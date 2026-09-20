@@ -1,0 +1,18 @@
+# Godot
+.godot/
+*.translation
+
+# GDExtension 构建产物
+game/bin/*.dll
+game/bin/*.so
+game/bin/*.dylib
+game/bin/*.pdb
+game/bin/*.exp
+game/bin/*.lib
+.sconsign.dblite
+*.os
+*.obj
+
+# 导出
+export/
+build/
