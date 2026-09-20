@@ -25,6 +25,12 @@ target_sources(
 )
 
 target_include_directories(zhouzhu PRIVATE src)
+
+# MSVC 默认按系统代码页（这台机器是 GBK）读源文件，源码里的中文字面量会在编译期就被转坏，
+# 运行时打出乱码。/utf-8 同时指定源字符集与执行字符集为 UTF-8，与 Godot 的 String 一致。
+if(MSVC)
+    target_compile_options(zhouzhu PRIVATE /utf-8)
+endif()
 target_link_libraries(zhouzhu PRIVATE godot-cpp)
 
 # godot-cpp 算好的平台后缀，例如 .windows.template_debug.x86_64
