@@ -16,3 +16,9 @@ game/bin/*.lib
 # 导出
 export/
 build/
+
+# CMake / IDE
+cmake-build-*/
+CMakeUserPresets.json
+.idea/
+.vs/
