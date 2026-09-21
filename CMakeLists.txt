@@ -32,6 +32,8 @@ target_sources(
         ${ZHOUZHU_CORE_SOURCES}
         src/build_info.cpp
         src/build_info.h
+        src/input_actions.cpp
+        src/input_actions.h
         src/island.cpp
         src/island.h
         src/island_mesh.cpp
