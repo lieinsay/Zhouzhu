@@ -4,6 +4,7 @@
 #include <godot_cpp/godot.hpp>
 
 #include "build_info.h"
+#include "island.h"
 
 using namespace godot;
 
@@ -12,6 +13,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
         return;
     }
     GDREGISTER_CLASS(BuildInfo);
+    GDREGISTER_CLASS(Island);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {

@@ -1,0 +1,67 @@
+#pragma once
+
+#include <godot_cpp/classes/static_body3d.hpp>
+
+#include "island_field.h"
+
+// 一座浮空岛。节点原点在岸缘高度（局部 y = 0 即岸缘），岛体向下垂到岛底。
+// 进树时按属性生成高度场 → 网格 + 碰撞 + 栈桥；生成物没有 owner，不会写进场景文件。
+// 编辑器里同样生成，改属性即重建，方便摆岛。
+class Island : public godot::StaticBody3D {
+    GDCLASS(Island, godot::StaticBody3D)
+
+    int64_t seed = 1;
+    double area_m2 = 120000.0;
+    double age = 0.5;
+    double relief_m = 60.0;
+    double elongation = 1.3;
+    double axis_deg = 0.0;
+    double dock_bearing_deg = 0.0;
+    double cliff_m = 22.0;
+    double keel_m = 110.0;
+
+    IslandField field;
+    bool rebuild_queued = false;
+
+    void queue_rebuild();
+    void clear_generated();
+    godot::Vector3 dock_local(double p_along_out, double p_up) const;
+
+protected:
+    static void _bind_methods();
+
+public:
+    static constexpr double PIER_WIDTH = 3.0;
+    static constexpr double PIER_LIFT = 0.1; // 栈桥面比停机坪高这么多，免得与地面共面闪烁
+
+    void _ready() override;
+
+    void rebuild();
+
+    // 泊位：船的原点（甲板面中心）该在的位姿，船身平行于岸。p_half_beam = 船的半宽。
+    godot::Transform3D get_berth_transform(double p_half_beam) const;
+    godot::Vector3 get_pier_end_position() const;
+    // 停机坪上、面朝栈桥的出生位姿
+    godot::Transform3D get_spawn_transform() const;
+    // 该处（全局 xz）的地面全局高度；没有地面返回 NAN
+    double get_surface_height(const godot::Vector3 &p_global) const;
+
+    void set_seed(int64_t p_value);
+    int64_t get_seed() const { return seed; }
+    void set_area_m2(double p_value);
+    double get_area_m2() const { return area_m2; }
+    void set_age(double p_value);
+    double get_age() const { return age; }
+    void set_relief_m(double p_value);
+    double get_relief_m() const { return relief_m; }
+    void set_elongation(double p_value);
+    double get_elongation() const { return elongation; }
+    void set_axis_deg(double p_value);
+    double get_axis_deg() const { return axis_deg; }
+    void set_dock_bearing_deg(double p_value);
+    double get_dock_bearing_deg() const { return dock_bearing_deg; }
+    void set_cliff_m(double p_value);
+    double get_cliff_m() const { return cliff_m; }
+    void set_keel_m(double p_value);
+    double get_keel_m() const { return keel_m; }
+};
