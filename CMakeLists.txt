@@ -38,6 +38,8 @@ target_sources(
         src/island.h
         src/island_mesh.cpp
         src/island_mesh.h
+        src/player.cpp
+        src/player.h
         src/register_types.cpp
         src/register_types.h
 )

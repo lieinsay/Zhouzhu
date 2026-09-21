@@ -1,0 +1,53 @@
+[gd_scene load_steps=6 format=3]
+
+[sub_resource type="CapsuleShape3D" id="shape"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="cloth"]
+albedo_color = Color(0.7, 0.24, 0.19, 1)
+roughness = 0.9
+
+[sub_resource type="CapsuleMesh" id="torso_mesh"]
+material = SubResource("cloth")
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="straw"]
+albedo_color = Color(0.85, 0.74, 0.47, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="brim_mesh"]
+material = SubResource("straw")
+size = Vector3(0.5, 0.08, 0.45)
+
+[node name="Player" type="Player"]
+collision_layer = 4
+collision_mask = 3
+floor_max_angle = 0.872665
+floor_snap_length = 0.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("shape")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="Torso" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("torso_mesh")
+
+[node name="Brim" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.62, -0.3)
+mesh = SubResource("brim_mesh")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+collision_mask = 1
+spring_length = 5.0
+margin = 0.2
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+far = 8000.0

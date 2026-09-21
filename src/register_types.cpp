@@ -5,6 +5,7 @@
 
 #include "build_info.h"
 #include "island.h"
+#include "player.h"
 
 using namespace godot;
 
@@ -14,6 +15,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     }
     GDREGISTER_CLASS(BuildInfo);
     GDREGISTER_CLASS(Island);
+    GDREGISTER_CLASS(Player);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {
