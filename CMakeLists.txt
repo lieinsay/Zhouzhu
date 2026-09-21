@@ -34,6 +34,8 @@ target_sources(
     zhouzhu
     PRIVATE
         ${ZHOUZHU_CORE_SOURCES}
+        src/farm.cpp
+        src/farm.h
         src/input_actions.cpp
         src/input_actions.h
         src/island.cpp
