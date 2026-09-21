@@ -19,6 +19,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/flight_model.h
     src/island_field.cpp
     src/island_field.h
+    src/island_river.cpp
+    src/island_river.h
     src/rng.h
     src/value_noise.cpp
     src/value_noise.h

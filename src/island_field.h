@@ -29,6 +29,15 @@ struct IslandParams {
     double dock_bearing = 0.0; // 码头在岛的哪个方位（弧度，同 theta 的转向）
     double dock_apron_m = 20.0; // 码头后面压平的停机坪半径
     double pier_min_m = 9.0; // 栈桥最短伸出多少
+
+    // 河（见 island_river.h）。默认没有：不是每座岛都养得起一条河
+    bool river = false;
+    double river_half_width_m = 3.2; // 水面半宽
+    double river_depth_m = 0.6; // 河心水深
+    double river_freeboard_m = 0.35; // 河滩比水面高多少
+    double river_flat_m = 9.0; // 每侧压平成河滩的宽度（能种地的就是这一条）
+    bool trail = false; // 从停机坪修一条路到河滩（要有河）
+    double trail_half_width_m = 2.5;
 };
 
 struct IslandDock {
@@ -36,6 +45,18 @@ struct IslandDock {
     double y = 0.0; // 停机坪与栈桥面的高度
     double out_x = 1.0, out_z = 0.0; // 指向岛外的单位向量
     double pier_m = 9.0; // 栈桥自岸缘点向外伸多长：保证泊位上的船身碰不到两侧的岸
+};
+
+// 河中线上的一点，自源头排到河口（岸缘）；水面沿程只降不升
+struct RiverPoint {
+    double x = 0.0, z = 0.0;
+    double water = 0.0; // 水面 y
+    double half_width = 0.0;
+};
+
+struct TrailPoint {
+    double x = 0.0, z = 0.0;
+    double y = 0.0; // 路面高
 };
 
 struct IslandField {
@@ -49,6 +70,11 @@ struct IslandField {
     std::vector<float> inside; // 岸线 0 → 腹地 1 的「向内程度」
     std::vector<float> bottom; // 岛底 y
     IslandDock dock;
+    std::vector<RiverPoint> river; // 没有河则为空
+    std::vector<float> river_dist; // 到河中线的水平距离（m）；没有河则为空
+    std::vector<float> river_depth; // 该节点上方的水深，不在水下为 0；没有河则为空
+    std::vector<TrailPoint> trail; // 停机坪 → 河滩；没有路则为空
+    std::vector<float> trail_dist; // 到路中线的水平距离（m）；没有路则为空
 
     size_t index(int p_i, int p_j) const { return size_t(p_i) * size_t(n) + size_t(p_j); }
     double coord(int p_k) const { return (p_k - (n - 1) * 0.5) * cell_m; }
@@ -63,6 +89,8 @@ struct IslandField {
     int land_count() const;
     // 双线性取地面高度；该处没有地面则返回 false
     bool sample_height(double p_x, double p_z, double &r_y) const;
+    bool has_river() const { return !river.empty(); }
+    bool has_trail() const { return !trail.empty(); }
 };
 
 IslandAge island_age_class(double p_age);

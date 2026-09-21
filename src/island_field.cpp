@@ -4,6 +4,7 @@
 #include <cmath>
 #include <numeric>
 
+#include "island_river.h"
 #include "value_noise.h"
 
 namespace {
@@ -25,7 +26,7 @@ constexpr double PLATEAU_VALLEY_DEPTH = 0.5;
 constexpr double MOUND_AMP = 0.15;
 constexpr double TALUS_DEG = 38.0;
 
-// 这里没有移植水流侵蚀（切片不需要河），只留热力坍塌 + 坡面扩散，让坡能走人。
+// 这里没有移植水流侵蚀，只留热力坍塌 + 坡面扩散，让坡能走人；要河的岛由 island_river 事后刻一条。
 constexpr int RELAX_ROUNDS = 12;
 constexpr double DIFFUSION_K = 0.1;
 
@@ -489,6 +490,12 @@ IslandField generate_island_field(const IslandParams &p_params) {
     }
 
     build_dock(p_params, r, h);
+    if (p_params.river) {
+        carve_island_river(p_params, r, h); // 在码头之后：河道要绕开停机坪
+        if (p_params.trail) {
+            carve_dock_trail(p_params, r, h);
+        }
+    }
     build_bottom(p_params, r);
 
     r.height.assign(h.size(), float(p_params.rim_m));

@@ -193,6 +193,177 @@ void test_island(const char *p_name, double p_age, IslandAge p_class) {
     check(field_hash(generate_island_field(q)) != field_hash(f), "换种子，岛不同");
 }
 
+// 主场景里 IslandA 的参数，外加一条河
+IslandParams river_island_params(double p_age) {
+    IslandParams p;
+    p.seed = 1165;
+    p.age = p_age;
+    p.peak_m = p_age < 0.65 ? 60.0 : 24.0;
+    p.dock_bearing = -18.6 * 3.14159265358979323846 / 180.0;
+    p.river = true;
+    return p;
+}
+
+void test_river(const char *p_name, double p_age) {
+    std::printf("island_river（%s）\n", p_name);
+    const IslandParams p = river_island_params(p_age);
+    const IslandField f = generate_island_field(p);
+    IslandParams dry = p;
+    dry.river = false;
+    const IslandField f_dry = generate_island_field(dry);
+    const double R = std::sqrt(p.area_m2 / 3.14159265358979323846);
+
+    check(f_dry.river.empty() && f_dry.river_dist.empty(), "不要河的岛没有河");
+    check(f.has_river(), "要河的岛有河");
+    if (!f.has_river()) {
+        return;
+    }
+    check(f.mask == f_dry.mask, "河不改岛的轮廓");
+
+    // 河道：够长、水往低处流、绕开码头、在岸缘出岛
+    const std::vector<RiverPoint> &river = f.river;
+    double length = 0.0, dock_min = 1e18;
+    bool downhill = true;
+    for (size_t k = 0; k < river.size(); k++) {
+        if (k > 0) {
+            length += std::hypot(river[k].x - river[k - 1].x, river[k].z - river[k - 1].z);
+            downhill = downhill && river[k].water <= river[k - 1].water;
+        }
+        dock_min = std::min(dock_min, std::hypot(river[k].x - f.dock.x, river[k].z - f.dock.z));
+    }
+    check(length >= 0.6 * R, "河长不短于 0.6 个等效半径（" + std::to_string(length) + " m）");
+    check(downhill, "水面沿程只降不升");
+    check(river.front().water - river.back().water > 0.5, "源头到河口有落差");
+    check(dock_min >= p.dock_apron_m + p.river_flat_m + p.river_half_width_m, "河滩碰不到停机坪");
+    const RiverPoint &last = river.back(), &before = river[river.size() - 2];
+    const double ux = last.x - before.x, uz = last.z - before.z, ul = std::hypot(ux, uz);
+    double y;
+    check(f.sample_height(river[river.size() - 3].x, river[river.size() - 3].z, y), "河口以内是地面");
+    check(!f.sample_height(last.x + 2.0 * p.cell_m * ux / ul, last.z + 2.0 * p.cell_m * uz / ul, y), "河口以外是云海");
+
+    // 断面：河心在水下，两岸的滩在水上
+    bool bed_wet = true, banks_dry = true;
+    int banks_checked = 0;
+    for (size_t k = 1; k + 2 < river.size(); k++) {
+        const RiverPoint &a = river[k], &b = river[k + 1];
+        if (!f.sample_height(a.x, a.z, y)) {
+            continue;
+        }
+        bed_wet = bed_wet && y < a.water - 0.5 * p.river_depth_m;
+        const double len = std::hypot(b.x - a.x, b.z - a.z);
+        if ((a.water - b.water) / len > 0.05) {
+            continue; // 跌水段：岸跟着水一起往下掉，一格之内就差出几十厘米，不拿它量滩高
+        }
+        const double off = a.half_width + 3.0;
+        for (int side = -1; side <= 1; side += 2) {
+            const double bx = a.x - side * off * (b.z - a.z) / len, bz = a.z + side * off * (b.x - a.x) / len;
+            // 拐弯处这一点可能离另一段河更近，只看确实在「半宽 + 3 m」上的点
+            const int i = int(std::lround((bz + f.half_extent()) / f.cell_m)), j = int(std::lround((bx + f.half_extent()) / f.cell_m));
+            if (!f.in_mask(i, j) || std::abs(f.river_dist[f.index(i, j)] - off) > 1.5 || !f.sample_height(bx, bz, y)) {
+                continue;
+            }
+            banks_checked++;
+            banks_dry = banks_dry && y > a.water + 0.1;
+        }
+    }
+    check(bed_wet, "河心在水下");
+    check(banks_checked > 20 && banks_dry, "两岸的滩高出水面");
+
+    // 刻河之后：停机坪仍平、峰高不变、岛体够厚、河边走得了人
+    double flat_err = 0.0, h_max = -1e18, steepest = 0.0, gap_min = 1e18;
+    for (int i = 0; i < f.n; i++) {
+        for (int j = 0; j < f.n; j++) {
+            if (!f.in_mask(i, j)) {
+                continue;
+            }
+            const double h = f.height[f.index(i, j)];
+            h_max = std::max(h_max, h);
+            gap_min = std::min(gap_min, h - f.bottom[f.index(i, j)]);
+            if (std::hypot(f.coord(j) - f.dock.x, f.coord(i) - f.dock.z) <= 0.5 * p.dock_apron_m) {
+                flat_err = std::max(flat_err, std::abs(h - f.dock.y));
+            }
+            if (f.river_dist[f.index(i, j)] < 30.0) {
+                if (f.in_mask(i, j + 1)) {
+                    steepest = std::max(steepest, std::abs(f.height[f.index(i, j + 1)] - h) / f.cell_m);
+                }
+                if (f.in_mask(i + 1, j)) {
+                    steepest = std::max(steepest, std::abs(f.height[f.index(i + 1, j)] - h) / f.cell_m);
+                }
+            }
+        }
+    }
+    check(flat_err < 1e-3, "停机坪仍是平的");
+    check_near(h_max, p.peak_m, 0.01 * p.peak_m, "峰高不变");
+    check(gap_min >= 0.5 * p.cliff_m - 2.0, "河口切下去之后岛体仍够厚");
+    check(steepest <= 1.0, "河边 30 m 内没有陡过 45° 的坡（最陡 " + std::to_string(steepest) + "）");
+
+    check(field_hash(generate_island_field(p)) == field_hash(f), "同输入重跑，哈希一致");
+    check(field_hash(f) != field_hash(f_dry), "有河与无河的岛不同");
+}
+
+void test_trail(const char *p_name, double p_age) {
+    std::printf("island_river · 路（%s）\n", p_name);
+    IslandParams p = river_island_params(p_age);
+    const IslandField f_river = generate_island_field(p);
+    p.trail = true;
+    const IslandField f = generate_island_field(p);
+
+    check(f_river.trail.empty() && f_river.trail_dist.empty(), "不要路的岛没有路");
+    check(f.has_trail(), "要路的岛有路");
+    if (!f.has_trail()) {
+        return;
+    }
+    check(f.river.size() == f_river.river.size() && f.mask == f_river.mask, "修路不动河道与轮廓");
+
+    const std::vector<TrailPoint> &trail = f.trail;
+    check(std::hypot(trail.front().x - f.dock.x, trail.front().z - f.dock.z) <= 0.5 * p.dock_apron_m, "路从停机坪压平的那一圈里接出来");
+    check_near(trail.front().y, f.dock.y, 0.05, "路头与停机坪齐平");
+    {
+        const TrailPoint &end = trail.back();
+        const int i = int(std::lround((end.z + f.half_extent()) / f.cell_m)), j = int(std::lround((end.x + f.half_extent()) / f.cell_m));
+        const double beyond_water = f.river_dist[f.index(i, j)] - p.river_half_width_m;
+        check(f.in_mask(i, j) && f.river_depth[f.index(i, j)] == 0.0f && beyond_water > 0.0 && beyond_water < p.river_flat_m, "路尾落在河滩上");
+    }
+
+    // 走得上去：纵坡有上限；路面就是地面；路中线两侧 1.5 m 也大致是平的
+    double max_grade = 0.0, surface_err = 0.0, cross_err = 0.0;
+    bool dry = true;
+    for (size_t k = 0; k + 1 < trail.size(); k++) {
+        const TrailPoint &a = trail[k], &b = trail[k + 1];
+        const double len = std::hypot(b.x - a.x, b.z - a.z);
+        max_grade = std::max(max_grade, std::abs(b.y - a.y) / len);
+        if (std::hypot(a.x - f.dock.x, a.z - f.dock.z) < p.dock_apron_m) {
+            continue; // 停机坪里路不动土，那里本来就是平的
+        }
+        double y;
+        if (f.sample_height(a.x, a.z, y)) {
+            surface_err = std::max(surface_err, std::abs(y - a.y));
+        }
+        for (int side = -1; side <= 1; side += 2) {
+            if (f.sample_height(a.x - side * 1.5 * (b.z - a.z) / len, a.z + side * 1.5 * (b.x - a.x) / len, y)) {
+                cross_err = std::max(cross_err, std::abs(y - a.y));
+            }
+        }
+        const int i = int(std::lround((a.z + f.half_extent()) / f.cell_m)), j = int(std::lround((a.x + f.half_extent()) / f.cell_m));
+        dry = dry && f.in_mask(i, j) && f.river_depth[f.index(i, j)] == 0.0f;
+    }
+    check(max_grade <= 0.36, "路面纵坡不超过 0.36（最陡 " + std::to_string(max_grade) + "）");
+    check(surface_err <= 0.35, "路面贴着地面（最大偏差 " + std::to_string(surface_err) + " m）");
+    check(cross_err <= 0.8, "路中线两侧 1.5 m 内大致平（最大偏差 " + std::to_string(cross_err) + " m）");
+    check(dry, "路不下水");
+
+    double flat_err = 0.0;
+    for (int i = 0; i < f.n; i++) {
+        for (int j = 0; j < f.n; j++) {
+            if (f.in_mask(i, j) && std::hypot(f.coord(j) - f.dock.x, f.coord(i) - f.dock.z) <= 0.5 * p.dock_apron_m) {
+                flat_err = std::max(flat_err, std::abs(f.height[f.index(i, j)] - f.dock.y));
+            }
+        }
+    }
+    check(flat_err < 1e-3, "停机坪仍是平的");
+    check(field_hash(generate_island_field(p)) == field_hash(f), "同输入重跑，哈希一致");
+}
+
 void test_flight() {
     std::printf("flight_model\n");
     const FlightParams params;
@@ -266,6 +437,12 @@ int main() {
     test_island("新岛 · 火山锥", 0.1, IslandAge::YOUNG);
     test_island("中年 · 山脊", 0.5, IslandAge::MID);
     test_island("老岛 · 台地", 0.8, IslandAge::OLD);
+    test_river("老岛 · 台地", 0.8);
+    test_river("中年 · 山脊", 0.5);
+    test_river("新岛 · 火山锥", 0.1);
+    test_trail("老岛 · 台地", 0.8);
+    test_trail("中年 · 山脊", 0.5);
+    test_trail("新岛 · 火山锥", 0.1);
     test_flight();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
