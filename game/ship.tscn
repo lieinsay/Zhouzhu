@@ -1,0 +1,250 @@
+[gd_scene load_steps=32 format=3]
+
+[sub_resource type="StandardMaterial3D" id="mat_wood"]
+albedo_color = Color(0.52, 0.37, 0.23, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_hull"]
+albedo_color = Color(0.33, 0.22, 0.15, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_rail"]
+albedo_color = Color(0.4, 0.28, 0.18, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="mat_sail"]
+albedo_color = Color(0.9, 0.86, 0.74, 1)
+roughness = 1.0
+cull_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="mat_stone"]
+albedo_color = Color(0.25, 0.62, 0.6, 1)
+roughness = 0.6
+emission_enabled = true
+emission = Color(0.2, 0.75, 0.7, 1)
+emission_energy_multiplier = 1.4
+
+[sub_resource type="BoxMesh" id="mesh_Deck"]
+material = SubResource("mat_wood")
+size = Vector3(5.0, 0.6, 14.0)
+
+[sub_resource type="BoxShape3D" id="shape_Deck"]
+size = Vector3(5.0, 0.6, 14.0)
+
+[sub_resource type="BoxMesh" id="mesh_Hull"]
+material = SubResource("mat_hull")
+size = Vector3(3.6, 2.0, 11.0)
+
+[sub_resource type="BoxShape3D" id="shape_Hull"]
+size = Vector3(3.6, 2.0, 11.0)
+
+[sub_resource type="BoxMesh" id="mesh_RailPF"]
+material = SubResource("mat_rail")
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxShape3D" id="shape_RailPF"]
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxMesh" id="mesh_RailPA"]
+material = SubResource("mat_rail")
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxShape3D" id="shape_RailPA"]
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxMesh" id="mesh_RailSF"]
+material = SubResource("mat_rail")
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxShape3D" id="shape_RailSF"]
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxMesh" id="mesh_RailSA"]
+material = SubResource("mat_rail")
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxShape3D" id="shape_RailSA"]
+size = Vector3(0.15, 1.0, 5.8)
+
+[sub_resource type="BoxMesh" id="mesh_RailBow"]
+material = SubResource("mat_rail")
+size = Vector3(5.0, 1.0, 0.15)
+
+[sub_resource type="BoxShape3D" id="shape_RailBow"]
+size = Vector3(5.0, 1.0, 0.15)
+
+[sub_resource type="BoxMesh" id="mesh_RailStern"]
+material = SubResource("mat_rail")
+size = Vector3(5.0, 1.0, 0.15)
+
+[sub_resource type="BoxShape3D" id="shape_RailStern"]
+size = Vector3(5.0, 1.0, 0.15)
+
+[sub_resource type="BoxMesh" id="mesh_HelmPost"]
+material = SubResource("mat_hull")
+size = Vector3(0.4, 1.0, 0.4)
+
+[sub_resource type="BoxShape3D" id="shape_HelmPost"]
+size = Vector3(0.4, 1.0, 0.4)
+
+[sub_resource type="BoxMesh" id="mesh_Floatstone"]
+material = SubResource("mat_stone")
+size = Vector3(1.6, 1.2, 8.0)
+
+[sub_resource type="BoxMesh" id="mesh_Sail"]
+material = SubResource("mat_sail")
+size = Vector3(0.06, 4.2, 3.2)
+
+[sub_resource type="BoxMesh" id="mesh_Boom"]
+material = SubResource("mat_rail")
+size = Vector3(0.14, 0.14, 3.6)
+
+[sub_resource type="PrismMesh" id="mesh_Bow"]
+material = SubResource("mat_wood")
+size = Vector3(5, 3.2, 0.6)
+
+[sub_resource type="PrismMesh" id="mesh_BowHull"]
+material = SubResource("mat_hull")
+size = Vector3(3.6, 3.2, 2)
+
+[sub_resource type="CylinderMesh" id="mesh_Mast"]
+material = SubResource("mat_hull")
+top_radius = 0.12
+bottom_radius = 0.18
+height = 7.2
+
+[sub_resource type="CylinderShape3D" id="shape_Mast"]
+radius = 0.2
+height = 7.2
+
+[sub_resource type="TorusMesh" id="mesh_Wheel"]
+material = SubResource("mat_rail")
+inner_radius = 0.3
+outer_radius = 0.4
+
+[node name="Ship" type="Ship"]
+collision_layer = 2
+collision_mask = 1
+motion_mode = 1
+
+[node name="DeckShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+shape = SubResource("shape_Deck")
+
+[node name="HullShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.6, 0)
+shape = SubResource("shape_Hull")
+
+[node name="RailPFShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.425, 0.5, -4.1)
+shape = SubResource("shape_RailPF")
+
+[node name="RailPAShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.425, 0.5, 4.1)
+shape = SubResource("shape_RailPA")
+
+[node name="RailSFShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.425, 0.5, -4.1)
+shape = SubResource("shape_RailSF")
+
+[node name="RailSAShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.425, 0.5, 4.1)
+shape = SubResource("shape_RailSA")
+
+[node name="RailBowShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -6.925)
+shape = SubResource("shape_RailBow")
+
+[node name="RailSternShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 6.925)
+shape = SubResource("shape_RailStern")
+
+[node name="HelmPostShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 4.5)
+shape = SubResource("shape_HelmPost")
+
+[node name="MastShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -2.5)
+shape = SubResource("shape_Mast")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Deck" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.3, 0)
+mesh = SubResource("mesh_Deck")
+
+[node name="Hull" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.6, 0)
+mesh = SubResource("mesh_Hull")
+
+[node name="RailPF" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.425, 0.5, -4.1)
+mesh = SubResource("mesh_RailPF")
+
+[node name="RailPA" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.425, 0.5, 4.1)
+mesh = SubResource("mesh_RailPA")
+
+[node name="RailSF" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.425, 0.5, -4.1)
+mesh = SubResource("mesh_RailSF")
+
+[node name="RailSA" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.425, 0.5, 4.1)
+mesh = SubResource("mesh_RailSA")
+
+[node name="RailBow" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -6.925)
+mesh = SubResource("mesh_RailBow")
+
+[node name="RailStern" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 6.925)
+mesh = SubResource("mesh_RailStern")
+
+[node name="HelmPost" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 4.5)
+mesh = SubResource("mesh_HelmPost")
+
+[node name="Floatstone" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.2, 0)
+mesh = SubResource("mesh_Floatstone")
+
+[node name="Sail" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.7, -0.7)
+mesh = SubResource("mesh_Sail")
+
+[node name="Boom" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -0.7)
+mesh = SubResource("mesh_Boom")
+
+[node name="Bow" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -0.3, -8.6)
+mesh = SubResource("mesh_Bow")
+
+[node name="BowHull" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, -1.6, -7.1)
+mesh = SubResource("mesh_BowHull")
+
+[node name="Mast" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -2.5)
+mesh = SubResource("mesh_Mast")
+
+[node name="Wheel" type="MeshInstance3D" parent="Visual"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 1.15, 4.72)
+mesh = SubResource("mesh_Wheel")
+
+[node name="Helm" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4.5)
+
+[node name="Seat" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5.4)
+
+[node name="Exit" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0, 3.4)
+
+[node name="CameraRig" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
+far = 8000.0

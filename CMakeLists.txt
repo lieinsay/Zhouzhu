@@ -42,6 +42,8 @@ target_sources(
         src/player.h
         src/register_types.cpp
         src/register_types.h
+        src/ship.cpp
+        src/ship.h
 )
 
 target_include_directories(zhouzhu PRIVATE src)
