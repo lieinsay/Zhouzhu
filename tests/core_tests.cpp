@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "farm_model.h"
 #include "flight_model.h"
 #include "island_field.h"
 #include "value_noise.h"
@@ -362,6 +363,95 @@ void test_trail(const char *p_name, double p_age) {
     }
     check(flat_err < 1e-3, "停机坪仍是平的");
     check(field_hash(generate_island_field(p)) == field_hash(f), "同输入重跑，哈希一致");
+
+    const FarmSurvey survey = survey_farmland(f, p.dock_apron_m, FarmRules());
+    int on_trail = 0;
+    for (uint8_t a : survey.arability) {
+        on_trail += Arability(a) == Arability::TRAIL ? 1 : 0;
+    }
+    check(on_trail > 0 && survey.arable_count() >= 60, "路上不能垦，路外的河滩照样能垦");
+}
+
+void test_farm() {
+    std::printf("farm_model\n");
+    const IslandParams p = river_island_params(0.8);
+    const IslandField f = generate_island_field(p);
+    FarmRules rules;
+    const FarmSurvey survey = survey_farmland(f, p.dock_apron_m, rules);
+
+    // 勘察
+    int water = 0, dry = 0;
+    bool arable_ok = true;
+    int near_i = -1, near_j = -1, far_i = -1, far_j = -1, dry_i = -1, dry_j = -1;
+    for (int i = 0; i < f.n - 1; i++) {
+        for (int j = 0; j < f.n - 1; j++) {
+            const Arability a = survey.at(i, j);
+            water += a == Arability::WATER ? 1 : 0;
+            dry += a == Arability::TOO_DRY ? 1 : 0;
+            if (a == Arability::TOO_DRY) {
+                dry_i = i;
+                dry_j = j;
+            }
+            if (a != Arability::ARABLE) {
+                continue;
+            }
+            const float m = survey.moisture[survey.index(i, j)];
+            arable_ok = arable_ok && f.quad_solid(i, j) && f.river_depth[f.index(i, j)] == 0.0f && m >= 0.0f && m <= 1.0f;
+            if (near_i < 0 || m > survey.moisture[survey.index(near_i, near_j)]) {
+                near_i = i;
+                near_j = j;
+            }
+            if (far_i < 0 || m < survey.moisture[survey.index(far_i, far_j)]) {
+                far_i = i;
+                far_j = j;
+            }
+        }
+    }
+    check(survey.arable_count() >= 60, "河边有成片可垦的地（" + std::to_string(survey.arable_count()) + " 格）");
+    check(water > 0 && dry > survey.arable_count(), "河里不能垦，离河远的地占多数");
+    check(arable_ok, "可垦的格子都有地面、不在水里");
+    check(survey.at(-1, 0) == Arability::NO_GROUND && survey.at(0, f.n - 1) == Arability::NO_GROUND, "界外算没有地面");
+    IslandParams no_river = p;
+    no_river.river = false;
+    check(survey_farmland(generate_island_field(no_river), p.dock_apron_m, rules).arable_count() == 0, "没有河的岛无地可垦");
+    if (near_i < 0 || dry_i < 0) {
+        return;
+    }
+
+    // 地块状态机
+    FarmModel farm(survey, rules);
+    check(farm.available_action(dry_i, dry_j, 5) == FarmAction::NONE, "离河太远：不能开垦");
+    check(farm.perform(dry_i, dry_j, FarmAction::TILL, 5) == 0 && farm.plot_at(dry_i, dry_j).state == PlotState::WILD, "硬垦也垦不动");
+    check(farm.available_action(near_i, near_j, 0) == FarmAction::TILL, "荒地：开垦（不要粟）");
+    check(farm.perform(near_i, near_j, FarmAction::SOW, 5) == 0, "没垦的地不能直接播种");
+    check(farm.perform(near_i, near_j, FarmAction::TILL, 5) == 0 && farm.plot_at(near_i, near_j).state == PlotState::TILLED, "开垦 → 已垦");
+    check(farm.available_action(near_i, near_j, 0) == FarmAction::NONE, "没有粟：不能播种");
+    check(farm.perform(near_i, near_j, FarmAction::SOW, 5) == -rules.seed_cost, "播种耗一份粟");
+    check(farm.plot_at(near_i, near_j).state == PlotState::GROWING && farm.available_action(near_i, near_j, 5) == FarmAction::NONE, "生长中：无事可做");
+
+    farm.perform(far_i, far_j, FarmAction::TILL, 5);
+    farm.perform(far_i, far_j, FarmAction::SOW, 5);
+    int stage_changes = 0;
+    double near_ripe_at = -1.0, far_ripe_at = -1.0;
+    for (int step = 1; step <= 60 * 200 && far_ripe_at < 0.0; step++) {
+        stage_changes += int(farm.advance(1.0 / 60.0).size()) / 2;
+        if (near_ripe_at < 0.0 && farm.plot_at(near_i, near_j).state == PlotState::RIPE) {
+            near_ripe_at = step / 60.0;
+        }
+        if (farm.plot_at(far_i, far_j).state == PlotState::RIPE) {
+            far_ripe_at = step / 60.0;
+        }
+    }
+    const double near_m = survey.moisture[survey.index(near_i, near_j)], far_m = survey.moisture[survey.index(far_i, far_j)];
+    check_near(near_ripe_at, rules.grow_seconds / (rules.dry_growth + (1 - rules.dry_growth) * near_m), 0.1, "河边的地按墒情算的时间成熟");
+    check_near(far_ripe_at, rules.grow_seconds / (rules.dry_growth + (1 - rules.dry_growth) * far_m), 0.1, "远处的地也是");
+    check(near_ripe_at < far_ripe_at, "离河近的先熟");
+    check(stage_changes == 2 * (FarmModel::STAGES - 1), "每格的外观阶段各变 STAGES − 1 次");
+    check(farm.count(PlotState::RIPE) == 2 && farm.count(PlotState::GROWING) == 0, "两格都熟了");
+    check(farm.available_action(near_i, near_j, 0) == FarmAction::HARVEST, "成熟：收获");
+    check(farm.perform(near_i, near_j, FarmAction::HARVEST, 0) == rules.harvest_yield, "收获得粟");
+    check(farm.plot_at(near_i, near_j).state == PlotState::TILLED, "收完还是垦好的地，能接着种");
+    check(rules.harvest_yield > rules.seed_cost, "种一收多：循环是正的");
 }
 
 void test_flight() {
@@ -443,6 +533,7 @@ int main() {
     test_trail("老岛 · 台地", 0.8);
     test_trail("中年 · 山脊", 0.5);
     test_trail("新岛 · 火山锥", 0.1);
+    test_farm();
     test_flight();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
