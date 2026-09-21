@@ -13,11 +13,21 @@ project(zhouzhu LANGUAGES CXX)
 
 add_subdirectory(extern/godot-cpp)
 
+# 不含 Godot 头的纯算法文件：扩展与单元测试各编一份。
+set(ZHOUZHU_CORE_SOURCES
+    src/island_field.cpp
+    src/island_field.h
+    src/rng.h
+    src/value_noise.cpp
+    src/value_noise.h
+)
+
 add_library(zhouzhu SHARED)
 
 target_sources(
     zhouzhu
     PRIVATE
+        ${ZHOUZHU_CORE_SOURCES}
         src/build_info.cpp
         src/build_info.h
         src/register_types.cpp
@@ -57,3 +67,15 @@ set_target_properties(
         PREFIX ""
         OUTPUT_NAME "zhouzhu${GODOTCPP_SUFFIX}"
 )
+
+# 单元测试：只编纯算法文件，不链 godot-cpp。
+#   cmake --build build --config Debug --target zhouzhu_core_tests
+#   ctest --test-dir build -C Debug --output-on-failure
+enable_testing()
+add_executable(zhouzhu_core_tests ${ZHOUZHU_CORE_SOURCES} tests/core_tests.cpp)
+target_include_directories(zhouzhu_core_tests PRIVATE src)
+set_target_properties(zhouzhu_core_tests PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
+if(MSVC)
+    target_compile_options(zhouzhu_core_tests PRIVATE /utf-8)
+endif()
+add_test(NAME core COMMAND zhouzhu_core_tests)
