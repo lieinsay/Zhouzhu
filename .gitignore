@@ -23,3 +23,6 @@ cmake-build-*/
 CMakeUserPresets.json
 .idea/
 .vs/
+
+# mellos-mapping 的进度图与运行时状态
+.mellos/
