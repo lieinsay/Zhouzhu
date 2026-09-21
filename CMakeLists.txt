@@ -30,8 +30,6 @@ target_sources(
     zhouzhu
     PRIVATE
         ${ZHOUZHU_CORE_SOURCES}
-        src/build_info.cpp
-        src/build_info.h
         src/input_actions.cpp
         src/input_actions.h
         src/island.cpp
@@ -44,6 +42,8 @@ target_sources(
         src/register_types.h
         src/ship.cpp
         src/ship.h
+        src/voyage.cpp
+        src/voyage.h
 )
 
 target_include_directories(zhouzhu PRIVATE src)

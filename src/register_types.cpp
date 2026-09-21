@@ -3,10 +3,10 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/godot.hpp>
 
-#include "build_info.h"
 #include "island.h"
 #include "player.h"
 #include "ship.h"
+#include "voyage.h"
 
 using namespace godot;
 
@@ -14,10 +14,10 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
-    GDREGISTER_CLASS(BuildInfo);
     GDREGISTER_CLASS(Island);
     GDREGISTER_CLASS(Player);
     GDREGISTER_CLASS(Ship);
+    GDREGISTER_CLASS(Voyage);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {
