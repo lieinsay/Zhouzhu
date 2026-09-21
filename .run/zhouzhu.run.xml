@@ -1,0 +1,7 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="zhouzhu" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="--path D:\Project\My\Zhouzhu\game" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="zhouzhu" TARGET_NAME="zhouzhu" CONFIG_NAME="Debug" RUN_PATH="$PROJECT_DIR$/../../../Program Files/Godot/Godot_v4.4.1-stable_win64_console.exe">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>
