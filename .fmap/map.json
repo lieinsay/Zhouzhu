@@ -1,0 +1,648 @@
+{
+  "version": 1,
+  "project": {
+    "name": "州渚"
+  },
+  "nodes": [
+    {
+      "id": "e2e",
+      "label": "航程端到端测试",
+      "detail": "无头运行主场景，GDScript 驱动器只通过输入动作操作：走到舵位 → E → 飞到目的岛码头 → E 靠泊离舵 → 走下船。断言玩家最终站在目的岛地面上。另有一次带窗口截图的目视检查。",
+      "tag": "验收",
+      "evidence": "无头 --fixed-fps 60：voyage_e2e exit 0（模拟 52.0 s，玩家站在目的岛），respawn_e2e exit 0；ctest 1/1；带窗口截图 8 张已目视",
+      "sources": [
+        "game/tests/voyage_e2e.gd",
+        "game/tests/respawn_e2e.gd"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "main-scene",
+      "label": "主场景",
+      "detail": "main.tscn：天空 / 光 / 云海 + 两座岛（老台地的出发岛、新火山锥的目的岛，相距约 1.3 km 且高差 80 m）+ ship.tscn + player.tscn + Voyage。",
+      "tag": "场景",
+      "evidence": "无头加载 0 报错；带窗口截图 8 张：天空/云海/两岛/空艇/中文 HUD 均正常",
+      "sources": [
+        "game/main.tscn"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "voyage",
+      "label": "Voyage 编排",
+      "detail": "主场景唯一的编排者。切片一：谁在受控（角色/空艇）、上舵、靠泊、坠落回位。切片二：步行时盯着视线前方 1.8 m 的那一格，按下 E 起工、按住累计工时（开垦 1.5 s / 播种 0.6 s / 收获 0.8 s），换格或松手作废；粟的数量、HUD 提示与拒绝原因都在这里。Player、Ship、Farm 互不相识。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "voyage_e2e PASS（上舵/靠泊/离舵/抵达判定）+ respawn_e2e PASS（坠至 y=-31 后回到岛上着地，600 m 外的空艇被召回泊位）；HUD 中文截图正常",
+      "sources": [
+        "src/voyage.h",
+        "src/voyage.cpp"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "island-node",
+      "label": "Island 节点",
+      "detail": "按属性生成高度场 → 网格 + 碰撞 + 栈桥；has_river 打开时还有河水网格与通往河滩的路。每次生成完发 rebuilt 信号，长在岛上的东西（Farm）靠它知道地形换了；get_trail_points 把路交给上层。",
+      "tag": "场景角色",
+      "evidence": "e2e：两座岛生成，泊位/栈桥头/出生点位姿被 Voyage 与测试使用，get_surface_height 判定抵达；截图中栈桥与甲板齐平",
+      "sources": [
+        "src/island.h",
+        "src/island.cpp"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "player",
+      "label": "Player 角色",
+      "detail": "CharacterBody3D，第三人称弹簧臂相机。相对相机朝向的 WASD、跳、疾跑、重力。set_controlled(false) 时停输入停物理（入座用）。不知道飞船的存在。",
+      "tag": "场景角色",
+      "evidence": "e2e：出生点→栈桥→甲板 4.8 s，下船→对岸停机坪 3.5 s，全程着地；鼠标视角与跳跃未自动化验证",
+      "sources": [
+        "src/player.h",
+        "src/player.cpp",
+        "game/player.tscn"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "ship",
+      "label": "Ship 空艇",
+      "detail": "CharacterBody3D，甲板可站人。受控时读输入 → flight-model → move_and_slide（与岛碰撞）；不受控时悬停制动。靠泊：向给定泊位位姿自动滑行。给出舵位 / 座位 / 追尾相机。",
+      "tag": "场景角色",
+      "evidence": "e2e：爬升 1.3 s、巡航 951 m 用 35.6 s（极速 32 m/s）、靠泊滑行 5.9 s 后停在泊位位姿；甲板可站人",
+      "sources": [
+        "src/ship.h",
+        "src/ship.cpp",
+        "game/ship.tscn"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "island-mesh",
+      "label": "岛屿网格与碰撞",
+      "detail": "高度场 → 顶面/崖壁/岛底顶点数组与碰撞面；有河时按离河距离着色（河床砾石 → 水边沙 → 润草）、路面着土色，另出一条水面带 + 岸缘外渐隐的瀑布（无碰撞）。",
+      "tag": "引擎构件",
+      "evidence": "截图目视：顶面草/岩/停机坪上色、崖壁、倒锥岛底均正面朝外；e2e 中玩家在其碰撞面上行走、空艇不穿岛",
+      "sources": [
+        "src/island_mesh.h",
+        "src/island_mesh.cpp"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "input-map",
+      "label": "输入动作表",
+      "detail": "启动时用 InputMap 注册动作（移动 / 跳 / 疾跑 / 交互 / 升降），不写进 project.godot。测试经同一层动作驱动。",
+      "tag": "引擎构件",
+      "evidence": "e2e 全程只经 Input.action_press 这一层动作驱动并通过（移动/升降/转舵/交互）",
+      "sources": [
+        "src/input_actions.h",
+        "src/input_actions.cpp"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "island-field",
+      "label": "岛屿高度场",
+      "detail": "skyisle-gen terrain.py 的游戏尺度移植：椭圆 + 域扭曲 + 轮廓噪声，面积二分反解取最大连通块；基形随岛龄（新锥 / 中脊 / 老台地）；岸缘 rim → 峰 peak 归一，崖缘不向下收敛。另加码头：沿方位找岸缘点并压平停机坪。输入参数，输出 IslandField 值，无状态。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests: 新/中/老三种岛各 15 项通过（面积<2%、峰高<1%、单连通、岛体厚度、码头泊位无陆地、停机坪平、重跑哈希一致）",
+      "sources": [
+        "src/island_field.h",
+        "src/island_field.cpp",
+        "tests/core_tests.cpp"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "flight-model",
+      "label": "空艇飞行模型",
+      "detail": "纯函数 step(state, input, params, dt)：油门 → 前向速度、舵 → 偏航角速度、升降 → 垂直速度，各自一阶逼近；侧滑快速衰减。不碰撞、不积分位置（那是 Ship 的 move_and_slide）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests: 10 项通过（全油门到极速、松手停船、右舵 yaw 减小、爬升极速、侧滑衰减、帧率无关、输入夹断）",
+      "sources": [
+        "src/flight_model.h",
+        "src/flight_model.cpp",
+        "tests/core_tests.cpp"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "rng-noise",
+      "label": "随机数 + 值噪声",
+      "detail": "SplitMix64 确定性随机流；LatticeNoise / FractalNoise（skyisle-gen grid.py 的移植，特征尺度以米给）。同种子跨平台逐位一致，不用 std 分布。",
+      "tag": "原语",
+      "evidence": "zhouzhu_core_tests: rng 6 项 + value_noise 4 项通过（同种子同序列、取值域、连续性）",
+      "sources": [
+        "src/rng.h",
+        "src/value_noise.h",
+        "src/value_noise.cpp",
+        "tests/core_tests.cpp"
+      ],
+      "since": "e1"
+    },
+    {
+      "id": "island-river",
+      "label": "河道",
+      "detail": "在已成形的高度场上先定河道再让地形迁就：腹地泉眼 → 最小代价路径（罚上坡、绕开码头、偏向码头这半边）→ 水面沿程只降不升 → 刻河槽、两岸各压出 9 m 平缓河滩、滩外按固定坡度接回原地形。输出河中线（水面高、半宽）与每节点的离河距离、水深。IslandParams.river 默认关。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests：三种岛龄的河够长、水面单调降、绕开码头、岸缘出岛、河心在水下/滩在水上、坡 ≤ 45°、确定性",
+      "sources": [
+        "src/island_river.h",
+        "src/island_river.cpp"
+      ],
+      "since": "e2"
+    },
+    {
+      "id": "dock-trail",
+      "label": "码头到河滩的路",
+      "detail": "岛缘是一圈 35° 以上的陡坡，没有路玩家下了船够不着河。与河共用最小代价路径与折线刻槽：选线按坡度平方罚陡坡，路面抹平并限纵坡 0.32，两侧按边坡接回原地形；路上不可垦。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests：纵坡 ≤ 0.36、路面贴地、不下水、停机坪仍平；farm_e2e 沿路 13 s 走到河滩",
+      "sources": [
+        "src/island_river.h",
+        "src/island_river.cpp"
+      ],
+      "since": "e2"
+    },
+    {
+      "id": "farm-model",
+      "label": "农田模型",
+      "detail": "地块 = 高度场的格子（2.5 m）。勘察：每格可否开垦及原因（没地面/在水里/离河太远/太陡/停机坪/路上）与墒情。地块状态机 荒地→已垦→生长→成熟→（收获）已垦；生长速度随墒情；播种耗 1 粟、收获得 4。谁在干活、粟有多少不归它管。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests：勘察与状态机全过（河边先熟、种一收多）",
+      "sources": [
+        "src/farm_model.h",
+        "src/farm_model.cpp"
+      ],
+      "since": "e2"
+    },
+    {
+      "id": "farm-node",
+      "label": "Farm 农田",
+      "detail": "挂在 Island 下面，岛 rebuilt 后重新勘察；持有该岛的地块表并推进生长，把地块画出来（垄 + 四个阶段的粟苗，几何体占位）和目标格描边；对上回答「这一格是什么、能做什么」并执行开垦/播种/收获。",
+      "tag": "场景角色",
+      "evidence": "farm_e2e PASS；开窗截图目视四个生长阶段",
+      "sources": [
+        "src/farm.h",
+        "src/farm.cpp"
+      ],
+      "since": "e2"
+    },
+    {
+      "id": "farm-e2e",
+      "label": "农事端到端测试",
+      "detail": "无头 Godot + 输入驱动器：出生点按 E 被拒 → 沿路走到河滩 → 按住 E 开垦 → 播种 → 等成熟 → 收获，断言地块状态与粟数。",
+      "tag": "验收",
+      "evidence": "Godot --headless --fixed-fps 60 res://tests/farm_e2e.tscn → exit 0，粟 5 → 8",
+      "sources": [
+        "game/tests/farm_e2e.gd",
+        "game/tests/farm_e2e.tscn"
+      ],
+      "since": "e2"
+    }
+  ],
+  "edges": [
+    {
+      "from": "island-field",
+      "to": "rng-noise",
+      "label": "噪声取样",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "island-mesh",
+      "to": "island-field",
+      "label": "IslandField",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "island-node",
+      "to": "island-mesh",
+      "label": "顶点数组 / 碰撞面",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "island-node",
+      "to": "island-field",
+      "label": "高度查询 / 码头",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "ship",
+      "to": "flight-model",
+      "label": "step()",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "ship",
+      "to": "input-map",
+      "label": "动作名",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "player",
+      "to": "input-map",
+      "label": "动作名",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "player",
+      "label": "控制权 / 位姿",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "ship",
+      "label": "控制权 / 靠泊",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "island-node",
+      "label": "码头位姿 / 出生点",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "input-map",
+      "label": "注册 + 交互键",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "main-scene",
+      "to": "voyage",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "e2e",
+      "to": "main-scene",
+      "label": "加载并驱动",
+      "chains": [
+        "voyage"
+      ]
+    },
+    {
+      "from": "island-field",
+      "to": "island-river",
+      "label": "要河的岛：刻河",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "island-field",
+      "to": "dock-trail",
+      "label": "有河就修路",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "dock-trail",
+      "to": "island-river",
+      "label": "河滩在哪 / 共用选线与刻槽",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "island-river",
+      "to": "rng-noise",
+      "label": "蜿蜒噪声",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "farm-model",
+      "to": "island-field",
+      "label": "离河距离 / 水深 / 坡度",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "farm-node",
+      "to": "farm-model",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "farm-node",
+      "to": "island-node",
+      "label": "高度场 / rebuilt",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "farm-node",
+      "label": "目标格 / 开垦·播种·收获",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "farm-e2e",
+      "to": "main-scene",
+      "chains": [
+        "farming"
+      ]
+    }
+  ],
+  "chains": [
+    {
+      "id": "voyage",
+      "title": "切片一：走上空艇，从一座岛飞到另一座",
+      "story": "玩家操作角色走上空艇、掌舵，从一座空岛飞到另一座空岛，靠泊下船。",
+      "date": "2026-09-21",
+      "color": "#4f8ff7",
+      "commits": "1ff9b1e..a3711d9",
+      "branch": "slice-1-voyage",
+      "source": "mellos:slice-voyage",
+      "steps": [
+        {
+          "text": "进入主场景：两座岛按种子生成，玩家落在出发岛的出生点",
+          "nodes": [
+            "main-scene",
+            "island-node",
+            "island-mesh",
+            "island-field",
+            "rng-noise"
+          ]
+        },
+        {
+          "text": "WASD 走过栈桥，登上空艇甲板",
+          "nodes": [
+            "player",
+            "input-map",
+            "island-node",
+            "ship"
+          ]
+        },
+        {
+          "text": "走到舵旁按 E 上舵：控制权和相机从角色切到空艇",
+          "nodes": [
+            "voyage",
+            "player",
+            "ship",
+            "input-map"
+          ]
+        },
+        {
+          "text": "掌舵爬升、巡航约 951 m 飞向目的岛，HUD 给方位与距离",
+          "nodes": [
+            "ship",
+            "flight-model",
+            "input-map",
+            "voyage"
+          ]
+        },
+        {
+          "text": "进入码头 45 m 内按 E：自动滑行靠泊，停稳后离舵",
+          "nodes": [
+            "voyage",
+            "ship",
+            "island-node"
+          ]
+        },
+        {
+          "text": "走下船，踏上目的岛停机坪——抵达",
+          "nodes": [
+            "player",
+            "island-node"
+          ]
+        },
+        {
+          "text": "兜底：途中坠入云海就回到上一个安全落脚点，漂远的空艇召回最近码头",
+          "nodes": [
+            "voyage",
+            "player",
+            "ship",
+            "island-node"
+          ]
+        }
+      ],
+      "nodes": [
+        "e2e",
+        "main-scene",
+        "voyage",
+        "island-node",
+        "player",
+        "ship",
+        "island-mesh",
+        "input-map",
+        "island-field",
+        "flight-model",
+        "rng-noise"
+      ]
+    },
+    {
+      "id": "farming",
+      "title": "切片二：在河边开垦、播种、收获",
+      "story": "玩家操作角色下了码头，顺着土路走上河滩，在河边按住 E 把荒地垦成田、种下粟，等它长熟后收回更多的粟。",
+      "date": "2026-09-21",
+      "color": "#f08c3a",
+      "steps": [
+        {
+          "text": "进入主场景：出发岛除了地形，还生成一条从腹地流到岸缘的河，和一条从停机坪通到河滩的土路",
+          "nodes": [
+            "main-scene",
+            "island-node",
+            "island-field",
+            "island-river",
+            "dock-trail",
+            "island-mesh"
+          ]
+        },
+        {
+          "text": "岛一生成完，农田就把每一格地勘察一遍：离河近、坡缓、不在水里/路上/停机坪上的才可垦",
+          "nodes": [
+            "farm-node",
+            "farm-model",
+            "island-node"
+          ]
+        },
+        {
+          "text": "玩家在停机坪按 E：离河太远垦不了，提示里说明原因",
+          "nodes": [
+            "voyage",
+            "farm-node",
+            "input-map"
+          ]
+        },
+        {
+          "text": "顺着土路走上河滩；视线前方那一格能干活时描出亮边，提示「按住 E 开垦」",
+          "nodes": [
+            "player",
+            "dock-trail",
+            "voyage",
+            "farm-node"
+          ]
+        },
+        {
+          "text": "按住 E 1.5 秒开垦：荒地变成起了垄的田",
+          "nodes": [
+            "voyage",
+            "farm-node",
+            "farm-model"
+          ]
+        },
+        {
+          "text": "再按住 E 播种：粟 −1，垄上冒出苗",
+          "nodes": [
+            "voyage",
+            "farm-node",
+            "farm-model"
+          ]
+        },
+        {
+          "text": "粟苗随时间长高，离河越近墒情越好、熟得越快；一两分钟后抽穗变黄",
+          "nodes": [
+            "farm-node",
+            "farm-model"
+          ]
+        },
+        {
+          "text": "按住 E 收获：粟 +4，地还是垦好的，可以接着种",
+          "nodes": [
+            "voyage",
+            "farm-node",
+            "farm-model"
+          ]
+        }
+      ],
+      "nodes": [
+        "island-river",
+        "dock-trail",
+        "farm-model",
+        "farm-node",
+        "farm-e2e",
+        "voyage",
+        "island-node",
+        "island-mesh",
+        "main-scene",
+        "island-field",
+        "input-map",
+        "player",
+        "rng-noise"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "type": "slice",
+      "date": "2026-09-21",
+      "title": "切片一：走上空艇，从一座岛飞到另一座",
+      "summary": "切片一已完成并验收：玩家走上空艇、掌舵、从出发岛飞 951 m 到目的岛、靠泊下船。Godot 4.4.1 + C++ GDExtension。岛屿生成是 skyisle-gen island/terrain.py 的游戏尺度 C++ 移植（无水流侵蚀，运行时不依赖 skyisle-gen）。纯算法文件不含 Godot 头，CTest 单测；整条航程与坠落回位用无头 Godot + GDScript 输入驱动器验收。已按主题拆成 10 个提交，在分支 slice-1-voyage（1ff9b1e..a3711d9），未并入 main、未推送。",
+      "commits": "1ff9b1e..a3711d9",
+      "chain": "voyage",
+      "nodes": [
+        "e2e",
+        "main-scene",
+        "voyage",
+        "island-node",
+        "player",
+        "ship",
+        "island-mesh",
+        "input-map",
+        "island-field",
+        "flight-model",
+        "rng-noise"
+      ],
+      "info": {
+        "created": [
+          "e2e",
+          "main-scene",
+          "voyage",
+          "island-node",
+          "player",
+          "ship",
+          "island-mesh",
+          "input-map",
+          "island-field",
+          "flight-model",
+          "rng-noise"
+        ],
+        "reused": [],
+        "updated": []
+      }
+    },
+    {
+      "id": "e2",
+      "type": "slice",
+      "date": "2026-09-21",
+      "title": "切片二：在河边开垦、播种、收获",
+      "summary": "玩家操作角色下了码头，顺着土路走上河滩，在河边按住 E 把荒地垦成田、种下粟，等它长熟后收回更多的粟。",
+      "chain": "farming",
+      "nodes": [
+        "island-river",
+        "dock-trail",
+        "farm-model",
+        "farm-node",
+        "farm-e2e",
+        "voyage",
+        "island-node",
+        "island-mesh",
+        "main-scene",
+        "island-field",
+        "input-map",
+        "player",
+        "rng-noise"
+      ],
+      "info": {
+        "created": [
+          "island-river",
+          "dock-trail",
+          "farm-model",
+          "farm-node",
+          "farm-e2e"
+        ],
+        "reused": [
+          "voyage",
+          "island-node",
+          "island-mesh",
+          "main-scene",
+          "island-field",
+          "input-map",
+          "player",
+          "rng-noise"
+        ],
+        "updated": [
+          "voyage",
+          "island-node",
+          "island-mesh"
+        ]
+      }
+    }
+  ],
+  "aliases": {}
+}
