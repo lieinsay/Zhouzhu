@@ -20,6 +20,39 @@ namespace {
 
 constexpr double RECALL_DISTANCE = 60.0; // 坠落回位时，船离得比这远就把它召回最近的码头
 constexpr double NOTICE_SECONDS = 2.5;
+constexpr int PROGRESS_CELLS = 8;
+
+const Color TARGET_READY(1.0f, 0.96f, 0.72f, 0.95f); // 这一格有活可干
+const Color TARGET_IDLE(1.0f, 1.0f, 1.0f, 0.4f); // 是块田，但眼下没什么可做
+
+// 每样活要按住多久
+double work_seconds(Farm::Action p_action) {
+    switch (p_action) {
+        case Farm::ACTION_TILL:
+            return 1.5;
+        case Farm::ACTION_SOW:
+            return 0.6;
+        case Farm::ACTION_HARVEST:
+            return 0.8;
+        case Farm::ACTION_NONE:
+            break;
+    }
+    return 0.0;
+}
+
+String work_name(Farm::Action p_action) {
+    switch (p_action) {
+        case Farm::ACTION_TILL:
+            return String(U"开垦");
+        case Farm::ACTION_SOW:
+            return String(U"播种");
+        case Farm::ACTION_HARVEST:
+            return String(U"收获");
+        case Farm::ACTION_NONE:
+            break;
+    }
+    return String();
+}
 
 Label *make_label(int p_font_size) {
     Label *label = memnew(Label);
@@ -38,6 +71,7 @@ double yaw_of(const Transform3D &p_transform) {
 void Voyage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_state"), &Voyage::get_state);
     ClassDB::bind_method(D_METHOD("has_arrived"), &Voyage::has_arrived);
+    ClassDB::bind_method(D_METHOD("is_working"), &Voyage::is_working);
 
     ClassDB::bind_method(D_METHOD("set_origin_island_path", "path"), &Voyage::set_origin_island_path);
     ClassDB::bind_method(D_METHOD("get_origin_island_path"), &Voyage::get_origin_island_path);
@@ -55,17 +89,27 @@ void Voyage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_leave_helm_speed"), &Voyage::get_leave_helm_speed);
     ClassDB::bind_method(D_METHOD("set_kill_altitude", "value"), &Voyage::set_kill_altitude);
     ClassDB::bind_method(D_METHOD("get_kill_altitude"), &Voyage::get_kill_altitude);
+    ClassDB::bind_method(D_METHOD("set_farm_path", "path"), &Voyage::set_farm_path);
+    ClassDB::bind_method(D_METHOD("get_farm_path"), &Voyage::get_farm_path);
+    ClassDB::bind_method(D_METHOD("set_reach", "value"), &Voyage::set_reach);
+    ClassDB::bind_method(D_METHOD("get_reach"), &Voyage::get_reach);
+    ClassDB::bind_method(D_METHOD("set_grain", "value"), &Voyage::set_grain);
+    ClassDB::bind_method(D_METHOD("get_grain"), &Voyage::get_grain);
 
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "origin_island", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Island"), "set_origin_island_path", "get_origin_island_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "destination_island", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Island"), "set_destination_island_path", "get_destination_island_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "ship", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Ship"), "set_ship_path", "get_ship_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "player", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Player"), "set_player_path", "get_player_path");
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "farm", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Farm"), "set_farm_path", "get_farm_path");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "helm_range", PROPERTY_HINT_RANGE, "0.5,10,0.1,suffix:m"), "set_helm_range", "get_helm_range");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dock_range", PROPERTY_HINT_RANGE, "5,200,1,suffix:m"), "set_dock_range", "get_dock_range");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "leave_helm_speed", PROPERTY_HINT_RANGE, "0,30,0.5,suffix:m/s"), "set_leave_helm_speed", "get_leave_helm_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "kill_altitude", PROPERTY_HINT_RANGE, "-500,500,1,suffix:m"), "set_kill_altitude", "get_kill_altitude");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "reach", PROPERTY_HINT_RANGE, "0.5,4,0.1,suffix:m"), "set_reach", "get_reach");
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "grain", PROPERTY_HINT_RANGE, "0,999,1"), "set_grain", "get_grain");
 
     ADD_SIGNAL(MethodInfo("arrived"));
+    ADD_SIGNAL(MethodInfo("farm_worked", PropertyInfo(Variant::VECTOR2I, "cell"), PropertyInfo(Variant::INT, "action")));
 
     BIND_ENUM_CONSTANT(ON_FOOT);
     BIND_ENUM_CONSTANT(PILOTING);
@@ -89,6 +133,7 @@ void Voyage::_ready() {
         set_physics_process(false);
         return;
     }
+    farm = Object::cast_to<Farm>(get_node_or_null(farm_path));
 
     // 子节点先于父节点 _ready，岛此刻已经生成完，泊位与出生点都有了
     ship->place_at(origin->get_berth_transform(ship->get_half_beam()));
@@ -145,6 +190,7 @@ void Voyage::_physics_process(double p_delta) {
                 board();
                 break;
             }
+            tend_farm(p_delta, interact);
             track_footing();
             if (player->get_global_position().y < kill_altitude) {
                 respawn();
@@ -180,6 +226,12 @@ void Voyage::_physics_process(double p_delta) {
 }
 
 void Voyage::board() {
+    drop_work();
+    target_cell = Farm::NO_CELL;
+    target_action = Farm::ACTION_NONE;
+    if (farm) {
+        farm->set_highlight(Farm::NO_CELL, Color());
+    }
     player->set_controlled(false);
     ship->set_controlled(true);
     ship->get_camera()->make_current();
@@ -201,6 +253,97 @@ void Voyage::seat_player() {
     const Transform3D seat = ship->get_seat_transform();
     player->set_global_position(seat.origin);
     player->set_facing_yaw(yaw_of(seat));
+}
+
+// 步行时的农事：盯着视线前方的那一格；按下 E 起工，按住才算工时，干满了才落到地里。
+void Voyage::tend_farm(double p_delta, bool p_interact) {
+    if (!farm) {
+        return;
+    }
+    target_cell = Farm::NO_CELL;
+    if (player->is_on_floor()) {
+        const Vector3 ahead = Basis(Vector3(0, 1, 0), real_t(player->get_look_yaw())).xform(Vector3(0, 0, real_t(-reach)));
+        target_cell = farm->cell_at(player->get_global_position() + ahead);
+    }
+    target_action = farm->available_action(target_cell, grain);
+
+    // 描边只给「与农事有关」的格子：有活可干的，或者已经是田的
+    if (target_action != Farm::ACTION_NONE) {
+        farm->set_highlight(target_cell, TARGET_READY);
+    } else if (target_cell != Farm::NO_CELL && farm->get_plot(target_cell) != Farm::PLOT_WILD) {
+        farm->set_highlight(target_cell, TARGET_IDLE);
+    } else {
+        farm->set_highlight(Farm::NO_CELL, Color());
+    }
+
+    if (p_interact) {
+        if (target_action != Farm::ACTION_NONE) {
+            work_cell = target_cell;
+            work_action = target_action;
+            work_time = 0.0;
+            player->set_facing_yaw(player->get_look_yaw());
+        } else if (target_cell != Farm::NO_CELL) {
+            say(refusal(target_cell));
+        }
+    }
+    if (work_action == Farm::ACTION_NONE) {
+        return;
+    }
+    if (!Input::get_singleton()->is_action_pressed(input_actions::INTERACT) || target_cell != work_cell || target_action != work_action) {
+        drop_work();
+        return;
+    }
+    work_time += p_delta;
+    if (work_time < work_seconds(work_action)) {
+        return;
+    }
+    const int gained = farm->perform(work_cell, work_action, grain);
+    grain += gained;
+    if (work_action == Farm::ACTION_HARVEST) {
+        say(vformat(String(U"收了 %d 粟"), gained));
+    }
+    emit_signal("farm_worked", work_cell, int(work_action));
+    drop_work(); // 下一样活要重新按 E：免得垦完顺手就把种子撒了
+}
+
+void Voyage::drop_work() {
+    work_action = Farm::ACTION_NONE;
+    work_cell = Farm::NO_CELL;
+    work_time = 0.0;
+}
+
+void Voyage::say(const String &p_notice) {
+    notice = p_notice;
+    notice_time = p_notice.is_empty() ? 0.0 : NOTICE_SECONDS;
+}
+
+// 按了 E 却无事可做：说清楚为什么
+String Voyage::refusal(const Vector2i &p_cell) const {
+    switch (farm->get_plot(p_cell)) {
+        case Farm::PLOT_TILLED:
+            return String(U"没有粟种了");
+        case Farm::PLOT_GROWING:
+            return vformat(String(U"粟还没熟（长了 %d%%）"), int(std::lround(farm->get_growth(p_cell) * 100.0)));
+        case Farm::PLOT_RIPE:
+        case Farm::PLOT_WILD:
+            break;
+    }
+    switch (farm->get_land(p_cell)) {
+        case Farm::LAND_WATER:
+            return String(U"这是河");
+        case Farm::LAND_TOO_DRY:
+            return String(U"离河太远，引不到水，垦了也白垦");
+        case Farm::LAND_TOO_STEEP:
+            return String(U"坡太陡，垦不成地");
+        case Farm::LAND_DOCK:
+            return String(U"停机坪上不能垦");
+        case Farm::LAND_TRAIL:
+            return String(U"这是路，垦了就没法走了");
+        case Farm::LAND_ARABLE:
+        case Farm::LAND_NO_GROUND:
+            break;
+    }
+    return String();
 }
 
 // 记下最近一次站在岛上的位置（坠落后回到这里），顺便判定是否已踏上目的地。
@@ -225,6 +368,7 @@ void Voyage::track_footing() {
 
 void Voyage::respawn() {
     const Vector3 target = has_safe_footing ? safe_footing : origin->get_spawn_transform().origin;
+    drop_work();
     player->set_velocity(Vector3());
     player->set_global_position(target + Vector3(0, 0.5f, 0));
     // 人回来了船却漂在远处，这一局就死了：把船召回最近的码头
@@ -268,6 +412,33 @@ void Voyage::update_hud() {
             status = arrived ? String(U"已踏上对岸的岛") : String(U"目标：登上空艇，飞到对岸的岛上去");
             const bool near_helm = player->get_global_position().distance_to(ship->get_helm_position()) <= helm_range;
             prompt = near_helm ? String(U"按 E 掌舵") : String(U"WASD 移动 · 空格 跳 · Shift 疾跑");
+            if (!farm) {
+                break;
+            }
+            status += vformat(String(U"\n粟 %d"), grain);
+            const int fields = farm->get_plot_count(Farm::PLOT_TILLED) + farm->get_plot_count(Farm::PLOT_GROWING) + farm->get_plot_count(Farm::PLOT_RIPE);
+            if (fields > 0) {
+                status += vformat(String(U"    田 %d 块"), fields);
+                const int ripe = farm->get_plot_count(Farm::PLOT_RIPE);
+                if (ripe > 0) {
+                    status += vformat(String(U"（%d 块可收）"), ripe);
+                }
+            } else {
+                status += String(U"    河边的滩地可以开垦");
+            }
+            if (near_helm) {
+                break;
+            }
+            if (work_action != Farm::ACTION_NONE) {
+                const int filled = int(PROGRESS_CELLS * work_time / work_seconds(work_action));
+                prompt = work_name(work_action) + String(U"中 ") + String(U"■").repeat(filled) + String(U"□").repeat(PROGRESS_CELLS - filled);
+            } else if (target_action == Farm::ACTION_SOW) {
+                prompt = String(U"按住 E 播种（耗 1 粟）");
+            } else if (target_action != Farm::ACTION_NONE) {
+                prompt = String(U"按住 E ") + work_name(target_action);
+            } else if (target_cell != Farm::NO_CELL && farm->get_plot(target_cell) == Farm::PLOT_GROWING) {
+                prompt = vformat(String(U"粟苗 · 长了 %d%%"), int(std::lround(farm->get_growth(target_cell) * 100.0)));
+            }
         } break;
 
         case PILOTING: {
