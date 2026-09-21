@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "flight_model.h"
 #include "island_field.h"
 #include "value_noise.h"
 
@@ -192,6 +193,71 @@ void test_island(const char *p_name, double p_age, IslandAge p_class) {
     check(field_hash(generate_island_field(q)) != field_hash(f), "换种子，岛不同");
 }
 
+void test_flight() {
+    std::printf("flight_model\n");
+    const FlightParams params;
+    const double dt = 1.0 / 60.0;
+
+    FlightState s;
+    FlightInput full;
+    full.throttle = 1.0;
+    for (int k = 0; k < 60 * 30; k++) {
+        s = flight_step(s, full, params, dt);
+    }
+    check_near(s.vz, -params.max_speed, 0.05, "全油门：沿船头（−z）到极速");
+    check_near(s.vx, 0.0, 1e-6, "全油门：不侧移");
+
+    for (int k = 0; k < 60 * 30; k++) {
+        s = flight_step(s, FlightInput(), params, dt);
+    }
+    check(std::hypot(s.vx, s.vz) < 0.01 && std::abs(s.vy) < 0.01, "松手：停下来");
+
+    FlightInput right;
+    right.rudder = 1.0;
+    FlightState t;
+    for (int k = 0; k < 60 * 5; k++) {
+        t = flight_step(t, right, params, dt);
+    }
+    check(t.yaw < -1.0, "右舵：yaw 减小");
+    check_near(t.yaw_rate, -params.max_yaw_rate, 0.01, "右舵：角速度到极值");
+    double fx, fz;
+    flight_forward(-1.5707963267948966, fx, fz);
+    check_near(fx, 1.0, 1e-9, "右转 90°：船头指向 +x");
+
+    FlightInput up;
+    up.lift = 1.0;
+    FlightState u;
+    for (int k = 0; k < 60 * 10; k++) {
+        u = flight_step(u, up, params, dt);
+    }
+    check_near(u.vy, params.max_climb, 0.01, "升：到爬升极速");
+
+    FlightState side;
+    side.vx = 10.0; // 船头朝 −z，纯侧滑
+    for (int k = 0; k < 60 * 5; k++) {
+        side = flight_step(side, FlightInput(), params, dt);
+    }
+    check(std::abs(side.vx) < 0.01, "侧滑很快衰减");
+
+    // 与帧率无关（直线段）
+    FlightState a, b;
+    for (int k = 0; k < 10; k++) {
+        a = flight_step(a, full, params, 0.1);
+    }
+    for (int k = 0; k < 100; k++) {
+        b = flight_step(b, full, params, 0.01);
+    }
+    check_near(a.vz, b.vz, 1e-9, "10 × 0.1 s 与 100 × 0.01 s 速度相同");
+
+    FlightInput wild;
+    wild.throttle = 50.0;
+    FlightState w;
+    for (int k = 0; k < 60 * 30; k++) {
+        w = flight_step(w, wild, params, dt);
+    }
+    check(std::hypot(w.vx, w.vz) <= params.max_speed + 1e-6, "输入越界被夹住");
+}
+
 } // namespace
 
 int main() {
@@ -200,6 +266,7 @@ int main() {
     test_island("新岛 · 火山锥", 0.1, IslandAge::YOUNG);
     test_island("中年 · 山脊", 0.5, IslandAge::MID);
     test_island("老岛 · 台地", 0.8, IslandAge::OLD);
+    test_flight();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
