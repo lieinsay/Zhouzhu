@@ -8,6 +8,7 @@ game/bin/*.so
 game/bin/*.dylib
 game/bin/*.pdb
 game/bin/*.exp
+game/bin/*.ilk
 game/bin/*.lib
 .sconsign.dblite
 *.os
