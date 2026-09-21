@@ -45,6 +45,7 @@ void Island::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_pier_end_position"), &Island::get_pier_end_position);
     ClassDB::bind_method(D_METHOD("get_spawn_transform"), &Island::get_spawn_transform);
     ClassDB::bind_method(D_METHOD("get_surface_height", "global_position"), &Island::get_surface_height);
+    ClassDB::bind_method(D_METHOD("get_trail_points"), &Island::get_trail_points);
 
     ClassDB::bind_method(D_METHOD("set_seed", "value"), &Island::set_seed);
     ClassDB::bind_method(D_METHOD("get_seed"), &Island::get_seed);
@@ -64,6 +65,8 @@ void Island::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_cliff_m"), &Island::get_cliff_m);
     ClassDB::bind_method(D_METHOD("set_keel_m", "value"), &Island::set_keel_m);
     ClassDB::bind_method(D_METHOD("get_keel_m"), &Island::get_keel_m);
+    ClassDB::bind_method(D_METHOD("set_has_river", "value"), &Island::set_has_river);
+    ClassDB::bind_method(D_METHOD("get_has_river"), &Island::get_has_river);
 
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "area_m2", PROPERTY_HINT_RANGE, "5000,1000000,1000,suffix:m²"), "set_area_m2", "get_area_m2");
@@ -74,6 +77,9 @@ void Island::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dock_bearing_deg", PROPERTY_HINT_RANGE, "-180,180,0.1,degrees"), "set_dock_bearing_deg", "get_dock_bearing_deg");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "cliff_m", PROPERTY_HINT_RANGE, "2,100,0.5,suffix:m"), "set_cliff_m", "get_cliff_m");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "keel_m", PROPERTY_HINT_RANGE, "0,400,1,suffix:m"), "set_keel_m", "get_keel_m");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "has_river"), "set_has_river", "get_has_river");
+
+    ADD_SIGNAL(MethodInfo("rebuilt"));
 }
 
 void Island::_ready() {
@@ -103,7 +109,7 @@ void Island::rebuild() {
     rebuild_queued = false;
     clear_generated();
 
-    IslandParams params;
+    params = IslandParams();
     params.seed = uint64_t(seed);
     params.area_m2 = area_m2;
     params.age = age;
@@ -114,6 +120,8 @@ void Island::rebuild() {
     params.dock_bearing = Math::deg_to_rad(dock_bearing_deg);
     params.cliff_m = cliff_m;
     params.keel_m = keel_m;
+    params.river = has_river;
+    params.trail = has_river;
     field = generate_island_field(params);
 
     auto adopt = [this](Node *p_node, const char *p_name) {
@@ -144,6 +152,29 @@ void Island::rebuild() {
     CollisionShape3D *terrain_collider = memnew(CollisionShape3D);
     terrain_collider->set_shape(terrain_shape);
     adopt(terrain_collider, "TerrainShape");
+
+    // 河水
+    const RiverMeshData water = build_river_mesh(field);
+    if (!water.vertices.is_empty()) {
+        Array water_arrays;
+        water_arrays.resize(Mesh::ARRAY_MAX);
+        water_arrays[Mesh::ARRAY_VERTEX] = water.vertices;
+        water_arrays[Mesh::ARRAY_NORMAL] = water.normals;
+        water_arrays[Mesh::ARRAY_COLOR] = water.colors;
+        water_arrays[Mesh::ARRAY_INDEX] = water.indices;
+        Ref<ArrayMesh> water_mesh;
+        water_mesh.instantiate();
+        water_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, water_arrays);
+        Ref<StandardMaterial3D> water_material = make_material(Color(0.42f, 0.62f, 0.72f), true);
+        water_material->set_transparency(BaseMaterial3D::TRANSPARENCY_ALPHA);
+        water_material->set_cull_mode(BaseMaterial3D::CULL_DISABLED);
+        water_material->set_roughness(0.12f);
+        water_mesh->surface_set_material(0, water_material);
+        MeshInstance3D *water_instance = memnew(MeshInstance3D);
+        water_instance->set_mesh(water_mesh);
+        water_instance->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
+        adopt(water_instance, "Water");
+    }
 
     // 栈桥：x 轴沿伸出方向
     const IslandDock &dock = field.dock;
@@ -182,6 +213,8 @@ void Island::rebuild() {
         post->set_position(dock_local(dock.pier_m - 0.4, PIER_LIFT + 0.55) + pier_basis.get_column(2) * real_t(side * (0.5 * PIER_WIDTH - 0.15)));
         adopt(post, side < 0 ? "PostL" : "PostR");
     }
+
+    emit_signal("rebuilt");
 }
 
 Vector3 Island::dock_local(double p_along_out, double p_up) const {
@@ -209,6 +242,15 @@ Transform3D Island::get_spawn_transform() const {
     }
     const Vector3 out(real_t(dock.out_x), 0, real_t(dock.out_z));
     return get_global_transform() * Transform3D(Basis::looking_at(out, Vector3(0, 1, 0)), pos);
+}
+
+PackedVector3Array Island::get_trail_points() const {
+    PackedVector3Array points;
+    const Transform3D xf = get_global_transform();
+    for (const TrailPoint &point : field.trail) {
+        points.push_back(xf.xform(Vector3(real_t(point.x), real_t(point.y), real_t(point.z))));
+    }
+    return points;
 }
 
 double Island::get_surface_height(const Vector3 &p_global) const {
@@ -262,5 +304,10 @@ void Island::set_cliff_m(double p_value) {
 
 void Island::set_keel_m(double p_value) {
     keel_m = p_value;
+    queue_rebuild();
+}
+
+void Island::set_has_river(bool p_value) {
+    has_river = p_value;
     queue_rebuild();
 }

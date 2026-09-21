@@ -17,3 +17,14 @@ struct IslandMeshData {
 };
 
 IslandMeshData build_island_mesh(const IslandField &p_field);
+
+// 河：沿中线铺一条水面带，出了岸缘接一道跌进云海的瀑布（越往下越透明，顶点色的 alpha）。没有河则返回空表。
+// 只是看的，不参与碰撞：水浅，人直接蹚过去。
+struct RiverMeshData {
+    godot::PackedVector3Array vertices;
+    godot::PackedVector3Array normals;
+    godot::PackedColorArray colors;
+    godot::PackedInt32Array indices;
+};
+
+RiverMeshData build_river_mesh(const IslandField &p_field);

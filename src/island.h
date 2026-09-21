@@ -1,11 +1,13 @@
 #pragma once
 
 #include <godot_cpp/classes/static_body3d.hpp>
+#include <godot_cpp/variant/packed_vector3_array.hpp>
 
 #include "island_field.h"
 
 // 一座浮空岛。节点原点在岸缘高度（局部 y = 0 即岸缘），岛体向下垂到岛底。
-// 进树时按属性生成高度场 → 网格 + 碰撞 + 栈桥；生成物没有 owner，不会写进场景文件。
+// 进树时按属性生成高度场 → 网格 + 碰撞 + 栈桥（+ 河水）；生成物没有 owner，不会写进场景文件。
+// 每次生成完发 rebuilt 信号：长在岛上的东西（Farm）靠它知道地形换了。
 // 编辑器里同样生成，改属性即重建，方便摆岛。
 class Island : public godot::StaticBody3D {
     GDCLASS(Island, godot::StaticBody3D)
@@ -20,6 +22,9 @@ class Island : public godot::StaticBody3D {
     double cliff_m = 22.0;
     double keel_m = 110.0;
 
+    bool has_river = false;
+
+    IslandParams params; // 上一次 rebuild 用的那一份
     IslandField field;
     bool rebuild_queued = false;
 
@@ -45,6 +50,12 @@ public:
     godot::Transform3D get_spawn_transform() const;
     // 该处（全局 xz）的地面全局高度；没有地面返回 NAN
     double get_surface_height(const godot::Vector3 &p_global) const;
+    // 停机坪 → 河滩的路（全局坐标，顺着走的次序）；岛上没有河就没有路，返回空
+    godot::PackedVector3Array get_trail_points() const;
+
+    // 给同在 C++ 里的上层读（Farm 据此勘察农田）
+    const IslandField &get_field() const { return field; }
+    const IslandParams &get_params() const { return params; }
 
     void set_seed(int64_t p_value);
     int64_t get_seed() const { return seed; }
@@ -64,4 +75,6 @@ public:
     double get_cliff_m() const { return cliff_m; }
     void set_keel_m(double p_value);
     double get_keel_m() const { return keel_m; }
+    void set_has_river(bool p_value);
+    bool get_has_river() const { return has_river; }
 };

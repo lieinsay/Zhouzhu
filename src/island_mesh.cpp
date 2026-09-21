@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <initializer_list>
 #include <vector>
 
 #include <godot_cpp/variant/color.hpp>
@@ -18,6 +19,18 @@ const Color EARTH(0.56f, 0.48f, 0.36f); // 停机坪：踩实的土
 const Color CLIFF_TOP(0.40f, 0.35f, 0.30f);
 const Color CLIFF_LOW(0.25f, 0.22f, 0.21f);
 const Color UNDERSIDE(0.20f, 0.18f, 0.18f);
+const Color RIVERBED(0.40f, 0.38f, 0.31f); // 河床的砾石
+const Color SHORE(0.58f, 0.53f, 0.40f); // 水边的沙
+const Color MEADOW(0.22f, 0.43f, 0.15f); // 河滩上喝饱了水的草
+const Color WATER(0.62f, 0.80f, 0.90f);
+
+constexpr double SHORE_M = 6.5; // 离河中线这么远以内泛沙色
+constexpr double MEADOW_M = 18.0; // 这么远以内草色偏润
+constexpr double WATER_OVERLAP_M = 0.6; // 水面带比水面宽出这么多，边缘埋进岸里
+constexpr real_t WATER_ALPHA = 0.78f;
+constexpr double FALL_SPEED = 3.0; // 瀑布出岸时的水平速度
+constexpr double FALL_SECONDS = 3.6; // 画这么久的抛物线（约 60 m 落差）
+constexpr int FALL_SEGMENTS = 12;
 
 struct Builder {
     IslandMeshData data;
@@ -79,6 +92,18 @@ IslandMeshData build_island_mesh(const IslandField &f) {
             Color color = GRASS.lerp(GRASS_HIGH, high).lerp(ROCK, steep);
             const double d_dock = std::hypot(pos.x - f.dock.x, pos.z - f.dock.z);
             color = color.lerp(EARTH, real_t(std::clamp(1.6 - d_dock / 9.0, 0.0, 1.0)));
+            if (f.has_river()) {
+                const double d_river = f.river_dist[f.index(i, j)];
+                if (f.river_depth[f.index(i, j)] > 0.0f) {
+                    color = RIVERBED;
+                } else {
+                    color = color.lerp(MEADOW, real_t(0.7 * std::clamp(1.0 - d_river / MEADOW_M, 0.0, 1.0) * (1.0 - steep)));
+                    color = color.lerp(SHORE, real_t(std::clamp((SHORE_M - d_river) / 3.0, 0.0, 1.0)));
+                }
+            }
+            if (f.has_trail() && f.river_depth[f.index(i, j)] <= 0.0f) {
+                color = color.lerp(EARTH, real_t(std::clamp(1.8 - f.trail_dist[f.index(i, j)] / 2.0, 0.0, 1.0)));
+            }
             top_id[f.index(i, j)] = b.add_vertex(pos, normal, color);
             bottom_id[f.index(i, j)] = b.add_vertex(bottom_point(f, i, j), surface_normal(f, f.bottom, i, j, true), UNDERSIDE);
         }
@@ -131,4 +156,50 @@ IslandMeshData build_island_mesh(const IslandField &f) {
         }
     }
     return b.data;
+}
+
+RiverMeshData build_river_mesh(const IslandField &f) {
+    RiverMeshData data;
+    const std::vector<RiverPoint> &river = f.river;
+    if (river.size() < 2) {
+        return data;
+    }
+
+    // 一排排横断面：(左, 右) 两个顶点，相邻两排之间两个三角面
+    auto add_rung = [&data](const Vector3 &p_center, const Vector3 &p_lateral, real_t p_half_width, const Vector3 &p_normal, real_t p_alpha) {
+        const Color color(WATER.r, WATER.g, WATER.b, p_alpha);
+        for (int side = -1; side <= 1; side += 2) {
+            data.vertices.push_back(p_center + p_lateral * (p_half_width * real_t(side)));
+            data.normals.push_back(p_normal);
+            data.colors.push_back(color);
+        }
+        const int v = int(data.vertices.size()) - 2;
+        if (v >= 2) {
+            // 材质不剔背面，绕向只求一致
+            for (int index : { v - 2, v - 1, v, v - 1, v + 1, v }) {
+                data.indices.push_back(index);
+            }
+        }
+    };
+
+    Vector3 flow, lateral;
+    for (size_t k = 0; k < river.size(); k++) {
+        const RiverPoint &a = river[k > 0 ? k - 1 : k], &b = river[k + 1 < river.size() ? k + 1 : k];
+        flow = Vector3(real_t(b.x - a.x), 0, real_t(b.z - a.z)).normalized();
+        lateral = Vector3(-flow.z, 0, flow.x);
+        add_rung(Vector3(real_t(river[k].x), real_t(river[k].water), real_t(river[k].z)), lateral,
+                real_t(river[k].half_width + WATER_OVERLAP_M), Vector3(0, 1, 0), WATER_ALPHA);
+    }
+
+    // 瀑布：出岸后的抛物线
+    const RiverPoint &lip = river.back();
+    const Vector3 start(real_t(lip.x), real_t(lip.water), real_t(lip.z));
+    for (int s = 1; s <= FALL_SEGMENTS; s++) {
+        const double t = FALL_SECONDS * s / FALL_SEGMENTS;
+        const Vector3 center = start + flow * real_t(FALL_SPEED * t) + Vector3(0, real_t(-0.5 * 9.8 * t * t), 0);
+        const Vector3 heading = (flow * real_t(FALL_SPEED) + Vector3(0, real_t(-9.8 * t), 0)).normalized();
+        const real_t fade = 1.0f - real_t(s) / FALL_SEGMENTS;
+        add_rung(center, lateral, real_t(lip.half_width * (0.6 + 0.4 * fade)), lateral.cross(heading).normalized(), WATER_ALPHA * fade);
+    }
+    return data;
 }
