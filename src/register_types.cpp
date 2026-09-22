@@ -14,6 +14,7 @@
 #include "settlement.h"
 #include "ship.h"
 #include "shipyard.h"
+#include "villagers.h"
 #include "voyage.h"
 
 using namespace godot;
@@ -26,6 +27,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Farm);
     GDREGISTER_CLASS(Shipyard);
     GDREGISTER_CLASS(Settlement);
+    GDREGISTER_CLASS(Villagers);
     GDREGISTER_CLASS(Player);
     GDREGISTER_CLASS(Ship);
     GDREGISTER_CLASS(Voyage);

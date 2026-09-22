@@ -89,6 +89,9 @@ public:
     // 干一样活；p_crop 只在播种时用（作物 id）。返回收获的份数（开垦、播种为 0）；做不了返回 0 且什么都不变
     int perform(const godot::Vector2i &p_cell, Action p_action, const godot::String &p_crop);
 
+    // 给同在 C++ 里的上层读（村民据此挑地；动地仍走 perform，好让地块重画）
+    const FarmModel &get_model() const { return model; }
+
     // 目标格的描边；NO_CELL = 不画
     void set_highlight(const godot::Vector2i &p_cell, const godot::Color &p_color);
 

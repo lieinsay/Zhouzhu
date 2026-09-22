@@ -42,6 +42,7 @@ public:
     godot::PackedStringArray get_layout() const;
     void set_layout(const godot::PackedStringArray &p_ids); // 整份换掉并重建
     int get_count() const { return layout.size(); }
+    const SettlementLayout &get_model() const { return layout; } // 给同在 C++ 里的上层读（村民据此找家门、绕开房子）
     godot::String get_building_kind(int p_index) const;
     godot::Vector3 get_building_position(int p_index) const; // 全局，地坪中心
     double get_building_yaw_deg(int p_index) const;

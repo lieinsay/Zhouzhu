@@ -74,6 +74,8 @@ target_sources(
         src/ship.h
         src/shipyard.cpp
         src/shipyard.h
+        src/villagers.cpp
+        src/villagers.h
         src/voyage.cpp
         src/voyage.h
 )
