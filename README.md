@@ -72,12 +72,37 @@ cmake -B build && cmake --build build --config Debug      # 扩展 → game/bin/
 装配视角是 `RefitOverlay`（`src/refit_overlay.*`），面板是 `RefitPanel`（都只画），入坞、爬梯与改装的编排仍在 `Voyage` 和 `Player`。
 泊位与坞位都是**接触线**（`Transform3D`，X 指向码头 / 跳板）：船把朝那一侧的舷边贴到线上，船多宽都靠得上。
 
+## 切片四：开发者布置模式——在岛上放建筑，长出村落
+
+岛上现在有**聚落**：出发岛路尽头的河滩上是一个村子（堂屋、几座民居、一座仓、坡上一座望楼），目的岛停机坪后面有两座民居和一座望楼。
+建筑是占位的几何体：石头台基把地坪架平、夯土墙、灰瓦悬山顶、一扇门；台基与墙带碰撞，人走不进去、也上不了台。
+
+村子是用**布置模式**（面向开发者的简化场景编辑）摆出来的：步行时按 **B**（或 F1）进入，相机跳到高处绕着一个**地面光标**转（鼠标转视角、滚轮拉远拉近），
+光标处画一座半透明的**幽灵建筑**——绿是能盖、红是不能盖（提示里说为什么）、白是光标下已经有一座（选中它）。
+**WASD** 按相机方向挪光标（Shift 快三倍）、**Q/R** 每按一下转 15°、**1/2/3/4** 选民居 / 堂屋 / 仓 / 望楼、**E** 放一座、**X** 拆掉光标下那座、
+**F5** 把清单存盘、**Tab** 合上回到人身上。开着布置模式时人站住不动。改的是脚下这座岛的聚落；岛上没挂 `Settlement` 节点就开不了。
+
+选址的规矩：占地（四角、四边中点、中心九个点）都得有地面；不在河里、停机坪上、路上、船坞坪上；占地内地面高差不超过 2.5 m（`Settlement.max_rise`，再高台基就成了一堵墙）；
+与别的建筑之间至少空 1 m。放的时候坐标取整到 0.5 m。
+
+清单不写进场景文件：`Settlement` 节点的 `layout_path` 指向 `game/settlements/<岛>.txt`，一座一行 `kind@x,z,yaw°`（岛的局部坐标，米 / 度，`#` 开头是注释），
+进游戏时读、F5 写回同一个文件——所以摆好的村落随仓库提交，可以看 diff。`Voyage.dev_tools` 关掉就没有 B 这个键。
+`tools/seed_villages.gd` 是个样板脚本，按路和河的走向自动铺一遍两座岛的起步村落（会覆盖清单），地形改了、村落整体站不住时重铺一次：
+
+```
+Godot --headless --path game --script res://tools/seed_villages.gd
+```
+
+建筑表在 `src/buildings.*`、选址与清单在 `src/settlement_model.*`（都是纯算法），`Settlement`（`src/settlement.*`）挂在 `Island` 下按清单建几何与碰撞，
+布置视角是 `BuildOverlay`（`src/build_overlay.*`）、面板是 `BuildPanel`（都只画），光标、朝向、选了哪种、开没开都在 `Voyage` 里。
+
 ## 测试
 
 ```
-ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型）
+ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址）
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_e2e.tscn    # 整条航程，只经输入动作驱动
 Godot --headless --path game --fixed-fps 60 res://tests/respawn_e2e.tscn   # 坠入云海 → 回位 + 召回空艇
 Godot --headless --path game --fixed-fps 60 res://tests/farm_e2e.tscn      # 沿路走到河滩 → 开垦 → 没种子被拒 → 背包里选菽 → 播种 → 成熟 → 收进背包
 Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn  # 画样台被拒 → 掌舵入坞 → 装配视角里放 / 换 / 拆、违规被拒 → 爬梯子上二层再下到舵旁 → 飞回泊位
+Godot --headless --path game --fixed-fps 60 res://tests/build_e2e.tscn     # B 进布置模式 → 停机坪被拒 → 河滩放民居 → 已有 / 挨得太近被拒 → 转 45° 放望楼 → X 拆 → F5 存、读回 → 走到望楼被墙挡住 → 仓库里的村落都站得住
 ```
