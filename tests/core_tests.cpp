@@ -3,8 +3,11 @@
 //   cmake --build build --config Debug --target zhouzhu_core_tests
 //   ctest --test-dir build -C Debug --output-on-failure
 
+#include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -13,10 +16,14 @@
 #include "flight_model.h"
 #include "inventory.h"
 #include "island_field.h"
+#include "map_image.h"
 #include "settlement_model.h"
 #include "ship_layout.h"
+#include "terrain_tile.h"
 #include "value_noise.h"
 #include "villager_model.h"
+#include "world_grid.h"
+#include "world_terrain.h"
 
 namespace {
 
@@ -1136,6 +1143,264 @@ void test_villagers() {
     check(t.kind == TaskKind::CHAT && t.building != 0 && t.seconds >= work.chat_min_s && t.seconds <= work.chat_max_s, "闲人去别家串门");
 }
 
+
+// 合成一个 terrain.bin：圆岛，半径 p_radius，岸缘 200 m、中间鼓到 260 m
+std::vector<uint8_t> synthetic_terrain_bin(int p_rows, int p_cols, double p_res, double p_radius) {
+    std::vector<uint8_t> out;
+    auto put = [&out](const void *p, size_t n) { out.insert(out.end(), (const uint8_t *)p, (const uint8_t *)p + n); };
+    const uint32_t version = 1, rows = uint32_t(p_rows), cols = uint32_t(p_cols);
+    const double x0 = -(p_cols - 1) * 0.5 * p_res, z0 = -(p_rows - 1) * 0.5 * p_res;
+    put("ZZWG", 4);
+    put(&version, 4);
+    put(&rows, 4);
+    put(&cols, 4);
+    put(&p_res, 8);
+    put(&x0, 8);
+    put(&z0, 8);
+    std::vector<uint16_t> h;
+    std::vector<int16_t> shore;
+    std::vector<uint8_t> isl, cover, stream;
+    for (int r = 0; r < p_rows; r++) {
+        for (int c = 0; c < p_cols; c++) {
+            const double d = std::hypot(x0 + c * p_res, z0 + r * p_res);
+            const double inside = std::max(0.0, 1.0 - d / p_radius);
+            h.push_back(uint16_t(std::lround((200.0 + 60.0 * inside * inside) * 100.0)));
+            shore.push_back(int16_t(std::lround(p_radius - d)));
+            isl.push_back(0);
+            cover.push_back(d < p_radius ? (d < 0.5 * p_radius ? 7 : 4) : 0);
+            stream.push_back(0);
+        }
+    }
+    put(h.data(), h.size() * 2);
+    put(shore.data(), shore.size() * 2);
+    put(isl.data(), isl.size());
+    put(cover.data(), cover.size());
+    put(stream.data(), stream.size());
+    return out;
+}
+
+WorldGrid synthetic_grid() {
+    const std::vector<uint8_t> bin = synthetic_terrain_bin(41, 51, 100.0, 1500.0);
+    WorldGrid g;
+    std::string err;
+    parse_world_grid(bin.data(), bin.size(), g, err);
+    return g;
+}
+
+void test_world_grid() {
+    std::printf("world_grid\n");
+    const std::vector<uint8_t> bin = synthetic_terrain_bin(41, 51, 100.0, 1500.0);
+    WorldGrid g;
+    std::string err;
+    check(parse_world_grid(bin.data(), bin.size(), g, err), "合成的 terrain.bin 能解析：" + err);
+    check(g.rows == 41 && g.cols == 51 && g.res == 100.0, "行列与格距读对");
+    check_near(g.x0, -2500.0, 1e-9, "格 (0,0) 格心 x");
+    check_near(g.height_at(0.0, 0.0), 260.0, 0.01, "格心上双三次 = 格值");
+    check_near(g.height_at(300.0, -400.0), g.height[g.index(20 - 4, 25 + 3)], 0.01, "另一个格心");
+    check(g.shore_at(0, 0) > 1400.0 && g.shore_at(2400.0, 0) < 0.0, "岸距：岛心为正、岛外为负");
+    double jump = 0.0;
+    for (double x = -2000; x < 2000; x += 7.3) {
+        jump = std::max(jump, std::abs(g.height_at(x, 123.0) - g.height_at(x + 0.05, 123.0)));
+    }
+    check(jump < 0.05, "高程连续：5 cm 内的变化 < 5 cm");
+    check(g.landcover[g.nearest_cell(0, 0)] == 7 && g.landcover[g.nearest_cell(1100, 0)] == 4, "最近格的地表类");
+
+    std::vector<uint8_t> broken = bin;
+    broken[0] = 'X';
+    check(!parse_world_grid(broken.data(), broken.size(), g, err), "开头不是 ZZWG 拒收");
+    broken = bin;
+    broken.pop_back();
+    check(!parse_world_grid(broken.data(), broken.size(), g, err), "短一个字节拒收");
+}
+
+WorldIsland synthetic_island() {
+    WorldIsland isl;
+    isl.id = 0;
+    isl.rim_m = 200.0;
+    isl.cliff_m = 30.0;
+    isl.keel_m = 120.0;
+    isl.max_shore_m = 1500.0;
+    return isl;
+}
+
+void test_world_terrain() {
+    std::printf("world_terrain\n");
+    const WorldGrid g = synthetic_grid();
+    const WorldTerrain t(g, { synthetic_island() }, 7), t2(g, { synthetic_island() }, 7), t3(g, { synthetic_island() }, 8);
+
+    bool same = true, other = false, thick = true;
+    double jump = 0.0, detail_max = 0.0;
+    for (int k = 0; k < 20000; k++) {
+        const double a = k * 0.0219911, d = 200.0 + (k % 97) * 20.0;
+        const double x = d * std::cos(a), z = d * std::sin(a);
+        const TerrainSample s = t.sample(x, z), s2 = t2.sample(x, z), s3 = t3.sample(x, z);
+        same = same && s.top == s2.top && s.land == s2.land && s.bottom == s2.bottom;
+        other = other || s.top != s3.top;
+        if (s.land) {
+            thick = thick && s.bottom < s.top - 1.0;
+            detail_max = std::max(detail_max, std::abs(s.top - g.height_at(x, z)));
+        }
+        jump = std::max(jump, std::abs(s.top - t.sample(x + 0.02, z).top));
+    }
+    // 沿射线找岸：岸线进退不超过噪声幅度
+    double coast_lo = 1e9, coast_hi = 0.0;
+    for (int k = 0; k < 360; k++) {
+        const double a = k * 3.14159265 / 180.0;
+        double r = 0.0;
+        while (r < 2500.0 && t.sample(r * std::cos(a), r * std::sin(a)).land) {
+            r += 1.0;
+        }
+        coast_lo = std::min(coast_lo, r);
+        coast_hi = std::max(coast_hi, r);
+    }
+    check(same, "同种子同地形");
+    check(other, "换种子细节不同");
+    check(thick, "岛底总在顶面之下");
+    check(jump < 0.1, "顶面连续：2 cm 内的变化 < 10 cm（得到 " + std::to_string(jump) + "）");
+    check(detail_max > 0.3 && detail_max < 8.0, "细节噪声只补小起伏（得到 " + std::to_string(detail_max) + " m）");
+    check(coast_lo > 1500.0 - WorldTerrain::COAST_AMP_M - 60.0 && coast_hi < 1500.0 + WorldTerrain::COAST_AMP_M + 60.0,
+            "岸线在栅格岸线附近进退（" + std::to_string(coast_lo) + " … " + std::to_string(coast_hi) + "）");
+    check(coast_hi - coast_lo > 8.0, "岸线不是正圆：噪声真的让它进退了");
+    const TerrainSample rim = t.sample(1500.0 - WorldTerrain::COAST_AMP_M - 60.0, 0.0), core = t.sample(0.0, 0.0);
+    check(core.bottom < rim.bottom - 60.0, "岛底中间垂得最深（倒锥）");
+    double y = 0.0;
+    check(t.surface(0, 0, y) && std::abs(y - 260.0) < 8.0 && !t.surface(2400.0, 0.0, y), "surface：岛心有地、岛外没有");
+}
+
+void test_terrain_tiles() {
+    std::printf("terrain_tile\n");
+    const WorldGrid g = synthetic_grid();
+    const WorldTerrain t(g, { synthetic_island() }, 7);
+    const TileLayout layout(g);
+    check(layout.size(layout.get_max_level()) == TileLayout::LEAF_M, "叶块 128 m");
+    check(layout.size(0) >= 5100.0, "根块盖住整个栅格");
+
+    const std::vector<TileKey> tiles = layout.select(100.0, 50.0);
+    const TileKey here = layout.leaf_at(100.0, 50.0);
+    bool has_here = false, disjoint = true;
+    for (size_t a = 0; a < tiles.size(); a++) {
+        has_here = has_here || tiles[a] == here;
+        for (size_t b = a + 1; b < tiles.size(); b++) {
+            disjoint = disjoint && !layout.overlaps(tiles[a], tiles[b]);
+        }
+    }
+    check(has_here, "焦点所在的叶块被选中");
+    check(disjoint, "选出的块互不重叠");
+    int uncovered = 0;
+    for (int k = 0; k < 4096; k++) {
+        const double x = -1600.0 + (k % 64) * 50.0, z = -1600.0 + (k / 64) * 50.0;
+        if (!t.sample(x, z).land) {
+            continue;
+        }
+        int covering = 0;
+        for (const TileKey &key : tiles) {
+            double cx, cz;
+            layout.corner(key, cx, cz);
+            const double s = layout.size(key.level);
+            covering += x >= cx && x < cx + s && z >= cz && z < cz + s ? 1 : 0;
+        }
+        uncovered += covering == 1 ? 0 : 1;
+    }
+    check(uncovered == 0, "每一处有地的点恰好落在一个块里（漏 / 重 " + std::to_string(uncovered) + " 处）");
+    int near_leaves = 0, far_coarse = 0;
+    for (const TileKey &key : tiles) {
+        double cx, cz;
+        layout.corner(key, cx, cz);
+        const double s = layout.size(key.level);
+        const double d = std::hypot(cx + 0.5 * s - 100.0, cz + 0.5 * s - 50.0);
+        near_leaves += d < 200.0 && key.level == layout.get_max_level() ? 1 : 0;
+        far_coarse += d > 1200.0 && key.level < layout.get_max_level() ? 1 : 0;
+    }
+    check(near_leaves >= 4, "焦点附近全是叶块");
+    check(far_coarse >= 1, "远处用粗块");
+
+    const TileMesh inner = build_tile_mesh(t, layout, here);
+    const size_t verts = inner.positions.size() / 3;
+    bool indices_ok = inner.indices.size() % 3 == 0, local = true;
+    for (int32_t k : inner.indices) {
+        indices_ok = indices_ok && k >= 0 && size_t(k) < verts;
+    }
+    for (size_t k = 0; k < verts; k++) {
+        local = local && inner.positions[k * 3] >= -0.01f && inner.positions[k * 3] <= 128.01f && inner.positions[k * 3 + 2] >= -0.01f && inner.positions[k * 3 + 2] <= 128.01f;
+    }
+    check(inner.land_quads == 64 * 64, "岛心的叶块满是陆地");
+    check(indices_ok && local, "下标有效、顶点在块的局部坐标里");
+    check(!inner.collision.empty() && inner.collision.size() % 9 == 0, "叶块带碰撞面");
+    bool heights_match = true;
+    for (size_t k = 0; k < verts && k < 400; k++) {
+        if (inner.normals[k * 3 + 1] > 0.5f) {
+            const TerrainSample s = t.sample(inner.origin_x + inner.positions[k * 3], inner.origin_z + inner.positions[k * 3 + 2]);
+            heights_match = heights_match && std::abs(s.top - inner.positions[k * 3 + 1]) < 0.01;
+        }
+    }
+    check(heights_match, "顶面顶点就是地形函数的值");
+
+    // 岸边的块：有崖壁（水平法线的面）
+    const TileMesh coast = build_tile_mesh(t, layout, layout.leaf_at(1500.0, 0.0));
+    int walls = 0;
+    for (size_t k = 0; k < coast.normals.size() / 3; k++) {
+        walls += coast.normals[k * 3 + 1] == 0.0f ? 1 : 0;
+    }
+    check(coast.land_quads > 0 && coast.land_quads < 64 * 64, "岸边的块一半是地");
+    check(walls > 0, "岸边的块有崖壁");
+    const TileMesh coarse = build_tile_mesh(t, layout, { 1, 0, 0 });
+    check(coarse.collision.empty(), "粗块不带碰撞");
+}
+
+void test_map_image() {
+    std::printf("map_image\n");
+    const WorldGrid g = synthetic_grid();
+    const MapImage img = build_map_image(g);
+    check(img.width == 51 && img.height == 41 && img.rgba.size() == size_t(51 * 41 * 4), "一格一像素");
+    check(img.rgba[g.index(20, 25) * 4 + 3] == 255 && img.rgba[g.index(0, 0) * 4 + 3] == 0, "陆地不透明、虚空透明");
+    double u, v, x, z;
+    world_to_map(g, 1234.0, -567.0, u, v);
+    map_to_world(g, u, v, x, z);
+    check_near(x, 1234.0, 1e-6, "地图 ↔ 世界往返 x");
+    check_near(z, -567.0, 1e-6, "地图 ↔ 世界往返 z");
+    world_to_map(g, g.x0, g.z0, u, v);
+    check_near(u, 0.5, 1e-9, "格 (0,0) 的格心在像素 (0.5, 0.5)");
+}
+
+// 真正入库的 2051 资产（仓库里有才测）
+void test_world_2051() {
+    const std::string path = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/terrain.bin";
+    std::ifstream in(path, std::ios::binary);
+    if (!in) {
+        std::printf("world 2051（跳过：没有 %s）\n", path.c_str());
+        return;
+    }
+    std::printf("world 2051\n");
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    std::string err;
+    check(parse_world_grid(bin.data(), bin.size(), g, err), "2051 的 terrain.bin 能解析：" + err);
+    check(g.rows == 1012 && g.cols == 837 && g.res == 100.0, "1012 × 837 格、100 m");
+    check(g.land_count() == 258847, "陆地格数与 skyisle-gen 一致（" + std::to_string(g.land_count()) + "）");
+    // 邑治（村001，skyisle 的 km (-10.05, 2.35)）
+    const double sx = -10050.0, sz = -2350.0;
+    check(g.shore[g.nearest_cell(sx, sz)] > 0 && std::abs(g.height_at(sx, sz) - 317.0) < 6.0, "邑治在陆地上、高约 317 m（" + std::to_string(g.height_at(sx, sz)) + "）");
+    check(g.island[g.nearest_cell(sx, sz)] == 0, "邑治在主岛");
+    WorldIsland main;
+    main.rim_m = 217.8;
+    main.cliff_m = 26.8;
+    main.keel_m = 191.0;
+    main.max_shore_m = 15000.0;
+    const WorldTerrain t(g, { main }, 2051);
+    double y = 0.0;
+    check(t.surface(sx, sz, y), "邑治处连续地形有地");
+    const TileLayout layout(g);
+    const auto started = std::chrono::steady_clock::now();
+    const std::vector<TileKey> tiles = layout.select(sx, sz);
+    size_t tris = 0;
+    for (const TileKey &key : tiles) {
+        tris += build_tile_mesh(t, layout, key).indices.size() / 3;
+    }
+    const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+    std::printf("  站在邑治：%zu 块、%zu 个三角面，建完 %.0f ms（%.1f ms/块）\n", tiles.size(), tris, ms, ms / double(tiles.size()));
+    check(tiles.size() > 20 && tiles.size() < 600, "块数在几十到几百之间（" + std::to_string(tiles.size()) + "）");
+}
+
 } // namespace
 
 int main() {
@@ -1160,6 +1425,11 @@ int main() {
     test_flight();
     test_settlement();
     test_villagers();
+    test_world_grid();
+    test_world_terrain();
+    test_terrain_tiles();
+    test_map_image();
+    test_world_2051();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

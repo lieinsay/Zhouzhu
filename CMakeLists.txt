@@ -29,15 +29,23 @@ set(ZHOUZHU_CORE_SOURCES
     src/island_field.h
     src/island_river.cpp
     src/island_river.h
+    src/map_image.cpp
+    src/map_image.h
     src/rng.h
     src/settlement_model.cpp
     src/settlement_model.h
     src/ship_layout.cpp
     src/ship_layout.h
+    src/terrain_tile.cpp
+    src/terrain_tile.h
     src/value_noise.cpp
     src/value_noise.h
     src/villager_model.cpp
     src/villager_model.h
+    src/world_grid.cpp
+    src/world_grid.h
+    src/world_terrain.cpp
+    src/world_terrain.h
 )
 
 add_library(zhouzhu SHARED)
@@ -120,6 +128,8 @@ set_target_properties(
 enable_testing()
 add_executable(zhouzhu_core_tests ${ZHOUZHU_CORE_SOURCES} tests/core_tests.cpp)
 target_include_directories(zhouzhu_core_tests PRIVATE src)
+# 有的测试读仓库里的真资产（game/worlds/…）
+target_compile_definitions(zhouzhu_core_tests PRIVATE ZHOUZHU_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 set_target_properties(zhouzhu_core_tests PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
 if(MSVC)
     target_compile_options(zhouzhu_core_tests PRIVATE /utf-8)
