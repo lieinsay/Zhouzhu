@@ -46,6 +46,10 @@ target_sources(
         ${ZHOUZHU_CORE_SOURCES}
         src/backpack_panel.cpp
         src/backpack_panel.h
+        src/build_overlay.cpp
+        src/build_overlay.h
+        src/build_panel.cpp
+        src/build_panel.h
         src/farm.cpp
         src/farm.h
         src/input_actions.cpp

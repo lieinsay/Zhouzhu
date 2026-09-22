@@ -4,6 +4,8 @@
 #include <godot_cpp/godot.hpp>
 
 #include "backpack_panel.h"
+#include "build_overlay.h"
+#include "build_panel.h"
 #include "farm.h"
 #include "island.h"
 #include "player.h"
@@ -30,6 +32,8 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(BackpackPanel);
     GDREGISTER_CLASS(RefitPanel);
     GDREGISTER_CLASS(RefitOverlay);
+    GDREGISTER_CLASS(BuildPanel);
+    GDREGISTER_CLASS(BuildOverlay);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {
