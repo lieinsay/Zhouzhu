@@ -4,6 +4,7 @@
 #include <cmath>
 #include <numeric>
 
+#include "dock_site.h"
 #include "island_river.h"
 #include "value_noise.h"
 
@@ -345,64 +346,55 @@ bool land_at(const IslandField &r, double p_x, double p_z) {
     return r.in_mask(i, j);
 }
 
-// 码头：沿方位自外向内找到岸缘点，量出栈桥要伸多长，再把它背后的停机坪压平。
+// 高度场当作码头的地面：陆地 = 最近节点在掩膜里，地面高取正在生成的高度数组
+class FieldDockGround : public DockGround {
+    const IslandField &r;
+    const std::vector<double> &h;
+
+public:
+    FieldDockGround(const IslandField &p_field, const std::vector<double> &p_h) :
+            r(p_field), h(p_h) {}
+    bool land(double p_x, double p_z) const override { return land_at(r, p_x, p_z); }
+    bool ground(double p_x, double p_z, double &r_y) const override {
+        const double ext = r.half_extent();
+        const int j = int(std::lround((p_x + ext) / r.cell_m));
+        const int i = int(std::lround((p_z + ext) / r.cell_m));
+        if (!r.in_mask(i, j)) {
+            return false;
+        }
+        r_y = h[r.index(i, j)];
+        return true;
+    }
+};
+
+// 码头：沿方位自外向内找到岸缘点，量出栈桥要伸多长，再把它背后的停机坪压平（几何见 dock_site.h）。
 void build_dock(const IslandParams &p, IslandField &r, std::vector<double> &h) {
+    DockRules rules;
+    rules.step_m = 0.5 * r.cell_m;
+    rules.back_m = r.cell_m;
+    rules.apron_m = p.dock_apron_m;
+    rules.pier_min_m = p.pier_min_m;
+    rules.berth_half_length_m = BERTH_HALF_LENGTH;
+    rules.lattice_m = r.cell_m;
+    rules.lattice_x0 = r.coord(0);
+    rules.lattice_z0 = r.coord(0);
+    const DockPlan plan = plan_dock(FieldDockGround(r, h), 0.0, 0.0, std::cos(p.dock_bearing), std::sin(p.dock_bearing), r.half_extent(), rules);
     IslandDock &dock = r.dock;
-    dock.out_x = std::cos(p.dock_bearing);
-    dock.out_z = std::sin(p.dock_bearing);
-    const double step = 0.5 * r.cell_m;
+    dock.x = plan.x;
+    dock.z = plan.z;
+    dock.y = plan.y;
+    dock.out_x = plan.out_x;
+    dock.out_z = plan.out_z;
+    dock.pier_m = plan.pier_m;
 
-    // 岸缘点：它和它背后 4 格都得是陆地，免得落在一根细岬上
-    double t_rim = 0.0;
-    for (double t = r.half_extent(); t > 0.0; t -= step) {
-        bool solid = true;
-        for (int back = 0; back <= 4 && solid; back++) {
-            const double tb = t - back * r.cell_m;
-            solid = land_at(r, tb * dock.out_x, tb * dock.out_z);
-        }
-        if (solid) {
-            t_rim = t;
-            break;
-        }
-    }
-    dock.x = t_rim * dock.out_x;
-    dock.z = t_rim * dock.out_z;
-
-    // 泊位上的船平行于岸：船身两侧各留 22 m（够 7 格长的船），看这一段岸线最远伸出多少
-    const double lat_x = -dock.out_z, lat_z = dock.out_x;
-    double reach = 0.0;
-    for (double s = -BERTH_HALF_LENGTH; s <= BERTH_HALF_LENGTH; s += step) {
-        for (double t = 0.0; t <= 60.0; t += step) {
-            if (land_at(r, dock.x + t * dock.out_x + s * lat_x, dock.z + t * dock.out_z + s * lat_z)) {
-                reach = std::max(reach, t);
-            }
-        }
-    }
-    dock.pier_m = std::max(p.pier_min_m, reach + 3.0);
-
-    // 停机坪高度 = 岸缘点周围半个半径内的平均地面
     const int n = r.n;
-    double sum = 0.0;
-    int count = 0;
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            if (r.mask[r.index(i, j)] && std::hypot(r.coord(j) - dock.x, r.coord(i) - dock.z) <= 0.5 * p.dock_apron_m) {
-                sum += h[r.index(i, j)];
-                count++;
-            }
-        }
-    }
-    dock.y = count > 0 ? sum / count : p.rim_m;
-
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             const size_t k = r.index(i, j);
             if (!r.mask[k]) {
                 continue;
             }
-            const double d = std::hypot(r.coord(j) - dock.x, r.coord(i) - dock.z) / p.dock_apron_m;
-            // 半径以内一半全平，外一半渐回原地形
-            const double w = smoothstep(clamp01(2.0 * (1.0 - d)));
+            const double w = dock_pad_weight(plan, r.coord(j), r.coord(i));
             h[k] += w * (dock.y - h[k]);
         }
     }
