@@ -137,6 +137,15 @@ Godot --headless --path game --script res://tools/seed_villages.gd
 
 已知的：地面偏平、还没有树；溪涧只是颜色；地图不标散户 / 前哨 / 桥；世界坐标到 ±50 km，单精度下有毫米级的抖动。
 
+## 开发者工具（哪张地图里都能用）
+
+全局 autoload `DeveloperTools`（类 `DevTools`，`game/dev_tools.tscn`；场景根的 `dev_tools` 为假时不理这些键）：
+
+- **F2 换地图**：弹出清单（`maps` 属性：场景路径 → 名字，默认「甲乙两岛（切片一至五）」`main.tscn` 与「岛群 #2051（真实比例）」`world_2051.tscn`），点一项或按数字键换过去，F2 / Esc 合上。
+- **F3 god 模式**：不受重力、能飞——空格升、Ctrl（或 C）降、WASD 按相机朝向飞，默认 30 m/s，按住 Shift ×5（150 m/s）；碰撞照旧，降到地上就站住。
+  右上角标着 GOD；换了地图照样开着。速度是 Player 的 `god_speed` / `god_boost`。
+- 甲乙两岛没有岛群地图：那里按 M 会提示去 F2 换到「岛群 #2051」。
+
 ## 测试
 
 ```
@@ -148,4 +157,5 @@ Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn  # 画
 Godot --headless --path game --fixed-fps 60 res://tests/build_e2e.tscn     # B 进布置模式 → 停机坪被拒 → 河滩放民居 → 已有 / 挨得太近被拒 → 转 45° 放望楼 → X 拆 → F5 存、读回 → 走到望楼被墙挡住 → 仓库里的村落都站得住
 Godot --headless --path game --fixed-fps 60 res://tests/villager_e2e.tscn  # 两岛人数与职业 → 陆续出门 → 每帧贴地、不进房子、不瞬移 → 开荒播种收割、粮进仓、挑水、站班巡村、串门 → 玩家的地没人碰 → 收工全村进门 → 天亮又出门
 Godot --headless --path game --fixed-fps 60 res://tests/world_e2e.tscn     # 真实比例岛群：邑治站稳 → 跑 → M 开地图、滚轮缩小、点乙岛瞬移 → 点 57 km 外的码头瞬移 → 坠落回位
+Godot --headless --path game --fixed-fps 60 res://tests/dev_tools_e2e.tscn # 开发者工具：甲乙两岛按 M 提示 → F3 god 升 / 降 / Shift 150 m/s → 关 god 重力回来 → F2 按 2 换到 2051（god 跟着）→ 换回
 ```
