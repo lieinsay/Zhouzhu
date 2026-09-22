@@ -7,20 +7,25 @@
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/packed_string_array.hpp>
+#include <godot_cpp/variant/packed_vector3_array.hpp>
 
 #include "flight_model.h"
 #include "ship_layout.h"
 
-// 空艇。原点在甲板面上、舷门正中，船头朝 −z；甲板可站人。
-// 船是一节节拼的：layout（自船头到船尾的模块 id）决定几何与碰撞——每节一段甲板、船体、舷栏，
-// 驾驶区有舵柱、舵轮与舵楼顶，储存区两侧摞货箱、中间留走道，动力区船底吊浮石、甲板上一对侧桅帆；
-// 船头一只楔、首尾各一道栏。舷门固定在 z = 0 的两舷（前 count/2 节在舷门前），所以泊位、坞位、跳板都指舷门，
-// 船怎么改都不用挪码头。舵位 / 座位 / 出口由布局算出；FlightParams 由船况（ship_layout）算出。
+// 空艇。原点在舷门格 (0,0,0) 的第 0 层甲板面中心，船头朝 −z，x 向右舷；甲板可站人。
+// 船是三维格子里拼的（layout："x,y,z:kind" 序列，见 ship_layout.h）：
+//   · 每列最上面那一节是开放甲板：甲板板（第 0 层）或下面舱体的顶、按邻列高度取舍的舷栏、模块的陈设
+//     （驾驶区舵柱舵轮舵楼顶，储存区两侧货箱中间走道，动力区一对侧桅帆）；
+//   · 被上面盖住的节是封闭舱体（储存区 = 货舱，墙上有舱门；动力区 = 机舱，墙上透着浮石的光）；
+//   · 第 0 层每节下面吊船体，动力区再吊浮石；最前一排前面一只船头楔；
+//   · 相邻两列高度不同处生成梯子：踏板 + 带 "ladder" 元数据的 Area3D（+Z 离墙）+ 舷栏缺口，Player 靠它上下。
+// 舷门在舷门那一排（z = 0、第 0 层）两头的船边，z ∈ ±0.9 不设栏。
+// 泊位 / 坞位是「接触线」：X 指向码头的位姿，船按面向码头那一侧的船边算原点该在哪，所以船怎么改都不用挪码头。
 // 受控时：输入 → flight_model → move_and_slide（与岛碰撞）。不受控：输入为零，自己停稳悬着。
-// 靠泊 / 入坞：向给定位姿自动滑过去，期间不理碰撞（位姿由 Island / Shipyard 保证是空的）。
+// 靠泊 / 入坞：向接触线滑过去，期间不理碰撞（位姿由 Island / Shipyard 保证是空的）。
 //
 // 场景（ship.tscn）里须有：Visual（Node3D，转向时侧倾的只是它；拼出来的样子都挂在下面）、
-// CameraRig/Camera3D（追尾相机，鼠标绕船转）。碰撞体拼在根节点下。
+// CameraRig/Camera3D（追尾相机，鼠标绕船转）。碰撞体与梯子区域拼在根节点下。
 class Ship : public godot::CharacterBody3D {
     GDCLASS(Ship, godot::CharacterBody3D)
 
@@ -28,7 +33,6 @@ class Ship : public godot::CharacterBody3D {
     FlightState state;
     ShipLayout layout = default_layout();
     ShipStats stats;
-    double half_beam = 2.5;
     double min_altitude = 15.0; // 云海之上的最低飞行高度（全局 y）
     double mouse_sensitivity = 0.0025;
 
@@ -42,19 +46,24 @@ class Ship : public godot::CharacterBody3D {
     godot::Vector3 helm_local;
     godot::Vector3 seat_local;
     godot::Vector3 exit_local;
+    godot::PackedVector3Array ladder_feet_local;
+    godot::PackedVector3Array ladder_tops_local;
 
     godot::Node3D *visual = nullptr;
     godot::Node3D *camera_rig = nullptr;
     godot::Camera3D *camera = nullptr;
 
-    godot::Ref<godot::StandardMaterial3D> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof;
+    godot::Ref<godot::StandardMaterial3D> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow;
 
     void ensure_materials();
     void clear_generated();
     void rebuild();
-    void build_section(int p_index);
+    void build_module(const Module &p_module);
+    void build_ladder(const Ladder &p_ladder);
     void step_flight(double p_delta);
     void step_mooring(double p_delta);
+    // 把面向接触线那一侧的船边贴到接触线上，原点该在哪；r_flipped：船头是否与接触线的 Z 反向
+    godot::Vector3 origin_for(const godot::Transform3D &p_contact, double p_yaw) const;
 
 protected:
     static void _bind_methods();
@@ -67,19 +76,26 @@ public:
     void set_controlled(bool p_controlled);
     bool is_controlled() const { return controlled; }
 
-    // 立刻把舷门摆到位姿上并清零速度（开局、读档、召回）
-    void place_at(const godot::Transform3D &p_transform);
-    // 开始向泊位 / 坞位滑行（位姿指舷门该在哪）；到位后发 moored 信号
-    void moor_at(const godot::Transform3D &p_berth);
+    // 立刻贴到接触线上并清零速度（开局、读档、召回、改完船重新坐定）。
+    // p_keep_heading：保留现在的船头朝向（接触线的两个方向里取转得少的），否则船头顺着接触线的 Z
+    void place_at(const godot::Transform3D &p_contact, bool p_keep_heading = false);
+    // 开始向接触线滑行（两舷都有舷门，船头朝哪边都能靠：取转得少的）；到位后发 moored 信号
+    void moor_at(const godot::Transform3D &p_contact);
     bool is_mooring() const { return mooring; }
+    // 船舷是否贴在这条接触线上（两个朝向都算）
+    bool is_at(const godot::Transform3D &p_contact, double p_tolerance) const;
 
     double get_speed() const;
     godot::Vector3 get_helm_position() const;
     godot::Transform3D get_seat_transform() const;
     godot::Transform3D get_exit_transform() const;
     godot::Camera3D *get_camera() const { return camera; }
+    // 某一列顶层甲板的中心（全局）；没有这一列返回原点
+    godot::Vector3 get_deck_position(int p_x, int p_z) const;
+    godot::PackedVector3Array get_ladder_feet() const; // 梯脚（全局，离墙半米）
+    godot::PackedVector3Array get_ladder_tops() const; // 梯顶落脚处（全局）
 
-    // 布局：脚本 / 场景文件用 id 数组；C++ 上层直接用模型。换了布局立刻重拼，发 refitted 信号
+    // 布局：脚本 / 场景文件用 "x,y,z:kind" 数组；C++ 上层直接用模型。换了布局立刻重拼，发 refitted 信号
     void set_layout(const godot::PackedStringArray &p_ids);
     godot::PackedStringArray get_layout() const;
     const ShipLayout &get_layout_model() const { return layout; }
@@ -88,13 +104,13 @@ public:
     const ShipStats &get_stats_model() const { return stats; }
     godot::Dictionary get_stats() const; // sections / mass / thrust / hold / max_speed / max_climb / max_yaw_rate / can_fly
     bool can_fly() const { return stats.can_fly(); }
-    int get_section_count() const { return int(layout.size()); }
-    godot::String get_section_id(int p_index) const;
-    double get_bow_z() const { return layout_bow_z(layout); }
-    double get_stern_z() const { return layout_stern_z(layout); }
+    int get_section_count() const { return layout.size(); }
+    double get_bow_z() const { return bow_z(layout); }
+    double get_stern_z() const { return stern_z(layout); }
+    double get_port_edge_x() const { return port_edge_x(layout); }
+    double get_starboard_edge_x() const { return starboard_edge_x(layout); }
+    int get_levels() const { return layout.levels(); }
 
-    void set_half_beam(double p_value) { half_beam = p_value; }
-    double get_half_beam() const { return half_beam; }
     void set_min_altitude(double p_value) { min_altitude = p_value; }
     double get_min_altitude() const { return min_altitude; }
     double get_max_speed() const { return params.max_speed; }

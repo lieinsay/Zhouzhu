@@ -4,7 +4,7 @@
 collision_layer = 2
 collision_mask = 1
 motion_mode = 1
-layout = PackedStringArray("power", "bridge")
+layout = PackedStringArray("0,0,-1:power", "0,0,0:bridge")
 
 [node name="Visual" type="Node3D" parent="."]
 
