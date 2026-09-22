@@ -8,6 +8,7 @@
 // 玩家角色：第三人称，相对相机朝向的 WASD、跳、疾跑。
 // 根节点自己从不旋转——转的是相机支点（鼠标）和身体模型（朝移动方向）。
 // 它不知道飞船的存在：入座时由上层 set_controlled(false) 停掉输入与物理，再直接摆位姿。
+// set_input_blocked(true) 只挡输入（开着背包时 W/S 是在选东西，不是在走路），物理照常：重力、落地都还在。
 //
 // 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D。
 class Player : public godot::CharacterBody3D {
@@ -20,6 +21,7 @@ class Player : public godot::CharacterBody3D {
     double mouse_sensitivity = 0.0025;
 
     bool controlled = true;
+    bool input_blocked = false;
     double look_yaw = 0.0;
     double look_pitch = -0.25;
     uint32_t saved_layer = 0;
@@ -41,6 +43,8 @@ public:
 
     void set_controlled(bool p_controlled);
     bool is_controlled() const { return controlled; }
+    void set_input_blocked(bool p_blocked) { input_blocked = p_blocked; }
+    bool is_input_blocked() const { return input_blocked; }
     void set_look_yaw(double p_yaw);
     double get_look_yaw() const { return look_yaw; }
     void set_facing_yaw(double p_yaw); // 身体模型朝向

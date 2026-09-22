@@ -13,6 +13,7 @@ constexpr const char *SPRINT = "sprint";
 constexpr const char *ASCEND = "ascend";
 constexpr const char *DESCEND = "descend";
 constexpr const char *INTERACT = "interact";
+constexpr const char *INVENTORY = "inventory"; // 开合背包
 
 // 幂等：已有的动作不重复注册
 void register_all();

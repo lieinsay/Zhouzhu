@@ -26,6 +26,8 @@ constexpr double PITCH_MAX = 0.6;
 void Player::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_controlled", "controlled"), &Player::set_controlled);
     ClassDB::bind_method(D_METHOD("is_controlled"), &Player::is_controlled);
+    ClassDB::bind_method(D_METHOD("set_input_blocked", "blocked"), &Player::set_input_blocked);
+    ClassDB::bind_method(D_METHOD("is_input_blocked"), &Player::is_input_blocked);
     ClassDB::bind_method(D_METHOD("set_look_yaw", "yaw"), &Player::set_look_yaw);
     ClassDB::bind_method(D_METHOD("get_look_yaw"), &Player::get_look_yaw);
     ClassDB::bind_method(D_METHOD("set_facing_yaw", "yaw"), &Player::set_facing_yaw);
@@ -70,7 +72,7 @@ void Player::apply_look() {
 }
 
 void Player::_unhandled_input(const Ref<InputEvent> &p_event) {
-    if (!controlled || Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED) {
+    if (!controlled || input_blocked || Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED) {
         return;
     }
     const Ref<InputEventMouseMotion> motion = p_event;
@@ -87,7 +89,7 @@ void Player::_physics_process(double p_delta) {
         return;
     }
     Input *input = Input::get_singleton();
-    const Vector2 stick = input->get_vector(input_actions::MOVE_LEFT, input_actions::MOVE_RIGHT, input_actions::MOVE_FORWARD, input_actions::MOVE_BACK);
+    const Vector2 stick = input_blocked ? Vector2() : input->get_vector(input_actions::MOVE_LEFT, input_actions::MOVE_RIGHT, input_actions::MOVE_FORWARD, input_actions::MOVE_BACK);
     const Vector3 wish = Basis(Vector3(0, 1, 0), real_t(look_yaw)).xform(Vector3(stick.x, 0, stick.y));
     const double speed = input->is_action_pressed(input_actions::SPRINT) ? sprint_speed : walk_speed;
 
@@ -97,7 +99,7 @@ void Player::_physics_process(double p_delta) {
     velocity.x += (wish.x * real_t(speed) - velocity.x) * blend;
     velocity.z += (wish.z * real_t(speed) - velocity.z) * blend;
     if (grounded) {
-        velocity.y = input->is_action_just_pressed(input_actions::JUMP) ? real_t(jump_speed) : 0;
+        velocity.y = !input_blocked && input->is_action_just_pressed(input_actions::JUMP) ? real_t(jump_speed) : 0;
     } else {
         velocity.y -= real_t(gravity * p_delta);
     }
