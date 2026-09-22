@@ -62,6 +62,8 @@ target_sources(
         src/refit_panel.h
         src/register_types.cpp
         src/register_types.h
+        src/settlement.cpp
+        src/settlement.h
         src/ship.cpp
         src/ship.h
         src/shipyard.cpp
