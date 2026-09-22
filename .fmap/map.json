@@ -473,6 +473,74 @@
       ],
       "since": "e9",
       "parent": "ship-layout"
+    },
+    {
+      "id": "villager-nav",
+      "label": "导航格与寻路",
+      "detail": "高度场 + 建筑清单 → 1.25 m 一格：有地面、相邻两格坡度 ≤ 0.6、不在房子占地（外扩 0.9 m）里才走得了，河里记作水格（代价 ×4）；A* 八方向不切角，再按视线拉直成路点。地面高按网格同样的三角切法取，脚正好踩在画出来的地上。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：绕房、崖壁、岛外、房子里停在外面",
+      "sources": [
+        "src/villager_model.h",
+        "src/villager_model.cpp"
+      ],
+      "since": "e10"
+    },
+    {
+      "id": "villager-clock",
+      "label": "钟点",
+      "detail": "一天 day_seconds 秒；卯时 6 点出工、11:30–12:30 歇晌、18:30 收工；时辰名与「巳时 · 第 1 日 · 09:30」这种文字。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：子夜 / 正午 / 次日卯时 / 时辰名",
+      "sources": [
+        "src/villager_model.cpp"
+      ],
+      "since": "e10"
+    },
+    {
+      "id": "villager-residents",
+      "label": "职业与住户",
+      "detail": "每座民居 per_house 口（头一口农、第二口挑水，没地没河就闲）、堂屋一口闲、每座望楼一个守望住堂屋（没有就住最近的民居）；名字表按种子洗牌取，不重复。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：分派 7 项",
+      "sources": [
+        "src/villager_model.cpp"
+      ],
+      "since": "e10"
+    },
+    {
+      "id": "villager-brain",
+      "label": "村民决策",
+      "detail": "decide_task(村民, 村况, 随机流) → 去哪、到了干什么、干多久。农夫只动自己认领的地（收 → 播 → 开荒 → 锄草），粮送进仓；挑水河边 → 堂屋；守望站班 ↔ 巡村；闲人串门；歇晌收工回家。村况全是只读引用，状态都在上层。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：四种职业的决策全过",
+      "sources": [
+        "src/villager_model.cpp"
+      ],
+      "since": "e10"
+    },
+    {
+      "id": "villagers-node",
+      "label": "Villagers 村民",
+      "detail": "Island 的子节点，排在 Settlement 后：岛 rebuilt 或清单改了就整村重招；持有村民状态、村里的仓与认领表；每帧推进钟点、走路、干活计时并把结果落到 Farm；占位小人与头顶字，进门即藏。没有碰撞，不进屋。",
+      "tag": "场景角色",
+      "evidence": "villager_e2e PASS；开窗截图目视",
+      "sources": [
+        "src/villagers.h",
+        "src/villagers.cpp"
+      ],
+      "since": "e10"
+    },
+    {
+      "id": "villager-e2e",
+      "label": "村民端到端测试",
+      "detail": "玩家不动，看村民过一天：人数职业、每帧贴地不进房不瞬移、各样活都干过、粮比开局多、玩家的地没人碰、收工全进门、天亮又出门。",
+      "tag": "验收",
+      "evidence": "headless 5 s PASS，12.6 万人帧检查",
+      "sources": [
+        "game/tests/villager_e2e.gd"
+      ],
+      "since": "e10"
     }
   ],
   "edges": [
@@ -998,6 +1066,148 @@
       "chains": [
         "shipyard"
       ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "villager-brain",
+      "label": "下一件事",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "villager-nav",
+      "label": "路点",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "villager-residents",
+      "label": "谁住哪干哪行",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "villager-clock",
+      "label": "该在家吗",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "farm-node",
+      "label": "开荒 / 播种 / 收割",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "settlement-node",
+      "label": "清单 / 改了",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "island-node",
+      "label": "rebuilt / 高度场",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "inventory",
+      "label": "村里的仓",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-brain",
+      "to": "villager-nav",
+      "label": "站位吸到干地",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-brain",
+      "to": "villager-clock",
+      "label": "钟点",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-brain",
+      "to": "villager-residents",
+      "label": "职业",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-brain",
+      "to": "farm-model",
+      "label": "地块状态",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-brain",
+      "to": "crops",
+      "label": "哪样是种子",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-nav",
+      "to": "island-field",
+      "label": "地面 / 水深",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-nav",
+      "to": "settlement-model",
+      "label": "占地",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "villagers-node",
+      "label": "钟点文字",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "main-scene",
+      "to": "villagers-node",
+      "chains": [
+        "villagers"
+      ]
+    },
+    {
+      "from": "villager-e2e",
+      "to": "main-scene",
+      "chains": [
+        "villagers"
+      ]
     }
   ],
   "chains": [
@@ -1412,6 +1622,88 @@
         "input-map",
         "island-field"
       ]
+    },
+    {
+      "id": "villagers",
+      "title": "切片五：村民——按钟点出门、沿路走、干活、回家",
+      "story": "岛上的村子住进了人：天亮了他们从各自家里陆续出门，绕着房子、顺着缓坡走到干活的地方——农夫蹚过河去开荒、播种、收割，把粮背进仓；挑水的在河边打水挑到堂屋；守望在望楼下站班、绕村巡看；闲人去别家门口串门；到了歇晌和收工的钟点，全村走回家进门。玩家垦的地没人碰。",
+      "date": "2026-09-22",
+      "color": "#e5536b",
+      "commits": "1ebfbe0..125b3be",
+      "steps": [
+        {
+          "text": "进入主场景：两座岛的聚落盖好后，Villagers 按清单招人——每户两口、堂屋一口、每座望楼一个守望，按岛上有没有农田和河分派成农 / 挑水 / 守望 / 闲；同时在高度场上建一张避开房子与陡坡的导航格",
+          "nodes": [
+            "main-scene",
+            "villagers-node",
+            "villager-residents",
+            "villager-nav",
+            "settlement-node",
+            "island-field",
+            "island-node"
+          ]
+        },
+        {
+          "text": "HUD 第一行末尾走着脚下这座岛的钟点；到了卯时出工，村民错开几秒从家门口出来",
+          "nodes": [
+            "voyage",
+            "villagers-node",
+            "villager-clock"
+          ]
+        },
+        {
+          "text": "每人问一句「下一件做什么」：农夫收熟了的、播垦好的（种子从村里的仓里拿）、认领不满就在家门口开荒、都种上了就锄草",
+          "nodes": [
+            "villager-brain",
+            "villagers-node",
+            "farm-model",
+            "crops"
+          ]
+        },
+        {
+          "text": "找路：A* 在导航格上绕开房子、不上崖壁，河里能蹚但尽量不下水，再拉直成几段路点；村民贴着地面一段段走过去",
+          "nodes": [
+            "villager-nav",
+            "villagers-node",
+            "island-field"
+          ]
+        },
+        {
+          "text": "到了就干：头顶「名字 · 在干什么」，农夫抡锄弯腰；干完把结果落下去——开荒、播种、收割走 Farm，收成背着送进仓；挑水的打满了挑进堂屋，守望站完一班巡三户，闲人聊一阵换一家",
+          "nodes": [
+            "villagers-node",
+            "farm-node",
+            "villager-brain",
+            "inventory"
+          ]
+        },
+        {
+          "text": "歇晌与收工：钟点一到，半路的掉头、干着的放下，都走回家进门藏起来；夜里没人出门，天亮再出来",
+          "nodes": [
+            "villagers-node",
+            "villager-clock",
+            "villager-brain"
+          ]
+        }
+      ],
+      "nodes": [
+        "villager-nav",
+        "villager-clock",
+        "villager-residents",
+        "villager-brain",
+        "villagers-node",
+        "villager-e2e",
+        "main-scene",
+        "settlement-node",
+        "island-field",
+        "island-node",
+        "voyage",
+        "farm-model",
+        "crops",
+        "farm-node",
+        "inventory",
+        "settlement-model"
+      ]
     }
   ],
   "events": [
@@ -1712,6 +2004,56 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e10",
+      "type": "slice",
+      "date": "2026-09-22",
+      "title": "切片五：村民——按钟点出门、沿路走、干活、回家",
+      "summary": "岛上的村子住进了人：天亮了他们从各自家里陆续出门，绕着房子、顺着缓坡走到干活的地方——农夫蹚过河去开荒、播种、收割，把粮背进仓；挑水的在河边打水挑到堂屋；守望在望楼下站班、绕村巡看；闲人去别家门口串门；到了歇晌和收工的钟点，全村走回家进门。玩家垦的地没人碰。",
+      "commits": "1ebfbe0..125b3be",
+      "chain": "villagers",
+      "nodes": [
+        "villager-nav",
+        "villager-clock",
+        "villager-residents",
+        "villager-brain",
+        "villagers-node",
+        "villager-e2e",
+        "main-scene",
+        "settlement-node",
+        "island-field",
+        "island-node",
+        "voyage",
+        "farm-model",
+        "crops",
+        "farm-node",
+        "inventory",
+        "settlement-model"
+      ],
+      "info": {
+        "created": [
+          "villager-nav",
+          "villager-clock",
+          "villager-residents",
+          "villager-brain",
+          "villagers-node",
+          "villager-e2e"
+        ],
+        "reused": [
+          "main-scene",
+          "settlement-node",
+          "island-field",
+          "island-node",
+          "voyage",
+          "farm-model",
+          "crops",
+          "farm-node",
+          "inventory",
+          "settlement-model"
+        ],
+        "updated": []
       }
     }
   ],
