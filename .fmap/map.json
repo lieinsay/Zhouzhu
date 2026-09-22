@@ -30,9 +30,9 @@
     {
       "id": "voyage",
       "label": "Voyage 编排",
-      "detail": "主场景唯一的编排者。切片一：谁在受控（角色/空艇）、上舵、靠泊、坠落回位。切片二：步行时盯着视线前方 1.8 m 的那一格，按下 E 起工、按住累计工时（开垦 1.5 s / 播种 0.6 s / 收获 0.8 s），换格或松手作废。拓展：背包、手上拿着的种子、面板开合与光标也在这里（voyage-pack）；播种从背包扣种子、收获按地里的作物把产物放进背包。Player、Ship、Farm、BackpackPanel 互不相识。",
+      "detail": "主场景唯一的编排者。切片一：谁在受控、上舵、靠泊、坠落回位。切片二：农事工时。拓展：背包（voyage-pack）。切片三：掌舵时泊位与坞位取最近的按 E 入坞；下船到画样台按 E 改装（A/D 选节、W/S 换类型、E 加一节、X 拆掉、Tab 合上），每一步直接改 Ship 的布局，不合法就说明；没有动力区的船拒绝上舵；改装开着时挡住 Player 输入。Player、Ship、Farm、Shipyard、面板互不相识。",
       "tag": "切片编排（状态在此）",
-      "evidence": "farm_e2e PASS：无种子按 E 3 s 不动；Tab/S/E/Tab 后手持菽；播种菽 3→2；收获菽→5、粟仍 5；voyage/respawn e2e 无回归",
+      "evidence": "shipyard_e2e PASS：船不在坞被拒、入坞、六步改装含两次拒绝、无动力拒上舵、补回、飞回靠泊；farm/voyage/respawn e2e 无回归",
       "sources": [
         "src/voyage.h",
         "src/voyage.cpp"
@@ -42,7 +42,7 @@
     {
       "id": "island-node",
       "label": "Island 节点",
-      "detail": "按属性生成高度场 → 网格 + 碰撞 + 栈桥；has_river 打开时还有河水网格与通往河滩的路。每次生成完发 rebuilt 信号，长在岛上的东西（Farm）靠它知道地形换了；get_trail_points 把路交给上层。",
+      "detail": "按属性生成高度场 → 网格 + 碰撞 + 栈桥；has_river 打开时还有河水网格与通往河滩的路；has_yard 打开时高度场里带船坞坪（岸线退得太深就凿不出，has_shipyard() 为假）。每次生成完发 rebuilt 信号，长在岛上的东西（Farm、Shipyard）靠它知道地形换了。",
       "tag": "场景角色",
       "evidence": "e2e：两座岛生成，泊位/栈桥头/出生点位姿被 Voyage 与测试使用，get_surface_height 判定抵达；截图中栈桥与甲板齐平",
       "sources": [
@@ -67,9 +67,9 @@
     {
       "id": "ship",
       "label": "Ship 空艇",
-      "detail": "CharacterBody3D，甲板可站人。受控时读输入 → flight-model → move_and_slide（与岛碰撞）；不受控时悬停制动。靠泊：向给定泊位位姿自动滑行。给出舵位 / 座位 / 追尾相机。",
+      "detail": "CharacterBody3D，甲板可站人。按 layout（模块 id 序列）运行时拼几何与碰撞：每节甲板 / 船体 / 舷栏（舷门固定在原点两舷），驾驶区舵柱舵轮舵楼顶，储存区两侧货箱中间走道，动力区船底浮石加一对侧桅帆，船头楔与首尾栏；舵位 / 座位 / 出口与 FlightParams 由布局算出。受控时读输入 → flight-model → move_and_slide；靠泊 / 入坞向给定位姿（指舷门）自动滑行。",
       "tag": "场景角色",
-      "evidence": "e2e：爬升 1.3 s、巡航 951 m 用 35.6 s（极速 32 m/s）、靠泊滑行 5.9 s 后停在泊位位姿；甲板可站人",
+      "evidence": "shipyard_e2e 改装重拼 6 次、航速 32 → 20.4；voyage/respawn/farm e2e 无回归；截图目视货箱 / 舵楼顶 / 侧桅帆",
       "sources": [
         "src/ship.h",
         "src/ship.cpp",
@@ -92,7 +92,7 @@
     {
       "id": "input-map",
       "label": "输入动作表",
-      "detail": "启动时用 InputMap 注册动作（移动 / 跳 / 疾跑 / 交互 / 升降 / 背包 Tab·I），不写进 project.godot。测试经同一层动作驱动。",
+      "detail": "启动时用 InputMap 注册动作（移动 / 跳 / 疾跑 / 交互 / 升降 / 背包 Tab·I / 拆掉 X·Backspace·Delete），不写进 project.godot。测试经同一层动作驱动。",
       "tag": "引擎构件",
       "evidence": "e2e 全程只经 Input.action_press 这一层动作驱动并通过（移动/升降/转舵/交互）",
       "sources": [
@@ -104,7 +104,7 @@
     {
       "id": "island-field",
       "label": "岛屿高度场",
-      "detail": "skyisle-gen terrain.py 的游戏尺度移植：椭圆 + 域扭曲 + 轮廓噪声，面积二分反解取最大连通块；基形随岛龄（新锥 / 中脊 / 老台地）；岸缘 rim → 峰 peak 归一，崖缘不向下收敛。另加码头：沿方位找岸缘点并压平停机坪。输入参数，输出 IslandField 值，无状态。",
+      "detail": "skyisle-gen terrain.py 的游戏尺度移植：椭圆 + 域扭曲 + 轮廓噪声，面积二分反解取最大连通块；基形随岛龄；岸缘 rim → 峰 peak 归一。另加码头：沿方位找岸缘点并压平停机坪（泊位两侧扫 16 m 岸线，够 5 节的船）；要船坞的岛在停机坪旁凿坪（island-yard）。输入参数，输出 IslandField 值，无状态。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "zhouzhu_core_tests: 新/中/老三种岛各 15 项通过（面积<2%、峰高<1%、单连通、岛体厚度、码头泊位无陆地、停机坪平、重跑哈希一致）",
       "sources": [
@@ -168,7 +168,7 @@
     {
       "id": "farm-model",
       "label": "农田模型",
-      "detail": "地块 = 高度场的格子（2.5 m）。勘察：每格可否开垦及原因与墒情。地块状态机 荒地→已垦→生长→成熟→（收获）已垦，地块记着种的作物；till / sow(crop) / harvest → {产物, 数量}；生长期 = 基准 × 作物倍率 ÷ 墒情速率。谁在干活、背包里有什么不归它管。",
+      "detail": "地块 = 高度场的格子（2.5 m）。勘察：每格可否开垦及原因（含停机坪、路、船坞坪）与墒情。地块状态机 荒地→已垦→生长→成熟→（收获）已垦，地块记着种的作物；till / sow(crop) / harvest → {产物, 数量}；生长期 = 基准 × 作物倍率 ÷ 墒情速率。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "zhouzhu_core_tests farm_model：菽生长期 = 粟 × 1.5，收下来是菽；203 项 0 失败",
       "sources": [
@@ -251,6 +251,68 @@
         "src/backpack_panel.cpp"
       ],
       "since": "e3"
+    },
+    {
+      "id": "ship-layout",
+      "label": "布局与船况",
+      "detail": "模块表（驾驶区 / 储存区 / 动力区：质量、推力、货舱格）；布局 = 自船头到船尾的模块序列，恰好一个驾驶区、1..5 节，舷门前 count/2 节，各节 z 起点；船况：推重比 → 航速升速、节数 → 转向率、货舱格数；换类型 / 加一节 / 拆掉不合法就不动并给出原因。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests ship_layout：默认小艇 32 m/s，多货更慢、多动力更快，驾驶区唯一，上限 5 节，编辑拒绝原因，z 起点，id 往返",
+      "sources": [
+        "src/ship_layout.h",
+        "src/ship_layout.cpp",
+        "tests/core_tests.cpp"
+      ],
+      "since": "e4"
+    },
+    {
+      "id": "island-yard",
+      "label": "船坞坪",
+      "detail": "停机坪旁沿岸 36×16 m 的矩形坪：在停机坪两侧各试一遍，取整个落在陆地上、进深更浅的一侧，离码头中线 6 m（路从那儿上山），压平到停机坪高，坪外按 45° 挖方 / 填方接回原地形。河的选线离它 ≥ 21 m、路 ≥ 6.5 m，两者的土方到坪跟前收手；农田勘察记为 YARD；网格涂石板色。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests island_yard 三种岛龄：在岛上、平、与停机坪同高、河 ≥ 15 m、路 ≥ 4 m、坪缘坡度、确定性",
+      "sources": [
+        "src/island_field.h",
+        "src/island_field.cpp",
+        "src/island_river.cpp"
+      ],
+      "since": "e4"
+    },
+    {
+      "id": "shipyard",
+      "label": "Shipyard 船坞",
+      "detail": "挂在 Island 下的 StaticBody3D，岛 rebuilt 后按坪搭：两道坞墩梁托船体、首尾门架、从岛内一侧斜到舷门的跳板（带碰撞）、跳板脚边靠码头一侧的画样台。给出坞位位姿（舷门该停的位姿，甲板在坪上 3.6 m）、跳板顶 / 脚、画样台位置。船在不在坞里、怎么改，不归它管。",
+      "tag": "场景角色",
+      "evidence": "shipyard_e2e：入坞后舷门离坞位 < 0.5 m，走下跳板 2.7 s 到画样台；开窗截图目视坞梁 / 门架 / 跳板 / 画样台",
+      "sources": [
+        "src/shipyard.h",
+        "src/shipyard.cpp"
+      ],
+      "since": "e4"
+    },
+    {
+      "id": "refit-panel",
+      "label": "RefitPanel 改装面板",
+      "detail": "只负责画：给它布局、光标、船况，自船头到船尾一行一节列出来，光标那行描亮，标出船头船尾，底下一行船况（节数 / 货舱 / 航速 / 升速 / 转向），飞不起来的船说明为什么。自己不存状态、不读输入。",
+      "tag": "引擎构件",
+      "evidence": "开窗截图 REFIT_open：两行节、光标、船头船尾标记、船况行、按键提示",
+      "sources": [
+        "src/refit_panel.h",
+        "src/refit_panel.cpp"
+      ],
+      "since": "e4"
+    },
+    {
+      "id": "shipyard-e2e",
+      "label": "船坞端到端测试",
+      "detail": "无头 Godot + 输入驱动器：画样台被拒 → 掌舵入坞 → 走下跳板 → 六步改装（含两次拒绝）→ 无动力拒上舵 → 补回动力区 → 飞回泊位靠泊；每步对布局、船况与 Voyage 状态。",
+      "tag": "验收",
+      "evidence": "Godot --headless --fixed-fps 60 res://tests/shipyard_e2e.tscn → exit 0（模拟 47.8 s），航速 32 → 20.4",
+      "sources": [
+        "game/tests/shipyard_e2e.gd",
+        "game/tests/shipyard_e2e.tscn"
+      ],
+      "since": "e4"
     }
   ],
   "edges": [
@@ -506,6 +568,102 @@
       "chains": [
         "farming"
       ]
+    },
+    {
+      "from": "ship",
+      "to": "ship-layout",
+      "label": "各节 z / 船况 → FlightParams",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "island-field",
+      "to": "island-yard",
+      "label": "要船坞的岛：凿坪",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "island-river",
+      "to": "island-yard",
+      "label": "河与路绕开、土方收手",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "farm-model",
+      "to": "island-yard",
+      "label": "坪上不可垦",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "island-mesh",
+      "to": "island-yard",
+      "label": "坪面涂石板色",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "shipyard",
+      "to": "island-yard",
+      "label": "坪的矩形与高度",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "shipyard",
+      "to": "island-node",
+      "label": "高度场 / rebuilt",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "refit-panel",
+      "to": "ship-layout",
+      "label": "模块名 / 船况",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "shipyard",
+      "label": "坞位 / 画样台",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "refit-panel",
+      "label": "布局 / 光标 / 船况",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "ship-layout",
+      "label": "编辑规则",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "shipyard-e2e",
+      "to": "main-scene",
+      "label": "加载并驱动",
+      "chains": [
+        "shipyard"
+      ]
     }
   ],
   "chains": [
@@ -709,6 +867,111 @@
         "backpack-panel"
       ],
       "commits": "6f056df..42b5a39"
+    },
+    {
+      "id": "shipyard",
+      "title": "切片三：地面船坞，把空艇改成一节节的",
+      "story": "玩家把空艇开进岸边的船坞，下船走到画样台，一节一节地改船：加储存区、换动力区、拆掉不要的；改完的船更重更慢或更快，没有动力区就飞不起来，改好了再掌舵飞回泊位。",
+      "date": "2026-09-22",
+      "color": "#3fb27f",
+      "commits": "440ed3f..30483e5",
+      "steps": [
+        {
+          "text": "进入主场景：出发岛的停机坪旁沿岸凿出一块石板坪，河与路的选线都绕开它；船坞在坪上搭起坞墩梁、门架、跳板与画样台",
+          "nodes": [
+            "main-scene",
+            "island-node",
+            "island-field",
+            "island-yard",
+            "island-river",
+            "island-mesh",
+            "shipyard"
+          ]
+        },
+        {
+          "text": "空艇按布局（动力区 + 驾驶区）运行时拼出来：每节甲板、船体、舷栏，舷门固定在原点两舷；船况（航速 32 m/s、升速、转向、货舱）由布局算出",
+          "nodes": [
+            "ship",
+            "ship-layout",
+            "flight-model"
+          ]
+        },
+        {
+          "text": "玩家在画样台按 E：船不在坞里，被拒并说明",
+          "nodes": [
+            "voyage",
+            "shipyard",
+            "player",
+            "input-map"
+          ]
+        },
+        {
+          "text": "走上空艇掌舵、升空，飞到船坞跟前（比泊位更近）按 E 入坞：船滑进坞位停在坞墩梁上",
+          "nodes": [
+            "voyage",
+            "ship",
+            "shipyard",
+            "island-node",
+            "input-map"
+          ]
+        },
+        {
+          "text": "下船顺跳板走到画样台按 E：改装面板打开，人站住不动，面板列出自船头到船尾的每一节与船况",
+          "nodes": [
+            "voyage",
+            "refit-panel",
+            "ship-layout",
+            "player",
+            "shipyard"
+          ]
+        },
+        {
+          "text": "A/D 选节、W/S 换类型、E 加一节、X 拆掉：每改一下船立刻重拼；改驾驶区、拆驾驶区、加第六节都被拒并说明",
+          "nodes": [
+            "voyage",
+            "ship-layout",
+            "ship",
+            "refit-panel",
+            "input-map"
+          ]
+        },
+        {
+          "text": "拆掉了动力区的船上不了舵：舵旁按 E 被拒，提示去画样台加一节",
+          "nodes": [
+            "voyage",
+            "ship",
+            "ship-layout",
+            "player"
+          ]
+        },
+        {
+          "text": "补回动力区后掌舵升空，飞回泊位靠泊；多了一节货的船航速从 32 掉到 20 m/s",
+          "nodes": [
+            "voyage",
+            "ship",
+            "flight-model",
+            "island-node"
+          ]
+        }
+      ],
+      "nodes": [
+        "ship-layout",
+        "island-yard",
+        "shipyard",
+        "refit-panel",
+        "shipyard-e2e",
+        "ship",
+        "voyage",
+        "island-node",
+        "island-field",
+        "input-map",
+        "farm-model",
+        "main-scene",
+        "island-river",
+        "island-mesh",
+        "flight-model",
+        "player"
+      ]
     }
   ],
   "events": [
@@ -822,6 +1085,63 @@
           "inventory",
           "crops",
           "backpack-panel"
+        ]
+      }
+    },
+    {
+      "id": "e4",
+      "type": "slice",
+      "date": "2026-09-22",
+      "title": "切片三：地面船坞，把空艇改成一节节的",
+      "summary": "玩家把空艇开进岸边的船坞，下船走到画样台，一节一节地改船：加储存区、换动力区、拆掉不要的；改完的船更重更慢或更快，没有动力区就飞不起来，改好了再掌舵飞回泊位。",
+      "commits": "440ed3f..30483e5",
+      "chain": "shipyard",
+      "nodes": [
+        "ship-layout",
+        "island-yard",
+        "shipyard",
+        "refit-panel",
+        "shipyard-e2e",
+        "ship",
+        "voyage",
+        "island-node",
+        "island-field",
+        "input-map",
+        "farm-model",
+        "main-scene",
+        "island-river",
+        "island-mesh",
+        "flight-model",
+        "player"
+      ],
+      "info": {
+        "created": [
+          "ship-layout",
+          "island-yard",
+          "shipyard",
+          "refit-panel",
+          "shipyard-e2e"
+        ],
+        "reused": [
+          "ship",
+          "voyage",
+          "island-node",
+          "island-field",
+          "input-map",
+          "farm-model",
+          "main-scene",
+          "island-river",
+          "island-mesh",
+          "flight-model",
+          "player"
+        ],
+        "updated": [
+          "ship",
+          "voyage",
+          "island-node",
+          "island-field",
+          "input-map",
+          "farm-model"
         ]
       }
     }
