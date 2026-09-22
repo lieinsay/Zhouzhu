@@ -8,6 +8,7 @@
 #include "island.h"
 #include "player.h"
 #include "ship.h"
+#include "shipyard.h"
 #include "voyage.h"
 
 using namespace godot;
@@ -18,6 +19,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     }
     GDREGISTER_CLASS(Island);
     GDREGISTER_CLASS(Farm);
+    GDREGISTER_CLASS(Shipyard);
     GDREGISTER_CLASS(Player);
     GDREGISTER_CLASS(Ship);
     GDREGISTER_CLASS(Voyage);

@@ -56,6 +56,8 @@ target_sources(
         src/register_types.h
         src/ship.cpp
         src/ship.h
+        src/shipyard.cpp
+        src/shipyard.h
         src/voyage.cpp
         src/voyage.h
 )
