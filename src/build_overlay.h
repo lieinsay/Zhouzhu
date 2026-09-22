@@ -30,7 +30,7 @@ private:
 
     double orbit_yaw = 0.6;
     double orbit_elevation = 0.7;
-    double orbit_distance = 30.0;
+    double orbit_distance = 40.0;
     godot::Vector3 focus;
 
     void ensure_built();

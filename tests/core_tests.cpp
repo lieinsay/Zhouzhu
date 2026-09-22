@@ -780,21 +780,21 @@ void test_settlement() {
 
     // 占地与压着
     const Building a{ "house", 0.0, 0.0, 0.0 };
-    check(footprint_contains(house, a, 2.9, 2.4) && !footprint_contains(house, a, 3.1, 0.0) && !footprint_contains(house, a, 0.0, 2.6), "占地：面阔 6 进深 5");
-    check(footprint_contains(house, a, 3.4, 0.0, 0.5), "占地可以外扩");
+    check(footprint_contains(house, a, 5.4, 3.2) && !footprint_contains(house, a, 5.6, 0.0) && !footprint_contains(house, a, 0.0, 3.3), "占地：面阔 11 进深 6.5");
+    check(footprint_contains(house, a, 5.9, 0.0, 0.5), "占地可以外扩");
     const Building e{ "house", 0.0, 6.0, 0.5 * PI };
-    check(footprint_contains(house, e, 2.4, 6.0) && !footprint_contains(house, e, 2.6, 6.0) && footprint_contains(house, e, 0.0, 8.9), "转 90° 后面阔沿 z");
+    check(footprint_contains(house, e, 3.2, 6.0) && !footprint_contains(house, e, 3.3, 6.0) && footprint_contains(house, e, 0.0, 11.4), "转 90° 后面阔沿 z");
     double cx[4], cz[4];
     footprint_corners(house, 0.0, 0.0, 0.5 * PI, 0.0, cx, cz);
-    check_near(cx[0], 2.5, 1e-9, "转 90° 的左前角 x");
-    check_near(cz[0], 3.0, 1e-9, "转 90° 的左前角 z");
-    check(!footprints_overlap(a, Building{ "house", 7.2, 0.0, 0.0 }, 1.0) && footprints_overlap(a, Building{ "house", 6.8, 0.0, 0.0 }, 1.0), "并排两座：空 1 m 才不算压着");
-    check(footprints_overlap(a, e, 1.0) && !footprints_overlap(a, Building{ "house", 0.0, 6.6, 0.5 * PI }, 1.0), "转 90° 的邻居按转后的占地算");
-    check(!footprints_overlap(Building{ "house", 0.0, 0.0, 0.25 * PI }, Building{ "house", 10.0, 0.0, 0.25 * PI }, 1.0) && footprints_overlap(Building{ "house", 0.0, 0.0, 0.25 * PI }, Building{ "house", 8.0, 0.0, 0.25 * PI }, 1.0), "斜着的两座用分离轴判（转 45° 后对角伸出去，8 m 还压着）");
+    check_near(cx[0], 3.25, 1e-9, "转 90° 的左前角 x");
+    check_near(cz[0], 5.5, 1e-9, "转 90° 的左前角 z");
+    check(!footprints_overlap(a, Building{ "house", 12.2, 0.0, 0.0 }, 1.0) && footprints_overlap(a, Building{ "house", 11.8, 0.0, 0.0 }, 1.0), "并排两座：空 1 m 才不算压着");
+    check(footprints_overlap(a, e, 1.0) && !footprints_overlap(a, Building{ "house", 0.0, 9.8, 0.5 * PI }, 1.0), "转 90° 的邻居按转后的占地算");
+    check(!footprints_overlap(Building{ "house", 0.0, 0.0, 0.25 * PI }, Building{ "house", 13.0, 0.0, 0.25 * PI }, 1.0) && footprints_overlap(Building{ "house", 0.0, 0.0, 0.25 * PI }, Building{ "house", 9.0, 0.0, 0.25 * PI }, 1.0), "斜着的两座用分离轴判（都转 45° 后沿进深方向错开就分得开）");
     SettlementLayout pair;
     pair.add(a);
-    pair.add(Building{ "house", 7.2, 0.0, 0.0 });
-    check(settlement_find(pair, 7.2, 0.0) == 1 && settlement_find(pair, 0.0, 0.0) == 0 && settlement_find(pair, 3.6, 0.0) == -1, "点落在哪一座里");
+    pair.add(Building{ "house", 12.2, 0.0, 0.0 });
+    check(settlement_find(pair, 12.2, 0.0) == 1 && settlement_find(pair, 0.0, 0.0) == 0 && settlement_find(pair, 6.0, 0.0) == -1, "点落在哪一座里");
 
     // 勘察
     IslandParams p = river_island_params(0.8);
@@ -810,13 +810,20 @@ void test_settlement() {
     const RiverPoint &rp = f.river[f.river.size() / 2];
     check(survey_site(f, p.dock_apron_m, house, rp.x, rp.z, 0.0, layout, rules).reason == "这是河，盖不了", "河里被拒");
     check(f.yard.present && survey_site(f, p.dock_apron_m, house, f.yard.x, f.yard.z, 0.0, layout, rules).reason == "这是船坞的坪，盖不得", "船坞坪被拒");
-    // 路上：挑一处离停机坪、船坞都够远的路点
+    // 路上：从路的中段（在坡上，两侧都有地）往两头找一处离停机坪、船坞都够远的路点
     int trail_checked = 0;
-    for (const TrailPoint &t : f.trail) {
-        if (std::hypot(t.x - f.dock.x, t.z - f.dock.z) > p.dock_apron_m + rules.dock_margin_m + 8.0 && !f.yard.contains(t.x, t.z, rules.yard_margin_m + 8.0)) {
-            check(survey_site(f, p.dock_apron_m, house, t.x, t.z, 0.0, layout, rules).reason == "压着路了", "路上被拒");
-            trail_checked++;
-            break;
+    const int mid = int(f.trail.size()) / 2;
+    for (int step = 0; step < int(f.trail.size()) && trail_checked == 0; step++) {
+        for (int k : { mid + step, mid - step }) {
+            if (k < 0 || k >= int(f.trail.size()) || trail_checked > 0) {
+                continue;
+            }
+            const TrailPoint &t = f.trail[size_t(k)];
+            if (std::hypot(t.x - f.dock.x, t.z - f.dock.z) > p.dock_apron_m + rules.dock_margin_m + 8.0 && !f.yard.contains(t.x, t.z, rules.yard_margin_m + 8.0)) {
+                const std::string why = survey_site(f, p.dock_apron_m, house, t.x, t.z, 0.0, layout, rules).reason;
+                check(why == "压着路了", "路上被拒（" + why + "）");
+                trail_checked++;
+            }
         }
     }
     check(trail_checked == 1, "路上有一处可以测");

@@ -14,10 +14,10 @@ using namespace godot;
 namespace {
 
 constexpr double ELEVATION_MIN = 0.15, ELEVATION_MAX = 1.45;
-constexpr double DISTANCE_MIN = 8.0, DISTANCE_MAX = 160.0;
+constexpr double DISTANCE_MIN = 10.0, DISTANCE_MAX = 200.0;
 constexpr real_t EDGE_T = 0.12f;
-constexpr real_t PLINTH_MARGIN = 0.4f;
-constexpr real_t ROOF_OVERHANG = 0.5f;
+constexpr real_t PLINTH_MARGIN = 0.6f;
+constexpr real_t ROOF_OVERHANG = 0.9f;
 
 Ref<StandardMaterial3D> make_ghost(const Color &p_color) {
     Ref<StandardMaterial3D> material;
@@ -99,7 +99,7 @@ void BuildOverlay::rebuild_ghost(const BuildingDef &p_def) {
     roof_instance->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
     ghost->add_child(roof_instance);
     // 门的位置画一根竖条，转向时看得出正面朝哪
-    make_box(ghost, "DoorMark", Vector3(1.1f, 2.0f, EDGE_T), Transform3D(Basis(), Vector3(0, 1.0f, 0.5f * d + 0.1f)));
+    make_box(ghost, "DoorMark", Vector3(1.3f, 2.5f, EDGE_T), Transform3D(Basis(), Vector3(0, 1.25f, 0.5f * d + 0.1f)));
     // 占地描边：四条棱，贴地坪
     const real_t hw = 0.5f * w + PLINTH_MARGIN, hd = 0.5f * d + PLINTH_MARGIN;
     make_box(ghost, "EdgeFront", Vector3(2 * hw + EDGE_T, EDGE_T, EDGE_T), Transform3D(Basis(), Vector3(0, 0, hd)))->set_name("Edge0");
@@ -121,7 +121,7 @@ void BuildOverlay::show_at(const Vector3 &p_focus) {
     focus = p_focus;
     orbit_yaw = 0.6;
     orbit_elevation = 0.7;
-    orbit_distance = 30.0;
+    orbit_distance = 40.0;
     place_camera();
 }
 

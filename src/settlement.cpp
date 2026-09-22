@@ -18,9 +18,9 @@ using namespace godot;
 namespace {
 
 const char *GENERATED_META = "settlement_generated";
-constexpr real_t PLINTH_MARGIN = 0.4f; // 台基比墙脚往外多这么多
-constexpr real_t ROOF_OVERHANG = 0.5f; // 出檐
-constexpr real_t DOOR_W = 1.1f, DOOR_H = 2.0f, DOOR_T = 0.12f;
+constexpr real_t PLINTH_MARGIN = 0.6f; // 台基比墙脚往外多这么多
+constexpr real_t ROOF_OVERHANG = 0.9f; // 出檐（檐深是中式房子的样子）
+constexpr real_t DOOR_W = 1.3f, DOOR_H = 2.5f, DOOR_T = 0.12f;
 constexpr double SITE_STEP = 0.5; // find_site 的搜索格
 
 Ref<StandardMaterial3D> make_material(const Color &p_albedo, float p_roughness) {
@@ -185,12 +185,12 @@ void Settlement::build_one(int p_index) {
     roof_instance->set_mesh(prism);
     roof_instance->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(Math_PI / 2)), Vector3(0, wall + 0.5f * roof, 0)));
     root->add_child(roof_instance);
-    add_box("Ridge", Vector3(w + 2 * ROOF_OVERHANG + 0.3f, 0.25f, 0.35f), Vector3(0, wall + roof, 0), mat_roof);
+    add_box("Ridge", Vector3(w + 2 * ROOF_OVERHANG + 0.4f, 0.35f, 0.5f), Vector3(0, wall + roof, 0), mat_roof);
 
     add_box("Door", Vector3(DOOR_W, DOOR_H, DOOR_T), Vector3(0, 0.5f * DOOR_H, 0.5f * d + 0.02f), mat_door);
     if (std::string(def->id) == "tower") {
         // 望楼：顶层一圈栏杆的样子
-        add_box("Rail", Vector3(w + 1.2f, 0.15f, d + 1.2f), Vector3(0, wall - 0.9f, 0), mat_door);
+        add_box("Rail", Vector3(w + 1.6f, 0.2f, d + 1.6f), Vector3(0, wall - 1.2f, 0), mat_door);
     }
 }
 
