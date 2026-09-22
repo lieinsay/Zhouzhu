@@ -38,6 +38,8 @@ target_sources(
     zhouzhu
     PRIVATE
         ${ZHOUZHU_CORE_SOURCES}
+        src/backpack_panel.cpp
+        src/backpack_panel.h
         src/farm.cpp
         src/farm.h
         src/input_actions.cpp

@@ -3,6 +3,7 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/godot.hpp>
 
+#include "backpack_panel.h"
 #include "farm.h"
 #include "island.h"
 #include "player.h"
@@ -20,6 +21,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Player);
     GDREGISTER_CLASS(Ship);
     GDREGISTER_CLASS(Voyage);
+    GDREGISTER_CLASS(BackpackPanel);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {
