@@ -16,16 +16,16 @@ namespace {
 
 const char *GENERATED_META = "shipyard_generated";
 
-constexpr real_t BEAM_LENGTH = 30.0f; // 坞墩梁：够 5 节的船（船头 −12.4 … 船尾 15）
-constexpr real_t BEAM_U = 1.0f; // 梁中心在长轴上的位置（船尾长，往后挪一点）
-constexpr real_t BEAM_SPACING = 1.5f; // 两道梁离船中线各这么远（船体半宽 1.8）
+constexpr real_t BEAM_LENGTH = 42.0f; // 坞墩梁：够 7 格长的船加船头楔
+constexpr real_t BEAM_SPACING = 1.5f; // 两道梁离贴着跳板那一格的船中线各这么远（船体半宽 1.8）
 constexpr real_t BEAM_W = 0.5f;
-constexpr real_t GANTRY_U = 17.0f;
-constexpr real_t GANTRY_HALF_SPAN = 4.2f;
-constexpr real_t GANTRY_H = 9.5f;
+constexpr real_t GANTRY_U = 21.0f;
+constexpr real_t GANTRY_V_SEA = -9.5f; // 门架两根柱在短轴上的位置：坪的海侧边缘与跳板线之内
+constexpr real_t GANTRY_V_LAND = 3.5f;
+constexpr real_t GANTRY_H = 16.0f; // 三层船 9 m + 坞里抬高 3.6 m，帆顶之下
 constexpr real_t GANGWAY_W = 1.6f; // 舷门宽 1.8
 constexpr real_t GANGWAY_T = 0.25f;
-constexpr real_t DECK_HALF_W = 2.5f;
+constexpr real_t CELL_HALF_W = 2.5f;
 
 Ref<StandardMaterial3D> make_material(const Color &p_albedo, float p_roughness) {
     Ref<StandardMaterial3D> material;
@@ -39,7 +39,7 @@ Ref<StandardMaterial3D> make_material(const Color &p_albedo, float p_roughness) 
 
 void Shipyard::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_present"), &Shipyard::is_present);
-    ClassDB::bind_method(D_METHOD("get_cradle_transform"), &Shipyard::get_cradle_transform);
+    ClassDB::bind_method(D_METHOD("get_cradle_contact"), &Shipyard::get_cradle_contact);
     ClassDB::bind_method(D_METHOD("get_gangway_top"), &Shipyard::get_gangway_top);
     ClassDB::bind_method(D_METHOD("get_gangway_foot"), &Shipyard::get_gangway_foot);
     ClassDB::bind_method(D_METHOD("get_bench_position"), &Shipyard::get_bench_position);
@@ -92,7 +92,6 @@ void Shipyard::build() {
     }
     const IslandYard &yard = island->get_field().yard;
     const Vector3 u_axis(real_t(yard.ux), 0, real_t(yard.uz));
-    const Vector3 v_axis(real_t(yard.vx), 0, real_t(yard.vz));
     const Vector3 up(0, 1, 0);
     // 盒子的朝向：x 沿长轴 u；z 取 u × y，与短轴 v 同向或反向都行（盒子对称），但不能是左手系，否则面会翻
     const Basis frame(u_axis, up, u_axis.cross(up));
@@ -123,48 +122,50 @@ void Shipyard::build() {
     };
     auto place = [&](double p_u, double p_v, double p_up) { return Transform3D(frame, yard_point(p_u, p_v, p_up)); };
 
-    // 坞墩梁：托着船体两侧的底（船体底在甲板面之下 2.6 m）
+    // 坞墩梁：托着贴跳板那一格的船体两侧的底（船体底在甲板面之下 2.6 m）
     const real_t beam_h = real_t(CRADLE_LIFT - 2.6);
+    const double ship_v = CONTACT_V - CELL_HALF_W;
     for (int side = -1; side <= 1; side += 2) {
-        add_box(side < 0 ? "KeelBeamA" : "KeelBeamB", Vector3(BEAM_LENGTH, beam_h, BEAM_W), place(BEAM_U, SHIP_V + side * BEAM_SPACING, 0.5 * beam_h), mat_beam, true);
+        add_box(side < 0 ? "KeelBeamA" : "KeelBeamB", Vector3(BEAM_LENGTH, beam_h, BEAM_W), place(0.0, ship_v + side * BEAM_SPACING, 0.5 * beam_h), mat_beam, true);
     }
     // 门架：船首尾两端各一座，跨过船身
     for (int end = -1; end <= 1; end += 2) {
-        for (int side = -1; side <= 1; side += 2) {
-            add_box(vformat("GantryPost%d%d", end, side), Vector3(0.4f, GANTRY_H, 0.4f), place(end * GANTRY_U, SHIP_V + side * GANTRY_HALF_SPAN, 0.5 * GANTRY_H), mat_timber, true);
+        for (real_t v : { GANTRY_V_SEA, GANTRY_V_LAND }) {
+            add_box(vformat("GantryPost%d%s", end, v < 0 ? "S" : "L"), Vector3(0.4f, GANTRY_H, 0.4f), place(end * GANTRY_U, v, 0.5 * GANTRY_H), mat_timber, true);
         }
-        add_box(vformat("GantryBeam%d", end), Vector3(0.4f, 0.4f, 2 * GANTRY_HALF_SPAN + 0.4f), place(end * GANTRY_U, SHIP_V, GANTRY_H + 0.2), mat_timber, false);
+        add_box(vformat("GantryBeam%d", end), Vector3(0.4f, 0.4f, GANTRY_V_LAND - GANTRY_V_SEA + 0.4f), place(end * GANTRY_U, 0.5 * (GANTRY_V_SEA + GANTRY_V_LAND), GANTRY_H + 0.2), mat_timber, false);
     }
 
-    // 跳板：从坪上斜到舷门外的甲板边缘
-    const Vector3 top = yard_point(0.0, SHIP_V + DECK_HALF_W, CRADLE_LIFT);
-    const Vector3 foot = yard_point(0.0, SHIP_V + DECK_HALF_W + GANGWAY_RUN, 0.0);
+    // 跳板：从坪上斜到接触线上的甲板边缘
+    const Vector3 top = yard_point(0.0, CONTACT_V, CRADLE_LIFT);
+    const Vector3 foot = yard_point(0.0, CONTACT_V + GANGWAY_RUN, 0.0);
     const Vector3 downhill = (foot - top).normalized();
     const Vector3 plank_up = downhill.cross(u_axis).normalized();
     const Vector3 plank_up_fixed = plank_up.y >= 0 ? plank_up : -plank_up;
     const Basis plank_frame(u_axis, plank_up_fixed, u_axis.cross(plank_up_fixed));
     add_box("Gangway", Vector3(GANGWAY_W, GANGWAY_T, real_t((foot - top).length())), Transform3D(plank_frame, 0.5f * (top + foot) - plank_up_fixed * (0.5f * GANGWAY_T)), mat_timber, true);
 
-    // 画样台：一张桌子，上面摊着样图
-    add_box("Bench", Vector3(1.6f, 0.9f, 0.8f), place(BENCH_U, BENCH_V + 0.9, 0.45), mat_beam, true);
-    add_box("BenchPaper", Vector3(1.2f, 0.03f, 0.6f), place(BENCH_U, BENCH_V + 0.9, 0.915), mat_paper, false);
+    // 画样台：一张桌子（在站位靠海那一侧，从跳板脚和停机坪走过来都不会撞上），上面摊着样图
+    add_box("Bench", Vector3(1.6f, 0.9f, 0.8f), place(BENCH_U, BENCH_V - 1.4, 0.45), mat_beam, true);
+    add_box("BenchPaper", Vector3(1.2f, 0.03f, 0.6f), place(BENCH_U, BENCH_V - 1.4, 0.915), mat_paper, false);
 }
 
-Transform3D Shipyard::get_cradle_transform() const {
+Transform3D Shipyard::get_cradle_contact() const {
     ERR_FAIL_COND_V(!is_present(), Transform3D());
     const IslandYard &yard = island->get_field().yard;
-    const Vector3 along(real_t(yard.ux), 0, real_t(yard.uz));
-    return get_global_transform() * Transform3D(Basis::looking_at(along, Vector3(0, 1, 0)), yard_point(0.0, SHIP_V, CRADLE_LIFT));
+    const Vector3 toward_gangway(real_t(yard.vx), 0, real_t(yard.vz));
+    const Vector3 up(0, 1, 0);
+    return get_global_transform() * Transform3D(Basis(toward_gangway, up, toward_gangway.cross(up)), yard_point(0.0, CONTACT_V, CRADLE_LIFT));
 }
 
 Vector3 Shipyard::get_gangway_top() const {
     ERR_FAIL_COND_V(!is_present(), Vector3());
-    return get_global_transform().xform(yard_point(0.0, SHIP_V + DECK_HALF_W - 0.3, CRADLE_LIFT));
+    return get_global_transform().xform(yard_point(0.0, CONTACT_V - 0.3, CRADLE_LIFT));
 }
 
 Vector3 Shipyard::get_gangway_foot() const {
     ERR_FAIL_COND_V(!is_present(), Vector3());
-    return get_global_transform().xform(yard_point(0.0, SHIP_V + DECK_HALF_W + GANGWAY_RUN + 0.8, 0.0));
+    return get_global_transform().xform(yard_point(0.0, CONTACT_V + GANGWAY_RUN + 0.8, 0.0));
 }
 
 Vector3 Shipyard::get_bench_position() const {
