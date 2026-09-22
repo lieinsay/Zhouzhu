@@ -46,6 +46,7 @@ void Island::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_spawn_transform"), &Island::get_spawn_transform);
     ClassDB::bind_method(D_METHOD("get_surface_height", "global_position"), &Island::get_surface_height);
     ClassDB::bind_method(D_METHOD("get_trail_points"), &Island::get_trail_points);
+    ClassDB::bind_method(D_METHOD("get_river_points"), &Island::get_river_points);
 
     ClassDB::bind_method(D_METHOD("set_seed", "value"), &Island::set_seed);
     ClassDB::bind_method(D_METHOD("get_seed"), &Island::get_seed);
@@ -255,6 +256,15 @@ PackedVector3Array Island::get_trail_points() const {
     const Transform3D xf = get_global_transform();
     for (const TrailPoint &point : field.trail) {
         points.push_back(xf.xform(Vector3(real_t(point.x), real_t(point.y), real_t(point.z))));
+    }
+    return points;
+}
+
+PackedVector3Array Island::get_river_points() const {
+    PackedVector3Array points;
+    const Transform3D xf = get_global_transform();
+    for (const RiverPoint &point : field.river) {
+        points.push_back(xf.xform(Vector3(real_t(point.x), real_t(point.water), real_t(point.z))));
     }
     return points;
 }

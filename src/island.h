@@ -54,6 +54,8 @@ public:
     double get_surface_height(const godot::Vector3 &p_global) const;
     // 停机坪 → 河滩的路（全局坐标，顺着走的次序）；岛上没有河就没有路，返回空
     godot::PackedVector3Array get_trail_points() const;
+    // 河中线（全局坐标，自源头到河口，点在水面高）；没有河返回空
+    godot::PackedVector3Array get_river_points() const;
 
     // 给同在 C++ 里的上层读（Farm 据此勘察农田）
     const IslandField &get_field() const { return field; }
