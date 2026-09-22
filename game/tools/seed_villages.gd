@@ -59,10 +59,10 @@ func _seed_a(island: Island, settlement: Settlement) -> void:
 	var across := -_flat(end - river[nearest])  # 从路尽头指向对岸
 	var placed := 0
 	for k in [-2, -1, 0, 1, 2]:
-		placed += int(_put(settlement, "house", end + across * 17.0 + along * (k * 11.0), _facing(-across), 9.0))
-	placed += int(_put(settlement, "hall", end + across * 31.0 + along * 2.0, _facing(-across), 14.0))
-	placed += int(_put(settlement, "granary", end + across * 31.0 + along * 16.0, _facing(-along), 12.0))
-	placed += int(_put(settlement, "tower", end + across * 46.0 - along * 10.0, _facing(-across), 20.0))
+		placed += int(_put(settlement, "house", end + across * 20.0 + along * (k * 15.0), _facing(-across), 10.0))
+	placed += int(_put(settlement, "hall", end + across * 38.0 + along * 2.0, _facing(-across), 16.0))
+	placed += int(_put(settlement, "granary", end + across * 38.0 + along * 20.0, _facing(-along), 14.0))
+	placed += int(_put(settlement, "tower", end + across * 56.0 - along * 12.0, _facing(-across), 24.0))
 	print("IslandA：铺了 %d 座 → %s（%s）" % [placed, settlement.layout_path, "已存" if settlement.save() else "没存上"])
 
 
@@ -73,7 +73,7 @@ func _seed_b(island: Island, settlement: Settlement) -> void:
 	var inland := _flat(spawn.basis.z)  # 出生位姿面朝栈桥（岛外），-basis.z 是它看的方向，所以 +basis.z 指向岛内
 	var side := Vector3(-inland.z, 0, inland.x)
 	var placed := 0
-	placed += int(_put(settlement, "house", spawn.origin + inland * 26.0 + side * 8.0, _facing(-inland), 30.0))
-	placed += int(_put(settlement, "house", spawn.origin + inland * 30.0 - side * 9.0, _facing(-inland), 30.0))
-	placed += int(_put(settlement, "tower", spawn.origin + inland * 45.0, _facing(-inland), 40.0))
+	placed += int(_put(settlement, "house", spawn.origin + inland * 30.0 + side * 12.0, _facing(-inland), 36.0))
+	placed += int(_put(settlement, "house", spawn.origin + inland * 34.0 - side * 12.0, _facing(-inland), 36.0))
+	placed += int(_put(settlement, "tower", spawn.origin + inland * 52.0, _facing(-inland), 44.0))
 	print("IslandB：铺了 %d 座 → %s（%s）" % [placed, settlement.layout_path, "已存" if settlement.save() else "没存上"])
