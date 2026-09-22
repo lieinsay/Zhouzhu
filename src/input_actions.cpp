@@ -43,4 +43,9 @@ void input_actions::register_all() {
     bind(KIND_1, { KEY_1, KEY_KP_1 });
     bind(KIND_2, { KEY_2, KEY_KP_2 });
     bind(KIND_3, { KEY_3, KEY_KP_3 });
+    bind(KIND_4, { KEY_4, KEY_KP_4 });
+    bind(BUILD_MODE, { KEY_B, KEY_F1 });
+    bind(ROTATE_LEFT, { KEY_Q });
+    bind(ROTATE_RIGHT, { KEY_R });
+    bind(SAVE, { KEY_F5 });
 }

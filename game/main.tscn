@@ -64,6 +64,9 @@ has_yard = true
 
 [node name="Shipyard" type="Shipyard" parent="IslandA"]
 
+[node name="Settlement" type="Settlement" parent="IslandA"]
+layout_path = "res://settlements/island_a.txt"
+
 [node name="IslandB" type="Island" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1250, 200, -420)
 seed = 2051
@@ -73,6 +76,9 @@ relief_m = 85.0
 axis_deg = 40.0
 dock_bearing_deg = 161.4
 keel_m = 90.0
+
+[node name="Settlement" type="Settlement" parent="IslandB"]
+layout_path = "res://settlements/island_b.txt"
 
 [node name="Ship" parent="." instance=ExtResource("1_ship")]
 

@@ -9,12 +9,15 @@
 #include <godot_cpp/variant/node_path.hpp>
 
 #include "backpack_panel.h"
+#include "build_overlay.h"
+#include "build_panel.h"
 #include "farm.h"
 #include "inventory.h"
 #include "island.h"
 #include "player.h"
 #include "refit_overlay.h"
 #include "refit_panel.h"
+#include "settlement.h"
 #include "ship.h"
 #include "shipyard.h"
 
@@ -23,6 +26,8 @@
 // 切片三：掌舵时靠近船坞按 E 入坞；下船走到画样台按 E 改装；没有动力区的船上不了舵。
 // 拓展：改装在装配视角里做——环绕船的相机（鼠标转），三维格子里挪光标（W/S 前后、A/D 左右、空格/Shift 上下层），
 // 1/2/3 选模块，E 放一节或换类型，X 拆掉，Tab 合上；每改一下船立刻重拼并在坞里重新坐定。
+// 切片四（开发者工具）：步行时按 B 进布置模式——相机绕着地面光标转，WASD 挪光标、Q/R 转向、1-4 选建筑、E 放、X 拆、F5 把清单存回文件、Tab 合上；
+// 改的是玩家所在岛的 Settlement。dev_tools 关掉就没有这个键。
 // 「现在是谁在受控」「手上的活干到哪了」「背包里有什么、手上拿着哪种种子、背包开没开」「改装开没开、光标在哪一格、选了哪种模块」这些状态只在这里：
 // Player、Ship、Farm、Shipyard、BackpackPanel、RefitPanel、RefitOverlay 互不相识，各自只回答自己的事。
 class Voyage : public godot::Node3D {
@@ -48,6 +53,7 @@ private:
     double kill_altitude = -30.0; // 掉到这以下算坠入云海
     double reach = 1.8; // 够得着身前（视线方向）多远的那一格地
     godot::Dictionary starting_pack; // 开局背包：物品 id → 份数
+    bool dev_tools = true; // 开发者工具（布置模式）开不开
 
     State state = ON_FOOT;
     bool moor_to_yard = false; // 正在滑向的是坞位（不是泊位）
@@ -65,6 +71,13 @@ private:
     bool refit_open = false;
     Cell refit_cursor;
     ModuleKind refit_kind = ModuleKind::STORAGE;
+    // 布置（开发者）：开合、改的是哪座岛的聚落、光标（全局，连续移动；放的时候按 0.5 m 格取整）、朝向、选了哪种建筑、光标下已有的那一座
+    bool build_open = false;
+    Settlement *build_target = nullptr;
+    godot::Vector3 build_cursor;
+    double build_yaw = 0.0;
+    int build_kind = 0;
+    int build_selected = -1;
     // 农事：视线前方的那一格、对它能做什么；按住 E 干的活（换格、松手即作废）
     godot::Vector2i target_cell = godot::Vector2i(-1, -1);
     Farm::Action target_action = Farm::ACTION_NONE;
@@ -83,6 +96,8 @@ private:
     BackpackPanel *pack_panel = nullptr;
     RefitPanel *refit_panel = nullptr;
     RefitOverlay *refit_overlay = nullptr;
+    BuildPanel *build_panel = nullptr;
+    BuildOverlay *build_overlay = nullptr;
 
     void build_hud();
     void update_hud();
@@ -97,6 +112,11 @@ private:
     godot::String refit_cursor_status(RefitOverlay::CursorState &r_state) const;
     void refresh_refit_view();
     bool near_bench() const;
+    void set_build_open(bool p_open);
+    void browse_build(double p_delta, bool p_interact);
+    void refresh_build_view();
+    godot::Vector3 build_cursor_snapped() const; // 光标按 0.5 m 格取整、贴地（全局）
+    Settlement *settlement_of(Island *p_island) const; // 岛下面的 Settlement 子节点；没有返回 nullptr
     void interact_at_bench();
     bool has_seed_in_hand() const { return !held_seed.empty() && pack.has(held_seed); }
     void tend_farm(double p_delta, bool p_interact);
@@ -129,6 +149,12 @@ public:
     godot::Vector3i get_refit_cursor() const { return godot::Vector3i(refit_cursor.x, refit_cursor.y, refit_cursor.z); }
     godot::String get_refit_kind() const { return godot::String(modules::def(refit_kind).id); }
     bool is_ship_in_yard() const; // 空艇停在坞位上（改得了）
+    bool is_build_open() const { return build_open; }
+    godot::Vector3 get_build_cursor() const; // 取整后的光标（全局）；没开返回零
+    godot::String get_build_kind() const { return godot::String(buildings::at(build_kind).id); }
+    int get_build_selected() const { return build_selected; }
+    double get_build_yaw_deg() const;
+    double get_build_camera_yaw() const; // 布置视角的相机方位：W 把光标往 (−sin, 0, −cos) 挪
     godot::String get_notice() const { return notice_time > 0.0 ? notice : godot::String(); }
     godot::String get_held_seed() const; // 手上拿着的种子（物品 id）；没拿返回空串
     int get_item_count(const godot::String &p_item) const;
@@ -158,6 +184,8 @@ public:
     double get_reach() const { return reach; }
     void set_starting_pack(const godot::Dictionary &p_value) { starting_pack = p_value; }
     godot::Dictionary get_starting_pack() const { return starting_pack; }
+    void set_dev_tools(bool p_value) { dev_tools = p_value; }
+    bool get_dev_tools() const { return dev_tools; }
 };
 
 VARIANT_ENUM_CAST(Voyage::State);

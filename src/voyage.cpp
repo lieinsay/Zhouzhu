@@ -24,6 +24,11 @@ namespace {
 constexpr double RECALL_DISTANCE = 60.0; // 坠落回位时，船离得比这远就把它召回最近的码头
 constexpr double IN_YARD_TOLERANCE = 0.5; // 船舷离坞位接触线这么近就算停在坞里
 constexpr double REFIT_MOUSE_SENSITIVITY = 0.004;
+constexpr double BUILD_CURSOR_SPEED = 8.0; // m/s；按住 Shift 三倍
+constexpr double BUILD_CURSOR_SPRINT = 3.0;
+constexpr double BUILD_SNAP = 0.5; // 放建筑时坐标取整到这么细
+constexpr double BUILD_YAW_STEP = 15.0; // 度
+constexpr double BUILD_ZOOM_STEP = 0.85;
 constexpr double NOTICE_SECONDS = 2.5;
 constexpr int PROGRESS_CELLS = 8;
 
@@ -99,6 +104,12 @@ void Voyage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_refit_cursor"), &Voyage::get_refit_cursor);
     ClassDB::bind_method(D_METHOD("get_refit_kind"), &Voyage::get_refit_kind);
     ClassDB::bind_method(D_METHOD("is_ship_in_yard"), &Voyage::is_ship_in_yard);
+    ClassDB::bind_method(D_METHOD("is_build_open"), &Voyage::is_build_open);
+    ClassDB::bind_method(D_METHOD("get_build_cursor"), &Voyage::get_build_cursor);
+    ClassDB::bind_method(D_METHOD("get_build_kind"), &Voyage::get_build_kind);
+    ClassDB::bind_method(D_METHOD("get_build_selected"), &Voyage::get_build_selected);
+    ClassDB::bind_method(D_METHOD("get_build_yaw_deg"), &Voyage::get_build_yaw_deg);
+    ClassDB::bind_method(D_METHOD("get_build_camera_yaw"), &Voyage::get_build_camera_yaw);
     ClassDB::bind_method(D_METHOD("get_notice"), &Voyage::get_notice);
 
     ClassDB::bind_method(D_METHOD("set_origin_island_path", "path"), &Voyage::set_origin_island_path);
@@ -125,6 +136,8 @@ void Voyage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_reach"), &Voyage::get_reach);
     ClassDB::bind_method(D_METHOD("set_starting_pack", "value"), &Voyage::set_starting_pack);
     ClassDB::bind_method(D_METHOD("get_starting_pack"), &Voyage::get_starting_pack);
+    ClassDB::bind_method(D_METHOD("set_dev_tools", "value"), &Voyage::set_dev_tools);
+    ClassDB::bind_method(D_METHOD("get_dev_tools"), &Voyage::get_dev_tools);
 
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "origin_island", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Island"), "set_origin_island_path", "get_origin_island_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "destination_island", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Island"), "set_destination_island_path", "get_destination_island_path");
@@ -138,6 +151,7 @@ void Voyage::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "kill_altitude", PROPERTY_HINT_RANGE, "-500,500,1,suffix:m"), "set_kill_altitude", "get_kill_altitude");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "reach", PROPERTY_HINT_RANGE, "0.5,4,0.1,suffix:m"), "set_reach", "get_reach");
     ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "starting_pack"), "set_starting_pack", "get_starting_pack");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "dev_tools"), "set_dev_tools", "get_dev_tools");
 
     ADD_SIGNAL(MethodInfo("arrived"));
     ADD_SIGNAL(MethodInfo("farm_worked", PropertyInfo(Variant::VECTOR2I, "cell"), PropertyInfo(Variant::INT, "action")));
@@ -229,6 +243,21 @@ void Voyage::build_hud() {
     refit_overlay->set_name("RefitOverlay");
     refit_overlay->set_visible(false);
     add_child(refit_overlay);
+
+    build_panel = memnew(BuildPanel);
+    build_panel->set_name("Build");
+    build_panel->set_anchors_preset(Control::PRESET_TOP_RIGHT);
+    build_panel->set_h_grow_direction(Control::GROW_DIRECTION_BEGIN);
+    build_panel->set_v_grow_direction(Control::GROW_DIRECTION_END);
+    build_panel->set_offset(SIDE_RIGHT, -24);
+    build_panel->set_offset(SIDE_TOP, 18);
+    build_panel->set_visible(false);
+    layer->add_child(build_panel);
+
+    build_overlay = memnew(BuildOverlay);
+    build_overlay->set_name("BuildOverlay");
+    build_overlay->set_visible(false);
+    add_child(build_overlay);
 }
 
 String Voyage::get_held_seed() const {
@@ -261,6 +290,25 @@ void Voyage::_unhandled_input(const Ref<InputEvent> &p_event) {
             return;
         }
     }
+    if (build_open && input->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED) {
+        const Ref<InputEventMouseMotion> motion = p_event;
+        if (motion.is_valid()) {
+            const Vector2 rel = motion->get_relative();
+            build_overlay->orbit(-rel.x * REFIT_MOUSE_SENSITIVITY, rel.y * REFIT_MOUSE_SENSITIVITY);
+            return;
+        }
+        const Ref<InputEventMouseButton> wheel = p_event;
+        if (wheel.is_valid() && wheel->is_pressed()) {
+            if (wheel->get_button_index() == MOUSE_BUTTON_WHEEL_UP) {
+                build_overlay->zoom(BUILD_ZOOM_STEP);
+                return;
+            }
+            if (wheel->get_button_index() == MOUSE_BUTTON_WHEEL_DOWN) {
+                build_overlay->zoom(1.0 / BUILD_ZOOM_STEP);
+                return;
+            }
+        }
+    }
     const Ref<InputEventMouseButton> click = p_event;
     if (click.is_valid() && click->is_pressed() && input->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED) {
         input->set_mouse_mode(Input::MOUSE_MODE_CAPTURED);
@@ -276,12 +324,19 @@ void Voyage::_physics_process(double p_delta) {
             if (Input::get_singleton()->is_action_just_pressed(input_actions::INVENTORY)) {
                 if (refit_open) {
                     set_refit_open(false); // Tab 先合上开着的那个
+                } else if (build_open) {
+                    set_build_open(false);
                 } else {
                     set_pack_open(!pack_open);
                 }
             }
+            if (dev_tools && Input::get_singleton()->is_action_just_pressed(input_actions::BUILD_MODE)) {
+                set_build_open(!build_open);
+            }
             if (refit_open) {
                 browse_refit(interact); // 开着改装面板：E 是加一节
+            } else if (build_open) {
+                browse_build(p_delta, interact); // 开着布置模式：E 是放一座
             } else if (pack_open) {
                 browse_pack(interact); // 开着背包：E 是拿东西，不是上舵、不是干活
             } else if (interact && near_bench()) {
@@ -335,6 +390,7 @@ void Voyage::_physics_process(double p_delta) {
 void Voyage::board() {
     set_pack_open(false);
     set_refit_open(false);
+    set_build_open(false);
     drop_work();
     target_cell = Farm::NO_CELL;
     target_action = Farm::ACTION_NONE;
@@ -423,6 +479,7 @@ void Voyage::set_refit_open(bool p_open) {
         return;
     }
     set_pack_open(false);
+    set_build_open(false);
     drop_work();
     target_cell = Farm::NO_CELL;
     target_action = Farm::ACTION_NONE;
@@ -531,6 +588,170 @@ void Voyage::browse_refit(bool p_interact) {
         ship->place_at(shipyard->get_cradle_contact(), true); // 船身变了，舷门还得贴着跳板
         say(done);
     }
+}
+
+Settlement *Voyage::settlement_of(Island *p_island) const {
+    if (!p_island) {
+        return nullptr;
+    }
+    const TypedArray<Node> children = p_island->get_children();
+    for (int64_t k = 0; k < children.size(); k++) {
+        Settlement *settlement = Object::cast_to<Settlement>(children[k]);
+        if (settlement) {
+            return settlement;
+        }
+    }
+    return nullptr;
+}
+
+// 开合布置模式（开发者）。开着的时候人站住、相机绕着光标转；改的是脚下这座岛的 Settlement，岛上没挂就开不了
+void Voyage::set_build_open(bool p_open) {
+    if (build_open == p_open) {
+        return;
+    }
+    if (!p_open) {
+        build_open = false;
+        build_target = nullptr;
+        build_selected = -1;
+        player->set_input_blocked(false);
+        build_panel->set_visible(false);
+        build_overlay->set_visible(false);
+        player->get_camera()->make_current();
+        return;
+    }
+    Settlement *target = settlement_of(nearest_island(player->get_global_position()));
+    if (!target) {
+        say(String(U"这座岛上没有 Settlement 节点：在 Island 下面挂一个再来布置"));
+        return;
+    }
+    set_pack_open(false);
+    set_refit_open(false);
+    drop_work();
+    target_cell = Farm::NO_CELL;
+    target_action = Farm::ACTION_NONE;
+    if (farm) {
+        farm->set_highlight(Farm::NO_CELL, Color());
+    }
+    build_open = true;
+    build_target = target;
+    build_cursor = player->get_global_position();
+    build_yaw = 0.0;
+    build_kind = 0;
+    build_selected = -1;
+    player->set_input_blocked(true);
+    build_panel->set_visible(true);
+    build_overlay->set_visible(true);
+    build_overlay->show_at(build_cursor_snapped());
+    build_overlay->get_camera()->make_current();
+    refresh_build_view();
+}
+
+Vector3 Voyage::build_cursor_snapped() const {
+    Island *island = build_target ? build_target->get_island() : nullptr;
+    if (!island) {
+        return build_cursor;
+    }
+    const Transform3D xf = island->get_global_transform();
+    Vector3 local = xf.affine_inverse().xform(build_cursor);
+    local.x = real_t(std::round(local.x / BUILD_SNAP) * BUILD_SNAP);
+    local.z = real_t(std::round(local.z / BUILD_SNAP) * BUILD_SNAP);
+    Vector3 snapped = xf.xform(local);
+    const double ground = island->get_surface_height(snapped);
+    if (!std::isnan(ground)) {
+        snapped.y = real_t(ground);
+    }
+    return snapped;
+}
+
+Vector3 Voyage::get_build_cursor() const {
+    return build_open ? build_cursor_snapped() : Vector3();
+}
+
+double Voyage::get_build_yaw_deg() const {
+    return Math::rad_to_deg(build_yaw);
+}
+
+double Voyage::get_build_camera_yaw() const {
+    return build_overlay ? build_overlay->get_camera_yaw() : 0.0;
+}
+
+// 布置：WASD 相对相机挪光标（Shift 快），Q/R 转向，1-4 选建筑，E 放一座，X 拆掉光标下的那座，F5 存盘。
+// 光标贴着地面走；放的时候坐标取整到 0.5 m。规矩在 settlement_model 里，这里只转述原因
+void Voyage::browse_build(double p_delta, bool p_interact) {
+    Input *input = Input::get_singleton();
+    auto pressed = [input](const char *p_action) { return input->is_action_just_pressed(p_action); };
+    Island *island = build_target->get_island();
+
+    const double fb = double(input->is_action_pressed(input_actions::MOVE_FORWARD)) - double(input->is_action_pressed(input_actions::MOVE_BACK));
+    const double lr = double(input->is_action_pressed(input_actions::MOVE_RIGHT)) - double(input->is_action_pressed(input_actions::MOVE_LEFT));
+    if (fb != 0.0 || lr != 0.0) {
+        const Vector3 dir = (build_overlay->get_forward() * real_t(fb) + build_overlay->get_right() * real_t(lr)).normalized();
+        const double speed = BUILD_CURSOR_SPEED * (input->is_action_pressed(input_actions::SPRINT) ? BUILD_CURSOR_SPRINT : 1.0);
+        build_cursor += dir * real_t(speed * p_delta);
+        const double ground = island->get_surface_height(build_cursor);
+        if (!std::isnan(ground)) {
+            build_cursor.y = real_t(ground);
+        }
+    }
+    build_yaw += Math::deg_to_rad(BUILD_YAW_STEP) * (double(pressed(input_actions::ROTATE_RIGHT)) - double(pressed(input_actions::ROTATE_LEFT)));
+    build_yaw = std::fmod(build_yaw + 4.0 * Math_PI, 2.0 * Math_PI);
+    const char *kind_keys[4] = { input_actions::KIND_1, input_actions::KIND_2, input_actions::KIND_3, input_actions::KIND_4 };
+    for (int k = 0; k < 4 && k < buildings::COUNT; k++) {
+        if (pressed(kind_keys[k])) {
+            build_kind = k;
+        }
+    }
+
+    const Vector3 spot = build_cursor_snapped();
+    build_selected = build_target->find_at(spot);
+    const BuildingDef &def = buildings::at(build_kind);
+    if (pressed(input_actions::REMOVE)) {
+        if (build_selected >= 0) {
+            const String name = String::utf8(buildings::by_id(to_std(build_target->get_building_kind(build_selected)))->name);
+            build_target->remove(build_selected);
+            build_selected = -1;
+            say(String(U"拆掉了一座") + name);
+        } else {
+            say(String(U"光标下没有建筑"));
+        }
+    } else if (p_interact) {
+        if (build_selected >= 0) {
+            say(String(U"这里已经有") + String::utf8(buildings::by_id(to_std(build_target->get_building_kind(build_selected)))->name) + String(U"了：X 拆掉再放"));
+        } else {
+            const String reason = build_target->place(String(def.id), spot, build_yaw);
+            say(reason.is_empty() ? String(U"放了一座") + String::utf8(def.name) : reason);
+        }
+    }
+    if (pressed(input_actions::SAVE)) {
+        if (build_target->save()) {
+            say(String(U"已存到 ") + build_target->get_layout_path());
+        } else {
+            say(String(U"没设 layout_path，存不了：在 Settlement 节点上填一个 res:// 路径"));
+        }
+    }
+}
+
+// 每帧把光标、幽灵与面板刷一遍：光标下有建筑就描它（白），没有就按能不能盖画幽灵（绿 / 红）
+void Voyage::refresh_build_view() {
+    const Vector3 spot = build_cursor_snapped();
+    Island *island = build_target->get_island();
+    const Vector3 local = island->get_global_transform().affine_inverse().xform(spot);
+    String status;
+    bool ok = false;
+    if (build_selected >= 0) {
+        const BuildingDef *here = buildings::by_id(to_std(build_target->get_building_kind(build_selected)));
+        status = String(U"这里是") + String::utf8(here->name) + String(U" · X 拆掉");
+        ok = true;
+        build_overlay->refresh(spot, *here, build_target->get_building_transform(build_selected), BuildOverlay::GHOST_SELECTED);
+    } else {
+        const BuildingDef &def = buildings::at(build_kind);
+        Transform3D ghost;
+        const SiteReport report = build_target->survey_site_global(def, spot, build_yaw, ghost);
+        ok = report.ok();
+        status = ok ? String(U"空地：E 放一座") + String::utf8(def.name) : String::utf8(report.reason.c_str());
+        build_overlay->refresh(spot, def, ghost, ok ? BuildOverlay::GHOST_CAN_PLACE : BuildOverlay::GHOST_CANNOT_PLACE);
+    }
+    build_panel->refresh(island->get_name(), local, get_build_yaw_deg(), status, ok, build_kind, build_target->get_count(), build_target->get_layout_path(), build_target->is_dirty());
 }
 
 // 翻背包：W/S 挪光标，E 把光标那样种子拿在手上（再按一次放下）。
@@ -752,6 +973,12 @@ void Voyage::update_hud() {
             if (refit_open) {
                 refresh_refit_view();
                 prompt = String(U"W/S 前后 · A/D 左右 · 空格/Shift 上下 · 1/2/3 选模块 · E 放/换 · X 拆 · Tab 合上");
+                break;
+            }
+            if (build_open) {
+                refresh_build_view();
+                status = String(U"开发者布置模式 · ") + build_target->get_island()->get_name();
+                prompt = String(U"WASD 挪光标 · Q/R 转向 · 1-4 选建筑 · E 放 · X 拆 · F5 存盘 · Tab 合上");
                 break;
             }
             if (near_bench()) {
