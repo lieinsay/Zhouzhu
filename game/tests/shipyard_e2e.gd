@@ -65,7 +65,8 @@ func _ready() -> void:
 		_finish(false, "开局船不该在坞里")
 		return
 	speed_before_refit = ship.get_max_speed()
-	waypoints = [yard.get_bench_position()]
+	# 从停机坪过来先走坪的岛内一侧（坞墩块横在坪上，正对着推会顶住），再折到画样台
+	waypoints = [yard.get_bench_position() + _cradle().basis.x * 6.0, yard.get_bench_position()]
 	print("shipyard_e2e: 出生点 %s，泊位接触线 %s，坞位接触线 %s（相距 %.0f m），画样台 %s，跳板 %s → %s，开局航速 %.1f m/s" % [
 		player.global_position, _berth().origin, _cradle().origin, _berth().origin.distance_to(_cradle().origin),
 		yard.get_bench_position(), yard.get_gangway_top(), yard.get_gangway_foot(), speed_before_refit])
@@ -94,7 +95,7 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "该提示船坞里没有船，实为「%s」" % main.get_notice())
 				else:
 					# 先回到栈桥正后方再上桥：从船坞直奔桥头会从岸崖边上走下去
-					waypoints = [origin.get_spawn_transform().origin, origin.get_pier_end_position(), ship.global_position]
+					waypoints = [yard.get_bench_position() + _cradle().basis.x * 6.0, origin.get_spawn_transform().origin, origin.get_pier_end_position(), ship.global_position]
 					_enter(Phase.WALK_TO_SHIP)
 		Phase.WALK_TO_SHIP:
 			if _follow_waypoints(0.6):

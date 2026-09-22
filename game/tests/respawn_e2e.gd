@@ -46,7 +46,8 @@ func _physics_process(delta: float) -> void:
 		var ground := origin.get_surface_height(player.global_position)
 		var on_island := not is_nan(ground) and absf(player.global_position.y - ground) < 1.0
 		var ship_home := ship.is_at(berth, 0.1)
-		var near_dock := player.global_position.distance_to(origin.get_pier_end_position()) < 30.0
+		# 回到的是最后一次踩在岛上的地方（栈桥下没有地面，不算）：该在停机坪上、出生点附近；栈桥多长不关它的事
+		var near_dock := player.global_position.distance_to(origin.get_spawn_transform().origin) < 30.0
 		if on_island and ship_home and near_dock:
 			_finish(true, "回到岛上，空艇已召回泊位")
 		else:

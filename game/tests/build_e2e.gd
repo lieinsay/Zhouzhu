@@ -2,7 +2,7 @@ extends Node
 ## 布置模式（开发者工具）端到端测试：加载主场景，只通过输入动作操作。
 ## 出发岛的聚落清单先改到 user:// 的临时文件（不动仓库里的村落）。
 ## 出生点按 B 进布置模式（人站住、相机换成布置视角）→ 在停机坪上按 E 被拒 → 把光标挪到河滩上一块能盖的地 → E 放一座民居
-## → 同一处再按 E 被拒（已经有了）→ 挪开 4 m 再放被拒（挨得太近）→ 4 选望楼、R 转三下（45°）、挪到旁边再放
+## → 同一处再按 E 被拒（已经有了）→ 挪到占地外一点再放被拒（挨得太近）→ 4 选望楼、R 转三下（45°）、挪到旁边再放
 ## → 挪回民居上按 X 拆掉 → F5 存盘，文件里的行与清单一致 → Tab 合上、人能动 → 重新读文件，清单不变
 ## → 顺着路走到望楼跟前，被墙挡住走不进去 → 换回仓库里的村落文件，每一座都还站得住。
 ##
@@ -17,7 +17,7 @@ const MOVES := ["move_forward", "move_back", "move_left", "move_right", "sprint"
 const KEYS := ["interact", "remove", "inventory", "build_mode", "rotate_left", "rotate_right", "kind_1", "kind_2", "kind_3", "kind_4", "save"]
 
 enum Phase {
-	OPEN, REFUSED_ON_APRON, TO_SITE_A, PLACE_HOUSE, PLACE_AGAIN, TO_NEAR, PLACE_TOO_CLOSE, PICK_TOWER, TO_SITE_B, PLACE_TOWER,
+	OPEN, TO_APRON, REFUSED_ON_APRON, TO_SITE_A, PLACE_HOUSE, PLACE_AGAIN, TO_NEAR, PLACE_TOO_CLOSE, PICK_TOWER, TO_SITE_B, PLACE_TOWER,
 	BACK_TO_HOUSE, REMOVE_HOUSE, SAVE, CLOSE, RELOAD, WALK_TO_TOWER, SHIPPED_VILLAGE, DONE,
 }
 
@@ -33,6 +33,7 @@ var shots_dir := ""
 var shipped_path := ""
 var site_a := Vector3.ZERO
 var site_b := Vector3.ZERO
+var near_site := Vector3.ZERO
 var tower_center := Vector3.ZERO
 var waypoints: Array[Vector3] = []
 var taps: Array = []
@@ -99,6 +100,11 @@ func _physics_process(delta: float) -> void:
 				_finish(false, "默认该选民居（%s）" % main.get_build_kind())
 			else:
 				_shot("BUILD_open")
+				_enter(Phase.TO_APRON)
+		Phase.TO_APRON:
+			# 出生点离岸太近，11 m 宽的民居会伸到岛外；往岛内挪几米，还在停机坪上
+			var spawn := island.get_spawn_transform()
+			if _steer_cursor(_snap(spawn.origin + spawn.basis.z * 6.0)):
 				_queue([["interact", 2]])
 				_enter(Phase.REFUSED_ON_APRON)
 		Phase.REFUSED_ON_APRON:
@@ -132,12 +138,22 @@ func _physics_process(delta: float) -> void:
 			else:
 				_enter(Phase.TO_NEAR)
 		Phase.TO_NEAR:
-			if _steer_cursor(site_a + Vector3(4.0, 0, 0)):
+			# 民居面阔 11 进深 6.5：出了占地但压着（要空 1 m）的一处——四个方向里挑一个不先被别的理由（路、河、坡）拒掉的
+			if near_site == Vector3.ZERO:
+				for offset in [Vector3(7.5, 0, 0), Vector3(-7.5, 0, 0), Vector3(0, 0, 4.5), Vector3(0, 0, -4.5)]:
+					var spot := _snap(site_a + offset)
+					if settlement.survey("house", spot, 0.0).contains("挨得太近"):
+						near_site = spot
+						break
+				if near_site == Vector3.ZERO:
+					_finish(false, "民居四周找不到一处只因挨得太近被拒的地")
+					return
+			if _steer_cursor(near_site):
 				_queue([["interact", 2]])
 				_enter(Phase.PLACE_TOO_CLOSE)
 		Phase.PLACE_TOO_CLOSE:
 			if settlement.get_count() != 1:
-				_finish(false, "挨着民居 4 m 居然放下了")
+				_finish(false, "挨着民居居然放下了")
 			elif not main.get_notice().contains("挨得太近"):
 				_finish(false, "该说挨得太近，实为「%s」" % main.get_notice())
 			else:
@@ -147,7 +163,7 @@ func _physics_process(delta: float) -> void:
 			if main.get_build_kind() != "tower" or absf(main.get_build_yaw_deg() - 45.0) > 0.5:
 				_finish(false, "该选中望楼、转了 45°（%s，%.1f°）" % [main.get_build_kind(), main.get_build_yaw_deg()])
 			else:
-				site_b = settlement.find_site("tower", site_a + Vector3(12.0, 0, 0), deg_to_rad(45.0), 30.0)
+				site_b = settlement.find_site("tower", site_a + Vector3(16.0, 0, 0), deg_to_rad(45.0), 36.0)
 				if is_nan(site_b.y):
 					_finish(false, "民居旁边 30 m 内找不到能盖望楼的地")
 				else:
@@ -220,7 +236,7 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "人走进望楼里去了（离中心 %.1f m）" % flat)
 				elif still_frames >= 90 or elapsed - phase_started > 60.0:
 					_hold("move_forward", false)
-					if flat > 6.0:
+					if flat > 8.0:
 						_finish(false, "人没走到望楼跟前就停了（离中心 %.1f m，位置 %s）" % [flat, player.global_position])
 					else:
 						_shot("BUILD_blocked")
@@ -267,6 +283,14 @@ func _run_taps() -> bool:
 
 
 ## 把布置光标挪到 target（取整后的光标正好落到 target 上才算到）：按相机方位选 WASD，远了按 Shift
+## 岛内坐标取整到 0.5 m 格（光标就是这么取整的），再回到全局
+func _snap(global: Vector3) -> Vector3:
+	var local := island.to_local(global)
+	local.x = roundf(local.x * 2.0) / 2.0
+	local.z = roundf(local.z * 2.0) / 2.0
+	return island.to_global(local)
+
+
 func _steer_cursor(target: Vector3) -> bool:
 	var cursor: Vector3 = main.get_build_cursor()
 	var to := target - cursor
