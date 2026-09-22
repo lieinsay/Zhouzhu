@@ -30,9 +30,9 @@
     {
       "id": "voyage",
       "label": "Voyage 编排",
-      "detail": "主场景唯一的编排者。切片一：谁在受控（角色/空艇）、上舵、靠泊、坠落回位。切片二：步行时盯着视线前方 1.8 m 的那一格，按下 E 起工、按住累计工时（开垦 1.5 s / 播种 0.6 s / 收获 0.8 s），换格或松手作废；粟的数量、HUD 提示与拒绝原因都在这里。Player、Ship、Farm 互不相识。",
+      "detail": "主场景唯一的编排者。切片一：谁在受控（角色/空艇）、上舵、靠泊、坠落回位。切片二：步行时盯着视线前方 1.8 m 的那一格，按下 E 起工、按住累计工时（开垦 1.5 s / 播种 0.6 s / 收获 0.8 s），换格或松手作废。拓展：背包、手上拿着的种子、面板开合与光标也在这里（voyage-pack）；播种从背包扣种子、收获按地里的作物把产物放进背包。Player、Ship、Farm、BackpackPanel 互不相识。",
       "tag": "切片编排（状态在此）",
-      "evidence": "voyage_e2e PASS（上舵/靠泊/离舵/抵达判定）+ respawn_e2e PASS（坠至 y=-31 后回到岛上着地，600 m 外的空艇被召回泊位）；HUD 中文截图正常",
+      "evidence": "farm_e2e PASS：无种子按 E 3 s 不动；Tab/S/E/Tab 后手持菽；播种菽 3→2；收获菽→5、粟仍 5；voyage/respawn e2e 无回归",
       "sources": [
         "src/voyage.h",
         "src/voyage.cpp"
@@ -54,7 +54,7 @@
     {
       "id": "player",
       "label": "Player 角色",
-      "detail": "CharacterBody3D，第三人称弹簧臂相机。相对相机朝向的 WASD、跳、疾跑、重力。set_controlled(false) 时停输入停物理（入座用）。不知道飞船的存在。",
+      "detail": "CharacterBody3D，第三人称弹簧臂相机。相对相机朝向的 WASD、跳、疾跑、重力。set_controlled(false) 时停输入停物理（入座用）；set_input_blocked(true) 只挡输入（开着背包时），物理照常。不知道飞船的存在。",
       "tag": "场景角色",
       "evidence": "e2e：出生点→栈桥→甲板 4.8 s，下船→对岸停机坪 3.5 s，全程着地；鼠标视角与跳跃未自动化验证",
       "sources": [
@@ -92,7 +92,7 @@
     {
       "id": "input-map",
       "label": "输入动作表",
-      "detail": "启动时用 InputMap 注册动作（移动 / 跳 / 疾跑 / 交互 / 升降），不写进 project.godot。测试经同一层动作驱动。",
+      "detail": "启动时用 InputMap 注册动作（移动 / 跳 / 疾跑 / 交互 / 升降 / 背包 Tab·I），不写进 project.godot。测试经同一层动作驱动。",
       "tag": "引擎构件",
       "evidence": "e2e 全程只经 Input.action_press 这一层动作驱动并通过（移动/升降/转舵/交互）",
       "sources": [
@@ -168,9 +168,9 @@
     {
       "id": "farm-model",
       "label": "农田模型",
-      "detail": "地块 = 高度场的格子（2.5 m）。勘察：每格可否开垦及原因（没地面/在水里/离河太远/太陡/停机坪/路上）与墒情。地块状态机 荒地→已垦→生长→成熟→（收获）已垦；生长速度随墒情；播种耗 1 粟、收获得 4。谁在干活、粟有多少不归它管。",
+      "detail": "地块 = 高度场的格子（2.5 m）。勘察：每格可否开垦及原因与墒情。地块状态机 荒地→已垦→生长→成熟→（收获）已垦，地块记着种的作物；till / sow(crop) / harvest → {产物, 数量}；生长期 = 基准 × 作物倍率 ÷ 墒情速率。谁在干活、背包里有什么不归它管。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "zhouzhu_core_tests：勘察与状态机全过（河边先熟、种一收多）",
+      "evidence": "zhouzhu_core_tests farm_model：菽生长期 = 粟 × 1.5，收下来是菽；203 项 0 失败",
       "sources": [
         "src/farm_model.h",
         "src/farm_model.cpp"
@@ -180,9 +180,9 @@
     {
       "id": "farm-node",
       "label": "Farm 农田",
-      "detail": "挂在 Island 下面，岛 rebuilt 后重新勘察；持有该岛的地块表并推进生长，把地块画出来（垄 + 四个阶段的粟苗，几何体占位）和目标格描边；对上回答「这一格是什么、能做什么」并执行开垦/播种/收获。",
+      "detail": "挂在 Island 下面，岛 rebuilt 后重新勘察；持有该岛的地块表并推进生长，把地块画出来（垄 + 作物苗，粟与菽画法不同）和目标格描边；对上回答「这一格是什么、种的什么、能做什么」，perform(cell, action, crop) 执行开垦/播种/收获并报出收了几份。",
       "tag": "场景角色",
-      "evidence": "farm_e2e PASS；开窗截图目视四个生长阶段",
+      "evidence": "farm_e2e PASS；开窗截图目视粟苗四阶段与菽的成熟形态",
       "sources": [
         "src/farm.h",
         "src/farm.cpp"
@@ -200,6 +200,57 @@
         "game/tests/farm_e2e.tscn"
       ],
       "since": "e2"
+    },
+    {
+      "id": "voyage-pack",
+      "label": "背包与手持种子",
+      "detail": "Voyage 里的背包状态：Inventory、手上拿着的种子（物品 id）、面板开合与光标。Tab 开合；开着时挡住 Player 输入、不种地，W/S 挪光标，E 把种子拿在手上（再按放下，不是种子会说明）。开局物品来自 starting_pack 属性。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "farm_e2e PASS：只经 inventory / move_back / interact 动作选到菽",
+      "sources": [
+        "src/voyage.h",
+        "src/voyage.cpp"
+      ],
+      "since": "e3",
+      "parent": "voyage"
+    },
+    {
+      "id": "inventory",
+      "label": "背包模型",
+      "detail": "物品 id → 数量的堆栈表，保留放入顺序，归零即移除；add / remove（不够则失败且不动）/ count。不含 Godot 头，不认识物品是什么。",
+      "tag": "原语",
+      "evidence": "zhouzhu_core_tests inventory：叠堆 / 顺序 / 不够不动 / 拿光即除，全过",
+      "sources": [
+        "src/inventory.h",
+        "src/inventory.cpp",
+        "tests/core_tests.cpp"
+      ],
+      "since": "e3"
+    },
+    {
+      "id": "crops",
+      "label": "物品与作物表",
+      "detail": "静态表：物品（id、中文名）与作物（种子物品、产物物品、生长期倍率、单产）。粟：种粟得粟 ×4；菽：种菽得菽 ×3、生长期 1.5 倍。crop_of_seed 把手上的物品映射成作物。不含 Godot 头。",
+      "tag": "原语",
+      "evidence": "zhouzhu_core_tests crops：种子与产物都在物品表、种一收多、由种子查回作物，全过",
+      "sources": [
+        "src/crops.h",
+        "src/crops.cpp",
+        "tests/core_tests.cpp"
+      ],
+      "since": "e3"
+    },
+    {
+      "id": "backpack-panel",
+      "label": "BackpackPanel 背包面板",
+      "detail": "只负责画：给它背包内容、光标位置与手持物品，列出「名字 ×数量」，种子标出来、手持的标「手持」、光标那行描亮。自己不存状态、不读输入。",
+      "tag": "引擎构件",
+      "evidence": "开窗截图：面板在右上，粟 / 菽两行，光标与「种子 · 手持」标记正确",
+      "sources": [
+        "src/backpack_panel.h",
+        "src/backpack_panel.cpp"
+      ],
+      "since": "e3"
     }
   ],
   "edges": [
@@ -375,6 +426,86 @@
       "chains": [
         "farming"
       ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "inventory",
+      "label": "扣种子 / 进收成",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "crops",
+      "label": "手上物品 → 作物",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "backpack-panel",
+      "label": "内容 / 光标 / 手持",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "player",
+      "label": "开包时挡输入",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "input-map",
+      "label": "inventory 动作",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "farm-node",
+      "label": "播种(作物) / 收获",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "backpack-panel",
+      "to": "inventory",
+      "label": "堆栈表",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "backpack-panel",
+      "to": "crops",
+      "label": "名字 / 是否种子",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "farm-model",
+      "to": "crops",
+      "label": "生长倍率 / 产物 / 单产",
+      "chains": [
+        "farming"
+      ]
+    },
+    {
+      "from": "farm-node",
+      "to": "crops",
+      "label": "按作物挑画法",
+      "chains": [
+        "farming"
+      ]
     }
   ],
   "chains": [
@@ -467,7 +598,7 @@
     {
       "id": "farming",
       "title": "切片二：在河边开垦、播种、收获",
-      "story": "玩家操作角色下了码头，顺着土路走上河滩，在河边按住 E 把荒地垦成田、种下粟，等它长熟后收回更多的粟。",
+      "story": "玩家操作角色下了码头，顺着土路走上河滩，在河边按住 E 把荒地垦成田，从背包里挑一样种子拿在手上种下去，等它长熟后收回更多的收成放进背包。",
       "date": "2026-09-21",
       "color": "#f08c3a",
       "steps": [
@@ -516,26 +647,45 @@
           ]
         },
         {
-          "text": "再按住 E 播种：粟 −1，垄上冒出苗",
+          "text": "对着垦好的地按 E 会被拦下：手上没种子。Tab 打开背包，W/S 挪到菽，E 拿在手上，Tab 合上；开着背包时人站住不动",
           "nodes": [
-            "voyage",
-            "farm-node",
-            "farm-model"
+            "voyage-pack",
+            "backpack-panel",
+            "inventory",
+            "crops",
+            "player",
+            "input-map",
+            "farm-node"
           ]
         },
         {
-          "text": "粟苗随时间长高，离河越近墒情越好、熟得越快；一两分钟后抽穗变黄",
+          "text": "再按住 E 播种：背包里菽 −1，地块记着种的是菽，垄上冒出苗",
           "nodes": [
+            "voyage",
+            "voyage-pack",
             "farm-node",
-            "farm-model"
+            "farm-model",
+            "inventory",
+            "crops"
           ]
         },
         {
-          "text": "按住 E 收获：粟 +4，地还是垦好的，可以接着种",
+          "text": "苗随时间长高，离河越近墒情越好、熟得越快；菽比粟慢一半，熟了顶上结出淡黄的豆荚",
+          "nodes": [
+            "farm-node",
+            "farm-model",
+            "crops"
+          ]
+        },
+        {
+          "text": "按住 E 收获：按地里的作物把收成放进背包（菽 +3），地还是垦好的，可以接着种",
           "nodes": [
             "voyage",
+            "voyage-pack",
             "farm-node",
-            "farm-model"
+            "farm-model",
+            "inventory",
+            "crops"
           ]
         }
       ],
@@ -552,7 +702,11 @@
         "island-field",
         "input-map",
         "player",
-        "rng-noise"
+        "rng-noise",
+        "voyage-pack",
+        "inventory",
+        "crops",
+        "backpack-panel"
       ],
       "commits": "6f056df..42b5a39"
     }
@@ -641,6 +795,33 @@
           "voyage",
           "island-node",
           "island-mesh"
+        ]
+      }
+    },
+    {
+      "id": "e3",
+      "type": "extend",
+      "date": "2026-09-22",
+      "title": "拓展：种子从背包里选，收成进背包",
+      "summary": "农事原本凭空播种（Voyage 里一个粟计数）。现在玩家有背包，Tab 打开、W/S 选、E 把种子拿在手上；播种扣手上那种种子，作物按种子决定（粟 / 菽），收获把作物的产物放回背包。",
+      "commits": "886271f..bb47a44",
+      "nodes": [
+        "voyage",
+        "voyage-pack",
+        "inventory",
+        "crops",
+        "backpack-panel"
+      ],
+      "info": {
+        "node": "voyage",
+        "children": [
+          "voyage-pack"
+        ],
+        "adopted": [],
+        "peers": [
+          "inventory",
+          "crops",
+          "backpack-panel"
         ]
       }
     }
