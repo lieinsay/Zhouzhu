@@ -5,12 +5,13 @@
 #include <utility>
 #include <vector>
 
+#include "crops.h"
 #include "island_field.h"
 
 // 一座岛上的农田。地块就是高度场的格子（节点 (i, j) 为左上角的那一格，边长 cell_m），
 // 所以垦出来的地恰好贴着地形的两个三角面，不用另立一套坐标。
 // 本文件不含 Godot 头。勘察是「高度场 → 值」的纯函数；FarmModel 只是一张地块表加几条转移规则，
-// 谁来干活、手里有多少粟，都不归它管。
+// 谁来干活、背包里有没有种子，都不归它管：播种时上层把作物递进来，收获时它把「产物 × 几份」交出去。
 
 enum class PlotState : uint8_t {
     WILD, // 荒地（表里没有这一格）
@@ -42,10 +43,8 @@ struct FarmRules {
     double max_slope = 0.2; // 格内最大坡度（高差 / 对角线）
     double dock_margin_m = 4.0; // 停机坪外再让出这么多
     double trail_margin_m = 2.5; // 格子的哪个角离路中线这么近，就算在路上
-    double grow_seconds = 60.0; // 紧挨着河的地从播种到成熟
+    double grow_seconds = 60.0; // 紧挨着河的地从播种到成熟（生长期倍率为 1 的作物）
     double dry_growth = 0.6; // 勉强引得到水的地，生长速度是河边的这么多倍
-    int seed_cost = 1;
-    int harvest_yield = 4; // 收一格得多少粟（粟既是粮也是种）
 };
 
 struct FarmSurvey {
@@ -65,6 +64,13 @@ FarmSurvey survey_farmland(const IslandField &p_field, double p_dock_apron_m, co
 struct Plot {
     PlotState state = PlotState::WILD;
     double growth = 0.0; // 0 → 1
+    const CropDef *crop = nullptr; // 种的是什么；只在 GROWING / RIPE 时有
+};
+
+// 收获所得
+struct Harvest {
+    const char *item = nullptr; // 产物物品 id；没收到东西为 nullptr
+    int count = 0;
 };
 
 class FarmModel {
@@ -84,10 +90,12 @@ public:
     void set_rules(const FarmRules &p_rules) { rules = p_rules; }
 
     Plot plot_at(int p_i, int p_j) const;
-    // 手里有 p_grain 粟时，对这一格能做什么
-    FarmAction available_action(int p_i, int p_j, int p_grain) const;
-    // 做了；返回粟的增减（播种为负、收获为正）。p_action 与 available_action 不符则什么都不做、返回 0
-    int perform(int p_i, int p_j, FarmAction p_action, int p_grain);
+    // 对这一格能做什么；p_has_seed = 手上有没有种子（没有就播不了）
+    FarmAction available_action(int p_i, int p_j, bool p_has_seed) const;
+    // 三样活。做不了（与 available_action 不符）就什么都不动：till / sow 返回 false，harvest 返回空
+    bool till(int p_i, int p_j);
+    bool sow(int p_i, int p_j, const CropDef *p_crop);
+    Harvest harvest(int p_i, int p_j);
     // 推进生长；返回这一步里外观阶段变了的格子（(i, j) 成对）
     std::vector<int> advance(double p_delta);
 

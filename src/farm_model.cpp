@@ -58,12 +58,12 @@ Plot FarmModel::plot_at(int p_i, int p_j) const {
     return it == plots.end() ? Plot() : it->second;
 }
 
-FarmAction FarmModel::available_action(int p_i, int p_j, int p_grain) const {
+FarmAction FarmModel::available_action(int p_i, int p_j, bool p_has_seed) const {
     switch (plot_at(p_i, p_j).state) {
         case PlotState::WILD:
             return survey.at(p_i, p_j) == Arability::ARABLE ? FarmAction::TILL : FarmAction::NONE;
         case PlotState::TILLED:
-            return p_grain >= rules.seed_cost ? FarmAction::SOW : FarmAction::NONE;
+            return p_has_seed ? FarmAction::SOW : FarmAction::NONE;
         case PlotState::GROWING:
             return FarmAction::NONE;
         case PlotState::RIPE:
@@ -72,25 +72,30 @@ FarmAction FarmModel::available_action(int p_i, int p_j, int p_grain) const {
     return FarmAction::NONE;
 }
 
-int FarmModel::perform(int p_i, int p_j, FarmAction p_action, int p_grain) {
-    if (p_action == FarmAction::NONE || p_action != available_action(p_i, p_j, p_grain)) {
-        return 0;
+bool FarmModel::till(int p_i, int p_j) {
+    if (available_action(p_i, p_j, false) != FarmAction::TILL) {
+        return false;
+    }
+    plots[key(p_i, p_j)] = { PlotState::TILLED, 0.0, nullptr };
+    return true;
+}
+
+bool FarmModel::sow(int p_i, int p_j, const CropDef *p_crop) {
+    if (!p_crop || available_action(p_i, p_j, true) != FarmAction::SOW) {
+        return false;
+    }
+    plots[key(p_i, p_j)] = { PlotState::GROWING, 0.0, p_crop };
+    return true;
+}
+
+Harvest FarmModel::harvest(int p_i, int p_j) {
+    if (available_action(p_i, p_j, false) != FarmAction::HARVEST) {
+        return Harvest();
     }
     Plot &plot = plots[key(p_i, p_j)];
-    switch (p_action) {
-        case FarmAction::TILL:
-            plot = { PlotState::TILLED, 0.0 };
-            return 0;
-        case FarmAction::SOW:
-            plot = { PlotState::GROWING, 0.0 };
-            return -rules.seed_cost;
-        case FarmAction::HARVEST:
-            plot = { PlotState::TILLED, 0.0 };
-            return rules.harvest_yield;
-        case FarmAction::NONE:
-            break;
-    }
-    return 0;
+    const Harvest got = { plot.crop->product, plot.crop->yield };
+    plot = { PlotState::TILLED, 0.0, nullptr }; // 收完还是垦好的地
+    return got;
 }
 
 std::vector<int> FarmModel::advance(double p_delta) {
@@ -103,7 +108,8 @@ std::vector<int> FarmModel::advance(double p_delta) {
         const int before = stage_of(plot);
         const double moisture = survey.moisture[survey.index(i, j)];
         const double rate = rules.dry_growth + (1.0 - rules.dry_growth) * moisture;
-        plot.growth += p_delta * rate / std::max(1e-6, rules.grow_seconds);
+        const double factor = plot.crop ? plot.crop->grow_factor : 1.0;
+        plot.growth += p_delta * rate / std::max(1e-6, rules.grow_seconds * factor);
         if (plot.growth >= 1.0) {
             plot.growth = 1.0;
             plot.state = PlotState::RIPE;

@@ -421,18 +421,24 @@ void test_farm() {
     }
 
     // 地块状态机
+    const CropDef *millet = catalog::crop("millet");
+    const CropDef *bean = catalog::crop("bean");
     FarmModel farm(survey, rules);
-    check(farm.available_action(dry_i, dry_j, 5) == FarmAction::NONE, "离河太远：不能开垦");
-    check(farm.perform(dry_i, dry_j, FarmAction::TILL, 5) == 0 && farm.plot_at(dry_i, dry_j).state == PlotState::WILD, "硬垦也垦不动");
-    check(farm.available_action(near_i, near_j, 0) == FarmAction::TILL, "荒地：开垦（不要粟）");
-    check(farm.perform(near_i, near_j, FarmAction::SOW, 5) == 0, "没垦的地不能直接播种");
-    check(farm.perform(near_i, near_j, FarmAction::TILL, 5) == 0 && farm.plot_at(near_i, near_j).state == PlotState::TILLED, "开垦 → 已垦");
-    check(farm.available_action(near_i, near_j, 0) == FarmAction::NONE, "没有粟：不能播种");
-    check(farm.perform(near_i, near_j, FarmAction::SOW, 5) == -rules.seed_cost, "播种耗一份粟");
-    check(farm.plot_at(near_i, near_j).state == PlotState::GROWING && farm.available_action(near_i, near_j, 5) == FarmAction::NONE, "生长中：无事可做");
+    check(farm.available_action(dry_i, dry_j, true) == FarmAction::NONE, "离河太远：不能开垦");
+    check(!farm.till(dry_i, dry_j) && farm.plot_at(dry_i, dry_j).state == PlotState::WILD, "硬垦也垦不动");
+    check(farm.available_action(near_i, near_j, false) == FarmAction::TILL, "荒地：开垦（不要种子）");
+    check(!farm.sow(near_i, near_j, millet), "没垦的地不能直接播种");
+    check(farm.till(near_i, near_j) && farm.plot_at(near_i, near_j).state == PlotState::TILLED, "开垦 → 已垦");
+    check(farm.available_action(near_i, near_j, false) == FarmAction::NONE, "手上没种子：不能播种");
+    check(farm.available_action(near_i, near_j, true) == FarmAction::SOW, "手上有种子：播种");
+    check(!farm.sow(near_i, near_j, nullptr), "没说种什么：播不了");
+    check(farm.harvest(near_i, near_j).count == 0, "空地没得收");
+    check(farm.sow(near_i, near_j, millet), "播下粟");
+    check(farm.plot_at(near_i, near_j).state == PlotState::GROWING && farm.plot_at(near_i, near_j).crop == millet, "生长中，地块记着种的是粟");
+    check(farm.available_action(near_i, near_j, true) == FarmAction::NONE, "生长中：无事可做");
 
-    farm.perform(far_i, far_j, FarmAction::TILL, 5);
-    farm.perform(far_i, far_j, FarmAction::SOW, 5);
+    farm.till(far_i, far_j);
+    farm.sow(far_i, far_j, millet);
     int stage_changes = 0;
     double near_ripe_at = -1.0, far_ripe_at = -1.0;
     for (int step = 1; step <= 60 * 200 && far_ripe_at < 0.0; step++) {
@@ -450,10 +456,24 @@ void test_farm() {
     check(near_ripe_at < far_ripe_at, "离河近的先熟");
     check(stage_changes == 2 * (FarmModel::STAGES - 1), "每格的外观阶段各变 STAGES − 1 次");
     check(farm.count(PlotState::RIPE) == 2 && farm.count(PlotState::GROWING) == 0, "两格都熟了");
-    check(farm.available_action(near_i, near_j, 0) == FarmAction::HARVEST, "成熟：收获");
-    check(farm.perform(near_i, near_j, FarmAction::HARVEST, 0) == rules.harvest_yield, "收获得粟");
-    check(farm.plot_at(near_i, near_j).state == PlotState::TILLED, "收完还是垦好的地，能接着种");
-    check(rules.harvest_yield > rules.seed_cost, "种一收多：循环是正的");
+    check(farm.available_action(near_i, near_j, false) == FarmAction::HARVEST, "成熟：收获");
+    const Harvest got = farm.harvest(near_i, near_j);
+    check(got.item && std::string(got.item) == "millet" && got.count == millet->yield, "收获得粟，数量按作物表");
+    check(farm.plot_at(near_i, near_j).state == PlotState::TILLED && farm.plot_at(near_i, near_j).crop == nullptr, "收完还是垦好的地，能接着种");
+    check(farm.harvest(near_i, near_j).count == 0, "收过的地再收没有");
+
+    // 换种菽：同一块地，生长期按作物倍率拉长，收的是菽
+    check(farm.sow(near_i, near_j, bean), "接着种菽");
+    double bean_ripe_at = -1.0;
+    for (int step = 1; step <= 60 * 400 && bean_ripe_at < 0.0; step++) {
+        farm.advance(1.0 / 60.0);
+        if (farm.plot_at(near_i, near_j).state == PlotState::RIPE) {
+            bean_ripe_at = step / 60.0;
+        }
+    }
+    check_near(bean_ripe_at, near_ripe_at * bean->grow_factor, 0.1, "菽的生长期是粟的 grow_factor 倍");
+    const Harvest beans = farm.harvest(near_i, near_j);
+    check(beans.item && std::string(beans.item) == "bean" && beans.count == bean->yield, "收下来是菽");
 }
 
 void test_inventory() {
