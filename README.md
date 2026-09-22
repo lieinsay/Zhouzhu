@@ -97,13 +97,34 @@ Godot --headless --path game --script res://tools/seed_villages.gd
 建筑表在 `src/buildings.*`、选址与清单在 `src/settlement_model.*`（都是纯算法），`Settlement`（`src/settlement.*`）挂在 `Island` 下按清单建几何与碰撞，
 布置视角是 `BuildOverlay`（`src/build_overlay.*`）、面板是 `BuildPanel`（都只画），光标、朝向、选了哪种、开没开都在 `Voyage` 里。
 
+## 切片五：村民——按钟点出门、沿路走、干活、回家
+
+村子里现在住着人。出发岛 12 口（五户民居各两口、堂屋一口、望楼一个守望），目的岛 5 口。每人头顶一行字：「名字 · 在干什么」（40 m 内看得见）。
+左上角第一行末尾是脚下这座岛的钟点（「辰时 · 第 1 日 · 08:26」）：一天默认 20 分钟，卯时六点出工、午间歇晌一个钟头、酉时六点半收工，夜里全村在屋里。
+
+规矩按职业分（`assign_residents` 按聚落里有什么房子、岛上有没有农田和河来分派）：
+
+- **农**：只种自己认领的地——熟了先收，垦好的就拿仓里的种子播，认领不满四块就在家门口 55 m 内开荒，都种上了就去锄草；收下的粮背着送进仓。玩家垦的地他们不碰。
+- **挑水**：在家门口的河边打水，挑到堂屋的公用水缸（没有堂屋就挑回家）。
+- **守望**：望楼下背对着楼站一班，再绕村巡三户人家门口，回去接着站。
+- **闲**：去别家门口串门聊一阵。目的岛没有农田也没有河，除了守望都闲着。
+
+走路用岛的高度场建一张 1.25 m 的**导航格**：有地面、相邻两格坡度不超过 0.6、不在房子占地（外扩 0.9 m）里的格子才走得了，河里能蹚但代价高；A* 找路再拉直。
+所以村民绕着房子走、不上崖壁；村子紧挨着河，没有桥，过河就蹚水。收工或歇晌的钟点一到，半路的掉头、干着的放下，都走回家进门——进门就藏起来（屋里还没有）。
+村民没有碰撞（人能穿过去），也还不跟玩家说话；在布置模式里改了房子，整村按新清单重新招人。
+
+规矩全在 `src/villager_model.*`（纯算法：导航格与寻路、钟点、职业与住户、决策），场景里是挂在 `Island` 下、排在 `Settlement` 后面的 `Villagers` 节点（`src/villagers.*`）：
+它持有全部村民的状态、村里的仓（`starting_store`，默认粟 8 菽 4）和认领表，每个物理帧推进钟点、走路、干活计时，开荒 / 播种 / 收割走 `Farm::perform`。
+一天多长、几点开局、走多快、每户几口是它的属性（`day_seconds` / `start_hour` / `walk_speed` / `per_house`）。
+
 ## 测试
 
 ```
-ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址）
+ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址 / 村民的导航格、钟点、分派与决策）
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_e2e.tscn    # 整条航程，只经输入动作驱动
 Godot --headless --path game --fixed-fps 60 res://tests/respawn_e2e.tscn   # 坠入云海 → 回位 + 召回空艇
 Godot --headless --path game --fixed-fps 60 res://tests/farm_e2e.tscn      # 沿路走到河滩 → 开垦 → 没种子被拒 → 背包里选菽 → 播种 → 成熟 → 收进背包
 Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn  # 画样台被拒 → 掌舵入坞 → 装配视角里放 / 换 / 拆、违规被拒 → 爬梯子上二层再下到舵旁 → 飞回泊位
 Godot --headless --path game --fixed-fps 60 res://tests/build_e2e.tscn     # B 进布置模式 → 停机坪被拒 → 河滩放民居 → 已有 / 挨得太近被拒 → 转 45° 放望楼 → X 拆 → F5 存、读回 → 走到望楼被墙挡住 → 仓库里的村落都站得住
+Godot --headless --path game --fixed-fps 60 res://tests/villager_e2e.tscn  # 两岛人数与职业 → 陆续出门 → 每帧贴地、不进房子、不瞬移 → 开荒播种收割、粮进仓、挑水、站班巡村、串门 → 玩家的地没人碰 → 收工全村进门 → 天亮又出门
 ```
