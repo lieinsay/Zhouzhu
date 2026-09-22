@@ -48,4 +48,5 @@ void input_actions::register_all() {
     bind(ROTATE_LEFT, { KEY_Q });
     bind(ROTATE_RIGHT, { KEY_R });
     bind(SAVE, { KEY_F5 });
+    bind(MAP, { KEY_M });
 }

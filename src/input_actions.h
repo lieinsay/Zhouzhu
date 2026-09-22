@@ -23,6 +23,7 @@ constexpr const char *BUILD_MODE = "build_mode"; // 开发者：开合布置模�
 constexpr const char *ROTATE_LEFT = "rotate_left"; // 布置时把建筑转向
 constexpr const char *ROTATE_RIGHT = "rotate_right";
 constexpr const char *SAVE = "save"; // 布置时把清单存盘
+constexpr const char *MAP = "map"; // 开合岛群地图
 
 // 幂等：已有的动作不重复注册
 void register_all();

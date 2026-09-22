@@ -16,6 +16,9 @@
 #include "shipyard.h"
 #include "villagers.h"
 #include "voyage.h"
+#include "world.h"
+#include "world_map.h"
+#include "world_scene.h"
 
 using namespace godot;
 
@@ -36,6 +39,9 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(RefitOverlay);
     GDREGISTER_CLASS(BuildPanel);
     GDREGISTER_CLASS(BuildOverlay);
+    GDREGISTER_CLASS(World);
+    GDREGISTER_CLASS(WorldMap);
+    GDREGISTER_CLASS(WorldScene);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {

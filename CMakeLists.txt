@@ -86,6 +86,12 @@ target_sources(
         src/villagers.h
         src/voyage.cpp
         src/voyage.h
+        src/world.cpp
+        src/world.h
+        src/world_map.cpp
+        src/world_map.h
+        src/world_scene.cpp
+        src/world_scene.h
 )
 
 target_include_directories(zhouzhu PRIVATE src)
