@@ -40,6 +40,7 @@ public:
         LAND_TOO_STEEP,
         LAND_DOCK,
         LAND_TRAIL,
+        LAND_YARD,
     };
 
     static const godot::Vector2i NO_CELL;

@@ -36,6 +36,7 @@ enum class Arability : uint8_t {
     TOO_STEEP,
     DOCK, // 停机坪
     TRAIL, // 路上
+    YARD, // 船坞坪
 };
 
 struct FarmRules {

@@ -38,6 +38,12 @@ struct IslandParams {
     double river_flat_m = 9.0; // 每侧压平成河滩的宽度（能种地的就是这一条）
     bool trail = false; // 从停机坪修一条路到河滩（要有河）
     double trail_half_width_m = 2.5;
+
+    // 船坞坪（见 IslandYard）。默认没有
+    bool yard = false;
+    double yard_length_m = 36.0; // 沿岸
+    double yard_width_m = 16.0; // 向岛内
+    double yard_max_inland_m = 25.0; // 岸线退得比这还深就不建
 };
 
 struct IslandDock {
@@ -45,6 +51,29 @@ struct IslandDock {
     double y = 0.0; // 停机坪与栈桥面的高度
     double out_x = 1.0, out_z = 0.0; // 指向岛外的单位向量
     double pier_m = 9.0; // 栈桥自岸缘点向外伸多长：保证泊位上的船身碰不到两侧的岸
+};
+
+// 船坞坪：停机坪旁沿岸的一块矩形平地，与停机坪同高，船坞（坞架、跳板、画样台）搭在上面。
+// 局部坐标 (u, v)：u 沿长轴（顺着岸，自靠停机坪的一端量起，中心为 0），v 沿短轴指向岛内（中心为 0）。
+struct IslandYard {
+    bool present = false;
+    double x = 0.0, z = 0.0; // 中心
+    double ux = 1.0, uz = 0.0; // 长轴单位向量（沿岸）
+    double vx = 0.0, vz = 1.0; // 短轴单位向量（指向岛内）
+    double y = 0.0; // 坪面高
+    double length = 0.0, width = 0.0;
+
+    void to_local(double p_x, double p_z, double &r_u, double &r_v) const {
+        r_u = (p_x - x) * ux + (p_z - z) * uz;
+        r_v = (p_x - x) * vx + (p_z - z) * vz;
+    }
+    void from_local(double p_u, double p_v, double &r_x, double &r_z) const {
+        r_x = x + p_u * ux + p_v * vx;
+        r_z = z + p_u * uz + p_v * vz;
+    }
+    // 点到矩形外缘的水平距离；在矩形内为 0
+    double outside_distance(double p_x, double p_z) const;
+    bool contains(double p_x, double p_z, double p_margin = 0.0) const { return present && outside_distance(p_x, p_z) <= p_margin; }
 };
 
 // 河中线上的一点，自源头排到河口（岸缘）；水面沿程只降不升
@@ -70,6 +99,7 @@ struct IslandField {
     std::vector<float> inside; // 岸线 0 → 腹地 1 的「向内程度」
     std::vector<float> bottom; // 岛底 y
     IslandDock dock;
+    IslandYard yard; // 没有船坞则 present = false
     std::vector<RiverPoint> river; // 没有河则为空
     std::vector<float> river_dist; // 到河中线的水平距离（m）；没有河则为空
     std::vector<float> river_depth; // 该节点上方的水深，不在水下为 0；没有河则为空

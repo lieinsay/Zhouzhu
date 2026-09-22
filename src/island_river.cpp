@@ -144,6 +144,15 @@ double dock_release(const IslandField &r, double p_x, double p_z, double p_inner
     return smoothstep(std::clamp((d - p_inner) / (p_outer - p_inner), 0.0, 1.0));
 }
 
+// 船坞坪同理：离坪缘 p_inner 以内 0，p_outer 以外 1；没有船坞则处处 1
+double yard_release(const IslandField &r, double p_x, double p_z, double p_inner, double p_outer) {
+    if (!r.yard.present) {
+        return 1.0;
+    }
+    const double d = r.yard.outside_distance(p_x, p_z);
+    return smoothstep(std::clamp((d - p_inner) / (p_outer - p_inner), 0.0, 1.0));
+}
+
 // 最小代价路径的骨架：从 p_source 出发，p_step 给出走到邻居的代价（负 = 不可走），p_goal 判终点。
 std::vector<int> least_cost_path(const IslandField &r, int p_source, const std::function<double(int, int, double)> &p_step,
         const std::function<bool(int)> &p_goal, const std::function<bool(int)> &p_dead_end) {
@@ -193,8 +202,8 @@ std::vector<int> least_cost_path(const IslandField &r, int p_source, const std::
     return course;
 }
 
-// 泉眼 → 河口的节点序列；找不到返回空。
-std::vector<int> trace_river(const IslandParams &p, const IslandField &r, const std::vector<double> &h, double p_keep_out, double p_min_run) {
+// 泉眼 → 河口的节点序列；找不到返回空。p_yard_keep_out：河中线离船坞坪至少这么远（河滩不能压到坪上）
+std::vector<int> trace_river(const IslandParams &p, const IslandField &r, const std::vector<double> &h, double p_keep_out, double p_yard_keep_out, double p_min_run) {
     Rng rng = Rng(p.seed).fork(STREAM_RIVER);
     const int n = r.n;
     const double R = std::sqrt(p.area_m2 / PI);
@@ -228,7 +237,7 @@ std::vector<int> trace_river(const IslandParams &p, const IslandField &r, const 
     return least_cost_path(
             r, source,
             [&](int k, int m, double dist) {
-                if (dock_distance(m) < p_keep_out) {
+                if (dock_distance(m) < p_keep_out || r.yard.contains(r.coord(m % n), r.coord(m / n), p_yard_keep_out)) {
                     return -1.0;
                 }
                 double weight = 1.0 + MEANDER_COST * (0.5 + 0.5 * meander.sample(r.coord(m % n), r.coord(m / n))) +
@@ -250,9 +259,10 @@ std::vector<int> trace_river(const IslandParams &p, const IslandField &r, const 
 void carve_island_river(const IslandParams &p, IslandField &r, std::vector<double> &h) {
     const int n = r.n;
     const double keep_out = p.dock_apron_m + p.river_half_width_m + SPRING_EXTRA_M + p.river_flat_m + 6.0;
+    const double yard_keep_out = p.river_half_width_m + SPRING_EXTRA_M + p.river_flat_m + 6.0;
     std::vector<int> course;
     for (double min_run : MOUTH_MIN_RUNS) {
-        course = trace_river(p, r, h, keep_out, min_run);
+        course = trace_river(p, r, h, keep_out, yard_keep_out, min_run);
         if (!course.empty()) {
             break;
         }
@@ -307,7 +317,7 @@ void carve_island_river(const IslandParams &p, IslandField &r, std::vector<doubl
                 const double bank = here.level + p.river_freeboard_m * smoothstep(std::min(1.0, beyond_water / BANK_RISE_M)) + FLAT_FALL * beyond_water;
                 const double beyond_flat = std::max(0.0, beyond_water - p.river_flat_m);
                 const double shaped = std::clamp(h[k], bank - FILL_SLOPE * beyond_flat, bank + CUT_SLOPE * beyond_flat);
-                h[k] += dock_release(r, x, z, p.dock_apron_m, 2.0 * p.dock_apron_m) * (shaped - h[k]);
+                h[k] += dock_release(r, x, z, p.dock_apron_m, 2.0 * p.dock_apron_m) * yard_release(r, x, z, 3.0, 15.0) * (shaped - h[k]);
             }
         }
     }
@@ -324,13 +334,16 @@ void carve_dock_trail(const IslandParams &p, IslandField &r, std::vector<double>
     }
     const int n = r.n;
 
-    // 起点：停机坪压平的那一圈里、码头正后方
+    // 起点：停机坪压平的那一圈里、码头后方；有船坞就往船坞的另一侧挪一点，路别从坞里穿出去
     int source = -1;
-    {
-        const double sx = r.dock.x - 0.4 * p.dock_apron_m * r.dock.out_x, sz = r.dock.z - 0.4 * p.dock_apron_m * r.dock.out_z;
+    for (double shift : { r.yard.present ? 0.3 * p.dock_apron_m : 0.0, 0.0 }) {
+        // 岸线不直，挪过去的那一点可能已经在岸外：那就退回码头正后方
+        const double sx = r.dock.x - 0.4 * p.dock_apron_m * r.dock.out_x - shift * r.yard.ux;
+        const double sz = r.dock.z - 0.4 * p.dock_apron_m * r.dock.out_z - shift * r.yard.uz;
         const int i = int(std::lround((sz + r.half_extent()) / r.cell_m)), j = int(std::lround((sx + r.half_extent()) / r.cell_m));
         if (r.in_mask(i, j)) {
             source = int(r.index(i, j));
+            break;
         }
     }
     if (source < 0) {
@@ -345,7 +358,7 @@ void carve_dock_trail(const IslandParams &p, IslandField &r, std::vector<double>
     const std::vector<int> course = least_cost_path(
             r, source,
             [&](int k, int m, double dist) {
-                if (r.river_depth[m] > 0.0f) {
+                if (r.river_depth[m] > 0.0f || r.yard.contains(r.coord(m % n), r.coord(m / n), p.trail_half_width_m + 4.0)) {
                     return -1.0;
                 }
                 const double grade = std::abs(h[m] - h[k]) / dist / TRAIL_GRADE_SCALE;
@@ -401,8 +414,8 @@ void carve_dock_trail(const IslandParams &p, IslandField &r, std::vector<double>
             }
             const double beyond = std::max(0.0, here.dist - here.half_width);
             const double shaped = std::clamp(h[k], here.level - TRAIL_FILL_SLOPE * beyond, here.level + TRAIL_CUT_SLOPE * beyond);
-            // 路是从停机坪里接出来的：只让开压得全平的那半个半径
-            h[k] += dock_release(r, x, z, 0.5 * p.dock_apron_m, p.dock_apron_m) * (shaped - h[k]);
+            // 路是从停机坪里接出来的：只让开压得全平的那半个半径；船坞坪跟前也收手
+            h[k] += dock_release(r, x, z, 0.5 * p.dock_apron_m, p.dock_apron_m) * yard_release(r, x, z, 1.0, 6.0) * (shaped - h[k]);
         }
     }
 

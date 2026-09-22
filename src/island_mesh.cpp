@@ -16,6 +16,7 @@ const Color GRASS(0.30f, 0.46f, 0.20f);
 const Color GRASS_HIGH(0.47f, 0.52f, 0.30f);
 const Color ROCK(0.46f, 0.43f, 0.39f);
 const Color EARTH(0.56f, 0.48f, 0.36f); // 停机坪：踩实的土
+const Color PAVING(0.52f, 0.50f, 0.47f); // 船坞坪：石板
 const Color CLIFF_TOP(0.40f, 0.35f, 0.30f);
 const Color CLIFF_LOW(0.25f, 0.22f, 0.21f);
 const Color UNDERSIDE(0.20f, 0.18f, 0.18f);
@@ -103,6 +104,10 @@ IslandMeshData build_island_mesh(const IslandField &f) {
             }
             if (f.has_trail() && f.river_depth[f.index(i, j)] <= 0.0f) {
                 color = color.lerp(EARTH, real_t(std::clamp(1.8 - f.trail_dist[f.index(i, j)] / 2.0, 0.0, 1.0)));
+            }
+            if (f.yard.present) {
+                // 船坞坪铺了石板：坪内全是石板色，坪外一格内渐回
+                color = color.lerp(PAVING, real_t(std::clamp(1.0 - f.yard.outside_distance(pos.x, pos.z) / f.cell_m, 0.0, 1.0)));
             }
             top_id[f.index(i, j)] = b.add_vertex(pos, normal, color);
             bottom_id[f.index(i, j)] = b.add_vertex(bottom_point(f, i, j), surface_normal(f, f.bottom, i, j, true), UNDERSIDE);

@@ -170,12 +170,12 @@ void test_island(const char *p_name, double p_age, IslandAge p_class) {
     check(f.sample_height(d.x - 3.0 * d.out_x, d.z - 3.0 * d.out_z, y), "岸缘点背后是地面");
     check(d.pier_m >= p.pier_min_m, "栈桥不短于下限");
     bool berth_clear = true;
-    for (double s = -9.0; s <= 9.0; s += 1.0) {
+    for (double s = -15.0; s <= 15.0; s += 1.0) {
         for (double t = d.pier_m; t <= d.pier_m + 8.0; t += 1.0) {
             berth_clear = berth_clear && !f.sample_height(d.x + t * d.out_x - s * d.out_z, d.z + t * d.out_z + s * d.out_x, y);
         }
     }
-    check(berth_clear, "泊位（栈桥头外 8 m × 两侧 9 m）里没有陆地");
+    check(berth_clear, "泊位（栈桥头外 8 m × 两侧 15 m）里没有陆地");
     double flat_err = 0.0;
     int flat_n = 0;
     for (int i = 0; i < f.n; i++) {
@@ -476,6 +476,82 @@ void test_farm() {
     check(beans.item && std::string(beans.item) == "bean" && beans.count == bean->yield, "收下来是菽");
 }
 
+// 主场景里 IslandA 的参数 + 河 + 路 + 船坞
+void test_yard(const char *p_name, double p_age) {
+    std::printf("island_yard（%s）\n", p_name);
+    IslandParams p = river_island_params(p_age);
+    p.trail = true;
+    p.yard = true;
+    const IslandField f = generate_island_field(p);
+    const IslandYard &y = f.yard;
+    check(y.present, "有船坞坪");
+    if (!y.present) {
+        return;
+    }
+    check_near(std::hypot(y.ux, y.uz), 1.0, 1e-9, "长轴是单位向量");
+    check_near(y.ux * y.vx + y.uz * y.vz, 0.0, 1e-9, "长短轴垂直");
+    check_near(y.y, f.dock.y, 1e-9, "坪与停机坪同高");
+    check(std::abs(y.vx + f.dock.out_x) < 1e-9 && std::abs(y.vz + f.dock.out_z) < 1e-9, "短轴指向岛内");
+
+    // 坪内每个节点都是陆地、都平；坪外一圈也是陆地（坞架、跳板有地放）
+    bool solid = true, flat = true, rim_solid = true;
+    int inside = 0;
+    for (int i = 0; i < f.n; i++) {
+        for (int j = 0; j < f.n; j++) {
+            const double x = f.coord(j), z = f.coord(i);
+            const double beyond = y.outside_distance(x, z);
+            if (beyond <= 0.0) {
+                inside++;
+                solid = solid && f.in_mask(i, j);
+                flat = flat && f.in_mask(i, j) && std::abs(f.height[f.index(i, j)] - y.y) < 1e-6;
+            } else if (beyond <= 1.5) {
+                rim_solid = rim_solid && f.in_mask(i, j);
+            }
+        }
+    }
+    check(inside >= int(0.9 * y.length * y.width / (f.cell_m * f.cell_m)), "坪上的节点数与面积相称");
+    check(solid, "坪内全是陆地");
+    check(flat, "坪内是平的");
+    check(rim_solid, "坪外 1.5 m 内也是陆地");
+
+    // 坪挨着停机坪、不压到码头中线；出生点不在坪上
+    double u = 0.0, v = 0.0;
+    y.to_local(f.dock.x, f.dock.z, u, v);
+    check(std::abs(u) > 0.5 * y.length + 5.0 && std::abs(u) < 0.5 * y.length + 7.0, "坪的近端离码头中线 5–7 m（路从这儿上山）");
+    check(v < -0.5 * y.width, "坪在岸缘点之内（岛这一侧）");
+    y.to_local(f.dock.x - 12.0 * f.dock.out_x, f.dock.z - 12.0 * f.dock.out_z, u, v);
+    check(y.outside_distance(f.dock.x - 12.0 * f.dock.out_x, f.dock.z - 12.0 * f.dock.out_z) > 1.0, "出生点不在坪上");
+
+    // 河与路都绕开
+    double river_min = 1e18, trail_min = 1e18;
+    for (const RiverPoint &pt : f.river) {
+        river_min = std::min(river_min, y.outside_distance(pt.x, pt.z));
+    }
+    for (const TrailPoint &pt : f.trail) {
+        trail_min = std::min(trail_min, y.outside_distance(pt.x, pt.z));
+    }
+    check(f.has_river() && river_min >= 15.0, "河中线离坪至少 15 m（得到 " + std::to_string(river_min) + "）");
+    check(f.has_trail() && trail_min >= 4.0, "路中线离坪至少 4 m（得到 " + std::to_string(trail_min) + "）");
+
+    // 坪外地形接回：坪缘外 2 m 内（河与路的土方都不碰的那一圈）的高差不超过挖方 / 填方坡度
+    bool graded = true;
+    for (int i = 0; i < f.n; i++) {
+        for (int j = 0; j < f.n; j++) {
+            const double beyond = y.outside_distance(f.coord(j), f.coord(i));
+            if (f.in_mask(i, j) && beyond > 0.0 && beyond <= 2.0) {
+                graded = graded && f.height[f.index(i, j)] <= y.y + 1.0 * beyond + 1e-6 && f.height[f.index(i, j)] >= y.y - 0.8 * beyond - 1e-6;
+            }
+        }
+    }
+    check(graded, "坪外按坡度接回原地形");
+
+    // 没要船坞的岛没有；确定性
+    IslandParams q = p;
+    q.yard = false;
+    check(!generate_island_field(q).yard.present, "不要船坞就没有");
+    check(field_hash(generate_island_field(p)) == field_hash(f), "同输入重跑，哈希一致");
+}
+
 void test_inventory() {
     std::printf("inventory\n");
     Inventory pack;
@@ -589,6 +665,9 @@ int main() {
     test_trail("老岛 · 台地", 0.8);
     test_trail("中年 · 山脊", 0.5);
     test_trail("新岛 · 火山锥", 0.1);
+    test_yard("老岛 · 台地", 0.8);
+    test_yard("中年 · 山脊", 0.5);
+    test_yard("新岛 · 火山锥", 0.1);
     test_inventory();
     test_crops();
     test_farm();

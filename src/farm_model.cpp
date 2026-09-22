@@ -38,6 +38,8 @@ FarmSurvey survey_farmland(const IslandField &f, double p_dock_apron_m, const Fa
                     verdict = Arability::WATER;
                 } else if (std::hypot(cx - f.dock.x, cz - f.dock.z) <= p_dock_apron_m + p_rules.dock_margin_m) {
                     verdict = Arability::DOCK;
+                } else if (f.yard.contains(cx, cz, p_rules.dock_margin_m)) {
+                    verdict = Arability::YARD;
                 } else if (trail <= p_rules.trail_margin_m) {
                     verdict = Arability::TRAIL;
                 } else if (dist > p_rules.max_river_m) {

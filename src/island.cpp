@@ -67,6 +67,9 @@ void Island::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_keel_m"), &Island::get_keel_m);
     ClassDB::bind_method(D_METHOD("set_has_river", "value"), &Island::set_has_river);
     ClassDB::bind_method(D_METHOD("get_has_river"), &Island::get_has_river);
+    ClassDB::bind_method(D_METHOD("set_has_yard", "value"), &Island::set_has_yard);
+    ClassDB::bind_method(D_METHOD("get_has_yard"), &Island::get_has_yard);
+    ClassDB::bind_method(D_METHOD("has_shipyard"), &Island::has_shipyard);
 
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "area_m2", PROPERTY_HINT_RANGE, "5000,1000000,1000,suffix:m²"), "set_area_m2", "get_area_m2");
@@ -78,6 +81,7 @@ void Island::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "cliff_m", PROPERTY_HINT_RANGE, "2,100,0.5,suffix:m"), "set_cliff_m", "get_cliff_m");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "keel_m", PROPERTY_HINT_RANGE, "0,400,1,suffix:m"), "set_keel_m", "get_keel_m");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "has_river"), "set_has_river", "get_has_river");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "has_yard"), "set_has_yard", "get_has_yard");
 
     ADD_SIGNAL(MethodInfo("rebuilt"));
 }
@@ -122,6 +126,7 @@ void Island::rebuild() {
     params.keel_m = keel_m;
     params.river = has_river;
     params.trail = has_river;
+    params.yard = has_yard;
     field = generate_island_field(params);
 
     auto adopt = [this](Node *p_node, const char *p_name) {
@@ -309,5 +314,10 @@ void Island::set_keel_m(double p_value) {
 
 void Island::set_has_river(bool p_value) {
     has_river = p_value;
+    queue_rebuild();
+}
+
+void Island::set_has_yard(bool p_value) {
+    has_yard = p_value;
     queue_rebuild();
 }

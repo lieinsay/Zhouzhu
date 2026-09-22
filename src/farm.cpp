@@ -17,7 +17,7 @@ using namespace godot;
 const Vector2i Farm::NO_CELL = Vector2i(-1, -1);
 
 static_assert(int(Farm::PLOT_RIPE) == int(PlotState::RIPE) && int(Farm::ACTION_HARVEST) == int(FarmAction::HARVEST) &&
-                int(Farm::LAND_TRAIL) == int(Arability::TRAIL),
+                int(Farm::LAND_YARD) == int(Arability::YARD),
         "Farm 的枚举要与 farm_model.h 的逐项对齐");
 
 namespace {
@@ -257,6 +257,7 @@ void Farm::_bind_methods() {
     BIND_ENUM_CONSTANT(LAND_TOO_STEEP);
     BIND_ENUM_CONSTANT(LAND_DOCK);
     BIND_ENUM_CONSTANT(LAND_TRAIL);
+    BIND_ENUM_CONSTANT(LAND_YARD);
 }
 
 void Farm::_ready() {

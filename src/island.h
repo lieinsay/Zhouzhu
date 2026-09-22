@@ -23,6 +23,7 @@ class Island : public godot::StaticBody3D {
     double keel_m = 110.0;
 
     bool has_river = false;
+    bool has_yard = false;
 
     IslandParams params; // 上一次 rebuild 用的那一份
     IslandField field;
@@ -77,4 +78,8 @@ public:
     double get_keel_m() const { return keel_m; }
     void set_has_river(bool p_value);
     bool get_has_river() const { return has_river; }
+    void set_has_yard(bool p_value);
+    bool get_has_yard() const { return has_yard; }
+    // 要了船坞、坪也真的凿出来了（岸线太退的岛凿不出）
+    bool has_shipyard() const { return field.yard.present; }
 };
