@@ -187,6 +187,9 @@ void Voyage::_ready() {
         pack.add(to_std(keys[k]), int(starting_pack[keys[k]]));
     }
 
+    helm.attach(ship, player);
+    sync_helm_rules();
+
     // 子节点先于父节点 _ready，岛此刻已经生成完，泊位与出生点都有了
     ship->place_at(origin->get_berth_contact());
     const Transform3D spawn = origin->get_spawn_transform();
@@ -319,8 +322,8 @@ void Voyage::_physics_process(double p_delta) {
     const bool interact = Input::get_singleton()->is_action_just_pressed(input_actions::INTERACT);
     notice_time = Math::max(0.0, notice_time - p_delta);
 
-    switch (state) {
-        case ON_FOOT: {
+    switch (helm.get_state()) {
+        case Helm::ON_FOOT: {
             if (Input::get_singleton()->is_action_just_pressed(input_actions::INVENTORY)) {
                 if (refit_open) {
                     set_refit_open(false); // Tab 先合上开着的那个
@@ -341,7 +344,7 @@ void Voyage::_physics_process(double p_delta) {
                 browse_pack(interact); // 开着背包：E 是拿东西，不是上舵、不是干活
             } else if (interact && near_bench()) {
                 interact_at_bench();
-            } else if (interact && player->get_global_position().distance_to(ship->get_helm_position()) <= helm_range) {
+            } else if (interact && helm.near_helm()) {
                 if (!ship->can_fly()) {
                     say(String(U"没有动力区，飞不起来：去船坞的画样台加一节"));
                 } else {
@@ -357,32 +360,12 @@ void Voyage::_physics_process(double p_delta) {
             }
         } break;
 
-        case PILOTING: {
-            seat_player();
-            if (!interact) {
-                break;
+        case Helm::PILOTING:
+        case Helm::MOORING:
+            if (helm.step(interact, berths()) == Helm::STILL_MOVING) {
+                say(String(U"船还在走，先停稳再离舵"));
             }
-            Transform3D target;
-            bool yard = false;
-            if (moor_target_in_range(target, yard)) {
-                ship->moor_at(target);
-                ship->set_controlled(false);
-                moor_to_yard = yard;
-                state = MOORING;
-            } else if (ship->get_speed() <= leave_helm_speed) {
-                disembark();
-            } else {
-                notice = String(U"船还在走，先停稳再离舵");
-                notice_time = NOTICE_SECONDS;
-            }
-        } break;
-
-        case MOORING: {
-            seat_player();
-            if (!ship->is_mooring()) {
-                disembark();
-            }
-        } break;
+            break;
     }
     update_hud();
 }
@@ -397,27 +380,13 @@ void Voyage::board() {
     if (farm) {
         farm->set_highlight(Farm::NO_CELL, Color());
     }
-    player->set_controlled(false);
-    ship->set_controlled(true);
-    ship->get_camera()->make_current();
-    seat_player();
-    state = PILOTING;
+    helm.board();
 }
 
-void Voyage::disembark() {
-    const Transform3D exit = ship->get_exit_transform();
-    ship->set_controlled(false);
-    player->set_global_position(exit.origin + Vector3(0, 0.05f, 0));
-    player->set_look_yaw(yaw_of(exit));
-    player->set_controlled(true);
-    player->get_camera()->make_current();
-    state = ON_FOOT;
-}
-
-void Voyage::seat_player() {
-    const Transform3D seat = ship->get_seat_transform();
-    player->set_global_position(seat.origin);
-    player->set_facing_yaw(yaw_of(seat));
+void Voyage::sync_helm_rules() {
+    helm.helm_range = helm_range;
+    helm.dock_range = dock_range;
+    helm.leave_helm_speed = leave_helm_speed;
 }
 
 // 开合背包。开着的时候人站住（输入挡在 Player 门口，物理照常），手上的活作废，描边收起。
@@ -945,25 +914,15 @@ void Voyage::respawn() {
     notice_time = NOTICE_SECONDS;
 }
 
-bool Voyage::moor_target_in_range(Transform3D &r_target, bool &r_yard) const {
-    bool found = false;
-    double best_distance = dock_range;
-    auto consider = [&](const Transform3D &p_target, bool p_yard) {
-        const double distance = ship->get_global_position().distance_to(p_target.origin);
-        if (distance <= best_distance) {
-            found = true;
-            best_distance = distance;
-            r_target = p_target;
-            r_yard = p_yard;
-        }
-    };
+std::vector<Berth> Voyage::berths() const {
+    std::vector<Berth> out;
     for (Island *island : { origin, destination }) {
-        consider(island->get_berth_contact(), false);
+        out.push_back(Berth{ island->get_berth_contact(), false, -1 });
     }
     if (shipyard && shipyard->is_present()) {
-        consider(shipyard->get_cradle_contact(), true);
+        out.push_back(Berth{ shipyard->get_cradle_contact(), true, -1 });
     }
-    return found;
+    return out;
 }
 
 Island *Voyage::nearest_island(const Vector3 &p_position) const {
@@ -979,10 +938,10 @@ void Voyage::update_hud() {
     Island *target = arrived ? origin : destination;
     const Transform3D target_berth = target->get_berth_contact();
 
-    switch (state) {
-        case ON_FOOT: {
+    switch (helm.get_state()) {
+        case Helm::ON_FOOT: {
             status = arrived ? String(U"已踏上对岸的岛") : String(U"目标：登上空艇，飞到对岸的岛上去");
-            const bool near_helm = player->get_global_position().distance_to(ship->get_helm_position()) <= helm_range;
+            const bool near_helm = helm.near_helm();
             prompt = near_helm ? (ship->can_fly() ? String(U"按 E 掌舵") : String(U"没有动力区，飞不起来")) : String(U"WASD 移动 · 空格 跳 · Shift 疾跑");
             if (refit_open) {
                 refresh_refit_view();
@@ -1042,36 +1001,13 @@ void Voyage::update_hud() {
             }
         } break;
 
-        case PILOTING: {
-            const Vector3 ship_position = ship->get_global_position();
-            const Vector3 to_target = target_berth.origin - ship_position;
-            const double distance = Vector2(to_target.x, to_target.z).length();
-            // 目标相对船头的方位：正 = 在右舷
-            const Vector3 local = ship->get_global_transform().basis.xform_inv(to_target);
-            const int relative_deg = int(std::lround(Math::rad_to_deg(std::atan2(double(local.x), double(-local.z)))));
-            String bearing = String(U"正前方");
-            if (relative_deg > 2) {
-                bearing = vformat(String(U"右舷 %d°"), relative_deg);
-            } else if (relative_deg < -2) {
-                bearing = vformat(String(U"左舷 %d°"), -relative_deg);
-            }
-            status = vformat(String(U"航速 %d m/s    高度 %d m\n%s %d m    %s    高差 %+d m"),
-                    int(std::lround(ship->get_speed())), int(std::lround(ship_position.y)),
-                    arrived ? String(U"回程泊位") : String(U"对岸泊位"), int(std::lround(distance)), bearing, int(std::lround(to_target.y)));
-
-            Transform3D moor_target;
-            bool yard = false;
-            if (moor_target_in_range(moor_target, yard)) {
-                prompt = ship->is_at(moor_target, 0.5) ? String(U"按 E 离舵") : (yard ? String(U"按 E 入坞") : String(U"按 E 靠泊"));
-            } else if (ship->get_speed() <= leave_helm_speed) {
-                prompt = String(U"W/S 进退 · A/D 转舵 · 空格 升 · Shift 降 · E 离舵");
-            } else {
-                prompt = String(U"W/S 进退 · A/D 转舵 · 空格 升 · Shift 降");
-            }
+        case Helm::PILOTING: {
+            status = helm.course_text(target_berth, arrived ? String(U"回程泊位") : String(U"对岸泊位"));
+            prompt = helm.piloting_prompt(berths());
         } break;
 
-        case MOORING: {
-            status = moor_to_yard ? String(U"入坞中") : String(U"靠泊中");
+        case Helm::MOORING: {
+            status = helm.is_mooring_to_yard() ? String(U"入坞中") : String(U"靠泊中");
             prompt = String(U"……");
         } break;
     }
@@ -1079,7 +1015,7 @@ void Voyage::update_hud() {
         prompt = notice;
     }
     // 第一行末尾：脚下（或船下）那座岛的钟点——村民按它出工收工
-    const Villagers *villagers = villagers_of(nearest_island(state == ON_FOOT ? player->get_global_position() : ship->get_global_position()));
+    const Villagers *villagers = villagers_of(nearest_island(helm.get_state() == Helm::ON_FOOT ? player->get_global_position() : ship->get_global_position()));
     if (villagers) {
         const String clock = String(U"    ") + villagers->get_clock_text();
         const int line_end = status.find("\n");

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/classes/label.hpp>
@@ -12,6 +13,7 @@
 #include "build_overlay.h"
 #include "build_panel.h"
 #include "farm.h"
+#include "helm.h"
 #include "inventory.h"
 #include "island.h"
 #include "player.h"
@@ -56,8 +58,7 @@ private:
     godot::Dictionary starting_pack; // 开局背包：物品 id → 份数
     bool dev_tools = true; // 开发者工具（布置模式）开不开
 
-    State state = ON_FOOT;
-    bool moor_to_yard = false; // 正在滑向的是坞位（不是泊位）
+    Helm helm; // 上舵、飞、靠泊、离舵（与岛群的 WorldScene 同一套）
     bool arrived = false;
     bool has_safe_footing = false;
     godot::Vector3 safe_footing;
@@ -103,8 +104,6 @@ private:
     void build_hud();
     void update_hud();
     void board();
-    void disembark();
-    void seat_player();
     void set_pack_open(bool p_open);
     void browse_pack(bool p_interact);
     void set_refit_open(bool p_open);
@@ -128,8 +127,9 @@ private:
     godot::String refusal(const godot::Vector2i &p_cell) const;
     void track_footing();
     void respawn();
-    // dock_range 内最近的泊位 / 坞位；r_yard 说是不是坞位。没有返回 false
-    bool moor_target_in_range(godot::Transform3D &r_target, bool &r_yard) const;
+    // 此刻能靠的泊位与坞位
+    std::vector<Berth> berths() const;
+    void sync_helm_rules();
     Island *nearest_island(const godot::Vector3 &p_position) const;
 
 protected:
@@ -142,7 +142,7 @@ public:
     void _physics_process(double p_delta) override;
     void _unhandled_input(const godot::Ref<godot::InputEvent> &p_event) override;
 
-    State get_state() const { return state; }
+    State get_state() const { return State(helm.get_state()); }
     bool has_arrived() const { return arrived; }
     bool is_working() const { return work_action != Farm::ACTION_NONE; }
     bool is_pack_open() const { return pack_open; }
@@ -170,11 +170,20 @@ public:
     godot::NodePath get_ship_path() const { return ship_path; }
     void set_player_path(const godot::NodePath &p_path) { player_path = p_path; }
     godot::NodePath get_player_path() const { return player_path; }
-    void set_helm_range(double p_value) { helm_range = p_value; }
+    void set_helm_range(double p_value) {
+        helm_range = p_value;
+        sync_helm_rules();
+    }
     double get_helm_range() const { return helm_range; }
-    void set_dock_range(double p_value) { dock_range = p_value; }
+    void set_dock_range(double p_value) {
+        dock_range = p_value;
+        sync_helm_rules();
+    }
     double get_dock_range() const { return dock_range; }
-    void set_leave_helm_speed(double p_value) { leave_helm_speed = p_value; }
+    void set_leave_helm_speed(double p_value) {
+        leave_helm_speed = p_value;
+        sync_helm_rules();
+    }
     double get_leave_helm_speed() const { return leave_helm_speed; }
     void set_kill_altitude(double p_value) { kill_altitude = p_value; }
     double get_kill_altitude() const { return kill_altitude; }

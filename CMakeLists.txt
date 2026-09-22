@@ -75,6 +75,8 @@ target_sources(
         src/dock_builder.h
         src/farm.cpp
         src/farm.h
+        src/helm.cpp
+        src/helm.h
         src/input_actions.cpp
         src/input_actions.h
         src/island.cpp

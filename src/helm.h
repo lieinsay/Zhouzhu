@@ -1,0 +1,65 @@
+#pragma once
+
+#include <vector>
+
+#include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/variant/transform3d.hpp>
+
+#include "player.h"
+#include "ship.h"
+
+// 掌舵：上舵 → 飞（换档）→ 叫靠泊（船自己滑到泊位上）→ 离舵下船。甲乙两岛（Voyage）与岛群（WorldScene）共用。
+// 不是节点，是编排者肚子里的一个部件：状态（谁在受控、在不在滑向泊位）在这里，但每一步由编排者在自己的物理帧里推一下，
+// 泊位候选也由编排者当场给——它知道此刻有哪些码头 / 船坞，这里不认识 Island、World。
+// 上舵前该收起的面板、该放下的活，是编排者的事；这里只管人、船、相机的交接。
+
+struct Berth {
+    godot::Transform3D contact; // 接触线（见 dock_builder::berth_contact）
+    bool yard = false; // 是坞位（入坞）不是泊位（靠泊）
+    int id = -1; // 编排者自己认的号（码头号），这里不用
+};
+
+class Helm {
+public:
+    enum State {
+        ON_FOOT,
+        PILOTING,
+        MOORING,
+    };
+    enum Event {
+        NONE,
+        MOOR_STARTED, // 叫了靠泊 / 入坞，船开始滑
+        DISEMBARKED, // 人下了船
+        STILL_MOVING, // 想离舵，船还没停稳
+    };
+
+    double helm_range = 2.2; // 离舵多近能上舵
+    double dock_range = 45.0; // 离泊位多近能叫靠泊
+    double leave_helm_speed = 3.0; // 半空中离舵：船速须低于此
+
+private:
+    Ship *ship = nullptr;
+    Player *player = nullptr;
+    State state = ON_FOOT;
+    Berth moor_berth; // 正在滑向的那一个
+
+public:
+    void attach(Ship *p_ship, Player *p_player);
+
+    State get_state() const { return state; }
+    bool is_mooring_to_yard() const { return state == MOORING && moor_berth.yard; }
+    const Berth &get_moor_berth() const { return moor_berth; }
+    bool near_helm() const;
+
+    void board();
+    void disembark();
+    // 掌舵 / 滑行中每个物理帧调：人坐稳在舵旁；R/F 换档；p_interact 时在泊位附近叫靠泊，否则停稳了就离舵
+    Event step(bool p_interact, const std::vector<Berth> &p_berths);
+    // dock_range 内最近的泊位；没有返回 false
+    bool moor_target(const std::vector<Berth> &p_berths, Berth &r_berth) const;
+
+    // 航行 HUD：「航速 · 档位 · 高度」一行，「<目标名> 距离 · 方位 · 高差」一行
+    godot::String course_text(const godot::Transform3D &p_target, const godot::String &p_target_name) const;
+    // 掌舵时的操作提示（泊位附近换成「按 E 靠泊 / 入坞 / 离舵」）
+    godot::String piloting_prompt(const std::vector<Berth> &p_berths) const;
+};
