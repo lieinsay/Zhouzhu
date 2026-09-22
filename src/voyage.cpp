@@ -604,6 +604,20 @@ Settlement *Voyage::settlement_of(Island *p_island) const {
     return nullptr;
 }
 
+Villagers *Voyage::villagers_of(Island *p_island) const {
+    if (!p_island) {
+        return nullptr;
+    }
+    const TypedArray<Node> children = p_island->get_children();
+    for (int64_t k = 0; k < children.size(); k++) {
+        Villagers *villagers = Object::cast_to<Villagers>(children[k]);
+        if (villagers) {
+            return villagers;
+        }
+    }
+    return nullptr;
+}
+
 // 开合布置模式（开发者）。开着的时候人站住、相机绕着光标转；改的是脚下这座岛的 Settlement，岛上没挂就开不了
 void Voyage::set_build_open(bool p_open) {
     if (build_open == p_open) {
@@ -1063,6 +1077,13 @@ void Voyage::update_hud() {
     }
     if (notice_time > 0.0) {
         prompt = notice;
+    }
+    // 第一行末尾：脚下（或船下）那座岛的钟点——村民按它出工收工
+    const Villagers *villagers = villagers_of(nearest_island(state == ON_FOOT ? player->get_global_position() : ship->get_global_position()));
+    if (villagers) {
+        const String clock = String(U"    ") + villagers->get_clock_text();
+        const int line_end = status.find("\n");
+        status = line_end < 0 ? status + clock : status.insert(line_end, clock);
     }
     status_label->set_text(status);
     prompt_label->set_text(prompt);

@@ -20,6 +20,7 @@
 #include "settlement.h"
 #include "ship.h"
 #include "shipyard.h"
+#include "villagers.h"
 
 // 主场景的编排。切片一：走上空艇 → 掌舵 → 飞到对岸 → 靠泊下船；切片二：步行时在河边开垦、播种、收获；
 // 拓展：种子从背包里选（Tab 开合背包，W/S 选、E 拿在手上），收成进背包；
@@ -117,6 +118,7 @@ private:
     void refresh_build_view();
     godot::Vector3 build_cursor_snapped() const; // 光标按 0.5 m 格取整、贴地（全局）
     Settlement *settlement_of(Island *p_island) const; // 岛下面的 Settlement 子节点；没有返回 nullptr
+    Villagers *villagers_of(Island *p_island) const; // 岛下面的 Villagers 子节点；没有返回 nullptr
     void interact_at_bench();
     bool has_seed_in_hand() const { return !held_seed.empty() && pack.has(held_seed); }
     void tend_farm(double p_delta, bool p_interact);
