@@ -13,6 +13,7 @@
 #include "flight_model.h"
 #include "inventory.h"
 #include "island_field.h"
+#include "settlement_model.h"
 #include "ship_layout.h"
 #include "value_noise.h"
 
@@ -753,6 +754,105 @@ void test_flight() {
     check(std::hypot(w.vx, w.vz) <= params.max_speed + 1e-6, "输入越界被夹住");
 }
 
+void test_settlement() {
+    std::printf("settlement_model\n");
+    constexpr double PI = 3.14159265358979323846;
+    const BuildingDef &house = *buildings::by_id("house");
+
+    // 建筑表
+    check(buildings::by_id("house") && buildings::by_id("hall") && buildings::by_id("granary") && buildings::by_id("tower") && !buildings::by_id("palace"), "按 id 查建筑");
+    check(std::string(house.name) == "民居" && buildings::index_of("tower") == 3 && buildings::index_of("palace") == -1, "显示名与序号");
+    check(buildings::COUNT == 4 && &buildings::at(0) == &house, "表里四种");
+
+    // 文本往返
+    const Building b{ "house", 12.5, -30.25, 0.5 * PI };
+    const std::string id = building_id(b);
+    check(id == "house@12.50,-30.25,90.0", "building_id（" + id + "）");
+    Building back;
+    check(parse_building_id(id, back) && back.kind == "house" && std::abs(back.x - 12.5) < 1e-9 && std::abs(back.z + 30.25) < 1e-9 && std::abs(back.yaw - 0.5 * PI) < 1e-9, "parse 往返");
+    check(parse_building_id("tower@0,0,-90", back) && std::abs(back.yaw - 1.5 * PI) < 1e-9, "负角度归到 [0, 360)");
+    check(!parse_building_id("house@1,2", back) && !parse_building_id("palace@1,2,3", back) && !parse_building_id("house@1,2,3,4", back) && !parse_building_id("@1,2,3", back), "残缺 / 不认识的条目");
+    bool ok = true;
+    const SettlementLayout parsed = settlement_from_ids({ "# 注释", "", "  house@1,2,3  ", "bogus" }, &ok);
+    check(parsed.size() == 1 && !ok, "跳过注释与空行，认不出的条目报 ok=false");
+    check(settlement_ids(parsed).size() == 1 && settlement_ids(parsed)[0] == "house@1.00,2.00,3.0", "layout_ids");
+    check(settlement_from_ids(settlement_ids(parsed)) == parsed, "往返相等");
+
+    // 占地与压着
+    const Building a{ "house", 0.0, 0.0, 0.0 };
+    check(footprint_contains(house, a, 2.9, 2.4) && !footprint_contains(house, a, 3.1, 0.0) && !footprint_contains(house, a, 0.0, 2.6), "占地：面阔 6 进深 5");
+    check(footprint_contains(house, a, 3.4, 0.0, 0.5), "占地可以外扩");
+    const Building e{ "house", 0.0, 6.0, 0.5 * PI };
+    check(footprint_contains(house, e, 2.4, 6.0) && !footprint_contains(house, e, 2.6, 6.0) && footprint_contains(house, e, 0.0, 8.9), "转 90° 后面阔沿 z");
+    double cx[4], cz[4];
+    footprint_corners(house, 0.0, 0.0, 0.5 * PI, 0.0, cx, cz);
+    check_near(cx[0], 2.5, 1e-9, "转 90° 的左前角 x");
+    check_near(cz[0], 3.0, 1e-9, "转 90° 的左前角 z");
+    check(!footprints_overlap(a, Building{ "house", 7.2, 0.0, 0.0 }, 1.0) && footprints_overlap(a, Building{ "house", 6.8, 0.0, 0.0 }, 1.0), "并排两座：空 1 m 才不算压着");
+    check(footprints_overlap(a, e, 1.0) && !footprints_overlap(a, Building{ "house", 0.0, 6.6, 0.5 * PI }, 1.0), "转 90° 的邻居按转后的占地算");
+    check(!footprints_overlap(Building{ "house", 0.0, 0.0, 0.25 * PI }, Building{ "house", 10.0, 0.0, 0.25 * PI }, 1.0) && footprints_overlap(Building{ "house", 0.0, 0.0, 0.25 * PI }, Building{ "house", 8.0, 0.0, 0.25 * PI }, 1.0), "斜着的两座用分离轴判（转 45° 后对角伸出去，8 m 还压着）");
+    SettlementLayout pair;
+    pair.add(a);
+    pair.add(Building{ "house", 7.2, 0.0, 0.0 });
+    check(settlement_find(pair, 7.2, 0.0) == 1 && settlement_find(pair, 0.0, 0.0) == 0 && settlement_find(pair, 3.6, 0.0) == -1, "点落在哪一座里");
+
+    // 勘察
+    IslandParams p = river_island_params(0.8);
+    p.trail = true;
+    p.yard = true;
+    const IslandField f = generate_island_field(p);
+    const SiteRules rules;
+    SettlementLayout layout;
+    // 停机坪：岸缘点周围几米是掩膜的锯齿边，往岛内退 0.7 个坪的半径（14 m）
+    const double apron_x = f.dock.x - 0.7 * p.dock_apron_m * f.dock.out_x, apron_z = f.dock.z - 0.7 * p.dock_apron_m * f.dock.out_z;
+    check(survey_site(f, p.dock_apron_m, house, apron_x, apron_z, 0.0, layout, rules).reason == "停机坪上不能盖", "停机坪被拒");
+    check(survey_site(f, p.dock_apron_m, house, 2.0 * f.half_extent(), 0.0, 0.0, layout, rules).reason.find("没有地面") != std::string::npos, "岛外被拒");
+    const RiverPoint &rp = f.river[f.river.size() / 2];
+    check(survey_site(f, p.dock_apron_m, house, rp.x, rp.z, 0.0, layout, rules).reason == "这是河，盖不了", "河里被拒");
+    check(f.yard.present && survey_site(f, p.dock_apron_m, house, f.yard.x, f.yard.z, 0.0, layout, rules).reason == "这是船坞的坪，盖不得", "船坞坪被拒");
+    // 路上：挑一处离停机坪、船坞都够远的路点
+    int trail_checked = 0;
+    for (const TrailPoint &t : f.trail) {
+        if (std::hypot(t.x - f.dock.x, t.z - f.dock.z) > p.dock_apron_m + rules.dock_margin_m + 8.0 && !f.yard.contains(t.x, t.z, rules.yard_margin_m + 8.0)) {
+            check(survey_site(f, p.dock_apron_m, house, t.x, t.z, 0.0, layout, rules).reason == "压着路了", "路上被拒");
+            trail_checked++;
+            break;
+        }
+    }
+    check(trail_checked == 1, "路上有一处可以测");
+    // 扫全岛：得有能盖的地，也得有太陡的地
+    int sites = 0, steep = 0;
+    double site_x = 0.0, site_z = 0.0;
+    for (int i = 0; i < f.n; i += 2) {
+        for (int j = 0; j < f.n; j += 2) {
+            const SiteReport r = survey_site(f, p.dock_apron_m, house, f.coord(j), f.coord(i), 0.0, layout, rules);
+            if (r.ok()) {
+                if (sites == 0) {
+                    site_x = f.coord(j);
+                    site_z = f.coord(i);
+                }
+                sites++;
+            } else if (r.reason.rfind("坡太陡", 0) == 0) {
+                steep++;
+            }
+        }
+    }
+    check(sites > 20, "岛上有不少能盖民居的地（" + std::to_string(sites) + "）");
+    check(steep > 0, "岛缘有太陡的地（" + std::to_string(steep) + "）");
+    const SiteReport site = survey_site(f, p.dock_apron_m, house, site_x, site_z, 0.0, layout, rules);
+    check(site.ok() && site.ground_max - site.ground_min <= rules.max_rise_m, "选中的地高差在限内");
+    check_near(site.floor_y, site.ground_max + house.plinth_m, 1e-9, "地坪 = 最高地面 + 台基");
+    check_near(site.plinth_bottom, site.ground_min - rules.bury_m, 1e-9, "台基埋到最低地面之下");
+    check(settlement_place(layout, f, p.dock_apron_m, "house", site_x, site_z, 0.0, rules).empty() && layout.size() == 1, "放一座");
+    check(settlement_place(layout, f, p.dock_apron_m, "house", site_x, site_z, 0.0, rules) == "和民居挨得太近" && layout.size() == 1, "同一处再放被拒");
+    check(survey_site(f, p.dock_apron_m, house, site_x, site_z, 0.0, layout, rules, 0).ok(), "忽略自己就能过");
+    check(settlement_place(layout, f, p.dock_apron_m, "palace", site_x, site_z, 0.0, rules) == "没有这种建筑：palace", "不认识的建筑");
+    check(settlement_place(layout, f, p.dock_apron_m, "house", apron_x, apron_z, 0.0, rules) == "停机坪上不能盖" && layout.size() == 1, "被拒时清单不动");
+    check(settlement_find(layout, site_x, site_z) == 0, "放下的那座找得到");
+    layout.erase(0);
+    check(layout.empty(), "拆掉");
+}
+
 } // namespace
 
 int main() {
@@ -775,6 +875,7 @@ int main() {
     test_crops();
     test_farm();
     test_flight();
+    test_settlement();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
