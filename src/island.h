@@ -3,6 +3,7 @@
 #include <godot_cpp/classes/static_body3d.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
+#include "dock_site.h"
 #include "island_field.h"
 
 // 一座浮空岛。节点原点在岸缘高度（局部 y = 0 即岸缘），岛体向下垂到岛底。
@@ -31,14 +32,13 @@ class Island : public godot::StaticBody3D {
 
     void queue_rebuild();
     void clear_generated();
-    godot::Vector3 dock_local(double p_along_out, double p_up) const;
 
 protected:
     static void _bind_methods();
 
 public:
-    static constexpr double PIER_WIDTH = 3.0;
-    static constexpr double PIER_LIFT = 0.1; // 栈桥面比停机坪高这么多，免得与地面共面闪烁
+    // 码头几何（栈桥、泊位、出生点都由它推出，见 dock_builder）
+    DockPlan dock_plan() const;
 
     void _ready() override;
 

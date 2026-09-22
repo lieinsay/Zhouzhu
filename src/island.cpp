@@ -14,6 +14,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
+#include "dock_builder.h"
 #include "island_mesh.h"
 
 using namespace godot;
@@ -21,10 +22,6 @@ using namespace godot;
 namespace {
 
 const char *GENERATED_META = "island_generated";
-constexpr double PIER_INLAND = 4.0; // 栈桥根埋进岸里多少
-constexpr double PIER_THICKNESS = 0.5;
-constexpr double BERTH_GAP = 0.15; // 船舷与栈桥头之间的缝
-constexpr double SPAWN_INLAND = 12.0;
 
 Ref<StandardMaterial3D> make_material(const Color &p_albedo, bool p_vertex_color) {
     Ref<StandardMaterial3D> material;
@@ -182,73 +179,45 @@ void Island::rebuild() {
         adopt(water_instance, "Water");
     }
 
-    // 栈桥：x 轴沿伸出方向
-    const IslandDock &dock = field.dock;
-    const Vector3 out(real_t(dock.out_x), 0, real_t(dock.out_z));
-    const Basis pier_basis(out, Vector3(0, 1, 0), out.cross(Vector3(0, 1, 0)));
-    const Vector3 pier_size(real_t(dock.pier_m + PIER_INLAND), real_t(PIER_THICKNESS), real_t(PIER_WIDTH));
-    const Transform3D pier_xf(pier_basis, dock_local(0.5 * (dock.pier_m - PIER_INLAND), PIER_LIFT - 0.5 * PIER_THICKNESS));
-
-    Ref<BoxMesh> pier_mesh;
-    pier_mesh.instantiate();
-    pier_mesh->set_size(pier_size);
-    pier_mesh->set_material(make_material(Color(0.47f, 0.34f, 0.22f), false));
-    MeshInstance3D *pier = memnew(MeshInstance3D);
-    pier->set_mesh(pier_mesh);
-    pier->set_transform(pier_xf);
-    adopt(pier, "Pier");
-
-    Ref<BoxShape3D> pier_shape;
-    pier_shape.instantiate();
-    pier_shape->set_size(pier_size);
-    CollisionShape3D *pier_collider = memnew(CollisionShape3D);
-    pier_collider->set_shape(pier_shape);
-    pier_collider->set_transform(pier_xf);
-    adopt(pier_collider, "PierShape");
-
-    // 栈桥头的两根系缆桩（只是样子）
-    Ref<CylinderMesh> post_mesh;
-    post_mesh.instantiate();
-    post_mesh->set_top_radius(0.12f);
-    post_mesh->set_bottom_radius(0.14f);
-    post_mesh->set_height(1.1f);
-    post_mesh->set_material(make_material(Color(0.30f, 0.21f, 0.14f), false));
-    for (int side = -1; side <= 1; side += 2) {
-        MeshInstance3D *post = memnew(MeshInstance3D);
-        post->set_mesh(post_mesh);
-        post->set_position(dock_local(dock.pier_m - 0.4, PIER_LIFT + 0.55) + pier_basis.get_column(2) * real_t(side * (0.5 * PIER_WIDTH - 0.15)));
-        adopt(post, side < 0 ? "PostL" : "PostR");
-    }
+    // 栈桥、碰撞、系缆桩（与岛群的码头同一套搭法）
+    dock_builder::build_pier(this, dock_plan(), [](Node3D *p_parent, Node *p_node, const char *p_name) {
+        p_node->set_name(p_name);
+        p_node->set_meta(GENERATED_META, true);
+        p_parent->add_child(p_node);
+    });
 
     emit_signal("rebuilt");
 }
 
-Vector3 Island::dock_local(double p_along_out, double p_up) const {
+DockPlan Island::dock_plan() const {
     const IslandDock &dock = field.dock;
-    return Vector3(real_t(dock.x + p_along_out * dock.out_x), real_t(dock.y + p_up), real_t(dock.z + p_along_out * dock.out_z));
+    DockPlan plan;
+    plan.ok = true;
+    plan.x = dock.x;
+    plan.z = dock.z;
+    plan.y = dock.y;
+    plan.out_x = dock.out_x;
+    plan.out_z = dock.out_z;
+    plan.pier_m = dock.pier_m;
+    plan.apron_m = params.dock_apron_m;
+    return plan;
 }
 
 Transform3D Island::get_berth_contact() const {
-    const IslandDock &dock = field.dock;
-    const Vector3 toward_pier(real_t(-dock.out_x), 0, real_t(-dock.out_z));
-    const Vector3 up(0, 1, 0);
-    const Transform3D local(Basis(toward_pier, up, toward_pier.cross(up)), dock_local(dock.pier_m + BERTH_GAP, PIER_LIFT));
-    return get_global_transform() * local;
+    return get_global_transform() * dock_builder::berth_contact(dock_plan());
 }
 
 Vector3 Island::get_pier_end_position() const {
-    return get_global_transform().xform(dock_local(field.dock.pier_m, PIER_LIFT));
+    return get_global_transform().xform(dock_builder::pier_end(dock_plan()));
 }
 
 Transform3D Island::get_spawn_transform() const {
-    const IslandDock &dock = field.dock;
-    Vector3 pos = dock_local(-SPAWN_INLAND, 0.0);
+    Transform3D local = dock_builder::spawn(dock_plan());
     double ground = 0.0;
-    if (field.sample_height(pos.x, pos.z, ground)) {
-        pos.y = real_t(ground);
+    if (field.sample_height(local.origin.x, local.origin.z, ground)) {
+        local.origin.y = real_t(ground);
     }
-    const Vector3 out(real_t(dock.out_x), 0, real_t(dock.out_z));
-    return get_global_transform() * Transform3D(Basis::looking_at(out, Vector3(0, 1, 0)), pos);
+    return get_global_transform() * local;
 }
 
 PackedVector3Array Island::get_trail_points() const {
@@ -332,3 +301,4 @@ void Island::set_has_yard(bool p_value) {
     has_yard = p_value;
     queue_rebuild();
 }
+

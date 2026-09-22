@@ -16,6 +16,8 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "dock_builder.h"
+
 using namespace godot;
 
 namespace {
@@ -44,6 +46,13 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_loaded"), &World::is_loaded);
     ClassDB::bind_method(D_METHOD("get_tile_count"), &World::get_tile_count);
     ClassDB::bind_method(D_METHOD("get_pending_count"), &World::get_pending_count);
+    ClassDB::bind_method(D_METHOD("get_dock_count"), &World::get_dock_count);
+    ClassDB::bind_method(D_METHOD("find_dock", "id"), &World::find_dock);
+    ClassDB::bind_method(D_METHOD("get_dock_id", "index"), &World::get_dock_id);
+    ClassDB::bind_method(D_METHOD("is_dock_berthable", "index"), &World::is_dock_berthable);
+    ClassDB::bind_method(D_METHOD("get_dock_berth", "index"), &World::get_dock_berth);
+    ClassDB::bind_method(D_METHOD("get_dock_spawn", "index"), &World::get_dock_spawn);
+    ClassDB::bind_method(D_METHOD("get_dock_position", "index"), &World::get_dock_position);
 
     ClassDB::bind_method(D_METHOD("set_data_dir", "value"), &World::set_data_dir);
     ClassDB::bind_method(D_METHOD("get_data_dir"), &World::get_data_dir);
@@ -105,6 +114,17 @@ bool World::load() {
     }
     terrain = WorldTerrain(grid, islands, uint64_t(terrain_seed));
     layout = TileLayout(grid);
+
+    // 码头：在原地形上量好，再把停机坪压进地形里——都在第一块地面开建之前
+    const String sites_path = data_dir.path_join("sites.tsv");
+    const PackedByteArray sites_bytes = FileAccess::get_file_as_bytes(sites_path);
+    const std::string sites_text(reinterpret_cast<const char *>(sites_bytes.ptr()), size_t(sites_bytes.size()));
+    if (sites_bytes.is_empty() || !parse_world_sites(sites_text, sites, error)) {
+        ERR_PRINT(String("World: 读不了 ") + sites_path + "：" + String::utf8(error.c_str()) + String(U"（用 tools/export_skyisle.py --sites 导出）"));
+        sites = WorldSites();
+    }
+    docks = plan_world_docks(terrain, sites, world_dock_rules());
+    terrain.set_pads(docks);
 
     ground_material.instantiate();
     ground_material->set_roughness(1.0);
@@ -348,4 +368,42 @@ int World::get_pending_count() {
         missing += tiles.find(key.packed()) == tiles.end() ? 1 : 0;
     }
     return missing;
+}
+
+int World::find_dock(int p_id) const {
+    for (size_t k = 0; k < sites.docks.size(); k++) {
+        if (sites.docks[k].id == p_id) {
+            return int(k);
+        }
+    }
+    return -1;
+}
+
+int World::get_dock_id(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, int(sites.docks.size()), -1);
+    return sites.docks[size_t(p_index)].id;
+}
+
+bool World::is_dock_berthable(int p_index) const {
+    return p_index >= 0 && p_index < int(docks.size()) && docks[size_t(p_index)].ok;
+}
+
+Transform3D World::get_dock_berth(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, int(docks.size()), Transform3D());
+    return dock_builder::berth_contact(docks[size_t(p_index)]);
+}
+
+Transform3D World::get_dock_spawn(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, int(docks.size()), Transform3D());
+    Transform3D xf = dock_builder::spawn(docks[size_t(p_index)]);
+    double y = 0.0;
+    if (terrain.surface(xf.origin.x, xf.origin.z, y)) {
+        xf.origin.y = real_t(y);
+    }
+    return xf;
+}
+
+Vector3 World::get_dock_position(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, int(docks.size()), Vector3());
+    return dock_builder::point(docks[size_t(p_index)], 0.0, 0.0);
 }

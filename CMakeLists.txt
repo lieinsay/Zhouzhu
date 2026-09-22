@@ -71,6 +71,8 @@ target_sources(
         src/build_panel.h
         src/dev_tools.cpp
         src/dev_tools.h
+        src/dock_builder.cpp
+        src/dock_builder.h
         src/farm.cpp
         src/farm.h
         src/input_actions.cpp

@@ -15,12 +15,15 @@
 
 #include "terrain_tile.h"
 #include "world_grid.h"
+#include "world_sites.h"
 #include "world_terrain.h"
 
 // 一个真实比例的岛群（skyisle-gen 第三层产物，经 tools/export_skyisle.py 转成 data_dir 下的 terrain.bin + world.json）。
 // 地面是流式的：焦点（上层每帧 set_focus，通常是玩家）一动，就按 TileLayout 重新选块，缺的块丢给后台线程建网格，
 // 建好的在主线程挂进场景；被取代的旧块要等盖住它的新块都到齐了才拆，所以地面不会闪出窟窿。最细一级（叶块）带碰撞。
 // 瞬移前调 prepare_at：同步建好落点周围的叶块，人落下去脚下一定有地。
+// 码头：加载时按 sites.tsv 把全部码头规划好（dock_site），停机坪压进连续地形里再建第一块地面；
+// 泊位接触线、出生位姿由此给出。栈桥与村落这些实物不归这里管（见 WorldSites 节点，走近了才建）。
 // 节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
 class World : public godot::Node3D {
     GDCLASS(World, godot::Node3D)
@@ -35,6 +38,8 @@ class World : public godot::Node3D {
     WorldTerrain terrain;
     TileLayout layout;
     godot::Dictionary info; // world.json
+    WorldSites sites; // sites.tsv
+    std::vector<DockPlan> docks; // 与 sites.docks 一一对应
     bool loaded = false;
 
     struct Tile {
@@ -89,9 +94,20 @@ public:
     int get_tile_count() const { return int(tiles.size()); }
     int get_pending_count();
 
+    // 码头（下标与 sites.docks 一致）
+    int get_dock_count() const { return int(docks.size()); }
+    int find_dock(int p_id) const; // 按生成器的码头号找下标；没有 −1
+    int get_dock_id(int p_index) const;
+    bool is_dock_berthable(int p_index) const; // 找到了岸缘，能靠泊
+    godot::Transform3D get_dock_berth(int p_index) const; // 泊位接触线（世界坐标）
+    godot::Transform3D get_dock_spawn(int p_index) const; // 坪上面朝栈桥的出生位姿（世界坐标）
+    godot::Vector3 get_dock_position(int p_index) const; // 岸缘点（栈桥根）
+
     // 给同在 C++ 里的上层（WorldMap 画底图）
     const WorldGrid &get_grid() const { return grid; }
     const WorldTerrain &get_terrain() const { return terrain; }
+    const WorldSites &get_sites() const { return sites; }
+    const std::vector<DockPlan> &get_docks() const { return docks; }
 
     void set_data_dir(const godot::String &p_value) { data_dir = p_value; }
     godot::String get_data_dir() const { return data_dir; }
