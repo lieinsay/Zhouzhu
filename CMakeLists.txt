@@ -19,10 +19,13 @@ set(ZHOUZHU_CORE_SOURCES
     src/buildings.h
     src/crops.cpp
     src/crops.h
+    src/dock_site.cpp
+    src/dock_site.h
     src/farm_model.cpp
     src/farm_model.h
     src/flight_model.cpp
     src/flight_model.h
+    src/ground_query.h
     src/inventory.cpp
     src/inventory.h
     src/island_field.cpp
@@ -40,10 +43,16 @@ set(ZHOUZHU_CORE_SOURCES
     src/terrain_tile.h
     src/value_noise.cpp
     src/value_noise.h
+    src/village_plan.cpp
+    src/village_plan.h
     src/villager_model.cpp
     src/villager_model.h
     src/world_grid.cpp
     src/world_grid.h
+    src/world_ground.cpp
+    src/world_ground.h
+    src/world_sites.cpp
+    src/world_sites.h
     src/world_terrain.cpp
     src/world_terrain.h
 )
@@ -143,3 +152,12 @@ if(MSVC)
     target_compile_options(zhouzhu_core_tests PRIVATE /utf-8)
 endif()
 add_test(NAME core COMMAND zhouzhu_core_tests)
+
+# 岛群体检：把 2051 的全部码头与村落离线铺一遍（见 tools/site_survey.cpp）
+add_executable(zhouzhu_site_survey ${ZHOUZHU_CORE_SOURCES} tools/site_survey.cpp)
+target_include_directories(zhouzhu_site_survey PRIVATE src)
+set_target_properties(zhouzhu_site_survey PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
+if(MSVC)
+    target_compile_options(zhouzhu_site_survey PRIVATE /utf-8)
+endif()
+add_test(NAME site_survey_2051 COMMAND zhouzhu_site_survey ${CMAKE_CURRENT_SOURCE_DIR}/game/worlds/2051)

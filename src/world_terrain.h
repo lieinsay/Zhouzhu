@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
+#include "dock_site.h"
 #include "world_grid.h"
 
 // 岛群的连续地形：在任意 (x, z) 上给出有没有地、顶面多高、岛底多深、是什么地表。
@@ -10,7 +12,9 @@
 //   陆地 ⇔ 岸距 + 岸线噪声 > 0（岸线不再是 100 m 的锯齿）
 //   顶面 = 栅格高程 + 细节噪声（按地表调幅：岩多草少、田最平）
 //   岛底 = 岸缘 − 崖高 − 龙骨 × √向内程度（倒锥，与 skyisle-gen 的岛体一致）
-// 同一点无论哪一级网格来取，结果都一样，所以不同精度的地块拼得上。没有状态，线程安全。
+//   停机坪（set_pads）：顶面按 dock_pad_weight 拉向坪高——码头后面那一片是平的
+// 同一点无论哪一级网格来取，结果都一样，所以不同精度的地块拼得上。
+// 停机坪在建第一块地面之前设好、之后不再变；除此之外没有状态，取样线程安全。
 
 struct WorldIsland {
     int id = 0;
@@ -34,8 +38,12 @@ class WorldTerrain {
     const WorldGrid *grid = nullptr;
     std::vector<WorldIsland> islands; // 按 id 下标
     uint64_t seed = 0;
+    std::vector<DockPlan> pads;
+    std::unordered_map<int64_t, std::vector<int>> pad_buckets; // 桶 → 压着这个桶的坪
 
 public:
+    static constexpr double PAD_BUCKET_M = 256.0;
+
     static constexpr double COAST_AMP_M = 28.0; // 岸线噪声幅度：岸线最多进退这么多
     static constexpr double COAST_FEATURE_M = 90.0;
 
@@ -50,6 +58,14 @@ public:
     double coast_noise(double p_x, double p_z) const; // 约 [-1, 1]
     double detail(double p_x, double p_z) const; // 米
     TerrainSample sample(double p_x, double p_z) const;
+    // 不算停机坪的原地形（码头选址就在它上面量）
+    TerrainSample sample_raw(double p_x, double p_z) const;
+
+    // 停机坪：只收 ok 的；建地面之前调
+    void set_pads(const std::vector<DockPlan> &p_pads);
+    const std::vector<DockPlan> &get_pads() const { return pads; }
+    // 只问有没有地（比 sample 省：不算高度）
+    bool is_land(double p_x, double p_z) const;
     // 只要顶面（没有地返回 false）
     bool surface(double p_x, double p_z, double &r_y) const;
 };

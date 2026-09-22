@@ -117,7 +117,7 @@ double WorldTerrain::detail(double p_x, double p_z) const {
     return (a + (b - a) * tr) * hash_fbm(seed ^ STREAM_DETAIL, p_x, p_z, DETAIL_FEATURE_M, DETAIL_OCTAVES);
 }
 
-TerrainSample WorldTerrain::sample(double p_x, double p_z) const {
+TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     TerrainSample s;
     const WorldGrid &g = *grid;
     s.shore = g.shore_at(p_x, p_z) + COAST_AMP_M * coast_noise(p_x, p_z);
@@ -132,6 +132,57 @@ TerrainSample WorldTerrain::sample(double p_x, double p_z) const {
     s.bottom = isl.rim_m - isl.cliff_m - isl.keel_m * std::sqrt(inward) + UNDERSIDE_AMP_M * hash_fbm(seed ^ STREAM_UNDERSIDE, p_x, p_z, UNDERSIDE_FEATURE_M, 3);
     s.bottom = std::min(s.bottom, s.top - MIN_THICKNESS_M);
     return s;
+}
+
+namespace {
+
+int64_t pad_key(int p_i, int p_j) {
+    return (int64_t(p_i) << 32) ^ int64_t(uint32_t(p_j));
+}
+
+} // namespace
+
+void WorldTerrain::set_pads(const std::vector<DockPlan> &p_pads) {
+    pads.clear();
+    pad_buckets.clear();
+    for (const DockPlan &pad : p_pads) {
+        if (!pad.ok) {
+            continue;
+        }
+        const int index = int(pads.size());
+        pads.push_back(pad);
+        const int i0 = int(std::floor((pad.z - pad.apron_m) / PAD_BUCKET_M)), i1 = int(std::floor((pad.z + pad.apron_m) / PAD_BUCKET_M));
+        const int j0 = int(std::floor((pad.x - pad.apron_m) / PAD_BUCKET_M)), j1 = int(std::floor((pad.x + pad.apron_m) / PAD_BUCKET_M));
+        for (int i = i0; i <= i1; i++) {
+            for (int j = j0; j <= j1; j++) {
+                pad_buckets[pad_key(i, j)].push_back(index);
+            }
+        }
+    }
+}
+
+TerrainSample WorldTerrain::sample(double p_x, double p_z) const {
+    TerrainSample s = sample_raw(p_x, p_z);
+    if (pad_buckets.empty()) {
+        return s;
+    }
+    const auto found = pad_buckets.find(pad_key(int(std::floor(p_z / PAD_BUCKET_M)), int(std::floor(p_x / PAD_BUCKET_M))));
+    if (found == pad_buckets.end()) {
+        return s;
+    }
+    for (int index : found->second) {
+        const DockPlan &pad = pads[size_t(index)];
+        const double w = dock_pad_weight(pad, p_x, p_z);
+        if (w > 0.0) {
+            s.top += w * (pad.y - s.top);
+        }
+    }
+    s.bottom = std::min(s.bottom, s.top - MIN_THICKNESS_M);
+    return s;
+}
+
+bool WorldTerrain::is_land(double p_x, double p_z) const {
+    return grid->shore_at(p_x, p_z) + COAST_AMP_M * coast_noise(p_x, p_z) > 0.0;
 }
 
 bool WorldTerrain::surface(double p_x, double p_z, double &r_y) const {

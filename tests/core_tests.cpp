@@ -3,6 +3,7 @@
 //   cmake --build build --config Debug --target zhouzhu_core_tests
 //   ctest --test-dir build -C Debug --output-on-failure
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -12,6 +13,7 @@
 #include <vector>
 
 #include "crops.h"
+#include "dock_site.h"
 #include "farm_model.h"
 #include "flight_model.h"
 #include "inventory.h"
@@ -21,8 +23,11 @@
 #include "ship_layout.h"
 #include "terrain_tile.h"
 #include "value_noise.h"
+#include "village_plan.h"
 #include "villager_model.h"
 #include "world_grid.h"
+#include "world_ground.h"
+#include "world_sites.h"
 #include "world_terrain.h"
 
 namespace {
@@ -1401,6 +1406,239 @@ void test_world_2051() {
     check(tiles.size() > 20 && tiles.size() < 600, "块数在几十到几百之间（" + std::to_string(tiles.size()) + "）");
 }
 
+// ---------------------------------------------------------------- 码头几何与铺村（两边共用的纯算法）
+
+// 圆岛：半径 200 m，东边泊位旁有一根细岬（宽 3 m，伸到 x = 225），地面起伏
+class RoundDockGround : public DockGround {
+public:
+    bool land(double p_x, double p_z) const override {
+        if (std::hypot(p_x, p_z) <= 200.0) {
+            return true;
+        }
+        return p_x > 0.0 && p_x < 225.0 && std::abs(p_z - 20.0) < 1.5; // 岬
+    }
+    bool ground(double p_x, double p_z, double &r_y) const override {
+        if (!land(p_x, p_z)) {
+            return false;
+        }
+        r_y = 30.0 + 4.0 * std::sin(p_x * 0.07) + 3.0 * std::cos(p_z * 0.05);
+        return true;
+    }
+};
+
+void test_dock_site() {
+    std::printf("dock_site\n");
+    const RoundDockGround ground;
+    DockRules rules;
+    rules.step_m = 0.5;
+    rules.back_m = 1.0;
+    rules.lattice_m = 1.0;
+    const DockPlan plan = plan_dock(ground, 0.0, 0.0, 1.0, 0.0, 300.0, rules);
+    check(plan.ok, "找到岸缘点");
+    check(plan.x > 195.0 && plan.x <= 200.0 && std::abs(plan.z) < 1e-9, "岸缘点落在圆岸上，不在细岬上（x = " + std::to_string(plan.x) + "）");
+    check(plan.x + plan.pier_m >= 224.5 + 3.0 - 1e-6, "栈桥伸过泊位旁的细岬（最后一块陆地在 x = 224.5）再留 3 m（" + std::to_string(plan.pier_m) + " m）");
+    double bx = 0.0, by = 0.0, bz = 0.0;
+    dock_berth(plan, 0.15, 0.1, bx, by, bz);
+    bool clear = true;
+    for (double s = -rules.berth_half_length_m; s <= rules.berth_half_length_m; s += 0.5) {
+        for (double d = 0.0; d <= 3.0; d += 0.5) { // 船舷往外 3 m 的一条
+            clear = clear && !ground.land(bx + d, bz + s);
+        }
+    }
+    check(clear, "泊位上船身所在的一条（沿岸 ±30 m）碰不到岸");
+    check_near(dock_pad_weight(plan, plan.x, plan.z), 1.0, 1e-12, "岸缘点全平");
+    check_near(dock_pad_weight(plan, plan.x - 0.5 * plan.apron_m, plan.z), 1.0, 1e-12, "半个半径处仍全平");
+    check_near(dock_pad_weight(plan, plan.x - plan.apron_m, plan.z), 0.0, 1e-12, "一个半径外回到原地形");
+    double sum = 0.0;
+    int n = 0;
+    for (int i = -20; i <= 20; i++) {
+        for (int j = 150; j <= 230; j++) {
+            double y = 0.0;
+            if (std::hypot(j - plan.x, i - plan.z) <= 0.5 * rules.apron_m && ground.land(j, i) && ground.ground(j, i, y)) {
+                sum += y;
+                n++;
+            }
+        }
+    }
+    check_near(plan.y, sum / n, 1e-9, "坪高 = 半个半径内格点地面的平均");
+    const DockPlan none = plan_dock(ground, 500.0, 500.0, 1.0, 0.0, 50.0, rules);
+    check(!none.ok, "一路都是虚空：找不到岸缘");
+}
+
+// 测铺村用的地面：x 方向缓坡 5%；x ∈ [60, 100] 是陡坡（1:1）；(−60, 0) 半径 25 m 是码头的坪；z ∈ [40, 46] 是溪涧；|x|、|z| > 400 没有地
+class TestSiteGround : public SiteGround {
+public:
+    bool site_height(double p_x, double p_z, double &r_y) const override {
+        if (std::abs(p_x) > 400.0 || std::abs(p_z) > 400.0) {
+            return false;
+        }
+        r_y = 0.05 * p_x + (std::clamp(p_x, 60.0, 100.0) - 60.0);
+        return true;
+    }
+    SiteBlock site_block(double p_x, double p_z) const override {
+        if (p_z >= 40.0 && p_z <= 46.0) {
+            return { 0, "压着溪涧了" };
+        }
+        if (std::hypot(p_x + 60.0, p_z) <= 25.0) {
+            return { 1, "码头的停机坪上不能盖" };
+        }
+        return SiteBlock();
+    }
+};
+
+void test_village_plan() {
+    std::printf("village_plan\n");
+    const TestSiteGround ground;
+    const SiteRules site;
+    const VillageRules rules;
+    VillageRequest request;
+    request.households = 60;
+    request.seat = true;
+    request.seed = 7;
+    const VillagePlan plan = plan_village(ground, request, site, rules);
+    check(plan.wanted == 62 && plan.missing == 0 && plan.layout.size() == 62, "邑治 60 户：60 座民居 + 堂屋 + 仓，全摆下（" + std::to_string(plan.layout.size()) + "）");
+    check(plan.layout.at(0).kind == "hall" && std::hypot(plan.layout.at(0).x, plan.layout.at(0).z) < 1e-9, "堂屋落在村心");
+    check(plan.layout.at(1).kind == "granary", "仓排第二");
+    int houses = 0, on_steep_band = 0;
+    bool blocked = false, steep = false, overlap = false, stands = true;
+    for (int k = 0; k < plan.layout.size(); k++) {
+        const Building &b = plan.layout.at(k);
+        const BuildingDef &def = *buildings::by_id(b.kind);
+        houses += b.kind == "house";
+        double cx[4], cz[4];
+        footprint_corners(def, b.x, b.z, b.yaw, 0.0, cx, cz);
+        double lo = 1e9, hi = -1e9;
+        for (int c = 0; c < 4; c++) {
+            blocked = blocked || ground.site_block(cx[c], cz[c]).rank >= 0;
+            double y = 0.0;
+            ground.site_height(cx[c], cz[c], y);
+            lo = std::min(lo, y);
+            hi = std::max(hi, y);
+        }
+        blocked = blocked || ground.site_block(b.x, b.z).rank >= 0;
+        steep = steep || hi - lo > site.max_rise_m;
+        on_steep_band += b.x > 62.0 && b.x < 98.0;
+        stands = stands && survey_site(ground, def, b.x, b.z, b.yaw, plan.layout, site, k).ok();
+        for (int o = 0; o < k; o++) {
+            overlap = overlap || footprints_overlap(b, plan.layout.at(o), site.gap_m);
+        }
+    }
+    check(houses == 60, "一户一座民居");
+    check(!blocked, "没有一座压着码头的坪或溪涧");
+    check(!steep && on_steep_band == 0, "没有一座在陡坡上（占地四角高差都不超过 max_rise，陡坡带上一座没有）");
+    check(!overlap, "房子两两不挨着");
+    check(stands, "每一座按整份清单重新勘察都站得住");
+    check(plan.layout == plan_village(ground, request, site, rules).layout, "同输入，清单一样");
+    VillageRequest other = request;
+    other.seed = 8;
+    check(plan.layout != plan_village(ground, other, site, rules).layout, "换种子，摆法不同");
+    // 缓坡上门朝下坡：x 向东升，门朝西
+    int downhill = 0, sloped = 0;
+    for (const Building &b : plan.layout.get_items()) {
+        if (b.kind == "house" && b.x < 50.0) {
+            sloped++;
+            const double door_x = std::sin(b.yaw), door_z = std::cos(b.yaw);
+            downhill += door_x < -0.99 || std::abs(door_z) > 0.99; // 转 90° 那一试门朝南北，也算顺着等高线
+        }
+    }
+    check(sloped > 20 && downhill == sloped, "缓坡上的民居都顺着等高线摆（" + std::to_string(downhill) + " / " + std::to_string(sloped) + "）");
+    // 散户：1 户就 1 座，没有堂屋
+    VillageRequest hamlet;
+    hamlet.x = 200.0;
+    hamlet.z = -200.0;
+    hamlet.households = 1;
+    const VillagePlan one = plan_village(ground, hamlet, site, rules);
+    check(one.layout.size() == 1 && one.layout.at(0).kind == "house", "散户 1 户：一座民居");
+    // 地方不够：摆不下的如数报出
+    VillageRules tight = rules;
+    tight.max_radius_m = 30.0;
+    request.households = 40;
+    const VillagePlan cramped = plan_village(ground, request, site, tight);
+    check(cramped.missing > 0 && cramped.layout.size() + cramped.missing == 42, "半径太小：摆不下的如数报出（" + std::to_string(cramped.missing) + "）");
+}
+
+void test_world_sites() {
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in) {
+        std::printf("world_sites（跳过：没有 2051 资产）\n");
+        return;
+    }
+    std::printf("world_sites（2051）\n");
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    WorldSites sites;
+    std::string err;
+    check(parse_world_grid(bin.data(), bin.size(), g, err), "terrain.bin 能解析");
+    check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
+    check(sites.islands.size() == 32 && sites.docks.size() == 91 && sites.settlements.size() == 371, "32 岛、91 码头、180 村 + 191 散户");
+    const SiteSettlement *seat = sites.village_by_id(1);
+    check(seat && seat->seat && seat->households == 271 && seat->name == "村001", "村001 是邑治、271 户");
+    const SiteDock *main_dock = sites.dock_by_id(7);
+    check(main_dock && main_dock->main && main_dock->island == 0, "主码头 #7 在主岛");
+    WorldSites bad;
+    check(!parse_world_sites("dock\t1\tx\t0\t0\t0\n", bad, err), "坏行报错");
+
+    WorldTerrain t(g, sites.terrain_islands(), 2051);
+    const std::vector<DockPlan> docks = plan_world_docks(t, sites, world_dock_rules());
+    int ok = 0;
+    for (const DockPlan &d : docks) {
+        ok += d.ok;
+    }
+    check(ok == 91, "91 个码头都找到岸缘（" + std::to_string(ok) + "）");
+    t.set_pads(docks);
+    // 主码头 #7 与乙岛 #2：压平后泊位附近的地面等高
+    for (int id : { 7, 2 }) {
+        size_t k = 0;
+        while (sites.docks[k].id != id) {
+            k++;
+        }
+        const DockPlan &d = docks[k];
+        const std::string tag = "码头 #" + std::to_string(id);
+        check(std::hypot(d.x - sites.docks[k].x, d.z - sites.docks[k].z) < 150.0, tag + "：岸缘点离生成器的点不到 150 m");
+        double worst = 0.0;
+        int samples = 0;
+        for (double along = -0.45 * d.apron_m; along <= 0.0; along += 2.0) {
+            for (double side = -8.0; side <= 8.0; side += 2.0) {
+                const double x = d.x + along * d.out_x - side * d.out_z, z = d.z + along * d.out_z + side * d.out_x;
+                const TerrainSample s = t.sample(x, z);
+                if (s.land && std::hypot(x - d.x, z - d.z) <= 0.5 * d.apron_m) {
+                    worst = std::max(worst, std::abs(s.top - d.y));
+                    samples++;
+                }
+            }
+        }
+        check(samples > 20 && worst < 1e-6, tag + "：栈桥根到岛内半个坪半径，地面与坪同高（最大差 " + std::to_string(worst) + " m）");
+        double y = 0.0;
+        check(t.surface(d.x - 12.0 * d.out_x, d.z - 12.0 * d.out_z, y) && std::abs(y - d.y) < 1e-6, tag + "：出生点（岸缘内 12 m）在坪上");
+        const TerrainSample raw = t.sample_raw(d.x + (d.pier_m + 0.15) * d.out_x, d.z + (d.pier_m + 0.15) * d.out_z);
+        check(!raw.land, tag + "：泊位在岸外");
+        check(d.y > 100.0 && d.y < 400.0, tag + "：坪高在岸缘一带（" + std::to_string(d.y) + " m）");
+    }
+    // 主码头旁的村152 与邑治：不压码头的坪、不在陡坡上
+    const WorldVillageRules rules;
+    for (int id : { 152, 1 }) {
+        const SiteSettlement *v = sites.village_by_id(id);
+        const VillagePlan plan = plan_world_village(t, *v, 2051, rules);
+        const std::string tag = v->name;
+        check(plan.missing == 0 && plan.layout.size() == plan.wanted, tag + "：全摆下（" + std::to_string(plan.layout.size()) + " 座）");
+        const WorldSiteGround ground(t, v->x, v->z, 2000.0);
+        bool on_pad = false, steep = false;
+        for (const Building &b : plan.layout.get_items()) {
+            const BuildingDef &def = *buildings::by_id(b.kind);
+            const SiteReport r = survey_site(ground, def, b.x, b.z, b.yaw, SettlementLayout(), rules.site);
+            steep = steep || r.ground_max - r.ground_min > rules.site.max_rise_m;
+            for (const DockPlan &d : docks) {
+                on_pad = on_pad || std::hypot(v->x + b.x - d.x, v->z + b.z - d.z) < d.apron_m + 0.5 * std::hypot(def.width_m, def.depth_m);
+            }
+        }
+        check(!on_pad, tag + "：没有一座压着码头的坪");
+        check(!steep, tag + "：没有一座在陡坡上");
+        check(plan.layout == plan_world_village(t, *v, 2051, rules).layout, tag + "：同输入同清单");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -1430,6 +1668,9 @@ int main() {
     test_terrain_tiles();
     test_map_image();
     test_world_2051();
+    test_dock_site();
+    test_village_plan();
+    test_world_sites();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
