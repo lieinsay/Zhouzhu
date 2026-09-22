@@ -30,7 +30,7 @@ constexpr double TALUS_DEG = 38.0;
 constexpr int RELAX_ROUNDS = 12;
 constexpr double DIFFUSION_K = 0.1;
 
-constexpr double BERTH_HALF_LENGTH = 16.0; // 泊位两侧要空出的岸线（半个最长的船身还多一点）
+constexpr double BERTH_HALF_LENGTH = 22.0; // 泊位两侧要空出的岸线（半个最长的船身还多一点：7 格 × 5 m + 船头楔）
 
 // 船坞坪
 constexpr double YARD_GAP = 6.0; // 坪与码头中线（栈桥、出生点、路头所在）之间留的空：路要从这儿上山
@@ -368,7 +368,7 @@ void build_dock(const IslandParams &p, IslandField &r, std::vector<double> &h) {
     dock.x = t_rim * dock.out_x;
     dock.z = t_rim * dock.out_z;
 
-    // 泊位上的船平行于岸：船身两侧各留 16 m（够 5 节的船），看这一段岸线最远伸出多少
+    // 泊位上的船平行于岸：船身两侧各留 22 m（够 7 格长的船），看这一段岸线最远伸出多少
     const double lat_x = -dock.out_z, lat_z = dock.out_x;
     double reach = 0.0;
     for (double s = -BERTH_HALF_LENGTH; s <= BERTH_HALF_LENGTH; s += step) {

@@ -44,8 +44,9 @@ public:
 
     void rebuild();
 
-    // 泊位：船的原点（甲板面中心）该在的位姿，船身平行于岸。p_half_beam = 船的半宽。
-    godot::Transform3D get_berth_transform(double p_half_beam) const;
+    // 泊位接触线：栈桥头外一道缝处、船舷该贴上的位姿。基向 X 指向栈桥（岛内），Z 顺着岸；
+    // 船按自己面向栈桥那一侧的船边算原点该在哪（见 Ship::place_at / moor_at）。
+    godot::Transform3D get_berth_contact() const;
     godot::Vector3 get_pier_end_position() const;
     // 停机坪上、面朝栈桥的出生位姿
     godot::Transform3D get_spawn_transform() const;

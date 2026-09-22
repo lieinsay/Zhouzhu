@@ -97,7 +97,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _destination_berth() -> Vector3:
-	return destination.get_berth_transform(ship.half_beam).origin
+	return destination.get_berth_contact().origin
 
 
 func _enter(next: Phase) -> void:

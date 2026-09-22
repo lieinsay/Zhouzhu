@@ -24,7 +24,7 @@ func _ready() -> void:
 	player = main.get_node("Player")
 	ship = main.get_node("Ship")
 	origin = main.get_node("IslandA")
-	berth = origin.get_berth_transform(ship.half_beam)
+	berth = origin.get_berth_contact()
 	ship.place_at(Transform3D(Basis(), berth.origin + Vector3(0, 60, 600)))
 
 
@@ -45,7 +45,7 @@ func _physics_process(delta: float) -> void:
 	elif player.is_on_floor():
 		var ground := origin.get_surface_height(player.global_position)
 		var on_island := not is_nan(ground) and absf(player.global_position.y - ground) < 1.0
-		var ship_home := ship.global_position.distance_to(berth.origin) < 0.1
+		var ship_home := ship.is_at(berth, 0.1)
 		var near_dock := player.global_position.distance_to(origin.get_pier_end_position()) < 30.0
 		if on_island and ship_home and near_dock:
 			_finish(true, "回到岛上，空艇已召回泊位")

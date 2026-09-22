@@ -41,7 +41,7 @@ Ref<StandardMaterial3D> make_material(const Color &p_albedo, bool p_vertex_color
 
 void Island::_bind_methods() {
     ClassDB::bind_method(D_METHOD("rebuild"), &Island::rebuild);
-    ClassDB::bind_method(D_METHOD("get_berth_transform", "half_beam"), &Island::get_berth_transform);
+    ClassDB::bind_method(D_METHOD("get_berth_contact"), &Island::get_berth_contact);
     ClassDB::bind_method(D_METHOD("get_pier_end_position"), &Island::get_pier_end_position);
     ClassDB::bind_method(D_METHOD("get_spawn_transform"), &Island::get_spawn_transform);
     ClassDB::bind_method(D_METHOD("get_surface_height", "global_position"), &Island::get_surface_height);
@@ -227,10 +227,11 @@ Vector3 Island::dock_local(double p_along_out, double p_up) const {
     return Vector3(real_t(dock.x + p_along_out * dock.out_x), real_t(dock.y + p_up), real_t(dock.z + p_along_out * dock.out_z));
 }
 
-Transform3D Island::get_berth_transform(double p_half_beam) const {
+Transform3D Island::get_berth_contact() const {
     const IslandDock &dock = field.dock;
-    const Vector3 along_shore(real_t(-dock.out_z), 0, real_t(dock.out_x));
-    const Transform3D local(Basis::looking_at(along_shore, Vector3(0, 1, 0)), dock_local(dock.pier_m + p_half_beam + BERTH_GAP, PIER_LIFT));
+    const Vector3 toward_pier(real_t(-dock.out_x), 0, real_t(-dock.out_z));
+    const Vector3 up(0, 1, 0);
+    const Transform3D local(Basis(toward_pier, up, toward_pier.cross(up)), dock_local(dock.pier_m + BERTH_GAP, PIER_LIFT));
     return get_global_transform() * local;
 }
 
