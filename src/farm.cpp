@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <initializer_list>
 
 #include <godot_cpp/classes/array_mesh.hpp>
@@ -27,8 +28,6 @@ const Color SOIL(0.30f, 0.22f, 0.15f);
 const Color SOIL_RIDGE(0.36f, 0.27f, 0.18f);
 const Color SPROUT(0.47f, 0.66f, 0.26f);
 const Color LEAF(0.30f, 0.53f, 0.19f);
-const Color STALK_RIPE(0.62f, 0.58f, 0.27f);
-const Color EAR(0.85f, 0.67f, 0.22f); // 粟穗
 
 constexpr real_t SOIL_LIFT = 0.04f; // 垦过的土比草皮高一点，免得共面闪烁
 constexpr real_t BALK = 0.03f; // 格与格之间留的田埂（占格宽的比例，每侧）
@@ -39,9 +38,23 @@ constexpr real_t RIDGE_HEIGHT = 0.13f;
 constexpr real_t HIGHLIGHT_LIFT = 0.1f;
 constexpr real_t HIGHLIGHT_WIDTH = 0.05f; // 占格宽的比例
 
-// 粟苗各外观阶段的高与半宽（米）
-constexpr real_t PLANT_HEIGHT[FarmModel::STAGES] = { 0.10f, 0.32f, 0.62f, 0.78f };
-constexpr real_t PLANT_HALF_WIDTH[FarmModel::STAGES] = { 0.025f, 0.04f, 0.05f, 0.05f };
+// 一种作物的画法：各外观阶段的苗高与半宽（米），熟了的秆色，顶上那一截（粟穗 / 豆荚）的颜色与尺寸
+struct CropLook {
+    real_t height[FarmModel::STAGES];
+    real_t half_width[FarmModel::STAGES];
+    Color stalk_ripe;
+    Color head;
+    real_t head_half_width;
+    real_t head_height;
+};
+
+const CropLook MILLET_LOOK = { { 0.10f, 0.32f, 0.62f, 0.78f }, { 0.025f, 0.04f, 0.05f, 0.05f }, Color(0.62f, 0.58f, 0.27f), Color(0.85f, 0.67f, 0.22f), 0.075f, 0.24f };
+// 菽：矮而蓬，熟了秆子发褐，顶上一团淡黄绿的豆荚
+const CropLook BEAN_LOOK = { { 0.08f, 0.22f, 0.36f, 0.42f }, { 0.03f, 0.07f, 0.10f, 0.11f }, Color(0.45f, 0.40f, 0.22f), Color(0.72f, 0.74f, 0.38f), 0.13f, 0.12f };
+
+const CropLook &look_of(const Plot &p_plot) {
+    return p_plot.crop && std::strcmp(p_plot.crop->id, "bean") == 0 ? BEAN_LOOK : MILLET_LOOK;
+}
 
 // 一格地：四个角的局部坐标，以及格内任一点 (u 沿 x, v 沿 z ∈ [0, 1]) 的贴地位置——按地形网格同样的两个三角面取，
 // 所以画出来的东西严丝合缝地贴在坡上。
@@ -167,15 +180,16 @@ Ref<ArrayMesh> build_plot_mesh(const Patch &p_patch, const Vector2i &p_cell, con
         }
         const int stage = FarmModel::stage_of(p_plot);
         const bool ripe = p_plot.state == PlotState::RIPE;
-        const Color stalk = ripe ? STALK_RIPE : SPROUT.lerp(LEAF, real_t(stage) / (FarmModel::STAGES - 2));
+        const CropLook &look = look_of(p_plot);
+        const Color stalk = ripe ? look.stalk_ripe : SPROUT.lerp(LEAF, real_t(stage) / (FarmModel::STAGES - 2));
         for (int q = 0; q < PLANTS_PER_RIDGE; q++) {
             const int salt = r * PLANTS_PER_RIDGE + q;
             const real_t u = (real_t(q) + 0.5f) / PLANTS_PER_RIDGE + 0.08f * jitter(p_cell, salt);
-            const real_t height = PLANT_HEIGHT[stage] * (1.0f + 0.25f * jitter(p_cell, salt + 100));
+            const real_t height = look.height[stage] * (1.0f + 0.25f * jitter(p_cell, salt + 100));
             const Vector3 base = p_patch.at(std::clamp(u, lo, hi), v, SOIL_LIFT + RIDGE_HEIGHT - 0.02f);
-            b.column(base, PLANT_HALF_WIDTH[stage], height, stalk);
+            b.column(base, look.half_width[stage], height, stalk);
             if (ripe) {
-                b.column(base + Vector3(0, height, 0), 0.075f, 0.24f, EAR);
+                b.column(base + Vector3(0, height, 0), look.head_half_width, look.head_height, look.head);
             }
         }
     }
@@ -211,8 +225,10 @@ void Farm::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_growth", "cell"), &Farm::get_growth);
     ClassDB::bind_method(D_METHOD("get_moisture", "cell"), &Farm::get_moisture);
     ClassDB::bind_method(D_METHOD("get_plot_count", "state"), &Farm::get_plot_count);
-    ClassDB::bind_method(D_METHOD("available_action", "cell", "grain"), &Farm::available_action);
-    ClassDB::bind_method(D_METHOD("perform", "cell", "action", "grain"), &Farm::perform);
+    ClassDB::bind_method(D_METHOD("get_crop", "cell"), &Farm::get_crop);
+    ClassDB::bind_method(D_METHOD("get_crop_yield", "crop"), &Farm::get_crop_yield);
+    ClassDB::bind_method(D_METHOD("available_action", "cell", "has_seed"), &Farm::available_action);
+    ClassDB::bind_method(D_METHOD("perform", "cell", "action", "crop"), &Farm::perform);
     ClassDB::bind_method(D_METHOD("set_highlight", "cell", "color"), &Farm::set_highlight);
     ClassDB::bind_method(D_METHOD("on_island_rebuilt"), &Farm::on_island_rebuilt);
 
@@ -220,12 +236,9 @@ void Farm::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_max_river_distance"), &Farm::get_max_river_distance);
     ClassDB::bind_method(D_METHOD("set_grow_seconds", "value"), &Farm::set_grow_seconds);
     ClassDB::bind_method(D_METHOD("get_grow_seconds"), &Farm::get_grow_seconds);
-    ClassDB::bind_method(D_METHOD("set_harvest_yield", "value"), &Farm::set_harvest_yield);
-    ClassDB::bind_method(D_METHOD("get_harvest_yield"), &Farm::get_harvest_yield);
 
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_river_distance", PROPERTY_HINT_RANGE, "4,60,0.5,suffix:m"), "set_max_river_distance", "get_max_river_distance");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "grow_seconds", PROPERTY_HINT_RANGE, "1,1800,1,suffix:s"), "set_grow_seconds", "get_grow_seconds");
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "harvest_yield", PROPERTY_HINT_RANGE, "1,20,1"), "set_harvest_yield", "get_harvest_yield");
 
     ADD_SIGNAL(MethodInfo("plot_changed", PropertyInfo(Variant::VECTOR2I, "cell")));
 
@@ -321,7 +334,7 @@ Vector2i Farm::find_nearest_arable(const Vector3 &p_global) const {
     double best_d2 = 1e18;
     for (int i = 0; i < field.n - 1; i++) {
         for (int j = 0; j < field.n - 1; j++) {
-            if (model.available_action(i, j, 0) != FarmAction::TILL) {
+            if (model.available_action(i, j, false) != FarmAction::TILL) {
                 continue;
             }
             const double dx = field.coord(j) + 0.5 * field.cell_m - local.x, dz = field.coord(i) + 0.5 * field.cell_m - local.z;
@@ -356,17 +369,42 @@ int Farm::get_plot_count(State p_state) const {
     return model.count(PlotState(p_state));
 }
 
-Farm::Action Farm::available_action(const Vector2i &p_cell, int p_grain) const {
-    return Action(model.available_action(p_cell.x, p_cell.y, p_grain));
+String Farm::get_crop(const Vector2i &p_cell) const {
+    const Plot plot = model.plot_at(p_cell.x, p_cell.y);
+    return plot.crop ? String(plot.crop->id) : String();
 }
 
-int Farm::perform(const Vector2i &p_cell, Action p_action, int p_grain) {
-    if (p_action == ACTION_NONE || available_action(p_cell, p_grain) != p_action) {
-        return 0;
+int Farm::get_crop_yield(const String &p_crop) const {
+    const CropDef *crop = catalog::crop(p_crop.utf8().get_data());
+    return crop ? crop->yield : 0;
+}
+
+Farm::Action Farm::available_action(const Vector2i &p_cell, bool p_has_seed) const {
+    return Action(model.available_action(p_cell.x, p_cell.y, p_has_seed));
+}
+
+int Farm::perform(const Vector2i &p_cell, Action p_action, const String &p_crop) {
+    int gained = 0;
+    bool done = false;
+    switch (p_action) {
+        case ACTION_TILL:
+            done = model.till(p_cell.x, p_cell.y);
+            break;
+        case ACTION_SOW:
+            done = model.sow(p_cell.x, p_cell.y, catalog::crop(p_crop.utf8().get_data()));
+            break;
+        case ACTION_HARVEST: {
+            const Harvest got = model.harvest(p_cell.x, p_cell.y);
+            done = got.count > 0;
+            gained = got.count;
+        } break;
+        case ACTION_NONE:
+            break;
     }
-    const int delta = model.perform(p_cell.x, p_cell.y, FarmAction(p_action), p_grain);
-    refresh_plot(p_cell);
-    return delta;
+    if (done) {
+        refresh_plot(p_cell);
+    }
+    return gained;
 }
 
 void Farm::refresh_plot(const Vector2i &p_cell) {
@@ -425,10 +463,5 @@ void Farm::set_max_river_distance(double p_value) {
 
 void Farm::set_grow_seconds(double p_value) {
     rules.grow_seconds = p_value;
-    apply_rules();
-}
-
-void Farm::set_harvest_yield(int p_value) {
-    rules.harvest_yield = p_value;
     apply_rules();
 }

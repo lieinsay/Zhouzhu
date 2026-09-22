@@ -10,8 +10,9 @@
 #include "island.h"
 
 // 一座岛上的农田：Island 的子节点，变换留在原点（岛的局部坐标就是它的局部坐标）。
-// 岛每次 rebuilt 后重新勘察；地块表在 FarmModel 里，这里负责推进生长、把地块画出来（垄 + 粟苗，几何体占位），
-// 以及回答上层「这一格是什么、能做什么」。谁在干活、粟有多少，它不知道——那是 Voyage 的事。
+// 岛每次 rebuilt 后重新勘察；地块表在 FarmModel 里，这里负责推进生长、把地块画出来（垄 + 作物苗，几何体占位，粟与菽画法不同），
+// 以及回答上层「这一格是什么、种的什么、能做什么」。谁在干活、背包里有什么，它不知道——那是 Voyage 的事：
+// 播种时上层告诉它种哪种作物，收获时它报出收了几份（产物是什么，问作物表）。
 //
 // 格子用 Vector2i(i, j) 指：高度场里以节点 (i, j) 为左上角的那一格（i 沿 z、j 沿 x）。(-1, -1) = 没有这一格。
 class Farm : public godot::Node3D {
@@ -78,9 +79,14 @@ public:
     double get_moisture(const godot::Vector2i &p_cell) const;
     int get_plot_count(State p_state) const;
 
-    Action available_action(const godot::Vector2i &p_cell, int p_grain) const;
-    // 返回粟的增减；做不了返回 0 且什么都不变
-    int perform(const godot::Vector2i &p_cell, Action p_action, int p_grain);
+    // 这一格种的作物 id；没种返回空串
+    godot::String get_crop(const godot::Vector2i &p_cell) const;
+    // 作物表：收一格得几份（不认识的作物返回 0）
+    int get_crop_yield(const godot::String &p_crop) const;
+
+    Action available_action(const godot::Vector2i &p_cell, bool p_has_seed) const;
+    // 干一样活；p_crop 只在播种时用（作物 id）。返回收获的份数（开垦、播种为 0）；做不了返回 0 且什么都不变
+    int perform(const godot::Vector2i &p_cell, Action p_action, const godot::String &p_crop);
 
     // 目标格的描边；NO_CELL = 不画
     void set_highlight(const godot::Vector2i &p_cell, const godot::Color &p_color);
@@ -89,8 +95,6 @@ public:
     double get_max_river_distance() const { return rules.max_river_m; }
     void set_grow_seconds(double p_value);
     double get_grow_seconds() const { return rules.grow_seconds; }
-    void set_harvest_yield(int p_value);
-    int get_harvest_yield() const { return rules.harvest_yield; }
 };
 
 VARIANT_ENUM_CAST(Farm::State);
