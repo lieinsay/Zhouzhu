@@ -39,4 +39,5 @@ void input_actions::register_all() {
     bind(DESCEND, { KEY_SHIFT, KEY_CTRL });
     bind(INTERACT, { KEY_E });
     bind(INVENTORY, { KEY_TAB, KEY_I });
+    bind(REMOVE, { KEY_X, KEY_BACKSPACE, KEY_DELETE });
 }

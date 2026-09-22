@@ -13,12 +13,16 @@
 #include "inventory.h"
 #include "island.h"
 #include "player.h"
+#include "refit_panel.h"
 #include "ship.h"
+#include "shipyard.h"
 
 // 主场景的编排。切片一：走上空艇 → 掌舵 → 飞到对岸 → 靠泊下船；切片二：步行时在河边开垦、播种、收获；
-// 拓展：种子从背包里选（Tab 开合背包，W/S 选、E 拿在手上），收成进背包。
-// 「现在是谁在受控」「手上的活干到哪了」「背包里有什么、手上拿着哪种种子、背包开没开」这些状态只在这里：
-// Player、Ship、Farm、BackpackPanel 互不相识，各自只回答自己的事。
+// 拓展：种子从背包里选（Tab 开合背包，W/S 选、E 拿在手上），收成进背包；
+// 切片三：掌舵时靠近船坞按 E 入坞；下船走到画样台按 E 改装（A/D 选节、W/S 换类型、E 加一节、X 拆掉、Tab 合上），
+// 每改一下船立刻重拼；没有动力区的船上不了舵。
+// 「现在是谁在受控」「手上的活干到哪了」「背包里有什么、手上拿着哪种种子、背包开没开」「改装面板开没开、光标在哪一节」这些状态只在这里：
+// Player、Ship、Farm、Shipyard、BackpackPanel、RefitPanel 互不相识，各自只回答自己的事。
 class Voyage : public godot::Node3D {
     GDCLASS(Voyage, godot::Node3D)
 
@@ -35,7 +39,8 @@ private:
     godot::NodePath ship_path = "Ship";
     godot::NodePath player_path = "Player";
     godot::NodePath farm_path = "IslandA/Farm"; // 可以不接：那就没有农事
-    double helm_range = 2.2; // 离舵多近能上舵
+    godot::NodePath shipyard_path = "IslandA/Shipyard"; // 可以不接：那就没处改船
+    double helm_range = 2.2; // 离舵多近能上舵；离画样台多近能改船
     double dock_range = 45.0; // 离泊位多近能叫靠泊
     double leave_helm_speed = 3.0; // 半空中离舵：船速须低于此
     double kill_altitude = -30.0; // 掉到这以下算坠入云海
@@ -43,6 +48,7 @@ private:
     godot::Dictionary starting_pack; // 开局背包：物品 id → 份数
 
     State state = ON_FOOT;
+    bool moor_to_yard = false; // 正在滑向的是坞位（不是泊位）
     bool arrived = false;
     bool has_safe_footing = false;
     godot::Vector3 safe_footing;
@@ -53,6 +59,9 @@ private:
     std::string held_seed;
     bool pack_open = false;
     int pack_cursor = 0;
+    // 改装：面板开合与光标（自船头数第几节）；布局本身在 Ship 里，每一步直接改它
+    bool refit_open = false;
+    int refit_cursor = 0;
     // 农事：视线前方的那一格、对它能做什么；按住 E 干的活（换格、松手即作废）
     godot::Vector2i target_cell = godot::Vector2i(-1, -1);
     Farm::Action target_action = Farm::ACTION_NONE;
@@ -65,9 +74,11 @@ private:
     Ship *ship = nullptr;
     Player *player = nullptr;
     Farm *farm = nullptr;
+    Shipyard *shipyard = nullptr;
     godot::Label *status_label = nullptr;
     godot::Label *prompt_label = nullptr;
     BackpackPanel *pack_panel = nullptr;
+    RefitPanel *refit_panel = nullptr;
 
     void build_hud();
     void update_hud();
@@ -76,6 +87,10 @@ private:
     void seat_player();
     void set_pack_open(bool p_open);
     void browse_pack(bool p_interact);
+    void set_refit_open(bool p_open);
+    void browse_refit(bool p_interact);
+    bool near_bench() const;
+    void interact_at_bench();
     bool has_seed_in_hand() const { return !held_seed.empty() && pack.has(held_seed); }
     void tend_farm(double p_delta, bool p_interact);
     void finish_work();
@@ -84,7 +99,8 @@ private:
     godot::String refusal(const godot::Vector2i &p_cell) const;
     void track_footing();
     void respawn();
-    Island *island_in_dock_range(godot::Transform3D &r_berth) const;
+    // dock_range 内最近的泊位 / 坞位；r_yard 说是不是坞位。没有返回 false
+    bool moor_target_in_range(godot::Transform3D &r_target, bool &r_yard) const;
     Island *nearest_island(const godot::Vector3 &p_position) const;
 
 protected:
@@ -102,6 +118,10 @@ public:
     bool is_working() const { return work_action != Farm::ACTION_NONE; }
     bool is_pack_open() const { return pack_open; }
     int get_pack_cursor() const { return pack_cursor; }
+    bool is_refit_open() const { return refit_open; }
+    int get_refit_cursor() const { return refit_cursor; }
+    bool is_ship_in_yard() const; // 空艇停在坞位上（改得了）
+    godot::String get_notice() const { return notice_time > 0.0 ? notice : godot::String(); }
     godot::String get_held_seed() const; // 手上拿着的种子（物品 id）；没拿返回空串
     int get_item_count(const godot::String &p_item) const;
     godot::PackedStringArray get_pack_items() const; // 背包里的物品 id，按面板里的顺序
@@ -124,6 +144,8 @@ public:
     double get_kill_altitude() const { return kill_altitude; }
     void set_farm_path(const godot::NodePath &p_path) { farm_path = p_path; }
     godot::NodePath get_farm_path() const { return farm_path; }
+    void set_shipyard_path(const godot::NodePath &p_path) { shipyard_path = p_path; }
+    godot::NodePath get_shipyard_path() const { return shipyard_path; }
     void set_reach(double p_value) { reach = p_value; }
     double get_reach() const { return reach; }
     void set_starting_pack(const godot::Dictionary &p_value) { starting_pack = p_value; }
