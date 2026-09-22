@@ -1,0 +1,226 @@
+extends Node
+## 开发者工具端到端测试（DevTools autoload），只通过输入操作：
+## 甲乙两岛里按 M → 提示去 F2 换地图 → F3 开 god → 空格升起 → Ctrl 降回地面站住 → Shift 前飞超过 100 m/s
+## → F3 关、重力回来往下掉 → F3 再开 → F2 开清单、按 2 换到岛群 #2051：新场景里的人还是 god、脚下有地
+## → F2、按 1 换回甲乙两岛。
+##
+##   Godot --headless --path game --fixed-fps 60 res://tests/dev_tools_e2e.tscn
+##
+## 去掉 --headless、末尾加 `-- --shots=<目录>`，存 god 飞行与换地图清单两张图。
+##
+## 驱动器自己不是「当前场景」：它把 main.tscn 挂成当前场景，换地图时被换掉的是那个，驱动器留着。
+
+const MAIN := preload("res://main.tscn")
+const TIMEOUT := 120.0
+
+enum Phase { START, PRESS_M, GOD_ON, ASCEND, DESCEND, BOOST, GOD_OFF, FALLING, GOD_AGAIN, OPEN_MENU, PICK_2051, IN_2051, BACK, DONE }
+
+var dev: DevTools
+var player: Player
+var phase := Phase.START
+var elapsed := 0.0
+var phase_started := 0.0
+var mark := Vector3.ZERO
+var peak_speed := 0.0
+var sent := false
+var shots_dir := ""
+var pending_shot := ""
+var shot_wait := 0
+
+
+func _ready() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--shots="):
+			shots_dir = arg.trim_prefix("--shots=")
+			DirAccess.make_dir_recursive_absolute(shots_dir)
+	get_tree().root.size = Vector2i(1280, 720)
+	dev = get_node("/root/DeveloperTools")  # autoload 不能与类同名
+	var main := MAIN.instantiate()
+	get_tree().root.add_child.call_deferred(main)
+	(func(): get_tree().current_scene = main).call_deferred()
+
+
+func _process(_delta: float) -> void:
+	if pending_shot.is_empty() or shots_dir.is_empty():
+		return
+	shot_wait -= 1
+	if shot_wait <= 0:
+		get_viewport().get_texture().get_image().save_png(shots_dir.path_join(pending_shot + ".png"))
+		pending_shot = ""
+
+
+func _shot(shot_name: String) -> void:
+	pending_shot = shot_name
+	shot_wait = 3
+
+
+func _goto(next: Phase) -> void:
+	phase = next
+	phase_started = elapsed
+	sent = false
+
+
+## 本阶段里只做一次（送出的输入事件下一帧才处理，所以按完要等一会儿再看结果）
+func _once() -> bool:
+	if sent:
+		return false
+	sent = true
+	return true
+
+
+func _action(action: String) -> void:
+	for pressed in [true, false]:
+		var ev := InputEventAction.new()
+		ev.action = action
+		ev.pressed = pressed
+		Input.parse_input_event(ev)
+
+
+func _key(code: Key) -> void:
+	for pressed in [true, false]:
+		var ev := InputEventKey.new()
+		ev.physical_keycode = code
+		ev.keycode = code
+		ev.pressed = pressed
+		Input.parse_input_event(ev)
+
+
+func _scene_path() -> String:
+	var scene := get_tree().current_scene
+	return scene.scene_file_path if scene else ""
+
+
+func _find_player() -> Player:
+	var scene := get_tree().current_scene
+	if scene == null or scene == self:
+		return null
+	var found := scene.find_children("*", "Player", true, false)
+	return found[0] if not found.is_empty() else null
+
+
+func _physics_process(delta: float) -> void:
+	elapsed += delta
+	var t := elapsed - phase_started
+	if elapsed > TIMEOUT:
+		_finish(false, "超时（卡在 %s）" % Phase.keys()[phase])
+		return
+	match phase:
+		Phase.START:
+			player = _find_player()
+			if player and _scene_path() == "res://main.tscn" and t > 1.0 and player.is_on_floor():
+				_goto(Phase.PRESS_M)
+		Phase.PRESS_M:
+			if _once():
+				_action("map")
+			if t < 0.2:
+				return
+			if not dev.get_notice().contains("F2"):
+				_finish(false, "甲乙两岛里按 M 没有提示去 F2（提示：%s）" % dev.get_notice())
+				return
+			_goto(Phase.GOD_ON)
+		Phase.GOD_ON:
+			if _once():
+				_action("god_mode")
+			if t < 0.2:
+				return
+			if not dev.is_god() or not player.is_god_mode():
+				_finish(false, "按 F3 god 没开")
+				return
+			mark = player.global_position
+			_goto(Phase.ASCEND)
+		Phase.ASCEND:
+			Input.action_press("ascend")
+			if t > 2.0:
+				Input.action_release("ascend")
+				var rise := player.global_position.y - mark.y
+				if rise < 30.0:
+					_finish(false, "按空格 2 s 只升了 %.1f m" % rise)
+					return
+				print("dev_tools_e2e: god 升起 %.1f m" % rise)
+				_goto(Phase.DESCEND)
+		Phase.DESCEND:
+			Input.action_press("fly_down")
+			if player.is_on_floor() and t > 0.5:
+				Input.action_release("fly_down")
+				print("dev_tools_e2e: Ctrl 降回地面（%.1f s）" % t)
+				_goto(Phase.BOOST)
+			elif t > 10.0:
+				_finish(false, "按 Ctrl 10 s 还没落地：%s" % player.global_position)
+		Phase.BOOST:
+			Input.action_press("ascend")  # 先离地，免得贴地蹭
+			Input.action_press("move_forward")
+			Input.action_press("sprint")
+			var v := player.velocity
+			peak_speed = maxf(peak_speed, Vector2(v.x, v.z).length())
+			if t > 2.5:
+				for a in ["ascend", "move_forward", "sprint"]:
+					Input.action_release(a)
+				if peak_speed < 100.0:
+					_finish(false, "Shift 前飞最快只有 %.0f m/s" % peak_speed)
+					return
+				print("dev_tools_e2e: Shift 前飞最快 %.0f m/s" % peak_speed)
+				_shot("1_god")
+				_goto(Phase.GOD_OFF)
+		Phase.GOD_OFF:
+			if _once():
+				_action("god_mode")
+			if t < 0.2:
+				return
+			if dev.is_god() or player.is_god_mode():
+				_finish(false, "再按 F3 god 没关")
+				return
+			_goto(Phase.FALLING)
+		Phase.FALLING:
+			if t > 0.5:
+				if player.velocity.y > -3.0:
+					_finish(false, "关了 god 没往下掉（vy = %.1f）" % player.velocity.y)
+					return
+				_goto(Phase.GOD_AGAIN)
+		Phase.GOD_AGAIN:
+			_action("god_mode")
+			_goto(Phase.OPEN_MENU)
+		Phase.OPEN_MENU:
+			if t > 0.3 and _once():
+				_action("switch_map")
+			if t > 0.6:
+				if not dev.is_menu_open():
+					_finish(false, "按 F2 清单没开")
+					return
+				_shot("2_menu")
+				_goto(Phase.PICK_2051)
+		Phase.PICK_2051:
+			if t > 0.4:
+				_key(KEY_2)
+				_goto(Phase.IN_2051)
+		Phase.IN_2051:
+			if _scene_path() != "res://world_2051.tscn":
+				if t > 5.0:
+					_finish(false, "按 2 没换到岛群 #2051（当前 %s）" % _scene_path())
+				return
+			player = _find_player()
+			if player == null:
+				return
+			var world: World = get_tree().current_scene.get_node("World")
+			var at := player.global_position
+			var ground: float = world.get_surface_height(at.x, at.z)
+			if t > 1.0 and player.is_god_mode() and not is_nan(ground) and absf(at.y - ground) < 2.0 and world.is_ready_at(at):
+				print("dev_tools_e2e: 换到岛群 #2051，god 还开着，人在地上（%s）" % at)
+				_action("switch_map")
+				_goto(Phase.BACK)
+			elif t > 15.0:
+				_finish(false, "换到 2051 后：god %s，离地 %.1f，脚下块 %s" % [player.is_god_mode(), at.y - ground, world.is_ready_at(at)])
+		Phase.BACK:
+			if t > 0.3 and _once():
+				_key(KEY_1)
+			if _scene_path() == "res://main.tscn" and _find_player() != null:
+				_finish(true, "M 提示、god 升降与加速、关 god 恢复重力、F2 换到 2051 且 god 跟着、换回甲乙两岛")
+			elif t > 5.0:
+				_finish(false, "按 1 没换回甲乙两岛（当前 %s）" % _scene_path())
+
+
+func _finish(ok: bool, why: String) -> void:
+	for a in ["ascend", "fly_down", "move_forward", "sprint"]:
+		Input.action_release(a)
+	set_physics_process(false)
+	print("dev_tools: %s —— %s（模拟 %.1f s）" % ["PASS" if ok else "FAIL", why, elapsed])
+	get_tree().quit(0 if ok else 1)
