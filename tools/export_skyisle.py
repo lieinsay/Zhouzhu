@@ -2,8 +2,9 @@
 
     python tools/export_skyisle.py <岛群目录> <输出目录>
     python tools/export_skyisle.py D:/Project/My/skyisle-gen/out/seed42/islands/2051 game/worlds/2051
+    python tools/export_skyisle.py --sites game/worlds/2051      # 只按已有的 world.json 重写 sites.tsv
 
-读 terrain.npz / island.json / settlements.json，写两份文件：
+读 terrain.npz / island.json / settlements.json，写三份文件：
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
@@ -18,6 +19,13 @@ terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北�
     u8 [rows·cols]  1 = 溪涧
 
 world.json —— 岛表与点位，坐标全换成游戏的米：x 向东、z 向南，原点 = 群心。
+
+sites.tsv —— 同一份岛表与点位的平铺版，给不读 JSON 的纯 C++（src/world_sites.*：游戏里铺码头与村落、批量体检工具）。
+    UTF-8，制表符分隔，# 开头是注释，一行一条：
+    island   id  rim_m  cliff_m  keel_m  max_shore_m
+    dock     id  island  x  z  main(0/1)
+    village  id  island  x  z  households  seat(0/1)  name
+    hamlet   id  island  x  z  households  0           name
 
 只依赖 numpy + scipy。游戏运行时不需要它，也不读 skyisle-gen 的 out/。
 """
@@ -128,10 +136,29 @@ def export(src: Path, dst: Path) -> None:
         "population": settle.get("population"),
     }
     (dst / "world.json").write_text(json.dumps(world, ensure_ascii=False, indent=1), encoding="utf-8")
+    write_sites(world, dst)
     print(f"{dst}: {rows}×{cols} @ {res:g} m, {len(islands)} 岛, {len(world['villages'])} 村, {len(world['docks'])} 码头")
 
 
+def write_sites(world: dict, dst: Path) -> None:
+    lines = ["# 由 tools/export_skyisle.py 从 world.json 导出，别手改。格式见那个脚本开头。"]
+    for isl in world["islands"]:
+        lines.append("\t".join(str(v) for v in ("island", isl["id"], isl["rim_m"], isl["cliff_m"], isl["keel_m"], isl["max_shore_m"])))
+    for d in world["docks"]:
+        lines.append("\t".join(str(v) for v in ("dock", d["id"], d["island"], d["pos"][0], d["pos"][1], 1 if d.get("main") else 0)))
+    for kind, key in (("village", "villages"), ("hamlet", "hamlets")):
+        for v in world[key]:
+            row = (kind, v["id"], v["island"], v["pos"][0], v["pos"][1], v["households"], 1 if v.get("seat") else 0, v.get("name", ""))
+            lines.append("\t".join(str(x) for x in row))
+    (dst / "sites.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) == 3 and sys.argv[1] == "--sites":
+        out = Path(sys.argv[2])
+        write_sites(json.loads((out / "world.json").read_text(encoding="utf-8")), out)
+        print(f"{out / 'sites.tsv'}")
+    elif len(sys.argv) == 3:
+        export(Path(sys.argv[1]), Path(sys.argv[2]))
+    else:
         sys.exit(__doc__)
-    export(Path(sys.argv[1]), Path(sys.argv[2]))
