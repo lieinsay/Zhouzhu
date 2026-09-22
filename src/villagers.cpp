@@ -93,13 +93,15 @@ void Villagers::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_clock_text"), &Villagers::get_clock_text);
     ClassDB::bind_method(D_METHOD("set_hour", "hour"), &Villagers::set_hour);
     ClassDB::bind_method(D_METHOD("get_nav_height", "global_position"), &Villagers::get_nav_height);
-    ClassDB::bind_method(D_METHOD("on_island_rebuilt"), &Villagers::on_island_rebuilt);
+    ClassDB::bind_method(D_METHOD("on_host_rebuilt"), &Villagers::on_host_rebuilt);
     ClassDB::bind_method(D_METHOD("on_layout_changed"), &Villagers::on_layout_changed);
 
     ClassDB::bind_method(D_METHOD("set_settlement_path", "path"), &Villagers::set_settlement_path);
     ClassDB::bind_method(D_METHOD("get_settlement_path"), &Villagers::get_settlement_path);
     ClassDB::bind_method(D_METHOD("set_farm_path", "path"), &Villagers::set_farm_path);
     ClassDB::bind_method(D_METHOD("get_farm_path"), &Villagers::get_farm_path);
+    ClassDB::bind_method(D_METHOD("set_max_folk", "value"), &Villagers::set_max_folk);
+    ClassDB::bind_method(D_METHOD("get_max_folk"), &Villagers::get_max_folk);
     ClassDB::bind_method(D_METHOD("set_per_house", "value"), &Villagers::set_per_house);
     ClassDB::bind_method(D_METHOD("get_per_house"), &Villagers::get_per_house);
     ClassDB::bind_method(D_METHOD("set_day_seconds", "value"), &Villagers::set_day_seconds);
@@ -116,6 +118,7 @@ void Villagers::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "settlement_path"), "set_settlement_path", "get_settlement_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "farm_path"), "set_farm_path", "get_farm_path");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "per_house", PROPERTY_HINT_RANGE, "0,6,1"), "set_per_house", "get_per_house");
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "max_folk", PROPERTY_HINT_RANGE, "0,500,1"), "set_max_folk", "get_max_folk");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "day_seconds", PROPERTY_HINT_RANGE, "10,7200,1,suffix:s"), "set_day_seconds", "get_day_seconds");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "start_hour", PROPERTY_HINT_RANGE, "0,23.99,0.25"), "set_start_hour", "get_start_hour");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "walk_speed", PROPERTY_HINT_RANGE, "0.3,6,0.05,suffix:m/s"), "set_walk_speed", "get_walk_speed");
@@ -137,8 +140,8 @@ void Villagers::_ready() {
         set_physics_process(false);
         return;
     }
-    island = Object::cast_to<Island>(get_parent());
-    ERR_FAIL_NULL_MSG(island, "Villagers 要挂在 Island 下面");
+    host = SettlementHost::of(get_parent());
+    ERR_FAIL_NULL_MSG(host, "Villagers 要挂在聚落宿主（Island / WorldVillage）下面");
     settlement = Object::cast_to<Settlement>(get_node_or_null(settlement_path));
     ERR_FAIL_NULL_MSG(settlement, "Villagers 找不到 Settlement（settlement_path）");
     farm = Object::cast_to<Farm>(get_node_or_null(farm_path));
@@ -155,18 +158,22 @@ void Villagers::_ready() {
 
     clock = day.day_seconds * start_hour / 24.0;
     // 聚落与农田都在岛 rebuilt 时重建，它们排在前面、先连的信号，所以这里收到时它们已经好了
-    island->connect("rebuilt", Callable(this, "on_island_rebuilt"));
+    host->host_node()->connect("rebuilt", Callable(this, "on_host_rebuilt"));
     settlement->connect("changed", Callable(this, "on_layout_changed"));
-    if (island->get_field().n > 0) {
-        on_island_rebuilt();
+    if (host->host_ready()) {
+        on_host_rebuilt();
     }
 }
 
-void Villagers::on_island_rebuilt() {
+void Villagers::on_host_rebuilt() {
+    ground = host->host_nav_ground();
     populate();
 }
 
 void Villagers::on_layout_changed() {
+    if (!ground) {
+        return; // 宿主还没好：等它的 rebuilt
+    }
     populate();
 }
 
@@ -187,11 +194,17 @@ void Villagers::populate() {
     for (int64_t k = 0; k < keys.size(); k++) {
         store.add(to_std(String(keys[k])), int(starting_store[keys[k]]));
     }
-    const IslandField &field = island->get_field();
+    const IslandField *field = host->host_field();
     const SettlementLayout &layout = settlement->get_model();
-    nav = build_nav_grid(field, layout, nav_rules);
-    const std::vector<Resident> residents = assign_residents(layout, farm != nullptr, field.has_river(), per_house, uint64_t(seed) ^ uint64_t(island->get_seed()));
-    const Rng base(uint64_t(seed) * 0x9E3779B97F4A7C15ull + uint64_t(island->get_seed()));
+    double x0 = 0.0, z0 = 0.0;
+    int cols = 0, rows = 0;
+    host->host_nav_window(layout, nav_rules, x0, z0, cols, rows);
+    nav = build_nav_grid(*ground, x0, z0, cols, rows, layout, nav_rules);
+    std::vector<Resident> residents = assign_residents(layout, farm != nullptr && field, field && field->has_river(), per_house, uint64_t(seed) ^ host->host_seed());
+    if (max_folk > 0 && int(residents.size()) > max_folk) {
+        residents.resize(size_t(max_folk)); // 封顶：其余的算在屋里
+    }
+    const Rng base(uint64_t(seed) * 0x9E3779B97F4A7C15ull + host->host_seed());
     folk.resize(residents.size());
     for (int k = 0; k < int(residents.size()); k++) {
         Folk &f = folk[size_t(k)];
@@ -291,7 +304,7 @@ void Villagers::build_body(Folk &r_folk, int p_index) {
 
 VillageView Villagers::view() const {
     VillageView v;
-    v.field = &island->get_field();
+    v.field = host->host_field();
     v.layout = &settlement->get_model();
     v.nav = &nav;
     v.farm = farm ? &farm->get_model() : nullptr;
@@ -437,10 +450,7 @@ void Villagers::place_body(Folk &r_folk) {
     if (!r_folk.root) {
         return;
     }
-    double y = 0.0;
-    if (!surface_height(island->get_field(), r_folk.mind.x, r_folk.mind.z, y)) {
-        y = 0.0;
-    }
+    const double y = ground_y(r_folk.mind.x, r_folk.mind.z);
     double bob = 0.0, lean = 0.0, sway = 0.0;
     Vector3 tool_rot;
     if (r_folk.phase == WALKING) {
@@ -484,7 +494,7 @@ void Villagers::refresh_label(const Folk &r_folk) {
 }
 
 void Villagers::_physics_process(double p_delta) {
-    if (!island || !settlement || nav.cols == 0) {
+    if (!host || !settlement || nav.cols == 0) {
         return;
     }
     clock += p_delta;
@@ -583,17 +593,13 @@ Villagers::Phase Villagers::get_villager_phase(int p_index) const {
 Vector3 Villagers::get_villager_position(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(folk.size()), Vector3());
     const Folk &f = folk[size_t(p_index)];
-    double y = 0.0;
-    surface_height(island->get_field(), f.mind.x, f.mind.z, y);
-    return island->get_global_transform().xform(Vector3(real_t(f.mind.x), real_t(y), real_t(f.mind.z)));
+    return host_transform().xform(Vector3(real_t(f.mind.x), real_t(ground_y(f.mind.x, f.mind.z)), real_t(f.mind.z)));
 }
 
 Vector3 Villagers::get_villager_target(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(folk.size()), Vector3());
     const Task &t = folk[size_t(p_index)].task;
-    double y = 0.0;
-    surface_height(island->get_field(), t.x, t.z, y);
-    return island->get_global_transform().xform(Vector3(real_t(t.x), real_t(y), real_t(t.z)));
+    return host_transform().xform(Vector3(real_t(t.x), real_t(ground_y(t.x, t.z)), real_t(t.z)));
 }
 
 String Villagers::get_villager_carrying(int p_index) const {
@@ -650,13 +656,21 @@ void Villagers::set_hour(double p_hour) {
 }
 
 double Villagers::get_nav_height(const Vector3 &p_global) const {
-    if (!island) {
+    if (!host || !ground) {
         return std::numeric_limits<double>::quiet_NaN();
     }
-    const Vector3 local = island->get_global_transform().affine_inverse().xform(p_global);
+    const Vector3 local = host_transform().affine_inverse().xform(p_global);
     double y = 0.0;
-    if (!surface_height(island->get_field(), local.x, local.z, y)) {
+    if (!ground->walk_height(local.x, local.z, y)) {
         return std::numeric_limits<double>::quiet_NaN();
     }
-    return island->get_global_transform().xform(Vector3(local.x, real_t(y), local.z)).y;
+    return host_transform().xform(Vector3(local.x, real_t(y), local.z)).y;
+}
+
+double Villagers::ground_y(double p_x, double p_z) const {
+    double y = 0.0;
+    if (!ground || !ground->walk_height(p_x, p_z, y)) {
+        return 0.0;
+    }
+    return y;
 }

@@ -656,7 +656,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 const int granary = first_of_kind(*p_view.layout, "granary");
                 return at_building(TaskKind::DELIVER, p_view, granary >= 0 ? granary : who.home, w.deliver_s);
             }
-            if (!p_view.farm) {
+            if (!p_view.farm || !p_view.field) {
                 return idle_task(r_mind, p_view, p_rng);
             }
             int owned = 0;

@@ -91,6 +91,7 @@ target_sources(
         src/register_types.h
         src/settlement.cpp
         src/settlement.h
+        src/settlement_host.h
         src/ship.cpp
         src/ship.h
         src/shipyard.cpp

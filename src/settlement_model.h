@@ -93,6 +93,8 @@ SiteReport survey_site(const IslandField &p_field, double p_dock_apron_m, const 
         const SettlementLayout &p_others, const SiteRules &p_rules, int p_ignore = -1);
 
 // 编辑：返回空串表示做了；否则原因，清单不动
+std::string settlement_place(SettlementLayout &p_layout, const SiteGround &p_ground, const std::string &p_kind,
+        double p_x, double p_z, double p_yaw, const SiteRules &p_rules);
 std::string settlement_place(SettlementLayout &p_layout, const IslandField &p_field, double p_dock_apron_m, const std::string &p_kind,
         double p_x, double p_z, double p_yaw, const SiteRules &p_rules);
 // 点落在哪一座的占地里；没有返回 −1（重叠时取清单里靠后的，即最近放的）

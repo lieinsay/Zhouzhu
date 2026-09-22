@@ -302,3 +302,18 @@ void Island::set_has_yard(bool p_value) {
     queue_rebuild();
 }
 
+std::unique_ptr<SiteGround> Island::host_site_ground(const SiteRules &p_rules) const {
+    return std::make_unique<IslandSiteGround>(field, params.dock_apron_m, p_rules);
+}
+
+std::unique_ptr<NavGround> Island::host_nav_ground() const {
+    return std::make_unique<IslandNavGround>(field);
+}
+
+void Island::host_nav_window(const SettlementLayout &, const NavRules &p_rules, double &r_x0, double &r_z0, int &r_cols, int &r_rows) const {
+    // 铺满整座岛（与 build_nav_grid(IslandField) 一致）
+    const double ext = field.half_extent();
+    r_x0 = -ext;
+    r_z0 = -ext;
+    r_cols = r_rows = field.n < 2 ? 0 : int(std::floor(2.0 * ext / p_rules.cell_m));
+}

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include <godot_cpp/classes/label3d.hpp>
@@ -11,10 +12,12 @@
 #include "farm.h"
 #include "island.h"
 #include "settlement.h"
+#include "settlement_host.h"
 #include "villager_model.h"
 
-// 一座岛上的村民：Island 的子节点，变换留在原点（岛的局部坐标就是它的局部坐标），要排在 Settlement 后面
-// （岛 rebuilt 时聚落先重盖，这里才重招人）。
+// 一处聚落的村民：聚落宿主（Island / WorldVillage）的子节点，变换留在原点（宿主的局部坐标就是它的局部坐标），要排在 Settlement 后面
+// （宿主 rebuilt 时聚落先重盖，这里才重招人）。导航格只铺宿主给的窗口（岛上是整座岛，岛群里是村子周围）；
+// 宿主没有高度场（岛群里的村）就没地可种、没河可挑，除了守望都闲着。max_folk 给人数封顶（0 = 不封）。
 //
 // 岛生成好、聚落清单就绪后按清单招人（assign_residents）、建导航格；清单改了（布置模式）就整村重招。
 // 每个物理帧：钟点往前走；每个村民要么在屋里（藏起来，到了出工的钟点再错开几秒出门），要么沿路点走（贴地），
@@ -55,12 +58,14 @@ private:
     godot::NodePath settlement_path = "../Settlement";
     godot::NodePath farm_path = "../Farm"; // 可以不接：那就没人种地
     int per_house = 2;
+    int max_folk = 0;
     double start_hour = 7.5;
     double walk_speed = 1.3;
     int64_t seed = 1;
     godot::Dictionary starting_store; // 村里的仓开局有什么：物品 id → 份数
 
-    Island *island = nullptr;
+    SettlementHost *host = nullptr;
+    std::unique_ptr<NavGround> ground; // 宿主给的导航地面；宿主 rebuilt 时换新
     Settlement *settlement = nullptr;
     Farm *farm = nullptr;
     NavRules nav_rules;
@@ -76,7 +81,9 @@ private:
     godot::Ref<godot::StandardMaterial3D> mat_skin, mat_hat, mat_wood, mat_water, mat_sack;
     godot::Ref<godot::StandardMaterial3D> mat_job[4];
 
-    void on_island_rebuilt();
+    void on_host_rebuilt();
+    godot::Transform3D host_transform() const { return host->host_node()->get_global_transform(); }
+    double ground_y(double p_x, double p_z) const; // 局部坐标的地面高；没有地面 0
     void on_layout_changed();
     void populate();
     void clear_folk();
@@ -128,6 +135,8 @@ public:
     godot::NodePath get_farm_path() const { return farm_path; }
     void set_per_house(int p_value) { per_house = p_value; }
     int get_per_house() const { return per_house; }
+    void set_max_folk(int p_value) { max_folk = p_value; }
+    int get_max_folk() const { return max_folk; }
     void set_day_seconds(double p_value) { day.day_seconds = p_value > 1.0 ? p_value : 1.0; }
     double get_day_seconds() const { return day.day_seconds; }
     void set_start_hour(double p_value) { start_hour = p_value; }

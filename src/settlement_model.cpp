@@ -204,18 +204,23 @@ SiteReport survey_site(const IslandField &f, double p_dock_apron_m, const Buildi
     return survey_site(IslandSiteGround(f, p_dock_apron_m, p_rules), p_def, p_x, p_z, p_yaw, p_others, p_rules, p_ignore);
 }
 
-std::string settlement_place(SettlementLayout &p_layout, const IslandField &p_field, double p_dock_apron_m, const std::string &p_kind,
+std::string settlement_place(SettlementLayout &p_layout, const SiteGround &p_ground, const std::string &p_kind,
         double p_x, double p_z, double p_yaw, const SiteRules &p_rules) {
     const BuildingDef *def = buildings::by_id(p_kind);
     if (!def) {
         return "没有这种建筑：" + p_kind;
     }
-    const SiteReport report = survey_site(p_field, p_dock_apron_m, *def, p_x, p_z, p_yaw, p_layout, p_rules);
+    const SiteReport report = survey_site(p_ground, *def, p_x, p_z, p_yaw, p_layout, p_rules);
     if (!report.ok()) {
         return report.reason;
     }
     p_layout.add(Building{ p_kind, p_x, p_z, normalize_yaw(p_yaw) });
     return std::string();
+}
+
+std::string settlement_place(SettlementLayout &p_layout, const IslandField &p_field, double p_dock_apron_m, const std::string &p_kind,
+        double p_x, double p_z, double p_yaw, const SiteRules &p_rules) {
+    return settlement_place(p_layout, IslandSiteGround(p_field, p_dock_apron_m, p_rules), p_kind, p_x, p_z, p_yaw, p_rules);
 }
 
 int settlement_find(const SettlementLayout &p_layout, double p_px, double p_pz) {
