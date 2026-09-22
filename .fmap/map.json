@@ -42,7 +42,7 @@
     {
       "id": "island-node",
       "label": "Island 节点",
-      "detail": "Island 节点：按种子生成高度场与网格，给出生点、栈桥端、泊位接触线（Transform3D，X 指向码头，船把舷边贴上去）、地表高度；has_yard 开船坞坪。",
+      "detail": "Island 节点：按属性生成高度场、网格、碰撞、栈桥、河水；泊位接触线、出生点、地面高度、路点与河中线点；has_yard 凿船坞坪；rebuilt 信号让 Farm / Shipyard / Settlement 跟着重建。",
       "tag": "场景角色",
       "evidence": "e2e：两座岛生成，泊位/栈桥头/出生点位姿被 Voyage 与测试使用，get_surface_height 判定抵达；截图中栈桥与甲板齐平",
       "sources": [
@@ -345,6 +345,102 @@
         "src/refit_overlay.cpp"
       ],
       "since": "e5"
+    },
+    {
+      "id": "voyage-build",
+      "label": "布置模式编排",
+      "detail": "步行时 B 开合（dev_tools 属性），光标贴地按相机方向 WASD 挪、Q/R 转 15°、1-4 选建筑、E 放、X 拆、F5 存盘、Tab 合上；开着时人站住；改的是脚下岛的 Settlement；规矩在聚落模型里，这里只转述原因。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "build_e2e PASS：开合、停机坪 / 已有 / 挨得太近被拒、转 45° 放望楼、拆、存",
+      "sources": [
+        "src/voyage.h",
+        "src/voyage.cpp"
+      ],
+      "since": "e6",
+      "parent": "voyage"
+    },
+    {
+      "id": "buildings",
+      "label": "建筑表",
+      "detail": "四种建筑的尺寸表：面阔 × 进深、台基高、墙高、屋脊高与显示名；按 id 查。",
+      "tag": "原语",
+      "evidence": "zhouzhu_core_tests settlement_model 段",
+      "sources": [
+        "src/buildings.h",
+        "src/buildings.cpp"
+      ],
+      "since": "e7"
+    },
+    {
+      "id": "settlement-model",
+      "label": "聚落模型：选址与清单",
+      "detail": "一座岛上的建筑清单（岛内坐标 + 朝向，\"kind@x,z,yaw°\" 文本往返）；survey_site 用高度场勘察占地九点：有地面、不在河 / 停机坪 / 船坞坪 / 路上、不与别的建筑压着（分离轴）、高差 ≤ 2.5 m，给地坪高与台基深度和中文原因；settlement_place / settlement_find。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests：文本往返、占地与分离轴、各种被拒、放 / 拒 / 忽略自己；339 项 0 失败",
+      "sources": [
+        "src/settlement_model.h",
+        "src/settlement_model.cpp"
+      ],
+      "since": "e7"
+    },
+    {
+      "id": "settlement-node",
+      "label": "Settlement 聚落",
+      "detail": "Island 的子节点（StaticBody3D）。layout_path 指向 game/settlements/*.txt，进树时读、岛 rebuilt 后重建几何：台基（埋进坡里架平地坪）+ 夯土墙 + 悬山顶（PrismMesh）+ 门，台基与墙带碰撞。对外 survey / place / remove / find_at / find_site / save / load，dirty 标记。",
+      "tag": "场景角色",
+      "evidence": "build_e2e PASS：放 / 拒 / 拆 / 存 / 读回一致，望楼挡住人，仓库村落 8 座 survey_building 全过",
+      "sources": [
+        "src/settlement.h",
+        "src/settlement.cpp"
+      ],
+      "since": "e7"
+    },
+    {
+      "id": "build-overlay",
+      "label": "BuildOverlay 布置视角",
+      "detail": "只画：环绕光标的相机（鼠标转、滚轮远近）、光标处半透明幽灵建筑与占地描边（绿能盖 / 红不能 / 白选中）；对外给相机的水平朝向，上层据此挪光标。",
+      "tag": "引擎构件",
+      "evidence": "build_e2e 按 get_build_camera_yaw 驾光标到目标；开窗截图目视",
+      "sources": [
+        "src/build_overlay.h",
+        "src/build_overlay.cpp"
+      ],
+      "since": "e7"
+    },
+    {
+      "id": "build-panel",
+      "label": "BuildPanel 布置面板",
+      "detail": "只画：在哪座岛、光标坐标与朝向、状态与原因、1-4 建筑表（选中描亮）、清单几座与存盘路径 / 未存标记、按键提示。",
+      "tag": "引擎构件",
+      "evidence": "开窗截图目视",
+      "sources": [
+        "src/build_panel.h",
+        "src/build_panel.cpp"
+      ],
+      "since": "e7"
+    },
+    {
+      "id": "seed-villages",
+      "label": "铺村工具",
+      "detail": "SceneTree 脚本：按路尽头与河中线的走向，用 find_site 在两座岛上铺一个起步村落并存盘；地形改了、村落站不住时重铺。",
+      "tag": "工具",
+      "evidence": "headless 跑过：IslandA 8 座、IslandB 3 座；build_e2e 末段验证每座都站得住",
+      "sources": [
+        "game/tools/seed_villages.gd"
+      ],
+      "since": "e7"
+    },
+    {
+      "id": "build-e2e",
+      "label": "布置端到端测试",
+      "detail": "无头 Godot：清单改到 user://，B 打开 → 停机坪被拒 → 河滩放民居 → 已有 / 挨得太近被拒 → 转 45° 放望楼 → X 拆 → F5 存、读回 → Tab 合上 → 走到望楼被挡 → 仓库村落每座站得住。",
+      "tag": "验收",
+      "evidence": "Godot --headless --fixed-fps 60 build_e2e exit 0，模拟 23.8 s",
+      "sources": [
+        "game/tests/build_e2e.gd",
+        "game/tests/build_e2e.tscn"
+      ],
+      "since": "e7"
     }
   ],
   "edges": [
@@ -727,6 +823,141 @@
       "from": "player",
       "to": "ship",
       "label": "梯子区域"
+    },
+    {
+      "from": "settlement-model",
+      "to": "island-field",
+      "label": "地面高度 / 河 / 路 / 坪",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "settlement-model",
+      "to": "buildings",
+      "label": "占地尺寸",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "settlement-node",
+      "to": "settlement-model",
+      "label": "清单 / 勘察",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "settlement-node",
+      "to": "buildings",
+      "label": "几何尺寸",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "settlement-node",
+      "to": "island-node",
+      "label": "高度场 / rebuilt",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "build-overlay",
+      "to": "buildings",
+      "label": "幽灵尺寸",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "build-panel",
+      "to": "buildings",
+      "label": "名字与尺寸",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "voyage-build",
+      "to": "settlement-node",
+      "label": "勘察 / 放 / 拆 / 存",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "voyage-build",
+      "to": "build-overlay",
+      "label": "光标 / 幽灵 / 相机朝向",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "voyage-build",
+      "to": "build-panel",
+      "label": "光标 / 状态 / 清单",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "voyage-build",
+      "to": "player",
+      "label": "开着时挡输入",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "voyage-build",
+      "to": "input-map",
+      "label": "build_mode / rotate / kind_4 / save",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "voyage-build",
+      "to": "island-node",
+      "label": "地面高度",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "seed-villages",
+      "to": "settlement-node",
+      "label": "find_site / place / save",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "seed-villages",
+      "to": "island-node",
+      "label": "路点 / 河中线",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "main-scene",
+      "to": "settlement-node",
+      "chains": [
+        "settlement"
+      ]
+    },
+    {
+      "from": "build-e2e",
+      "to": "main-scene",
+      "label": "加载并驱动",
+      "chains": [
+        "settlement"
+      ]
     }
   ],
   "chains": [
@@ -1051,6 +1282,95 @@
         "ship-layout-rules",
         "ship-layout-ladders"
       ]
+    },
+    {
+      "id": "settlement",
+      "title": "切片四：开发者布置模式——在岛上放建筑，长出村落",
+      "story": "开发者在游戏里按 B 进入布置模式，绕着地面光标看岛，把民居、堂屋、仓、望楼一座座放到能盖的地上、转向、拆掉，按 F5 把清单存回仓库里的文本文件；玩家进游戏时岛上就有了村落，房子挡得住人。",
+      "date": "2026-09-22",
+      "color": "#c264d9",
+      "commits": "337d5a8..190111f",
+      "steps": [
+        {
+          "text": "进入主场景：两座岛的 Settlement 节点各读自己的清单文件，岛生成完就按清单在地上盖起台基、墙、悬山顶与门，带碰撞",
+          "nodes": [
+            "main-scene",
+            "settlement-node",
+            "settlement-model",
+            "buildings",
+            "island-node"
+          ]
+        },
+        {
+          "text": "步行时按 B：人站住，相机跳到高处绕着脚下的光标转（鼠标转、滚轮远近），右上面板列出四种建筑与清单状态",
+          "nodes": [
+            "voyage-build",
+            "build-overlay",
+            "build-panel",
+            "player",
+            "input-map"
+          ]
+        },
+        {
+          "text": "WASD 按相机方向挪光标（贴着地面走）、Q/R 转向、1-4 换建筑：光标处的幽灵建筑随之变——能盖是绿，不能盖是红并说明为什么",
+          "nodes": [
+            "voyage-build",
+            "build-overlay",
+            "settlement-node",
+            "settlement-model",
+            "island-field",
+            "input-map"
+          ]
+        },
+        {
+          "text": "在停机坪、河里、路上、船坞坪上、陡坡上或压着别的建筑按 E 都被拒；在河滩的空地上按 E 放下一座，清单记为有改动未存",
+          "nodes": [
+            "voyage-build",
+            "settlement-node",
+            "settlement-model",
+            "buildings"
+          ]
+        },
+        {
+          "text": "光标挪到已有的建筑上它描成白框：X 拆掉，E 会提醒先拆再放",
+          "nodes": [
+            "voyage-build",
+            "build-overlay",
+            "settlement-node"
+          ]
+        },
+        {
+          "text": "F5 把清单存回 layout_path 指的文本文件（一座一行 kind@x,z,yaw°），Tab 合上回到人身上；文件随仓库提交，重进游戏照样盖起来",
+          "nodes": [
+            "voyage-build",
+            "settlement-node",
+            "input-map"
+          ]
+        },
+        {
+          "text": "起始村落由 seed_villages.gd 按路与河的走向铺出来：出发岛河对岸五座民居沿河、堂屋与仓在后排、望楼在坡上；目的岛停机坪后一处落脚点",
+          "nodes": [
+            "seed-villages",
+            "settlement-node",
+            "island-node"
+          ]
+        }
+      ],
+      "nodes": [
+        "buildings",
+        "settlement-model",
+        "settlement-node",
+        "build-overlay",
+        "build-panel",
+        "seed-villages",
+        "build-e2e",
+        "island-node",
+        "main-scene",
+        "voyage-build",
+        "player",
+        "input-map",
+        "island-field"
+      ]
     }
   ],
   "events": [
@@ -1246,6 +1566,72 @@
         "adopted": [],
         "peers": [
           "refit-overlay"
+        ]
+      }
+    },
+    {
+      "id": "e6",
+      "type": "extend",
+      "date": "2026-09-22",
+      "title": "拓展：切片四：Voyage 长出「布置模式编排」",
+      "summary": "开发者布置模式的状态（开没开、光标、朝向、选了哪种、光标下的那座）只在 Voyage 里；Settlement、BuildOverlay、BuildPanel 互不相识。",
+      "commits": "fe3000a",
+      "nodes": [
+        "voyage",
+        "voyage-build"
+      ],
+      "info": {
+        "node": "voyage",
+        "children": [
+          "voyage-build"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e7",
+      "type": "slice",
+      "date": "2026-09-22",
+      "title": "切片四：开发者布置模式——在岛上放建筑，长出村落",
+      "summary": "开发者在游戏里按 B 进入布置模式，绕着地面光标看岛，把民居、堂屋、仓、望楼一座座放到能盖的地上、转向、拆掉，按 F5 把清单存回仓库里的文本文件；玩家进游戏时岛上就有了村落，房子挡得住人。",
+      "commits": "337d5a8..190111f",
+      "chain": "settlement",
+      "nodes": [
+        "buildings",
+        "settlement-model",
+        "settlement-node",
+        "build-overlay",
+        "build-panel",
+        "seed-villages",
+        "build-e2e",
+        "island-node",
+        "main-scene",
+        "voyage-build",
+        "player",
+        "input-map",
+        "island-field"
+      ],
+      "info": {
+        "created": [
+          "buildings",
+          "settlement-model",
+          "settlement-node",
+          "build-overlay",
+          "build-panel",
+          "seed-villages",
+          "build-e2e"
+        ],
+        "reused": [
+          "island-node",
+          "main-scene",
+          "voyage-build",
+          "player",
+          "input-map",
+          "island-field"
+        ],
+        "updated": [
+          "island-node"
         ]
       }
     }
