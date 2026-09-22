@@ -707,6 +707,22 @@ void test_flight() {
     const FlightParams params;
     const double dt = 1.0 / 60.0;
 
+    // 档位：头一档就是原样，档越高越快；越界夹到两头
+    check(flight_gears::count() >= 3, "至少三档");
+    check_near(apply_gear(params, 0).max_speed, params.max_speed, 1e-12, "头一档 = 船本身的极速");
+    check(apply_gear(params, 1).max_speed > params.max_speed && apply_gear(params, 2).max_speed > apply_gear(params, 1).max_speed, "档越高极速越大");
+    check(apply_gear(params, 2).max_climb > params.max_climb, "高档升降也快");
+    check_near(apply_gear(params, 99).max_speed, apply_gear(params, flight_gears::count() - 1).max_speed, 1e-12, "越界夹到最高档");
+    {
+        FlightState geared;
+        const FlightInput full{ 1.0, 0.0, 0.0 };
+        for (int k = 0; k < 60 * 20; k++) {
+            geared = flight_step(geared, full, apply_gear(params, flight_gears::count() - 1), dt);
+        }
+        const double v = std::hypot(geared.vx, geared.vz);
+        check(v > 100.0, "最高档 20 秒内过 100 m/s（" + std::to_string(v) + "）：30 km 五分钟内飞到");
+    }
+
     FlightState s;
     FlightInput full;
     full.throttle = 1.0;

@@ -32,3 +32,19 @@ struct FlightState {
 void flight_forward(double p_yaw, double &r_x, double &r_z);
 
 FlightState flight_step(const FlightState &p_state, const FlightInput &p_input, const FlightParams &p_params, double p_dt);
+
+// 速度档位：掌舵时一档一档换，档位系数乘到极速与升降极速上（倒车跟着极速走）。
+// 头一档就是船本身的船况，泊位附近、村子上空用它；岛与岛之间 5–30 km，换到高档几分钟飞到。
+struct FlightGear {
+    const char *id;
+    const char *name; // 显示名，UTF-8
+    double speed_scale;
+    double climb_scale;
+};
+
+namespace flight_gears {
+int count();
+const FlightGear &at(int p_gear); // 越界夹到两头
+} // namespace flight_gears
+
+FlightParams apply_gear(const FlightParams &p_params, int p_gear);

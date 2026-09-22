@@ -42,3 +42,31 @@ FlightState flight_step(const FlightState &p_state, const FlightInput &p_input, 
     s.vy = approach(s.vy, lift * p_params.max_climb, p_params.climb_tau, p_dt);
     return s;
 }
+
+namespace {
+
+const FlightGear GEARS[] = {
+    { "harbor", "泊", 1.0, 1.0 },
+    { "cruise", "巡", 2.5, 1.5 },
+    { "swift", "疾", 4.0, 2.0 },
+};
+constexpr int GEAR_COUNT = int(sizeof(GEARS) / sizeof(GEARS[0]));
+
+} // namespace
+
+int flight_gears::count() {
+    return GEAR_COUNT;
+}
+
+const FlightGear &flight_gears::at(int p_gear) {
+    return GEARS[std::clamp(p_gear, 0, GEAR_COUNT - 1)];
+}
+
+FlightParams apply_gear(const FlightParams &p_params, int p_gear) {
+    const FlightGear &g = flight_gears::at(p_gear);
+    FlightParams p = p_params;
+    p.max_speed *= g.speed_scale;
+    p.reverse_speed *= g.speed_scale;
+    p.max_climb *= g.climb_scale;
+    return p;
+}

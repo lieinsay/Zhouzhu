@@ -37,6 +37,7 @@ class Ship : public godot::CharacterBody3D {
     double mouse_sensitivity = 0.0025;
 
     bool controlled = false;
+    int gear = 0; // 速度档位（flight_gears）；靠泊、放到泊位上时回到头一档
     bool mooring = false;
     godot::Vector3 berth_position;
     double berth_yaw = 0.0;
@@ -113,5 +114,8 @@ public:
 
     void set_min_altitude(double p_value) { min_altitude = p_value; }
     double get_min_altitude() const { return min_altitude; }
-    double get_max_speed() const { return params.max_speed; }
+    double get_max_speed() const { return apply_gear(params, gear).max_speed; } // 当前档位下
+    void set_gear(int p_gear);
+    int get_gear() const { return gear; }
+    godot::String get_gear_name() const;
 };

@@ -139,6 +139,9 @@ void Ship::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_mooring"), &Ship::is_mooring);
     ClassDB::bind_method(D_METHOD("is_at", "contact", "tolerance"), &Ship::is_at);
     ClassDB::bind_method(D_METHOD("get_speed"), &Ship::get_speed);
+    ClassDB::bind_method(D_METHOD("set_gear", "gear"), &Ship::set_gear);
+    ClassDB::bind_method(D_METHOD("get_gear"), &Ship::get_gear);
+    ClassDB::bind_method(D_METHOD("get_gear_name"), &Ship::get_gear_name);
     ClassDB::bind_method(D_METHOD("get_helm_position"), &Ship::get_helm_position);
     ClassDB::bind_method(D_METHOD("get_seat_transform"), &Ship::get_seat_transform);
     ClassDB::bind_method(D_METHOD("get_exit_transform"), &Ship::get_exit_transform);
@@ -515,7 +518,7 @@ void Ship::step_flight(double p_delta) {
         in.rudder = input->get_axis(input_actions::MOVE_LEFT, input_actions::MOVE_RIGHT);
         in.lift = input->get_axis(input_actions::DESCEND, input_actions::ASCEND);
     }
-    state = flight_step(state, in, params, p_delta);
+    state = flight_step(state, in, apply_gear(params, gear), p_delta);
 
     // 别沉进云海
     const double altitude = get_global_position().y;
@@ -599,8 +602,17 @@ Vector3 Ship::origin_for(const Transform3D &p_contact, double p_yaw) const {
     return p_contact.origin - toward * real_t(edge);
 }
 
+void Ship::set_gear(int p_gear) {
+    gear = Math::clamp(p_gear, 0, flight_gears::count() - 1);
+}
+
+String Ship::get_gear_name() const {
+    return String::utf8(flight_gears::at(gear).name);
+}
+
 void Ship::place_at(const Transform3D &p_contact, bool p_keep_heading) {
     mooring = false;
+    gear = 0;
     const double contact_yaw = p_contact.basis.get_euler().y;
     const double yaw = p_keep_heading && std::abs(angle_difference(state.yaw, contact_yaw)) > Math_PI / 2 ? contact_yaw + Math_PI : contact_yaw;
     state = FlightState();
@@ -616,6 +628,7 @@ void Ship::moor_at(const Transform3D &p_contact) {
     berth_yaw = std::abs(angle_difference(state.yaw, yaw)) <= Math_PI / 2 ? yaw : yaw + Math_PI;
     berth_position = origin_for(p_contact, berth_yaw);
     mooring = true;
+    gear = 0;
 }
 
 bool Ship::is_at(const Transform3D &p_contact, double p_tolerance) const {
