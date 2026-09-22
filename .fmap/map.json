@@ -659,6 +659,43 @@
         "game/tests/world_e2e.gd"
       ],
       "since": "e11"
+    },
+    {
+      "id": "player-god",
+      "label": "god 飞行",
+      "detail": "set_god_mode：不受重力，按相机水平朝向飞，空格升、Ctrl / C 降，god_speed 30 m/s，按住 Shift × god_boost 5；碰撞照旧，降到地上就站住。",
+      "tag": "场景角色",
+      "evidence": "dev_tools_e2e：2 s 升 55 m、Ctrl 落地、Shift 150 m/s、关掉重力恢复",
+      "sources": [
+        "src/player.h",
+        "src/player.cpp"
+      ],
+      "since": "e12",
+      "parent": "player"
+    },
+    {
+      "id": "dev-tools-node",
+      "label": "DevTools 开发者工具",
+      "detail": "全局 autoload（DeveloperTools，game/dev_tools.tscn）：god 开没开、清单开没开只在这里；F2 换地图清单（maps 属性）、F3 开关 god 并随场景切换套到新 Player 上、没有岛群地图的场景按 M 提示；场景根 dev_tools 为假时不理。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "dev_tools_e2e PASS；开窗截图目视",
+      "sources": [
+        "src/dev_tools.h",
+        "src/dev_tools.cpp",
+        "game/dev_tools.tscn"
+      ],
+      "since": "e13"
+    },
+    {
+      "id": "dev-tools-e2e",
+      "label": "开发者工具端到端测试",
+      "detail": "M 提示 → god 升 / 降 / 加速 → 关 god 重力回来 → F2 换到 2051 且 god 跟着 → 换回；驱动器把 main.tscn 挂成当前场景，自己留着。",
+      "tag": "验收",
+      "evidence": "headless exit 0（模拟 11 s）",
+      "sources": [
+        "game/tests/dev_tools_e2e.gd"
+      ],
+      "since": "e13"
     }
   ],
   "edges": [
@@ -1444,6 +1481,53 @@
       "chains": [
         "real-scale-world"
       ]
+    },
+    {
+      "from": "dev-tools-node",
+      "to": "player-god",
+      "label": "开关 god",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "dev-tools-node",
+      "to": "input-map",
+      "label": "F2 / F3 / M",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "dev-tools-node",
+      "to": "main-scene",
+      "label": "换场景",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "dev-tools-node",
+      "to": "world-2051-scene",
+      "label": "换场景",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "player-god",
+      "to": "input-map",
+      "label": "空格 / Ctrl / Shift",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "dev-tools-e2e",
+      "to": "dev-tools-node",
+      "chains": [
+        "dev-tools"
+      ]
     }
   ],
   "chains": [
@@ -2023,6 +2107,62 @@
         "player",
         "input-map"
       ]
+    },
+    {
+      "id": "dev-tools",
+      "title": "开发者工具：换地图 + god 模式",
+      "story": "开发者在任何一张地图里按 F2 调出地图清单，一点就在甲乙两岛和岛群 #2051 之间来回换；按 F3 开 god，人就能腾空飞起、按住 Shift 以 150 m/s 掠过岛群，降到地上照样站住，换了地图也还飞着。",
+      "date": "2026-09-22",
+      "color": "#b8a12a",
+      "commits": "155924a..35aa1ee",
+      "steps": [
+        {
+          "text": "游戏一启动，全局的开发者工具就挂在场景树上，不管当前是哪张地图",
+          "nodes": [
+            "dev-tools-node"
+          ]
+        },
+        {
+          "text": "甲乙两岛里按 M：这里没有岛群地图，提示按 F2 换到有地图的「岛群 #2051」",
+          "nodes": [
+            "dev-tools-node",
+            "input-map",
+            "main-scene"
+          ]
+        },
+        {
+          "text": "按 F3 开 god：右上角标出 GOD 与速度，空格升、Ctrl 降、WASD 按相机朝向飞，Shift 加速到 150 m/s",
+          "nodes": [
+            "dev-tools-node",
+            "player-god",
+            "input-map"
+          ]
+        },
+        {
+          "text": "按 F2 弹出换地图清单，点一项或按数字键：换到那张地图的场景，人落在它的出生点",
+          "nodes": [
+            "dev-tools-node",
+            "input-map",
+            "main-scene",
+            "world-2051-scene"
+          ]
+        },
+        {
+          "text": "换过去以后，新场景里的人照样开着 god；再按 F3 关掉，重力回来往下落",
+          "nodes": [
+            "dev-tools-node",
+            "player-god"
+          ]
+        }
+      ],
+      "nodes": [
+        "dev-tools-node",
+        "dev-tools-e2e",
+        "input-map",
+        "main-scene",
+        "player-god",
+        "world-2051-scene"
+      ]
     }
   ],
   "events": [
@@ -2413,6 +2553,56 @@
         "reused": [
           "player",
           "input-map"
+        ],
+        "updated": []
+      }
+    },
+    {
+      "id": "e12",
+      "type": "extend",
+      "date": "2026-09-22",
+      "title": "拓展：Player 长出 god 模式",
+      "summary": "开发者开了 god 之后人不受重力、能飞能快；Player 不知道是谁开的。",
+      "commits": "155924a",
+      "nodes": [
+        "player",
+        "player-god"
+      ],
+      "info": {
+        "node": "player",
+        "children": [
+          "player-god"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e13",
+      "type": "slice",
+      "date": "2026-09-22",
+      "title": "切片：开发者工具：换地图 + god 模式",
+      "summary": "开发者在任何一张地图里按 F2 调出地图清单，一点就在甲乙两岛和岛群 #2051 之间来回换；按 F3 开 god，人就能腾空飞起、按住 Shift 以 150 m/s 掠过岛群，降到地上照样站住，换了地图也还飞着。",
+      "commits": "155924a..35aa1ee",
+      "chain": "dev-tools",
+      "nodes": [
+        "dev-tools-node",
+        "dev-tools-e2e",
+        "input-map",
+        "main-scene",
+        "player-god",
+        "world-2051-scene"
+      ],
+      "info": {
+        "created": [
+          "dev-tools-node",
+          "dev-tools-e2e"
+        ],
+        "reused": [
+          "input-map",
+          "main-scene",
+          "player-god",
+          "world-2051-scene"
         ],
         "updated": []
       }
