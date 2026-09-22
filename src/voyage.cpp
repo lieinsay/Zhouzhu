@@ -12,6 +12,7 @@
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "crops.h"
 #include "input_actions.h"
 
 using namespace godot;
@@ -66,12 +67,30 @@ double yaw_of(const Transform3D &p_transform) {
     return p_transform.basis.get_euler().y;
 }
 
+String name_of(const std::string &p_item) {
+    return String::utf8(catalog::item_name(p_item).c_str());
+}
+
+std::string to_std(const String &p_string) {
+    return std::string(p_string.utf8().get_data());
+}
+
 } // namespace
+
+Voyage::Voyage() {
+    starting_pack["millet"] = 5;
+    starting_pack["bean"] = 3;
+}
 
 void Voyage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_state"), &Voyage::get_state);
     ClassDB::bind_method(D_METHOD("has_arrived"), &Voyage::has_arrived);
     ClassDB::bind_method(D_METHOD("is_working"), &Voyage::is_working);
+    ClassDB::bind_method(D_METHOD("is_pack_open"), &Voyage::is_pack_open);
+    ClassDB::bind_method(D_METHOD("get_pack_cursor"), &Voyage::get_pack_cursor);
+    ClassDB::bind_method(D_METHOD("get_held_seed"), &Voyage::get_held_seed);
+    ClassDB::bind_method(D_METHOD("get_item_count", "item"), &Voyage::get_item_count);
+    ClassDB::bind_method(D_METHOD("get_pack_items"), &Voyage::get_pack_items);
 
     ClassDB::bind_method(D_METHOD("set_origin_island_path", "path"), &Voyage::set_origin_island_path);
     ClassDB::bind_method(D_METHOD("get_origin_island_path"), &Voyage::get_origin_island_path);
@@ -93,8 +112,8 @@ void Voyage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_farm_path"), &Voyage::get_farm_path);
     ClassDB::bind_method(D_METHOD("set_reach", "value"), &Voyage::set_reach);
     ClassDB::bind_method(D_METHOD("get_reach"), &Voyage::get_reach);
-    ClassDB::bind_method(D_METHOD("set_grain", "value"), &Voyage::set_grain);
-    ClassDB::bind_method(D_METHOD("get_grain"), &Voyage::get_grain);
+    ClassDB::bind_method(D_METHOD("set_starting_pack", "value"), &Voyage::set_starting_pack);
+    ClassDB::bind_method(D_METHOD("get_starting_pack"), &Voyage::get_starting_pack);
 
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "origin_island", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Island"), "set_origin_island_path", "get_origin_island_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "destination_island", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Island"), "set_destination_island_path", "get_destination_island_path");
@@ -106,7 +125,7 @@ void Voyage::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "leave_helm_speed", PROPERTY_HINT_RANGE, "0,30,0.5,suffix:m/s"), "set_leave_helm_speed", "get_leave_helm_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "kill_altitude", PROPERTY_HINT_RANGE, "-500,500,1,suffix:m"), "set_kill_altitude", "get_kill_altitude");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "reach", PROPERTY_HINT_RANGE, "0.5,4,0.1,suffix:m"), "set_reach", "get_reach");
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "grain", PROPERTY_HINT_RANGE, "0,999,1"), "set_grain", "get_grain");
+    ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "starting_pack"), "set_starting_pack", "get_starting_pack");
 
     ADD_SIGNAL(MethodInfo("arrived"));
     ADD_SIGNAL(MethodInfo("farm_worked", PropertyInfo(Variant::VECTOR2I, "cell"), PropertyInfo(Variant::INT, "action")));
@@ -134,6 +153,12 @@ void Voyage::_ready() {
         return;
     }
     farm = Object::cast_to<Farm>(get_node_or_null(farm_path));
+
+    // 开局背包；按表里的顺序放，面板就按这个顺序列
+    const Array keys = starting_pack.keys();
+    for (int k = 0; k < keys.size(); k++) {
+        pack.add(to_std(keys[k]), int(starting_pack[keys[k]]));
+    }
 
     // 子节点先于父节点 _ready，岛此刻已经生成完，泊位与出生点都有了
     ship->place_at(origin->get_berth_transform(ship->get_half_beam()));
@@ -166,6 +191,32 @@ void Voyage::build_hud() {
     prompt_label->set_offset(SIDE_BOTTOM, -56);
     prompt_label->set_offset(SIDE_TOP, -56);
     layer->add_child(prompt_label);
+
+    pack_panel = memnew(BackpackPanel);
+    pack_panel->set_name("Backpack");
+    pack_panel->set_anchors_preset(Control::PRESET_TOP_RIGHT);
+    pack_panel->set_h_grow_direction(Control::GROW_DIRECTION_BEGIN);
+    pack_panel->set_v_grow_direction(Control::GROW_DIRECTION_END);
+    pack_panel->set_offset(SIDE_RIGHT, -24);
+    pack_panel->set_offset(SIDE_TOP, 18);
+    pack_panel->set_visible(false);
+    layer->add_child(pack_panel);
+}
+
+String Voyage::get_held_seed() const {
+    return String::utf8(held_seed.c_str());
+}
+
+int Voyage::get_item_count(const String &p_item) const {
+    return pack.count(to_std(p_item));
+}
+
+PackedStringArray Voyage::get_pack_items() const {
+    PackedStringArray items;
+    for (const ItemStack &stack : pack.get_stacks()) {
+        items.push_back(String::utf8(stack.item.c_str()));
+    }
+    return items;
 }
 
 void Voyage::_unhandled_input(const Ref<InputEvent> &p_event) {
@@ -186,11 +237,17 @@ void Voyage::_physics_process(double p_delta) {
 
     switch (state) {
         case ON_FOOT: {
-            if (interact && player->get_global_position().distance_to(ship->get_helm_position()) <= helm_range) {
+            if (Input::get_singleton()->is_action_just_pressed(input_actions::INVENTORY)) {
+                set_pack_open(!pack_open);
+            }
+            if (pack_open) {
+                browse_pack(interact); // 开着背包：E 是拿东西，不是上舵、不是干活
+            } else if (interact && player->get_global_position().distance_to(ship->get_helm_position()) <= helm_range) {
                 board();
                 break;
+            } else {
+                tend_farm(p_delta, interact);
             }
-            tend_farm(p_delta, interact);
             track_footing();
             if (player->get_global_position().y < kill_altitude) {
                 respawn();
@@ -226,6 +283,7 @@ void Voyage::_physics_process(double p_delta) {
 }
 
 void Voyage::board() {
+    set_pack_open(false);
     drop_work();
     target_cell = Farm::NO_CELL;
     target_action = Farm::ACTION_NONE;
@@ -255,6 +313,63 @@ void Voyage::seat_player() {
     player->set_facing_yaw(yaw_of(seat));
 }
 
+// 开合背包。开着的时候人站住（输入挡在 Player 门口，物理照常），手上的活作废，描边收起。
+void Voyage::set_pack_open(bool p_open) {
+    if (pack_open == p_open) {
+        return;
+    }
+    pack_open = p_open;
+    player->set_input_blocked(p_open);
+    pack_panel->set_visible(p_open);
+    if (!p_open) {
+        return;
+    }
+    drop_work();
+    target_cell = Farm::NO_CELL;
+    target_action = Farm::ACTION_NONE;
+    if (farm) {
+        farm->set_highlight(Farm::NO_CELL, Color());
+    }
+    // 光标落在手上拿着的那样东西上；没拿就从头
+    pack_cursor = 0;
+    const std::vector<ItemStack> &stacks = pack.get_stacks();
+    for (int k = 0; k < int(stacks.size()); k++) {
+        if (stacks[size_t(k)].item == held_seed) {
+            pack_cursor = k;
+        }
+    }
+}
+
+// 翻背包：W/S 挪光标，E 把光标那样种子拿在手上（再按一次放下）。
+void Voyage::browse_pack(bool p_interact) {
+    const int n = pack.size();
+    if (n == 0) {
+        pack_cursor = 0;
+        return;
+    }
+    Input *input = Input::get_singleton();
+    if (input->is_action_just_pressed(input_actions::MOVE_FORWARD)) {
+        pack_cursor = (pack_cursor + n - 1) % n;
+    }
+    if (input->is_action_just_pressed(input_actions::MOVE_BACK)) {
+        pack_cursor = (pack_cursor + 1) % n;
+    }
+    pack_cursor = Math::clamp(pack_cursor, 0, n - 1);
+    if (!p_interact) {
+        return;
+    }
+    const std::string &item = pack.get_stacks()[size_t(pack_cursor)].item;
+    if (!catalog::is_seed(item)) {
+        say(name_of(item) + String(U"不是种子，种不了"));
+    } else if (held_seed == item) {
+        held_seed.clear();
+        say(String(U"放下了") + name_of(item) + String(U"种"));
+    } else {
+        held_seed = item;
+        say(String(U"手上拿着") + name_of(item) + String(U"种，去田里按住 E 播"));
+    }
+}
+
 // 步行时的农事：盯着视线前方的那一格；按下 E 起工，按住才算工时，干满了才落到地里。
 void Voyage::tend_farm(double p_delta, bool p_interact) {
     if (!farm) {
@@ -265,7 +380,7 @@ void Voyage::tend_farm(double p_delta, bool p_interact) {
         const Vector3 ahead = Basis(Vector3(0, 1, 0), real_t(player->get_look_yaw())).xform(Vector3(0, 0, real_t(-reach)));
         target_cell = farm->cell_at(player->get_global_position() + ahead);
     }
-    target_action = farm->available_action(target_cell, grain);
+    target_action = farm->available_action(target_cell, has_seed_in_hand());
 
     // 描边只给「与农事有关」的格子：有活可干的，或者已经是田的
     if (target_action != Farm::ACTION_NONE) {
@@ -297,13 +412,34 @@ void Voyage::tend_farm(double p_delta, bool p_interact) {
     if (work_time < work_seconds(work_action)) {
         return;
     }
-    const int gained = farm->perform(work_cell, work_action, grain);
-    grain += gained;
-    if (work_action == Farm::ACTION_HARVEST) {
-        say(vformat(String(U"收了 %d 粟"), gained));
-    }
+    finish_work();
     emit_signal("farm_worked", work_cell, int(work_action));
     drop_work(); // 下一样活要重新按 E：免得垦完顺手就把种子撒了
+}
+
+// 工时够了，活落到地里；种子从背包扣、收成往背包放，都在这一处
+void Voyage::finish_work() {
+    switch (work_action) {
+        case Farm::ACTION_TILL:
+            farm->perform(work_cell, Farm::ACTION_TILL, String());
+            break;
+        case Farm::ACTION_SOW: {
+            const CropDef *crop = catalog::crop_of_seed(held_seed);
+            if (crop && pack.remove(held_seed, 1)) {
+                farm->perform(work_cell, Farm::ACTION_SOW, String(crop->id));
+            }
+        } break;
+        case Farm::ACTION_HARVEST: {
+            const CropDef *crop = catalog::crop(to_std(farm->get_crop(work_cell)));
+            const int gained = farm->perform(work_cell, Farm::ACTION_HARVEST, String());
+            if (crop && gained > 0) {
+                pack.add(crop->product, gained);
+                say(vformat(String(U"收了 %d 份%s，放进了背包"), gained, name_of(crop->product)));
+            }
+        } break;
+        case Farm::ACTION_NONE:
+            break;
+    }
 }
 
 void Voyage::drop_work() {
@@ -321,7 +457,7 @@ void Voyage::say(const String &p_notice) {
 String Voyage::refusal(const Vector2i &p_cell) const {
     switch (farm->get_plot(p_cell)) {
         case Farm::PLOT_TILLED:
-            return String(U"没有粟种了");
+            return held_seed.empty() ? String(U"手上没有种子：按 Tab 打开背包选一样") : name_of(held_seed) + String(U"种用完了，去背包换一样");
         case Farm::PLOT_GROWING:
             return vformat(String(U"粟还没熟（长了 %d%%）"), int(std::lround(farm->get_growth(p_cell) * 100.0)));
         case Farm::PLOT_RIPE:
@@ -415,7 +551,15 @@ void Voyage::update_hud() {
             if (!farm) {
                 break;
             }
-            status += vformat(String(U"\n粟 %d"), grain);
+            // 第二行：背包一眼看全，手上拿着什么
+            status += String(U"\n背包");
+            if (pack.empty()) {
+                status += String(U" 空");
+            }
+            for (const ItemStack &stack : pack.get_stacks()) {
+                status += vformat(String(U" %s %d"), name_of(stack.item), stack.count);
+            }
+            status += held_seed.empty() ? String(U"    手持 —") : String(U"    手持 ") + name_of(held_seed) + String(U"种");
             const int fields = farm->get_plot_count(Farm::PLOT_TILLED) + farm->get_plot_count(Farm::PLOT_GROWING) + farm->get_plot_count(Farm::PLOT_RIPE);
             if (fields > 0) {
                 status += vformat(String(U"    田 %d 块"), fields);
@@ -426,6 +570,11 @@ void Voyage::update_hud() {
             } else {
                 status += String(U"    河边的滩地可以开垦");
             }
+            if (pack_open) {
+                pack_panel->refresh(pack, pack_cursor, held_seed);
+                prompt = String(U"W/S 选 · E 拿在手上 · Tab 合上");
+                break;
+            }
             if (near_helm) {
                 break;
             }
@@ -433,11 +582,13 @@ void Voyage::update_hud() {
                 const int filled = int(PROGRESS_CELLS * work_time / work_seconds(work_action));
                 prompt = work_name(work_action) + String(U"中 ") + String(U"■").repeat(filled) + String(U"□").repeat(PROGRESS_CELLS - filled);
             } else if (target_action == Farm::ACTION_SOW) {
-                prompt = String(U"按住 E 播种（耗 1 粟）");
+                prompt = String(U"按住 E 播") + name_of(held_seed) + String(U"（耗 1 份）");
             } else if (target_action != Farm::ACTION_NONE) {
                 prompt = String(U"按住 E ") + work_name(target_action);
+            } else if (target_cell != Farm::NO_CELL && farm->get_plot(target_cell) == Farm::PLOT_TILLED) {
+                prompt = held_seed.empty() ? String(U"按 Tab 打开背包，选一样种子") : name_of(held_seed) + String(U"种用完了");
             } else if (target_cell != Farm::NO_CELL && farm->get_plot(target_cell) == Farm::PLOT_GROWING) {
-                prompt = vformat(String(U"粟苗 · 长了 %d%%"), int(std::lround(farm->get_growth(target_cell) * 100.0)));
+                prompt = vformat(String(U"%s苗 · 长了 %d%%"), name_of(to_std(farm->get_crop(target_cell))), int(std::lround(farm->get_growth(target_cell) * 100.0)));
             }
         } break;
 

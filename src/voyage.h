@@ -1,18 +1,24 @@
 #pragma once
 
+#include <string>
+
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/node_path.hpp>
 
+#include "backpack_panel.h"
 #include "farm.h"
+#include "inventory.h"
 #include "island.h"
 #include "player.h"
 #include "ship.h"
 
-// 主场景的编排。切片一：走上空艇 → 掌舵 → 飞到对岸 → 靠泊下船；切片二：步行时在河边开垦、播种、收获。
-// 「现在是谁在受控」「手上的活干到哪了」「有多少粟」这些状态只在这里：
-// Player、Ship、Farm 互不相识，各自只回答自己的事。
+// 主场景的编排。切片一：走上空艇 → 掌舵 → 飞到对岸 → 靠泊下船；切片二：步行时在河边开垦、播种、收获；
+// 拓展：种子从背包里选（Tab 开合背包，W/S 选、E 拿在手上），收成进背包。
+// 「现在是谁在受控」「手上的活干到哪了」「背包里有什么、手上拿着哪种种子、背包开没开」这些状态只在这里：
+// Player、Ship、Farm、BackpackPanel 互不相识，各自只回答自己的事。
 class Voyage : public godot::Node3D {
     GDCLASS(Voyage, godot::Node3D)
 
@@ -34,7 +40,7 @@ private:
     double leave_helm_speed = 3.0; // 半空中离舵：船速须低于此
     double kill_altitude = -30.0; // 掉到这以下算坠入云海
     double reach = 1.8; // 够得着身前（视线方向）多远的那一格地
-    int grain = 5; // 粟：既是收成也是种子
+    godot::Dictionary starting_pack; // 开局背包：物品 id → 份数
 
     State state = ON_FOOT;
     bool arrived = false;
@@ -42,6 +48,11 @@ private:
     godot::Vector3 safe_footing;
     double notice_time = 0.0;
     godot::String notice;
+    // 背包：内容、手上拿着的种子（物品 id，空 = 没拿）、面板开合与光标
+    Inventory pack;
+    std::string held_seed;
+    bool pack_open = false;
+    int pack_cursor = 0;
     // 农事：视线前方的那一格、对它能做什么；按住 E 干的活（换格、松手即作废）
     godot::Vector2i target_cell = godot::Vector2i(-1, -1);
     Farm::Action target_action = Farm::ACTION_NONE;
@@ -56,13 +67,18 @@ private:
     Farm *farm = nullptr;
     godot::Label *status_label = nullptr;
     godot::Label *prompt_label = nullptr;
+    BackpackPanel *pack_panel = nullptr;
 
     void build_hud();
     void update_hud();
     void board();
     void disembark();
     void seat_player();
+    void set_pack_open(bool p_open);
+    void browse_pack(bool p_interact);
+    bool has_seed_in_hand() const { return !held_seed.empty() && pack.has(held_seed); }
     void tend_farm(double p_delta, bool p_interact);
+    void finish_work();
     void drop_work();
     void say(const godot::String &p_notice);
     godot::String refusal(const godot::Vector2i &p_cell) const;
@@ -75,6 +91,8 @@ protected:
     static void _bind_methods();
 
 public:
+    Voyage();
+
     void _ready() override;
     void _physics_process(double p_delta) override;
     void _unhandled_input(const godot::Ref<godot::InputEvent> &p_event) override;
@@ -82,6 +100,11 @@ public:
     State get_state() const { return state; }
     bool has_arrived() const { return arrived; }
     bool is_working() const { return work_action != Farm::ACTION_NONE; }
+    bool is_pack_open() const { return pack_open; }
+    int get_pack_cursor() const { return pack_cursor; }
+    godot::String get_held_seed() const; // 手上拿着的种子（物品 id）；没拿返回空串
+    int get_item_count(const godot::String &p_item) const;
+    godot::PackedStringArray get_pack_items() const; // 背包里的物品 id，按面板里的顺序
 
     void set_origin_island_path(const godot::NodePath &p_path) { origin_island_path = p_path; }
     godot::NodePath get_origin_island_path() const { return origin_island_path; }
@@ -103,8 +126,8 @@ public:
     godot::NodePath get_farm_path() const { return farm_path; }
     void set_reach(double p_value) { reach = p_value; }
     double get_reach() const { return reach; }
-    void set_grain(int p_value) { grain = p_value; }
-    int get_grain() const { return grain; }
+    void set_starting_pack(const godot::Dictionary &p_value) { starting_pack = p_value; }
+    godot::Dictionary get_starting_pack() const { return starting_pack; }
 };
 
 VARIANT_ENUM_CAST(Voyage::State);

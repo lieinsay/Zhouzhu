@@ -32,6 +32,10 @@ material = SubResource("cloud_material")
 size = Vector2(40000, 40000)
 
 [node name="Main" type="Voyage"]
+starting_pack = {
+"millet": 5,
+"bean": 3
+}
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("environment")
