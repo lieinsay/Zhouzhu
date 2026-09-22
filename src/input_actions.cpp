@@ -40,4 +40,7 @@ void input_actions::register_all() {
     bind(INTERACT, { KEY_E });
     bind(INVENTORY, { KEY_TAB, KEY_I });
     bind(REMOVE, { KEY_X, KEY_BACKSPACE, KEY_DELETE });
+    bind(KIND_1, { KEY_1, KEY_KP_1 });
+    bind(KIND_2, { KEY_2, KEY_KP_2 });
+    bind(KIND_3, { KEY_3, KEY_KP_3 });
 }

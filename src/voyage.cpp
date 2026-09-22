@@ -8,6 +8,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
+#include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -21,7 +22,8 @@ using namespace godot;
 namespace {
 
 constexpr double RECALL_DISTANCE = 60.0; // 坠落回位时，船离得比这远就把它召回最近的码头
-constexpr double IN_YARD_TOLERANCE = 0.5; // 舷门离坞位这么近就算停在坞里
+constexpr double IN_YARD_TOLERANCE = 0.5; // 船舷离坞位接触线这么近就算停在坞里
+constexpr double REFIT_MOUSE_SENSITIVITY = 0.004;
 constexpr double NOTICE_SECONDS = 2.5;
 constexpr int PROGRESS_CELLS = 8;
 
@@ -95,6 +97,7 @@ void Voyage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_pack_items"), &Voyage::get_pack_items);
     ClassDB::bind_method(D_METHOD("is_refit_open"), &Voyage::is_refit_open);
     ClassDB::bind_method(D_METHOD("get_refit_cursor"), &Voyage::get_refit_cursor);
+    ClassDB::bind_method(D_METHOD("get_refit_kind"), &Voyage::get_refit_kind);
     ClassDB::bind_method(D_METHOD("is_ship_in_yard"), &Voyage::is_ship_in_yard);
     ClassDB::bind_method(D_METHOD("get_notice"), &Voyage::get_notice);
 
@@ -171,7 +174,7 @@ void Voyage::_ready() {
     }
 
     // 子节点先于父节点 _ready，岛此刻已经生成完，泊位与出生点都有了
-    ship->place_at(origin->get_berth_transform(ship->get_half_beam()));
+    ship->place_at(origin->get_berth_contact());
     const Transform3D spawn = origin->get_spawn_transform();
     player->set_global_position(spawn.origin + Vector3(0, 0.1f, 0));
     player->set_look_yaw(yaw_of(spawn));
@@ -221,6 +224,11 @@ void Voyage::build_hud() {
     refit_panel->set_offset(SIDE_TOP, 18);
     refit_panel->set_visible(false);
     layer->add_child(refit_panel);
+
+    refit_overlay = memnew(RefitOverlay);
+    refit_overlay->set_name("RefitOverlay");
+    refit_overlay->set_visible(false);
+    add_child(refit_overlay);
 }
 
 String Voyage::get_held_seed() const {
@@ -244,6 +252,14 @@ void Voyage::_unhandled_input(const Ref<InputEvent> &p_event) {
     if (p_event->is_action_pressed("ui_cancel")) {
         input->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
         return;
+    }
+    if (refit_open && input->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED) {
+        const Ref<InputEventMouseMotion> motion = p_event;
+        if (motion.is_valid()) {
+            const Vector2 rel = motion->get_relative();
+            refit_overlay->orbit(-rel.x * REFIT_MOUSE_SENSITIVITY, rel.y * REFIT_MOUSE_SENSITIVITY);
+            return;
+        }
     }
     const Ref<InputEventMouseButton> click = p_event;
     if (click.is_valid() && click->is_pressed() && input->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED) {
@@ -377,7 +393,7 @@ void Voyage::set_pack_open(bool p_open) {
 
 bool Voyage::is_ship_in_yard() const {
     return shipyard && shipyard->is_present() && !ship->is_mooring() &&
-            ship->get_global_position().distance_to(shipyard->get_cradle_transform().origin) <= IN_YARD_TOLERANCE;
+            ship->is_at(shipyard->get_cradle_contact(), IN_YARD_TOLERANCE);
 }
 
 bool Voyage::near_bench() const {
@@ -393,7 +409,7 @@ void Voyage::interact_at_bench() {
     set_refit_open(true);
 }
 
-// 开合改装面板。开着的时候人站住（输入挡在 Player 门口），手上的活作废
+// 开合改装。开着的时候人站住（输入挡在 Player 门口），手上的活作废，相机切到装配视角
 void Voyage::set_refit_open(bool p_open) {
     if (refit_open == p_open) {
         return;
@@ -401,7 +417,9 @@ void Voyage::set_refit_open(bool p_open) {
     refit_open = p_open;
     player->set_input_blocked(p_open);
     refit_panel->set_visible(p_open);
+    refit_overlay->set_visible(p_open);
     if (!p_open) {
+        player->get_camera()->make_current();
         return;
     }
     set_pack_open(false);
@@ -411,46 +429,106 @@ void Voyage::set_refit_open(bool p_open) {
     if (farm) {
         farm->set_highlight(Farm::NO_CELL, Color());
     }
-    refit_cursor = 0; // 从船头数
+    // 光标落在驾驶区上，选中的模块默认储存区
+    const Module *bridge = ship->get_layout_model().bridge();
+    refit_cursor = bridge ? bridge->at : Cell{ 0, 0, 0 };
+    refit_kind = ModuleKind::STORAGE;
+    refit_overlay->show_for(ship->get_layout_model(), ship->get_global_transform());
+    refit_overlay->get_camera()->make_current();
+    refresh_refit_view();
 }
 
-// 改船：A/D 选节，W/S 换这一节的类型，E 在这一节后面加一节储存区，X 拆掉这一节。每一步直接落到船上，不合法就说明为什么。
+String Voyage::refit_cursor_status(RefitOverlay::CursorState &r_state) const {
+    const ShipLayout &layout = ship->get_layout_model();
+    const Module *here = layout.at(refit_cursor);
+    if (here) {
+        r_state = RefitOverlay::CURSOR_SELECTED;
+        String text = String(U"这里是") + String::utf8(modules::def(here->kind).name);
+        if (here->kind == ModuleKind::BRIDGE) {
+            return text + String(U"：换不得、拆不得");
+        }
+        ShipLayout trial = layout;
+        const std::string removable = layout_remove(trial, refit_cursor);
+        if (here->kind != refit_kind) {
+            trial = layout;
+            const std::string swap = layout_set_kind(trial, refit_cursor, refit_kind);
+            text += swap.empty() ? String(U"：E 换成") + String::utf8(modules::def(refit_kind).name) : String(U"：") + String::utf8(swap.c_str());
+        }
+        return text + (removable.empty() ? String(U" · X 拆掉") : String(U" · ") + String::utf8(removable.c_str()));
+    }
+    ShipLayout trial = layout;
+    const std::string reason = layout_place(trial, refit_cursor, refit_kind);
+    if (reason.empty()) {
+        r_state = RefitOverlay::CURSOR_CAN_PLACE;
+        return String(U"空格：E 放一节") + String::utf8(modules::def(refit_kind).name);
+    }
+    r_state = RefitOverlay::CURSOR_CANNOT_PLACE;
+    return String(U"空格：") + String::utf8(reason.c_str());
+}
+
+void Voyage::refresh_refit_view() {
+    RefitOverlay::CursorState state = RefitOverlay::CURSOR_CANNOT_PLACE;
+    const String status = refit_cursor_status(state);
+    refit_panel->refresh(refit_cursor, status, state != RefitOverlay::CURSOR_CANNOT_PLACE, refit_kind, ship->get_stats_model());
+    refit_overlay->refresh(ship->get_layout_model(), ship->get_global_transform(), refit_cursor, state, layout_candidates(ship->get_layout_model()));
+}
+
+// 改船：W/S/A/D 在格子里挪光标、空格/Shift 上下层，1/2/3 选模块，E 放一节或换类型，X 拆掉。
+// 每一步直接落到船上（船在坞里重新坐定，舷门仍贴着跳板），不合法就说明为什么。
 void Voyage::browse_refit(bool p_interact) {
     Input *input = Input::get_singleton();
-    ShipLayout draft = ship->get_layout_model();
-    const int n = int(draft.size());
-    refit_cursor = Math::clamp(refit_cursor, 0, Math::max(0, n - 1));
-    if (input->is_action_just_pressed(input_actions::MOVE_LEFT)) {
-        refit_cursor = Math::max(0, refit_cursor - 1);
+    auto pressed = [input](const char *p_action) { return input->is_action_just_pressed(p_action); };
+    Cell next = refit_cursor;
+    next.z += pressed(input_actions::MOVE_BACK) - pressed(input_actions::MOVE_FORWARD);
+    next.x += pressed(input_actions::MOVE_RIGHT) - pressed(input_actions::MOVE_LEFT);
+    next.y += pressed(input_actions::ASCEND) - pressed(input_actions::DESCEND);
+    if (next != refit_cursor) {
+        if (cell_in_range(next)) {
+            refit_cursor = next;
+        } else {
+            say(String(U"船坞能造的范围到头了"));
+        }
     }
-    if (input->is_action_just_pressed(input_actions::MOVE_RIGHT)) {
-        refit_cursor = Math::min(n - 1, refit_cursor + 1);
+    if (pressed(input_actions::KIND_1)) {
+        refit_kind = ModuleKind::BRIDGE;
+    } else if (pressed(input_actions::KIND_2)) {
+        refit_kind = ModuleKind::STORAGE;
+    } else if (pressed(input_actions::KIND_3)) {
+        refit_kind = ModuleKind::POWER;
     }
 
+    ShipLayout draft = ship->get_layout_model();
     std::string reason;
     String done;
-    if (input->is_action_just_pressed(input_actions::MOVE_FORWARD) || input->is_action_just_pressed(input_actions::MOVE_BACK)) {
-        reason = layout_cycle_kind(draft, refit_cursor, input->is_action_just_pressed(input_actions::MOVE_BACK) ? 1 : -1);
-        if (reason.empty()) {
-            done = vformat(String(U"第 %d 节换成了%s"), refit_cursor + 1, String::utf8(modules::def(draft[size_t(refit_cursor)]).name));
-        }
-    } else if (input->is_action_just_pressed(input_actions::REMOVE)) {
+    const String kind_name = String::utf8(modules::def(refit_kind).name);
+    if (pressed(input_actions::REMOVE)) {
         reason = layout_remove(draft, refit_cursor);
         if (reason.empty()) {
-            done = vformat(String(U"拆掉了第 %d 节"), refit_cursor + 1);
-            refit_cursor = Math::min(refit_cursor, int(draft.size()) - 1);
+            done = String(U"拆掉了这一节");
         }
     } else if (p_interact) {
-        reason = layout_insert_after(draft, refit_cursor, ModuleKind::STORAGE);
-        if (reason.empty()) {
-            refit_cursor += 1; // 光标落到新加的那一节上，接着 W/S 就能换类型
-            done = vformat(String(U"第 %d 节后面加了一节储存区"), refit_cursor);
+        const Module *here = draft.at(refit_cursor);
+        if (here) {
+            if (here->kind == refit_kind) {
+                reason = std::string("这一节已经是") + modules::def(refit_kind).name + "了";
+            } else {
+                reason = layout_set_kind(draft, refit_cursor, refit_kind);
+                if (reason.empty()) {
+                    done = String(U"这一节换成了") + kind_name;
+                }
+            }
+        } else {
+            reason = layout_place(draft, refit_cursor, refit_kind);
+            if (reason.empty()) {
+                done = String(U"放了一节") + kind_name;
+            }
         }
     }
     if (!reason.empty()) {
         say(String::utf8(reason.c_str()));
     } else if (!done.is_empty()) {
         ship->apply_layout(draft);
+        ship->place_at(shipyard->get_cradle_contact(), true); // 船身变了，舷门还得贴着跳板
         say(done);
     }
 }
@@ -626,7 +704,7 @@ void Voyage::respawn() {
     player->set_global_position(target + Vector3(0, 0.5f, 0));
     // 人回来了船却漂在远处，这一局就死了：把船召回最近的码头
     if (ship->get_global_position().distance_to(target) > RECALL_DISTANCE) {
-        ship->place_at(nearest_island(target)->get_berth_transform(ship->get_half_beam()));
+        ship->place_at(nearest_island(target)->get_berth_contact());
     }
     notice = String(U"坠入云海，回到了上一个落脚点");
     notice_time = NOTICE_SECONDS;
@@ -645,10 +723,10 @@ bool Voyage::moor_target_in_range(Transform3D &r_target, bool &r_yard) const {
         }
     };
     for (Island *island : { origin, destination }) {
-        consider(island->get_berth_transform(ship->get_half_beam()), false);
+        consider(island->get_berth_contact(), false);
     }
     if (shipyard && shipyard->is_present()) {
-        consider(shipyard->get_cradle_transform(), true);
+        consider(shipyard->get_cradle_contact(), true);
     }
     return found;
 }
@@ -664,7 +742,7 @@ void Voyage::update_hud() {
     String prompt;
     // 航行目标：没到过对岸就是对岸，到过了就是回程
     Island *target = arrived ? origin : destination;
-    const Transform3D target_berth = target->get_berth_transform(ship->get_half_beam());
+    const Transform3D target_berth = target->get_berth_contact();
 
     switch (state) {
         case ON_FOOT: {
@@ -672,8 +750,8 @@ void Voyage::update_hud() {
             const bool near_helm = player->get_global_position().distance_to(ship->get_helm_position()) <= helm_range;
             prompt = near_helm ? (ship->can_fly() ? String(U"按 E 掌舵") : String(U"没有动力区，飞不起来")) : String(U"WASD 移动 · 空格 跳 · Shift 疾跑");
             if (refit_open) {
-                refit_panel->refresh(ship->get_layout_model(), refit_cursor, ship->get_stats_model());
-                prompt = String(U"A/D 选节 · W/S 换类型 · E 加一节 · X 拆掉 · Tab 合上");
+                refresh_refit_view();
+                prompt = String(U"W/S 前后 · A/D 左右 · 空格/Shift 上下 · 1/2/3 选模块 · E 放/换 · X 拆 · Tab 合上");
                 break;
             }
             if (near_bench()) {
@@ -743,7 +821,7 @@ void Voyage::update_hud() {
             Transform3D moor_target;
             bool yard = false;
             if (moor_target_in_range(moor_target, yard)) {
-                prompt = ship_position.distance_to(moor_target.origin) < 0.5 ? String(U"按 E 离舵") : (yard ? String(U"按 E 入坞") : String(U"按 E 靠泊"));
+                prompt = ship->is_at(moor_target, 0.5) ? String(U"按 E 离舵") : (yard ? String(U"按 E 入坞") : String(U"按 E 靠泊"));
             } else if (ship->get_speed() <= leave_helm_speed) {
                 prompt = String(U"W/S 进退 · A/D 转舵 · 空格 升 · Shift 降 · E 离舵");
             } else {

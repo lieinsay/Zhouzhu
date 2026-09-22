@@ -52,6 +52,8 @@ target_sources(
         src/island_mesh.h
         src/player.cpp
         src/player.h
+        src/refit_overlay.cpp
+        src/refit_overlay.h
         src/refit_panel.cpp
         src/refit_panel.h
         src/register_types.cpp

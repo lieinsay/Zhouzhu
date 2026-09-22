@@ -15,6 +15,9 @@ constexpr const char *DESCEND = "descend";
 constexpr const char *INTERACT = "interact";
 constexpr const char *INVENTORY = "inventory"; // 开合背包
 constexpr const char *REMOVE = "remove"; // 改装时拆掉光标那一节
+constexpr const char *KIND_1 = "kind_1"; // 改装时选模块：驾驶区
+constexpr const char *KIND_2 = "kind_2"; // 储存区
+constexpr const char *KIND_3 = "kind_3"; // 动力区
 
 // 幂等：已有的动作不重复注册
 void register_all();

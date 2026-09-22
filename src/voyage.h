@@ -13,16 +13,18 @@
 #include "inventory.h"
 #include "island.h"
 #include "player.h"
+#include "refit_overlay.h"
 #include "refit_panel.h"
 #include "ship.h"
 #include "shipyard.h"
 
 // 主场景的编排。切片一：走上空艇 → 掌舵 → 飞到对岸 → 靠泊下船；切片二：步行时在河边开垦、播种、收获；
 // 拓展：种子从背包里选（Tab 开合背包，W/S 选、E 拿在手上），收成进背包；
-// 切片三：掌舵时靠近船坞按 E 入坞；下船走到画样台按 E 改装（A/D 选节、W/S 换类型、E 加一节、X 拆掉、Tab 合上），
-// 每改一下船立刻重拼；没有动力区的船上不了舵。
-// 「现在是谁在受控」「手上的活干到哪了」「背包里有什么、手上拿着哪种种子、背包开没开」「改装面板开没开、光标在哪一节」这些状态只在这里：
-// Player、Ship、Farm、Shipyard、BackpackPanel、RefitPanel 互不相识，各自只回答自己的事。
+// 切片三：掌舵时靠近船坞按 E 入坞；下船走到画样台按 E 改装；没有动力区的船上不了舵。
+// 拓展：改装在装配视角里做——环绕船的相机（鼠标转），三维格子里挪光标（W/S 前后、A/D 左右、空格/Shift 上下层），
+// 1/2/3 选模块，E 放一节或换类型，X 拆掉，Tab 合上；每改一下船立刻重拼并在坞里重新坐定。
+// 「现在是谁在受控」「手上的活干到哪了」「背包里有什么、手上拿着哪种种子、背包开没开」「改装开没开、光标在哪一格、选了哪种模块」这些状态只在这里：
+// Player、Ship、Farm、Shipyard、BackpackPanel、RefitPanel、RefitOverlay 互不相识，各自只回答自己的事。
 class Voyage : public godot::Node3D {
     GDCLASS(Voyage, godot::Node3D)
 
@@ -59,9 +61,10 @@ private:
     std::string held_seed;
     bool pack_open = false;
     int pack_cursor = 0;
-    // 改装：面板开合与光标（自船头数第几节）；布局本身在 Ship 里，每一步直接改它
+    // 改装：开合、光标格、选了哪种模块；布局本身在 Ship 里，每一步直接改它
     bool refit_open = false;
-    int refit_cursor = 0;
+    Cell refit_cursor;
+    ModuleKind refit_kind = ModuleKind::STORAGE;
     // 农事：视线前方的那一格、对它能做什么；按住 E 干的活（换格、松手即作废）
     godot::Vector2i target_cell = godot::Vector2i(-1, -1);
     Farm::Action target_action = Farm::ACTION_NONE;
@@ -79,6 +82,7 @@ private:
     godot::Label *prompt_label = nullptr;
     BackpackPanel *pack_panel = nullptr;
     RefitPanel *refit_panel = nullptr;
+    RefitOverlay *refit_overlay = nullptr;
 
     void build_hud();
     void update_hud();
@@ -89,6 +93,9 @@ private:
     void browse_pack(bool p_interact);
     void set_refit_open(bool p_open);
     void browse_refit(bool p_interact);
+    // 光标格眼下是什么 / 能不能放选中的模块；返回说明，r_state 给装配视角
+    godot::String refit_cursor_status(RefitOverlay::CursorState &r_state) const;
+    void refresh_refit_view();
     bool near_bench() const;
     void interact_at_bench();
     bool has_seed_in_hand() const { return !held_seed.empty() && pack.has(held_seed); }
@@ -119,7 +126,8 @@ public:
     bool is_pack_open() const { return pack_open; }
     int get_pack_cursor() const { return pack_cursor; }
     bool is_refit_open() const { return refit_open; }
-    int get_refit_cursor() const { return refit_cursor; }
+    godot::Vector3i get_refit_cursor() const { return godot::Vector3i(refit_cursor.x, refit_cursor.y, refit_cursor.z); }
+    godot::String get_refit_kind() const { return godot::String(modules::def(refit_kind).id); }
     bool is_ship_in_yard() const; // 空艇停在坞位上（改得了）
     godot::String get_notice() const { return notice_time > 0.0 ? notice : godot::String(); }
     godot::String get_held_seed() const; // 手上拿着的种子（物品 id）；没拿返回空串

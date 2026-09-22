@@ -7,6 +7,7 @@
 #include "farm.h"
 #include "island.h"
 #include "player.h"
+#include "refit_overlay.h"
 #include "refit_panel.h"
 #include "ship.h"
 #include "shipyard.h"
@@ -26,6 +27,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Voyage);
     GDREGISTER_CLASS(BackpackPanel);
     GDREGISTER_CLASS(RefitPanel);
+    GDREGISTER_CLASS(RefitOverlay);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {

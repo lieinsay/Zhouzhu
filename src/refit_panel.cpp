@@ -14,6 +14,8 @@ const Color ROW_PLAIN(0.85f, 0.85f, 0.82f);
 const Color ROW_CURSOR(1.0f, 0.96f, 0.72f);
 const Color ROW_DIM(0.6f, 0.6f, 0.58f);
 const Color ROW_WARN(0.95f, 0.55f, 0.45f);
+const Color ROW_OK(0.75f, 0.92f, 0.55f);
+const Color TITLE(0.95f, 0.9f, 0.75f);
 
 Label *make_label(int p_font_size, const Color &p_color) {
     Label *label = memnew(Label);
@@ -21,7 +23,19 @@ Label *make_label(int p_font_size, const Color &p_color) {
     label->add_theme_color_override("font_color", p_color);
     label->add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85f));
     label->add_theme_constant_override("outline_size", 4);
+    label->set_autowrap_mode(TextServer::AUTOWRAP_WORD_SMART);
     return label;
+}
+
+String side_name(int p_x) {
+    return p_x < 0 ? String(U"左舷") : (p_x > 0 ? String(U"右舷") : String(U"中线"));
+}
+
+String row_name(int p_z) {
+    if (p_z == 0) {
+        return String(U"舷门排");
+    }
+    return p_z < 0 ? vformat(String(U"舷门前 %d 格"), -p_z) : vformat(String(U"舷门后 %d 格"), p_z);
 }
 
 } // namespace
@@ -40,50 +54,59 @@ void RefitPanel::ensure_built() {
     box->set_corner_radius_all(6);
     box->set_content_margin_all(14);
     add_theme_stylebox_override("panel", box);
-    set_custom_minimum_size(Vector2(340, 0));
+    set_custom_minimum_size(Vector2(380, 0));
 
     column = memnew(VBoxContainer);
     column->add_theme_constant_override("separation", 4);
     add_child(column);
 
-    title = make_label(22, Color(0.95f, 0.9f, 0.75f));
-    title->set_text(String(U"改装空艇 · 自船头到船尾"));
+    title = make_label(22, TITLE);
+    title->set_text(String(U"改装空艇 · 装配视角"));
     column->add_child(title);
+
+    cursor_label = make_label(18, ROW_CURSOR);
+    column->add_child(cursor_label);
+    cursor_status = make_label(16, ROW_PLAIN);
+    column->add_child(cursor_status);
+
+    palette_title = make_label(15, ROW_DIM);
+    palette_title->set_text(String(U"要放的模块（1 / 2 / 3 选）"));
+    column->add_child(palette_title);
+    for (int k = 0; k < int(ModuleKind::COUNT); k++) {
+        palette[k] = make_label(18, ROW_PLAIN);
+        column->add_child(palette[k]);
+    }
 
     stats_label = make_label(16, ROW_PLAIN);
     column->add_child(stats_label);
 
-    hint = make_label(15, ROW_DIM);
-    hint->set_text(String(U"A/D 选节 · W/S 换类型 · E 加一节 · X 拆掉 · Tab 合上"));
+    hint = make_label(14, ROW_DIM);
+    hint->set_text(String(U"W/S 前后 · A/D 左右 · 空格/Shift 上下层\nE 放一节或换类型 · X 拆掉 · 鼠标转视角 · Tab 合上"));
     column->add_child(hint);
 }
 
-void RefitPanel::refresh(const ShipLayout &p_layout, int p_cursor, const ShipStats &p_stats) {
+void RefitPanel::refresh(const Cell &p_cursor, const String &p_cursor_status, bool p_cursor_ok, ModuleKind p_kind, const ShipStats &p_stats) {
     ensure_built();
-    const int wanted = int(p_layout.size());
-    while (int(rows.size()) < wanted) {
-        Label *row = make_label(19, ROW_PLAIN);
-        column->add_child(row);
-        column->move_child(row, int(rows.size()) + 1); // 排在标题后、船况前
-        rows.push_back(row);
-    }
-    for (int k = wanted; k < int(rows.size()); k++) {
-        rows[size_t(k)]->set_visible(false);
-    }
-    for (int k = 0; k < wanted; k++) {
-        const ModuleDef &d = modules::def(p_layout[size_t(k)]);
-        String text = (k == p_cursor ? String(U"▸ ") : String(U"   ")) + vformat(String(U"第 %d 节  %s"), k + 1, String::utf8(d.name));
-        if (k == 0) {
-            text += String(U"    ← 船头");
-        } else if (k == wanted - 1) {
-            text += String(U"    ← 船尾");
+    cursor_label->set_text(vformat(String(U"光标：%s · 第 %d 层 · %s"), side_name(p_cursor.x), p_cursor.y + 1, row_name(p_cursor.z)));
+    cursor_status->set_text(p_cursor_status);
+    cursor_status->add_theme_color_override("font_color", p_cursor_ok ? ROW_OK : ROW_WARN);
+
+    for (int k = 0; k < int(ModuleKind::COUNT); k++) {
+        const ModuleDef &d = modules::def(ModuleKind(k));
+        const bool chosen = ModuleKind(k) == p_kind;
+        String note;
+        if (d.thrust > 0.0) {
+            note = String(U"出推力");
+        } else if (d.hold > 0) {
+            note = vformat(String(U"货舱 %d 格"), d.hold);
+        } else {
+            note = String(U"舵在这儿，只能有一个");
         }
-        Label *row = rows[size_t(k)];
-        row->set_visible(true);
-        row->set_text(text);
-        row->add_theme_color_override("font_color", k == p_cursor ? ROW_CURSOR : ROW_PLAIN);
+        palette[k]->set_text((chosen ? String(U"▸ ") : String(U"   ")) + vformat(String(U"%d  %s    %s"), k + 1, String::utf8(d.name), note));
+        palette[k]->add_theme_color_override("font_color", chosen ? ROW_CURSOR : ROW_PLAIN);
     }
-    String stats = vformat(String(U"%d/%d 节 · 货舱 %d 格"), p_stats.sections, MAX_SECTIONS, p_stats.hold);
+
+    String stats = vformat(String(U"%d/%d 节 · 质量 %.1f · 推力 %.0f · 货舱 %d 格"), p_stats.sections, MAX_MODULES, p_stats.mass, p_stats.thrust, p_stats.hold);
     if (p_stats.can_fly()) {
         stats += vformat(String(U"\n航速 %d m/s · 升速 %d m/s · 转向 %d°/s"), int(std::lround(p_stats.max_speed)), int(std::lround(p_stats.max_climb)),
                 int(std::lround(p_stats.max_yaw_rate * 180.0 / 3.14159265358979323846)));
