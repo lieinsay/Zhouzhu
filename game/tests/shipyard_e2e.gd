@@ -1,8 +1,9 @@
 extends Node
 ## 船坞端到端测试：加载主场景，只通过输入动作操作。
 ## 出生点走到画样台按 E → 船不在坞里，被拒 → 走上空艇掌舵、升空、飞向船坞、E 入坞 → 下船走下跳板到画样台
-## → E 打开改装面板 → E 加一节储存区 / S 换成动力区 / W 换回 / 改驾驶区被拒 / 拆驾驶区被拒 / 拆掉动力区 → Tab 合上
-## → 走上舵位按 E：没有动力区，上不了舵 → 回画样台补一节动力区 → 掌舵升空飞回泊位靠泊。
+## → E 打开装配视角 → 在三维格子里改船：舷门后放一节储存区、往上再叠一节、悬空被拒、舷门排不是最宽被拒、
+##   左舷加一节、选动力区再加一节、拆支撑被拒、拆驾驶区被拒 → Tab 合上
+## → 走上跳板、爬梯子到第二层、下来走到舵位 → 掌舵升空飞回泊位靠泊。
 ## 断言每一步的布局、船况与 Voyage 状态一路对得上。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn
@@ -15,8 +16,7 @@ const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend"
 
 enum Phase {
 	WALK_TO_BENCH, REFUSED_NO_SHIP, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, FLY_TO_YARD, DOCKING,
-	WALK_DOWN, OPEN_REFIT, REFIT, WALK_UP, HELM_REFUSED, WALK_DOWN_AGAIN, OPEN_REFIT_AGAIN, RESTORE_POWER,
-	WALK_UP_AGAIN, TAKE_HELM_AGAIN, CLIMB_OUT_AGAIN, FLY_TO_BERTH, MOORING, DONE,
+	WALK_DOWN, OPEN_REFIT, REFIT, WALK_UP, CLIMB_LADDER, WALK_TO_HELM, TAKE_HELM_AGAIN, CLIMB_OUT_AGAIN, FLY_TO_BERTH, MOORING, DONE,
 }
 
 var main: Voyage
@@ -32,13 +32,15 @@ var shots_dir := ""
 var waypoints: Array[Vector3] = []
 var climb_from := 0.0
 var interact_frames := 0
-var released_for := 0
-# 改装脚本：每步 [[动作, 按住几帧]…, 之后该是的布局, 说明]；一步敲完就对布局
+# 改装脚本：每步 [[动作, 按住几帧]…, 之后该是的布局, 说明, 被拒时提示里该有的词]；一步敲完就对布局
 var steps: Array = []
 var taps: Array = []
 var tap_frames := 0
 var tap_gap := 0
 var speed_before_refit := 0.0
+var top_deck := Vector3.ZERO
+var ladder_index := 0
+var highest := -INF
 
 
 func _ready() -> void:
@@ -56,7 +58,7 @@ func _ready() -> void:
 	if not origin.has_shipyard() or not yard.is_present():
 		_finish(false, "出发岛上没有船坞")
 		return
-	if Array(ship.get_layout()) != ["power", "bridge"]:
+	if Array(ship.get_layout()) != ["0,0,-1:power", "0,0,0:bridge"]:
 		_finish(false, "开局的船该是 动力区 + 驾驶区（%s）" % [ship.get_layout()])
 		return
 	if main.is_ship_in_yard():
@@ -64,8 +66,8 @@ func _ready() -> void:
 		return
 	speed_before_refit = ship.get_max_speed()
 	waypoints = [yard.get_bench_position()]
-	print("shipyard_e2e: 出生点 %s，泊位 %s，坞位 %s（相距 %.0f m），画样台 %s，跳板 %s → %s，开局航速 %.1f m/s" % [
-		player.global_position, ship.global_position, _cradle().origin, ship.global_position.distance_to(_cradle().origin),
+	print("shipyard_e2e: 出生点 %s，泊位接触线 %s，坞位接触线 %s（相距 %.0f m），画样台 %s，跳板 %s → %s，开局航速 %.1f m/s" % [
+		player.global_position, _berth().origin, _cradle().origin, _berth().origin.distance_to(_cradle().origin),
 		yard.get_bench_position(), yard.get_gangway_top(), yard.get_gangway_foot(), speed_before_refit])
 
 
@@ -78,7 +80,6 @@ func _physics_process(delta: float) -> void:
 		interact_frames -= 1
 		if interact_frames == 0:
 			Input.action_release("interact")
-	released_for = 0 if Input.is_action_pressed("interact") else released_for + 1
 
 	match phase:
 		Phase.WALK_TO_BENCH:
@@ -87,7 +88,7 @@ func _physics_process(delta: float) -> void:
 				_enter(Phase.REFUSED_NO_SHIP)
 		Phase.REFUSED_NO_SHIP:
 			if main.is_refit_open():
-				_finish(false, "船不在坞里也打开了改装面板")
+				_finish(false, "船不在坞里也打开了改装")
 			elif elapsed - phase_started > 0.5:
 				if not main.get_notice().contains("船坞里没有船"):
 					_finish(false, "该提示船坞里没有船，实为「%s」" % main.get_notice())
@@ -106,7 +107,7 @@ func _physics_process(delta: float) -> void:
 				_tap_interact()
 		Phase.CLIMB_OUT, Phase.CLIMB_OUT_AGAIN:
 			_hold("ascend", true)
-			if ship.global_position.y > climb_from + 6.0:
+			if ship.global_position.y > climb_from + 8.0:
 				_enter(Phase.FLY_TO_YARD if phase == Phase.CLIMB_OUT else Phase.FLY_TO_BERTH)
 		Phase.FLY_TO_YARD:
 			if _hop_toward(_cradle().origin, _berth().origin):
@@ -116,95 +117,109 @@ func _physics_process(delta: float) -> void:
 		Phase.DOCKING:
 			if main.get_state() == Voyage.ON_FOOT:
 				if not main.is_ship_in_yard():
-					_finish(false, "入坞后船不在坞位上（离坞位 %.2f m）" % ship.global_position.distance_to(_cradle().origin))
+					_finish(false, "入坞后船舷没贴在坞位接触线上（船 %s）" % ship.global_position)
 				elif not player.is_on_floor():
 					pass  # 等落到甲板上
 				else:
 					waypoints = [yard.get_gangway_top(), yard.get_gangway_foot(), yard.get_bench_position()]
 					_enter(Phase.WALK_DOWN)
-		Phase.WALK_DOWN, Phase.WALK_DOWN_AGAIN:
+		Phase.WALK_DOWN:
 			if _follow_waypoints(main.helm_range - 0.5):
 				_tap_interact()
-				_enter(Phase.OPEN_REFIT if phase == Phase.WALK_DOWN else Phase.OPEN_REFIT_AGAIN)
+				_enter(Phase.OPEN_REFIT)
 		Phase.OPEN_REFIT:
 			if main.is_refit_open():
 				if not player.is_input_blocked():
-					_finish(false, "开着改装面板人还能走")
+					_finish(false, "开着改装人还能走")
+					return
+				if main.get_refit_cursor() != Vector3i(0, 0, 0) or main.get_refit_kind() != "storage":
+					_finish(false, "打开时光标该在驾驶区、默认放储存区（%s，%s）" % [main.get_refit_cursor(), main.get_refit_kind()])
 					return
 				_shot("REFIT_open")
 				steps = [
-					[[["interact", 2]], ["power", "storage", "bridge"], "E：第 1 节后面加一节储存区"],
-					[[["move_back", 2]], ["power", "power", "bridge"], "S：新加的那节换成动力区"],
-					[[["move_forward", 2]], ["power", "storage", "bridge"], "W：换回储存区"],
-					[[["move_right", 2], ["move_forward", 2]], ["power", "storage", "bridge"], "D 到驾驶区、W：驾驶区换不得"],
-					[[["remove", 2]], ["power", "storage", "bridge"], "X：驾驶区拆不得"],
-					[[["move_left", 2], ["move_left", 2], ["remove", 2]], ["storage", "bridge"], "A A X：拆掉船头的动力区"],
-					[[["inventory", 2]], ["storage", "bridge"], "Tab 合上"],
+					[[["move_back", 2], ["interact", 2]], ["0,0,-1:power", "0,0,0:bridge", "0,0,1:storage"], "S 到舷门后一格、E：放一节储存区", ""],
+					[[["ascend", 2], ["interact", 2]], ["0,0,-1:power", "0,0,0:bridge", "0,0,1:storage", "0,1,1:storage"], "空格上一层、E：再叠一节", ""],
+					[[["move_left", 2], ["interact", 2]], ["0,0,-1:power", "0,0,0:bridge", "0,0,1:storage", "0,1,1:storage"], "A 到左舷第二层、E：悬空被拒", "悬空"],
+					[[["descend", 2], ["interact", 2]], ["0,0,-1:power", "0,0,0:bridge", "0,0,1:storage", "0,1,1:storage"], "Shift 下到第一层、E：舷门排不是最宽被拒", "最宽"],
+					[[["move_forward", 2], ["interact", 2]], ["0,0,-1:power", "-1,0,0:storage", "0,0,0:bridge", "0,0,1:storage", "0,1,1:storage"], "W 到舷门排左舷、E：放一节", ""],
+					[[["kind_3", 2], ["move_back", 2], ["interact", 2]], ["0,0,-1:power", "-1,0,0:storage", "0,0,0:bridge", "-1,0,1:power", "0,0,1:storage", "0,1,1:storage"], "3 选动力区、S、E：左舷后面放一节动力区", ""],
+					[[["move_right", 2], ["remove", 2]], ["0,0,-1:power", "-1,0,0:storage", "0,0,0:bridge", "-1,0,1:power", "0,0,1:storage", "0,1,1:storage"], "D 到中线、X：上面还搭着，拆不了", "上面"],
+					[[["move_forward", 2], ["remove", 2]], ["0,0,-1:power", "-1,0,0:storage", "0,0,0:bridge", "-1,0,1:power", "0,0,1:storage", "0,1,1:storage"], "W 到驾驶区、X：拆不得", "驾驶区"],
+					[[["inventory", 2]], ["0,0,-1:power", "-1,0,0:storage", "0,0,0:bridge", "-1,0,1:power", "0,0,1:storage", "0,1,1:storage"], "Tab 合上", ""],
 				]
 				_start_step()
 				_enter(Phase.REFIT)
 			elif elapsed - phase_started > 1.0:
-				_finish(false, "在画样台按了 E，改装面板没打开（%s）" % main.get_notice())
-		Phase.REFIT, Phase.RESTORE_POWER:
+				_finish(false, "在画样台按了 E，改装没打开（%s）" % main.get_notice())
+		Phase.REFIT:
 			if not _run_taps():
 				return
 			var step: Array = steps.pop_front()
 			if Array(ship.get_layout()) != step[1]:
 				_finish(false, "%s 之后布局该是 %s，实为 %s（提示「%s」）" % [step[2], step[1], ship.get_layout(), main.get_notice()])
 				return
+			if step[3] != "" and not main.get_notice().contains(step[3]):
+				_finish(false, "%s：提示里该有「%s」，实为「%s」" % [step[2], step[3], main.get_notice()])
+				return
 			print("shipyard_e2e:   %s → %s（%s）" % [step[2], ship.get_layout(), main.get_notice()])
-			if step[2].contains("换不得") or step[2].contains("拆不得"):
-				if not main.get_notice().contains("驾驶区"):
-					_finish(false, "被拒时该说明是驾驶区的缘故，实为「%s」" % main.get_notice())
-					return
+			if not main.is_ship_in_yard():
+				_finish(false, "%s 之后船舷没贴着坞位" % step[2])
+				return
+			if steps.size() == 2:
+				_shot("REFIT_stacked")
 			if not steps.is_empty():
 				_start_step()
 				return
 			if main.is_refit_open() or player.is_input_blocked():
-				_finish(false, "Tab 之后面板没合上或人还动不了")
-			elif phase == Phase.REFIT:
-				if ship.can_fly():
-					_finish(false, "拆掉动力区之后还说能飞")
-				else:
-					_shot("REFIT_no_power")
-					waypoints = [yard.get_gangway_foot(), yard.get_gangway_top(), ship.global_position]
-					_enter(Phase.WALK_UP)
+				_finish(false, "Tab 之后改装没合上或人还动不了")
+				return
+			var stats: Dictionary = ship.get_stats()
+			if not ship.can_fly() or stats["hold"] != 12 or stats["sections"] != 6 or ship.get_levels() != 2:
+				_finish(false, "改完该是 6 节、两层、货舱 12 格、能飞（%s）" % stats)
+			elif ship.get_max_speed() >= speed_before_refit:
+				_finish(false, "多了货，航速该比开局慢（%.1f ≥ %.1f）" % [ship.get_max_speed(), speed_before_refit])
+			elif ship.get_ladder_feet().size() < 1:
+				_finish(false, "两层的船该有梯子")
 			else:
-				var stats: Dictionary = ship.get_stats()
-				if not ship.can_fly() or stats["hold"] != 4:
-					_finish(false, "补回动力区后该能飞、货舱 4 格（%s）" % stats)
-				elif ship.get_max_speed() >= speed_before_refit:
-					_finish(false, "多了一节货，航速该比开局慢（%.1f ≥ %.1f）" % [ship.get_max_speed(), speed_before_refit])
-				else:
-					_shot("REFIT_done")
-					waypoints = [yard.get_gangway_foot(), yard.get_gangway_top(), ship.global_position]
-					_enter(Phase.WALK_UP_AGAIN)
+				_shot("REFIT_done")
+				# 梯脚里离舷门那一列的甲板最近的那架，从驾驶区甲板爬上去；梯顶目标取第二层甲板靠船头那一头的走道
+				var deck0: Vector3 = ship.get_deck_position(0, 0)
+				ladder_index = 0
+				for k in ship.get_ladder_feet().size():
+					if ship.get_ladder_feet()[k].distance_to(deck0) < ship.get_ladder_feet()[ladder_index].distance_to(deck0):
+						ladder_index = k
+				top_deck = ship.to_global(ship.to_local(ship.get_deck_position(0, 1)) + Vector3(0, 0, -1.4))
+				waypoints = [yard.get_gangway_foot(), yard.get_gangway_top(), deck0, ship.get_ladder_feet()[ladder_index]]
+				_enter(Phase.WALK_UP)
 		Phase.WALK_UP:
-			if _follow_waypoints(0.6):
-				_enter(Phase.HELM_REFUSED)
-		Phase.HELM_REFUSED:
-			if main.get_state() != Voyage.ON_FOOT:
-				_finish(false, "没有动力区居然上了舵")
-			elif _walk_toward(ship.get_helm_position(), main.helm_range - 0.3):
-				if released_for >= 3 and interact_frames == 0 and not main.get_notice().contains("动力区"):
-					_tap_interact()
-				elif main.get_notice().contains("动力区"):
-					print("shipyard_e2e:   上舵被拒：「%s」" % main.get_notice())
-					waypoints = [ship.global_position, yard.get_gangway_top(), yard.get_gangway_foot(), yard.get_bench_position()]
-					_enter(Phase.WALK_DOWN_AGAIN)
-		Phase.OPEN_REFIT_AGAIN:
-			if main.is_refit_open():
-				steps = [
-					[[["interact", 2], ["move_back", 2]], ["storage", "power", "bridge"], "E 加一节、S 换成动力区"],
-					[[["inventory", 2]], ["storage", "power", "bridge"], "Tab 合上"],
-				]
-				_start_step()
-				_enter(Phase.RESTORE_POWER)
-			elif elapsed - phase_started > 1.0:
-				_finish(false, "第二次在画样台按 E，改装面板没打开（%s）" % main.get_notice())
-		Phase.WALK_UP_AGAIN:
-			if _follow_waypoints(0.6):
+			if _follow_waypoints(0.5):
+				_enter(Phase.CLIMB_LADDER)
+		Phase.CLIMB_LADDER:
+			# 面朝梯子那面墙一直往前：Player 碰到梯子区域就会往上爬，爬过顶再往前就落在第二层甲板上
+			highest = maxf(highest, player.global_position.y)
+			# 正对着梯子往前推：斜着走会从梯子边上滑出去掉下来
+			var landing: Vector3 = ship.get_ladder_tops()[ladder_index]
+			_face(landing)
+			_hold("move_forward", true)
+			var flat := Vector2(landing.x - player.global_position.x, landing.z - player.global_position.z).length()
+			if flat < 1.2 and absf(player.global_position.y - top_deck.y) < 0.4 and player.is_on_floor():
+				_hold("move_forward", false)
+				_shot("LADDER_top")
+				# 下去：回到梯顶落脚处，朝梯脚走——走进舷栏缺口就顺梯子下去，再走到舵旁
+				waypoints = [ship.get_ladder_tops()[ladder_index], ship.get_ladder_feet()[ladder_index], ship.get_helm_position()]
+				_enter(Phase.WALK_TO_HELM)
+			elif elapsed - phase_started > 20.0:
+				_finish(false, "20 s 没爬上第二层（最高到 y=%.1f，第二层甲板 y=%.1f，在梯子上 %s）" % [highest, top_deck.y, player.is_on_ladder()])
+		Phase.WALK_TO_HELM:
+			# 从第二层朝舵位走：走出梯顶的缺口掉进梯子区域后，面朝墙按后退顺梯子下去，落地再走到舵旁
+			if player.is_on_ladder() and not player.is_on_floor():
+				_hold("move_forward", false)
+				_face(ship.get_ladder_tops()[ladder_index])
+				_hold("move_back", true)
+			elif _hold_back_released() and _follow_waypoints(main.helm_range - 0.3) and player.is_on_floor() and absf(player.global_position.y - ship.get_helm_position().y) < 1.5:
 				_enter(Phase.TAKE_HELM_AGAIN)
+			elif elapsed - phase_started > 20.0:
+				_finish(false, "20 s 没走到舵旁（玩家 %s，舵 %s）" % [player.global_position, ship.get_helm_position()])
 		Phase.FLY_TO_BERTH:
 			if _hop_toward(_berth().origin, _cradle().origin):
 				_release_all()
@@ -212,22 +227,22 @@ func _physics_process(delta: float) -> void:
 				_enter(Phase.MOORING)
 		Phase.MOORING:
 			if main.get_state() == Voyage.ON_FOOT:
-				if ship.global_position.distance_to(_berth().origin) > 0.5:
-					_finish(false, "靠泊后船不在泊位上（离泊位 %.2f m）" % ship.global_position.distance_to(_berth().origin))
+				if not ship.is_at(_berth(), 0.5):
+					_finish(false, "靠泊后船舷没贴在泊位接触线上（船 %s）" % ship.global_position)
 				elif main.is_ship_in_yard():
 					_finish(false, "船已离坞却还说在坞里")
 				else:
 					_enter(Phase.DONE)
 		Phase.DONE:
-			_finish(true, "入坞、改成 %s、飞回泊位靠泊；航速 %.1f → %.1f m/s" % [ship.get_layout(), speed_before_refit, ship.get_max_speed()])
+			_finish(true, "入坞、改成 %s（%d 节两层）、爬了梯子、飞回泊位靠泊；航速 %.1f → %.1f m/s" % [ship.get_layout(), ship.get_section_count(), speed_before_refit, ship.get_max_speed()])
 
 
 func _cradle() -> Transform3D:
-	return yard.get_cradle_transform()
+	return yard.get_cradle_contact()
 
 
 func _berth() -> Transform3D:
-	return origin.get_berth_transform(ship.half_beam)
+	return origin.get_berth_contact()
 
 
 func _start_step() -> void:
@@ -288,13 +303,25 @@ func _shot(shot_name: String) -> void:
 	get_viewport().get_texture().get_image().save_png(shots_dir.path_join(shot_name + ".png"))
 
 
+func _hold_back_released() -> bool:
+	_hold("move_back", false)
+	return true
+
+
+func _face(target: Vector3) -> void:
+	var to := target - player.global_position
+	player.set_look_yaw(atan2(-to.x, -to.z))
+
+
 func _walk_toward(target: Vector3, radius: float) -> bool:
 	var to := target - player.global_position
+	var rise := to.y
 	to.y = 0.0
-	if to.length() <= radius:
+	# 高度也得到了：挂在梯子半空时脚下的路点还不算到
+	if to.length() <= radius and absf(rise) < 1.5:
 		_hold("move_forward", false)
 		return true
-	player.set_look_yaw(atan2(-to.x, -to.z))
+	_face(target)
 	_hold("move_forward", true)
 	return false
 
@@ -326,11 +353,14 @@ func _hop_toward(target: Vector3, other: Vector3) -> bool:
 
 func _finish(ok: bool, why: String) -> void:
 	_release_all()
-	Input.action_release("interact")
-	Input.action_release("remove")
-	Input.action_release("inventory")
+	for action in ["interact", "remove", "inventory", "kind_1", "kind_2", "kind_3"]:
+		Input.action_release(action)
 	set_physics_process(false)
 	print("shipyard_e2e: %s —— %s（阶段 %s，模拟 %.1f s；玩家 %s，船 %s，Voyage 状态 %d，布局 %s，提示「%s」）" % [
 		"PASS" if ok else "FAIL", why, Phase.keys()[phase], elapsed, player.global_position, ship.global_position,
 		main.get_state(), ship.get_layout(), main.get_node("Hud").get_child(1).text])
+	if not ok:
+		print("shipyard_e2e: 玩家在船的局部坐标 %s，在梯子上 %s，着地 %s，剩余路点 %s，梯脚 %s，舷门边 %.1f / %.1f" % [
+			ship.to_local(player.global_position), player.is_on_ladder(), player.is_on_floor(), waypoints, ship.get_ladder_feet(),
+			ship.get_port_edge_x(), ship.get_starboard_edge_x()])
 	get_tree().quit(0 if ok else 1)
