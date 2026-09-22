@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://b0zhouzhudevtl"]
+
+[node name="DevTools" type="DevTools"]
+maps = {
+"res://main.tscn": "甲乙两岛（切片一至五）",
+"res://world_2051.tscn": "岛群 #2051（真实比例）"
+}

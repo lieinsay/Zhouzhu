@@ -6,6 +6,7 @@
 #include "backpack_panel.h"
 #include "build_overlay.h"
 #include "build_panel.h"
+#include "dev_tools.h"
 #include "farm.h"
 #include "island.h"
 #include "player.h"
@@ -42,6 +43,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(World);
     GDREGISTER_CLASS(WorldMap);
     GDREGISTER_CLASS(WorldScene);
+    GDREGISTER_CLASS(DevTools);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {

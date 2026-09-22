@@ -6,6 +6,10 @@ config/name="州渚"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
 
+[autoload]
+
+DeveloperTools="*res://dev_tools.tscn"
+
 [dotnet]
 
 project/assembly_name="zhouzhu"

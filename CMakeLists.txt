@@ -60,6 +60,8 @@ target_sources(
         src/build_overlay.h
         src/build_panel.cpp
         src/build_panel.h
+        src/dev_tools.cpp
+        src/dev_tools.h
         src/farm.cpp
         src/farm.h
         src/input_actions.cpp
