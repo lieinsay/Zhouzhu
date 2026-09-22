@@ -36,6 +36,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/ship_layout.h
     src/value_noise.cpp
     src/value_noise.h
+    src/villager_model.cpp
+    src/villager_model.h
 )
 
 add_library(zhouzhu SHARED)

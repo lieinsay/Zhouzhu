@@ -16,6 +16,7 @@
 #include "settlement_model.h"
 #include "ship_layout.h"
 #include "value_noise.h"
+#include "villager_model.h"
 
 namespace {
 
@@ -860,6 +861,281 @@ void test_settlement() {
     check(layout.empty(), "拆掉");
 }
 
+void test_villagers() {
+    std::printf("villager_model\n");
+    IslandParams p = river_island_params(0.8);
+    p.trail = true;
+    const IslandField f = generate_island_field(p);
+    SiteRules site_rules;
+
+    // 地面高与网格一致：节点上正好是节点高
+    double y = 0.0;
+    int node_i = -1, node_j = -1;
+    for (int i = f.n / 2; i < f.n && node_i < 0; i++) {
+        for (int j = f.n / 2; j < f.n; j++) {
+            if (f.quad_solid(i, j) && f.quad_solid(i - 1, j - 1)) {
+                node_i = i;
+                node_j = j;
+                break;
+            }
+        }
+    }
+    check(node_i >= 0 && surface_height(f, f.coord(node_j), f.coord(node_i), y) && std::abs(y - f.height[f.index(node_i, node_j)]) < 1e-4, "节点上的地面高 = 节点高");
+    check(!surface_height(f, 10.0 * f.half_extent(), 0.0, y), "岛外没有地面");
+
+    // 离河 18–30 m 找一块能盖民居的地，门朝河
+    SettlementLayout layout;
+    double hx = 0.0, hz = 0.0, hyaw = 0.0;
+    bool found = false;
+    for (int i = 0; i < f.n && !found; i += 2) {
+        for (int j = 0; j < f.n && !found; j += 2) {
+            if (!f.in_mask(i, j) || f.river_dist[f.index(i, j)] < 18.0 || f.river_dist[f.index(i, j)] > 30.0) {
+                continue;
+            }
+            double best = 1e18, rx = 0.0, rz = 0.0;
+            for (const RiverPoint &rp : f.river) {
+                const double d = std::hypot(rp.x - f.coord(j), rp.z - f.coord(i));
+                if (d < best) {
+                    best = d;
+                    rx = rp.x;
+                    rz = rp.z;
+                }
+            }
+            const double yaw = std::atan2(rx - f.coord(j), rz - f.coord(i));
+            if (settlement_place(layout, f, p.dock_apron_m, "house", f.coord(j), f.coord(i), yaw, site_rules).empty()) {
+                hx = f.coord(j);
+                hz = f.coord(i);
+                hyaw = yaw;
+                found = true;
+            }
+        }
+    }
+    check(found, "河边找得到一块盖民居的地");
+    if (!found) {
+        return;
+    }
+    const BuildingDef &house = *buildings::by_id("house");
+
+    // 导航格
+    NavRules nav_rules;
+    const NavGrid nav = build_nav_grid(f, layout, nav_rules);
+    check(nav.walkable_count() > 1000, "岛上大片地走得了（" + std::to_string(nav.walkable_count()) + " 格）");
+    check(!nav.walkable_at(hx, hz), "房子里走不了");
+    const NavPoint door = building_door(layout.at(0));
+    check(!footprint_contains(house, layout.at(0), door.x, door.z, 0.6), "门前站位在台基外");
+    NavPoint snapped;
+    check(nav_nearest_walkable(nav, door.x, door.z, 6.0, true, snapped), "门前 6 m 内有干地");
+    int wet = 0;
+    for (uint8_t w : nav.walk) {
+        wet += w == NavGrid::WET ? 1 : 0;
+    }
+    check(wet > 0, "河里的格子记作水里");
+    const double apron_x = f.dock.x - f.dock.out_x * 14.0, apron_z = f.dock.z - f.dock.out_z * 14.0;
+    check(nav.walkable_at(apron_x, apron_z), "停机坪走得了");
+    // 崖壁：岛上总有一处相邻两格陡得走不过去
+    bool cliff = false;
+    for (int r = 0; r + 1 < nav.rows && !cliff; r++) {
+        for (int c = 0; c < nav.cols && !cliff; c++) {
+            if (nav.walkable(r, c) && nav.walkable(r + 1, c)) {
+                const NavPoint a = nav.center(r, c), b = nav.center(r + 1, c);
+                cliff = std::abs(nav.y[nav.index(r, c)] - nav.y[nav.index(r + 1, c)]) > nav_rules.max_grade * nav.cell_m &&
+                        !nav_line_clear(nav, nav_rules, a.x, a.z, b.x, b.z);
+            }
+        }
+    }
+    check(cliff, "太陡的两格之间走不过去");
+
+    auto path_ok = [&](const std::vector<NavPoint> &p_path, double p_x0, double p_z0, const char *p_what) {
+        bool ok = !p_path.empty();
+        double px = p_x0, pz = p_z0;
+        NavPoint start;
+        if (ok && nav_nearest_walkable(nav, p_x0, p_z0, 6.0, false, start)) {
+            px = start.x;
+            pz = start.z;
+        }
+        for (const NavPoint &q : p_path) {
+            ok = ok && nav.walkable_at(q.x, q.z) && nav_line_clear(nav, nav_rules, px, pz, q.x, q.z);
+            for (int k = 0; k <= 20 && ok; k++) {
+                const double t = k / 20.0;
+                ok = !footprint_contains(house, layout.at(0), px + (q.x - px) * t, pz + (q.z - pz) * t, 0.3);
+            }
+            px = q.x;
+            pz = q.z;
+        }
+        check(ok, p_what);
+    };
+    const std::vector<NavPoint> to_door = nav_find_path(nav, nav_rules, apron_x, apron_z, snapped.x, snapped.z);
+    path_ok(to_door, apron_x, apron_z, "停机坪到门前的路：每段都走得了、不穿房子");
+    check(!to_door.empty() && std::abs(to_door.back().x - snapped.x) < 1e-9 && std::abs(to_door.back().z - snapped.z) < 1e-9, "路的末点就是门前");
+    // 绕房：房前 → 房后
+    double ux = 0, uz = 0, vx = 0, vz = 0;
+    building_axes(hyaw, ux, uz, vx, vz);
+    const double off = 0.5 * house.depth_m + 3.0;
+    const double bx = hx - vx * off, bz = hz - vz * off, fx = hx + vx * off, fz = hz + vz * off;
+    check(!nav_line_clear(nav, nav_rules, fx, fz, bx, bz), "直穿房子的线不通");
+    if (nav.walkable_at(bx, bz) && nav.walkable_at(fx, fz)) {
+        const std::vector<NavPoint> around = nav_find_path(nav, nav_rules, fx, fz, bx, bz);
+        path_ok(around, fx, fz, "房前到房后的路绕开房子");
+        double len = 0.0, qx = fx, qz = fz;
+        for (const NavPoint &q : around) {
+            len += std::hypot(q.x - qx, q.z - qz);
+            qx = q.x;
+            qz = q.z;
+        }
+        check(len > 2.0 * off + 1.0 && around.size() >= 2, "绕过去比直穿远、至少拐一次弯（" + std::to_string(len) + " m）");
+    }
+    const std::vector<NavPoint> into = nav_find_path(nav, nav_rules, apron_x, apron_z, hx, hz);
+    check(!into.empty() && !footprint_contains(house, layout.at(0), into.back().x, into.back().z, 0.5), "要去房子正中：停在房子外面");
+    check(nav_find_path(nav, nav_rules, apron_x, apron_z, 10.0 * f.half_extent(), 0.0).empty(), "岛外去不了");
+
+    // 钟点
+    DayRules day;
+    check(read_clock(0.0, day).day == 0 && std::abs(read_clock(0.0, day).hour) < 1e-9, "子夜");
+    check(std::abs(read_clock(day.day_seconds * 0.5, day).hour - 12.0) < 1e-9, "半天是正午");
+    check(read_clock(day.day_seconds * 1.25, day).day == 1 && std::abs(read_clock(day.day_seconds * 1.25, day).hour - 6.0) < 1e-9, "第二天卯时");
+    check(is_home_hour(3.0, day) && !is_home_hour(8.0, day) && is_home_hour(12.0, day) && !is_home_hour(14.0, day) && is_home_hour(19.0, day), "夜里与歇晌在家");
+    check(std::string(shichen_name(23.5)) == "子时" && std::string(shichen_name(0.5)) == "子时" && std::string(shichen_name(9.5)) == "巳时" && std::string(shichen_name(12.0)) == "午时", "时辰名");
+    const std::string text = clock_text(day.day_seconds * (1.0 + 9.5 / 24.0), day);
+    check(text == "巳时 · 第 2 日 · 09:30", "钟点文字（" + text + "）");
+
+    // 分派
+    const SettlementLayout town({ { "house", 0, 0, 0 }, { "hall", 40, 0, 0 }, { "house", 20, 0, 0 }, { "tower", 80, 0, 0 }, { "granary", 60, 0, 0 } });
+    const std::vector<Resident> folk = assign_residents(town, true, true, 2, 7);
+    check(folk.size() == 6, "两户各两口 + 堂屋一口 + 守望一个（" + std::to_string(folk.size()) + "）");
+    int farmers = 0, carriers = 0, watchmen = 0, idlers = 0;
+    bool names_unique = true;
+    for (size_t k = 0; k < folk.size(); k++) {
+        farmers += folk[k].job == Job::FARMER ? 1 : 0;
+        carriers += folk[k].job == Job::CARRIER ? 1 : 0;
+        watchmen += folk[k].job == Job::WATCHMAN ? 1 : 0;
+        idlers += folk[k].job == Job::IDLER ? 1 : 0;
+        for (size_t m = 0; m < k; m++) {
+            names_unique = names_unique && folk[k].name != folk[m].name;
+        }
+    }
+    check(farmers == 2 && carriers == 2 && watchmen == 1 && idlers == 1, "职业：农 2 挑水 2 守望 1 闲 1");
+    check(names_unique && !folk[0].name.empty(), "名字不重复");
+    check(folk.back().job == Job::WATCHMAN && folk.back().home == 1 && folk.back().post == 3, "守望住堂屋、守望楼");
+    check(assign_residents(town, true, true, 2, 7)[0].name == folk[0].name, "同一个种子名字一样");
+    int dry_idlers = 0;
+    for (const Resident &r : assign_residents(town, false, false, 2, 7)) {
+        dry_idlers += r.job == Job::IDLER ? 1 : 0;
+    }
+    check(dry_idlers == 5, "没地没河的岛：除守望都闲着");
+    check(assign_residents(SettlementLayout({ { "house", 0, 0, 0 }, { "tower", 30, 0, 0 } }), false, false, 2, 1).back().home == 0, "没有堂屋：守望住最近的民居");
+    check(assign_residents(SettlementLayout({ { "tower", 0, 0, 0 } }), true, true, 2, 1).empty(), "没有能住的房子就没人");
+    check(villagers::job_by_id("farmer") == &villagers::job(Job::FARMER) && !villagers::job_by_id("king"), "职业表按 id 查");
+    check(std::string(villagers::task(TaskKind::TILL).id) == "till" && std::string(villagers::task(TaskKind::WAIT).name) == "歇着", "活计表");
+
+    // 决策：河边这一户，加一座仓与一座望楼（不管站不站得住，决策只看清单）
+    SettlementLayout village = layout;
+    village.add({ "granary", hx + ux * 20.0, hz + uz * 20.0, hyaw });
+    village.add({ "tower", hx - ux * 20.0, hz - uz * 20.0, hyaw });
+    const NavGrid vnav = build_nav_grid(f, village, nav_rules);
+    FarmModel farm(survey_farmland(f, p.dock_apron_m, FarmRules()), FarmRules());
+    std::vector<Claim> claims;
+    Inventory store;
+    store.add("millet", 3);
+    WorkRules work;
+    VillageView view;
+    view.field = &f;
+    view.layout = &village;
+    view.nav = &vnav;
+    view.farm = &farm;
+    view.claims = &claims;
+    view.store = &store;
+    view.day = &day;
+    view.work = &work;
+    Rng rng(42);
+    VillagerMind farmer;
+    farmer.index = 0;
+    farmer.who = { "阿禾", Job::FARMER, 0, -1 };
+    farmer.x = door.x;
+    farmer.z = door.z;
+
+    view.hour = 20.0;
+    Task t = decide_task(farmer, view, rng);
+    check(t.kind == TaskKind::GO_HOME && t.building == 0, "收工了回家");
+    view.hour = 12.0;
+    check(decide_task(farmer, view, rng).kind == TaskKind::GO_HOME, "歇晌回家");
+    view.hour = 8.0;
+    t = decide_task(farmer, view, rng);
+    check(t.kind == TaskKind::TILL && farm.available_action(t.cell_i, t.cell_j, false) == FarmAction::TILL, "农夫出门先开荒");
+    const NavPoint pc = plot_center(f, t.cell_i, t.cell_j);
+    check(std::hypot(pc.x - snapped.x, pc.z - snapped.z) <= work.field_radius_m + 3.0 && vnav.dry_at(pc.x, pc.z), "开的地在家门口、站得住");
+    check(std::abs(t.x - pc.x) < 1e-9 && t.seconds == work.till_s, "站在地里干");
+    farm.till(t.cell_i, t.cell_j);
+    claims.push_back({ t.cell_i, t.cell_j, 0 });
+    const int ci = t.cell_i, cj = t.cell_j;
+    t = decide_task(farmer, view, rng);
+    check(t.kind == TaskKind::SOW && t.cell_i == ci && t.cell_j == cj && t.seed == "millet", "垦好了就播仓里的种子");
+    store.remove("millet", 3);
+    t = decide_task(farmer, view, rng);
+    check(t.kind == TaskKind::TILL && !(t.cell_i == ci && t.cell_j == cj), "仓里没种子：先去开下一块");
+    int pi = 0, pj = 0;
+    claims.push_back({ t.cell_i, t.cell_j, 1 }); // 别人认领了
+    check(pick_wild_plot(view, snapped.x, snapped.z, pi, pj) && !(pi == t.cell_i && pj == t.cell_j), "别人认领的地不抢");
+    claims.pop_back();
+    store.add("millet", 1);
+    farm.sow(ci, cj, catalog::crop("millet"));
+    farm.advance(1e6);
+    t = decide_task(farmer, view, rng);
+    check(t.kind == TaskKind::HARVEST && t.cell_i == ci && t.cell_j == cj, "熟了先收");
+    farmer.carrying = "millet";
+    farmer.carry_count = 4;
+    t = decide_task(farmer, view, rng);
+    check(t.kind == TaskKind::DELIVER && t.building == 1, "背着粮送进仓");
+    farmer.carrying.clear();
+    // 认领满了、都在长：锄草
+    farm.harvest(ci, cj);
+    farm.sow(ci, cj, catalog::crop("millet"));
+    for (int k = 1; k < work.plots_per_farmer; k++) {
+        claims.push_back({ ci, cj, 0 });
+    }
+    t = decide_task(farmer, view, rng);
+    check(t.kind == TaskKind::TEND && t.cell_i == ci, "地都种上了：锄草");
+    claims.clear();
+
+    VillagerMind carrier = farmer;
+    carrier.index = 1;
+    carrier.who = { "石头", Job::CARRIER, 0, -1 };
+    t = decide_task(carrier, view, rng);
+    check(t.kind == TaskKind::FETCH_WATER && vnav.dry_at(t.x, t.z), "挑水的去河边，站在干地上");
+    double near_river = 1e18;
+    for (const RiverPoint &rp : f.river) {
+        near_river = std::min(near_river, std::hypot(rp.x - t.x, rp.z - t.z));
+    }
+    check(near_river < 8.0, "打水的站位紧挨着河（" + std::to_string(near_river) + " m）");
+    carrier.carrying = "water";
+    t = decide_task(carrier, view, rng);
+    check(t.kind == TaskKind::DELIVER && t.building == 0, "挑满了：没有堂屋就送回家");
+    SettlementLayout with_hall = village;
+    with_hall.add({ "hall", hx - vx * 30.0, hz - vz * 30.0, hyaw });
+    view.layout = &with_hall;
+    t = decide_task(carrier, view, rng);
+    check(t.kind == TaskKind::DELIVER && t.building == 3, "挑满了：送到堂屋的水缸");
+    view.layout = &village;
+
+    VillagerMind watchman = farmer;
+    watchman.index = 2;
+    watchman.who = { "长庚", Job::WATCHMAN, 0, 2 };
+    t = decide_task(watchman, view, rng);
+    check(t.kind == TaskKind::WATCH && t.building == 2 && t.seconds == work.watch_s, "守望先站班");
+    const Building &tower = village.at(2);
+    check(std::hypot(t.face_x - tower.x, t.face_z - tower.z) > std::hypot(t.x - tower.x, t.z - tower.z), "站班背对望楼");
+    int patrols = 0;
+    for (int k = 0; k < work.patrol_stops; k++) {
+        const Task s = decide_task(watchman, view, rng);
+        patrols += s.kind == TaskKind::PATROL && s.building != 2 ? 1 : 0;
+    }
+    check(patrols == work.patrol_stops && decide_task(watchman, view, rng).kind == TaskKind::WATCH, "巡完一圈再回去站班");
+
+    VillagerMind idler = farmer;
+    idler.who = { "小满", Job::IDLER, 0, -1 };
+    t = decide_task(idler, view, rng);
+    check(t.kind == TaskKind::CHAT && t.building != 0 && t.seconds >= work.chat_min_s && t.seconds <= work.chat_max_s, "闲人去别家串门");
+}
+
 } // namespace
 
 int main() {
@@ -883,6 +1159,7 @@ int main() {
     test_farm();
     test_flight();
     test_settlement();
+    test_villagers();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
