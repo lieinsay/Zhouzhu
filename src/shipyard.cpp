@@ -16,16 +16,16 @@ namespace {
 
 const char *GENERATED_META = "shipyard_generated";
 
-constexpr real_t BEAM_LENGTH = 42.0f; // 坞墩梁：够 7 格长的船加船头楔
-constexpr real_t BEAM_SPACING = 1.5f; // 两道梁离贴着跳板那一格的船中线各这么远（船体半宽 1.8）
-constexpr real_t BEAM_W = 0.5f;
-constexpr real_t GANTRY_U = 21.0f;
-constexpr real_t GANTRY_V_SEA = -9.5f; // 门架两根柱在短轴上的位置：坪的海侧边缘与跳板线之内
-constexpr real_t GANTRY_V_LAND = 3.5f;
-constexpr real_t GANTRY_H = 16.0f; // 三层船 9 m + 坞里抬高 3.6 m，帆顶之下
-constexpr real_t GANGWAY_W = 1.6f; // 舷门宽 1.8
+constexpr real_t BLOCK_PITCH = 7.0f; // 坞墩块的间距：每格一块，最长的船（7 格加船头楔）也托得住
+constexpr real_t BLOCK_W = 0.8f; // 块沿长轴的厚
+constexpr real_t BLOCK_SPAN = 6.0f; // 块横跨船体（船体宽 5.2）
+constexpr real_t GANTRY_U = 29.0f;
+constexpr real_t GANTRY_V_SEA = -13.5f; // 门架两根柱在短轴上的位置：坪的海侧边缘与跳板线之内
+constexpr real_t GANTRY_V_LAND = 12.5f; // 岛这边的柱立在跳板脚之外：坞墩与跳板之间那条道得让人走
+constexpr real_t GANTRY_H = 20.0f; // 三层船 11.4 m + 坞里抬高 4.2 m + 顶层帆桅，帆顶之上
+constexpr real_t GANGWAY_W = 1.8f; // 舷门宽 2.0
 constexpr real_t GANGWAY_T = 0.25f;
-constexpr real_t CELL_HALF_W = 2.5f;
+constexpr real_t CELL_HALF_W = 3.5f;
 
 Ref<StandardMaterial3D> make_material(const Color &p_albedo, float p_roughness) {
     Ref<StandardMaterial3D> material;
@@ -122,11 +122,12 @@ void Shipyard::build() {
     };
     auto place = [&](double p_u, double p_v, double p_up) { return Transform3D(frame, yard_point(p_u, p_v, p_up)); };
 
-    // 坞墩梁：托着贴跳板那一格的船体两侧的底（船体底在甲板面之下 2.6 m）
-    const real_t beam_h = real_t(CRADLE_LIFT - 2.6);
+    // 坞墩：一排横着的墩块托着贴跳板那一格的船体底（船体底在甲板面之下 0.7 + 2.8 = 3.5 m），
+    // 每格一块、块与块之间走得过人——从停机坪过来的人不必绕
+    const real_t block_h = real_t(CRADLE_LIFT - 3.5);
     const double ship_v = CONTACT_V - CELL_HALF_W;
-    for (int side = -1; side <= 1; side += 2) {
-        add_box(side < 0 ? "KeelBeamA" : "KeelBeamB", Vector3(BEAM_LENGTH, beam_h, BEAM_W), place(0.0, ship_v + side * BEAM_SPACING, 0.5 * beam_h), mat_beam, true);
+    for (int k = -3; k <= 3; k++) { // 两头各留 9 m 空：从停机坪走上坪的人不用绕墩块；最长的船两头悬出墩块 3.5 m，托得住
+        add_box(vformat("KeelBlock%d", k + 4), Vector3(BLOCK_W, block_h, BLOCK_SPAN), place(k * BLOCK_PITCH, ship_v, 0.5 * block_h), mat_beam, true);
     }
     // 门架：船首尾两端各一座，跨过船身
     for (int end = -1; end <= 1; end += 2) {

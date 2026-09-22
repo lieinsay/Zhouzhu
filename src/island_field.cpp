@@ -30,7 +30,7 @@ constexpr double TALUS_DEG = 38.0;
 constexpr int RELAX_ROUNDS = 12;
 constexpr double DIFFUSION_K = 0.1;
 
-constexpr double BERTH_HALF_LENGTH = 22.0; // 泊位两侧要空出的岸线（半个最长的船身还多一点：7 格 × 5 m + 船头楔）
+constexpr double BERTH_HALF_LENGTH = 30.0; // 泊位两侧要空出的岸线（半个最长的船身还多一点：7 格 × 7 m + 船头楔）
 
 // 船坞坪
 constexpr double YARD_GAP = 6.0; // 坪与码头中线（栈桥、出生点、路头所在）之间留的空：路要从这儿上山

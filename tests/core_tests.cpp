@@ -579,12 +579,12 @@ void test_ship_layout() {
     check(layout_problem(dead).empty() && !layout_stats(dead).can_fly() && layout_stats(dead).max_speed == 0.0, "没有动力区：合法，但飞不起来");
 
     // 几何
-    check_near(cell_center_z(-1), -5.0, 1e-9, "格中心 z");
-    check_near(cell_deck_y(2), 6.0, 1e-9, "第 2 层甲板高 6 m");
-    check_near(bow_z(cargo), -7.5 - 2.4, 1e-9, "船头 = 最前一排前缘再伸出船头楔");
-    check_near(stern_z(cargo), 7.5, 1e-9, "船尾 = 最后一排后缘");
-    check_near(port_edge_x(cargo), -2.5, 1e-9, "一格宽的船：左舷边 −2.5");
-    check_near(starboard_edge_x(cargo), 2.5, 1e-9, "一格宽的船：右舷边 +2.5");
+    check_near(cell_center_z(-1), -7.0, 1e-9, "格中心 z");
+    check_near(cell_deck_y(2), 7.6, 1e-9, "第 2 层甲板高 7.6 m");
+    check_near(bow_z(cargo), -10.5 - 3.4, 1e-9, "船头 = 最前一排前缘再伸出船头楔");
+    check_near(stern_z(cargo), 10.5, 1e-9, "船尾 = 最后一排后缘");
+    check_near(port_edge_x(cargo), -3.5, 1e-9, "一格宽的船：左舷边 −3.5");
+    check_near(starboard_edge_x(cargo), 3.5, 1e-9, "一格宽的船：右舷边 +3.5");
     check(cargo.column_height(0, 1) == 1 && cargo.column_height(1, 0) == 0 && cargo.levels() == 1, "列高");
 
     // 往上搭、往两边搭
@@ -596,8 +596,8 @@ void test_ship_layout() {
     check(layout_place(tall, { -1, 1, 1 }, ModuleKind::STORAGE) == "悬空了：下面没有节撑着", "悬空被拒");
     check(layout_place(tall, { -1, 0, 1 }, ModuleKind::STORAGE) == "舷门那一排得是最宽的一排，不然靠不上码头", "先加宽舷门排");
     check(layout_place(tall, { -1, 0, 0 }, ModuleKind::STORAGE).empty(), "舷门排左舷加一节");
-    check_near(port_edge_x(tall), -7.5, 1e-9, "左舷边到了 −7.5");
-    check_near(starboard_edge_x(tall), 2.5, 1e-9, "右舷边还是 2.5");
+    check_near(port_edge_x(tall), -10.5, 1e-9, "左舷边到了 −10.5");
+    check_near(starboard_edge_x(tall), 3.5, 1e-9, "右舷边还是 3.5");
     check(layout_place(tall, { -1, 0, 1 }, ModuleKind::POWER).empty(), "现在左舷后面也能加");
     check(layout_place(tall, { -1, 1, 0 }, ModuleKind::STORAGE) == "舷门两头的格子上面不能搭：跳板要接甲板", "舷门排两头不能往上搭");
     check(layout_remove(tall, { 0, 0, 1 }) == "上面还搭着节，先拆上面的", "拆支撑被拒");

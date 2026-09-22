@@ -39,14 +39,15 @@ constexpr uint32_t LADDER_LAYER = 8; // Player 的 Sensor 只看这一层
 
 // 几何（米）
 constexpr real_t CELL_L = real_t(CELL_LENGTH_M), CELL_W = real_t(CELL_WIDTH_M), CELL_H = real_t(CELL_HEIGHT_M);
-constexpr real_t DECK_T = 0.6f; // 第 0 层甲板板厚，甲板面在 y = 0
-constexpr real_t HULL_W = 3.6f, HULL_H = 2.0f; // 船体吊在甲板下
-constexpr real_t RAIL_T = 0.15f, RAIL_H = 1.0f;
-constexpr real_t GATE_HALF = 0.9f; // 舷门半宽
+constexpr real_t DECK_T = 0.7f; // 第 0 层甲板板厚，甲板面在 y = 0
+constexpr real_t HULL_W = 5.2f, HULL_H = 2.8f; // 船体吊在甲板下
+constexpr real_t RAIL_T = 0.15f, RAIL_H = 1.15f;
+constexpr real_t GATE_HALF = 1.0f; // 舷门半宽
 constexpr real_t LADDER_GAP_HALF = 0.7f; // 梯顶处舷栏缺口的半宽
-constexpr real_t LADDER_ALONG = -2.0f; // 梯子靠墙的哪一头：沿墙偏这么多（左舷 / 船头那一头），避开舵柱、座位与货箱
-constexpr real_t HELM_AFT = 1.2f; // 舵柱在驾驶区中心之后多少
-constexpr real_t SEAT_AFT = 2.1f;
+constexpr real_t LADDER_ALONG = -2.8f; // 梯子靠墙的哪一头：沿墙偏这么多（左舷 / 船头那一头），避开舵柱、座位与货箱
+constexpr real_t HELM_AFT = 1.7f; // 舵柱在驾驶区中心之后多少
+constexpr real_t SEAT_AFT = 2.9f;
+constexpr real_t BOW_WEDGE = 4.5f; // 船头楔的长（与 ship_layout 的 BOW_M 配：楔尖再多出一点）
 constexpr real_t LADDER_W = 0.9f;
 constexpr real_t LADDER_ZONE_DEPTH = 1.0f; // 爬梯区域离墙多深
 constexpr real_t LADDER_ZONE_OVER = 1.2f; // 爬梯区域超出梯顶甲板多高：人到这儿才松开，正好落在甲板上
@@ -229,7 +230,7 @@ void Ship::build_module(const Module &p_module) {
     if (c.y == 0) {
         add_box(visual, this, prefix + String("Hull"), Vector3(HULL_W, HULL_H, CELL_L), at(cx, -DECK_T - 0.5f * HULL_H, cz), mat_hull, true);
         if (p_module.kind == ModuleKind::POWER) {
-            add_box(visual, this, prefix + String("Floatstone"), Vector3(1.6f, 1.2f, 4.0f), at(cx, -DECK_T - HULL_H - 0.6f, cz), mat_stone, false);
+            add_box(visual, this, prefix + String("Floatstone"), Vector3(2.4f, 1.6f, 5.6f), at(cx, -DECK_T - HULL_H - 0.8f, cz), mat_stone, false);
         }
     }
 
@@ -246,11 +247,11 @@ void Ship::build_module(const Module &p_module) {
             const Basis wall(along, Vector3(0, 1, 0), n);
             const String face_name = prefix + vformat("F%d%d_", d[0], d[1]);
             if (p_module.kind == ModuleKind::STORAGE) {
-                add_box(visual, this, face_name + String("Hatch"), Vector3(1.3f, 1.1f, 0.08f), Transform3D(wall, face + Vector3(0, -0.3f, 0)), mat_crate, false);
-                add_box(visual, this, face_name + String("Batten"), Vector3(CELL_W - 0.4f, 0.12f, 0.06f), Transform3D(wall, face + Vector3(0, 1.1f, 0)), mat_rail, false);
+                add_box(visual, this, face_name + String("Hatch"), Vector3(1.6f, 1.4f, 0.08f), Transform3D(wall, face + Vector3(0, -0.4f, 0)), mat_crate, false);
+                add_box(visual, this, face_name + String("Batten"), Vector3(CELL_W - 0.5f, 0.14f, 0.06f), Transform3D(wall, face + Vector3(0, 1.4f, 0)), mat_rail, false);
             } else if (p_module.kind == ModuleKind::POWER) {
                 for (int s = -1; s <= 1; s += 2) {
-                    add_box(visual, this, face_name + vformat("Slit%d", s), Vector3(1.4f, 0.28f, 0.08f), Transform3D(wall, face + along * (s * 1.2f) + Vector3(0, 0.4f, 0)), mat_glow, false);
+                    add_box(visual, this, face_name + vformat("Slit%d", s), Vector3(1.8f, 0.32f, 0.08f), Transform3D(wall, face + along * (s * 1.7f) + Vector3(0, 0.5f, 0)), mat_glow, false);
                 }
             }
         }
@@ -296,51 +297,51 @@ void Ship::build_module(const Module &p_module) {
     switch (p_module.kind) {
         case ModuleKind::BRIDGE: {
             const real_t zh = cz + HELM_AFT;
-            add_box(visual, this, prefix + String("HelmPost"), Vector3(0.4f, 1.0f, 0.4f), at(cx, deck + 0.5f, zh), mat_hull, true);
+            add_box(visual, this, prefix + String("HelmPost"), Vector3(0.4f, 1.05f, 0.4f), at(cx, deck + 0.525f, zh), mat_hull, true);
             Ref<TorusMesh> wheel;
             wheel.instantiate();
-            wheel->set_inner_radius(0.3f);
-            wheel->set_outer_radius(0.4f);
+            wheel->set_inner_radius(0.36f);
+            wheel->set_outer_radius(0.48f);
             wheel->set_material(mat_rail);
-            add_mesh(visual, prefix + String("Wheel"), wheel, Transform3D(Basis(Vector3(1, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)), Vector3(cx, deck + 1.15f, zh + 0.22f)));
+            add_mesh(visual, prefix + String("Wheel"), wheel, Transform3D(Basis(Vector3(1, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0)), Vector3(cx, deck + 1.2f, zh + 0.22f)));
             for (int side = -1; side <= 1; side += 2) {
                 for (int end = -1; end <= 1; end += 2) {
-                    add_box(visual, this, prefix + vformat("Post%d%d", side, end), Vector3(0.12f, 2.4f, 0.12f), at(cx + side * 2.0f, deck + 1.2f, cz + (end < 0 ? -1.4f : 2.2f)), mat_hull, false);
+                    add_box(visual, this, prefix + vformat("Post%d%d", side, end), Vector3(0.14f, 3.0f, 0.14f), at(cx + side * 2.8f, deck + 1.5f, cz + (end < 0 ? -2.0f : 3.0f)), mat_hull, false);
                 }
             }
-            add_box(visual, this, prefix + String("Roof"), Vector3(CELL_W, 0.12f, 4.2f), at(cx, deck + 2.46f, cz + 0.4f), mat_roof, false);
-            helm_local = Vector3(cx, deck + 1.0f, zh);
+            add_box(visual, this, prefix + String("Roof"), Vector3(CELL_W, 0.14f, 5.8f), at(cx, deck + 3.07f, cz + 0.5f), mat_roof, false);
+            helm_local = Vector3(cx, deck + 1.05f, zh);
             seat_local = Vector3(cx, deck, cz + SEAT_AFT);
         } break;
 
         case ModuleKind::STORAGE: {
             for (int side = -1; side <= 1; side += 2) {
-                const real_t x = cx + side * 1.55f;
-                add_box(visual, this, prefix + vformat("Crate%dA", side), Vector3(1.4f, 0.9f, 2.4f), at(x, deck + 0.45f, cz), mat_crate, true);
-                add_box(visual, this, prefix + vformat("Crate%dB", side), Vector3(1.0f, 0.6f, 1.6f), at(x, deck + 1.2f, cz - 0.2f), mat_crate, true);
+                const real_t x = cx + side * 2.2f;
+                add_box(visual, this, prefix + vformat("Crate%dA", side), Vector3(2.0f, 1.1f, 3.4f), at(x, deck + 0.55f, cz), mat_crate, true);
+                add_box(visual, this, prefix + vformat("Crate%dB", side), Vector3(1.4f, 0.8f, 2.2f), at(x, deck + 1.5f, cz - 0.3f), mat_crate, true);
             }
         } break;
 
         case ModuleKind::POWER: {
             Ref<CylinderMesh> mast;
             mast.instantiate();
-            mast->set_top_radius(0.09f);
-            mast->set_bottom_radius(0.13f);
-            mast->set_height(5.2f);
+            mast->set_top_radius(0.11f);
+            mast->set_bottom_radius(0.16f);
+            mast->set_height(7.2f);
             mast->set_material(mat_hull);
             Ref<CylinderShape3D> mast_shape;
             mast_shape.instantiate();
-            mast_shape->set_radius(0.15f);
-            mast_shape->set_height(5.2f);
+            mast_shape->set_radius(0.18f);
+            mast_shape->set_height(7.2f);
             for (int side = -1; side <= 1; side += 2) {
-                const real_t x = cx + side * 1.9f;
-                add_mesh(visual, prefix + vformat("Mast%d", side), mast, at(x, deck + 2.6f, cz));
+                const real_t x = cx + side * 2.7f;
+                add_mesh(visual, prefix + vformat("Mast%d", side), mast, at(x, deck + 3.6f, cz));
                 CollisionShape3D *collider = memnew(CollisionShape3D);
                 collider->set_shape(mast_shape);
-                collider->set_transform(at(x, deck + 2.6f, cz));
+                collider->set_transform(at(x, deck + 3.6f, cz));
                 adopt(this, collider, prefix + vformat("Mast%dShape", side));
                 add_box(visual, this, prefix + vformat("Boom%d", side), Vector3(0.14f, 0.14f, 3.4f), at(x, deck + 1.5f, cz), mat_rail, false);
-                add_box(visual, this, prefix + vformat("Sail%d", side), Vector3(0.06f, 3.3f, 3.0f), at(x, deck + 3.25f, cz), mat_sail, false);
+                add_box(visual, this, prefix + vformat("Sail%d", side), Vector3(0.06f, 4.6f, 4.2f), at(x, deck + 4.5f, cz), mat_sail, false);
             }
         } break;
 
@@ -419,20 +420,20 @@ void Ship::rebuild() {
         const real_t cx = real_t(cell_center_x(m.at.x)), zf = real_t(cell_center_z(front)) - 0.5f * CELL_L;
         Ref<PrismMesh> bow;
         bow.instantiate();
-        bow->set_size(Vector3(CELL_W, 3.2f, DECK_T));
+        bow->set_size(Vector3(CELL_W, BOW_WEDGE, DECK_T));
         bow->set_material(mat_wood);
-        add_mesh(visual, vformat("Bow%d", m.at.x), bow, Transform3D(lay_flat, Vector3(cx, -0.5f * DECK_T, zf - 1.6f)));
+        add_mesh(visual, vformat("Bow%d", m.at.x), bow, Transform3D(lay_flat, Vector3(cx, -0.5f * DECK_T, zf - 0.5f * BOW_WEDGE)));
         Ref<PrismMesh> bow_hull;
         bow_hull.instantiate();
-        bow_hull->set_size(Vector3(HULL_W, 3.2f, HULL_H));
+        bow_hull->set_size(Vector3(HULL_W, BOW_WEDGE, HULL_H));
         bow_hull->set_material(mat_hull);
-        add_mesh(visual, vformat("BowHull%d", m.at.x), bow_hull, Transform3D(lay_flat, Vector3(cx, -DECK_T - 0.5f * HULL_H, zf - 0.1f)));
+        add_mesh(visual, vformat("BowHull%d", m.at.x), bow_hull, Transform3D(lay_flat, Vector3(cx, -DECK_T - 0.5f * HULL_H, zf - 0.5f * BOW_WEDGE + 1.5f)));
     }
 
     // 追尾相机：船越长退得越远，越高抬得越高
     if (camera_rig && camera) {
-        camera_rig->set_position(Vector3(0, 2.5f + real_t(cell_deck_y(std::max(0, layout.levels() - 1))), 0));
-        camera->set_position(Vector3(0, 0, std::max(20.0f, real_t(stern_z(layout)) + 13.0f)));
+        camera_rig->set_position(Vector3(0, 3.0f + real_t(cell_deck_y(std::max(0, layout.levels() - 1))), 0));
+        camera->set_position(Vector3(0, 0, std::max(26.0f, real_t(stern_z(layout)) + 16.0f)));
     }
 
     emit_signal("refitted");

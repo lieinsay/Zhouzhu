@@ -415,7 +415,7 @@ void carve_dock_trail(const IslandParams &p, IslandField &r, std::vector<double>
             const double beyond = std::max(0.0, here.dist - here.half_width);
             const double shaped = std::clamp(h[k], here.level - TRAIL_FILL_SLOPE * beyond, here.level + TRAIL_CUT_SLOPE * beyond);
             // 路是从停机坪里接出来的：只让开压得全平的那半个半径；船坞坪跟前也收手
-            h[k] += dock_release(r, x, z, 0.5 * p.dock_apron_m, p.dock_apron_m) * yard_release(r, x, z, 1.0, 6.0) * (shaped - h[k]);
+            h[k] += dock_release(r, x, z, 0.5 * p.dock_apron_m, p.dock_apron_m) * yard_release(r, x, z, 2.0, 7.0) * (shaped - h[k]);
         }
     }
 

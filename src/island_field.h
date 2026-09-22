@@ -41,8 +41,8 @@ struct IslandParams {
 
     // 船坞坪（见 IslandYard）。默认没有
     bool yard = false;
-    double yard_length_m = 44.0; // 沿岸：够 7 格长的船加船头楔
-    double yard_width_m = 20.0; // 向岛内：够 3 格宽的船加跳板与画样台
+    double yard_length_m = 60.0; // 沿岸：够 7 格（7 m）长的船加船头楔
+    double yard_width_m = 28.0; // 向岛内：跳板与画样台在岛这边，3 格宽的船往海那边伸（可以悬出坪外）
     double yard_max_inland_m = 25.0; // 岸线退得比这还深就不建
 };
 

@@ -132,7 +132,7 @@ void RefitOverlay::show_for(const ShipLayout &p_layout, const Transform3D &p_shi
     const real_t length = real_t(stern_z(p_layout) - bow_z(p_layout)) + 2.0f * CELL_L;
     const real_t width = real_t(starboard_edge_x(p_layout) - port_edge_x(p_layout)) + 2.0f * CELL_W;
     const real_t height = real_t(cell_deck_y(p_layout.levels())) + CELL_H;
-    orbit_distance = std::max(24.0, 1.15 * std::sqrt(double(length * length + width * width + height * height)));
+    orbit_distance = std::max(30.0, 1.15 * std::sqrt(double(length * length + width * width + height * height)));
     focus = Vector3(0.5f * real_t(port_edge_x(p_layout) + starboard_edge_x(p_layout)), 0.5f * real_t(cell_deck_y(p_layout.levels())), 0.5f * real_t(bow_z(p_layout) + stern_z(p_layout)));
     place_camera();
 }
@@ -164,10 +164,10 @@ void RefitOverlay::refresh(const ShipLayout &p_layout, const Transform3D &p_ship
     const real_t bow = real_t(bow_z(p_layout)), stern = real_t(stern_z(p_layout));
     const real_t port = real_t(port_edge_x(p_layout)), starboard = real_t(starboard_edge_x(p_layout));
     const real_t mid_x = 0.5f * (port + starboard), mid_z = 0.5f * (bow + stern);
-    labels[0]->set_position(Vector3(mid_x, 1.5f, bow - 2.5f));
-    labels[1]->set_position(Vector3(mid_x, 1.5f, stern + 2.5f));
-    labels[2]->set_position(Vector3(port - 2.5f, 1.5f, mid_z));
-    labels[3]->set_position(Vector3(starboard + 2.5f, 1.5f, mid_z));
+    labels[0]->set_position(Vector3(mid_x, 1.8f, bow - 3.0f));
+    labels[1]->set_position(Vector3(mid_x, 1.8f, stern + 3.0f));
+    labels[2]->set_position(Vector3(port - 3.0f, 1.8f, mid_z));
+    labels[3]->set_position(Vector3(starboard + 3.0f, 1.8f, mid_z));
     place_camera();
 }
 

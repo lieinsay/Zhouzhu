@@ -6,7 +6,7 @@
 
 // 空艇的布局与船况。不含 Godot 头；名字是 UTF-8（两个编译目标都开了 /utf-8）。
 //
-// 一艘空艇是三维格子里的一堆「节」：每节占一格（长 5 m × 高 3 m × 宽 5 m），格子用 (x, y, z) 指——
+// 一艘空艇是三维格子里的一堆「节」：每节占一格（长 7 m × 高 3.8 m × 宽 7 m，按人的尺度定：甲板上能走开、舱房像间屋子），格子用 (x, y, z) 指——
 // x 左舷 −1 … 右舷 +1，y 第 0 层（船体那一层）… 第 2 层，z 船头 −3 … 船尾 +3。每节是一种模块：
 // 驾驶区（舵在这儿，恰好一个，上面不能再搭）、储存区（货舱）、动力区（浮石与帆，出推力）。
 // 舷门固定在格 (0, 0, 0) 那一排（z = 0、第 0 层）的两头；泊位、坞位、跳板都接舷门，所以船怎么改都不用挪码头。
@@ -52,9 +52,9 @@ struct Module {
     ModuleKind kind = ModuleKind::STORAGE;
 };
 
-constexpr double CELL_LENGTH_M = 5.0; // z
-constexpr double CELL_WIDTH_M = 5.0; // x
-constexpr double CELL_HEIGHT_M = 3.0; // y
+constexpr double CELL_LENGTH_M = 7.0; // z
+constexpr double CELL_WIDTH_M = 7.0; // x
+constexpr double CELL_HEIGHT_M = 3.8; // y
 constexpr int MAX_X = 1; // |x| ≤ 1
 constexpr int MAX_LEVELS = 3; // y ∈ [0, 2]
 constexpr int MAX_Z = 3; // |z| ≤ 3

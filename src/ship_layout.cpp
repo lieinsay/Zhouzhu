@@ -14,7 +14,7 @@ constexpr double CLIMB_PER_RATIO = 21.0;
 constexpr double CLIMB_CAP = 16.0;
 constexpr double YAW_RATE_TWO_SECTIONS = 0.75; // 两节船的转向率；船越大转得越慢
 
-constexpr double BOW_M = 2.4; // 船头楔伸出最前一排多少
+constexpr double BOW_M = 3.4; // 船头楔伸出最前一排多少
 
 const int N4[4][2] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }; // (dx, dz)
 
