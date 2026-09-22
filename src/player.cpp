@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include <godot_cpp/classes/area3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
@@ -32,6 +33,9 @@ void Player::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_look_yaw"), &Player::get_look_yaw);
     ClassDB::bind_method(D_METHOD("set_facing_yaw", "yaw"), &Player::set_facing_yaw);
     ClassDB::bind_method(D_METHOD("get_camera"), &Player::get_camera);
+    ClassDB::bind_method(D_METHOD("is_on_ladder"), &Player::is_on_ladder);
+    ClassDB::bind_method(D_METHOD("on_sensor_area_entered", "area"), &Player::on_sensor_area_entered);
+    ClassDB::bind_method(D_METHOD("on_sensor_area_exited", "area"), &Player::on_sensor_area_exited);
 
     ClassDB::bind_method(D_METHOD("set_walk_speed", "value"), &Player::set_walk_speed);
     ClassDB::bind_method(D_METHOD("get_walk_speed"), &Player::get_walk_speed);
@@ -62,7 +66,21 @@ void Player::_ready() {
     camera_pivot = get_node<Node3D>("CameraPivot");
     camera = get_node<Camera3D>("CameraPivot/SpringArm3D/Camera3D");
     ERR_FAIL_COND_MSG(!body || !camera_pivot || !camera, "Player: 场景里缺 Body 或 CameraPivot/SpringArm3D/Camera3D");
+    Area3D *sensor = get_node<Area3D>("Sensor");
+    ERR_FAIL_NULL_MSG(sensor, "Player: 场景里缺 Sensor（Area3D）");
+    sensor->connect("area_entered", Callable(this, "on_sensor_area_entered"));
+    sensor->connect("area_exited", Callable(this, "on_sensor_area_exited"));
     apply_look();
+}
+
+void Player::on_sensor_area_entered(Node3D *p_area) {
+    if (p_area && p_area->has_meta("ladder")) {
+        ladders.push_back(p_area);
+    }
+}
+
+void Player::on_sensor_area_exited(Node3D *p_area) {
+    ladders.erase(std::remove(ladders.begin(), ladders.end(), p_area), ladders.end());
 }
 
 void Player::apply_look() {
@@ -95,13 +113,35 @@ void Player::_physics_process(double p_delta) {
 
     Vector3 velocity = get_velocity();
     const bool grounded = is_on_floor();
-    const real_t blend = real_t(1.0 - std::exp(-(grounded ? GROUND_ACCEL : AIR_ACCEL) * p_delta));
-    velocity.x += (wish.x * real_t(speed) - velocity.x) * blend;
-    velocity.z += (wish.z * real_t(speed) - velocity.z) * blend;
-    if (grounded) {
-        velocity.y = !input_blocked && input->is_action_just_pressed(input_actions::JUMP) ? real_t(jump_speed) : 0;
+    // 沿梯子：面朝墙按前是上、背对墙按前是下；站在地上要往下时就当普通走路（走出梯顶的缺口自然会掉进梯子区域）
+    double climb = 0.0;
+    Vector3 outward;
+    if (is_on_ladder()) {
+        outward = ladders.back()->get_global_transform().basis.get_column(2);
+        const Vector3 look = Basis(Vector3(0, 1, 0), real_t(look_yaw)).xform(Vector3(0, 0, -1));
+        const double sign = look.dot(outward) < 0 ? 1.0 : -1.0;
+        const double along = input_blocked ? 0.0 : input->get_axis(input_actions::MOVE_BACK, input_actions::MOVE_FORWARD);
+        climb = sign * along;
+    }
+    if (is_on_ladder() && (!grounded || climb > 0.0)) {
+        velocity.y = real_t(climb * climb_speed);
+        // 水平只留一点，够把人从梯顶挪到甲板上；悬在梯子上时不许离开墙，免得半空滑出梯子掉下去
+        Vector3 slide = wish * real_t(0.35 * speed);
+        const real_t away = slide.dot(outward);
+        if (!grounded && away > 0) {
+            slide -= outward * away;
+        }
+        velocity.x = slide.x;
+        velocity.z = slide.z;
     } else {
-        velocity.y -= real_t(gravity * p_delta);
+        const real_t blend = real_t(1.0 - std::exp(-(grounded ? GROUND_ACCEL : AIR_ACCEL) * p_delta));
+        velocity.x += (wish.x * real_t(speed) - velocity.x) * blend;
+        velocity.z += (wish.z * real_t(speed) - velocity.z) * blend;
+        if (grounded) {
+            velocity.y = !input_blocked && input->is_action_just_pressed(input_actions::JUMP) ? real_t(jump_speed) : 0;
+        } else {
+            velocity.y -= real_t(gravity * p_delta);
+        }
     }
     set_velocity(velocity);
     move_and_slide();

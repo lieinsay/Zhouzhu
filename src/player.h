@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/character_body3d.hpp>
 #include <godot_cpp/classes/input_event.hpp>
@@ -9,8 +11,10 @@
 // 根节点自己从不旋转——转的是相机支点（鼠标）和身体模型（朝移动方向）。
 // 它不知道飞船的存在：入座时由上层 set_controlled(false) 停掉输入与物理，再直接摆位姿。
 // set_input_blocked(true) 只挡输入（开着背包时 W/S 是在选东西，不是在走路），物理照常：重力、落地都还在。
+// 爬梯：Sensor（Area3D）碰到带 "ladder" 元数据的区域时，前 / 后变成沿梯子上 / 下（面朝墙按前是上，背对墙按前是下），
+// 水平速度放慢，不受重力。梯子是谁的（船）它不知道。
 //
-// 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D。
+// 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D、Sensor（Area3D）。
 class Player : public godot::CharacterBody3D {
     GDCLASS(Player, godot::CharacterBody3D)
 
@@ -18,6 +22,7 @@ class Player : public godot::CharacterBody3D {
     double sprint_speed = 8.5;
     double jump_speed = 7.5;
     double gravity = 22.0;
+    double climb_speed = 2.5;
     double mouse_sensitivity = 0.0025;
 
     bool controlled = true;
@@ -30,8 +35,11 @@ class Player : public godot::CharacterBody3D {
     godot::Node3D *body = nullptr;
     godot::Node3D *camera_pivot = nullptr;
     godot::Camera3D *camera = nullptr;
+    std::vector<godot::Node3D *> ladders; // 眼下碰着的梯子区域（区域的 +Z 是离墙的方向）
 
     void apply_look();
+    void on_sensor_area_entered(godot::Node3D *p_area);
+    void on_sensor_area_exited(godot::Node3D *p_area);
 
 protected:
     static void _bind_methods();
@@ -45,6 +53,7 @@ public:
     bool is_controlled() const { return controlled; }
     void set_input_blocked(bool p_blocked) { input_blocked = p_blocked; }
     bool is_input_blocked() const { return input_blocked; }
+    bool is_on_ladder() const { return !ladders.empty(); }
     void set_look_yaw(double p_yaw);
     double get_look_yaw() const { return look_yaw; }
     void set_facing_yaw(double p_yaw); // 身体模型朝向
