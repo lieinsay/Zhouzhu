@@ -117,14 +117,35 @@ Godot --headless --path game --script res://tools/seed_villages.gd
 它持有全部村民的状态、村里的仓（`starting_store`，默认粟 8 菽 4）和认领表，每个物理帧推进钟点、走路、干活计时，开荒 / 播种 / 收割走 `Farm::perform`。
 一天多长、几点开局、走多快、每户几口是它的属性（`day_seconds` / `start_hour` / `walk_speed` / `per_house`）。
 
+## 重构：真实比例的岛群（world_2051.tscn）
+
+原来的甲乙两岛只有十几公顷，按 skyisle-gen 的尺度连「孤石」都算不上（它最小的岛也有 0.3 km²）。
+新场景 `game/world_2051.tscn` 直接用生成器里节点 2051（seed42，中疏诸岛）的整个岛群：84 × 101 km、32 座岛，主岛 1,794 km²，
+邑治、180 个村、91 个码头都在生成器定的位置上。出生在邑治；`main.tscn` 和上面五个切片的功能原样没动，之后再一样样迁过来。
+
+- **数据**：`tools/export_skyisle.py` 把 skyisle-gen 的 `out/<run>/islands/<节点>/` 转成 `game/worlds/<节点>/` 下的
+  `terrain.bin`（100 m 栅格：高程、有符号岸距、最近岛号、地表类、溪涧，格式见脚本开头）和 `world.json`（岛表与点位，坐标全换成米：x 东、z 南、原点 = 群心、y = 云带顶以上的高度）。
+  游戏运行时不依赖 Python，也不读 skyisle-gen 的 `out/`。换一个岛群：`python tools/export_skyisle.py <岛群目录> game/worlds/<节点>`，再把 World 的 `data_dir` 指过去。
+- **地面**：100 m 一格在人的尺度上几乎是平的，所以大形照栅格做双三次插值，100 m 以下的起伏用确定性噪声补
+  （按地表调幅：裸岩 7 m、林地 3.5 m、田 1 m）；岸线 = 岸距 + 岸线噪声 > 0，不再是 100 m 的锯齿；岛底是倒锥（岸缘 − 崖高 − 龙骨 × √向内程度）。
+  地面按四叉树分块流式加载：离人近的是 128 m 的叶块（2 m 一格，带碰撞），越远块越大越粗；块在后台线程里建，建好才换下旧块，所以不闪窟窿；块边垂一圈裙边遮住精度不同处的细缝。
+- **地图**（M）：栅格晕渲底图，标岛号、邑治、村（放大后写村名）、码头；滚轮缩放、右键拖动，悬停读出坐标 / 岛 / 高程 / 地表。
+- **瞬移**（开发者，`dev_tools`）：地图上左键一点，先同步建好落点周围的叶块，再把人放上去；点到云海就挪到 3 km 内最近的陆地。掉进云海回到上一处站稳的地方。
+
+算法全在纯算法文件里：`world_grid`（读栅格、双三次）、`world_terrain`（连续地形函数）、`terrain_tile`（选块、建块网格）、`map_image`（底图）。
+场景里是 `World`（流式地面，`src/world.*`）、`WorldMap`（地图面板，只画、点了只发 `teleport_requested`）、`WorldScene`（编排：地图开合、瞬移、坠落回位、HUD）。
+
+已知的：地面偏平、还没有树；溪涧只是颜色；地图不标散户 / 前哨 / 桥；世界坐标到 ±50 km，单精度下有毫米级的抖动。
+
 ## 测试
 
 ```
-ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址 / 村民的导航格、钟点、分派与决策）
+ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址 / 村民的导航格、钟点、分派与决策 / 岛群栅格、连续地形、分块、地图底图，含 2051 资产）
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_e2e.tscn    # 整条航程，只经输入动作驱动
 Godot --headless --path game --fixed-fps 60 res://tests/respawn_e2e.tscn   # 坠入云海 → 回位 + 召回空艇
 Godot --headless --path game --fixed-fps 60 res://tests/farm_e2e.tscn      # 沿路走到河滩 → 开垦 → 没种子被拒 → 背包里选菽 → 播种 → 成熟 → 收进背包
 Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn  # 画样台被拒 → 掌舵入坞 → 装配视角里放 / 换 / 拆、违规被拒 → 爬梯子上二层再下到舵旁 → 飞回泊位
 Godot --headless --path game --fixed-fps 60 res://tests/build_e2e.tscn     # B 进布置模式 → 停机坪被拒 → 河滩放民居 → 已有 / 挨得太近被拒 → 转 45° 放望楼 → X 拆 → F5 存、读回 → 走到望楼被墙挡住 → 仓库里的村落都站得住
 Godot --headless --path game --fixed-fps 60 res://tests/villager_e2e.tscn  # 两岛人数与职业 → 陆续出门 → 每帧贴地、不进房子、不瞬移 → 开荒播种收割、粮进仓、挑水、站班巡村、串门 → 玩家的地没人碰 → 收工全村进门 → 天亮又出门
+Godot --headless --path game --fixed-fps 60 res://tests/world_e2e.tscn     # 真实比例岛群：邑治站稳 → 跑 → M 开地图、滚轮缩小、点乙岛瞬移 → 点 57 km 外的码头瞬移 → 坠落回位
 ```
