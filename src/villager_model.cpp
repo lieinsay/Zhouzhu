@@ -66,27 +66,35 @@ double water_depth_at(const IslandField &p_field, double p_x, double p_z) {
 
 } // namespace
 
-NavGrid build_nav_grid(const IslandField &p_field, const SettlementLayout &p_layout, const NavRules &p_rules) {
+bool IslandNavGround::walk_height(double p_x, double p_z, double &r_y) const {
+    return surface_height(field, p_x, p_z, r_y);
+}
+
+double IslandNavGround::water_depth(double p_x, double p_z) const {
+    return water_depth_at(field, p_x, p_z);
+}
+
+NavGrid build_nav_grid(const NavGround &p_ground, double p_x0, double p_z0, int p_cols, int p_rows, const SettlementLayout &p_layout, const NavRules &p_rules) {
     NavGrid g;
-    if (p_field.n < 2) {
+    if (p_cols <= 0 || p_rows <= 0) {
         return g;
     }
     g.cell_m = p_rules.cell_m;
-    const double ext = p_field.half_extent();
-    g.x0 = -ext;
-    g.z0 = -ext;
-    g.cols = g.rows = int(std::floor(2.0 * ext / g.cell_m));
+    g.x0 = p_x0;
+    g.z0 = p_z0;
+    g.cols = p_cols;
+    g.rows = p_rows;
     g.walk.assign(size_t(g.cols) * size_t(g.rows), NavGrid::BLOCKED);
     g.y.assign(g.walk.size(), 0.0f);
     for (int r = 0; r < g.rows; r++) {
         for (int c = 0; c < g.cols; c++) {
             const NavPoint p = g.center(r, c);
             double y = 0.0;
-            if (!surface_height(p_field, p.x, p.z, y)) {
+            if (!p_ground.walk_height(p.x, p.z, y)) {
                 continue;
             }
             g.y[g.index(r, c)] = float(y);
-            g.walk[g.index(r, c)] = water_depth_at(p_field, p.x, p.z) > 0.05 ? NavGrid::WET : NavGrid::DRY;
+            g.walk[g.index(r, c)] = p_ground.water_depth(p.x, p.z) > 0.05 ? NavGrid::WET : NavGrid::DRY;
         }
     }
     // 房子占的地（外扩）走不了：只刷每座房子外接框里的格
@@ -96,11 +104,12 @@ NavGrid build_nav_grid(const IslandField &p_field, const SettlementLayout &p_lay
             continue;
         }
         const double reach = 0.5 * std::hypot(def->width_m, def->depth_m) + p_rules.building_margin_m + g.cell_m;
-        int r0 = 0, c0 = 0, r1 = 0, c1 = 0;
-        g.cell_of(b.x - reach, b.z - reach, r0, c0);
-        g.cell_of(b.x + reach, b.z + reach, r1, c1);
-        for (int r = std::max(r0, 0); r <= std::min(r1, g.rows - 1); r++) {
-            for (int c = std::max(c0, 0); c <= std::min(c1, g.cols - 1); c++) {
+        const int r0 = std::max(0, int(std::floor((b.z - reach - g.z0) / g.cell_m)));
+        const int c0 = std::max(0, int(std::floor((b.x - reach - g.x0) / g.cell_m)));
+        const int r1 = std::min(g.rows - 1, int(std::floor((b.z + reach - g.z0) / g.cell_m)));
+        const int c1 = std::min(g.cols - 1, int(std::floor((b.x + reach - g.x0) / g.cell_m)));
+        for (int r = r0; r <= r1; r++) {
+            for (int c = c0; c <= c1; c++) {
                 const NavPoint p = g.center(r, c);
                 if (footprint_contains(*def, b, p.x, p.z, p_rules.building_margin_m)) {
                     g.walk[g.index(r, c)] = NavGrid::BLOCKED;
@@ -109,6 +118,15 @@ NavGrid build_nav_grid(const IslandField &p_field, const SettlementLayout &p_lay
         }
     }
     return g;
+}
+
+NavGrid build_nav_grid(const IslandField &p_field, const SettlementLayout &p_layout, const NavRules &p_rules) {
+    if (p_field.n < 2) {
+        return NavGrid();
+    }
+    const double ext = p_field.half_extent();
+    const int cells = int(std::floor(2.0 * ext / p_rules.cell_m));
+    return build_nav_grid(IslandNavGround(p_field), -ext, -ext, cells, cells, p_layout, p_rules);
 }
 
 bool nav_nearest_walkable(const NavGrid &p_grid, double p_x, double p_z, double p_max_m, bool p_dry_only, NavPoint &r_point) {

@@ -129,43 +129,56 @@ bool footprints_overlap(const Building &p_a, const Building &p_b, double p_gap) 
     return true;
 }
 
-SiteReport survey_site(const IslandField &f, double p_dock_apron_m, const BuildingDef &p_def, double p_x, double p_z, double p_yaw,
+bool IslandSiteGround::site_height(double p_x, double p_z, double &r_y) const {
+    return field.sample_height(p_x, p_z, r_y);
+}
+
+SiteBlock IslandSiteGround::site_block(double p_x, double p_z) const {
+    size_t node = 0;
+    const bool in_grid = nearest_node(field, p_x, p_z, node);
+    if (in_grid && field.has_river() && field.river_depth[node] > 0.0f) {
+        return { 0, "这是河，盖不了" };
+    }
+    if (std::hypot(p_x - field.dock.x, p_z - field.dock.z) <= dock_apron_m + rules.dock_margin_m) {
+        return { 1, "停机坪上不能盖" };
+    }
+    if (field.yard.contains(p_x, p_z, rules.yard_margin_m)) {
+        return { 2, "这是船坞的坪，盖不得" };
+    }
+    if (in_grid && field.has_trail() && field.trail_dist[node] <= rules.trail_margin_m) {
+        return { 3, "压着路了" };
+    }
+    return SiteBlock();
+}
+
+SiteReport survey_site(const SiteGround &p_ground, const BuildingDef &p_def, double p_x, double p_z, double p_yaw,
         const SettlementLayout &p_others, const SiteRules &p_rules, int p_ignore) {
     SiteReport r;
     double px[9], pz[9];
     survey_points(p_def, p_x, p_z, p_yaw, px, pz);
 
     double lo = 1e18, hi = -1e18;
-    bool wet = false, on_trail = false, on_dock = false, on_yard = false;
+    SiteBlock block;
     for (int k = 0; k < 9; k++) {
         double ground = 0.0;
-        if (!f.sample_height(px[k], pz[k], ground)) {
+        if (!p_ground.site_height(px[k], pz[k], ground)) {
             r.reason = "这里没有地面：占地伸到岛外去了";
             return r;
         }
         lo = std::min(lo, ground);
         hi = std::max(hi, ground);
-        size_t node = 0;
-        if (nearest_node(f, px[k], pz[k], node)) {
-            wet = wet || (f.has_river() && f.river_depth[node] > 0.0f);
-            on_trail = on_trail || (f.has_trail() && f.trail_dist[node] <= p_rules.trail_margin_m);
+        const SiteBlock here = p_ground.site_block(px[k], pz[k]);
+        if (here.rank >= 0 && (block.rank < 0 || here.rank < block.rank)) {
+            block = here;
         }
-        on_dock = on_dock || std::hypot(px[k] - f.dock.x, pz[k] - f.dock.z) <= p_dock_apron_m + p_rules.dock_margin_m;
-        on_yard = on_yard || f.yard.contains(px[k], pz[k], p_rules.yard_margin_m);
     }
     r.ground_min = lo;
     r.ground_max = hi;
     r.floor_y = hi + p_def.plinth_m;
     r.plinth_bottom = lo - p_rules.bury_m;
 
-    if (wet) {
-        r.reason = "这是河，盖不了";
-    } else if (on_dock) {
-        r.reason = "停机坪上不能盖";
-    } else if (on_yard) {
-        r.reason = "这是船坞的坪，盖不得";
-    } else if (on_trail) {
-        r.reason = "压着路了";
+    if (block.rank >= 0) {
+        r.reason = block.reason;
     } else {
         // 压着别的建筑比坡陡先说：挪开就好，坡是挪不动的
         const Building here{ p_def.id, p_x, p_z, p_yaw };
@@ -184,6 +197,11 @@ SiteReport survey_site(const IslandField &f, double p_dock_apron_m, const Buildi
         }
     }
     return r;
+}
+
+SiteReport survey_site(const IslandField &f, double p_dock_apron_m, const BuildingDef &p_def, double p_x, double p_z, double p_yaw,
+        const SettlementLayout &p_others, const SiteRules &p_rules, int p_ignore) {
+    return survey_site(IslandSiteGround(f, p_dock_apron_m, p_rules), p_def, p_x, p_z, p_yaw, p_others, p_rules, p_ignore);
 }
 
 std::string settlement_place(SettlementLayout &p_layout, const IslandField &p_field, double p_dock_apron_m, const std::string &p_kind,

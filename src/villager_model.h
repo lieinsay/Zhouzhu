@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "farm_model.h"
+#include "ground_query.h"
 #include "inventory.h"
 #include "island_field.h"
 #include "rng.h"
@@ -58,6 +59,20 @@ struct NavGrid {
     int walkable_count() const;
 };
 
+// 一座游戏尺度的岛当作导航的地面：高与地面网格一致（三角切法），水深取最近节点。只持引用
+class IslandNavGround : public NavGround {
+    const IslandField &field;
+
+public:
+    explicit IslandNavGround(const IslandField &p_field) :
+            field(p_field) {}
+    bool walk_height(double p_x, double p_z, double &r_y) const override;
+    double water_depth(double p_x, double p_z) const override;
+};
+
+// 在 (x0, z0) 起、cols × rows 格的窗口里建导航格（只在村子周围建，不必铺满整座岛）
+NavGrid build_nav_grid(const NavGround &p_ground, double p_x0, double p_z0, int p_cols, int p_rows, const SettlementLayout &p_layout, const NavRules &p_rules);
+// 整座岛
 NavGrid build_nav_grid(const IslandField &p_field, const SettlementLayout &p_layout, const NavRules &p_rules);
 
 // 离 (x, z) 最近的可走格心，p_max_m 以内；p_dry_only 只要干地。找不到返回 false
