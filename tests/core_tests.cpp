@@ -8,8 +8,10 @@
 #include <string>
 #include <vector>
 
+#include "crops.h"
 #include "farm_model.h"
 #include "flight_model.h"
+#include "inventory.h"
 #include "island_field.h"
 #include "value_noise.h"
 
@@ -454,6 +456,40 @@ void test_farm() {
     check(rules.harvest_yield > rules.seed_cost, "种一收多：循环是正的");
 }
 
+void test_inventory() {
+    std::printf("inventory\n");
+    Inventory pack;
+    check(pack.empty() && pack.count("millet") == 0 && !pack.has("millet"), "空背包");
+    pack.add("millet", 5);
+    pack.add("bean", 3);
+    pack.add("millet", 2);
+    check(pack.size() == 2 && pack.count("millet") == 7 && pack.count("bean") == 3, "同种物品叠成一堆");
+    check(pack.get_stacks()[0].item == "millet" && pack.get_stacks()[1].item == "bean", "按第一次放入的顺序排");
+    check(!pack.remove("bean", 4) && pack.count("bean") == 3, "不够拿：不动");
+    check(pack.remove("bean", 3) && pack.size() == 1 && pack.count("bean") == 0, "拿光了这一堆就没了");
+    check(!pack.remove("bean", 1), "没有的东西拿不了");
+    pack.add("bean", 1);
+    check(pack.get_stacks()[1].item == "bean", "再放回来排在最后");
+    pack.add("millet", 0);
+    pack.add("", 3);
+    check(pack.size() == 2 && pack.count("millet") == 7, "放 0 份、放空名字：不做事");
+    check(pack.has("millet", 7) && !pack.has("millet", 8), "has 按份数比");
+}
+
+void test_crops() {
+    std::printf("crops\n");
+    check(catalog::CROP_COUNT >= 2 && catalog::ITEM_COUNT >= 2, "至少两种作物、两样物品");
+    for (int k = 0; k < catalog::CROP_COUNT; k++) {
+        const CropDef &c = catalog::CROPS[k];
+        check(catalog::item(c.seed) && catalog::item(c.product), std::string("作物 ") + c.id + " 的种子与产物都在物品表里");
+        check(c.yield > 1 && c.grow_factor > 0.0, std::string("作物 ") + c.id + " 种一收多、生长期为正");
+        check(catalog::crop_of_seed(c.seed) == &c, std::string("由种子能查回作物 ") + c.id);
+    }
+    check(catalog::crop("millet") && catalog::crop("bean") && !catalog::crop("rice"), "按 id 查作物");
+    check(catalog::is_seed("millet") && !catalog::is_seed("pebble"), "是不是种子");
+    check(catalog::item_name("millet") == "粟" && catalog::item_name("pebble") == "pebble", "显示名；没有的原样返回");
+}
+
 void test_flight() {
     std::printf("flight_model\n");
     const FlightParams params;
@@ -533,6 +569,8 @@ int main() {
     test_trail("老岛 · 台地", 0.8);
     test_trail("中年 · 山脊", 0.5);
     test_trail("新岛 · 火山锥", 0.1);
+    test_inventory();
+    test_crops();
     test_farm();
     test_flight();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
