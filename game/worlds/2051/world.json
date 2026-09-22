@@ -1,0 +1,7179 @@
+{
+ "source": {
+  "run": "seed42",
+  "node": 2051,
+  "seed": 42,
+  "generator": "zhouzhu_gen.island",
+  "cls_zh": "中疏诸岛",
+  "lat": -31.652283793862644,
+  "lon": 152.15278346036462
+ },
+ "grid": {
+  "rows": 1012,
+  "cols": 837,
+  "res_m": 100.0,
+  "x0": -42950.0,
+  "z0": -47350.0,
+  "height_scale": 100.0
+ },
+ "landcover": {
+  "classes": [
+   "虚空",
+   "崖缘",
+   "裸岩",
+   "高山草甸",
+   "林地",
+   "灌丛",
+   "草坡",
+   "可耕地",
+   "梯田",
+   "湿地",
+   "河道",
+   "湖"
+  ],
+  "palette": [
+   [
+    20,
+    24,
+    40
+   ],
+   [
+    90,
+    80,
+    75
+   ],
+   [
+    150,
+    150,
+    150
+   ],
+   [
+    170,
+    200,
+    120
+   ],
+   [
+    40,
+    110,
+    50
+   ],
+   [
+    120,
+    150,
+    70
+   ],
+   [
+    190,
+    200,
+    110
+   ],
+   [
+    230,
+    200,
+    90
+   ],
+   [
+    210,
+    170,
+    60
+   ],
+   [
+    90,
+    160,
+    150
+   ],
+   [
+    40,
+    90,
+    200
+   ],
+   [
+    30,
+    60,
+    170
+   ]
+  ]
+ },
+ "islands": [
+  {
+   "id": 0,
+   "center": [
+    0.0,
+    -0.0
+   ],
+   "area_km2": 1793.59,
+   "age": 0.522,
+   "age_zh": "中年",
+   "main": true,
+   "rim_m": 217.8,
+   "peak_m": 382.0,
+   "cliff_m": 26.8,
+   "keel_m": 191.0,
+   "max_shore_m": 17448.5
+  },
+  {
+   "id": 1,
+   "center": [
+    -18459.0,
+    38171.0
+   ],
+   "area_km2": 226.86,
+   "age": 0.449,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 169.4,
+   "peak_m": 272.2,
+   "cliff_m": 33.3,
+   "keel_m": 136.1,
+   "max_shore_m": 7011.4
+  },
+  {
+   "id": 2,
+   "center": [
+    31683.0,
+    -1418.0
+   ],
+   "area_km2": 105.91,
+   "age": 0.547,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 203.8,
+   "peak_m": 314.2,
+   "cliff_m": 46.7,
+   "keel_m": 157.1,
+   "max_shore_m": 4700.0
+  },
+  {
+   "id": 3,
+   "center": [
+    -12823.0,
+    -41955.0
+   ],
+   "area_km2": 67.81,
+   "age": 0.427,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 138.3,
+   "peak_m": 229.7,
+   "cliff_m": 23.5,
+   "keel_m": 114.8,
+   "max_shore_m": 4301.2
+  },
+  {
+   "id": 4,
+   "center": [
+    -24112.0,
+    6721.0
+   ],
+   "area_km2": 49.44,
+   "age": 0.46,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 111.5,
+   "peak_m": 171.9,
+   "cliff_m": 25.6,
+   "keel_m": 86.0,
+   "max_shore_m": 2844.3
+  },
+  {
+   "id": 5,
+   "center": [
+    -28532.0,
+    -3527.0
+   ],
+   "area_km2": 38.65,
+   "age": 0.449,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 197.0,
+   "peak_m": 306.3,
+   "cliff_m": 43.9,
+   "keel_m": 153.1,
+   "max_shore_m": 2941.1
+  },
+  {
+   "id": 6,
+   "center": [
+    -24140.0,
+    -11780.0
+   ],
+   "area_km2": 31.64,
+   "age": 0.597,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 197.2,
+   "peak_m": 321.6,
+   "cliff_m": 36.4,
+   "keel_m": 160.8,
+   "max_shore_m": 2377.0
+  },
+  {
+   "id": 7,
+   "center": [
+    -32068.0,
+    7621.0
+   ],
+   "area_km2": 26.74,
+   "age": 0.457,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 150.8,
+   "peak_m": 262.9,
+   "cliff_m": 19.3,
+   "keel_m": 131.4,
+   "max_shore_m": 2193.2
+  },
+  {
+   "id": 8,
+   "center": [
+    20993.0,
+    -19569.0
+   ],
+   "area_km2": 23.03,
+   "age": 0.459,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 185.5,
+   "peak_m": 305.7,
+   "cliff_m": 32.7,
+   "keel_m": 152.8,
+   "max_shore_m": 2102.4
+  },
+  {
+   "id": 9,
+   "center": [
+    17955.0,
+    -26248.0
+   ],
+   "area_km2": 20.25,
+   "age": 0.431,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 100.4,
+   "peak_m": 176.4,
+   "cliff_m": 12.2,
+   "keel_m": 88.2,
+   "max_shore_m": 1711.7
+  },
+  {
+   "id": 10,
+   "center": [
+    17646.0,
+    22819.0
+   ],
+   "area_km2": 18.01,
+   "age": 0.668,
+   "age_zh": "老岛",
+   "main": false,
+   "rim_m": 114.5,
+   "peak_m": 166.2,
+   "cliff_m": 31.4,
+   "keel_m": 83.1,
+   "max_shore_m": 1746.4
+  },
+  {
+   "id": 11,
+   "center": [
+    28711.0,
+    -12553.0
+   ],
+   "area_km2": 16.21,
+   "age": 0.558,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 178.0,
+   "peak_m": 320.5,
+   "cliff_m": 17.8,
+   "keel_m": 160.3,
+   "max_shore_m": 1555.6
+  },
+  {
+   "id": 12,
+   "center": [
+    -21920.0,
+    16486.0
+   ],
+   "area_km2": 14.74,
+   "age": 0.629,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 187.2,
+   "peak_m": 291.0,
+   "cliff_m": 41.7,
+   "keel_m": 145.5,
+   "max_shore_m": 1910.5
+  },
+  {
+   "id": 13,
+   "center": [
+    -22774.0,
+    50201.0
+   ],
+   "area_km2": 13.52,
+   "age": 0.438,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 205.9,
+   "peak_m": 318.0,
+   "cliff_m": 46.9,
+   "keel_m": 159.0,
+   "max_shore_m": 1800.0
+  },
+  {
+   "id": 14,
+   "center": [
+    21013.0,
+    -13684.0
+   ],
+   "area_km2": 12.43,
+   "age": 0.598,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 181.1,
+   "peak_m": 300.7,
+   "cliff_m": 30.8,
+   "keel_m": 150.4,
+   "max_shore_m": 1697.1
+  },
+  {
+   "id": 15,
+   "center": [
+    -30214.0,
+    -17089.0
+   ],
+   "area_km2": 11.54,
+   "age": 0.548,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 153.7,
+   "peak_m": 253.7,
+   "cliff_m": 26.8,
+   "keel_m": 126.9,
+   "max_shore_m": 1303.8
+  },
+  {
+   "id": 16,
+   "center": [
+    23054.0,
+    -49.0
+   ],
+   "area_km2": 10.75,
+   "age": 0.472,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 101.6,
+   "peak_m": 167.9,
+   "cliff_m": 17.6,
+   "keel_m": 84.0,
+   "max_shore_m": 1345.4
+  },
+  {
+   "id": 17,
+   "center": [
+    -25727.0,
+    -19138.0
+   ],
+   "area_km2": 10.05,
+   "age": 0.568,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 187.2,
+   "peak_m": 294.9,
+   "cliff_m": 39.8,
+   "keel_m": 147.5,
+   "max_shore_m": 1341.6
+  },
+  {
+   "id": 18,
+   "center": [
+    -40621.0,
+    946.0
+   ],
+   "area_km2": 9.45,
+   "age": 0.468,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 96.5,
+   "peak_m": 173.4,
+   "cliff_m": 9.9,
+   "keel_m": 86.7,
+   "max_shore_m": 1486.6
+  },
+  {
+   "id": 19,
+   "center": [
+    19896.0,
+    -8362.0
+   ],
+   "area_km2": 8.91,
+   "age": 0.531,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 174.1,
+   "peak_m": 275.6,
+   "cliff_m": 36.3,
+   "keel_m": 137.8,
+   "max_shore_m": 1360.1
+  },
+  {
+   "id": 20,
+   "center": [
+    26908.0,
+    4642.0
+   ],
+   "area_km2": 8.41,
+   "age": 0.578,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 207.6,
+   "peak_m": 356.4,
+   "cliff_m": 29.4,
+   "keel_m": 178.2,
+   "max_shore_m": 1486.6
+  },
+  {
+   "id": 21,
+   "center": [
+    -7694.0,
+    41842.0
+   ],
+   "area_km2": 7.96,
+   "age": 0.451,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 173.0,
+   "peak_m": 289.1,
+   "cliff_m": 28.5,
+   "keel_m": 144.6,
+   "max_shore_m": 1341.6
+  },
+  {
+   "id": 22,
+   "center": [
+    6279.0,
+    -36376.0
+   ],
+   "area_km2": 7.57,
+   "age": 0.56,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 140.6,
+   "peak_m": 245.2,
+   "cliff_m": 17.9,
+   "keel_m": 122.6,
+   "max_shore_m": 1315.3
+  },
+  {
+   "id": 23,
+   "center": [
+    -24459.0,
+    -28388.0
+   ],
+   "area_km2": 7.2,
+   "age": 0.491,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 172.6,
+   "peak_m": 313.1,
+   "cliff_m": 16.0,
+   "keel_m": 156.5,
+   "max_shore_m": 1236.9
+  },
+  {
+   "id": 24,
+   "center": [
+    -28358.0,
+    13635.0
+   ],
+   "area_km2": 6.89,
+   "age": 0.437,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 139.1,
+   "peak_m": 246.9,
+   "cliff_m": 15.6,
+   "keel_m": 123.5,
+   "max_shore_m": 1264.9
+  },
+  {
+   "id": 25,
+   "center": [
+    -17147.0,
+    25333.0
+   ],
+   "area_km2": 6.58,
+   "age": 0.631,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 169.8,
+   "peak_m": 264.6,
+   "cliff_m": 37.6,
+   "keel_m": 132.3,
+   "max_shore_m": 1118.0
+  },
+  {
+   "id": 26,
+   "center": [
+    20613.0,
+    -33434.0
+   ],
+   "area_km2": 6.3,
+   "age": 0.455,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 195.5,
+   "peak_m": 308.6,
+   "cliff_m": 41.2,
+   "keel_m": 154.3,
+   "max_shore_m": 1000.0
+  },
+  {
+   "id": 27,
+   "center": [
+    -35829.0,
+    49748.0
+   ],
+   "area_km2": 6.05,
+   "age": 0.455,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 217.9,
+   "peak_m": 359.1,
+   "cliff_m": 38.3,
+   "keel_m": 179.6,
+   "max_shore_m": 1166.2
+  },
+  {
+   "id": 28,
+   "center": [
+    -35526.0,
+    43554.0
+   ],
+   "area_km2": 5.81,
+   "age": 0.397,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 210.6,
+   "peak_m": 341.0,
+   "cliff_m": 40.1,
+   "keel_m": 170.5,
+   "max_shore_m": 905.5
+  },
+  {
+   "id": 29,
+   "center": [
+    38269.0,
+    -5222.0
+   ],
+   "area_km2": 5.6,
+   "age": 0.416,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 206.9,
+   "peak_m": 319.8,
+   "cliff_m": 47.0,
+   "keel_m": 159.9,
+   "max_shore_m": 1236.9
+  },
+  {
+   "id": 30,
+   "center": [
+    -12277.0,
+    -33795.0
+   ],
+   "area_km2": 5.38,
+   "age": 0.346,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 157.2,
+   "peak_m": 275.1,
+   "cliff_m": 19.6,
+   "keel_m": 137.5,
+   "max_shore_m": 1029.6
+  },
+  {
+   "id": 31,
+   "center": [
+    -2244.0,
+    42173.0
+   ],
+   "area_km2": 5.19,
+   "age": 0.549,
+   "age_zh": "中年",
+   "main": false,
+   "rim_m": 203.7,
+   "peak_m": 344.8,
+   "cliff_m": 31.3,
+   "keel_m": 172.4,
+   "max_shore_m": 1029.6
+  }
+ ],
+ "links": [
+  {
+   "a": 0,
+   "b": 1,
+   "kind": "ferry",
+   "gap_km": 3.354
+  },
+  {
+   "a": 0,
+   "b": 2,
+   "kind": "ferry",
+   "gap_km": 6.185
+  },
+  {
+   "a": 0,
+   "b": 3,
+   "kind": "ferry",
+   "gap_km": 5.968
+  },
+  {
+   "a": 0,
+   "b": 4,
+   "kind": "ferry",
+   "gap_km": 4.571
+  },
+  {
+   "a": 0,
+   "b": 5,
+   "kind": "ferry",
+   "gap_km": 5.6
+  },
+  {
+   "a": 0,
+   "b": 6,
+   "kind": "ferry",
+   "gap_km": 3.828
+  },
+  {
+   "a": 0,
+   "b": 7,
+   "kind": "ferry",
+   "gap_km": 12.31
+  },
+  {
+   "a": 0,
+   "b": 8,
+   "kind": "ferry",
+   "gap_km": 3.448
+  },
+  {
+   "a": 0,
+   "b": 9,
+   "kind": "ferry",
+   "gap_km": 4.909
+  },
+  {
+   "a": 0,
+   "b": 10,
+   "kind": "ferry",
+   "gap_km": 2.332
+  },
+  {
+   "a": 0,
+   "b": 11,
+   "kind": "ferry",
+   "gap_km": 9.772
+  },
+  {
+   "a": 0,
+   "b": 12,
+   "kind": "ferry",
+   "gap_km": 4.111
+  },
+  {
+   "a": 0,
+   "b": 14,
+   "kind": "ferry",
+   "gap_km": 4.528
+  },
+  {
+   "a": 0,
+   "b": 15,
+   "kind": "ferry",
+   "gap_km": 12.18
+  },
+  {
+   "a": 0,
+   "b": 16,
+   "kind": "bridge",
+   "gap_km": 0.6
+  },
+  {
+   "a": 0,
+   "b": 17,
+   "kind": "ferry",
+   "gap_km": 9.052
+  },
+  {
+   "a": 0,
+   "b": 19,
+   "kind": "bridge",
+   "gap_km": 1.503
+  },
+  {
+   "a": 0,
+   "b": 20,
+   "kind": "ferry",
+   "gap_km": 4.357
+  },
+  {
+   "a": 0,
+   "b": 21,
+   "kind": "ferry",
+   "gap_km": 8.766
+  },
+  {
+   "a": 0,
+   "b": 22,
+   "kind": "ferry",
+   "gap_km": 4.909
+  },
+  {
+   "a": 0,
+   "b": 23,
+   "kind": "ferry",
+   "gap_km": 11.18
+  },
+  {
+   "a": 0,
+   "b": 24,
+   "kind": "ferry",
+   "gap_km": 10.324
+  },
+  {
+   "a": 0,
+   "b": 25,
+   "kind": "ferry",
+   "gap_km": 4.73
+  },
+  {
+   "a": 0,
+   "b": 26,
+   "kind": "ferry",
+   "gap_km": 12.3
+  },
+  {
+   "a": 0,
+   "b": 29,
+   "kind": "ferry",
+   "gap_km": 17.349
+  },
+  {
+   "a": 0,
+   "b": 30,
+   "kind": "ferry",
+   "gap_km": 2.476
+  },
+  {
+   "a": 0,
+   "b": 31,
+   "kind": "ferry",
+   "gap_km": 8.075
+  },
+  {
+   "a": 1,
+   "b": 4,
+   "kind": "ferry",
+   "gap_km": 18.282
+  },
+  {
+   "a": 1,
+   "b": 12,
+   "kind": "ferry",
+   "gap_km": 11.721
+  },
+  {
+   "a": 1,
+   "b": 13,
+   "kind": "bridge",
+   "gap_km": 1.603
+  },
+  {
+   "a": 1,
+   "b": 21,
+   "kind": "bridge",
+   "gap_km": 1.414
+  },
+  {
+   "a": 1,
+   "b": 24,
+   "kind": "ferry",
+   "gap_km": 16.867
+  },
+  {
+   "a": 1,
+   "b": 25,
+   "kind": "ferry",
+   "gap_km": 3.4
+  },
+  {
+   "a": 1,
+   "b": 27,
+   "kind": "ferry",
+   "gap_km": 9.874
+  },
+  {
+   "a": 1,
+   "b": 28,
+   "kind": "ferry",
+   "gap_km": 6.42
+  },
+  {
+   "a": 1,
+   "b": 31,
+   "kind": "ferry",
+   "gap_km": 6.986
+  },
+  {
+   "a": 2,
+   "b": 8,
+   "kind": "ferry",
+   "gap_km": 11.673
+  },
+  {
+   "a": 2,
+   "b": 9,
+   "kind": "ferry",
+   "gap_km": 18.057
+  },
+  {
+   "a": 2,
+   "b": 10,
+   "kind": "ferry",
+   "gap_km": 19.272
+  },
+  {
+   "a": 2,
+   "b": 11,
+   "kind": "ferry",
+   "gap_km": 2.435
+  },
+  {
+   "a": 2,
+   "b": 14,
+   "kind": "ferry",
+   "gap_km": 7.28
+  },
+  {
+   "a": 2,
+   "b": 16,
+   "kind": "bridge",
+   "gap_km": 1.3
+  },
+  {
+   "a": 2,
+   "b": 19,
+   "kind": "ferry",
+   "gap_km": 5.28
+  },
+  {
+   "a": 2,
+   "b": 20,
+   "kind": "bridge",
+   "gap_km": 1.044
+  },
+  {
+   "a": 2,
+   "b": 29,
+   "kind": "bridge",
+   "gap_km": 1.456
+  },
+  {
+   "a": 3,
+   "b": 17,
+   "kind": "ferry",
+   "gap_km": 19.67
+  },
+  {
+   "a": 3,
+   "b": 22,
+   "kind": "ferry",
+   "gap_km": 13.727
+  },
+  {
+   "a": 3,
+   "b": 23,
+   "kind": "ferry",
+   "gap_km": 12.021
+  },
+  {
+   "a": 3,
+   "b": 30,
+   "kind": "ferry",
+   "gap_km": 2.159
+  },
+  {
+   "a": 4,
+   "b": 5,
+   "kind": "ferry",
+   "gap_km": 2.561
+  },
+  {
+   "a": 4,
+   "b": 6,
+   "kind": "ferry",
+   "gap_km": 9.402
+  },
+  {
+   "a": 4,
+   "b": 7,
+   "kind": "ferry",
+   "gap_km": 2.571
+  },
+  {
+   "a": 4,
+   "b": 12,
+   "kind": "ferry",
+   "gap_km": 2.518
+  },
+  {
+   "a": 4,
+   "b": 15,
+   "kind": "ferry",
+   "gap_km": 17.511
+  },
+  {
+   "a": 4,
+   "b": 17,
+   "kind": "ferry",
+   "gap_km": 18.6
+  },
+  {
+   "a": 4,
+   "b": 18,
+   "kind": "ferry",
+   "gap_km": 11.183
+  },
+  {
+   "a": 4,
+   "b": 24,
+   "kind": "ferry",
+   "gap_km": 2.421
+  },
+  {
+   "a": 4,
+   "b": 25,
+   "kind": "ferry",
+   "gap_km": 12.659
+  },
+  {
+   "a": 5,
+   "b": 6,
+   "kind": "bridge",
+   "gap_km": 1.044
+  },
+  {
+   "a": 5,
+   "b": 7,
+   "kind": "ferry",
+   "gap_km": 4.696
+  },
+  {
+   "a": 5,
+   "b": 12,
+   "kind": "ferry",
+   "gap_km": 15.632
+  },
+  {
+   "a": 5,
+   "b": 15,
+   "kind": "ferry",
+   "gap_km": 8.22
+  },
+  {
+   "a": 5,
+   "b": 17,
+   "kind": "ferry",
+   "gap_km": 10.296
+  },
+  {
+   "a": 5,
+   "b": 18,
+   "kind": "ferry",
+   "gap_km": 7.131
+  },
+  {
+   "a": 5,
+   "b": 23,
+   "kind": "ferry",
+   "gap_km": 19.615
+  },
+  {
+   "a": 5,
+   "b": 24,
+   "kind": "ferry",
+   "gap_km": 12.015
+  },
+  {
+   "a": 6,
+   "b": 7,
+   "kind": "ferry",
+   "gap_km": 13.551
+  },
+  {
+   "a": 6,
+   "b": 15,
+   "kind": "ferry",
+   "gap_km": 3.701
+  },
+  {
+   "a": 6,
+   "b": 17,
+   "kind": "bridge",
+   "gap_km": 1.612
+  },
+  {
+   "a": 6,
+   "b": 18,
+   "kind": "ferry",
+   "gap_km": 14.705
+  },
+  {
+   "a": 6,
+   "b": 23,
+   "kind": "ferry",
+   "gap_km": 10.717
+  },
+  {
+   "a": 6,
+   "b": 30,
+   "kind": "ferry",
+   "gap_km": 18.919
+  },
+  {
+   "a": 7,
+   "b": 12,
+   "kind": "ferry",
+   "gap_km": 7.495
+  },
+  {
+   "a": 7,
+   "b": 15,
+   "kind": "ferry",
+   "gap_km": 19.403
+  },
+  {
+   "a": 7,
+   "b": 18,
+   "kind": "ferry",
+   "gap_km": 4.974
+  },
+  {
+   "a": 7,
+   "b": 24,
+   "kind": "bridge",
+   "gap_km": 1.612
+  },
+  {
+   "a": 7,
+   "b": 25,
+   "kind": "ferry",
+   "gap_km": 17.828
+  },
+  {
+   "a": 8,
+   "b": 9,
+   "kind": "bridge",
+   "gap_km": 1.5
+  },
+  {
+   "a": 8,
+   "b": 11,
+   "kind": "ferry",
+   "gap_km": 6.046
+  },
+  {
+   "a": 8,
+   "b": 14,
+   "kind": "bridge",
+   "gap_km": 1.414
+  },
+  {
+   "a": 8,
+   "b": 16,
+   "kind": "ferry",
+   "gap_km": 15.241
+  },
+  {
+   "a": 8,
+   "b": 19,
+   "kind": "ferry",
+   "gap_km": 7.3
+  },
+  {
+   "a": 8,
+   "b": 22,
+   "kind": "ferry",
+   "gap_km": 18.021
+  },
+  {
+   "a": 8,
+   "b": 26,
+   "kind": "ferry",
+   "gap_km": 10.902
+  },
+  {
+   "a": 8,
+   "b": 29,
+   "kind": "ferry",
+   "gap_km": 18.042
+  },
+  {
+   "a": 9,
+   "b": 11,
+   "kind": "ferry",
+   "gap_km": 13.011
+  },
+  {
+   "a": 9,
+   "b": 14,
+   "kind": "ferry",
+   "gap_km": 7.159
+  },
+  {
+   "a": 9,
+   "b": 19,
+   "kind": "ferry",
+   "gap_km": 12.53
+  },
+  {
+   "a": 9,
+   "b": 22,
+   "kind": "ferry",
+   "gap_km": 11.491
+  },
+  {
+   "a": 9,
+   "b": 26,
+   "kind": "ferry",
+   "gap_km": 2.693
+  },
+  {
+   "a": 10,
+   "b": 16,
+   "kind": "ferry",
+   "gap_km": 17.789
+  },
+  {
+   "a": 10,
+   "b": 20,
+   "kind": "ferry",
+   "gap_km": 15.579
+  },
+  {
+   "a": 11,
+   "b": 14,
+   "kind": "ferry",
+   "gap_km": 3.225
+  },
+  {
+   "a": 11,
+   "b": 16,
+   "kind": "ferry",
+   "gap_km": 8.286
+  },
+  {
+   "a": 11,
+   "b": 19,
+   "kind": "ferry",
+   "gap_km": 4.785
+  },
+  {
+   "a": 11,
+   "b": 20,
+   "kind": "ferry",
+   "gap_km": 13.202
+  },
+  {
+   "a": 11,
+   "b": 26,
+   "kind": "ferry",
+   "gap_km": 19.409
+  },
+  {
+   "a": 11,
+   "b": 29,
+   "kind": "ferry",
+   "gap_km": 8.938
+  },
+  {
+   "a": 12,
+   "b": 24,
+   "kind": "ferry",
+   "gap_km": 3.276
+  },
+  {
+   "a": 12,
+   "b": 25,
+   "kind": "ferry",
+   "gap_km": 6.046
+  },
+  {
+   "a": 13,
+   "b": 21,
+   "kind": "ferry",
+   "gap_km": 13.485
+  },
+  {
+   "a": 13,
+   "b": 27,
+   "kind": "ferry",
+   "gap_km": 10.012
+  },
+  {
+   "a": 13,
+   "b": 28,
+   "kind": "ferry",
+   "gap_km": 10.422
+  },
+  {
+   "a": 13,
+   "b": 31,
+   "kind": "ferry",
+   "gap_km": 18.752
+  },
+  {
+   "a": 14,
+   "b": 16,
+   "kind": "ferry",
+   "gap_km": 9.866
+  },
+  {
+   "a": 14,
+   "b": 19,
+   "kind": "bridge",
+   "gap_km": 1.91
+  },
+  {
+   "a": 14,
+   "b": 20,
+   "kind": "ferry",
+   "gap_km": 15.862
+  },
+  {
+   "a": 14,
+   "b": 26,
+   "kind": "ferry",
+   "gap_km": 16.515
+  },
+  {
+   "a": 14,
+   "b": 29,
+   "kind": "ferry",
+   "gap_km": 15.608
+  },
+  {
+   "a": 15,
+   "b": 17,
+   "kind": "bridge",
+   "gap_km": 1.082
+  },
+  {
+   "a": 15,
+   "b": 18,
+   "kind": "ferry",
+   "gap_km": 16.86
+  },
+  {
+   "a": 15,
+   "b": 23,
+   "kind": "ferry",
+   "gap_km": 8.5
+  },
+  {
+   "a": 15,
+   "b": 30,
+   "kind": "ferry",
+   "gap_km": 19.871
+  },
+  {
+   "a": 16,
+   "b": 19,
+   "kind": "ferry",
+   "gap_km": 5.385
+  },
+  {
+   "a": 16,
+   "b": 20,
+   "kind": "ferry",
+   "gap_km": 3.041
+  },
+  {
+   "a": 16,
+   "b": 29,
+   "kind": "ferry",
+   "gap_km": 12.466
+  },
+  {
+   "a": 17,
+   "b": 23,
+   "kind": "ferry",
+   "gap_km": 5.482
+  },
+  {
+   "a": 17,
+   "b": 30,
+   "kind": "ferry",
+   "gap_km": 16.334
+  },
+  {
+   "a": 18,
+   "b": 24,
+   "kind": "ferry",
+   "gap_km": 14.076
+  },
+  {
+   "a": 19,
+   "b": 20,
+   "kind": "ferry",
+   "gap_km": 11.364
+  },
+  {
+   "a": 19,
+   "b": 29,
+   "kind": "ferry",
+   "gap_km": 15.487
+  },
+  {
+   "a": 20,
+   "b": 29,
+   "kind": "ferry",
+   "gap_km": 12.024
+  },
+  {
+   "a": 21,
+   "b": 25,
+   "kind": "ferry",
+   "gap_km": 15.593
+  },
+  {
+   "a": 21,
+   "b": 31,
+   "kind": "ferry",
+   "gap_km": 3.1
+  },
+  {
+   "a": 22,
+   "b": 26,
+   "kind": "ferry",
+   "gap_km": 11.336
+  },
+  {
+   "a": 22,
+   "b": 30,
+   "kind": "ferry",
+   "gap_km": 15.738
+  },
+  {
+   "a": 23,
+   "b": 30,
+   "kind": "ferry",
+   "gap_km": 10.03
+  },
+  {
+   "a": 24,
+   "b": 25,
+   "kind": "ferry",
+   "gap_km": 13.091
+  },
+  {
+   "a": 25,
+   "b": 31,
+   "kind": "ferry",
+   "gap_km": 19.377
+  },
+  {
+   "a": 27,
+   "b": 28,
+   "kind": "ferry",
+   "gap_km": 3.569
+  }
+ ],
+ "villages": [
+  {
+   "id": 1,
+   "island": 0,
+   "pos": [
+    -10050.0,
+    -2350.0
+   ],
+   "name": "村001",
+   "households": 271,
+   "seat": true,
+   "elev_m": 317.0
+  },
+  {
+   "id": 2,
+   "island": 0,
+   "pos": [
+    -4350.0,
+    50.0
+   ],
+   "name": "村002",
+   "households": 183,
+   "elev_m": 349.0
+  },
+  {
+   "id": 3,
+   "island": 0,
+   "pos": [
+    -7350.0,
+    -6250.0
+   ],
+   "name": "村003",
+   "households": 156,
+   "elev_m": 325.0
+  },
+  {
+   "id": 4,
+   "island": 0,
+   "pos": [
+    150.0,
+    14550.0
+   ],
+   "name": "村004",
+   "households": 127,
+   "elev_m": 294.0
+  },
+  {
+   "id": 5,
+   "island": 0,
+   "pos": [
+    3250.0,
+    4350.0
+   ],
+   "name": "村005",
+   "households": 116,
+   "elev_m": 355.0
+  },
+  {
+   "id": 6,
+   "island": 0,
+   "pos": [
+    -4050.0,
+    12150.0
+   ],
+   "name": "村006",
+   "households": 109,
+   "elev_m": 291.0
+  },
+  {
+   "id": 7,
+   "island": 0,
+   "pos": [
+    -1950.0,
+    -14950.0
+   ],
+   "name": "村007",
+   "households": 105,
+   "elev_m": 283.0
+  },
+  {
+   "id": 8,
+   "island": 0,
+   "pos": [
+    1650.0,
+    -9550.0
+   ],
+   "name": "村008",
+   "households": 101,
+   "elev_m": 293.0
+  },
+  {
+   "id": 9,
+   "island": 0,
+   "pos": [
+    -4450.0,
+    -27050.0
+   ],
+   "name": "村009",
+   "households": 100,
+   "elev_m": 266.0
+  },
+  {
+   "id": 10,
+   "island": 0,
+   "pos": [
+    -750.0,
+    19850.0
+   ],
+   "name": "村010",
+   "households": 100,
+   "elev_m": 277.0
+  },
+  {
+   "id": 11,
+   "island": 0,
+   "pos": [
+    -350.0,
+    -350.0
+   ],
+   "name": "村011",
+   "households": 98,
+   "elev_m": 362.0
+  },
+  {
+   "id": 12,
+   "island": 0,
+   "pos": [
+    13250.0,
+    2050.0
+   ],
+   "name": "村012",
+   "households": 97,
+   "elev_m": 302.0
+  },
+  {
+   "id": 13,
+   "island": 0,
+   "pos": [
+    3850.0,
+    -5850.0
+   ],
+   "name": "村013",
+   "households": 94,
+   "elev_m": 307.0
+  },
+  {
+   "id": 14,
+   "island": 0,
+   "pos": [
+    -6450.0,
+    2050.0
+   ],
+   "name": "村014",
+   "households": 90,
+   "elev_m": 338.0
+  },
+  {
+   "id": 15,
+   "island": 0,
+   "pos": [
+    -7350.0,
+    23450.0
+   ],
+   "name": "村015",
+   "households": 88,
+   "elev_m": 255.0
+  },
+  {
+   "id": 16,
+   "island": 0,
+   "pos": [
+    9450.0,
+    24350.0
+   ],
+   "name": "村016",
+   "households": 88,
+   "elev_m": 225.0
+  },
+  {
+   "id": 17,
+   "island": 0,
+   "pos": [
+    -1950.0,
+    25550.0
+   ],
+   "name": "村017",
+   "households": 87,
+   "elev_m": 258.0
+  },
+  {
+   "id": 18,
+   "island": 2,
+   "pos": [
+    33850.0,
+    450.0
+   ],
+   "name": "村018",
+   "households": 87,
+   "elev_m": 253.0
+  },
+  {
+   "id": 19,
+   "island": 0,
+   "pos": [
+    -7850.0,
+    2250.0
+   ],
+   "name": "村019",
+   "households": 86,
+   "elev_m": 320.0
+  },
+  {
+   "id": 20,
+   "island": 0,
+   "pos": [
+    10350.0,
+    18850.0
+   ],
+   "name": "村020",
+   "households": 84,
+   "elev_m": 261.0
+  },
+  {
+   "id": 21,
+   "island": 1,
+   "pos": [
+    -15150.0,
+    38950.0
+   ],
+   "name": "村021",
+   "households": 84,
+   "elev_m": 214.0
+  },
+  {
+   "id": 22,
+   "island": 0,
+   "pos": [
+    1750.0,
+    -1250.0
+   ],
+   "name": "村022",
+   "households": 79,
+   "elev_m": 353.0
+  },
+  {
+   "id": 23,
+   "island": 0,
+   "pos": [
+    -5550.0,
+    20650.0
+   ],
+   "name": "村023",
+   "households": 79,
+   "elev_m": 270.0
+  },
+  {
+   "id": 24,
+   "island": 0,
+   "pos": [
+    -4250.0,
+    -28150.0
+   ],
+   "name": "村024",
+   "households": 78,
+   "elev_m": 266.0
+  },
+  {
+   "id": 25,
+   "island": 0,
+   "pos": [
+    8250.0,
+    20450.0
+   ],
+   "name": "村025",
+   "households": 78,
+   "elev_m": 261.0
+  },
+  {
+   "id": 26,
+   "island": 0,
+   "pos": [
+    -4550.0,
+    25350.0
+   ],
+   "name": "村026",
+   "households": 78,
+   "elev_m": 264.0
+  },
+  {
+   "id": 27,
+   "island": 0,
+   "pos": [
+    -5350.0,
+    -29050.0
+   ],
+   "name": "村027",
+   "households": 76,
+   "elev_m": 259.0
+  },
+  {
+   "id": 28,
+   "island": 0,
+   "pos": [
+    150.0,
+    -17750.0
+   ],
+   "name": "村028",
+   "households": 76,
+   "elev_m": 272.0
+  },
+  {
+   "id": 29,
+   "island": 10,
+   "pos": [
+    18350.0,
+    24950.0
+   ],
+   "name": "村029",
+   "households": 76,
+   "elev_m": 156.0
+  },
+  {
+   "id": 30,
+   "island": 0,
+   "pos": [
+    12050.0,
+    -9450.0
+   ],
+   "name": "村030",
+   "households": 75,
+   "elev_m": 261.0
+  },
+  {
+   "id": 31,
+   "island": 0,
+   "pos": [
+    750.0,
+    650.0
+   ],
+   "name": "村031",
+   "households": 75,
+   "elev_m": 363.0
+  },
+  {
+   "id": 32,
+   "island": 1,
+   "pos": [
+    -20450.0,
+    41250.0
+   ],
+   "name": "村032",
+   "households": 75,
+   "elev_m": 242.0
+  },
+  {
+   "id": 33,
+   "island": 0,
+   "pos": [
+    7950.0,
+    -17550.0
+   ],
+   "name": "村033",
+   "households": 74,
+   "elev_m": 269.0
+  },
+  {
+   "id": 34,
+   "island": 0,
+   "pos": [
+    14550.0,
+    8550.0
+   ],
+   "name": "村034",
+   "households": 74,
+   "elev_m": 300.0
+  },
+  {
+   "id": 35,
+   "island": 1,
+   "pos": [
+    -11750.0,
+    40750.0
+   ],
+   "name": "村035",
+   "households": 74,
+   "elev_m": 195.0
+  },
+  {
+   "id": 36,
+   "island": 1,
+   "pos": [
+    -11150.0,
+    38250.0
+   ],
+   "name": "村036",
+   "households": 73,
+   "elev_m": 191.0
+  },
+  {
+   "id": 37,
+   "island": 0,
+   "pos": [
+    -4150.0,
+    17450.0
+   ],
+   "name": "村037",
+   "households": 72,
+   "elev_m": 277.0
+  },
+  {
+   "id": 38,
+   "island": 0,
+   "pos": [
+    -4950.0,
+    -23450.0
+   ],
+   "name": "村038",
+   "households": 71,
+   "elev_m": 263.0
+  },
+  {
+   "id": 39,
+   "island": 0,
+   "pos": [
+    6650.0,
+    15050.0
+   ],
+   "name": "村039",
+   "households": 71,
+   "elev_m": 290.0
+  },
+  {
+   "id": 40,
+   "island": 0,
+   "pos": [
+    -8450.0,
+    -16350.0
+   ],
+   "name": "村040",
+   "households": 70,
+   "elev_m": 283.0
+  },
+  {
+   "id": 41,
+   "island": 0,
+   "pos": [
+    4650.0,
+    -9250.0
+   ],
+   "name": "村041",
+   "households": 70,
+   "elev_m": 283.0
+  },
+  {
+   "id": 42,
+   "island": 0,
+   "pos": [
+    -2050.0,
+    5550.0
+   ],
+   "name": "村042",
+   "households": 70,
+   "elev_m": 342.0
+  },
+  {
+   "id": 43,
+   "island": 0,
+   "pos": [
+    -4250.0,
+    21750.0
+   ],
+   "name": "村043",
+   "households": 70,
+   "elev_m": 272.0
+  },
+  {
+   "id": 44,
+   "island": 0,
+   "pos": [
+    -7350.0,
+    4950.0
+   ],
+   "name": "村044",
+   "households": 69,
+   "elev_m": 308.0
+  },
+  {
+   "id": 45,
+   "island": 2,
+   "pos": [
+    32550.0,
+    -3050.0
+   ],
+   "name": "村045",
+   "households": 69,
+   "elev_m": 304.0
+  },
+  {
+   "id": 46,
+   "island": 0,
+   "pos": [
+    -7550.0,
+    21050.0
+   ],
+   "name": "村046",
+   "households": 68,
+   "elev_m": 262.0
+  },
+  {
+   "id": 47,
+   "island": 0,
+   "pos": [
+    -13650.0,
+    -5250.0
+   ],
+   "name": "村047",
+   "households": 67,
+   "elev_m": 302.0
+  },
+  {
+   "id": 48,
+   "island": 0,
+   "pos": [
+    14250.0,
+    -14450.0
+   ],
+   "name": "村048",
+   "households": 66,
+   "elev_m": 236.0
+  },
+  {
+   "id": 49,
+   "island": 0,
+   "pos": [
+    -12550.0,
+    -5650.0
+   ],
+   "name": "村049",
+   "households": 66,
+   "elev_m": 313.0
+  },
+  {
+   "id": 50,
+   "island": 0,
+   "pos": [
+    9850.0,
+    -950.0
+   ],
+   "name": "村050",
+   "households": 66,
+   "elev_m": 292.0
+  },
+  {
+   "id": 51,
+   "island": 0,
+   "pos": [
+    5350.0,
+    12050.0
+   ],
+   "name": "村051",
+   "households": 66,
+   "elev_m": 296.0
+  },
+  {
+   "id": 52,
+   "island": 0,
+   "pos": [
+    10250.0,
+    12150.0
+   ],
+   "name": "村052",
+   "households": 66,
+   "elev_m": 285.0
+  },
+  {
+   "id": 53,
+   "island": 0,
+   "pos": [
+    -4950.0,
+    28450.0
+   ],
+   "name": "村053",
+   "households": 66,
+   "elev_m": 251.0
+  },
+  {
+   "id": 54,
+   "island": 0,
+   "pos": [
+    11550.0,
+    -14150.0
+   ],
+   "name": "村054",
+   "households": 65,
+   "elev_m": 248.0
+  },
+  {
+   "id": 55,
+   "island": 1,
+   "pos": [
+    -16850.0,
+    43850.0
+   ],
+   "name": "村055",
+   "households": 65,
+   "elev_m": 197.0
+  },
+  {
+   "id": 56,
+   "island": 0,
+   "pos": [
+    -3250.0,
+    16050.0
+   ],
+   "name": "村056",
+   "households": 64,
+   "elev_m": 287.0
+  },
+  {
+   "id": 57,
+   "island": 0,
+   "pos": [
+    -5450.0,
+    17850.0
+   ],
+   "name": "村057",
+   "households": 64,
+   "elev_m": 271.0
+  },
+  {
+   "id": 58,
+   "island": 0,
+   "pos": [
+    9750.0,
+    23050.0
+   ],
+   "name": "村058",
+   "households": 64,
+   "elev_m": 237.0
+  },
+  {
+   "id": 59,
+   "island": 0,
+   "pos": [
+    -5850.0,
+    -15050.0
+   ],
+   "name": "村059",
+   "households": 63,
+   "elev_m": 288.0
+  },
+  {
+   "id": 60,
+   "island": 0,
+   "pos": [
+    -13850.0,
+    -8250.0
+   ],
+   "name": "村060",
+   "households": 63,
+   "elev_m": 291.0
+  },
+  {
+   "id": 61,
+   "island": 0,
+   "pos": [
+    -9850.0,
+    15750.0
+   ],
+   "name": "村061",
+   "households": 63,
+   "elev_m": 265.0
+  },
+  {
+   "id": 62,
+   "island": 0,
+   "pos": [
+    12450.0,
+    22350.0
+   ],
+   "name": "村062",
+   "households": 63,
+   "elev_m": 232.0
+  },
+  {
+   "id": 63,
+   "island": 0,
+   "pos": [
+    750.0,
+    30650.0
+   ],
+   "name": "村063",
+   "households": 63,
+   "elev_m": 232.0
+  },
+  {
+   "id": 64,
+   "island": 0,
+   "pos": [
+    -8350.0,
+    -11150.0
+   ],
+   "name": "村064",
+   "households": 62,
+   "elev_m": 285.0
+  },
+  {
+   "id": 65,
+   "island": 0,
+   "pos": [
+    -3750.0,
+    7150.0
+   ],
+   "name": "村065",
+   "households": 62,
+   "elev_m": 317.0
+  },
+  {
+   "id": 66,
+   "island": 0,
+   "pos": [
+    5150.0,
+    10850.0
+   ],
+   "name": "村066",
+   "households": 62,
+   "elev_m": 298.0
+  },
+  {
+   "id": 67,
+   "island": 0,
+   "pos": [
+    10450.0,
+    -13950.0
+   ],
+   "name": "村067",
+   "households": 61,
+   "elev_m": 260.0
+  },
+  {
+   "id": 68,
+   "island": 0,
+   "pos": [
+    -9450.0,
+    -6250.0
+   ],
+   "name": "村068",
+   "households": 61,
+   "elev_m": 311.0
+  },
+  {
+   "id": 69,
+   "island": 0,
+   "pos": [
+    17750.0,
+    1650.0
+   ],
+   "name": "村069",
+   "households": 61,
+   "elev_m": 269.0
+  },
+  {
+   "id": 70,
+   "island": 1,
+   "pos": [
+    -21850.0,
+    44750.0
+   ],
+   "name": "村070",
+   "households": 61,
+   "elev_m": 213.0
+  },
+  {
+   "id": 71,
+   "island": 0,
+   "pos": [
+    -50.0,
+    -20050.0
+   ],
+   "name": "村071",
+   "households": 60,
+   "elev_m": 271.0
+  },
+  {
+   "id": 72,
+   "island": 0,
+   "pos": [
+    -6950.0,
+    -11350.0
+   ],
+   "name": "村072",
+   "households": 59,
+   "elev_m": 292.0
+  },
+  {
+   "id": 73,
+   "island": 0,
+   "pos": [
+    -9450.0,
+    4750.0
+   ],
+   "name": "村073",
+   "households": 59,
+   "elev_m": 275.0
+  },
+  {
+   "id": 74,
+   "island": 0,
+   "pos": [
+    -11650.0,
+    5650.0
+   ],
+   "name": "村074",
+   "households": 59,
+   "elev_m": 262.0
+  },
+  {
+   "id": 75,
+   "island": 0,
+   "pos": [
+    1950.0,
+    22950.0
+   ],
+   "name": "村075",
+   "households": 59,
+   "elev_m": 270.0
+  },
+  {
+   "id": 76,
+   "island": 0,
+   "pos": [
+    12750.0,
+    -18550.0
+   ],
+   "name": "村076",
+   "households": 58,
+   "elev_m": 225.0
+  },
+  {
+   "id": 77,
+   "island": 0,
+   "pos": [
+    -2050.0,
+    -31850.0
+   ],
+   "name": "村077",
+   "households": 57,
+   "elev_m": 224.0
+  },
+  {
+   "id": 78,
+   "island": 0,
+   "pos": [
+    5550.0,
+    -15550.0
+   ],
+   "name": "村078",
+   "households": 57,
+   "elev_m": 281.0
+  },
+  {
+   "id": 79,
+   "island": 0,
+   "pos": [
+    -3450.0,
+    -13050.0
+   ],
+   "name": "村079",
+   "households": 57,
+   "elev_m": 294.0
+  },
+  {
+   "id": 80,
+   "island": 0,
+   "pos": [
+    4350.0,
+    -10950.0
+   ],
+   "name": "村080",
+   "households": 57,
+   "elev_m": 282.0
+  },
+  {
+   "id": 81,
+   "island": 0,
+   "pos": [
+    -2050.0,
+    28650.0
+   ],
+   "name": "村081",
+   "households": 56,
+   "elev_m": 253.0
+  },
+  {
+   "id": 82,
+   "island": 0,
+   "pos": [
+    -3950.0,
+    -21150.0
+   ],
+   "name": "村082",
+   "households": 55,
+   "elev_m": 266.0
+  },
+  {
+   "id": 83,
+   "island": 0,
+   "pos": [
+    -4350.0,
+    13850.0
+   ],
+   "name": "村083",
+   "households": 54,
+   "elev_m": 283.0
+  },
+  {
+   "id": 84,
+   "island": 0,
+   "pos": [
+    17350.0,
+    8550.0
+   ],
+   "name": "村084",
+   "households": 53,
+   "elev_m": 273.0
+  },
+  {
+   "id": 85,
+   "island": 0,
+   "pos": [
+    3750.0,
+    21850.0
+   ],
+   "name": "村085",
+   "households": 53,
+   "elev_m": 265.0
+  },
+  {
+   "id": 86,
+   "island": 0,
+   "pos": [
+    7350.0,
+    26550.0
+   ],
+   "name": "村086",
+   "households": 53,
+   "elev_m": 228.0
+  },
+  {
+   "id": 87,
+   "island": 0,
+   "pos": [
+    -150.0,
+    -27450.0
+   ],
+   "name": "村087",
+   "households": 52,
+   "elev_m": 258.0
+  },
+  {
+   "id": 88,
+   "island": 0,
+   "pos": [
+    13750.0,
+    6450.0
+   ],
+   "name": "村088",
+   "households": 52,
+   "elev_m": 309.0
+  },
+  {
+   "id": 89,
+   "island": 1,
+   "pos": [
+    -25350.0,
+    39850.0
+   ],
+   "name": "村089",
+   "households": 52,
+   "elev_m": 202.0
+  },
+  {
+   "id": 90,
+   "island": 6,
+   "pos": [
+    -24850.0,
+    -9250.0
+   ],
+   "name": "村090",
+   "households": 52,
+   "elev_m": 243.0
+  },
+  {
+   "id": 91,
+   "island": 0,
+   "pos": [
+    1950.0,
+    -10650.0
+   ],
+   "name": "村091",
+   "households": 51,
+   "elev_m": 288.0
+  },
+  {
+   "id": 92,
+   "island": 0,
+   "pos": [
+    8850.0,
+    3450.0
+   ],
+   "name": "村092",
+   "households": 51,
+   "elev_m": 318.0
+  },
+  {
+   "id": 93,
+   "island": 3,
+   "pos": [
+    -10850.0,
+    -44850.0
+   ],
+   "name": "村093",
+   "households": 50,
+   "elev_m": 165.0
+  },
+  {
+   "id": 94,
+   "island": 0,
+   "pos": [
+    -7850.0,
+    8250.0
+   ],
+   "name": "村094",
+   "households": 49,
+   "elev_m": 289.0
+  },
+  {
+   "id": 95,
+   "island": 0,
+   "pos": [
+    6650.0,
+    9150.0
+   ],
+   "name": "村095",
+   "households": 49,
+   "elev_m": 297.0
+  },
+  {
+   "id": 96,
+   "island": 0,
+   "pos": [
+    1450.0,
+    -21150.0
+   ],
+   "name": "村096",
+   "households": 48,
+   "elev_m": 265.0
+  },
+  {
+   "id": 97,
+   "island": 0,
+   "pos": [
+    -6750.0,
+    15150.0
+   ],
+   "name": "村097",
+   "households": 48,
+   "elev_m": 271.0
+  },
+  {
+   "id": 98,
+   "island": 0,
+   "pos": [
+    -8950.0,
+    -21650.0
+   ],
+   "name": "村098",
+   "households": 46,
+   "elev_m": 258.0
+  },
+  {
+   "id": 99,
+   "island": 0,
+   "pos": [
+    17550.0,
+    -3350.0
+   ],
+   "name": "村099",
+   "households": 46,
+   "elev_m": 232.0
+  },
+  {
+   "id": 100,
+   "island": 0,
+   "pos": [
+    20250.0,
+    3250.0
+   ],
+   "name": "村100",
+   "households": 46,
+   "elev_m": 241.0
+  },
+  {
+   "id": 101,
+   "island": 0,
+   "pos": [
+    13450.0,
+    19950.0
+   ],
+   "name": "村101",
+   "households": 46,
+   "elev_m": 232.0
+  },
+  {
+   "id": 102,
+   "island": 0,
+   "pos": [
+    -10350.0,
+    -20750.0
+   ],
+   "name": "村102",
+   "households": 45,
+   "elev_m": 254.0
+  },
+  {
+   "id": 103,
+   "island": 4,
+   "pos": [
+    -21550.0,
+    9150.0
+   ],
+   "name": "村103",
+   "households": 45,
+   "elev_m": 130.0
+  },
+  {
+   "id": 104,
+   "island": 0,
+   "pos": [
+    -10850.0,
+    -26950.0
+   ],
+   "name": "村104",
+   "households": 44,
+   "elev_m": 223.0
+  },
+  {
+   "id": 105,
+   "island": 0,
+   "pos": [
+    9850.0,
+    8650.0
+   ],
+   "name": "村105",
+   "households": 44,
+   "elev_m": 303.0
+  },
+  {
+   "id": 106,
+   "island": 0,
+   "pos": [
+    -15450.0,
+    14250.0
+   ],
+   "name": "村106",
+   "households": 44,
+   "elev_m": 222.0
+  },
+  {
+   "id": 107,
+   "island": 0,
+   "pos": [
+    -10050.0,
+    24950.0
+   ],
+   "name": "村107",
+   "households": 44,
+   "elev_m": 225.0
+  },
+  {
+   "id": 108,
+   "island": 0,
+   "pos": [
+    -750.0,
+    -4450.0
+   ],
+   "name": "村108",
+   "households": 42,
+   "elev_m": 343.0
+  },
+  {
+   "id": 109,
+   "island": 0,
+   "pos": [
+    -15150.0,
+    -1250.0
+   ],
+   "name": "村109",
+   "households": 42,
+   "elev_m": 284.0
+  },
+  {
+   "id": 110,
+   "island": 0,
+   "pos": [
+    3050.0,
+    15750.0
+   ],
+   "name": "村110",
+   "households": 42,
+   "elev_m": 290.0
+  },
+  {
+   "id": 111,
+   "island": 0,
+   "pos": [
+    2350.0,
+    17150.0
+   ],
+   "name": "村111",
+   "households": 42,
+   "elev_m": 289.0
+  },
+  {
+   "id": 112,
+   "island": 2,
+   "pos": [
+    35850.0,
+    -1050.0
+   ],
+   "name": "村112",
+   "households": 42,
+   "elev_m": 237.0
+  },
+  {
+   "id": 113,
+   "island": 0,
+   "pos": [
+    -3150.0,
+    -3150.0
+   ],
+   "name": "村113",
+   "households": 41,
+   "elev_m": 341.0
+  },
+  {
+   "id": 114,
+   "island": 0,
+   "pos": [
+    -1750.0,
+    4050.0
+   ],
+   "name": "村114",
+   "households": 40,
+   "elev_m": 354.0
+  },
+  {
+   "id": 115,
+   "island": 0,
+   "pos": [
+    -9650.0,
+    -30350.0
+   ],
+   "name": "村115",
+   "households": 39,
+   "elev_m": 228.0
+  },
+  {
+   "id": 116,
+   "island": 0,
+   "pos": [
+    9550.0,
+    -10550.0
+   ],
+   "name": "村116",
+   "households": 39,
+   "elev_m": 263.0
+  },
+  {
+   "id": 117,
+   "island": 0,
+   "pos": [
+    5850.0,
+    27050.0
+   ],
+   "name": "村117",
+   "households": 39,
+   "elev_m": 224.0
+  },
+  {
+   "id": 118,
+   "island": 0,
+   "pos": [
+    4650.0,
+    -550.0
+   ],
+   "name": "村118",
+   "households": 38,
+   "elev_m": 340.0
+  },
+  {
+   "id": 119,
+   "island": 4,
+   "pos": [
+    -23650.0,
+    11350.0
+   ],
+   "name": "村119",
+   "households": 38,
+   "elev_m": 124.0
+  },
+  {
+   "id": 120,
+   "island": 5,
+   "pos": [
+    -28450.0,
+    -1050.0
+   ],
+   "name": "村120",
+   "households": 37,
+   "elev_m": 228.0
+  },
+  {
+   "id": 121,
+   "island": 0,
+   "pos": [
+    8350.0,
+    -6150.0
+   ],
+   "name": "村121",
+   "households": 34,
+   "elev_m": 293.0
+  },
+  {
+   "id": 122,
+   "island": 0,
+   "pos": [
+    1950.0,
+    -27850.0
+   ],
+   "name": "村122",
+   "households": 32,
+   "elev_m": 242.0
+  },
+  {
+   "id": 123,
+   "island": 0,
+   "pos": [
+    2850.0,
+    -2250.0
+   ],
+   "name": "村123",
+   "households": 31,
+   "elev_m": 348.0
+  },
+  {
+   "id": 124,
+   "island": 1,
+   "pos": [
+    -15350.0,
+    30950.0
+   ],
+   "name": "村124",
+   "households": 31,
+   "elev_m": 187.0
+  },
+  {
+   "id": 125,
+   "island": 2,
+   "pos": [
+    28650.0,
+    -350.0
+   ],
+   "name": "村125",
+   "households": 31,
+   "elev_m": 272.0
+  },
+  {
+   "id": 126,
+   "island": 2,
+   "pos": [
+    35850.0,
+    -2150.0
+   ],
+   "name": "村126",
+   "households": 30,
+   "elev_m": 221.0
+  },
+  {
+   "id": 127,
+   "island": 4,
+   "pos": [
+    -22950.0,
+    3450.0
+   ],
+   "name": "村127",
+   "households": 30,
+   "elev_m": 123.0
+  },
+  {
+   "id": 128,
+   "island": 0,
+   "pos": [
+    -12650.0,
+    -850.0
+   ],
+   "name": "村128",
+   "households": 29,
+   "elev_m": 295.0
+  },
+  {
+   "id": 129,
+   "island": 0,
+   "pos": [
+    3550.0,
+    -13350.0
+   ],
+   "name": "村129",
+   "households": 28,
+   "elev_m": 280.0
+  },
+  {
+   "id": 130,
+   "island": 4,
+   "pos": [
+    -23950.0,
+    2350.0
+   ],
+   "name": "村130",
+   "households": 28,
+   "elev_m": 127.0
+  },
+  {
+   "id": 131,
+   "island": 0,
+   "pos": [
+    -17850.0,
+    -7350.0
+   ],
+   "name": "村131",
+   "households": 27,
+   "elev_m": 240.0
+  },
+  {
+   "id": 132,
+   "island": 0,
+   "pos": [
+    350.0,
+    19250.0
+   ],
+   "name": "村132",
+   "households": 27,
+   "elev_m": 288.0
+  },
+  {
+   "id": 133,
+   "island": 0,
+   "pos": [
+    4150.0,
+    -19550.0
+   ],
+   "name": "村133",
+   "households": 26,
+   "elev_m": 269.0
+  },
+  {
+   "id": 134,
+   "island": 0,
+   "pos": [
+    15350.0,
+    -6050.0
+   ],
+   "name": "村134",
+   "households": 25,
+   "elev_m": 252.0
+  },
+  {
+   "id": 135,
+   "island": 0,
+   "pos": [
+    -550.0,
+    31450.0
+   ],
+   "name": "村135",
+   "households": 24,
+   "elev_m": 236.0
+  },
+  {
+   "id": 136,
+   "island": 0,
+   "pos": [
+    6850.0,
+    -22650.0
+   ],
+   "name": "村136",
+   "households": 23,
+   "elev_m": 243.0
+  },
+  {
+   "id": 137,
+   "island": 0,
+   "pos": [
+    16350.0,
+    -7750.0
+   ],
+   "name": "村137",
+   "households": 23,
+   "elev_m": 226.0
+  },
+  {
+   "id": 138,
+   "island": 0,
+   "pos": [
+    -3050.0,
+    30150.0
+   ],
+   "name": "村138",
+   "households": 22,
+   "elev_m": 240.0
+  },
+  {
+   "id": 139,
+   "island": 0,
+   "pos": [
+    -750.0,
+    -15250.0
+   ],
+   "name": "村139",
+   "households": 21,
+   "elev_m": 282.0
+  },
+  {
+   "id": 140,
+   "island": 0,
+   "pos": [
+    12150.0,
+    -12450.0
+   ],
+   "name": "村140",
+   "households": 20,
+   "elev_m": 225.0
+  },
+  {
+   "id": 141,
+   "island": 1,
+   "pos": [
+    -26850.0,
+    39450.0
+   ],
+   "name": "村141",
+   "households": 20,
+   "elev_m": 188.0
+  },
+  {
+   "id": 142,
+   "island": 0,
+   "pos": [
+    6650.0,
+    -12650.0
+   ],
+   "name": "村142",
+   "households": 19,
+   "elev_m": 272.0
+  },
+  {
+   "id": 143,
+   "island": 0,
+   "pos": [
+    17650.0,
+    5650.0
+   ],
+   "name": "村143",
+   "households": 19,
+   "elev_m": 296.0
+  },
+  {
+   "id": 144,
+   "island": 0,
+   "pos": [
+    -2550.0,
+    -8550.0
+   ],
+   "name": "村144",
+   "households": 18,
+   "elev_m": 305.0
+  },
+  {
+   "id": 145,
+   "island": 5,
+   "pos": [
+    -29450.0,
+    -3550.0
+   ],
+   "name": "村145",
+   "households": 18,
+   "elev_m": 303.0
+  },
+  {
+   "id": 146,
+   "island": 9,
+   "pos": [
+    18850.0,
+    -26550.0
+   ],
+   "name": "村146",
+   "households": 17,
+   "elev_m": 136.0
+  },
+  {
+   "id": 147,
+   "island": 0,
+   "pos": [
+    14850.0,
+    -8350.0
+   ],
+   "name": "村147",
+   "households": 16,
+   "elev_m": 231.0
+  },
+  {
+   "id": 148,
+   "island": 0,
+   "pos": [
+    -12450.0,
+    3850.0
+   ],
+   "name": "村148",
+   "households": 16,
+   "elev_m": 243.0
+  },
+  {
+   "id": 149,
+   "island": 0,
+   "pos": [
+    7050.0,
+    -4150.0
+   ],
+   "name": "村149",
+   "households": 15,
+   "elev_m": 296.0
+  },
+  {
+   "id": 150,
+   "island": 0,
+   "pos": [
+    18750.0,
+    9550.0
+   ],
+   "name": "村150",
+   "households": 15,
+   "elev_m": 238.0
+  },
+  {
+   "id": 151,
+   "island": 3,
+   "pos": [
+    -13450.0,
+    -38850.0
+   ],
+   "name": "村151",
+   "households": 15,
+   "elev_m": 173.0
+  },
+  {
+   "id": 152,
+   "island": 0,
+   "pos": [
+    -16350.0,
+    2850.0
+   ],
+   "name": "村152",
+   "households": 14,
+   "elev_m": 231.0
+  },
+  {
+   "id": 153,
+   "island": 0,
+   "pos": [
+    15550.0,
+    15750.0
+   ],
+   "name": "村153",
+   "households": 14,
+   "elev_m": 235.0
+  },
+  {
+   "id": 154,
+   "island": 2,
+   "pos": [
+    32950.0,
+    -750.0
+   ],
+   "name": "村154",
+   "households": 14,
+   "elev_m": 255.0
+  },
+  {
+   "id": 155,
+   "island": 0,
+   "pos": [
+    -11350.0,
+    -1050.0
+   ],
+   "name": "村155",
+   "households": 13,
+   "elev_m": 304.0
+  },
+  {
+   "id": 156,
+   "island": 0,
+   "pos": [
+    -17050.0,
+    -9950.0
+   ],
+   "name": "村156",
+   "households": 12,
+   "elev_m": 239.0
+  },
+  {
+   "id": 157,
+   "island": 0,
+   "pos": [
+    -10050.0,
+    11350.0
+   ],
+   "name": "村157",
+   "households": 12,
+   "elev_m": 271.0
+  },
+  {
+   "id": 158,
+   "island": 0,
+   "pos": [
+    15450.0,
+    13150.0
+   ],
+   "name": "村158",
+   "households": 12,
+   "elev_m": 268.0
+  },
+  {
+   "id": 159,
+   "island": 0,
+   "pos": [
+    16350.0,
+    14650.0
+   ],
+   "name": "村159",
+   "households": 12,
+   "elev_m": 235.0
+  },
+  {
+   "id": 160,
+   "island": 1,
+   "pos": [
+    -23350.0,
+    34750.0
+   ],
+   "name": "村160",
+   "households": 12,
+   "elev_m": 216.0
+  },
+  {
+   "id": 161,
+   "island": 3,
+   "pos": [
+    -12550.0,
+    -37250.0
+   ],
+   "name": "村161",
+   "households": 12,
+   "elev_m": 154.0
+  },
+  {
+   "id": 162,
+   "island": 0,
+   "pos": [
+    -18050.0,
+    -4350.0
+   ],
+   "name": "村162",
+   "households": 11,
+   "elev_m": 243.0
+  },
+  {
+   "id": 163,
+   "island": 0,
+   "pos": [
+    -6450.0,
+    11250.0
+   ],
+   "name": "村163",
+   "households": 11,
+   "elev_m": 295.0
+  },
+  {
+   "id": 164,
+   "island": 0,
+   "pos": [
+    12750.0,
+    14050.0
+   ],
+   "name": "村164",
+   "households": 11,
+   "elev_m": 272.0
+  },
+  {
+   "id": 165,
+   "island": 2,
+   "pos": [
+    35250.0,
+    3850.0
+   ],
+   "name": "村165",
+   "households": 11,
+   "elev_m": 228.0
+  },
+  {
+   "id": 166,
+   "island": 0,
+   "pos": [
+    4050.0,
+    -20650.0
+   ],
+   "name": "村166",
+   "households": 10,
+   "elev_m": 264.0
+  },
+  {
+   "id": 167,
+   "island": 0,
+   "pos": [
+    13450.0,
+    250.0
+   ],
+   "name": "村167",
+   "households": 10,
+   "elev_m": 296.0
+  },
+  {
+   "id": 168,
+   "island": 0,
+   "pos": [
+    -9250.0,
+    18050.0
+   ],
+   "name": "村168",
+   "households": 10,
+   "elev_m": 250.0
+  },
+  {
+   "id": 169,
+   "island": 0,
+   "pos": [
+    6750.0,
+    28250.0
+   ],
+   "name": "村169",
+   "households": 10,
+   "elev_m": 225.0
+  },
+  {
+   "id": 170,
+   "island": 1,
+   "pos": [
+    -15650.0,
+    32650.0
+   ],
+   "name": "村170",
+   "households": 10,
+   "elev_m": 214.0
+  },
+  {
+   "id": 171,
+   "island": 8,
+   "pos": [
+    21350.0,
+    -18050.0
+   ],
+   "name": "村171",
+   "households": 10,
+   "elev_m": 235.0
+  },
+  {
+   "id": 172,
+   "island": 11,
+   "pos": [
+    30750.0,
+    -14550.0
+   ],
+   "name": "村172",
+   "households": 10,
+   "elev_m": 190.0
+  },
+  {
+   "id": 173,
+   "island": 0,
+   "pos": [
+    250.0,
+    -11850.0
+   ],
+   "name": "村173",
+   "households": 9,
+   "elev_m": 287.0
+  },
+  {
+   "id": 174,
+   "island": 0,
+   "pos": [
+    12450.0,
+    -1150.0
+   ],
+   "name": "村174",
+   "households": 9,
+   "elev_m": 281.0
+  },
+  {
+   "id": 175,
+   "island": 0,
+   "pos": [
+    -11450.0,
+    11550.0
+   ],
+   "name": "村175",
+   "households": 9,
+   "elev_m": 264.0
+  },
+  {
+   "id": 176,
+   "island": 0,
+   "pos": [
+    3450.0,
+    25250.0
+   ],
+   "name": "村176",
+   "households": 9,
+   "elev_m": 254.0
+  },
+  {
+   "id": 177,
+   "island": 0,
+   "pos": [
+    -7350.0,
+    29350.0
+   ],
+   "name": "村177",
+   "households": 9,
+   "elev_m": 236.0
+  },
+  {
+   "id": 178,
+   "island": 1,
+   "pos": [
+    -18450.0,
+    38850.0
+   ],
+   "name": "村178",
+   "households": 9,
+   "elev_m": 257.0
+  },
+  {
+   "id": 179,
+   "island": 10,
+   "pos": [
+    17050.0,
+    20050.0
+   ],
+   "name": "村179",
+   "households": 9,
+   "elev_m": 145.0
+  },
+  {
+   "id": 180,
+   "island": 0,
+   "pos": [
+    2750.0,
+    6050.0
+   ],
+   "name": "村180",
+   "households": 8,
+   "elev_m": 337.0
+  }
+ ],
+ "hamlets": [
+  {
+   "id": 1,
+   "island": 9,
+   "pos": [
+    17150.0,
+    -27950.0
+   ],
+   "name": "散户001",
+   "households": 7,
+   "elev_m": 128.0
+  },
+  {
+   "id": 2,
+   "island": 0,
+   "pos": [
+    -12450.0,
+    -4550.0
+   ],
+   "name": "散户002",
+   "households": 7,
+   "elev_m": 313.0
+  },
+  {
+   "id": 3,
+   "island": 12,
+   "pos": [
+    -21250.0,
+    18150.0
+   ],
+   "name": "散户003",
+   "households": 7,
+   "elev_m": 225.0
+  },
+  {
+   "id": 4,
+   "island": 0,
+   "pos": [
+    -12750.0,
+    -21750.0
+   ],
+   "name": "散户004",
+   "households": 6,
+   "elev_m": 227.0
+  },
+  {
+   "id": 5,
+   "island": 0,
+   "pos": [
+    -12050.0,
+    -15250.0
+   ],
+   "name": "散户005",
+   "households": 6,
+   "elev_m": 273.0
+  },
+  {
+   "id": 6,
+   "island": 0,
+   "pos": [
+    -14850.0,
+    -14950.0
+   ],
+   "name": "散户006",
+   "households": 6,
+   "elev_m": 232.0
+  },
+  {
+   "id": 7,
+   "island": 0,
+   "pos": [
+    -950.0,
+    -8250.0
+   ],
+   "name": "散户007",
+   "households": 6,
+   "elev_m": 305.0
+  },
+  {
+   "id": 8,
+   "island": 0,
+   "pos": [
+    -14550.0,
+    11350.0
+   ],
+   "name": "散户008",
+   "households": 6,
+   "elev_m": 252.0
+  },
+  {
+   "id": 9,
+   "island": 3,
+   "pos": [
+    -13550.0,
+    -44250.0
+   ],
+   "name": "散户009",
+   "households": 5,
+   "elev_m": 191.0
+  },
+  {
+   "id": 10,
+   "island": 3,
+   "pos": [
+    -11850.0,
+    -41650.0
+   ],
+   "name": "散户010",
+   "households": 5,
+   "elev_m": 204.0
+  },
+  {
+   "id": 11,
+   "island": 0,
+   "pos": [
+    -12550.0,
+    -13650.0
+   ],
+   "name": "散户011",
+   "households": 5,
+   "elev_m": 270.0
+  },
+  {
+   "id": 12,
+   "island": 0,
+   "pos": [
+    10950.0,
+    -3050.0
+   ],
+   "name": "散户012",
+   "households": 5,
+   "elev_m": 285.0
+  },
+  {
+   "id": 13,
+   "island": 0,
+   "pos": [
+    7050.0,
+    5950.0
+   ],
+   "name": "散户013",
+   "households": 5,
+   "elev_m": 331.0
+  },
+  {
+   "id": 14,
+   "island": 0,
+   "pos": [
+    1050.0,
+    7450.0
+   ],
+   "name": "散户014",
+   "households": 5,
+   "elev_m": 338.0
+  },
+  {
+   "id": 15,
+   "island": 0,
+   "pos": [
+    14550.0,
+    17650.0
+   ],
+   "name": "散户015",
+   "households": 5,
+   "elev_m": 225.0
+  },
+  {
+   "id": 16,
+   "island": 1,
+   "pos": [
+    -25250.0,
+    42850.0
+   ],
+   "name": "散户016",
+   "households": 5,
+   "elev_m": 208.0
+  },
+  {
+   "id": 17,
+   "island": 0,
+   "pos": [
+    -10350.0,
+    -28650.0
+   ],
+   "name": "散户017",
+   "households": 4,
+   "elev_m": 228.0
+  },
+  {
+   "id": 18,
+   "island": 0,
+   "pos": [
+    2750.0,
+    -24250.0
+   ],
+   "name": "散户018",
+   "households": 4,
+   "elev_m": 249.0
+  },
+  {
+   "id": 19,
+   "island": 0,
+   "pos": [
+    11850.0,
+    -17550.0
+   ],
+   "name": "散户019",
+   "households": 4,
+   "elev_m": 238.0
+  },
+  {
+   "id": 20,
+   "island": 0,
+   "pos": [
+    -1150.0,
+    -10750.0
+   ],
+   "name": "散户020",
+   "households": 4,
+   "elev_m": 299.0
+  },
+  {
+   "id": 21,
+   "island": 0,
+   "pos": [
+    17450.0,
+    -4150.0
+   ],
+   "name": "散户021",
+   "households": 4,
+   "elev_m": 224.0
+  },
+  {
+   "id": 22,
+   "island": 5,
+   "pos": [
+    -30050.0,
+    -3450.0
+   ],
+   "name": "散户022",
+   "households": 4,
+   "elev_m": 292.0
+  },
+  {
+   "id": 23,
+   "island": 0,
+   "pos": [
+    13050.0,
+    750.0
+   ],
+   "name": "散户023",
+   "households": 4,
+   "elev_m": 296.0
+  },
+  {
+   "id": 24,
+   "island": 0,
+   "pos": [
+    15150.0,
+    3450.0
+   ],
+   "name": "散户024",
+   "households": 4,
+   "elev_m": 306.0
+  },
+  {
+   "id": 25,
+   "island": 0,
+   "pos": [
+    18750.0,
+    9550.0
+   ],
+   "name": "散户025",
+   "households": 4,
+   "elev_m": 238.0
+  },
+  {
+   "id": 26,
+   "island": 0,
+   "pos": [
+    8750.0,
+    16750.0
+   ],
+   "name": "散户026",
+   "households": 4,
+   "elev_m": 283.0
+  },
+  {
+   "id": 27,
+   "island": 1,
+   "pos": [
+    -15950.0,
+    40750.0
+   ],
+   "name": "散户027",
+   "households": 4,
+   "elev_m": 215.0
+  },
+  {
+   "id": 28,
+   "island": 1,
+   "pos": [
+    -16150.0,
+    41550.0
+   ],
+   "name": "散户028",
+   "households": 4,
+   "elev_m": 216.0
+  },
+  {
+   "id": 29,
+   "island": 0,
+   "pos": [
+    -12650.0,
+    -14050.0
+   ],
+   "name": "散户029",
+   "households": 3,
+   "elev_m": 266.0
+  },
+  {
+   "id": 30,
+   "island": 0,
+   "pos": [
+    -14650.0,
+    -13950.0
+   ],
+   "name": "散户030",
+   "households": 3,
+   "elev_m": 233.0
+  },
+  {
+   "id": 31,
+   "island": 6,
+   "pos": [
+    -22550.0,
+    -11150.0
+   ],
+   "name": "散户031",
+   "households": 3,
+   "elev_m": 257.0
+  },
+  {
+   "id": 32,
+   "island": 6,
+   "pos": [
+    -23750.0,
+    -10550.0
+   ],
+   "name": "散户032",
+   "households": 3,
+   "elev_m": 276.0
+  },
+  {
+   "id": 33,
+   "island": 0,
+   "pos": [
+    -50.0,
+    -9750.0
+   ],
+   "name": "散户033",
+   "households": 3,
+   "elev_m": 295.0
+  },
+  {
+   "id": 34,
+   "island": 0,
+   "pos": [
+    -1050.0,
+    -8650.0
+   ],
+   "name": "散户034",
+   "households": 3,
+   "elev_m": 303.0
+  },
+  {
+   "id": 35,
+   "island": 0,
+   "pos": [
+    -16650.0,
+    -7950.0
+   ],
+   "name": "散户035",
+   "households": 3,
+   "elev_m": 270.0
+  },
+  {
+   "id": 36,
+   "island": 2,
+   "pos": [
+    34950.0,
+    -3750.0
+   ],
+   "name": "散户036",
+   "households": 3,
+   "elev_m": 254.0
+  },
+  {
+   "id": 37,
+   "island": 0,
+   "pos": [
+    7350.0,
+    -3750.0
+   ],
+   "name": "散户037",
+   "households": 3,
+   "elev_m": 299.0
+  },
+  {
+   "id": 38,
+   "island": 0,
+   "pos": [
+    -13850.0,
+    -3450.0
+   ],
+   "name": "散户038",
+   "households": 3,
+   "elev_m": 310.0
+  },
+  {
+   "id": 39,
+   "island": 2,
+   "pos": [
+    27150.0,
+    -2750.0
+   ],
+   "name": "散户039",
+   "households": 3,
+   "elev_m": 245.0
+  },
+  {
+   "id": 40,
+   "island": 0,
+   "pos": [
+    150.0,
+    -2150.0
+   ],
+   "name": "散户040",
+   "households": 3,
+   "elev_m": 357.0
+  },
+  {
+   "id": 41,
+   "island": 0,
+   "pos": [
+    5750.0,
+    -2150.0
+   ],
+   "name": "散户041",
+   "households": 3,
+   "elev_m": 315.0
+  },
+  {
+   "id": 42,
+   "island": 18,
+   "pos": [
+    -40950.0,
+    -350.0
+   ],
+   "name": "散户042",
+   "households": 3,
+   "elev_m": 133.0
+  },
+  {
+   "id": 43,
+   "island": 0,
+   "pos": [
+    5050.0,
+    350.0
+   ],
+   "name": "散户043",
+   "households": 3,
+   "elev_m": 352.0
+  },
+  {
+   "id": 44,
+   "island": 2,
+   "pos": [
+    35450.0,
+    4150.0
+   ],
+   "name": "散户044",
+   "households": 3,
+   "elev_m": 218.0
+  },
+  {
+   "id": 45,
+   "island": 2,
+   "pos": [
+    30550.0,
+    3850.0
+   ],
+   "name": "散户045",
+   "households": 3,
+   "elev_m": 230.0
+  },
+  {
+   "id": 46,
+   "island": 0,
+   "pos": [
+    3750.0,
+    9650.0
+   ],
+   "name": "散户046",
+   "households": 3,
+   "elev_m": 305.0
+  },
+  {
+   "id": 47,
+   "island": 1,
+   "pos": [
+    -15350.0,
+    35650.0
+   ],
+   "name": "散户047",
+   "households": 3,
+   "elev_m": 238.0
+  },
+  {
+   "id": 48,
+   "island": 1,
+   "pos": [
+    -25050.0,
+    42550.0
+   ],
+   "name": "散户048",
+   "households": 3,
+   "elev_m": 207.0
+  },
+  {
+   "id": 49,
+   "island": 27,
+   "pos": [
+    -34950.0,
+    49950.0
+   ],
+   "name": "散户049",
+   "households": 3,
+   "elev_m": 260.0
+  },
+  {
+   "id": 50,
+   "island": 3,
+   "pos": [
+    -15450.0,
+    -44050.0
+   ],
+   "name": "散户050",
+   "households": 2,
+   "elev_m": 178.0
+  },
+  {
+   "id": 51,
+   "island": 17,
+   "pos": [
+    -26050.0,
+    -18250.0
+   ],
+   "name": "散户051",
+   "households": 2,
+   "elev_m": 224.0
+  },
+  {
+   "id": 52,
+   "island": 0,
+   "pos": [
+    -13750.0,
+    -14150.0
+   ],
+   "name": "散户052",
+   "households": 2,
+   "elev_m": 249.0
+  },
+  {
+   "id": 53,
+   "island": 0,
+   "pos": [
+    2250.0,
+    -13050.0
+   ],
+   "name": "散户053",
+   "households": 2,
+   "elev_m": 283.0
+  },
+  {
+   "id": 54,
+   "island": 0,
+   "pos": [
+    6750.0,
+    -12550.0
+   ],
+   "name": "散户054",
+   "households": 2,
+   "elev_m": 272.0
+  },
+  {
+   "id": 55,
+   "island": 0,
+   "pos": [
+    -16350.0,
+    -11150.0
+   ],
+   "name": "散户055",
+   "households": 2,
+   "elev_m": 232.0
+  },
+  {
+   "id": 56,
+   "island": 0,
+   "pos": [
+    -15950.0,
+    -10550.0
+   ],
+   "name": "散户056",
+   "households": 2,
+   "elev_m": 247.0
+  },
+  {
+   "id": 57,
+   "island": 2,
+   "pos": [
+    30350.0,
+    -6650.0
+   ],
+   "name": "散户057",
+   "households": 2,
+   "elev_m": 235.0
+  },
+  {
+   "id": 58,
+   "island": 5,
+   "pos": [
+    -27650.0,
+    -5350.0
+   ],
+   "name": "散户058",
+   "households": 2,
+   "elev_m": 251.0
+  },
+  {
+   "id": 59,
+   "island": 0,
+   "pos": [
+    4850.0,
+    -4450.0
+   ],
+   "name": "散户059",
+   "households": 2,
+   "elev_m": 311.0
+  },
+  {
+   "id": 60,
+   "island": 5,
+   "pos": [
+    -31050.0,
+    -4450.0
+   ],
+   "name": "散户060",
+   "households": 2,
+   "elev_m": 254.0
+  },
+  {
+   "id": 61,
+   "island": 0,
+   "pos": [
+    11250.0,
+    -3850.0
+   ],
+   "name": "散户061",
+   "households": 2,
+   "elev_m": 286.0
+  },
+  {
+   "id": 62,
+   "island": 2,
+   "pos": [
+    35450.0,
+    -3750.0
+   ],
+   "name": "散户062",
+   "households": 2,
+   "elev_m": 233.0
+  },
+  {
+   "id": 63,
+   "island": 5,
+   "pos": [
+    -28750.0,
+    -2450.0
+   ],
+   "name": "散户063",
+   "households": 2,
+   "elev_m": 263.0
+  },
+  {
+   "id": 64,
+   "island": 0,
+   "pos": [
+    1850.0,
+    -1250.0
+   ],
+   "name": "散户064",
+   "households": 2,
+   "elev_m": 353.0
+  },
+  {
+   "id": 65,
+   "island": 0,
+   "pos": [
+    8050.0,
+    1950.0
+   ],
+   "name": "散户065",
+   "households": 2,
+   "elev_m": 327.0
+  },
+  {
+   "id": 66,
+   "island": 0,
+   "pos": [
+    18850.0,
+    3450.0
+   ],
+   "name": "散户066",
+   "households": 2,
+   "elev_m": 266.0
+  },
+  {
+   "id": 67,
+   "island": 4,
+   "pos": [
+    -24350.0,
+    4550.0
+   ],
+   "name": "散户067",
+   "households": 2,
+   "elev_m": 139.0
+  },
+  {
+   "id": 68,
+   "island": 0,
+   "pos": [
+    3750.0,
+    5550.0
+   ],
+   "name": "散户068",
+   "households": 2,
+   "elev_m": 338.0
+  },
+  {
+   "id": 69,
+   "island": 4,
+   "pos": [
+    -21750.0,
+    7550.0
+   ],
+   "name": "散户069",
+   "households": 2,
+   "elev_m": 142.0
+  },
+  {
+   "id": 70,
+   "island": 0,
+   "pos": [
+    14350.0,
+    8950.0
+   ],
+   "name": "散户070",
+   "households": 2,
+   "elev_m": 298.0
+  },
+  {
+   "id": 71,
+   "island": 0,
+   "pos": [
+    -5050.0,
+    10150.0
+   ],
+   "name": "散户071",
+   "households": 2,
+   "elev_m": 305.0
+  },
+  {
+   "id": 72,
+   "island": 0,
+   "pos": [
+    -10150.0,
+    11350.0
+   ],
+   "name": "散户072",
+   "households": 2,
+   "elev_m": 271.0
+  },
+  {
+   "id": 73,
+   "island": 0,
+   "pos": [
+    13050.0,
+    12650.0
+   ],
+   "name": "散户073",
+   "households": 2,
+   "elev_m": 283.0
+  },
+  {
+   "id": 74,
+   "island": 0,
+   "pos": [
+    12750.0,
+    13850.0
+   ],
+   "name": "散户074",
+   "households": 2,
+   "elev_m": 270.0
+  },
+  {
+   "id": 75,
+   "island": 0,
+   "pos": [
+    12450.0,
+    21950.0
+   ],
+   "name": "散户075",
+   "households": 2,
+   "elev_m": 226.0
+  },
+  {
+   "id": 76,
+   "island": 0,
+   "pos": [
+    7350.0,
+    24650.0
+   ],
+   "name": "散户076",
+   "households": 2,
+   "elev_m": 240.0
+  },
+  {
+   "id": 77,
+   "island": 0,
+   "pos": [
+    -3150.0,
+    29750.0
+   ],
+   "name": "散户077",
+   "households": 2,
+   "elev_m": 230.0
+  },
+  {
+   "id": 78,
+   "island": 1,
+   "pos": [
+    -16850.0,
+    34150.0
+   ],
+   "name": "散户078",
+   "households": 2,
+   "elev_m": 229.0
+  },
+  {
+   "id": 79,
+   "island": 1,
+   "pos": [
+    -25650.0,
+    40250.0
+   ],
+   "name": "散户079",
+   "households": 2,
+   "elev_m": 200.0
+  },
+  {
+   "id": 80,
+   "island": 13,
+   "pos": [
+    -22650.0,
+    49550.0
+   ],
+   "name": "散户080",
+   "households": 2,
+   "elev_m": 287.0
+  },
+  {
+   "id": 81,
+   "island": 3,
+   "pos": [
+    -13550.0,
+    -45450.0
+   ],
+   "name": "散户081",
+   "households": 1,
+   "elev_m": 157.0
+  },
+  {
+   "id": 82,
+   "island": 3,
+   "pos": [
+    -13950.0,
+    -44950.0
+   ],
+   "name": "散户082",
+   "households": 1,
+   "elev_m": 173.0
+  },
+  {
+   "id": 83,
+   "island": 3,
+   "pos": [
+    -15350.0,
+    -44250.0
+   ],
+   "name": "散户083",
+   "households": 1,
+   "elev_m": 181.0
+  },
+  {
+   "id": 84,
+   "island": 3,
+   "pos": [
+    -13950.0,
+    -44350.0
+   ],
+   "name": "散户084",
+   "households": 1,
+   "elev_m": 188.0
+  },
+  {
+   "id": 85,
+   "island": 3,
+   "pos": [
+    -12950.0,
+    -43750.0
+   ],
+   "name": "散户085",
+   "households": 1,
+   "elev_m": 197.0
+  },
+  {
+   "id": 86,
+   "island": 0,
+   "pos": [
+    4650.0,
+    -27850.0
+   ],
+   "name": "散户086",
+   "households": 1,
+   "elev_m": 228.0
+  },
+  {
+   "id": 87,
+   "island": 0,
+   "pos": [
+    -9650.0,
+    -27350.0
+   ],
+   "name": "散户087",
+   "households": 1,
+   "elev_m": 247.0
+  },
+  {
+   "id": 88,
+   "island": 0,
+   "pos": [
+    -5650.0,
+    -27150.0
+   ],
+   "name": "散户088",
+   "households": 1,
+   "elev_m": 267.0
+  },
+  {
+   "id": 89,
+   "island": 0,
+   "pos": [
+    -3350.0,
+    -20850.0
+   ],
+   "name": "散户089",
+   "households": 1,
+   "elev_m": 267.0
+  },
+  {
+   "id": 90,
+   "island": 8,
+   "pos": [
+    19250.0,
+    -20750.0
+   ],
+   "name": "散户090",
+   "households": 1,
+   "elev_m": 210.0
+  },
+  {
+   "id": 91,
+   "island": 0,
+   "pos": [
+    5250.0,
+    -20150.0
+   ],
+   "name": "散户091",
+   "households": 1,
+   "elev_m": 263.0
+  },
+  {
+   "id": 92,
+   "island": 8,
+   "pos": [
+    20750.0,
+    -19450.0
+   ],
+   "name": "散户092",
+   "households": 1,
+   "elev_m": 277.0
+  },
+  {
+   "id": 93,
+   "island": 8,
+   "pos": [
+    21050.0,
+    -18450.0
+   ],
+   "name": "散户093",
+   "households": 1,
+   "elev_m": 244.0
+  },
+  {
+   "id": 94,
+   "island": 8,
+   "pos": [
+    23450.0,
+    -18650.0
+   ],
+   "name": "散户094",
+   "households": 1,
+   "elev_m": 216.0
+  },
+  {
+   "id": 95,
+   "island": 0,
+   "pos": [
+    13250.0,
+    -18650.0
+   ],
+   "name": "散户095",
+   "households": 1,
+   "elev_m": 228.0
+  },
+  {
+   "id": 96,
+   "island": 17,
+   "pos": [
+    -25050.0,
+    -17450.0
+   ],
+   "name": "散户096",
+   "households": 1,
+   "elev_m": 215.0
+  },
+  {
+   "id": 97,
+   "island": 0,
+   "pos": [
+    -8450.0,
+    -15950.0
+   ],
+   "name": "散户097",
+   "households": 1,
+   "elev_m": 285.0
+  },
+  {
+   "id": 98,
+   "island": 0,
+   "pos": [
+    -3450.0,
+    -15550.0
+   ],
+   "name": "散户098",
+   "households": 1,
+   "elev_m": 277.0
+  },
+  {
+   "id": 99,
+   "island": 11,
+   "pos": [
+    30050.0,
+    -14850.0
+   ],
+   "name": "散户099",
+   "households": 1,
+   "elev_m": 204.0
+  },
+  {
+   "id": 100,
+   "island": 0,
+   "pos": [
+    -13450.0,
+    -14550.0
+   ],
+   "name": "散户100",
+   "households": 1,
+   "elev_m": 261.0
+  },
+  {
+   "id": 101,
+   "island": 6,
+   "pos": [
+    -22750.0,
+    -14250.0
+   ],
+   "name": "散户101",
+   "households": 1,
+   "elev_m": 241.0
+  },
+  {
+   "id": 102,
+   "island": 0,
+   "pos": [
+    -9350.0,
+    -14450.0
+   ],
+   "name": "散户102",
+   "households": 1,
+   "elev_m": 286.0
+  },
+  {
+   "id": 103,
+   "island": 11,
+   "pos": [
+    30650.0,
+    -13450.0
+   ],
+   "name": "散户103",
+   "households": 1,
+   "elev_m": 210.0
+  },
+  {
+   "id": 104,
+   "island": 0,
+   "pos": [
+    -15150.0,
+    -13150.0
+   ],
+   "name": "散户104",
+   "households": 1,
+   "elev_m": 222.0
+  },
+  {
+   "id": 105,
+   "island": 11,
+   "pos": [
+    29250.0,
+    -12850.0
+   ],
+   "name": "散户105",
+   "households": 1,
+   "elev_m": 241.0
+  },
+  {
+   "id": 106,
+   "island": 0,
+   "pos": [
+    10750.0,
+    -12250.0
+   ],
+   "name": "散户106",
+   "households": 1,
+   "elev_m": 238.0
+  },
+  {
+   "id": 107,
+   "island": 0,
+   "pos": [
+    -2950.0,
+    -11150.0
+   ],
+   "name": "散户107",
+   "households": 1,
+   "elev_m": 300.0
+  },
+  {
+   "id": 108,
+   "island": 6,
+   "pos": [
+    -22950.0,
+    -9950.0
+   ],
+   "name": "散户108",
+   "households": 1,
+   "elev_m": 248.0
+  },
+  {
+   "id": 109,
+   "island": 2,
+   "pos": [
+    29950.0,
+    -7350.0
+   ],
+   "name": "散户109",
+   "households": 1,
+   "elev_m": 222.0
+  },
+  {
+   "id": 110,
+   "island": 2,
+   "pos": [
+    30250.0,
+    -7250.0
+   ],
+   "name": "散户110",
+   "households": 1,
+   "elev_m": 219.0
+  },
+  {
+   "id": 111,
+   "island": 2,
+   "pos": [
+    32150.0,
+    -7150.0
+   ],
+   "name": "散户111",
+   "households": 1,
+   "elev_m": 227.0
+  },
+  {
+   "id": 112,
+   "island": 2,
+   "pos": [
+    28950.0,
+    -6950.0
+   ],
+   "name": "散户112",
+   "households": 1,
+   "elev_m": 232.0
+  },
+  {
+   "id": 113,
+   "island": 0,
+   "pos": [
+    -18150.0,
+    -7050.0
+   ],
+   "name": "散户113",
+   "households": 1,
+   "elev_m": 239.0
+  },
+  {
+   "id": 114,
+   "island": 2,
+   "pos": [
+    29650.0,
+    -6850.0
+   ],
+   "name": "散户114",
+   "households": 1,
+   "elev_m": 236.0
+  },
+  {
+   "id": 115,
+   "island": 0,
+   "pos": [
+    6650.0,
+    -6450.0
+   ],
+   "name": "散户115",
+   "households": 1,
+   "elev_m": 293.0
+  },
+  {
+   "id": 116,
+   "island": 0,
+   "pos": [
+    -3450.0,
+    -6250.0
+   ],
+   "name": "散户116",
+   "households": 1,
+   "elev_m": 325.0
+  },
+  {
+   "id": 117,
+   "island": 0,
+   "pos": [
+    11450.0,
+    -6150.0
+   ],
+   "name": "散户117",
+   "households": 1,
+   "elev_m": 276.0
+  },
+  {
+   "id": 118,
+   "island": 0,
+   "pos": [
+    11250.0,
+    -6050.0
+   ],
+   "name": "散户118",
+   "households": 1,
+   "elev_m": 279.0
+  },
+  {
+   "id": 119,
+   "island": 5,
+   "pos": [
+    -27050.0,
+    -5950.0
+   ],
+   "name": "散户119",
+   "households": 1,
+   "elev_m": 234.0
+  },
+  {
+   "id": 120,
+   "island": 5,
+   "pos": [
+    -28350.0,
+    -5350.0
+   ],
+   "name": "散户120",
+   "households": 1,
+   "elev_m": 251.0
+  },
+  {
+   "id": 121,
+   "island": 5,
+   "pos": [
+    -26950.0,
+    -5050.0
+   ],
+   "name": "散户121",
+   "households": 1,
+   "elev_m": 255.0
+  },
+  {
+   "id": 122,
+   "island": 5,
+   "pos": [
+    -28150.0,
+    -4950.0
+   ],
+   "name": "散户122",
+   "households": 1,
+   "elev_m": 260.0
+  },
+  {
+   "id": 123,
+   "island": 5,
+   "pos": [
+    -26750.0,
+    -4750.0
+   ],
+   "name": "散户123",
+   "households": 1,
+   "elev_m": 254.0
+  },
+  {
+   "id": 124,
+   "island": 2,
+   "pos": [
+    35150.0,
+    -4450.0
+   ],
+   "name": "散户124",
+   "households": 1,
+   "elev_m": 242.0
+  },
+  {
+   "id": 125,
+   "island": 5,
+   "pos": [
+    -30250.0,
+    -3950.0
+   ],
+   "name": "散户125",
+   "households": 1,
+   "elev_m": 281.0
+  },
+  {
+   "id": 126,
+   "island": 0,
+   "pos": [
+    -13550.0,
+    -3950.0
+   ],
+   "name": "散户126",
+   "households": 1,
+   "elev_m": 309.0
+  },
+  {
+   "id": 127,
+   "island": 2,
+   "pos": [
+    32250.0,
+    -3850.0
+   ],
+   "name": "散户127",
+   "households": 1,
+   "elev_m": 312.0
+  },
+  {
+   "id": 128,
+   "island": 0,
+   "pos": [
+    10750.0,
+    -3050.0
+   ],
+   "name": "散户128",
+   "households": 1,
+   "elev_m": 285.0
+  },
+  {
+   "id": 129,
+   "island": 2,
+   "pos": [
+    35150.0,
+    -3250.0
+   ],
+   "name": "散户129",
+   "households": 1,
+   "elev_m": 255.0
+  },
+  {
+   "id": 130,
+   "island": 0,
+   "pos": [
+    -4350.0,
+    -2550.0
+   ],
+   "name": "散户130",
+   "households": 1,
+   "elev_m": 337.0
+  },
+  {
+   "id": 131,
+   "island": 2,
+   "pos": [
+    32050.0,
+    -2350.0
+   ],
+   "name": "散户131",
+   "households": 1,
+   "elev_m": 307.0
+  },
+  {
+   "id": 132,
+   "island": 2,
+   "pos": [
+    36050.0,
+    -1850.0
+   ],
+   "name": "散户132",
+   "households": 1,
+   "elev_m": 224.0
+  },
+  {
+   "id": 133,
+   "island": 16,
+   "pos": [
+    24250.0,
+    -1650.0
+   ],
+   "name": "散户133",
+   "households": 1,
+   "elev_m": 114.0
+  },
+  {
+   "id": 134,
+   "island": 2,
+   "pos": [
+    28850.0,
+    -1750.0
+   ],
+   "name": "散户134",
+   "households": 1,
+   "elev_m": 274.0
+  },
+  {
+   "id": 135,
+   "island": 2,
+   "pos": [
+    29650.0,
+    -1350.0
+   ],
+   "name": "散户135",
+   "households": 1,
+   "elev_m": 282.0
+  },
+  {
+   "id": 136,
+   "island": 5,
+   "pos": [
+    -28150.0,
+    -850.0
+   ],
+   "name": "散户136",
+   "households": 1,
+   "elev_m": 236.0
+  },
+  {
+   "id": 137,
+   "island": 5,
+   "pos": [
+    -28150.0,
+    -850.0
+   ],
+   "name": "散户137",
+   "households": 1,
+   "elev_m": 236.0
+  },
+  {
+   "id": 138,
+   "island": 2,
+   "pos": [
+    31250.0,
+    -150.0
+   ],
+   "name": "散户138",
+   "households": 1,
+   "elev_m": 262.0
+  },
+  {
+   "id": 139,
+   "island": 0,
+   "pos": [
+    17150.0,
+    150.0
+   ],
+   "name": "散户139",
+   "households": 1,
+   "elev_m": 274.0
+  },
+  {
+   "id": 140,
+   "island": 0,
+   "pos": [
+    16450.0,
+    450.0
+   ],
+   "name": "散户140",
+   "households": 1,
+   "elev_m": 282.0
+  },
+  {
+   "id": 141,
+   "island": 4,
+   "pos": [
+    -25350.0,
+    2050.0
+   ],
+   "name": "散户141",
+   "households": 1,
+   "elev_m": 122.0
+  },
+  {
+   "id": 142,
+   "island": 4,
+   "pos": [
+    -25850.0,
+    2550.0
+   ],
+   "name": "散户142",
+   "households": 1,
+   "elev_m": 130.0
+  },
+  {
+   "id": 143,
+   "island": 0,
+   "pos": [
+    8250.0,
+    2650.0
+   ],
+   "name": "散户143",
+   "households": 1,
+   "elev_m": 320.0
+  },
+  {
+   "id": 144,
+   "island": 0,
+   "pos": [
+    -13650.0,
+    3950.0
+   ],
+   "name": "散户144",
+   "households": 1,
+   "elev_m": 231.0
+  },
+  {
+   "id": 145,
+   "island": 0,
+   "pos": [
+    20150.0,
+    4050.0
+   ],
+   "name": "散户145",
+   "households": 1,
+   "elev_m": 225.0
+  },
+  {
+   "id": 146,
+   "island": 2,
+   "pos": [
+    30350.0,
+    4250.0
+   ],
+   "name": "散户146",
+   "households": 1,
+   "elev_m": 223.0
+  },
+  {
+   "id": 147,
+   "island": 0,
+   "pos": [
+    10450.0,
+    4650.0
+   ],
+   "name": "散户147",
+   "households": 1,
+   "elev_m": 323.0
+  },
+  {
+   "id": 148,
+   "island": 0,
+   "pos": [
+    -12250.0,
+    4550.0
+   ],
+   "name": "散户148",
+   "households": 1,
+   "elev_m": 245.0
+  },
+  {
+   "id": 149,
+   "island": 0,
+   "pos": [
+    -6950.0,
+    4750.0
+   ],
+   "name": "散户149",
+   "households": 1,
+   "elev_m": 314.0
+  },
+  {
+   "id": 150,
+   "island": 0,
+   "pos": [
+    13950.0,
+    6450.0
+   ],
+   "name": "散户150",
+   "households": 1,
+   "elev_m": 309.0
+  },
+  {
+   "id": 151,
+   "island": 0,
+   "pos": [
+    -5950.0,
+    6550.0
+   ],
+   "name": "散户151",
+   "households": 1,
+   "elev_m": 319.0
+  },
+  {
+   "id": 152,
+   "island": 4,
+   "pos": [
+    -21350.0,
+    8750.0
+   ],
+   "name": "散户152",
+   "households": 1,
+   "elev_m": 125.0
+  },
+  {
+   "id": 153,
+   "island": 4,
+   "pos": [
+    -21350.0,
+    8750.0
+   ],
+   "name": "散户153",
+   "households": 1,
+   "elev_m": 125.0
+  },
+  {
+   "id": 154,
+   "island": 4,
+   "pos": [
+    -22450.0,
+    8850.0
+   ],
+   "name": "散户154",
+   "households": 1,
+   "elev_m": 152.0
+  },
+  {
+   "id": 155,
+   "island": 0,
+   "pos": [
+    -6250.0,
+    9250.0
+   ],
+   "name": "散户155",
+   "households": 1,
+   "elev_m": 309.0
+  },
+  {
+   "id": 156,
+   "island": 0,
+   "pos": [
+    -5650.0,
+    11750.0
+   ],
+   "name": "散户156",
+   "households": 1,
+   "elev_m": 298.0
+  },
+  {
+   "id": 157,
+   "island": 0,
+   "pos": [
+    17850.0,
+    11950.0
+   ],
+   "name": "散户157",
+   "households": 1,
+   "elev_m": 234.0
+  },
+  {
+   "id": 158,
+   "island": 0,
+   "pos": [
+    -4350.0,
+    13350.0
+   ],
+   "name": "散户158",
+   "households": 1,
+   "elev_m": 285.0
+  },
+  {
+   "id": 159,
+   "island": 0,
+   "pos": [
+    10550.0,
+    13150.0
+   ],
+   "name": "散户159",
+   "households": 1,
+   "elev_m": 287.0
+  },
+  {
+   "id": 160,
+   "island": 24,
+   "pos": [
+    -29550.0,
+    13550.0
+   ],
+   "name": "散户160",
+   "households": 1,
+   "elev_m": 197.0
+  },
+  {
+   "id": 161,
+   "island": 0,
+   "pos": [
+    -14150.0,
+    13950.0
+   ],
+   "name": "散户161",
+   "households": 1,
+   "elev_m": 228.0
+  },
+  {
+   "id": 162,
+   "island": 0,
+   "pos": [
+    6050.0,
+    16450.0
+   ],
+   "name": "散户162",
+   "households": 1,
+   "elev_m": 287.0
+  },
+  {
+   "id": 163,
+   "island": 12,
+   "pos": [
+    -21850.0,
+    17950.0
+   ],
+   "name": "散户163",
+   "households": 1,
+   "elev_m": 239.0
+  },
+  {
+   "id": 164,
+   "island": 0,
+   "pos": [
+    -9350.0,
+    19850.0
+   ],
+   "name": "散户164",
+   "households": 1,
+   "elev_m": 256.0
+  },
+  {
+   "id": 165,
+   "island": 10,
+   "pos": [
+    18350.0,
+    20650.0
+   ],
+   "name": "散户165",
+   "households": 1,
+   "elev_m": 149.0
+  },
+  {
+   "id": 166,
+   "island": 0,
+   "pos": [
+    3750.0,
+    21650.0
+   ],
+   "name": "散户166",
+   "households": 1,
+   "elev_m": 266.0
+  },
+  {
+   "id": 167,
+   "island": 0,
+   "pos": [
+    11650.0,
+    21350.0
+   ],
+   "name": "散户167",
+   "households": 1,
+   "elev_m": 228.0
+  },
+  {
+   "id": 168,
+   "island": 0,
+   "pos": [
+    -11050.0,
+    21950.0
+   ],
+   "name": "散户168",
+   "households": 1,
+   "elev_m": 230.0
+  },
+  {
+   "id": 169,
+   "island": 10,
+   "pos": [
+    16150.0,
+    22850.0
+   ],
+   "name": "散户169",
+   "households": 1,
+   "elev_m": 160.0
+  },
+  {
+   "id": 170,
+   "island": 10,
+   "pos": [
+    16850.0,
+    22550.0
+   ],
+   "name": "散户170",
+   "households": 1,
+   "elev_m": 159.0
+  },
+  {
+   "id": 171,
+   "island": 0,
+   "pos": [
+    5750.0,
+    22750.0
+   ],
+   "name": "散户171",
+   "households": 1,
+   "elev_m": 263.0
+  },
+  {
+   "id": 172,
+   "island": 0,
+   "pos": [
+    -9050.0,
+    27850.0
+   ],
+   "name": "散户172",
+   "households": 1,
+   "elev_m": 230.0
+  },
+  {
+   "id": 173,
+   "island": 0,
+   "pos": [
+    4050.0,
+    28050.0
+   ],
+   "name": "散户173",
+   "households": 1,
+   "elev_m": 234.0
+  },
+  {
+   "id": 174,
+   "island": 0,
+   "pos": [
+    -7650.0,
+    29750.0
+   ],
+   "name": "散户174",
+   "households": 1,
+   "elev_m": 229.0
+  },
+  {
+   "id": 175,
+   "island": 1,
+   "pos": [
+    -11050.0,
+    32450.0
+   ],
+   "name": "散户175",
+   "households": 1,
+   "elev_m": 188.0
+  },
+  {
+   "id": 176,
+   "island": 1,
+   "pos": [
+    -14850.0,
+    32650.0
+   ],
+   "name": "散户176",
+   "households": 1,
+   "elev_m": 220.0
+  },
+  {
+   "id": 177,
+   "island": 1,
+   "pos": [
+    -15350.0,
+    34750.0
+   ],
+   "name": "散户177",
+   "households": 1,
+   "elev_m": 228.0
+  },
+  {
+   "id": 178,
+   "island": 1,
+   "pos": [
+    -25250.0,
+    34850.0
+   ],
+   "name": "散户178",
+   "households": 1,
+   "elev_m": 194.0
+  },
+  {
+   "id": 179,
+   "island": 1,
+   "pos": [
+    -24950.0,
+    34950.0
+   ],
+   "name": "散户179",
+   "households": 1,
+   "elev_m": 196.0
+  },
+  {
+   "id": 180,
+   "island": 1,
+   "pos": [
+    -21350.0,
+    35250.0
+   ],
+   "name": "散户180",
+   "households": 1,
+   "elev_m": 217.0
+  },
+  {
+   "id": 181,
+   "island": 1,
+   "pos": [
+    -20450.0,
+    36450.0
+   ],
+   "name": "散户181",
+   "households": 1,
+   "elev_m": 245.0
+  },
+  {
+   "id": 182,
+   "island": 1,
+   "pos": [
+    -17550.0,
+    38850.0
+   ],
+   "name": "散户182",
+   "households": 1,
+   "elev_m": 251.0
+  },
+  {
+   "id": 183,
+   "island": 1,
+   "pos": [
+    -22850.0,
+    39650.0
+   ],
+   "name": "散户183",
+   "households": 1,
+   "elev_m": 214.0
+  },
+  {
+   "id": 184,
+   "island": 1,
+   "pos": [
+    -25050.0,
+    40050.0
+   ],
+   "name": "散户184",
+   "households": 1,
+   "elev_m": 203.0
+  },
+  {
+   "id": 185,
+   "island": 1,
+   "pos": [
+    -11250.0,
+    40450.0
+   ],
+   "name": "散户185",
+   "households": 1,
+   "elev_m": 199.0
+  },
+  {
+   "id": 186,
+   "island": 21,
+   "pos": [
+    -7150.0,
+    41350.0
+   ],
+   "name": "散户186",
+   "households": 1,
+   "elev_m": 254.0
+  },
+  {
+   "id": 187,
+   "island": 21,
+   "pos": [
+    -7050.0,
+    42650.0
+   ],
+   "name": "散户187",
+   "households": 1,
+   "elev_m": 248.0
+  },
+  {
+   "id": 188,
+   "island": 1,
+   "pos": [
+    -17250.0,
+    42850.0
+   ],
+   "name": "散户188",
+   "households": 1,
+   "elev_m": 218.0
+  },
+  {
+   "id": 189,
+   "island": 1,
+   "pos": [
+    -19050.0,
+    43850.0
+   ],
+   "name": "散户189",
+   "households": 1,
+   "elev_m": 215.0
+  },
+  {
+   "id": 190,
+   "island": 13,
+   "pos": [
+    -22750.0,
+    49350.0
+   ],
+   "name": "散户190",
+   "households": 1,
+   "elev_m": 286.0
+  },
+  {
+   "id": 191,
+   "island": 13,
+   "pos": [
+    -22450.0,
+    50350.0
+   ],
+   "name": "散户191",
+   "households": 1,
+   "elev_m": 299.0
+  }
+ ],
+ "docks": [
+  {
+   "id": 1,
+   "island": 0,
+   "pos": [
+    -8150.0,
+    29550.0
+   ],
+   "main": false,
+   "serves": [
+    1,
+    21,
+    25,
+    31
+   ]
+  },
+  {
+   "id": 2,
+   "island": 1,
+   "pos": [
+    -10750.0,
+    31950.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 3,
+   "island": 0,
+   "pos": [
+    20250.0,
+    -350.0
+   ],
+   "main": false,
+   "serves": [
+    2,
+    11,
+    14,
+    20,
+    29
+   ]
+  },
+  {
+   "id": 4,
+   "island": 2,
+   "pos": [
+    26450.0,
+    -1250.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 5,
+   "island": 0,
+   "pos": [
+    -9450.0,
+    -31450.0
+   ],
+   "main": false,
+   "serves": [
+    3,
+    22,
+    23,
+    30
+   ]
+  },
+  {
+   "id": 6,
+   "island": 3,
+   "pos": [
+    -10550.0,
+    -37950.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    30
+   ]
+  },
+  {
+   "id": 7,
+   "island": 0,
+   "pos": [
+    -17150.0,
+    2250.0
+   ],
+   "main": true,
+   "serves": [
+    4,
+    5,
+    6,
+    7,
+    12,
+    15,
+    17,
+    24
+   ]
+  },
+  {
+   "id": 8,
+   "island": 4,
+   "pos": [
+    -21150.0,
+    9550.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 9,
+   "island": 5,
+   "pos": [
+    -24750.0,
+    -3650.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 10,
+   "island": 6,
+   "pos": [
+    -22150.0,
+    -10050.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 11,
+   "island": 7,
+   "pos": [
+    -28950.0,
+    9450.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    4,
+    12,
+    25
+   ]
+  },
+  {
+   "id": 12,
+   "island": 0,
+   "pos": [
+    14350.0,
+    -17850.0
+   ],
+   "main": false,
+   "serves": [
+    8,
+    9,
+    26
+   ]
+  },
+  {
+   "id": 13,
+   "island": 8,
+   "pos": [
+    17650.0,
+    -19050.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 14,
+   "island": 9,
+   "pos": [
+    16850.0,
+    -22650.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    2,
+    11,
+    14,
+    19
+   ]
+  },
+  {
+   "id": 15,
+   "island": 0,
+   "pos": [
+    14550.0,
+    18650.0
+   ],
+   "main": false,
+   "serves": [
+    10
+   ]
+  },
+  {
+   "id": 16,
+   "island": 10,
+   "pos": [
+    15850.0,
+    21850.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 17,
+   "island": 11,
+   "pos": [
+    25950.0,
+    -10850.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    14,
+    16,
+    19
+   ]
+  },
+  {
+   "id": 18,
+   "island": 12,
+   "pos": [
+    -19650.0,
+    16150.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 19,
+   "island": 14,
+   "pos": [
+    19050.0,
+    -14350.0
+   ],
+   "main": false,
+   "serves": [
+    0
+   ]
+  },
+  {
+   "id": 20,
+   "island": 15,
+   "pos": [
+    -27850.0,
+    -17050.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    6,
+    30
+   ]
+  },
+  {
+   "id": 21,
+   "island": 17,
+   "pos": [
+    -23950.0,
+    -17650.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    4,
+    5
+   ]
+  },
+  {
+   "id": 22,
+   "island": 20,
+   "pos": [
+    25150.0,
+    4550.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    10,
+    14,
+    16,
+    19
+   ]
+  },
+  {
+   "id": 23,
+   "island": 21,
+   "pos": [
+    -6850.0,
+    40350.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    25,
+    31
+   ]
+  },
+  {
+   "id": 24,
+   "island": 22,
+   "pos": [
+    5450.0,
+    -34850.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    3,
+    8,
+    30
+   ]
+  },
+  {
+   "id": 25,
+   "island": 23,
+   "pos": [
+    -23150.0,
+    -28150.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    3,
+    30
+   ]
+  },
+  {
+   "id": 26,
+   "island": 24,
+   "pos": [
+    -26750.0,
+    13650.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    1,
+    4,
+    12,
+    25
+   ]
+  },
+  {
+   "id": 27,
+   "island": 25,
+   "pos": [
+    -15850.0,
+    25050.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    21,
+    31
+   ]
+  },
+  {
+   "id": 28,
+   "island": 26,
+   "pos": [
+    18850.0,
+    -32650.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    8,
+    9,
+    14,
+    22
+   ]
+  },
+  {
+   "id": 29,
+   "island": 29,
+   "pos": [
+    37050.0,
+    -4650.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    8,
+    11,
+    14,
+    16,
+    19,
+    20
+   ]
+  },
+  {
+   "id": 30,
+   "island": 30,
+   "pos": [
+    -11150.0,
+    -33250.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    22
+   ]
+  },
+  {
+   "id": 31,
+   "island": 31,
+   "pos": [
+    -1850.0,
+    40550.0
+   ],
+   "main": false,
+   "serves": [
+    0,
+    25
+   ]
+  },
+  {
+   "id": 32,
+   "island": 1,
+   "pos": [
+    -20350.0,
+    30350.0
+   ],
+   "main": false,
+   "serves": [
+    4,
+    12,
+    24,
+    25
+   ]
+  },
+  {
+   "id": 33,
+   "island": 4,
+   "pos": [
+    -23150.0,
+    12250.0
+   ],
+   "main": false,
+   "serves": [
+    1,
+    12,
+    24,
+    25
+   ]
+  },
+  {
+   "id": 34,
+   "island": 12,
+   "pos": [
+    -21150.0,
+    18650.0
+   ],
+   "main": false,
+   "serves": [
+    1,
+    25
+   ]
+  },
+  {
+   "id": 35,
+   "island": 25,
+   "pos": [
+    -17050.0,
+    27050.0
+   ],
+   "main": false,
+   "serves": [
+    1
+   ]
+  },
+  {
+   "id": 36,
+   "island": 1,
+   "pos": [
+    -25550.0,
+    45350.0
+   ],
+   "main": false,
+   "serves": [
+    27,
+    28
+   ]
+  },
+  {
+   "id": 37,
+   "island": 27,
+   "pos": [
+    -34550.0,
+    49450.0
+   ],
+   "main": false,
+   "serves": [
+    1,
+    13,
+    28
+   ]
+  },
+  {
+   "id": 38,
+   "island": 28,
+   "pos": [
+    -33650.0,
+    43950.0
+   ],
+   "main": false,
+   "serves": [
+    1,
+    13,
+    27
+   ]
+  },
+  {
+   "id": 39,
+   "island": 1,
+   "pos": [
+    -10050.0,
+    40450.0
+   ],
+   "main": false,
+   "serves": [
+    31
+   ]
+  },
+  {
+   "id": 40,
+   "island": 31,
+   "pos": [
+    -3250.0,
+    42150.0
+   ],
+   "main": false,
+   "serves": [
+    1,
+    13,
+    21
+   ]
+  },
+  {
+   "id": 41,
+   "island": 2,
+   "pos": [
+    28150.0,
+    -7450.0
+   ],
+   "main": false,
+   "serves": [
+    8,
+    9,
+    11,
+    14,
+    19
+   ]
+  },
+  {
+   "id": 42,
+   "island": 8,
+   "pos": [
+    21950.0,
+    -17650.0
+   ],
+   "main": false,
+   "serves": [
+    2,
+    11,
+    16,
+    19
+   ]
+  },
+  {
+   "id": 43,
+   "island": 2,
+   "pos": [
+    30350.0,
+    4650.0
+   ],
+   "main": false,
+   "serves": [
+    10
+   ]
+  },
+  {
+   "id": 44,
+   "island": 10,
+   "pos": [
+    18250.0,
+    19650.0
+   ],
+   "main": false,
+   "serves": [
+    2,
+    16,
+    20
+   ]
+  },
+  {
+   "id": 45,
+   "island": 11,
+   "pos": [
+    28250.0,
+    -10050.0
+   ],
+   "main": false,
+   "serves": [
+    2,
+    20
+   ]
+  },
+  {
+   "id": 46,
+   "island": 14,
+   "pos": [
+    22450.0,
+    -12150.0
+   ],
+   "main": false,
+   "serves": [
+    2,
+    11,
+    16,
+    20,
+    29
+   ]
+  },
+  {
+   "id": 47,
+   "island": 19,
+   "pos": [
+    21750.0,
+    -7550.0
+   ],
+   "main": false,
+   "serves": [
+    2,
+    11,
+    16,
+    20,
+    29
+   ]
+  },
+  {
+   "id": 48,
+   "island": 3,
+   "pos": [
+    -13950.0,
+    -37050.0
+   ],
+   "main": false,
+   "serves": [
+    17
+   ]
+  },
+  {
+   "id": 49,
+   "island": 17,
+   "pos": [
+    -25250.0,
+    -20950.0
+   ],
+   "main": false,
+   "serves": [
+    3,
+    23,
+    30
+   ]
+  },
+  {
+   "id": 50,
+   "island": 3,
+   "pos": [
+    -7950.0,
+    -41350.0
+   ],
+   "main": false,
+   "serves": [
+    22
+   ]
+  },
+  {
+   "id": 51,
+   "island": 3,
+   "pos": [
+    -16050.0,
+    -39050.0
+   ],
+   "main": false,
+   "serves": [
+    23
+   ]
+  },
+  {
+   "id": 52,
+   "island": 30,
+   "pos": [
+    -12450.0,
+    -34850.0
+   ],
+   "main": false,
+   "serves": [
+    3
+   ]
+  },
+  {
+   "id": 53,
+   "island": 4,
+   "pos": [
+    -25650.0,
+    1650.0
+   ],
+   "main": false,
+   "serves": [
+    5,
+    6,
+    15,
+    17
+   ]
+  },
+  {
+   "id": 54,
+   "island": 5,
+   "pos": [
+    -27250.0,
+    -350.0
+   ],
+   "main": false,
+   "serves": [
+    4,
+    12,
+    24
+   ]
+  },
+  {
+   "id": 55,
+   "island": 6,
+   "pos": [
+    -24950.0,
+    -7950.0
+   ],
+   "main": false,
+   "serves": [
+    4,
+    7
+   ]
+  },
+  {
+   "id": 56,
+   "island": 4,
+   "pos": [
+    -26450.0,
+    8850.0
+   ],
+   "main": false,
+   "serves": [
+    7
+   ]
+  },
+  {
+   "id": 57,
+   "island": 12,
+   "pos": [
+    -22750.0,
+    14750.0
+   ],
+   "main": false,
+   "serves": [
+    4,
+    5,
+    7
+   ]
+  },
+  {
+   "id": 58,
+   "island": 15,
+   "pos": [
+    -29850.0,
+    -15350.0
+   ],
+   "main": false,
+   "serves": [
+    4,
+    5,
+    7,
+    18
+   ]
+  },
+  {
+   "id": 59,
+   "island": 4,
+   "pos": [
+    -27750.0,
+    4250.0
+   ],
+   "main": false,
+   "serves": [
+    18
+   ]
+  },
+  {
+   "id": 60,
+   "island": 18,
+   "pos": [
+    -38650.0,
+    1750.0
+   ],
+   "main": false,
+   "serves": [
+    4,
+    5,
+    7,
+    24
+   ]
+  },
+  {
+   "id": 61,
+   "island": 25,
+   "pos": [
+    -17250.0,
+    23450.0
+   ],
+   "main": false,
+   "serves": [
+    4,
+    7,
+    12,
+    24
+   ]
+  },
+  {
+   "id": 62,
+   "island": 5,
+   "pos": [
+    -30150.0,
+    150.0
+   ],
+   "main": false,
+   "serves": [
+    7,
+    18
+   ]
+  },
+  {
+   "id": 63,
+   "island": 7,
+   "pos": [
+    -32250.0,
+    4450.0
+   ],
+   "main": false,
+   "serves": [
+    5,
+    6,
+    15
+   ]
+  },
+  {
+   "id": 64,
+   "island": 5,
+   "pos": [
+    -28850.0,
+    -7150.0
+   ],
+   "main": false,
+   "serves": [
+    15,
+    17,
+    23
+   ]
+  },
+  {
+   "id": 65,
+   "island": 23,
+   "pos": [
+    -24450.0,
+    -26450.0
+   ],
+   "main": false,
+   "serves": [
+    5,
+    6,
+    15,
+    17
+   ]
+  },
+  {
+   "id": 66,
+   "island": 24,
+   "pos": [
+    -29050.0,
+    12150.0
+   ],
+   "main": false,
+   "serves": [
+    5,
+    18
+   ]
+  },
+  {
+   "id": 67,
+   "island": 6,
+   "pos": [
+    -24950.0,
+    -14750.0
+   ],
+   "main": false,
+   "serves": [
+    15,
+    23
+   ]
+  },
+  {
+   "id": 68,
+   "island": 6,
+   "pos": [
+    -27050.0,
+    -8250.0
+   ],
+   "main": false,
+   "serves": [
+    18
+   ]
+  },
+  {
+   "id": 69,
+   "island": 18,
+   "pos": [
+    -39650.0,
+    -350.0
+   ],
+   "main": false,
+   "serves": [
+    6,
+    15
+   ]
+  },
+  {
+   "id": 70,
+   "island": 6,
+   "pos": [
+    -22450.0,
+    -15750.0
+   ],
+   "main": false,
+   "serves": [
+    30
+   ]
+  },
+  {
+   "id": 71,
+   "island": 30,
+   "pos": [
+    -13550.0,
+    -32450.0
+   ],
+   "main": false,
+   "serves": [
+    6,
+    15,
+    17,
+    23
+   ]
+  },
+  {
+   "id": 72,
+   "island": 7,
+   "pos": [
+    -34350.0,
+    4250.0
+   ],
+   "main": false,
+   "serves": [
+    18
+   ]
+  },
+  {
+   "id": 73,
+   "island": 11,
+   "pos": [
+    28950.0,
+    -14650.0
+   ],
+   "main": false,
+   "serves": [
+    8,
+    9,
+    26
+   ]
+  },
+  {
+   "id": 74,
+   "island": 16,
+   "pos": [
+    24050.0,
+    -2350.0
+   ],
+   "main": false,
+   "serves": [
+    8,
+    11,
+    14,
+    19,
+    29
+   ]
+  },
+  {
+   "id": 75,
+   "island": 19,
+   "pos": [
+    19850.0,
+    -9950.0
+   ],
+   "main": false,
+   "serves": [
+    8,
+    9
+   ]
+  },
+  {
+   "id": 76,
+   "island": 8,
+   "pos": [
+    18550.0,
+    -20950.0
+   ],
+   "main": false,
+   "serves": [
+    22
+   ]
+  },
+  {
+   "id": 77,
+   "island": 8,
+   "pos": [
+    20750.0,
+    -21450.0
+   ],
+   "main": false,
+   "serves": [
+    26
+   ]
+  },
+  {
+   "id": 78,
+   "island": 8,
+   "pos": [
+    23950.0,
+    -18350.0
+   ],
+   "main": false,
+   "serves": [
+    29
+   ]
+  },
+  {
+   "id": 79,
+   "island": 14,
+   "pos": [
+    20950.0,
+    -15850.0
+   ],
+   "main": false,
+   "serves": [
+    9,
+    26
+   ]
+  },
+  {
+   "id": 80,
+   "island": 9,
+   "pos": [
+    17250.0,
+    -29350.0
+   ],
+   "main": false,
+   "serves": [
+    22,
+    26
+   ]
+  },
+  {
+   "id": 81,
+   "island": 22,
+   "pos": [
+    7450.0,
+    -35350.0
+   ],
+   "main": false,
+   "serves": [
+    9,
+    26
+   ]
+  },
+  {
+   "id": 82,
+   "island": 16,
+   "pos": [
+    21650.0,
+    2150.0
+   ],
+   "main": false,
+   "serves": [
+    10
+   ]
+  },
+  {
+   "id": 83,
+   "island": 20,
+   "pos": [
+    27050.0,
+    3150.0
+   ],
+   "main": false,
+   "serves": [
+    11,
+    29
+   ]
+  },
+  {
+   "id": 84,
+   "island": 26,
+   "pos": [
+    20950.0,
+    -32450.0
+   ],
+   "main": false,
+   "serves": [
+    11
+   ]
+  },
+  {
+   "id": 85,
+   "island": 11,
+   "pos": [
+    30750.0,
+    -12350.0
+   ],
+   "main": false,
+   "serves": [
+    29
+   ]
+  },
+  {
+   "id": 86,
+   "island": 12,
+   "pos": [
+    -24250.0,
+    16250.0
+   ],
+   "main": false,
+   "serves": [
+    24
+   ]
+  },
+  {
+   "id": 87,
+   "island": 13,
+   "pos": [
+    -21050.0,
+    48550.0
+   ],
+   "main": false,
+   "serves": [
+    21,
+    31
+   ]
+  },
+  {
+   "id": 88,
+   "island": 21,
+   "pos": [
+    -9050.0,
+    42250.0
+   ],
+   "main": false,
+   "serves": [
+    13
+   ]
+  },
+  {
+   "id": 89,
+   "island": 13,
+   "pos": [
+    -24550.0,
+    50250.0
+   ],
+   "main": false,
+   "serves": [
+    27,
+    28
+   ]
+  },
+  {
+   "id": 90,
+   "island": 15,
+   "pos": [
+    -28550.0,
+    -18950.0
+   ],
+   "main": false,
+   "serves": [
+    23
+   ]
+  },
+  {
+   "id": 91,
+   "island": 16,
+   "pos": [
+    24150.0,
+    750.0
+   ],
+   "main": false,
+   "serves": [
+    20
+   ]
+  }
+ ],
+ "outposts": [
+  {
+   "id": 1,
+   "island": 1,
+   "pos": [
+    -15150.0,
+    38950.0
+   ],
+   "settlement": "村021",
+   "households": 84
+  },
+  {
+   "id": 2,
+   "island": 2,
+   "pos": [
+    33850.0,
+    450.0
+   ],
+   "settlement": "村018",
+   "households": 87
+  },
+  {
+   "id": 3,
+   "island": 3,
+   "pos": [
+    -10850.0,
+    -44850.0
+   ],
+   "settlement": "村093",
+   "households": 50
+  },
+  {
+   "id": 4,
+   "island": 4,
+   "pos": [
+    -21550.0,
+    9150.0
+   ],
+   "settlement": "村103",
+   "households": 45
+  },
+  {
+   "id": 5,
+   "island": 5,
+   "pos": [
+    -28450.0,
+    -1050.0
+   ],
+   "settlement": "村120",
+   "households": 37
+  },
+  {
+   "id": 6,
+   "island": 6,
+   "pos": [
+    -24850.0,
+    -9250.0
+   ],
+   "settlement": "村090",
+   "households": 52
+  },
+  {
+   "id": 7,
+   "island": 8,
+   "pos": [
+    21350.0,
+    -18050.0
+   ],
+   "settlement": "村171",
+   "households": 10
+  },
+  {
+   "id": 8,
+   "island": 9,
+   "pos": [
+    18850.0,
+    -26550.0
+   ],
+   "settlement": "村146",
+   "households": 17
+  },
+  {
+   "id": 9,
+   "island": 10,
+   "pos": [
+    18350.0,
+    24950.0
+   ],
+   "settlement": "村029",
+   "households": 76
+  },
+  {
+   "id": 10,
+   "island": 11,
+   "pos": [
+    30750.0,
+    -14550.0
+   ],
+   "settlement": "村172",
+   "households": 10
+  },
+  {
+   "id": 11,
+   "island": 12,
+   "pos": [
+    -21250.0,
+    18150.0
+   ],
+   "settlement": "散户003",
+   "households": 7
+  },
+  {
+   "id": 12,
+   "island": 13,
+   "pos": [
+    -22650.0,
+    49550.0
+   ],
+   "settlement": "散户080",
+   "households": 2
+  },
+  {
+   "id": 13,
+   "island": 16,
+   "pos": [
+    24250.0,
+    -1650.0
+   ],
+   "settlement": "散户133",
+   "households": 1
+  },
+  {
+   "id": 14,
+   "island": 17,
+   "pos": [
+    -26050.0,
+    -18250.0
+   ],
+   "settlement": "散户051",
+   "households": 2
+  },
+  {
+   "id": 15,
+   "island": 18,
+   "pos": [
+    -40950.0,
+    -350.0
+   ],
+   "settlement": "散户042",
+   "households": 3
+  },
+  {
+   "id": 16,
+   "island": 21,
+   "pos": [
+    -7150.0,
+    41350.0
+   ],
+   "settlement": "散户186",
+   "households": 1
+  },
+  {
+   "id": 17,
+   "island": 24,
+   "pos": [
+    -29550.0,
+    13550.0
+   ],
+   "settlement": "散户160",
+   "households": 1
+  },
+  {
+   "id": 18,
+   "island": 27,
+   "pos": [
+    -34950.0,
+    49950.0
+   ],
+   "settlement": "散户049",
+   "households": 3
+  }
+ ],
+ "bridgeheads": [
+  {
+   "id": 1,
+   "island": 0,
+   "pos": [
+    20650.0,
+    1050.0
+   ],
+   "to": 16,
+   "gap_km": 0.6
+  },
+  {
+   "id": 2,
+   "island": 16,
+   "pos": [
+    21250.0,
+    1050.0
+   ],
+   "to": 0,
+   "gap_km": 0.6
+  },
+  {
+   "id": 3,
+   "island": 0,
+   "pos": [
+    16750.0,
+    -7550.0
+   ],
+   "to": 19,
+   "gap_km": 1.503
+  },
+  {
+   "id": 4,
+   "island": 19,
+   "pos": [
+    18150.0,
+    -7950.0
+   ],
+   "to": 0,
+   "gap_km": 1.503
+  },
+  {
+   "id": 5,
+   "island": 1,
+   "pos": [
+    -22550.0,
+    46350.0
+   ],
+   "to": 13,
+   "gap_km": 1.603
+  },
+  {
+   "id": 6,
+   "island": 13,
+   "pos": [
+    -22650.0,
+    47950.0
+   ],
+   "to": 1,
+   "gap_km": 1.603
+  },
+  {
+   "id": 7,
+   "island": 1,
+   "pos": [
+    -10050.0,
+    40550.0
+   ],
+   "to": 21,
+   "gap_km": 1.414
+  },
+  {
+   "id": 8,
+   "island": 21,
+   "pos": [
+    -8650.0,
+    40750.0
+   ],
+   "to": 1,
+   "gap_km": 1.414
+  },
+  {
+   "id": 9,
+   "island": 2,
+   "pos": [
+    26150.0,
+    -2150.0
+   ],
+   "to": 16,
+   "gap_km": 1.3
+  },
+  {
+   "id": 10,
+   "island": 16,
+   "pos": [
+    24950.0,
+    -1650.0
+   ],
+   "to": 2,
+   "gap_km": 1.3
+  },
+  {
+   "id": 11,
+   "island": 2,
+   "pos": [
+    29550.0,
+    3950.0
+   ],
+   "to": 20,
+   "gap_km": 1.044
+  },
+  {
+   "id": 12,
+   "island": 20,
+   "pos": [
+    28550.0,
+    4250.0
+   ],
+   "to": 2,
+   "gap_km": 1.044
+  },
+  {
+   "id": 13,
+   "island": 2,
+   "pos": [
+    35650.0,
+    -4250.0
+   ],
+   "to": 29,
+   "gap_km": 1.456
+  },
+  {
+   "id": 14,
+   "island": 29,
+   "pos": [
+    37050.0,
+    -4650.0
+   ],
+   "to": 2,
+   "gap_km": 1.456
+  },
+  {
+   "id": 15,
+   "island": 5,
+   "pos": [
+    -27050.0,
+    -6950.0
+   ],
+   "to": 6,
+   "gap_km": 1.044
+  },
+  {
+   "id": 16,
+   "island": 6,
+   "pos": [
+    -26750.0,
+    -7950.0
+   ],
+   "to": 5,
+   "gap_km": 1.044
+  },
+  {
+   "id": 17,
+   "island": 6,
+   "pos": [
+    -23750.0,
+    -15750.0
+   ],
+   "to": 17,
+   "gap_km": 1.612
+  },
+  {
+   "id": 18,
+   "island": 17,
+   "pos": [
+    -23950.0,
+    -17350.0
+   ],
+   "to": 6,
+   "gap_km": 1.612
+  },
+  {
+   "id": 19,
+   "island": 7,
+   "pos": [
+    -29850.0,
+    10750.0
+   ],
+   "to": 24,
+   "gap_km": 1.612
+  },
+  {
+   "id": 20,
+   "island": 24,
+   "pos": [
+    -29050.0,
+    12150.0
+   ],
+   "to": 7,
+   "gap_km": 1.612
+  },
+  {
+   "id": 21,
+   "island": 8,
+   "pos": [
+    18850.0,
+    -21150.0
+   ],
+   "to": 9,
+   "gap_km": 1.5
+  },
+  {
+   "id": 22,
+   "island": 9,
+   "pos": [
+    17950.0,
+    -22350.0
+   ],
+   "to": 8,
+   "gap_km": 1.5
+  },
+  {
+   "id": 23,
+   "island": 8,
+   "pos": [
+    20750.0,
+    -17250.0
+   ],
+   "to": 14,
+   "gap_km": 1.414
+  },
+  {
+   "id": 24,
+   "island": 14,
+   "pos": [
+    20950.0,
+    -15850.0
+   ],
+   "to": 8,
+   "gap_km": 1.414
+  },
+  {
+   "id": 25,
+   "island": 14,
+   "pos": [
+    20250.0,
+    -11850.0
+   ],
+   "to": 19,
+   "gap_km": 1.91
+  },
+  {
+   "id": 26,
+   "island": 19,
+   "pos": [
+    20050.0,
+    -9950.0
+   ],
+   "to": 14,
+   "gap_km": 1.91
+  },
+  {
+   "id": 27,
+   "island": 15,
+   "pos": [
+    -28050.0,
+    -18750.0
+   ],
+   "to": 17,
+   "gap_km": 1.082
+  },
+  {
+   "id": 28,
+   "island": 17,
+   "pos": [
+    -27150.0,
+    -19350.0
+   ],
+   "to": 15,
+   "gap_km": 1.082
+  }
+ ],
+ "population": 47847.0
+}
