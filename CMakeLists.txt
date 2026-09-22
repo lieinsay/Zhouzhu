@@ -28,6 +28,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/island_river.cpp
     src/island_river.h
     src/rng.h
+    src/ship_layout.cpp
+    src/ship_layout.h
     src/value_noise.cpp
     src/value_noise.h
 )
