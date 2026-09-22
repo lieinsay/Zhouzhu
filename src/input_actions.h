@@ -24,6 +24,9 @@ constexpr const char *ROTATE_LEFT = "rotate_left"; // 布置时把建筑转向
 constexpr const char *ROTATE_RIGHT = "rotate_right";
 constexpr const char *SAVE = "save"; // 布置时把清单存盘
 constexpr const char *MAP = "map"; // 开合岛群地图
+constexpr const char *SWITCH_MAP = "switch_map"; // 开发者：开合换地图清单
+constexpr const char *GOD_MODE = "god_mode"; // 开发者：开关 god 模式
+constexpr const char *FLY_DOWN = "fly_down"; // god 模式下往下飞（Shift 已是加速，不能再用来降）
 
 // 幂等：已有的动作不重复注册
 void register_all();

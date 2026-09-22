@@ -49,4 +49,7 @@ void input_actions::register_all() {
     bind(ROTATE_RIGHT, { KEY_R });
     bind(SAVE, { KEY_F5 });
     bind(MAP, { KEY_M });
+    bind(SWITCH_MAP, { KEY_F2 });
+    bind(GOD_MODE, { KEY_F3 });
+    bind(FLY_DOWN, { KEY_CTRL, KEY_C });
 }
