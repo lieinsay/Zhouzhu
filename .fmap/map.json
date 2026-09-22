@@ -541,6 +541,124 @@
         "game/tests/villager_e2e.gd"
       ],
       "since": "e10"
+    },
+    {
+      "id": "skyisle-export",
+      "label": "岛群导出脚本",
+      "detail": "tools/export_skyisle.py：读 skyisle-gen 的 terrain.npz / island.json / settlements.json，写 terrain.bin（高程、有符号岸距、最近岛号、地表类、溪涧）与 world.json（岛表与点位，米制坐标）。游戏运行时不依赖它。",
+      "tag": "工具",
+      "evidence": "2051：1012×837 格、陆地格数与 skyisle-gen 一致（ctest）",
+      "sources": [
+        "tools/export_skyisle.py",
+        "game/worlds/2051/terrain.bin",
+        "game/worlds/2051/world.json"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "world-grid",
+      "label": "岛群栅格",
+      "detail": "解析 terrain.bin；Catmull-Rom 双三次取高程与岸距，最近格取岛号与地表类；地表类配色表（地图与地面共用）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest world_grid / world 2051",
+      "sources": [
+        "src/world_grid.h",
+        "src/world_grid.cpp"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "world-terrain",
+      "label": "连续地形",
+      "detail": "任意 (x, z) 上有没有地、顶面、岛底、地表：陆地 = 岸距 + 岸线噪声 > 0，顶面 = 栅格 + 按地表调幅的哈希值噪声，岛底 = 岸缘 − 崖高 − 龙骨 × √向内程度。无状态、线程安全，任何精度取样结果一致。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest world_terrain：确定、连续、岸线进退在噪声幅度内",
+      "sources": [
+        "src/world_terrain.h",
+        "src/world_terrain.cpp"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "terrain-tile",
+      "label": "分块地面",
+      "detail": "TileLayout：盖住整个栅格的四叉树，叶 128 m、每块 64 格，按离焦点的距离细分，只选可能有地的块；build_tile_mesh：顶面、崖壁、岛底（整块是地时隔 8 格）、块边裙边，叶块带碰撞面。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest terrain_tile：互不重叠、全覆盖、叶块碰撞；邑治处 274 块",
+      "sources": [
+        "src/terrain_tile.h",
+        "src/terrain_tile.cpp"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "map-image",
+      "label": "地图底图",
+      "detail": "栅格一格一像素：地表色 × 山影（夸大 6 倍），岸线描深、溪涧染蓝、虚空透明；地图像素 ↔ 世界坐标换算。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest map_image",
+      "sources": [
+        "src/map_image.h",
+        "src/map_image.cpp"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "world-node",
+      "label": "World 流式地面",
+      "detail": "读 data_dir 下的资产、持有连续地形；焦点挪 12 m 就重选块，缺的块丢给后台线程，建好的按时间预算挂进场景，旧块等盖住它的新块都到齐才拆；prepare_at 同步建好落点周围的叶块。",
+      "tag": "场景角色",
+      "evidence": "world_e2e：出生 0.2 s 站稳，瞬移后 1 s 内脚下有碰撞",
+      "sources": [
+        "src/world.h",
+        "src/world.cpp"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "world-map",
+      "label": "WorldMap 地图面板",
+      "detail": "只画：底图、岛号、邑治、村（放大写名）、码头、玩家箭头、比例尺、悬停读数；滚轮缩放、右键拖动；左键只发 teleport_requested，许不许瞬移由上层定。",
+      "tag": "引擎构件",
+      "evidence": "world_e2e 用滚轮与左键驱动；截图目视",
+      "sources": [
+        "src/world_map.h",
+        "src/world_map.cpp"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "world-scene",
+      "label": "WorldScene 编排",
+      "detail": "地图开没开、上一处站稳的地方、提示都在这里：出生在邑治，M 开合地图（开着时人站住、放开鼠标），dev_tools 下点哪瞬移到哪（云海就找 3 km 内最近的陆地），坠入云海回位，HUD 显示岛号 / 坐标 / 高程 / 待建块数。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "world_e2e PASS",
+      "sources": [
+        "src/world_scene.h",
+        "src/world_scene.cpp"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "world-2051-scene",
+      "label": "岛群场景 world_2051",
+      "detail": "WorldScene + World（data_dir = res://worlds/2051）+ Player + 云海 + 日光；与 main.tscn 并存，旧功能尚未迁入。",
+      "tag": "场景",
+      "sources": [
+        "game/world_2051.tscn"
+      ],
+      "since": "e11"
+    },
+    {
+      "id": "world-e2e",
+      "label": "岛群端到端测试",
+      "detail": "邑治站稳 → 疾跑不陷地 → M、滚轮、左键瞬移到乙岛 → 瞬移到 57 km 外的码头 → 坠落回位；--shots 存五张图。",
+      "tag": "验收",
+      "evidence": "headless --fixed-fps 60 exit 0（模拟 17.8 s）；开窗截图已目视",
+      "sources": [
+        "game/tests/world_e2e.gd"
+      ],
+      "since": "e11"
     }
   ],
   "edges": [
@@ -1208,6 +1326,124 @@
       "chains": [
         "villagers"
       ]
+    },
+    {
+      "from": "world-grid",
+      "to": "skyisle-export",
+      "label": "terrain.bin",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-terrain",
+      "to": "world-grid",
+      "label": "高程 / 岸距 / 地表",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "terrain-tile",
+      "to": "world-terrain",
+      "label": "取样",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "map-image",
+      "to": "world-grid",
+      "label": "栅格",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "terrain-tile",
+      "label": "选块 / 块网格",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "world-terrain",
+      "label": "地面高度",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "skyisle-export",
+      "label": "world.json 岛表",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-map",
+      "to": "map-image",
+      "label": "底图",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-map",
+      "to": "skyisle-export",
+      "label": "点位",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-scene",
+      "to": "world-node",
+      "label": "焦点 / 瞬移落点",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-scene",
+      "to": "world-map",
+      "label": "玩家位置 / 瞬移请求",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-scene",
+      "to": "player",
+      "label": "位姿 / 挡输入",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-scene",
+      "to": "input-map",
+      "label": "map（M）",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-2051-scene",
+      "to": "world-scene",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "real-scale-world"
+      ]
     }
   ],
   "chains": [
@@ -1704,6 +1940,89 @@
         "inventory",
         "settlement-model"
       ]
+    },
+    {
+      "id": "real-scale-world",
+      "title": "重构：真实比例的岛群（world_2051）",
+      "story": "玩家落在生成器里 2051 号岛群的邑治，脚下是按真实比例铺开的 84 × 101 km、32 座浮空岛；走到哪儿地面就铺到哪儿。按 M 打开岛群地图，看得到各岛、邑治、村子与码头，开发者在图上点一下就瞬移过去；掉进云海就回到上一处站稳的地方。",
+      "date": "2026-09-22",
+      "color": "#2fb5c4",
+      "commits": "051d5e3..ca59720",
+      "steps": [
+        {
+          "text": "离线导出：把 skyisle-gen 的岛群产物转成游戏资产（100 m 栅格 + 岛表与点位），随仓库提交",
+          "nodes": [
+            "skyisle-export"
+          ]
+        },
+        {
+          "text": "进入 world_2051 场景：World 读入栅格与岛表，玩家落在邑治，同步建好脚下一圈地面",
+          "nodes": [
+            "world-2051-scene",
+            "world-scene",
+            "world-node",
+            "world-grid",
+            "player"
+          ]
+        },
+        {
+          "text": "地面按连续地形函数取样：大形听栅格，100 m 以下的起伏、弯曲的岸线、倒锥的岛底由确定性噪声补上",
+          "nodes": [
+            "world-terrain",
+            "world-grid"
+          ]
+        },
+        {
+          "text": "边走边铺：焦点一动就按四叉树重选块，近处 2 m 一格带碰撞、远处大块粗格，后台线程建网格，新块到齐才拆旧块",
+          "nodes": [
+            "world-node",
+            "terrain-tile",
+            "world-terrain",
+            "player",
+            "input-map"
+          ]
+        },
+        {
+          "text": "按 M 打开地图：晕渲底图上标岛号、邑治、村、码头和玩家箭头，滚轮缩放、右键拖动、悬停读出坐标与地表",
+          "nodes": [
+            "world-scene",
+            "world-map",
+            "map-image",
+            "input-map"
+          ]
+        },
+        {
+          "text": "开发者在地图上左键一点：先建好落点周围的地面再把人放上去，点到云海就挪到最近的陆地",
+          "nodes": [
+            "world-map",
+            "world-scene",
+            "world-node",
+            "player"
+          ]
+        },
+        {
+          "text": "兜底：掉到云带顶以下就回到上一处站稳的地方",
+          "nodes": [
+            "world-scene",
+            "player",
+            "world-node"
+          ]
+        }
+      ],
+      "nodes": [
+        "skyisle-export",
+        "world-grid",
+        "world-terrain",
+        "terrain-tile",
+        "map-image",
+        "world-node",
+        "world-map",
+        "world-scene",
+        "world-2051-scene",
+        "world-e2e",
+        "player",
+        "input-map"
+      ]
     }
   ],
   "events": [
@@ -2052,6 +2371,48 @@
           "farm-node",
           "inventory",
           "settlement-model"
+        ],
+        "updated": []
+      }
+    },
+    {
+      "id": "e11",
+      "type": "slice",
+      "date": "2026-09-22",
+      "title": "切片：重构：真实比例的岛群（world_2051）",
+      "summary": "玩家落在生成器里 2051 号岛群的邑治，脚下是按真实比例铺开的 84 × 101 km、32 座浮空岛；走到哪儿地面就铺到哪儿。按 M 打开岛群地图，看得到各岛、邑治、村子与码头，开发者在图上点一下就瞬移过去；掉进云海就回到上一处站稳的地方。",
+      "commits": "051d5e3..ca59720",
+      "chain": "real-scale-world",
+      "nodes": [
+        "skyisle-export",
+        "world-grid",
+        "world-terrain",
+        "terrain-tile",
+        "map-image",
+        "world-node",
+        "world-map",
+        "world-scene",
+        "world-2051-scene",
+        "world-e2e",
+        "player",
+        "input-map"
+      ],
+      "info": {
+        "created": [
+          "skyisle-export",
+          "world-grid",
+          "world-terrain",
+          "terrain-tile",
+          "map-image",
+          "world-node",
+          "world-map",
+          "world-scene",
+          "world-2051-scene",
+          "world-e2e"
+        ],
+        "reused": [
+          "player",
+          "input-map"
         ],
         "updated": []
       }
