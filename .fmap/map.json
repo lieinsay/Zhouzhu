@@ -255,7 +255,7 @@
     {
       "id": "ship-layout",
       "label": "布局与船况",
-      "detail": "三维格子布局：Cell (x,y,z)，序列化成 \"x,y,z:kind\"。规矩：舷门格不空、驾驶区唯一且顶上不搭、上面要有支撑、列与船身连通、舷门排最宽且两头不叠、最多 12 节；放 / 换 / 拆各给中文拒绝原因；候选格 = 相邻能放储存区的空格；相邻列高矮不同处算出梯子；船况按节数与推重比。",
+      "detail": "空艇的三维格子布局与船况。每节 7 m 见方、3.8 m 高（按人的尺度定），最多 12 节；规矩、梯子、候选格、船况都由布局算出。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest 302 项通过（三维规则 / 梯子 / 候选格 / id 往返）",
       "sources": [
@@ -362,7 +362,7 @@
     {
       "id": "buildings",
       "label": "建筑表",
-      "detail": "四种建筑的尺寸表：面阔 × 进深、台基高、墙高、屋脊高与显示名；按 id 查。",
+      "detail": "四种建筑的尺寸表：面阔 × 进深、台基高、墙高、屋脊高与显示名；按 id 查。尺度按人（1.8 m）定、比真实略大一成。眼下只是摆设：进不去、用不了。",
       "tag": "原语",
       "evidence": "zhouzhu_core_tests settlement_model 段",
       "sources": [
@@ -441,6 +441,38 @@
         "game/tests/build_e2e.tscn"
       ],
       "since": "e7"
+    },
+    {
+      "id": "buildings-scale",
+      "label": "人的尺度",
+      "detail": "民居三间 11 × 6.5 m 檐高 3.3；堂屋五间 17 × 9.5 檐高 4.6；仓 6 × 6 台基 1.8；望楼 6 × 6 墙 12 m。Settlement 与 BuildOverlay 的出檐 0.9、台基外扩 0.6、门 1.3 × 2.5 配着改。",
+      "tag": "原语",
+      "evidence": "人站在民居门前 / 堂屋侧面的截图目视：檐口约两个人高、门比人高；build_e2e 与单测按新尺寸全过",
+      "sources": [
+        "src/buildings.cpp",
+        "src/settlement.cpp",
+        "src/build_overlay.cpp"
+      ],
+      "since": "e8",
+      "parent": "buildings"
+    },
+    {
+      "id": "ship-cells-scale",
+      "label": "格子 7 × 7 × 3.8",
+      "detail": "CELL_LENGTH / WIDTH / HEIGHT 与船头楔 BOW_M；Ship 的船体 5.2 × 2.8、舷栏 1.15、舵楼顶 3.1、桅 7.2、货箱 2.0 × 1.1 × 3.4 等按格重定；island_field 的泊位扫宽 30、船坞坪 60 × 28；Shipyard 的坞墩块 / 门架 / 抬高 / 跳板按新船重定。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest 339 项全过（几何数改过）；voyage / respawn / shipyard / farm / build 五条 e2e 全过；栈桥头、甲板上、坞架俯拍截图目视",
+      "sources": [
+        "src/ship_layout.h",
+        "src/ship_layout.cpp",
+        "src/ship.cpp",
+        "src/shipyard.cpp",
+        "src/shipyard.h",
+        "src/island_field.h",
+        "src/island_field.cpp"
+      ],
+      "since": "e9",
+      "parent": "ship-layout"
     }
   ],
   "edges": [
@@ -958,6 +990,14 @@
       "chains": [
         "settlement"
       ]
+    },
+    {
+      "from": "shipyard",
+      "to": "ship-cells-scale",
+      "label": "格宽 / 抬高 / 墩块间距",
+      "chains": [
+        "shipyard"
+      ]
     }
   ],
   "chains": [
@@ -1280,7 +1320,8 @@
         "player",
         "refit-overlay",
         "ship-layout-rules",
-        "ship-layout-ladders"
+        "ship-layout-ladders",
+        "ship-cells-scale"
       ]
     },
     {
@@ -1633,6 +1674,44 @@
         "updated": [
           "island-node"
         ]
+      }
+    },
+    {
+      "id": "e8",
+      "type": "extend",
+      "date": "2026-09-22",
+      "title": "拓展：建筑按人的尺度重定比例",
+      "summary": "真实尺度的房子在第三人称里像茅屋、人像巨人。改成三间 / 五间的民居尺度且比真实略大一成：民居 11 × 6.5、檐高 3.3；堂屋 17 × 9.5；仓 6 × 6 高台基；望楼 6 × 6、12 m 高。出檐、台基外扩、门也随之加大。眼下只是摆设：没有屋内、不能使用、进不去。",
+      "nodes": [
+        "buildings",
+        "buildings-scale"
+      ],
+      "info": {
+        "node": "buildings",
+        "children": [
+          "buildings-scale"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e9",
+      "type": "extend",
+      "date": "2026-09-22",
+      "title": "拓展：空艇的格子按人的尺度重定比例",
+      "summary": "每节 5 × 5 × 3 → 7 × 7 × 3.8 m：甲板上走得开、舱房像间屋子；船头楔 3.4。船体、舷栏、舵楼、货箱、桅帆、浮石、梯子偏移、相机距离按新格重定；泊位两侧岸线扫 30 m；船坞坪 60 × 28、坞墩梁改成一排坞墩块（岛这边留走道）、门架 20 m 高、坞里抬高 4.2。",
+      "nodes": [
+        "ship-layout",
+        "ship-cells-scale"
+      ],
+      "info": {
+        "node": "ship-layout",
+        "children": [
+          "ship-cells-scale"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
