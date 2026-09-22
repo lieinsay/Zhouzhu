@@ -39,11 +39,31 @@ cmake -B build && cmake --build build --config Debug      # 扩展 → game/bin/
 场景里是挂在 `Island` 下面的 `Farm` 节点（基准生长时间、引水距离是它的属性），
 开局物品是 `Voyage` 的 `starting_pack` 属性。
 
+## 切片三：地面船坞，把空艇改成一节节的
+
+出发岛的停机坪旁边，沿着岸在崖壁里凿出一块石板坪（`Island.has_yard`），坪上是船坞：两道坞墩梁、首尾两座门架、
+一块从坪上斜到舷门的跳板，跳板脚边一张画样台。
+
+空艇现在是**一节节拼的**：自船头到船尾一串模块，每节 5 m——
+**驾驶区**（舵在这儿，有且只有一个）、**储存区**（两侧摞货箱、中间留走道，每节货舱 4 格）、**动力区**（船底吊浮石、甲板上一对侧桅帆，出推力）。
+船况由布局算出来：航速、升速看推重比，节数越多转向越慢，货舱格数是储存区之和；没有动力区的船飞不起来。
+开局的小艇是「动力区 + 驾驶区」，32 m/s；加一节储存区就掉到 20 m/s，再加一节动力区又回到 30 m/s 上下。最多 5 节。
+
+改船要先把船开进坞里：掌舵时靠近船坞（45 m 内、比泊位近）按 E **入坞**，船自己滑进坞位；下船顺跳板走到画样台按 E 打开改装面板——
+**A/D** 选哪一节、**W/S** 换这一节的类型（储存区 ↔ 动力区）、**E** 在这一节后面加一节储存区、**X** 拆掉这一节、**Tab** 合上。
+每改一下船立刻重拼，驾驶区换不得也拆不得，第六节加不上，提示里会说为什么。船不在坞里时画样台什么也做不了。
+舷门固定在船的原点两舷，所以船怎么改长改短，泊位、坞位、跳板都不用挪。
+
+布局与船况在 `src/ship_layout.*`（纯算法），船坞坪在 `src/island_field.*`（河与路都绕开它，见 `island_river.*`），
+`Ship`（`src/ship.*`）按 `layout` 属性拼几何与碰撞，`Shipyard`（`src/shipyard.*`）挂在 `Island` 下搭坞架，
+改装面板是 `RefitPanel`（只画），入坞与改装的编排仍在 `Voyage`。
+
 ## 测试
 
 ```
-ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 背包 / 作物表 / 农田 / 飞行模型）
+ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型）
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_e2e.tscn    # 整条航程，只经输入动作驱动
 Godot --headless --path game --fixed-fps 60 res://tests/respawn_e2e.tscn   # 坠入云海 → 回位 + 召回空艇
 Godot --headless --path game --fixed-fps 60 res://tests/farm_e2e.tscn      # 沿路走到河滩 → 开垦 → 没种子被拒 → 背包里选菽 → 播种 → 成熟 → 收进背包
+Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn  # 画样台被拒 → 掌舵入坞 → 加一节 / 换类型 / 改拆驾驶区被拒 / 拆掉动力区 → 上不了舵 → 补回 → 飞回泊位
 ```
