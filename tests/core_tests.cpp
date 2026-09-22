@@ -555,8 +555,9 @@ void test_yard(const char *p_name, double p_age) {
 
 void test_ship_layout() {
     std::printf("ship_layout\n");
+    const Cell GATE{ 0, 0, 0 };
     const ShipLayout small = default_layout();
-    check(small.size() == 2 && small[0] == ModuleKind::POWER && small[1] == ModuleKind::BRIDGE, "默认小艇：动力区 + 驾驶区");
+    check(small.size() == 2 && small.at({ 0, 0, -1 }) && small.at({ 0, 0, -1 })->kind == ModuleKind::POWER && small.at(GATE)->kind == ModuleKind::BRIDGE, "默认小艇：动力区在舷门格前面，驾驶区在舷门格");
     check(layout_problem(small).empty(), "默认小艇合法");
     check(modules::by_id("bridge") && modules::by_id("storage") && modules::by_id("power") && !modules::by_id("cabin"), "按 id 查模块");
     check(std::string(modules::def(ModuleKind::STORAGE).name) == "储存区", "模块显示名");
@@ -568,52 +569,89 @@ void test_ship_layout() {
     check_near(s0.max_climb, 10.0, 0.05, "小艇升速 = 切片一的 10 m/s");
     check_near(s0.max_yaw_rate, 0.75, 1e-9, "小艇转向率 = 切片一的 0.75");
     ShipLayout cargo = small;
-    check(layout_insert_after(cargo, 0, ModuleKind::STORAGE).empty() && cargo.size() == 3 && cargo[1] == ModuleKind::STORAGE, "在第 1 节后加一节储存区");
+    check(layout_place(cargo, { 0, 0, 1 }, ModuleKind::STORAGE).empty() && cargo.size() == 3, "舷门格后面加一节储存区");
     const ShipStats s1 = layout_stats(cargo);
     check(s1.hold == 4 && s1.max_speed < s0.max_speed && s1.max_climb < s0.max_climb && s1.max_yaw_rate < s0.max_yaw_rate, "多一节货：有货舱，但更慢、更钝");
     ShipLayout strong = cargo;
-    check(layout_insert_after(strong, 0, ModuleKind::POWER).empty() && strong.size() == 4, "再加一节动力区");
-    check(layout_stats(strong).max_speed > s1.max_speed && layout_stats(strong).max_climb > s1.max_climb, "多一节动力：更快");
-    ShipLayout dead = { ModuleKind::STORAGE, ModuleKind::BRIDGE };
+    check(layout_place(strong, { 0, 0, -2 }, ModuleKind::POWER).empty() && layout_stats(strong).max_speed > s1.max_speed, "再加一节动力区：更快");
+    ShipLayout dead({ { { 0, 0, 0 }, ModuleKind::BRIDGE }, { { 0, 0, 1 }, ModuleKind::STORAGE } });
     check(layout_problem(dead).empty() && !layout_stats(dead).can_fly() && layout_stats(dead).max_speed == 0.0, "没有动力区：合法，但飞不起来");
 
-    // 各节位置：舷门在 z = 0，前面 count/2 节
-    check(fore_sections(1) == 0 && fore_sections(2) == 1 && fore_sections(3) == 1 && fore_sections(5) == 2, "舷门之前的节数");
-    check_near(section_front_z(small, 0), -SECTION_LENGTH_M, 1e-9, "两节：第 1 节在舷门前");
-    check_near(section_front_z(small, 1), 0.0, 1e-9, "两节：第 2 节从舷门起");
-    check_near(layout_bow_z(cargo), -SECTION_LENGTH_M, 1e-9, "三节：船头在 −L");
-    check_near(layout_stern_z(cargo), 2.0 * SECTION_LENGTH_M, 1e-9, "三节：船尾在 +2L");
-    check(bridge_index(cargo) == 2 && bridge_index({}) == -1, "驾驶区在第几节");
+    // 几何
+    check_near(cell_center_z(-1), -5.0, 1e-9, "格中心 z");
+    check_near(cell_deck_y(2), 6.0, 1e-9, "第 2 层甲板高 6 m");
+    check_near(bow_z(cargo), -7.5 - 2.4, 1e-9, "船头 = 最前一排前缘再伸出船头楔");
+    check_near(stern_z(cargo), 7.5, 1e-9, "船尾 = 最后一排后缘");
+    check_near(port_edge_x(cargo), -2.5, 1e-9, "一格宽的船：左舷边 −2.5");
+    check_near(starboard_edge_x(cargo), 2.5, 1e-9, "一格宽的船：右舷边 +2.5");
+    check(cargo.column_height(0, 1) == 1 && cargo.column_height(1, 0) == 0 && cargo.levels() == 1, "列高");
 
-    // 规则
-    check(layout_problem({}) == "船至少要有一节", "空布局不合法");
-    check(layout_problem({ ModuleKind::POWER, ModuleKind::STORAGE }) == "没有驾驶区，没处掌舵", "没有驾驶区不合法");
-    check(layout_problem({ ModuleKind::BRIDGE, ModuleKind::BRIDGE }) == "驾驶区只能有一个", "两个驾驶区不合法");
-    ShipLayout full = { ModuleKind::POWER, ModuleKind::POWER, ModuleKind::STORAGE, ModuleKind::STORAGE, ModuleKind::BRIDGE };
-    check(layout_problem(full).empty(), "五节合法");
-    check(!layout_insert_after(full, 4, ModuleKind::STORAGE).empty() && full.size() == 5, "第六节加不上，布局不动");
+    // 往上搭、往两边搭
+    ShipLayout tall = cargo;
+    check(layout_place(tall, { 0, 1, 1 }, ModuleKind::STORAGE).empty() && tall.levels() == 2 && tall.column_height(0, 1) == 2, "储存区上面再搭一节");
+    const std::vector<Ladder> ladders = layout_ladders(tall);
+    check(ladders.size() == 1 && ladders[0].low_x == 0 && ladders[0].low_z == 0 && ladders[0].high_z == 1 && ladders[0].from_level == 1 && ladders[0].to_level == 2, "舷门格与高一层的邻列之间有一架梯子");
+    check(layout_place(tall, { 0, 1, 0 }, ModuleKind::STORAGE) == "驾驶区顶上不能再搭", "驾驶区顶上不能搭");
+    check(layout_place(tall, { -1, 1, 1 }, ModuleKind::STORAGE) == "悬空了：下面没有节撑着", "悬空被拒");
+    check(layout_place(tall, { -1, 0, 1 }, ModuleKind::STORAGE) == "舷门那一排得是最宽的一排，不然靠不上码头", "先加宽舷门排");
+    check(layout_place(tall, { -1, 0, 0 }, ModuleKind::STORAGE).empty(), "舷门排左舷加一节");
+    check_near(port_edge_x(tall), -7.5, 1e-9, "左舷边到了 −7.5");
+    check_near(starboard_edge_x(tall), 2.5, 1e-9, "右舷边还是 2.5");
+    check(layout_place(tall, { -1, 0, 1 }, ModuleKind::POWER).empty(), "现在左舷后面也能加");
+    check(layout_place(tall, { -1, 1, 0 }, ModuleKind::STORAGE) == "舷门两头的格子上面不能搭：跳板要接甲板", "舷门排两头不能往上搭");
+    check(layout_remove(tall, { 0, 0, 1 }) == "上面还搭着节，先拆上面的", "拆支撑被拒");
+    check(layout_remove(tall, { 0, 1, 1 }).empty() && tall.levels() == 1, "先拆上面的");
+    check(layout_remove(tall, GATE) == "驾驶区拆不得", "驾驶区拆不得");
+    check(layout_place(tall, { 1, 0, 1 }, ModuleKind::STORAGE) == "舷门那一排得是最宽的一排，不然靠不上码头", "右舷伸出去也不行");
+    check(layout_place(tall, { 0, 0, 3 }, ModuleKind::STORAGE) == "有的节没和船身连上", "隔着空格不相连");
+    check(layout_place(tall, { 0, 0, 4 }, ModuleKind::STORAGE) == "超出了船坞能造的范围", "越界");
+    check(layout_place(tall, GATE, ModuleKind::STORAGE) == "这一格已经有节了", "占着的格放不了");
 
-    // 编辑
-    ShipLayout edit = cargo; // 动力 储存 驾驶
-    check(!layout_set_kind(edit, 2, ModuleKind::STORAGE).empty() && edit[2] == ModuleKind::BRIDGE, "驾驶区换不得");
-    check(!layout_set_kind(edit, 1, ModuleKind::BRIDGE).empty() && edit[1] == ModuleKind::STORAGE, "已有驾驶区，别的节换不成驾驶区");
-    check(layout_cycle_kind(edit, 1, 1).empty() && edit[1] == ModuleKind::POWER, "换类型：储存区 → 动力区");
-    check(layout_cycle_kind(edit, 1, 1).empty() && edit[1] == ModuleKind::STORAGE, "再换：动力区 → 储存区（跳过驾驶区）");
-    check(layout_cycle_kind(edit, 1, -1).empty() && edit[1] == ModuleKind::POWER, "反向换");
-    check(!layout_cycle_kind(edit, 2, 1).empty() && edit[2] == ModuleKind::BRIDGE, "驾驶区上换类型被拒");
-    check(!layout_remove(edit, 2).empty() && edit.size() == 3, "驾驶区拆不得");
-    check(layout_remove(edit, 0).empty() && edit.size() == 2 && edit[0] == ModuleKind::POWER, "拆掉第 1 节");
-    check(layout_remove(edit, 0).empty() && edit.size() == 1 && edit[0] == ModuleKind::BRIDGE, "拆到只剩驾驶区");
-    check(!layout_remove(edit, 0).empty() && edit.size() == 1, "最后的驾驶区拆不得");
-    check(!layout_remove(edit, 5).empty() && !layout_set_kind(edit, -1, ModuleKind::POWER).empty(), "越界的节");
-    check(layout_insert_after(edit, -1, ModuleKind::POWER).empty() && edit[0] == ModuleKind::POWER && edit[1] == ModuleKind::BRIDGE, "插在船头");
+    // 换类型
+    ShipLayout edit = cargo;
+    check(!layout_set_kind(edit, GATE, ModuleKind::STORAGE).empty() && edit.at(GATE)->kind == ModuleKind::BRIDGE, "驾驶区换不得");
+    check(!layout_set_kind(edit, { 0, 0, 1 }, ModuleKind::BRIDGE).empty(), "已有驾驶区，别的节换不成驾驶区");
+    check(layout_set_kind(edit, { 0, 0, 1 }, ModuleKind::POWER).empty() && edit.at({ 0, 0, 1 })->kind == ModuleKind::POWER, "储存区换成动力区");
+    check(layout_set_kind(edit, { 1, 1, 1 }, ModuleKind::POWER) == "这一格没有节", "空格换不了");
+
+    // 上限与候选格
+    ShipLayout full = small;
+    for (int z = 1; z <= 3; z++) {
+        for (int x = -1; x <= 1; x++) {
+            if (full.size() < MAX_MODULES) {
+                if (x != 0 && !full.has({ x, 0, 0 })) {
+                    layout_place(full, { x, 0, 0 }, ModuleKind::STORAGE);
+                }
+                layout_place(full, { x, 0, z }, ModuleKind::STORAGE);
+            }
+        }
+    }
+    check(full.size() == MAX_MODULES && layout_problem(full).empty(), "堆到上限 " + std::to_string(MAX_MODULES) + " 节");
+    check(layout_place(full, { 0, 1, 1 }, ModuleKind::STORAGE) == "最多 12 节" && full.size() == MAX_MODULES, "第 13 节加不上");
+    const std::vector<Cell> cands = layout_candidates(small);
+    bool cands_ok = !cands.empty();
+    for (const Cell &c : cands) {
+        ShipLayout trial = small;
+        cands_ok = cands_ok && !small.has(c) && layout_place(trial, c, ModuleKind::STORAGE).empty();
+    }
+    check(cands_ok, "候选格都是能放的空格（" + std::to_string(cands.size()) + " 个）");
+    bool has_aft = false, has_top = false, has_side = false, has_far = false;
+    for (const Cell &c : cands) {
+        has_aft = has_aft || c == Cell{ 0, 0, 1 };
+        has_top = has_top || c == Cell{ 0, 1, -1 };
+        has_side = has_side || c == Cell{ 1, 0, 0 };
+        has_far = has_far || c == Cell{ 1, 0, -1 } || c == Cell{ 0, 0, 2 } || c == Cell{ 0, 1, 0 };
+    }
+    check(has_aft && has_top && has_side && !has_far, "小艇的候选格：后方、动力区顶上、舷门排两侧；不含隔空的与驾驶区顶上");
 
     // id 往返
     const std::vector<std::string> ids = layout_ids(cargo);
-    check(ids.size() == 3 && ids[0] == "power" && ids[1] == "storage" && ids[2] == "bridge", "布局 → id");
+    check(ids.size() == 3 && ids[0] == "0,0,-1:power" && ids[1] == "0,0,0:bridge" && ids[2] == "0,0,1:storage", "布局 → id（按 y, z, x 排）");
     bool ok = false;
     check(layout_from_ids(ids, &ok) == cargo && ok, "id → 布局");
-    check(layout_from_ids({ "power", "cabin", "bridge" }, &ok).size() == 2 && !ok, "认不出的 id 跳过并报告");
+    check(layout_from_ids({ "0,0,-1:power", "cabin", "0,0,0:bridge" }, &ok).size() == 2 && !ok, "认不出的条目跳过并报告");
+    Module m;
+    check(!parse_module_id("1,2:power", m) && !parse_module_id("1,2,3:cabin", m) && parse_module_id("-1,2,3:power", m) && m.at.x == -1 && m.at.z == 3, "解析条目");
 }
 
 void test_inventory() {
