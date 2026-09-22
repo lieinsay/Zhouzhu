@@ -1,0 +1,52 @@
+[gd_scene load_steps=8 format=3 uid="uid://b0zhouzhuw2051"]
+
+[ext_resource type="PackedScene" path="res://player.tscn" id="1_player"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_material"]
+sky_top_color = Color(0.24, 0.43, 0.72, 1)
+sky_horizon_color = Color(0.78, 0.85, 0.92, 1)
+ground_bottom_color = Color(0.8, 0.85, 0.9, 1)
+ground_horizon_color = Color(0.78, 0.85, 0.92, 1)
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_material")
+
+[sub_resource type="Environment" id="environment"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_energy = 0.55
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.8, 0.86, 0.93, 1)
+fog_density = 0.00012
+fog_sky_affect = 0.2
+
+[sub_resource type="StandardMaterial3D" id="cloud_material"]
+albedo_color = Color(0.82, 0.86, 0.92, 1)
+roughness = 1.0
+
+[sub_resource type="PlaneMesh" id="cloud_mesh"]
+material = SubResource("cloud_material")
+size = Vector2(240000, 240000)
+
+[node name="World2051" type="WorldScene"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.819152, 0.42625, -0.383798, 0, 0.669131, 0.743145, 0.573576, -0.608749, 0.54812, 0, 600, 0)
+light_energy = 1.0
+shadow_enabled = true
+directional_shadow_max_distance = 500.0
+
+[node name="CloudSea" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 0)
+mesh = SubResource("cloud_mesh")
+
+[node name="World" type="World" parent="."]
+data_dir = "res://worlds/2051"
+terrain_seed = 2051
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
