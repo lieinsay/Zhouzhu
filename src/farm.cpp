@@ -56,13 +56,17 @@ const CropLook &look_of(const Plot &p_plot) {
     return p_plot.crop && std::strcmp(p_plot.crop->id, "bean") == 0 ? BEAN_LOOK : MILLET_LOOK;
 }
 
-// 一格地：四个角的局部坐标，以及格内任一点 (u 沿 x, v 沿 z ∈ [0, 1]) 的贴地位置——按地形网格同样的两个三角面取，
-// 所以画出来的东西严丝合缝地贴在坡上。
+// 一格地：四个角（相对左上角节点 (i, j) 的坐标，y 是地面高），以及格内任一点 (u 沿 x, v 沿 z ∈ [0, 1]) 的贴地位置——
+// 按地形网格同样的两个三角面取，所以画出来的东西严丝合缝地贴在坡上。
 struct Patch {
     Vector3 p00, p01, p10, p11; // (i, j) (i, j+1) (i+1, j) (i+1, j+1)
 
-    Patch(const IslandField &f, int i, int j) {
-        auto corner = [&f](int a, int b) { return Vector3(real_t(f.coord(b)), f.height[f.index(a, b)], real_t(f.coord(a))); };
+    Patch(const MapGround &g, const PlotLattice &l, int i, int j) {
+        auto corner = [&](int a, int b) {
+            PlotNode node;
+            g.plot_node(l, a, b, node);
+            return Vector3(real_t(l.node_x(b) - l.node_x(j)), real_t(node.y), real_t(l.node_z(a) - l.node_z(i)));
+        };
         p00 = corner(i, j);
         p01 = corner(i, j + 1);
         p10 = corner(i + 1, j);
@@ -230,7 +234,9 @@ void Farm::_bind_methods() {
     ClassDB::bind_method(D_METHOD("available_action", "cell", "has_seed"), &Farm::available_action);
     ClassDB::bind_method(D_METHOD("perform", "cell", "action", "crop"), &Farm::perform);
     ClassDB::bind_method(D_METHOD("set_highlight", "cell", "color"), &Farm::set_highlight);
-    ClassDB::bind_method(D_METHOD("on_island_rebuilt"), &Farm::on_island_rebuilt);
+    ClassDB::bind_method(D_METHOD("on_host_rebuilt"), &Farm::on_host_rebuilt);
+    ClassDB::bind_method(D_METHOD("set_search_radius", "value"), &Farm::set_search_radius);
+    ClassDB::bind_method(D_METHOD("get_search_radius"), &Farm::get_search_radius);
 
     ClassDB::bind_method(D_METHOD("set_max_river_distance", "value"), &Farm::set_max_river_distance);
     ClassDB::bind_method(D_METHOD("get_max_river_distance"), &Farm::get_max_river_distance);
@@ -239,6 +245,7 @@ void Farm::_bind_methods() {
 
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_river_distance", PROPERTY_HINT_RANGE, "4,60,0.5,suffix:m"), "set_max_river_distance", "get_max_river_distance");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "grow_seconds", PROPERTY_HINT_RANGE, "1,1800,1,suffix:s"), "set_grow_seconds", "get_grow_seconds");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "search_radius", PROPERTY_HINT_RANGE, "10,1000,1,suffix:m"), "set_search_radius", "get_search_radius");
 
     ADD_SIGNAL(MethodInfo("plot_changed", PropertyInfo(Variant::VECTOR2I, "cell")));
 
@@ -266,8 +273,8 @@ void Farm::_ready() {
         set_physics_process(false);
         return;
     }
-    island = Object::cast_to<Island>(get_parent());
-    ERR_FAIL_NULL_MSG(island, "Farm 要挂在 Island 下面");
+    host = GroundHost::of(get_parent());
+    ERR_FAIL_NULL_MSG(host, "Farm 要挂在地面宿主（Island / World / FlatMap）下面");
 
     plot_material.instantiate();
     plot_material->set_roughness(1.0);
@@ -278,21 +285,22 @@ void Farm::_ready() {
     highlight_material->set_shading_mode(BaseMaterial3D::SHADING_MODE_UNSHADED);
     highlight_material->set_transparency(BaseMaterial3D::TRANSPARENCY_ALPHA);
 
-    // 子节点先于父节点 _ready：岛此刻还没生成，等它的 rebuilt；已经生成过（运行中才挂上来）就直接勘察
-    island->connect("rebuilt", Callable(this, "on_island_rebuilt"));
-    if (island->get_field().n > 0) {
-        on_island_rebuilt();
+    // 子节点先于父节点 _ready：宿主此刻可能还没生成地面，等它的 rebuilt；已经生成过（运行中才挂上来）就直接开张
+    host->host_node()->connect("rebuilt", Callable(this, "on_host_rebuilt"));
+    if (host->host_ready()) {
+        on_host_rebuilt();
     }
 }
 
-void Farm::on_island_rebuilt() {
+void Farm::on_host_rebuilt() {
     // 地形换了，旧地块连同它们的样子一起作废
     for (const KeyValue<Vector2i, MeshInstance3D *> &entry : plot_nodes) {
         entry.value->queue_free();
     }
     plot_nodes.clear();
     set_highlight(NO_CELL, Color());
-    model = FarmModel(survey_farmland(island->get_field(), island->get_params().dock_apron_m, rules), rules);
+    ground = host->host_ground();
+    model = FarmModel(ground.get(), ground->plot_lattice(), rules);
 }
 
 void Farm::apply_rules() {
@@ -307,38 +315,59 @@ void Farm::_physics_process(double p_delta) {
 }
 
 bool Farm::has_ground(const Vector2i &p_cell) const {
-    return island && model.get_survey().at(p_cell.x, p_cell.y) != Arability::NO_GROUND;
+    return ground && p_cell != NO_CELL && model.land_at(p_cell.x, p_cell.y) != Arability::NO_GROUND;
+}
+
+Vector3 Farm::cell_corner(const Vector2i &p_cell) const {
+    const PlotLattice &l = model.get_lattice();
+    return Vector3(real_t(l.node_x(p_cell.y)), 0, real_t(l.node_z(p_cell.x)));
 }
 
 Vector2i Farm::cell_at(const Vector3 &p_global) const {
-    if (!island) {
+    if (!ground) {
         return NO_CELL;
     }
-    const IslandField &field = island->get_field();
-    const Vector3 local = island->get_global_transform().affine_inverse().xform(p_global);
-    const Vector2i cell(int(std::floor((local.z + field.half_extent()) / field.cell_m)), int(std::floor((local.x + field.half_extent()) / field.cell_m)));
+    const Vector3 local = host_transform().affine_inverse().xform(p_global);
+    int i = 0, j = 0;
+    if (!model.get_lattice().cell_of(local.x, local.z, i, j)) {
+        return NO_CELL;
+    }
+    const Vector2i cell(i, j);
     return has_ground(cell) ? cell : NO_CELL;
 }
 
 Vector3 Farm::get_cell_center(const Vector2i &p_cell) const {
     ERR_FAIL_COND_V(!has_ground(p_cell), Vector3());
-    return island->get_global_transform().xform(Patch(island->get_field(), p_cell.x, p_cell.y).at(0.5f, 0.5f));
+    return host_transform().xform(cell_corner(p_cell) + Patch(*ground, model.get_lattice(), p_cell.x, p_cell.y).at(0.5f, 0.5f));
 }
 
 Vector2i Farm::find_nearest_arable(const Vector3 &p_global) const {
-    if (!island) {
+    if (!ground) {
         return NO_CELL;
     }
-    const IslandField &field = island->get_field();
-    const Vector3 local = island->get_global_transform().affine_inverse().xform(p_global);
+    const PlotLattice &l = model.get_lattice();
+    const Vector3 local = host_transform().affine_inverse().xform(p_global);
+    int i0 = l.i_min, i1 = l.i_max - 1, j0 = l.j_min, j1 = l.j_max - 1;
+    if (!l.bounded) {
+        int ci = 0, cj = 0;
+        l.cell_of(local.x, local.z, ci, cj);
+        const int reach = int(std::ceil(search_radius / l.cell_m));
+        i0 = ci - reach;
+        i1 = ci + reach;
+        j0 = cj - reach;
+        j1 = cj + reach;
+    }
     Vector2i best = NO_CELL;
     double best_d2 = 1e18;
-    for (int i = 0; i < field.n - 1; i++) {
-        for (int j = 0; j < field.n - 1; j++) {
+    for (int i = i0; i <= i1; i++) {
+        for (int j = j0; j <= j1; j++) {
+            const double dx = l.center_x(j) - local.x, dz = l.center_z(i) - local.z;
+            if (dx * dx + dz * dz >= best_d2 || (!l.bounded && dx * dx + dz * dz > search_radius * search_radius)) {
+                continue;
+            }
             if (model.available_action(i, j, false) != FarmAction::TILL) {
                 continue;
             }
-            const double dx = field.coord(j) + 0.5 * field.cell_m - local.x, dz = field.coord(i) + 0.5 * field.cell_m - local.z;
             if (dx * dx + dz * dz < best_d2) {
                 best_d2 = dx * dx + dz * dz;
                 best = Vector2i(i, j);
@@ -349,7 +378,7 @@ Vector2i Farm::find_nearest_arable(const Vector3 &p_global) const {
 }
 
 Farm::Land Farm::get_land(const Vector2i &p_cell) const {
-    return Land(model.get_survey().at(p_cell.x, p_cell.y));
+    return p_cell == NO_CELL ? LAND_NO_GROUND : Land(model.land_at(p_cell.x, p_cell.y));
 }
 
 Farm::State Farm::get_plot(const Vector2i &p_cell) const {
@@ -362,8 +391,7 @@ double Farm::get_growth(const Vector2i &p_cell) const {
 }
 
 double Farm::get_moisture(const Vector2i &p_cell) const {
-    const FarmSurvey &survey = model.get_survey();
-    return survey.in_range(p_cell.x, p_cell.y) ? survey.moisture[survey.index(p_cell.x, p_cell.y)] : 0.0;
+    return has_ground(p_cell) ? double(model.survey(p_cell.x, p_cell.y).moisture) : 0.0;
 }
 
 int Farm::get_plot_count(State p_state) const {
@@ -381,7 +409,7 @@ int Farm::get_crop_yield(const String &p_crop) const {
 }
 
 Farm::Action Farm::available_action(const Vector2i &p_cell, bool p_has_seed) const {
-    return Action(model.available_action(p_cell.x, p_cell.y, p_has_seed));
+    return p_cell == NO_CELL ? ACTION_NONE : Action(model.available_action(p_cell.x, p_cell.y, p_has_seed));
 }
 
 int Farm::perform(const Vector2i &p_cell, Action p_action, const String &p_crop) {
@@ -422,10 +450,11 @@ void Farm::refresh_plot(const Vector2i &p_cell) {
             node->set_name(vformat("Plot_%d_%d", p_cell.x, p_cell.y));
             node->set_meta(GENERATED_META, true);
             node->set_material_override(plot_material);
+            node->set_position(cell_corner(p_cell));
             add_child(node);
             plot_nodes[p_cell] = node;
         }
-        node->set_mesh(build_plot_mesh(Patch(island->get_field(), p_cell.x, p_cell.y), p_cell, plot));
+        node->set_mesh(build_plot_mesh(Patch(*ground, model.get_lattice(), p_cell.x, p_cell.y), p_cell, plot));
     }
     emit_signal("plot_changed", p_cell);
 }
@@ -447,7 +476,8 @@ void Farm::set_highlight(const Vector2i &p_cell, const Color &p_color) {
         add_child(highlight);
     }
     if (p_cell != highlighted) {
-        highlight->set_mesh(build_highlight_mesh(Patch(island->get_field(), p_cell.x, p_cell.y)));
+        highlight->set_mesh(build_highlight_mesh(Patch(*ground, model.get_lattice(), p_cell.x, p_cell.y)));
+        highlight->set_position(cell_corner(p_cell));
         highlighted = p_cell;
     }
     highlight_material->set_albedo(p_color);
@@ -457,8 +487,8 @@ void Farm::set_highlight(const Vector2i &p_cell, const Color &p_color) {
 void Farm::set_max_river_distance(double p_value) {
     rules.max_river_m = p_value;
     // 勘察结果跟着变，连已垦的地一起作废：这是摆场景时调的参数，不是玩到一半改的
-    if (island && island->get_field().n > 0) {
-        on_island_rebuilt();
+    if (host && host->host_ready()) {
+        on_host_rebuilt();
     }
 }
 

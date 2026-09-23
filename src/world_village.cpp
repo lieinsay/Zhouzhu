@@ -18,13 +18,15 @@ void WorldVillage::_bind_methods() {
     ClassDB::bind_method(D_METHOD("has_folk"), &WorldVillage::has_folk);
     ClassDB::bind_method(D_METHOD("get_settlement"), &WorldVillage::get_settlement);
     ClassDB::bind_method(D_METHOD("get_villagers"), &WorldVillage::get_villagers);
+    ClassDB::bind_method(D_METHOD("is_edited"), &WorldVillage::is_edited);
     ADD_SIGNAL(MethodInfo("rebuilt"));
 }
 
-void WorldVillage::setup(World *p_world, const SiteSettlement &p_site, uint64_t p_seed) {
+void WorldVillage::setup(World *p_world, const SiteSettlement &p_site, uint64_t p_seed, const String &p_layout_path) {
     world = p_world;
     site = p_site;
     seed = p_seed;
+    layout_path = p_layout_path;
     set_name(vformat("%s%d", site.hamlet ? "Hamlet" : "Village", site.id));
     set_position(Vector3(real_t(site.x), 0, real_t(site.z)));
 }
@@ -35,8 +37,9 @@ void WorldVillage::_ready() {
     planned = true;
     settlement = memnew(Settlement);
     settlement->set_name("Settlement");
-    settlement->set_model(plan.layout);
-    add_child(settlement); // 宿主已经好了：Settlement 进树就盖
+    settlement->set_layout_path(layout_path);
+    settlement->set_base(plan.layout);
+    add_child(settlement); // 宿主已经好了：Settlement 进树就叠上改动、盖起来
 }
 
 void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk) {
@@ -51,19 +54,14 @@ void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk) {
     villagers = memnew(Villagers);
     villagers->set_name("Villagers");
     villagers->set_settlement_path(NodePath("../Settlement"));
-    villagers->set_farm_path(NodePath());
     villagers->set_per_house(p_per_house);
     villagers->set_max_folk(p_max_folk);
     villagers->set_seed(int64_t(host_seed() & 0x7FFFFFFF));
     add_child(villagers); // 排在 Settlement 后面
 }
 
-std::unique_ptr<SiteGround> WorldVillage::host_site_ground(const SiteRules &) const {
-    return std::make_unique<WorldSiteGround>(world->get_terrain(), site.x, site.z, PAD_SEARCH_M);
-}
-
-std::unique_ptr<NavGround> WorldVillage::host_nav_ground() const {
-    return std::make_unique<WorldNavGround>(world->get_terrain(), site.x, site.z);
+std::unique_ptr<MapGround> WorldVillage::host_ground() const {
+    return std::make_unique<WorldGround>(world->get_terrain(), site.x, site.z);
 }
 
 void WorldVillage::host_nav_window(const SettlementLayout &p_layout, const NavRules &p_rules, double &r_x0, double &r_z0, int &r_cols, int &r_rows) const {

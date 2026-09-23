@@ -1,5 +1,6 @@
 #include "villagers.h"
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -98,8 +99,8 @@ void Villagers::_bind_methods() {
 
     ClassDB::bind_method(D_METHOD("set_settlement_path", "path"), &Villagers::set_settlement_path);
     ClassDB::bind_method(D_METHOD("get_settlement_path"), &Villagers::get_settlement_path);
-    ClassDB::bind_method(D_METHOD("set_farm_path", "path"), &Villagers::set_farm_path);
-    ClassDB::bind_method(D_METHOD("get_farm_path"), &Villagers::get_farm_path);
+    ClassDB::bind_method(D_METHOD("get_farm"), &Villagers::get_farm);
+    ClassDB::bind_method(D_METHOD("has_water"), &Villagers::has_water);
     ClassDB::bind_method(D_METHOD("set_max_folk", "value"), &Villagers::set_max_folk);
     ClassDB::bind_method(D_METHOD("get_max_folk"), &Villagers::get_max_folk);
     ClassDB::bind_method(D_METHOD("set_per_house", "value"), &Villagers::set_per_house);
@@ -116,7 +117,6 @@ void Villagers::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_starting_store"), &Villagers::get_starting_store);
 
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "settlement_path"), "set_settlement_path", "get_settlement_path");
-    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "farm_path"), "set_farm_path", "get_farm_path");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "per_house", PROPERTY_HINT_RANGE, "0,6,1"), "set_per_house", "get_per_house");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "max_folk", PROPERTY_HINT_RANGE, "0,500,1"), "set_max_folk", "get_max_folk");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "day_seconds", PROPERTY_HINT_RANGE, "10,7200,1,suffix:s"), "set_day_seconds", "get_day_seconds");
@@ -140,11 +140,10 @@ void Villagers::_ready() {
         set_physics_process(false);
         return;
     }
-    host = SettlementHost::of(get_parent());
-    ERR_FAIL_NULL_MSG(host, "Villagers 要挂在聚落宿主（Island / WorldVillage）下面");
+    host = GroundHost::of(get_parent());
+    ERR_FAIL_NULL_MSG(host, "Villagers 要挂在地面宿主（Island / WorldVillage / FlatMap）下面");
     settlement = Object::cast_to<Settlement>(get_node_or_null(settlement_path));
     ERR_FAIL_NULL_MSG(settlement, "Villagers 找不到 Settlement（settlement_path）");
-    farm = farm_path.is_empty() ? nullptr : Object::cast_to<Farm>(get_node_or_null(farm_path));
 
     mat_skin = make_material(Color(0.86f, 0.68f, 0.52f));
     mat_hat = make_material(Color(0.78f, 0.68f, 0.42f)); // 斗笠
@@ -166,7 +165,7 @@ void Villagers::_ready() {
 }
 
 void Villagers::on_host_rebuilt() {
-    ground = host->host_nav_ground();
+    ground = host->host_ground();
     populate();
 }
 
@@ -194,13 +193,65 @@ void Villagers::populate() {
     for (int64_t k = 0; k < keys.size(); k++) {
         store.add(to_std(String(keys[k])), int(starting_store[keys[k]]));
     }
-    const IslandField *field = host->host_field();
     const SettlementLayout &layout = settlement->get_model();
     double x0 = 0.0, z0 = 0.0;
     int cols = 0, rows = 0;
     host->host_nav_window(layout, nav_rules, x0, z0, cols, rows);
+
+    // 村子的范围（本宿主坐标）：房子的外接圆
+    double cx = 0.0, cz = 0.0, reach = 0.0;
+    for (const Building &b : layout.get_items()) {
+        cx += b.x / layout.size();
+        cz += b.z / layout.size();
+    }
+    for (const Building &b : layout.get_items()) {
+        reach = std::max(reach, std::hypot(b.x - cx, b.z - cz));
+    }
+
+    // 农田：宿主指给的那一片，地块格换到本宿主的坐标；村子周围（离房子 field_radius_m 以内）有能垦的地才算有田
+    farm = host->host_farm();
+    bool has_farm = false;
+    if (farm && farm->get_host() && !layout.empty()) {
+        double fx = 0.0, fz = 0.0, vx = 0.0, vz = 0.0;
+        farm->get_host()->host_origin(fx, fz);
+        host->host_origin(vx, vz);
+        plots = farm->get_model().get_lattice().shifted(vx - fx, vz - fz);
+        has_farm = farm->get_model().any_arable_near(cx + vx - fx, cz + vz - fz, reach + work.field_radius_m);
+    }
+
+    // 水：村子 water_reach_m 以内的水中线；导航格够不着最近的那处水，就往那边扩
+    water.clear();
+    std::vector<WaterLine> lines;
+    const double far = reach + work.water_reach_m;
+    ground->water_lines(cx - far, cz - far, cx + far, cz + far, lines);
+    double near_d = 1e18, near_x = 0.0, near_z = 0.0;
+    for (WaterLine &line : lines) {
+        bool close = false;
+        for (const WaterPoint &p : line) {
+            const double d = std::hypot(p.x - cx, p.z - cz);
+            close = close || d <= far;
+            if (d < near_d) {
+                near_d = d;
+                near_x = p.x;
+                near_z = p.z;
+            }
+        }
+        if (close) {
+            water.push_back(std::move(line));
+        }
+    }
+    const bool water_inside = near_x >= x0 && near_z >= z0 && near_x <= x0 + cols * nav_rules.cell_m && near_z <= z0 + rows * nav_rules.cell_m;
+    if (!water.empty() && cols > 0 && !water_inside) {
+        const double margin = 10.0;
+        const double lo_x = std::min(x0, near_x - margin), lo_z = std::min(z0, near_z - margin);
+        const double hi_x = std::max(x0 + cols * nav_rules.cell_m, near_x + margin), hi_z = std::max(z0 + rows * nav_rules.cell_m, near_z + margin);
+        cols = int(std::ceil((hi_x - lo_x) / nav_rules.cell_m));
+        rows = int(std::ceil((hi_z - lo_z) / nav_rules.cell_m));
+        x0 = lo_x;
+        z0 = lo_z;
+    }
     nav = build_nav_grid(*ground, x0, z0, cols, rows, layout, nav_rules);
-    std::vector<Resident> residents = assign_residents(layout, farm != nullptr && field, field && field->has_river(), per_house, uint64_t(seed) ^ host->host_seed());
+    std::vector<Resident> residents = assign_residents(layout, has_farm, !water.empty(), per_house, uint64_t(seed) ^ host->host_seed());
     if (max_folk > 0 && int(residents.size()) > max_folk) {
         residents.resize(size_t(max_folk)); // 封顶：其余的算在屋里
     }
@@ -304,7 +355,8 @@ void Villagers::build_body(Folk &r_folk, int p_index) {
 
 VillageView Villagers::view() const {
     VillageView v;
-    v.field = host->host_field();
+    v.plots = farm ? &plots : nullptr;
+    v.water = &water;
     v.layout = &settlement->get_model();
     v.nav = &nav;
     v.farm = farm ? &farm->get_model() : nullptr;

@@ -4,16 +4,18 @@
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
 #include "dock_site.h"
+#include "ground_host.h"
 #include "island_field.h"
-#include "settlement_host.h"
 
 // 一座浮空岛。节点原点在岸缘高度（局部 y = 0 即岸缘），岛体向下垂到岛底。
 // 进树时按属性生成高度场 → 网格 + 碰撞 + 栈桥（+ 河水）；生成物没有 owner，不会写进场景文件。
-// 每次生成完发 rebuilt 信号：长在岛上的东西（Farm）靠它知道地形换了。
-// 编辑器里同样生成，改属性即重建，方便摆岛。
-class Island : public godot::StaticBody3D, public SettlementHost {
+// 每次生成完发 rebuilt 信号：长在岛上的东西（Farm、Shipyard、Settlement、Villagers）靠它知道地形换了。
+// 它是地面宿主（GroundHost）：地面是 IslandGround（高度场、河、路、停机坪、船坞坪），农田是它下面的 Farm 子节点。
+// 几座岛拼成一张地图的是 IslandMap。编辑器里同样生成，改属性即重建，方便摆岛。
+class Island : public godot::StaticBody3D, public GroundHost {
     GDCLASS(Island, godot::StaticBody3D)
 
+    godot::String label; // 给人看的名字（HUD、码头名）；空 = 用节点名
     int64_t seed = 1;
     double area_m2 = 120000.0;
     double age = 0.5;
@@ -58,19 +60,21 @@ public:
     // 河中线（全局坐标，自源头到河口，点在水面高）；没有河返回空
     godot::PackedVector3Array get_river_points() const;
 
-    // 聚落宿主（Settlement / Villagers 挂在岛下面）
+    // 地面宿主（Farm / Shipyard / Settlement / Villagers 挂在岛下面）
     godot::Node3D *host_node() override { return this; }
     const godot::Node3D *host_node() const override { return this; }
     bool host_ready() const override { return field.n > 0; }
-    std::unique_ptr<SiteGround> host_site_ground(const SiteRules &p_rules) const override;
-    std::unique_ptr<NavGround> host_nav_ground() const override;
+    std::unique_ptr<MapGround> host_ground() const override;
     void host_nav_window(const SettlementLayout &p_layout, const NavRules &p_rules, double &r_x0, double &r_z0, int &r_cols, int &r_rows) const override;
     uint64_t host_seed() const override { return uint64_t(seed); }
-    const IslandField *host_field() const override { return &field; }
+    Farm *host_farm() const override; // 岛下面的 Farm 子节点
+    YardPlan host_yard() const override { return field.yard; }
 
-    // 给同在 C++ 里的上层读（Farm 据此勘察农田）
+    // 给同在 C++ 里的上层读
     const IslandField &get_field() const { return field; }
     const IslandParams &get_params() const { return params; }
+    godot::String get_label() const { return label.is_empty() ? godot::String(get_name()) : label; }
+    void set_label(const godot::String &p_value) { label = p_value; }
 
     void set_seed(int64_t p_value);
     int64_t get_seed() const { return seed; }

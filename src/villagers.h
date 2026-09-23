@@ -10,14 +10,14 @@
 #include <godot_cpp/variant/node_path.hpp>
 
 #include "farm.h"
-#include "island.h"
+#include "ground_host.h"
 #include "settlement.h"
-#include "settlement_host.h"
 #include "villager_model.h"
 
-// 一处聚落的村民：聚落宿主（Island / WorldVillage）的子节点，变换留在原点（宿主的局部坐标就是它的局部坐标），要排在 Settlement 后面
-// （宿主 rebuilt 时聚落先重盖，这里才重招人）。导航格只铺宿主给的窗口（岛上是整座岛，岛群里是村子周围）；
-// 宿主没有高度场（岛群里的村）就没地可种、没河可挑，除了守望都闲着。max_folk 给人数封顶（0 = 不封）。
+// 一处聚落的村民：地面宿主（Island / WorldVillage / FlatMap）的子节点，变换留在原点（宿主的局部坐标就是它的局部坐标），要排在 Settlement 后面
+// （宿主 rebuilt 时聚落先重盖，这里才重招人）。导航格铺宿主给的窗口（岛上是整座岛，岛群里是村子周围），村子附近有水而窗口够不着时往水那边扩。
+// 农田是宿主指给的那一片（host_farm，可以挂在别的宿主下：岛群里的村种 World 下的农田），地块格换到自己宿主的坐标里用；
+// 村子附近有能垦的地才有农夫，work.water_reach_m 以内有水才有挑水的，否则除了守望都闲着。max_folk 给人数封顶（0 = 不封）。
 //
 // 岛生成好、聚落清单就绪后按清单招人（assign_residents）、建导航格；清单改了（布置模式）就整村重招。
 // 每个物理帧：钟点往前走；每个村民要么在屋里（藏起来，到了出工的钟点再错开几秒出门），要么沿路点走（贴地），
@@ -56,7 +56,6 @@ private:
     };
 
     godot::NodePath settlement_path = "../Settlement";
-    godot::NodePath farm_path = "../Farm"; // 可以不接：那就没人种地
     int per_house = 2;
     int max_folk = 0;
     double start_hour = 7.5;
@@ -64,10 +63,12 @@ private:
     int64_t seed = 1;
     godot::Dictionary starting_store; // 村里的仓开局有什么：物品 id → 份数
 
-    SettlementHost *host = nullptr;
-    std::unique_ptr<NavGround> ground; // 宿主给的导航地面；宿主 rebuilt 时换新
+    GroundHost *host = nullptr;
+    std::unique_ptr<MapGround> ground; // 宿主给的地面；宿主 rebuilt 时换新
     Settlement *settlement = nullptr;
-    Farm *farm = nullptr;
+    Farm *farm = nullptr; // 宿主指给的农田；没有为 nullptr
+    PlotLattice plots; // 农田的地块格，换到本宿主的坐标
+    std::vector<WaterLine> water; // 挑水去的水中线（本宿主坐标）
     NavRules nav_rules;
     DayRules day;
     WorkRules work;
@@ -131,8 +132,8 @@ public:
 
     void set_settlement_path(const godot::NodePath &p_path) { settlement_path = p_path; }
     godot::NodePath get_settlement_path() const { return settlement_path; }
-    void set_farm_path(const godot::NodePath &p_path) { farm_path = p_path; }
-    godot::NodePath get_farm_path() const { return farm_path; }
+    Farm *get_farm() const { return farm; }
+    bool has_water() const { return !water.empty(); }
     void set_per_house(int p_value) { per_house = p_value; }
     int get_per_house() const { return per_house; }
     void set_max_folk(int p_value) { max_folk = p_value; }

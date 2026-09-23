@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/box_mesh.hpp>
 #include <godot_cpp/classes/box_shape3d.hpp>
 #include <godot_cpp/classes/collision_shape3d.hpp>
+#include <godot_cpp/classes/dir_access.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/prism_mesh.hpp>
@@ -54,6 +55,8 @@ void Settlement::_bind_methods() {
     ClassDB::bind_method(D_METHOD("load"), &Settlement::load);
     ClassDB::bind_method(D_METHOD("save"), &Settlement::save);
     ClassDB::bind_method(D_METHOD("is_dirty"), &Settlement::is_dirty);
+    ClassDB::bind_method(D_METHOD("get_base_count"), &Settlement::get_base_count);
+    ClassDB::bind_method(D_METHOD("get_ground_height", "global_position"), &Settlement::get_ground_height);
     ClassDB::bind_method(D_METHOD("on_host_rebuilt"), &Settlement::on_host_rebuilt);
 
     ClassDB::bind_method(D_METHOD("set_layout_path", "path"), &Settlement::set_layout_path);
@@ -68,14 +71,14 @@ void Settlement::_bind_methods() {
 }
 
 void Settlement::_ready() {
-    host = SettlementHost::of(get_parent());
-    ERR_FAIL_NULL_MSG(host, "Settlement 要挂在聚落宿主（Island / WorldVillage）下面");
+    host = GroundHost::of(get_parent());
+    ERR_FAIL_NULL_MSG(host, "Settlement 要挂在地面宿主（Island / WorldVillage / FlatMap）下面");
     mat_stone = make_material(Color(0.52f, 0.50f, 0.46f), 1.0f);
     mat_wall = make_material(Color(0.76f, 0.64f, 0.46f), 1.0f); // 夯土
     mat_roof = make_material(Color(0.30f, 0.30f, 0.34f), 0.9f); // 灰瓦
     mat_door = make_material(Color(0.30f, 0.20f, 0.12f), 0.95f);
     if (!layout_path.is_empty()) {
-        load(); // 没有文件的（岛群里的村）清单由宿主用 set_model 给
+        load(); // 改动叠到宿主给的底清单上（岛上底是空的）
     }
     // 子节点先于父节点 _ready：宿主此刻可能还没生成地面，等它的 rebuilt；已经生成过就直接盖
     host->host_node()->connect("rebuilt", Callable(this, "on_host_rebuilt"));
@@ -85,9 +88,27 @@ void Settlement::_ready() {
 }
 
 void Settlement::on_host_rebuilt() {
-    ground = host->host_site_ground(rules);
+    refresh_ground();
     clear_generated();
     build_all();
+}
+
+void Settlement::refresh_ground() {
+    ground.reset();
+    map = host->host_ground();
+    ground = std::make_unique<MapSiteGround>(*map, rules);
+}
+
+double Settlement::get_ground_height(const Vector3 &p_global) const {
+    double y = 0.0;
+    if (!ready()) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    const Vector3 local = to_island(p_global);
+    if (!map->site_height(local.x, local.z, y)) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    return host_transform().xform(Vector3(local.x, real_t(y), local.z)).y;
 }
 
 void Settlement::clear_generated() {
@@ -335,7 +356,7 @@ Vector3 Settlement::find_site(const String &p_kind, const Vector3 &p_global, dou
 }
 
 bool Settlement::load() {
-    layout = SettlementLayout();
+    LayoutEdits edits;
     dirty = false;
     bool read = false;
     if (!layout_path.is_empty() && FileAccess::file_exists(layout_path)) {
@@ -347,12 +368,17 @@ bool Settlement::load() {
                 ids.push_back(to_std(lines[k]));
             }
             bool ok = true;
-            layout = settlement_from_ids(ids, &ok);
+            edits = parse_layout_edits(ids, &ok);
             if (!ok) {
                 WARN_PRINT(String("Settlement: ") + layout_path + String(U" 里有认不出的行，跳过了"));
             }
             read = true;
         }
+    }
+    int unmatched = 0;
+    layout = apply_layout_edits(base, edits, &unmatched);
+    if (unmatched > 0) {
+        WARN_PRINT(vformat(String(U"Settlement: %s 里要拆的 %d 座在底清单里找不到了（铺村的规矩改过？），跳过"), layout_path, unmatched));
     }
     if (ready()) {
         clear_generated();
@@ -366,14 +392,19 @@ bool Settlement::save() {
     if (layout_path.is_empty()) {
         return false;
     }
+    DirAccess::make_dir_recursive_absolute(layout_path.get_base_dir());
     Ref<FileAccess> file = FileAccess::open(layout_path, FileAccess::WRITE);
     if (file.is_null()) {
         ERR_PRINT(String("Settlement: 写不了 ") + layout_path);
         return false;
     }
-    file->store_line(String(U"# 聚落清单：一座一行 kind@x,z,yaw°（岛的局部坐标，米 / 度）。在游戏里按 B 进布置模式改，F5 存回这里。"));
-    for (const std::string &id : settlement_ids(layout)) {
-        file->store_line(String::utf8(id.c_str()));
+    if (base.empty()) {
+        file->store_line(String(U"# 聚落清单：一座一行 kind@x,z,yaw°（岛的局部坐标，米 / 度）。在游戏里按 B 进布置模式改，F5 存回这里。"));
+    } else {
+        file->store_line(String(U"# 村落改动：在自动铺村的结果上加（kind@x,z,yaw°）或拆（-kind@x,z,yaw°），村心为原点，米 / 度。在游戏里按 B 进布置模式改，F5 存回这里。"));
+    }
+    for (const std::string &line : layout_edit_lines(diff_layouts(base, layout))) {
+        file->store_line(String::utf8(line.c_str()));
     }
     file->close();
     dirty = false;
@@ -387,19 +418,18 @@ void Settlement::set_layout_path(const String &p_path) {
     }
 }
 
-void Settlement::set_model(const SettlementLayout &p_layout) {
-    layout = p_layout;
-    dirty = false;
-    if (ready()) {
-        clear_generated();
-        build_all();
+void Settlement::set_base(const SettlementLayout &p_base) {
+    base = p_base;
+    if (is_inside_tree() && host) {
+        load(); // 改动重新叠一遍，重画，发 changed
+    } else {
+        layout = base;
     }
-    emit_signal("changed");
 }
 
 void Settlement::set_max_rise(double p_value) {
     rules.max_rise_m = p_value;
     if (ready()) {
-        ground = host->host_site_ground(rules);
+        refresh_ground();
     }
 }

@@ -17,6 +17,11 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "dock_builder.h"
+#include "farm.h"
+#include "shipyard.h"
+#include "site_stream.h"
+#include "world_ground.h"
+#include "world_map.h"
 
 using namespace godot;
 
@@ -63,7 +68,11 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_build_threads", "value"), &World::set_build_threads);
     ClassDB::bind_method(D_METHOD("get_build_threads"), &World::get_build_threads);
 
+    ClassDB::bind_method(D_METHOD("set_sites_path", "value"), &World::set_sites_path);
+    ClassDB::bind_method(D_METHOD("get_sites_path"), &World::get_sites_path);
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "data_dir", PROPERTY_HINT_DIR), "set_data_dir", "get_data_dir");
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "sites_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "SiteStream"), "set_sites_path", "get_sites_path");
+    ADD_SIGNAL(MethodInfo("rebuilt"));
     ADD_PROPERTY(PropertyInfo(Variant::INT, "terrain_seed"), "set_terrain_seed", "get_terrain_seed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "split", PROPERTY_HINT_RANGE, "0.5,4,0.05"), "set_split", "get_split");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "build_threads", PROPERTY_HINT_RANGE, "1,16,1"), "set_build_threads", "get_build_threads");
@@ -78,6 +87,7 @@ void World::_ready() {
         set_process(false);
         return;
     }
+    site_stream = Object::cast_to<SiteStream>(get_node_or_null(sites_path));
     loaded = load();
     if (!loaded) {
         set_process(false);
@@ -85,6 +95,7 @@ void World::_ready() {
     }
     start_workers();
     set_process(true);
+    emit_signal("rebuilt"); // 挂在下面的 Farm、Shipyard 先于这里 _ready，此刻才等到地面
 }
 
 bool World::load() {
@@ -123,8 +134,7 @@ bool World::load() {
         ERR_PRINT(String("World: 读不了 ") + sites_path + "：" + String::utf8(error.c_str()) + String(U"（用 tools/export_skyisle.py --sites 导出）"));
         sites = WorldSites();
     }
-    docks = plan_world_docks(terrain, sites, world_dock_rules());
-    terrain.set_pads(docks);
+    works = lay_world_works(terrain, sites);
 
     ground_material.instantiate();
     ground_material->set_roughness(1.0);
@@ -362,7 +372,7 @@ int World::get_island_at(double p_x, double p_z) const {
     return loaded ? int(grid.island[grid.nearest_cell(p_x, p_z)]) : -1;
 }
 
-int World::get_pending_count() {
+int World::get_pending_count() const {
     int missing = 0;
     for (const TileKey &key : target) {
         missing += tiles.find(key.packed()) == tiles.end() ? 1 : 0;
@@ -385,17 +395,17 @@ int World::get_dock_id(int p_index) const {
 }
 
 bool World::is_dock_berthable(int p_index) const {
-    return p_index >= 0 && p_index < int(docks.size()) && docks[size_t(p_index)].ok;
+    return p_index >= 0 && p_index < int(works.docks.size()) && works.docks[size_t(p_index)].ok;
 }
 
 Transform3D World::get_dock_berth(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(docks.size()), Transform3D());
-    return dock_builder::berth_contact(docks[size_t(p_index)]);
+    ERR_FAIL_INDEX_V(p_index, int(works.docks.size()), Transform3D());
+    return dock_builder::berth_contact(works.docks[size_t(p_index)]);
 }
 
 Transform3D World::get_dock_spawn(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(docks.size()), Transform3D());
-    Transform3D xf = dock_builder::spawn(docks[size_t(p_index)]);
+    ERR_FAIL_INDEX_V(p_index, int(works.docks.size()), Transform3D());
+    Transform3D xf = dock_builder::spawn(works.docks[size_t(p_index)]);
     double y = 0.0;
     if (terrain.surface(xf.origin.x, xf.origin.z, y)) {
         xf.origin.y = real_t(y);
@@ -404,6 +414,105 @@ Transform3D World::get_dock_spawn(int p_index) const {
 }
 
 Vector3 World::get_dock_position(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(docks.size()), Vector3());
-    return dock_builder::point(docks[size_t(p_index)], 0.0, 0.0);
+    ERR_FAIL_INDEX_V(p_index, int(works.docks.size()), Vector3());
+    return dock_builder::point(works.docks[size_t(p_index)], 0.0, 0.0);
+}
+
+std::unique_ptr<MapGround> World::host_ground() const {
+    return std::make_unique<WorldGround>(terrain, 0.0, 0.0);
+}
+
+Farm *World::host_farm() const {
+    const TypedArray<Node> children = get_children();
+    for (int64_t k = 0; k < children.size(); k++) {
+        if (Farm *farm = Object::cast_to<Farm>(children[k])) {
+            return farm;
+        }
+    }
+    return nullptr;
+}
+
+YardPlan World::host_yard() const {
+    for (const YardPlan &yard : works.yards) {
+        if (yard.present) {
+            return yard;
+        }
+    }
+    return YardPlan();
+}
+
+int World::map_island_at(const Vector3 &p_global) const {
+    return std::isnan(get_surface_height(p_global.x, p_global.z)) ? -1 : get_island_at(p_global.x, p_global.z);
+}
+
+bool World::map_footing(const Vector3 &p_global) const {
+    return is_ready_at(p_global) && !std::isnan(get_surface_height(p_global.x, p_global.z));
+}
+
+bool World::map_dock_open(int p_index) const {
+    return is_dock_berthable(p_index) && site_stream && site_stream->get_dock(get_dock_id(p_index));
+}
+
+int World::map_dock_island(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, int(sites.docks.size()), -1);
+    return sites.docks[size_t(p_index)].island;
+}
+
+String World::map_dock_label(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, int(sites.docks.size()), String());
+    const SiteDock &dock = sites.docks[size_t(p_index)];
+    return vformat(String(U"岛 #%d 码头 #%d"), dock.island, dock.id);
+}
+
+std::vector<Shipyard *> World::map_shipyards() const {
+    std::vector<Shipyard *> out;
+    const TypedArray<Node> children = get_children();
+    for (int64_t k = 0; k < children.size(); k++) {
+        if (Shipyard *yard = Object::cast_to<Shipyard>(children[k])) {
+            out.push_back(yard);
+        }
+    }
+    return out;
+}
+
+GroundHost *World::map_settlement_at(const Vector3 &p_global) const {
+    return site_stream ? site_stream->village_at(p_global) : nullptr;
+}
+
+void World::map_focus(const Vector3 &p_global) {
+    set_focus(p_global);
+    if (site_stream) {
+        site_stream->set_focus(p_global);
+    }
+}
+
+void World::map_prepare(const Vector3 &p_global) {
+    prepare_at(p_global);
+    if (site_stream) {
+        site_stream->ensure_near(p_global); // 码头的栈桥、近处的村子与村民，人落地前就在
+    }
+}
+
+int World::map_pending() const {
+    return get_pending_count();
+}
+
+String World::map_location_text(const Vector3 &p_global) const {
+    return vformat(String(U"岛 #%d · 东 %s km  南 %s km · 高 %d m"), get_island_at(p_global.x, p_global.z),
+            String::num(p_global.x / 1000.0, 2), String::num(p_global.z / 1000.0, 2), int(std::lround(p_global.y)));
+}
+
+WorldMap *World::map_make_panel() {
+    WorldMap *panel = memnew(WorldMap);
+    panel->setup(grid, info);
+    for (int k = 0; k < get_dock_count(); k++) {
+        panel->set_dock(get_dock_id(k), is_dock_berthable(k), get_dock_position(k));
+    }
+    return panel;
+}
+
+void World::map_refresh_panel(WorldMap *p_panel) const {
+    if (site_stream) {
+        p_panel->set_built_sites(site_stream->get_built_docks(), site_stream->get_built_villages());
+    }
 }

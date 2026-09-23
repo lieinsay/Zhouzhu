@@ -13,22 +13,29 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/string.hpp>
 
+#include "ground_host.h"
+#include "map_host.h"
 #include "terrain_tile.h"
 #include "world_grid.h"
 #include "world_sites.h"
 #include "world_terrain.h"
 
+class SiteStream;
+
 // 一个真实比例的岛群（skyisle-gen 第三层产物，经 tools/export_skyisle.py 转成 data_dir 下的 terrain.bin + world.json）。
 // 地面是流式的：焦点（上层每帧 set_focus，通常是玩家）一动，就按 TileLayout 重新选块，缺的块丢给后台线程建网格，
 // 建好的在主线程挂进场景；被取代的旧块要等盖住它的新块都到齐了才拆，所以地面不会闪出窟窿。最细一级（叶块）带碰撞。
 // 瞬移前调 prepare_at：同步建好落点周围的叶块，人落下去脚下一定有地。
-// 码头：加载时按 sites.tsv 把全部码头规划好（dock_site），停机坪压进连续地形里再建第一块地面；
-// 泊位接触线、出生位姿由此给出。栈桥与村落这些实物不归这里管（见 WorldSites 节点，走近了才建）。
-// 节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
-class World : public godot::Node3D {
+// 码头与船坞坪：加载时按 sites.tsv 把全部码头规划好（dock_site）、主码头旁找好船坞坪（yard_site），压 / 凿进连续地形里再建第一块地面；
+// 泊位接触线、出生位姿由此给出。栈桥与村落这些实物不归这里管（SiteStream 节点，走近了才建）。
+// 它是地面宿主（GroundHost）：下面挂的 Farm（整个岛群一片农田，地块格与岛群坐标对齐）与 Shipyard（主码头旁）用它的坐标；
+// 也是地图宿主（MapHost）：码头、脚下的聚落（SiteStream 铺好的村）、流式焦点、岛群地图面板都由它回答。
+// 加载完发 rebuilt（只一次）。节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
+class World : public godot::Node3D, public GroundHost, public MapHost {
     GDCLASS(World, godot::Node3D)
 
     godot::String data_dir = "res://worlds/2051";
+    godot::NodePath sites_path = "../SiteStream"; // 可以不接：那就没有码头与村落的实物，也靠不了岸
     int64_t terrain_seed = 2051;
     double split = 1.25; // 焦点到块的距离 < 块边长 × split 就细分
     int build_threads = 3;
@@ -39,8 +46,9 @@ class World : public godot::Node3D {
     TileLayout layout;
     godot::Dictionary info; // world.json
     WorldSites sites; // sites.tsv
-    std::vector<DockPlan> docks; // 与 sites.docks 一一对应
+    WorldWorks works; // 码头与船坞坪，与 sites.docks 一一对应
     bool loaded = false;
+    SiteStream *site_stream = nullptr;
 
     struct Tile {
         TileKey key;
@@ -92,10 +100,10 @@ public:
     godot::Dictionary get_info() const { return info; }
     bool is_loaded() const { return loaded; }
     int get_tile_count() const { return int(tiles.size()); }
-    int get_pending_count();
+    int get_pending_count() const;
 
     // 码头（下标与 sites.docks 一致）
-    int get_dock_count() const { return int(docks.size()); }
+    int get_dock_count() const { return int(works.docks.size()); }
     int find_dock(int p_id) const; // 按生成器的码头号找下标；没有 −1
     int get_dock_id(int p_index) const;
     bool is_dock_berthable(int p_index) const; // 找到了岸缘，能靠泊
@@ -107,7 +115,45 @@ public:
     const WorldGrid &get_grid() const { return grid; }
     const WorldTerrain &get_terrain() const { return terrain; }
     const WorldSites &get_sites() const { return sites; }
-    const std::vector<DockPlan> &get_docks() const { return docks; }
+    const std::vector<DockPlan> &get_docks() const { return works.docks; }
+    SiteStream *get_site_stream() const { return site_stream; }
+
+    // GroundHost（Farm、Shipyard 挂在它下面）
+    godot::Node3D *host_node() override { return this; }
+    const godot::Node3D *host_node() const override { return this; }
+    bool host_ready() const override { return loaded; }
+    std::unique_ptr<MapGround> host_ground() const override;
+    Farm *host_farm() const override; // 下面的 Farm 子节点
+    YardPlan host_yard() const override; // 主码头旁的船坞坪
+    void host_origin(double &r_x, double &r_z) const override { r_x = r_z = 0.0; }
+
+    // MapHost
+    godot::Node3D *map_node() override { return this; }
+    bool map_ready() const override { return loaded; }
+    double map_surface(const godot::Vector3 &p_global) const override { return get_surface_height(p_global.x, p_global.z); }
+    int map_island_at(const godot::Vector3 &p_global) const override;
+    bool map_footing(const godot::Vector3 &p_global) const override;
+    int map_dock_count() const override { return get_dock_count(); }
+    int map_dock_id(int p_index) const override { return get_dock_id(p_index); }
+    bool map_dock_open(int p_index) const override;
+    godot::Transform3D map_dock_berth(int p_index) const override { return get_dock_berth(p_index); }
+    godot::Transform3D map_dock_spawn(int p_index) const override { return get_dock_spawn(p_index); }
+    godot::Vector3 map_dock_position(int p_index) const override { return get_dock_position(p_index); }
+    int map_dock_island(int p_index) const override;
+    godot::String map_dock_label(int p_index) const override;
+    std::vector<Shipyard *> map_shipyards() const override;
+    Farm *map_farm_at(const godot::Vector3 &p_global) const override { return host_farm(); }
+    GroundHost *map_settlement_at(const godot::Vector3 &p_global) const override;
+    void map_focus(const godot::Vector3 &p_global) override;
+    void map_prepare(const godot::Vector3 &p_global) override;
+    int map_pending() const override;
+    godot::String map_location_text(const godot::Vector3 &p_global) const override;
+    WorldMap *map_make_panel() override;
+    void map_refresh_panel(WorldMap *p_panel) const override;
+    double map_view_distance() const override { return 60000.0; } // 岛群近百公里宽，远处的岛也要看得见
+
+    void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
+    godot::NodePath get_sites_path() const { return sites_path; }
 
     void set_data_dir(const godot::String &p_value) { data_dir = p_value; }
     godot::String get_data_dir() const { return data_dir; }

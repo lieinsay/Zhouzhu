@@ -15,6 +15,8 @@
 #include <godot_cpp/core/math.hpp>
 
 #include "dock_builder.h"
+#include "farm.h"
+#include "island_ground.h"
 #include "island_mesh.h"
 
 using namespace godot;
@@ -45,6 +47,8 @@ void Island::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_trail_points"), &Island::get_trail_points);
     ClassDB::bind_method(D_METHOD("get_river_points"), &Island::get_river_points);
 
+    ClassDB::bind_method(D_METHOD("set_label", "value"), &Island::set_label);
+    ClassDB::bind_method(D_METHOD("get_label"), &Island::get_label);
     ClassDB::bind_method(D_METHOD("set_seed", "value"), &Island::set_seed);
     ClassDB::bind_method(D_METHOD("get_seed"), &Island::get_seed);
     ClassDB::bind_method(D_METHOD("set_area_m2", "value"), &Island::set_area_m2);
@@ -69,6 +73,7 @@ void Island::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_has_yard"), &Island::get_has_yard);
     ClassDB::bind_method(D_METHOD("has_shipyard"), &Island::has_shipyard);
 
+    ADD_PROPERTY(PropertyInfo(Variant::STRING, "label"), "set_label", "get_label");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "area_m2", PROPERTY_HINT_RANGE, "5000,1000000,1000,suffix:m²"), "set_area_m2", "get_area_m2");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "age", PROPERTY_HINT_RANGE, "0,1,0.01"), "set_age", "get_age");
@@ -302,18 +307,21 @@ void Island::set_has_yard(bool p_value) {
     queue_rebuild();
 }
 
-std::unique_ptr<SiteGround> Island::host_site_ground(const SiteRules &p_rules) const {
-    return std::make_unique<IslandSiteGround>(field, params.dock_apron_m, p_rules);
-}
-
-std::unique_ptr<NavGround> Island::host_nav_ground() const {
-    return std::make_unique<IslandNavGround>(field);
+std::unique_ptr<MapGround> Island::host_ground() const {
+    return std::make_unique<IslandGround>(field, params.dock_apron_m);
 }
 
 void Island::host_nav_window(const SettlementLayout &, const NavRules &p_rules, double &r_x0, double &r_z0, int &r_cols, int &r_rows) const {
-    // 铺满整座岛（与 build_nav_grid(IslandField) 一致）
-    const double ext = field.half_extent();
-    r_x0 = -ext;
-    r_z0 = -ext;
-    r_cols = r_rows = field.n < 2 ? 0 : int(std::floor(2.0 * ext / p_rules.cell_m));
+    island_nav_window(field, p_rules, r_x0, r_z0, r_cols, r_rows); // 铺满整座岛
+}
+
+Farm *Island::host_farm() const {
+    const TypedArray<Node> children = get_children();
+    for (int64_t k = 0; k < children.size(); k++) {
+        Farm *farm = Object::cast_to<Farm>(children[k]);
+        if (farm) {
+            return farm;
+        }
+    }
+    return nullptr;
 }

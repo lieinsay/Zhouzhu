@@ -14,12 +14,13 @@
 //   码头：dock_radius 以内建栈桥（便宜，一次建齐）；
 //   村与散户：离村子边缘 village_radius 以内铺房子，每帧最多铺一处（由近及远），免得一帧卡住；
 //   村民：folk_radius 以内才招，每村 max_folk 封顶。
-// 都带回滞：拆的距离比建的远 hysteresis 倍。瞬移前调 ensure_near，把落点周围的一次同步建好。
+// 都带回滞：拆的距离比建的远 hysteresis 倍；布置模式改过还没存的村不拆（拆了改动就丢了）。瞬移前调 ensure_near，把落点周围的一次同步建好。
 // 这里只持有「哪些建了」；码头几何在 World，村子清单在 WorldVillage。
 class SiteStream : public godot::Node3D {
     GDCLASS(SiteStream, godot::Node3D)
 
     godot::NodePath world_path = "../World";
+    godot::String layout_dir = "res://settlements/2051"; // 布置模式的改动：<layout_dir>/village_<号>.txt、hamlet_<号>.txt
     double dock_radius = 3000.0;
     double village_radius = 2500.0;
     double folk_radius = 900.0;
@@ -59,9 +60,13 @@ public:
     WorldVillage *get_village(int p_village_id) const; // 已建的村；没有返回 nullptr
     WorldVillage *get_hamlet(int p_hamlet_id) const;
     WorldDock *get_dock(int p_dock_id) const;
+    // 该点所在的那处已铺的村 / 散户（离村心不超过它的半径 + p_margin）；最近的那处，没有返回 nullptr
+    WorldVillage *village_at(const godot::Vector3 &p_point, double p_margin = 40.0) const;
 
     void set_world_path(const godot::NodePath &p_value) { world_path = p_value; }
     godot::NodePath get_world_path() const { return world_path; }
+    void set_layout_dir(const godot::String &p_value) { layout_dir = p_value; }
+    godot::String get_layout_dir() const { return layout_dir; }
     void set_dock_radius(double p_value) { dock_radius = p_value; }
     double get_dock_radius() const { return dock_radius; }
     void set_village_radius(double p_value) { village_radius = p_value; }

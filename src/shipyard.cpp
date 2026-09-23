@@ -43,23 +43,24 @@ void Shipyard::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_gangway_top"), &Shipyard::get_gangway_top);
     ClassDB::bind_method(D_METHOD("get_gangway_foot"), &Shipyard::get_gangway_foot);
     ClassDB::bind_method(D_METHOD("get_bench_position"), &Shipyard::get_bench_position);
-    ClassDB::bind_method(D_METHOD("on_island_rebuilt"), &Shipyard::on_island_rebuilt);
+    ClassDB::bind_method(D_METHOD("on_host_rebuilt"), &Shipyard::on_host_rebuilt);
 }
 
 void Shipyard::_ready() {
-    island = Object::cast_to<Island>(get_parent());
-    ERR_FAIL_NULL_MSG(island, "Shipyard 要挂在 Island 下面");
+    host = GroundHost::of(get_parent());
+    ERR_FAIL_NULL_MSG(host, "Shipyard 要挂在地面宿主（Island / World / FlatMap）下面");
     mat_timber = make_material(Color(0.45f, 0.32f, 0.20f), 0.95f);
     mat_beam = make_material(Color(0.36f, 0.26f, 0.17f), 0.95f);
     mat_paper = make_material(Color(0.88f, 0.84f, 0.72f), 1.0f);
-    // 子节点先于父节点 _ready：岛此刻还没生成，等它的 rebuilt；已经生成过就直接搭
-    island->connect("rebuilt", Callable(this, "on_island_rebuilt"));
-    if (island->get_field().n > 0) {
-        on_island_rebuilt();
+    // 子节点先于父节点 _ready：宿主此刻可能还没生成地面，等它的 rebuilt；已经生成过就直接搭
+    host->host_node()->connect("rebuilt", Callable(this, "on_host_rebuilt"));
+    if (host->host_ready()) {
+        on_host_rebuilt();
     }
 }
 
-void Shipyard::on_island_rebuilt() {
+void Shipyard::on_host_rebuilt() {
+    yard = host->host_yard();
     clear_generated();
     build();
 }
@@ -76,11 +77,10 @@ void Shipyard::clear_generated() {
 }
 
 bool Shipyard::is_present() const {
-    return island && island->get_field().yard.present;
+    return host && yard.present;
 }
 
 Vector3 Shipyard::yard_point(double p_u, double p_v, double p_up) const {
-    const IslandYard &yard = island->get_field().yard;
     double x = 0.0, z = 0.0;
     yard.from_local(p_u, p_v, x, z);
     return Vector3(real_t(x), real_t(yard.y + p_up), real_t(z));
@@ -90,7 +90,6 @@ void Shipyard::build() {
     if (!is_present()) {
         return;
     }
-    const IslandYard &yard = island->get_field().yard;
     const Vector3 u_axis(real_t(yard.ux), 0, real_t(yard.uz));
     const Vector3 up(0, 1, 0);
     // 盒子的朝向：x 沿长轴 u；z 取 u × y，与短轴 v 同向或反向都行（盒子对称），但不能是左手系，否则面会翻
@@ -153,7 +152,6 @@ void Shipyard::build() {
 
 Transform3D Shipyard::get_cradle_contact() const {
     ERR_FAIL_COND_V(!is_present(), Transform3D());
-    const IslandYard &yard = island->get_field().yard;
     const Vector3 toward_gangway(real_t(yard.vx), 0, real_t(yard.vz));
     const Vector3 up(0, 1, 0);
     return get_global_transform() * Transform3D(Basis(toward_gangway, up, toward_gangway.cross(up)), yard_point(0.0, CONTACT_V, CRADLE_LIFT));
