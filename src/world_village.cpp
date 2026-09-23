@@ -6,6 +6,7 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include "dock_builder.h"
+#include "hinterland.h"
 
 using namespace godot;
 
@@ -22,8 +23,10 @@ void WorldVillage::_bind_methods() {
     ADD_SIGNAL(MethodInfo("rebuilt"));
 }
 
-void WorldVillage::setup(World *p_world, const SiteSettlement &p_site, uint64_t p_seed, const String &p_layout_path) {
+void WorldVillage::setup(World *p_world, const SiteSettlement &p_site, uint64_t p_seed, const String &p_layout_path, Hinterland *p_hinterland, int p_index) {
     world = p_world;
+    hinterland = p_hinterland;
+    site_index = p_index;
     site = p_site;
     seed = p_seed;
     layout_path = p_layout_path;
@@ -47,7 +50,10 @@ void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk) {
         return;
     }
     if (!p_on) {
-        villagers->queue_free();
+        if (hinterland) {
+            hinterland->set_layout(site_index, settlement->get_model()); // 布置模式改过：远处照新清单记
+        }
+        villagers->queue_free(); // 离树时把账收回去（地块从农田里拿出来记进账本）
         villagers = nullptr;
         return;
     }
@@ -57,6 +63,9 @@ void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk) {
     villagers->set_per_house(p_per_house);
     villagers->set_max_folk(p_max_folk);
     villagers->set_seed(int64_t(host_seed() & 0x7FFFFFFF));
+    if (hinterland && site_index >= 0) {
+        villagers->set_ledger(hinterland->checkout(site_index, settlement->get_model()), hinterland->get_registry());
+    }
     add_child(villagers); // 排在 Settlement 后面
 }
 

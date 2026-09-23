@@ -63,6 +63,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/villager_model.h
     src/world_grid.cpp
     src/world_grid.h
+    src/world_ledger.cpp
+    src/world_ledger.h
     src/world_ground.cpp
     src/world_ground.h
     src/world_sites.cpp
@@ -102,6 +104,8 @@ target_sources(
         src/ground_host.h
         src/helm.cpp
         src/helm.h
+        src/hinterland.cpp
+        src/hinterland.h
         src/input_actions.cpp
         src/input_actions.h
         src/island.cpp

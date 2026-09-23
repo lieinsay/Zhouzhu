@@ -10,6 +10,7 @@
 #include "expedition.h"
 #include "farm.h"
 #include "flat_map.h"
+#include "hinterland.h"
 #include "island.h"
 #include "island_map.h"
 #include "player.h"
@@ -51,6 +52,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(WorldVillage);
     GDREGISTER_CLASS(WorldDock);
     GDREGISTER_CLASS(SiteStream);
+    GDREGISTER_CLASS(Hinterland);
     GDREGISTER_CLASS(Expedition);
     GDREGISTER_CLASS(DevTools);
 }

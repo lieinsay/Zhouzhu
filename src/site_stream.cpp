@@ -7,6 +7,8 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
+#include "hinterland.h"
+
 using namespace godot;
 
 namespace {
@@ -24,6 +26,10 @@ void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_village", "village_id"), &SiteStream::get_village);
     ClassDB::bind_method(D_METHOD("get_hamlet", "hamlet_id"), &SiteStream::get_hamlet);
     ClassDB::bind_method(D_METHOD("get_dock", "dock_id"), &SiteStream::get_dock);
+    ClassDB::bind_method(D_METHOD("get_focus"), &SiteStream::get_focus);
+    ClassDB::bind_method(D_METHOD("get_hinterland"), &SiteStream::get_hinterland);
+    ClassDB::bind_method(D_METHOD("set_hinterland_path", "value"), &SiteStream::set_hinterland_path);
+    ClassDB::bind_method(D_METHOD("get_hinterland_path"), &SiteStream::get_hinterland_path);
 
     ClassDB::bind_method(D_METHOD("set_world_path", "value"), &SiteStream::set_world_path);
     ClassDB::bind_method(D_METHOD("get_world_path"), &SiteStream::get_world_path);
@@ -44,6 +50,7 @@ void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_layout_dir"), &SiteStream::get_layout_dir);
     ClassDB::bind_method(D_METHOD("village_at", "point", "margin"), &SiteStream::village_at, DEFVAL(40.0));
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "world_path"), "set_world_path", "get_world_path");
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "hinterland_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Hinterland"), "set_hinterland_path", "get_hinterland_path");
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "layout_dir", PROPERTY_HINT_DIR), "set_layout_dir", "get_layout_dir");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dock_radius", PROPERTY_HINT_RANGE, "200,20000,10,suffix:m"), "set_dock_radius", "get_dock_radius");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "village_radius", PROPERTY_HINT_RANGE, "200,20000,10,suffix:m"), "set_village_radius", "get_village_radius");
@@ -60,6 +67,7 @@ void SiteStream::_ready() {
     }
     world = Object::cast_to<World>(get_node_or_null(world_path));
     ERR_FAIL_NULL_MSG(world, "SiteStream 找不到 World（world_path）");
+    hinterland = Object::cast_to<Hinterland>(get_node_or_null(hinterland_path));
 }
 
 void SiteStream::set_focus(const Vector3 &p_focus) {
@@ -95,7 +103,7 @@ WorldVillage *SiteStream::build_village(int p_index) {
     WorldVillage *village = memnew(WorldVillage);
     const SiteSettlement &site = world->get_sites().settlements[size_t(p_index)];
     const String file = vformat("%s_%d.txt", site.hamlet ? "hamlet" : "village", site.id);
-    village->setup(world, site, uint64_t(seed), layout_dir.is_empty() ? String() : layout_dir.path_join(file));
+    village->setup(world, site, uint64_t(seed), layout_dir.is_empty() ? String() : layout_dir.path_join(file), hinterland, p_index);
     add_child(village);
     villages[p_index] = village;
     return village;

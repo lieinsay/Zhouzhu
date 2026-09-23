@@ -9,17 +9,20 @@
 #include "world.h"
 #include "world_village.h"
 
+class Hinterland;
+
 // 岛群里的码头与村落，走近了才建、走远了就拆。节点放在场景原点。
 // 上层（WorldScene）每帧 set_focus（人，或掌舵时的船）；每隔 check_interval 秒按焦点重算一次：
 //   码头：dock_radius 以内建栈桥（便宜，一次建齐）；
 //   村与散户：离村子边缘 village_radius 以内铺房子，每帧最多铺一处（由近及远），免得一帧卡住；
 //   村民：folk_radius 以内才招，每村 max_folk 封顶。
 // 都带回滞：拆的距离比建的远 hysteresis 倍；布置模式改过还没存的村不拆（拆了改动就丢了）。瞬移前调 ensure_near，把落点周围的一次同步建好。
-// 这里只持有「哪些建了」；码头几何在 World，村子清单在 WorldVillage。
+// 这里只持有「哪些建了」；码头几何在 World，村子清单在 WorldVillage，村子的账（人、仓、田）在远处账房 Hinterland（可以不接：那就走近了从头招人）。
 class SiteStream : public godot::Node3D {
     GDCLASS(SiteStream, godot::Node3D)
 
     godot::NodePath world_path = "../World";
+    godot::NodePath hinterland_path = "../Hinterland";
     godot::String layout_dir = "res://settlements/2051"; // 布置模式的改动：<layout_dir>/village_<号>.txt、hamlet_<号>.txt
     double dock_radius = 3000.0;
     double village_radius = 2500.0;
@@ -31,6 +34,7 @@ class SiteStream : public godot::Node3D {
     double check_interval = 0.25;
 
     World *world = nullptr;
+    Hinterland *hinterland = nullptr;
     godot::Vector3 focus;
     bool has_focus = false;
     double since_check = 0.0;
@@ -50,6 +54,7 @@ public:
     void _process(double p_delta) override;
 
     void set_focus(const godot::Vector3 &p_focus);
+    godot::Vector3 get_focus() const { return focus; }
     // 同步把 p_point 周围该有的码头、村子、村民都建好（瞬移、开局用）
     void ensure_near(const godot::Vector3 &p_point);
 
@@ -63,6 +68,9 @@ public:
     // 该点所在的那处已铺的村 / 散户（离村心不超过它的半径 + p_margin）；最近的那处，没有返回 nullptr
     WorldVillage *village_at(const godot::Vector3 &p_point, double p_margin = 40.0) const;
 
+    Hinterland *get_hinterland() const { return hinterland; }
+    void set_hinterland_path(const godot::NodePath &p_value) { hinterland_path = p_value; }
+    godot::NodePath get_hinterland_path() const { return hinterland_path; }
     void set_world_path(const godot::NodePath &p_value) { world_path = p_value; }
     godot::NodePath get_world_path() const { return world_path; }
     void set_layout_dir(const godot::String &p_value) { layout_dir = p_value; }
