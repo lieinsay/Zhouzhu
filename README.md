@@ -133,7 +133,7 @@ Godot --headless --path game --script res://tools/seed_villages.gd
 - **瞬移**（开发者，`dev_tools`）：地图上左键一点，先同步建好落点周围的叶块，再把人放上去；点到云海就挪到 3 km 内最近的陆地。掉进云海回到上一处站稳的地方。
 
 算法全在纯算法文件里：`world_grid`（读栅格、双三次）、`world_terrain`（连续地形函数）、`terrain_tile`（选块、建块网格）、`map_image`（底图）。
-场景里是 `World`（流式地面，`src/world.*`）、`WorldMap`（地图面板，只画、点了只发 `teleport_requested`）、`WorldScene`（编排：地图开合、瞬移、坠落回位、HUD）。
+场景里是 `World`（流式地面，`src/world.*`）、`WorldMap`（地图面板，只画、点了只发 `teleport_requested`）、`WorldScene`（编排：地图开合、瞬移、坠落回位、HUD；后来并进了 `Expedition`，见「重构：地图宿主」）。
 
 已知的：地面偏平、还没有树；溪涧只是颜色；地图不标散户 / 前哨 / 桥；世界坐标到 ±50 km，单精度下有毫米级的抖动。
 
@@ -158,8 +158,8 @@ Godot --headless --path game --script res://tools/seed_villages.gd
   新加**速度档位**（两张地图都有）：掌舵时 **R** 升一档、**F** 降一档——泊（船本身的航速，开局小艇 32 m/s）、巡（×2.5）、疾（×4，128 m/s、升降 ×2），靠泊后回到泊档。
   30 km 用疾档四分钟上下。HUD 写着档位、目的码头的距离（远了按 km）、方位和高差。掉进云海回到上一处站稳的地方，船漂远了召回离那儿最近的码头。
 
-聚落与村民不再写死挂在 `Island` 下：它们认的是**聚落宿主**（`SettlementHost`，`src/settlement_host.h`）——给出地面查询（`SiteGround` / `NavGround`，`src/ground_query.h`）、导航格铺多大、种子。
-`Island` 与岛群里的 `WorldVillage`（`src/world_village.*`，节点放在村心，局部坐标离原点近、单精度不抖）各实现一份。
+聚落与村民不再写死挂在 `Island` 下：它们认的是**聚落宿主**——给出地面查询（`SiteGround` / `NavGround`，`src/ground_query.h`）、导航格铺多大、种子。
+`Island` 与岛群里的 `WorldVillage`（`src/world_village.*`，节点放在村心，局部坐标离原点近、单精度不抖）各实现一份。（重构后它扩成了**地面宿主** `GroundHost`，见下一节。）
 
 ### 批量体检：换岛群、改规矩之后不用进游戏一个个看
 
@@ -176,11 +176,65 @@ build/Release/zhouzhu_site_survey.exe game/worlds/2051 --report 明细.tsv      
 已知的：房子是一座座独立节点，邑治一次铺 273 座可能卡一下（还没量过帧时）；远处（2.5 km 外）的村子干脆不画，从天上看岛是空的；村子与相邻的散户之间不查重叠；
 村民没有活可干（没有田、没有河），只是串门；飞得快时远处的地面块来不及细化，贴着地飞可能穿过没带碰撞的粗块。
 
+## 重构：地图宿主——玩法与地图无关，岛群里样样都有
+
+切片二至五（种地、背包、船坞改船、布置模式、村民）原来只在甲乙两岛（`main.tscn`）里有，写在 1000 多行的 `Voyage` 里，处处认 `Island`；
+岛群那边另有一个 `WorldScene`。现在两边是**同一个编排** `Expedition`（`src/expedition.*`），场景只配属性；玩法全在与场景无关的部件里；
+地图之间的差异只写在两份**宿主接口**的实现里，玩法代码里不出现 `Island`、`World` 这些类型。
+
+- **地面**（`MapGround`，`src/map_ground.*`，纯算法）：一张地图的地面回答玩法要问的全部问题——多高、是不是水（河 / 溪涧 / 水面）、离水多远、水的中线在哪、
+  在不在码头的坪 / 船坞的坪 / 路上、是不是熟地、属于哪座岛、地块格怎么划。规矩只写一份，放在用它的地方：
+  禁区与原因（`ground_block`：河、溪涧、水面、停机坪、船坞坪、路）、能不能垦与墒情（`farm_model` 的 `survey_plot`：近水 16 m 内按离水远近，熟地至少 0.6）。
+  实现有三份：`IslandGround`（岛的高度场）、`WorldGround`（岛群的连续地形：地表类 10/11 是水面，溪涧两侧 12 m 算溪，地表类 7/8 是熟地）、`FlatGround`（平板岛）。
+- **地面宿主**（`GroundHost`，`src/ground_host.h`）：`Farm`、`Shipyard`、`Settlement`、`Villagers` 挂在它下面，只认它——
+  局部坐标的地面、导航格铺多大、种子、村民种哪片田、船坞坪在哪。`Island`、`World`（农田、船坞挂它）、`WorldVillage`（聚落、村民挂它）、`FlatMap` 各实现一份。
+- **地图宿主**（`MapHost`，`src/map_host.*`）：编排只认它——地面高、岛号、站稳没有；码头（泊位、出生位姿、岸缘点、名字、此刻靠不靠得上）；
+  有哪些船坞、脚下是哪片田、脚下是哪处聚落；流式焦点与瞬移前的准备；HUD 的位置行与航行目标行；岛群地图面板。
+  实现：`IslandMap`（`src/island_map.*`，把 `islands` 里列的几座 `Island` 拼成一张图）、`World`、`FlatMap`。
+- **玩法部件**（不是节点，编排持有、按优先级调度）：`Helm`（掌舵）、`PackHand`（背包与手持）、`FarmHand`（农事）、`RefitBench`（画样台改船）、`BuildMode`（布置模式）。
+- **船坞坪**选址抽成纯算法 `plan_yard`（`src/yard_site.*`），岛上与岛群同一份；岛群给每个主码头找一块（岛群里放宽到离岸 45 m 内，岸线噪声有 ±28 m），2051 只有主码头 #7 一个，坪离岸缘点 55 m。
+- **农田**不再是一张铺满整座岛的表：`FarmModel` 按地面和地块格用到哪块勘察哪块（岛上格子与高度场逐点重合，岛群的格子无边）。岛群里的 `World/Farm` 一片田盖住整个岛群。
+- **村落改动**：岛群的村子是自动铺的，布置模式存下的是「在自动铺的结果上的改动」——每村一个文件 `game/settlements/2051/village_<id>.txt` / `hamlet_<id>.txt`，
+  一行 `kind@x,z,yaw°` 是加一座、`-kind@x,z,yaw°` 是拆一座（村心为原点）。甲乙两岛的旧清单文件照读（底清单是空的，全是加）。存过改动的村子走远了照样拆，回来按文件叠回去；没存的改动不拆。
+- **村民**：村里有熟地（村子周围够得着的地方）就有农夫，300 m 内有水就有挑水的——岛群里的村子也下地、打水了（村152：14 个农夫、14 个挑水的）。导航格仍只铺村子周围，
+  挑水的去的水在圈外时把圈往那边扩。
+
+### 一张新地图最少要实现什么
+
+以平板岛（`FlatMap`，`src/flat_map.*` + `src/flat_ground.*`，场景 `game/flat_map.tscn`）为样板——它一行玩法都没写，`flat_map_e2e` 证明全部玩法照常：
+
+1. **地面**：一个 `MapGround` 子类，必须答 `site_height`（盖房子看的地面高）与 `walk_height`（走路看的）；要有水就答 `water_at` / `water_distance` / `water_lines`，
+   有码头坪、船坞坪、路就答 `on_dock` / `on_yard` / `on_trail`，有熟地就答 `fertile`。地块格（`plot_lattice`）不答就用 2.5 m 的无边格子。
+2. **地面宿主**：节点实现 `GroundHost` 的 `host_node` / `host_ready` / `host_ground`，地面好了发 `rebuilt` 信号；
+   要村民就答 `host_nav_window`（导航格铺多大）、`host_farm`（种哪片田），要船坞就答 `host_yard`（用 `plan_yard` 算）。
+3. **地图宿主**：实现 `MapHost` 的纯虚函数——`map_node`、`map_ready`、`map_surface`、`map_island_at`、码头五问（`map_dock_count` / `berth` / `spawn` / `position` / `island` / `label`，
+   几何用 `plan_dock` 与 `dock_builder` 就有）、`map_shipyards`、`map_farm_at`、`map_settlement_at`。流式加载、岛群地图面板、HUD 位置行都有默认值，可以不管。
+4. **场景**：根节点 `Expedition`（`map` 指向地图宿主，配出发 / 目的码头号），宿主下面挂 `Farm`、`Shipyard`、`Settlement`、`Villagers`（村民要排在聚落后面），再放 `Ship`、`Player`。
+
+### 与重构前不一样的地方（都是有意的）
+
+- **提示**：通知（「坠入云海……」「船坞里没有船……」之类）有了自己的一行，在操作提示下面，不再顶掉操作提示；到了目的码头那座岛会说「到了：<码头名>」（甲乙两岛以前不说）。
+  岛群坠落回位的话统一成「坠入云海，回到了上一个落脚点」；岛群里「没有动力区」也说全「……去船坞的画样台加一节」；岛群入坞时写「入坞中」。
+- **HUD**：岛群里也有背包那一行（种地要看）；甲乙两岛的目标行与航向行照旧。
+- **种地的话**：因为岛群里的水是溪涧、湖，不是河——「这是河」→「这是水里，垦不了」，「离河太远……」→「离水太远，引不到水，垦了也白垦」，
+  「河边的滩地可以开垦」→「水边的地、熟地可以开垦」；「粟还没熟」按实际作物说（种菽也说粟是个旧毛病）。
+- **盖房的原因**：岛群里码头坪的原因从「码头的停机坪上不能盖」统一成「停机坪上不能盖」。没有河的岛上，停机坪 / 船坞坪上的地块先报坪、不再先报「太干」。
+- **岛群的地形**：主码头 #7 旁凿出了船坞坪（60 × 28 m，切挖 1 m、填 0.8 m 渐回原地形），附近几百米内的地面因此变了；别处逐位不变（金标哈希里的村落清单不变）。
+- **出生**：岛群的出生点离地抬 0.1 m（原来 0.3 m，与两岛统一），落地早 0.1 s；`world_e2e` 结尾的地面块数 178 → 182（加载时机），人的位置一样。
+- **地块描边**：每块地的网格节点摆在自己那一格上（原来都在岛心、顶点带偏移），看起来一样。
+- 旧的 8 条 e2e 断言一条没改，最终位置、布局、背包、村民统计逐位一样；只有 `farm_e2e` 收尾打印的提示行因为通知另起一行而不同。
+
+新 e2e：`world_features_e2e`（岛群里依次：垦 → 背包选种 → 播 → 收；回主码头入坞改船、飞回泊位；回村152 布置模式加一座、拆一座自动铺的、F5 存、读回；村民农夫与挑水的在干活）
+与 `flat_map_e2e`（平板岛上同一套），共用一个驱动 `game/tests/feature_tour.gd`，子类只说地图在哪。岛群那条去远处用 M 开图点过去，平板岛走过去。
+
+已知的：主码头 #7 的停机坪在船坞坪靠海那一侧，从坪上直奔画样台会顶在坞墩块或门架柱上（测试绕着走：先顺着画样台那一线走出坞墩那一排，再往海那边绕过门架柱）；
+岛群的船坞只在主码头有。
+
 ## 开发者工具（哪张地图里都能用）
 
 全局 autoload `DeveloperTools`（类 `DevTools`，`game/dev_tools.tscn`；场景根的 `dev_tools` 为假时不理这些键）：
 
-- **F2 换地图**：弹出清单（`maps` 属性：场景路径 → 名字，默认「甲乙两岛（切片一至五）」`main.tscn` 与「岛群 #2051（真实比例）」`world_2051.tscn`），点一项或按数字键换过去，F2 / Esc 合上。
+- **F2 换地图**：弹出清单（`maps` 属性：场景路径 → 名字，默认「甲乙两岛（切片一至五）」`main.tscn`、「岛群 #2051（真实比例）」`world_2051.tscn` 与「平板岛（新地图样板 / 测试图）」`flat_map.tscn`），点一项或按数字键换过去，F2 / Esc 合上。
 - **F3 god 模式**：不受重力、能飞——空格升、Ctrl（或 C）降、WASD 按相机朝向飞，默认 30 m/s，按住 Shift ×5（150 m/s）；碰撞照旧，降到地上就站住。
   右上角标着 GOD；换了地图照样开着。速度是 Player 的 `god_speed` / `god_boost`。
 - 甲乙两岛没有岛群地图：那里按 M 会提示去 F2 换到「岛群 #2051」。
@@ -188,7 +242,7 @@ build/Release/zhouzhu_site_survey.exe game/worlds/2051 --report 明细.tsv      
 ## 测试
 
 ```
-ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址 / 村民的导航格、钟点、分派与决策 / 岛群栅格、连续地形、分块、地图底图，含 2051 资产 / 码头几何与压平 / 铺村 / 速度档位），外加岛群体检 site_survey_2051
+ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址 / 村民的导航格、钟点、分派与决策 / 岛群栅格、连续地形、分块、地图底图，含 2051 资产 / 码头几何与压平 / 铺村 / 速度档位 / 三种地面（岛、岛群、平板岛）同一套禁区与能垦规矩 / 村落改动的叠加与读写 / 重构前后逐位对照的金标），外加岛群体检 site_survey_2051
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_e2e.tscn    # 整条航程，只经输入动作驱动
 Godot --headless --path game --fixed-fps 60 res://tests/respawn_e2e.tscn   # 坠入云海 → 回位 + 召回空艇
 Godot --headless --path game --fixed-fps 60 res://tests/farm_e2e.tscn      # 沿路走到河滩 → 开垦 → 没种子被拒 → 背包里选菽 → 播种 → 成熟 → 收进背包
@@ -198,4 +252,6 @@ Godot --headless --path game --fixed-fps 60 res://tests/villager_e2e.tscn  # 两
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_2051_e2e.tscn # 岛群跑船：主码头出生、旁边的村子站在地上、地图与 3D 对得上 → 点地图去邑治：273 座都站在地上、有人出门 → 点回主码头 → 上船掌舵、换疾档、贴着地形飞 30 km → 乙岛 #2 靠泊下船 → 码头边散户站在地上、有人出门
 Godot --headless --path game --fixed-fps 60 res://tests/world_e2e.tscn     # 真实比例岛群：主码头站稳 → 跑 → M 开地图、滚轮缩小、点乙岛瞬移 → 点 57 km 外的码头瞬移 → 坠落回位
 Godot --headless --path game --fixed-fps 60 res://tests/dev_tools_e2e.tscn # 开发者工具：甲乙两岛按 M 提示 → F3 god 升 / 降 / Shift 150 m/s → 关 god 重力回来 → F2 按 2 换到 2051（god 跟着）→ 换回
+Godot --headless --path game --fixed-fps 60 res://tests/world_features_e2e.tscn # 岛群里全部玩法：点图去村152 旁垦 → 背包选菽 → 播、收 → 点回主码头：画样台被拒 → 入坞、放一节储存区 → 飞回泊位 → 点回村：B 加一座、拆一座、F5 存、读回 → 农夫与挑水的在干活
+Godot --headless --path game --fixed-fps 60 res://tests/flat_map_e2e.tscn  # 平板岛上同一套（走过去）：只实现了宿主接口的新地图，玩法全都照常
 ```
