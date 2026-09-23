@@ -16,7 +16,7 @@ struct CropDef {
     const char *name;
     const char *seed; // 播它要用的物品
     const char *product; // 收它得到的物品
-    double grow_factor; // 生长期 = FarmRules::grow_seconds × 这个
+    double grow_factor; // 生长期 = FarmRules::grow_hours × 这个
     int yield; // 收一格得几份产物
 };
 

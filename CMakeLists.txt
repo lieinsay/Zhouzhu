@@ -19,10 +19,14 @@ set(ZHOUZHU_CORE_SOURCES
     src/buildings.h
     src/crops.cpp
     src/crops.h
+    src/day_clock.cpp
+    src/day_clock.h
     src/dock_site.cpp
     src/dock_site.h
     src/farm_model.cpp
     src/farm_model.h
+    src/field_book.cpp
+    src/field_book.h
     src/flat_ground.cpp
     src/flat_ground.h
     src/flight_model.cpp
@@ -51,6 +55,10 @@ set(ZHOUZHU_CORE_SOURCES
     src/value_noise.h
     src/village_plan.cpp
     src/village_plan.h
+    src/village_sim.cpp
+    src/village_sim.h
+    src/village_state.cpp
+    src/village_state.h
     src/villager_model.cpp
     src/villager_model.h
     src/world_grid.cpp

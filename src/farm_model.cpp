@@ -45,6 +45,12 @@ PlotSurvey survey_plot(const MapGround &p_ground, const PlotLattice &p_lattice, 
     return s;
 }
 
+double growth_rate(double p_moisture, const CropDef *p_crop, const FarmRules &p_rules) {
+    const double rate = p_rules.dry_growth + (1.0 - p_rules.dry_growth) * p_moisture;
+    const double factor = p_crop ? p_crop->grow_factor : 1.0;
+    return rate / std::max(1e-6, p_rules.grow_hours * factor);
+}
+
 void FarmModel::set_rules(const FarmRules &p_rules) {
     rules = p_rules;
     surveyed.clear();
@@ -134,7 +140,7 @@ Harvest FarmModel::harvest(int p_i, int p_j) {
     return got;
 }
 
-std::vector<int> FarmModel::advance(double p_delta) {
+std::vector<int> FarmModel::advance(double p_hours) {
     std::vector<int> changed;
     for (auto &[cell, plot] : plots) {
         if (plot.state != PlotState::GROWING) {
@@ -142,10 +148,7 @@ std::vector<int> FarmModel::advance(double p_delta) {
         }
         const int i = key_i(cell), j = key_j(cell);
         const int before = stage_of(plot);
-        const double moisture = survey(i, j).moisture;
-        const double rate = rules.dry_growth + (1.0 - rules.dry_growth) * moisture;
-        const double factor = plot.crop ? plot.crop->grow_factor : 1.0;
-        plot.growth += p_delta * rate / std::max(1e-6, rules.grow_seconds * factor);
+        plot.growth += p_hours * growth_rate(survey(i, j).moisture, plot.crop, rules);
         if (plot.growth >= 1.0) {
             plot.growth = 1.0;
             plot.state = PlotState::RIPE;
@@ -156,6 +159,27 @@ std::vector<int> FarmModel::advance(double p_delta) {
         }
     }
     return changed;
+}
+
+Plot FarmModel::take(int p_i, int p_j) {
+    const auto it = plots.find(key(p_i, p_j));
+    if (it == plots.end()) {
+        return Plot();
+    }
+    const Plot plot = it->second;
+    plots.erase(it);
+    return plot;
+}
+
+bool FarmModel::put(int p_i, int p_j, const Plot &p_plot) {
+    if (p_plot.state == PlotState::WILD) {
+        return true;
+    }
+    if (plots.count(key(p_i, p_j)) || land_at(p_i, p_j) != Arability::ARABLE) {
+        return false;
+    }
+    plots[key(p_i, p_j)] = p_plot;
+    return true;
 }
 
 int FarmModel::count(PlotState p_state) const {

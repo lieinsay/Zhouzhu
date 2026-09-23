@@ -4,7 +4,9 @@
 #include <string>
 #include <vector>
 
+#include "day_clock.h"
 #include "farm_model.h"
+#include "field_book.h"
 #include "ground_query.h"
 #include "inventory.h"
 #include "map_ground.h"
@@ -15,7 +17,7 @@
 //
 // 分四块，全是「值进、值出」：
 //   导航格（NavGrid）——地面 + 建筑清单 → 哪里走得了；A* 找路再拉直，给出宿主坐标的路点。
-//   钟点（DayRules）——一天多少秒、几点出工几点收工、午间歇晌；时辰名。
+//   钟点在 day_clock.h（DayRules：几点出工几点收工、午间歇晌）。
 //   职业与住户（assign_residents）——按聚落里有什么建筑、附近有没有能种的地和水，分派谁住哪、干哪一行。
 //   决策（decide_task）——一个村民眼下该去哪、到了干什么、干多久。随机数流存在村民身上，由上层传进来。
 // 村民的状态（在哪、在干什么、背着什么、认领了哪些地）都在上层（Villagers 节点）；这里不存任何东西。
@@ -69,30 +71,6 @@ bool nav_line_clear(const NavGrid &p_grid, const NavRules &p_rules, double p_x0,
 // A* 找路（八方向，斜走不切角）再拉直。返回自起点之后的路点，末点就是终点（两端各自先吸到最近的可走格）；
 // 走不到返回空。起点与终点同格返回只含终点的一段
 std::vector<NavPoint> nav_find_path(const NavGrid &p_grid, const NavRules &p_rules, double p_x0, double p_z0, double p_x1, double p_z1);
-
-// ---------------------------------------------------------------- 钟点
-
-struct DayRules {
-    double day_seconds = 1200.0; // 一天（24 个钟头）在游戏里走多少秒
-    double work_start = 6.0; // 几点出工
-    double lunch_start = 11.5; // 歇晌
-    double lunch_end = 12.5;
-    double work_end = 18.5; // 收工
-};
-
-struct ClockReading {
-    int day = 0; // 第几天（从 0 起）
-    double hour = 0.0; // [0, 24)
-};
-
-// p_seconds：从第 0 天子夜起走过的秒数
-ClockReading read_clock(double p_seconds, const DayRules &p_rules);
-// 这个钟点该在家里吗（夜里、歇晌）
-bool is_home_hour(double p_hour, const DayRules &p_rules);
-// 时辰名（子 23–1、丑 1–3 …），UTF-8
-const char *shichen_name(double p_hour);
-// 「巳时 · 第 1 日 · 09:40」这种给人看的钟点
-std::string clock_text(double p_seconds, const DayRules &p_rules);
 
 // ---------------------------------------------------------------- 职业与住户
 
@@ -182,21 +160,33 @@ struct WorkRules {
     double patrol_s = 4.0;
     double chat_min_s = 8.0, chat_max_s = 20.0;
     double wait_s = 6.0;
+    double stroll_min_m = 6.0, stroll_max_m = 15.0; // 独门独户的闲人在门前走多远歇着
+    double wild_retry_s = 100.0; // 家门口找不到荒地可开：这么久（钟的秒，一天 40 分钟时是一个钟头）之后再找
 };
 
-// 决策要读的「村况」：全是只读的引用，谁也不在这儿改东西
+// 决策要读的「村况」：全是只读的引用，谁也不在这儿改东西。
+// 近处有导航格（nav），站不站得住问它；远处没有导航格，问地面（ground）与房子占地（layout）——同一条规矩的粗版本。
 struct VillageView {
     const PlotLattice *plots = nullptr; // 农田的地块格，换到宿主坐标（没有农田为 nullptr）
     const std::vector<WaterLine> *water = nullptr; // 挑水去的水中线（宿主坐标）；没有水为空
     const SettlementLayout *layout = nullptr;
-    const NavGrid *nav = nullptr;
-    const FarmModel *farm = nullptr; // 没有农田为 nullptr
+    const NavGrid *nav = nullptr; // 近处才有
+    const MapGround *ground = nullptr; // 没有导航格时用它判断站不站得住（宿主坐标）
+    const FieldBook *fields = nullptr; // 没有农田为 nullptr
     const std::vector<Claim> *claims = nullptr;
+    const ClaimRegistry *taken = nullptr; // 全图已被认领的格子（别的村的）；可以为 nullptr
+    const ArableMask *arable = nullptr; // 村子周围哪些格能垦（开账时勘察好的）；没有就现勘
     const Inventory *store = nullptr; // 村里的仓
+    double water_stock = 0.0, water_cap = 0.0; // 堂屋水缸里有几担、装得下几担（cap ≤ 0 = 不限）
     const DayRules *day = nullptr;
     const WorkRules *work = nullptr;
+    const NavRules *nav_rules = nullptr; // 远处判断「挨着房子」用它的 building_margin_m；nullptr 用默认
     double hour = 8.0;
+    double now = 0.0; // 钟的秒（只用来记「多久以后再找荒地」）
 };
+
+// 这一点站得住吗（干地、不在房子占地里）：有导航格问导航格，没有就问地面与清单
+bool view_dry_at(const VillageView &p_view, double p_x, double p_z);
 
 // 一个村民决策时要知道的自己
 struct VillagerMind {
@@ -206,15 +196,18 @@ struct VillagerMind {
     std::string carrying; // 背着什么物品（"water" / 粮食的物品 id）；空 = 空手
     int carry_count = 0;
     int patrol_left = 0; // 守望：这一圈还要巡几座
+    double wild_retry_at = 0.0; // 农夫：上回家门口没荒地可开，到这一秒之前不再找
+    int water_spot = -1; // 挑水的：去哪打水（找过一次就记下）：−1 还没找，0 没有水，1 有
+    double water_x = 0.0, water_z = 0.0, water_face_x = 0.0, water_face_z = 0.0;
 };
 
-// 下一件事。p_rng 是这个村民自己的随机流（上层存着，每个村民一条）；r_mind 里只有 patrol_left 会被改
+// 下一件事。p_rng 是这个村民自己的随机流（上层存着，每个村民一条）；r_mind 里只有 patrol_left、wild_retry_at 与记下的打水处会被改
 Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng);
 
-// 农夫挑地的规矩单独露出来，单测用：离 (x, z) 最近、离家门 field_radius_m 以内、没人认领、能开荒、格心在导航格上走得到干地的一格。
+// 农夫挑地的规矩单独露出来，单测用：离 (x, z) 最近、离家门 field_radius_m 以内、本村与别的村都没认领、能开荒、格心与四角站得住的一格。
 // 找不到返回 false
 bool pick_wild_plot(const VillageView &p_view, double p_home_x, double p_home_z, int &r_i, int &r_j);
-// 挑水的站位：水边离 (x, z) 最近、站在干地上、紧挨着水的一点；r_water 是面朝的水面点。没有水返回 false
+// 挑水的站位：水边离 (x, z) 最近、站得住、紧挨着水的一点；r_water 是面朝的水面点。没有水返回 false
 bool pick_water_spot(const VillageView &p_view, double p_x, double p_z, NavPoint &r_stand, NavPoint &r_water);
 // 地块格 (i, j) 的格心（宿主坐标）
 NavPoint plot_center(const PlotLattice &p_plots, int p_i, int p_j);

@@ -13,6 +13,7 @@
 // 本文件不含 Godot 头。可垦不可垦是「地面 → 值」的纯函数（survey_plot，两种地面同一套规矩）；
 // FarmModel 是一张地块表加几条转移规则，勘察按需做、做过的记下来（岛群无边，不能一次勘完）。
 // 谁来干活、背包里有没有种子，都不归它管：播种时上层把作物递进来，收获时它把「产物 × 几份」交出去。
+// 生长按游戏小时推进（钟在上层）：换一天的长度，庄稼跟着钟点一起变快变慢。
 
 enum class PlotState : uint8_t {
     WILD, // 荒地（表里没有这一格）
@@ -45,10 +46,14 @@ struct FarmRules {
     double max_slope = 0.2; // 格内最大坡度（高差 / 对角线）
     double dock_margin_m = 4.0; // 停机坪、船坞坪外再让出这么多
     double trail_margin_m = 2.5; // 格子的哪个角离路中线这么近，就算在路上
-    double grow_seconds = 60.0; // 紧挨着水的地从播种到成熟（生长期倍率为 1 的作物）
+    double grow_hours = 1.2; // 紧挨着水的地从播种到成熟要几个游戏小时（生长期倍率为 1 的作物）；一天 40 分钟时是 2 分钟
     double dry_growth = 0.6; // 勉强引得到水的地，生长速度是水边的这么多倍
     double fertile_moisture = 0.6; // 熟地（岛群的可耕地、梯田）不靠水也有这么好的墒情
 };
+
+// 一格地每个游戏小时长多少（0 → 1 是从播种到成熟）：墒情越好越快，作物的生长期倍率越大越慢。
+// 近处农田（FarmModel::advance）与远处村子账本里拿着的地块同用这一个式子
+double growth_rate(double p_moisture, const CropDef *p_crop, const FarmRules &p_rules);
 
 struct PlotSurvey {
     Arability land = Arability::NO_GROUND;
@@ -104,8 +109,12 @@ public:
     bool till(int p_i, int p_j);
     bool sow(int p_i, int p_j, const CropDef *p_crop);
     Harvest harvest(int p_i, int p_j);
-    // 推进生长；返回这一步里外观阶段变了的格子（(i, j) 成对）
-    std::vector<int> advance(double p_delta);
+    // 推进生长 p_hours 个游戏小时；返回这一步里外观阶段变了的格子（(i, j) 成对）
+    std::vector<int> advance(double p_hours);
+    // 把一格地整个拿走（村子走远了，地块连同长势记回村子的账本里）；表里没有返回荒地
+    Plot take(int p_i, int p_j);
+    // 放回一格地（村子又走近了）。那一格已经有人垦了（玩家、别的村）就放不下，返回 false
+    bool put(int p_i, int p_j, const Plot &p_plot);
 
     int count(PlotState p_state) const;
     // 表里的格子（垦过的），(i, j) 成对

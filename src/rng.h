@@ -26,6 +26,9 @@ public:
     // [p_lo, p_hi) 上的整数
     int range(int p_lo, int p_hi) { return p_lo + int(uniform() * double(p_hi - p_lo)); }
 
+    // 存档：流走到哪儿了（Rng(get_state()) 接着往下出同样的数）
+    uint64_t get_state() const { return state; }
+
     // 按部件名分出互不相干的子流：改一个部件取多少随机数，不会牵动别的部件。
     Rng fork(uint64_t p_stream) const {
         Rng r(state ^ (0xD1B54A32D192ED03ull * (p_stream + 1)));

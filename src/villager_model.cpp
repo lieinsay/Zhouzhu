@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <limits>
 #include <queue>
 
@@ -253,38 +252,6 @@ std::vector<NavPoint> nav_find_path(const NavGrid &p_grid, const NavRules &p_rul
     return out;
 }
 
-// ================================================================ 钟点
-
-ClockReading read_clock(double p_seconds, const DayRules &p_rules) {
-    ClockReading c;
-    const double days = std::max(0.0, p_seconds) / p_rules.day_seconds;
-    c.day = int(std::floor(days));
-    c.hour = (days - c.day) * 24.0;
-    if (c.hour >= 24.0) {
-        c.hour = 0.0;
-        c.day++;
-    }
-    return c;
-}
-
-bool is_home_hour(double p_hour, const DayRules &p_rules) {
-    return p_hour < p_rules.work_start || p_hour >= p_rules.work_end || (p_hour >= p_rules.lunch_start && p_hour < p_rules.lunch_end);
-}
-
-const char *shichen_name(double p_hour) {
-    static const char *NAMES[12] = { "子时", "丑时", "寅时", "卯时", "辰时", "巳时", "午时", "未时", "申时", "酉时", "戌时", "亥时" };
-    const double shifted = std::fmod(p_hour + 1.0 + 24.0, 24.0);
-    return NAMES[std::min(11, int(shifted / 2.0))];
-}
-
-std::string clock_text(double p_seconds, const DayRules &p_rules) {
-    const ClockReading c = read_clock(p_seconds, p_rules);
-    const int minutes = int(std::floor(c.hour * 60.0 + 1e-6));
-    char buf[96];
-    std::snprintf(buf, sizeof(buf), "%s · 第 %d 日 · %02d:%02d", shichen_name(c.hour), c.day + 1, minutes / 60, minutes % 60);
-    return buf;
-}
-
 // ================================================================ 职业与住户
 
 namespace {
@@ -429,7 +396,7 @@ bool claimed(const VillageView &p_view, int p_i, int p_j) {
     return false;
 }
 
-// 门前站位：吸到最近的干地
+// 门前站位：有导航格就吸到最近的干地
 NavPoint door_of(const VillageView &p_view, int p_building) {
     const Building &b = p_view.layout->at(p_building);
     NavPoint door = building_door(b);
@@ -505,7 +472,21 @@ Task idle_task(const VillagerMind &p_mind, const VillageView &p_view, Rng &p_rng
     if (other >= 0) {
         return at_building(TaskKind::CHAT, p_view, other, p_rng.uniform(w.chat_min_s, w.chat_max_s));
     }
-    return at_building(TaskKind::WAIT, p_view, p_mind.who.home, w.wait_s);
+    // 独门独户没处串门：在自家门前走走，找块站得住的地方歇一阵
+    Task t = at_building(TaskKind::WAIT, p_view, p_mind.who.home, w.wait_s);
+    for (int attempt = 0; attempt < 6; attempt++) {
+        const double angle = p_rng.uniform(0.0, 6.283185307179586), dist = p_rng.uniform(w.stroll_min_m, w.stroll_max_m);
+        const double x = t.x + std::sin(angle) * dist, z = t.z + std::cos(angle) * dist;
+        if (view_dry_at(p_view, x, z)) {
+            t.face_x = x + (x - t.x);
+            t.face_z = z + (z - t.z);
+            t.x = x;
+            t.z = z;
+            t.seconds = p_rng.uniform(w.chat_min_s, w.chat_max_s);
+            break;
+        }
+    }
+    return t;
 }
 
 // 仓里挑一样种子：份数最多的那样；没有返回空
@@ -523,8 +504,28 @@ std::string pick_seed(const Inventory &p_store) {
 
 } // namespace
 
+bool view_dry_at(const VillageView &p_view, double p_x, double p_z) {
+    if (p_view.nav) {
+        return p_view.nav->dry_at(p_x, p_z);
+    }
+    double y = 0.0;
+    if (!p_view.ground || !p_view.ground->walk_height(p_x, p_z, y) || p_view.ground->water_depth(p_x, p_z) > 0.05) {
+        return false;
+    }
+    if (p_view.layout) {
+        const double margin = p_view.nav_rules ? p_view.nav_rules->building_margin_m : NavRules().building_margin_m;
+        for (const Building &b : p_view.layout->get_items()) {
+            const BuildingDef *def = buildings::by_id(b.kind);
+            if (def && std::hypot(b.x - p_x, b.z - p_z) <= 0.5 * std::hypot(def->width_m, def->depth_m) + margin && footprint_contains(*def, b, p_x, p_z, margin)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 bool pick_wild_plot(const VillageView &p_view, double p_home_x, double p_home_z, int &r_i, int &r_j) {
-    if (!p_view.farm || !p_view.plots || !p_view.nav) {
+    if (!p_view.fields || !p_view.plots || (!p_view.nav && !p_view.ground)) {
         return false;
     }
     const PlotLattice &l = *p_view.plots;
@@ -539,33 +540,48 @@ bool pick_wild_plot(const VillageView &p_view, double p_home_x, double p_home_z,
         i1 = std::min(i1, l.i_max - 1);
         j1 = std::min(j1, l.j_max - 1);
     }
-    double best = std::numeric_limits<double>::infinity();
+    // 由近及远一格格试，第一格站得住的就是（等距的按行列先后，与逐格扫一遍取最近的结果一样）
+    struct Candidate {
+        double d;
+        int i, j;
+    };
+    std::vector<Candidate> order;
     for (int i = i0; i <= i1; i++) {
         for (int j = j0; j <= j1; j++) {
             const NavPoint c = plot_center(l, i, j);
             const double d = std::hypot(c.x - p_home_x, c.z - p_home_z);
-            if (d > radius || d >= best) {
-                continue;
+            if (d <= radius) {
+                order.push_back({ d, i, j });
             }
-            if (p_view.farm->available_action(i, j, false) != FarmAction::TILL || claimed(p_view, i, j)) {
-                continue;
-            }
-            // 格心与四角都得是干地：挨着房子（导航格里被让出去的那圈）的不开
-            const double h = 0.5 * l.cell_m - 0.05;
-            if (!p_view.nav->dry_at(c.x, c.z) || !p_view.nav->dry_at(c.x - h, c.z - h) || !p_view.nav->dry_at(c.x + h, c.z - h) ||
-                    !p_view.nav->dry_at(c.x - h, c.z + h) || !p_view.nav->dry_at(c.x + h, c.z + h)) {
-                continue;
-            }
-            best = d;
-            r_i = i;
-            r_j = j;
         }
     }
-    return best < std::numeric_limits<double>::infinity();
+    std::sort(order.begin(), order.end(), [](const Candidate &p_a, const Candidate &p_b) {
+        return p_a.d != p_b.d ? p_a.d < p_b.d : (p_a.i != p_b.i ? p_a.i < p_b.i : p_a.j < p_b.j);
+    });
+    for (const Candidate &cand : order) {
+        const int i = cand.i, j = cand.j;
+        if (p_view.arable && p_view.arable->covers(i, j) && !p_view.arable->arable(i, j)) {
+            continue; // 开账时勘察过：这格垦不了
+        }
+        const NavPoint c = plot_center(l, i, j);
+        if (p_view.fields->available(i, j, false) != FarmAction::TILL || claimed(p_view, i, j) || (p_view.taken && p_view.taken->taken(i, j))) {
+            continue;
+        }
+        // 格心与四角都得站得住：挨着房子（导航格里被让出去的那圈）的不开
+        const double h = 0.5 * l.cell_m - 0.05;
+        if (!view_dry_at(p_view, c.x, c.z) || !view_dry_at(p_view, c.x - h, c.z - h) || !view_dry_at(p_view, c.x + h, c.z - h) ||
+                !view_dry_at(p_view, c.x - h, c.z + h) || !view_dry_at(p_view, c.x + h, c.z + h)) {
+            continue;
+        }
+        r_i = i;
+        r_j = j;
+        return true;
+    }
+    return false;
 }
 
 bool pick_water_spot(const VillageView &p_view, double p_x, double p_z, NavPoint &r_stand, NavPoint &r_water) {
-    if (!p_view.water || !p_view.nav) {
+    if (!p_view.water || (!p_view.nav && !p_view.ground)) {
         return false;
     }
     double best = std::numeric_limits<double>::infinity();
@@ -588,7 +604,7 @@ bool pick_water_spot(const VillageView &p_view, double p_x, double p_z, NavPoint
                 // 往岸上找第一块干地：水边上
                 for (double out = p.half_width; out <= p.half_width + 4.0; out += 0.5) {
                     const double sx = p.x - tz * side * out, sz = p.z + tx * side * out;
-                    if (!p_view.nav->dry_at(sx, sz)) {
+                    if (!view_dry_at(p_view, sx, sz)) {
                         continue;
                     }
                     const double d = std::hypot(sx - p_x, sz - p_z);
@@ -618,7 +634,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 const int granary = first_of_kind(*p_view.layout, "granary");
                 return at_building(TaskKind::DELIVER, p_view, granary >= 0 ? granary : who.home, w.deliver_s);
             }
-            if (!p_view.farm || !p_view.plots) {
+            if (!p_view.fields || !p_view.plots) {
                 return idle_task(r_mind, p_view, p_rng);
             }
             int owned = 0;
@@ -633,7 +649,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 owned++;
                 const NavPoint at = plot_center(*p_view.plots, c.i, c.j);
                 const double d = std::hypot(at.x - r_mind.x, at.z - r_mind.z);
-                switch (p_view.farm->plot_at(c.i, c.j).state) {
+                switch (p_view.fields->plot_at(c.i, c.j).state) {
                     case PlotState::RIPE:
                         if (d < ripe_d) {
                             ripe_d = d;
@@ -665,8 +681,11 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 return t;
             }
             int i = 0, j = 0;
-            if (owned < w.plots_per_farmer && pick_wild_plot(p_view, home_door.x, home_door.z, i, j)) {
-                return at_plot(TaskKind::TILL, r_mind, p_view, i, j, w.till_s);
+            if (owned < w.plots_per_farmer && p_view.now >= r_mind.wild_retry_at) {
+                if (pick_wild_plot(p_view, home_door.x, home_door.z, i, j)) {
+                    return at_plot(TaskKind::TILL, r_mind, p_view, i, j, w.till_s);
+                }
+                r_mind.wild_retry_at = p_view.now + w.wild_retry_s; // 家门口没荒地了：过一阵再看（别的村可能退了认领）
             }
             if (!growing.empty()) {
                 const Claim &c = (*p_view.claims)[size_t(growing[size_t(p_rng.range(0, int(growing.size())))])];
@@ -679,14 +698,25 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 const int hall = first_of_kind(*p_view.layout, "hall");
                 return at_building(TaskKind::DELIVER, p_view, hall >= 0 ? hall : who.home, w.deliver_s);
             }
-            NavPoint stand, water;
-            if (pick_water_spot(p_view, home_door.x, home_door.z, stand, water)) {
+            if (p_view.water_cap > 0.0 && p_view.water_stock >= p_view.water_cap - 1e-9) {
+                return idle_task(r_mind, p_view, p_rng); // 缸满了：歇着去串门
+            }
+            // 去哪打水只看家门与水，找一次记下（找水要沿水边一点点探，远处没有导航格时尤其费）
+            if (r_mind.water_spot < 0) {
+                NavPoint stand, water;
+                r_mind.water_spot = pick_water_spot(p_view, home_door.x, home_door.z, stand, water) ? 1 : 0;
+                r_mind.water_x = stand.x;
+                r_mind.water_z = stand.z;
+                r_mind.water_face_x = water.x;
+                r_mind.water_face_z = water.z;
+            }
+            if (r_mind.water_spot > 0) {
                 Task t;
                 t.kind = TaskKind::FETCH_WATER;
-                t.x = stand.x;
-                t.z = stand.z;
-                t.face_x = water.x;
-                t.face_z = water.z;
+                t.x = r_mind.water_x;
+                t.z = r_mind.water_z;
+                t.face_x = r_mind.water_face_x;
+                t.face_z = r_mind.water_face_z;
                 t.seconds = w.fetch_s;
                 return t;
             }

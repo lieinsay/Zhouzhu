@@ -14,6 +14,8 @@
 #include <vector>
 
 #include "crops.h"
+#include "day_clock.h"
+#include "field_book.h"
 #include "dock_site.h"
 #include "farm_model.h"
 #include "flat_ground.h"
@@ -28,6 +30,8 @@
 #include "terrain_tile.h"
 #include "value_noise.h"
 #include "village_plan.h"
+#include "village_sim.h"
+#include "village_state.h"
 #include "villager_model.h"
 #include "world_grid.h"
 #include "world_ground.h"
@@ -499,8 +503,8 @@ void test_farm() {
         }
     }
     const double near_m = survey.model.survey(near_i, near_j).moisture, far_m = survey.model.survey(far_i, far_j).moisture;
-    check_near(near_ripe_at, rules.grow_seconds / (rules.dry_growth + (1 - rules.dry_growth) * near_m), 0.1, "河边的地按墒情算的时间成熟");
-    check_near(far_ripe_at, rules.grow_seconds / (rules.dry_growth + (1 - rules.dry_growth) * far_m), 0.1, "远处的地也是");
+    check_near(near_ripe_at, rules.grow_hours / (rules.dry_growth + (1 - rules.dry_growth) * near_m), 0.1, "河边的地按墒情算的时间成熟");
+    check_near(far_ripe_at, rules.grow_hours / (rules.dry_growth + (1 - rules.dry_growth) * far_m), 0.1, "远处的地也是");
     check(near_ripe_at < far_ripe_at, "离河近的先熟");
     check(stage_changes == 2 * (FarmModel::STAGES - 1), "每格的外观阶段各变 STAGES − 1 次");
     check(farm.count(PlotState::RIPE) == 2 && farm.count(PlotState::GROWING) == 0, "两格都熟了");
@@ -1110,7 +1114,8 @@ void test_villagers() {
     view.water = &water;
     view.layout = &village;
     view.nav = &vnav;
-    view.farm = &farm;
+    ModelFields fields(farm);
+    view.fields = &fields;
     view.claims = &claims;
     view.store = &store;
     view.day = &day;
@@ -2094,6 +2099,212 @@ void test_goldens() {
     report_golden("岛群远离主码头的村", villages.h, 0xb9346e12326159c4ull);
 }
 
+// ---------------------------------------------------------------- 村落的账本与推进（远近同源）
+
+// 平板岛上的一个村（与 flat_map.tscn 同一个：村心 (0, −70)、6 户、有堂屋与仓、西边 60 m 一条溪）：地面、农田、清单、地块格、水、导航格
+struct SimBed {
+    FlatIsland island;
+    FlatGround ground;
+    FarmModel farm;
+    SettlementLayout layout;
+    PlotLattice plots;
+    std::vector<WaterLine> water;
+    NavGrid nav;
+    SimRules rules;
+    DayRules day;
+    ClaimRegistry taken;
+    ModelFields near_fields;
+
+    SimBed() :
+            island(lay_flat_island(FlatIslandSpec())), ground(island), farm(&ground, ground.plot_lattice(), FarmRules()), near_fields(farm) {
+        const SiteRules site;
+        const MapSiteGround site_ground(ground, site);
+        VillageRequest request;
+        request.x = 0.0;
+        request.z = -70.0;
+        request.households = 6;
+        request.seat = true;
+        request.seed = 1;
+        layout = plan_village(site_ground, request, site, VillageRules()).layout;
+        plots = ground.plot_lattice();
+        water = village_water(ground, layout, rules.work);
+        nav = build_nav_grid(ground, -110.0, -150.0, int(170.0 / rules.nav.cell_m), int(150.0 / rules.nav.cell_m), layout, rules.nav);
+    }
+    VillageWorld world(bool p_near, FieldBook *p_fields) {
+        VillageWorld w;
+        w.layout = &layout;
+        w.plots = &plots;
+        w.water = &water;
+        w.nav = p_near ? &nav : nullptr;
+        w.ground = &ground;
+        w.fields = p_fields;
+        w.taken = &taken;
+        w.day = &day;
+        w.rules = &rules;
+        return w;
+    }
+    void found(VillageState &r_state, bool p_near, double p_now) {
+        Inventory store;
+        store.add("millet", 8);
+        store.add("bean", 4);
+        const bool has_farm = village_has_farm(farm, 0.0, 0.0, layout, rules.work);
+        HeldFields held(r_state.held, &farm);
+        found_village(r_state, world(p_near, p_near ? static_cast<FieldBook *>(&near_fields) : &held), has_farm, !water.empty(), 2, 40, 77, store, p_now);
+    }
+    // 近处逐帧：农田先长（与 Farm 节点排在村民前面一致），再推进村子
+    void run_near(VillageState &r_state, double p_until, double p_dt = 0.25) {
+        VillageWorld w = world(true, &near_fields);
+        while (r_state.clock < p_until - 1e-9) {
+            const double to = std::min(p_until, r_state.clock + p_dt);
+            farm.advance(game_hours(to - r_state.clock, day));
+            advance_village(r_state, w, to);
+        }
+    }
+    // 远处每半个游戏小时结一次
+    void run_far(VillageState &r_state, double p_until) {
+        HeldFields held(r_state.held, &farm);
+        VillageWorld w = world(false, &held);
+        const double step = game_seconds(0.5, day);
+        while (r_state.clock < p_until - 1e-9) {
+            advance_village(r_state, w, std::min(p_until, r_state.clock + step));
+        }
+    }
+};
+
+int grain_ledger(const VillageState &p_state, int p_start) {
+    return p_start + p_state.tally.harvested - p_state.tally.sown - p_state.tally.eaten;
+}
+
+void test_village_sim() {
+    std::printf("village_sim\n");
+    const DayRules day;
+    // 钟点：分界点
+    DayMark mark = DayMark::WORK_START;
+    check_near(next_day_mark(clock_at(0, 5.0, day), day, &mark), clock_at(0, 6.0, day), 1e-9, "五点之后的分界点是六点出工");
+    check(mark == DayMark::WORK_START, "……是出工");
+    check_near(next_day_mark(clock_at(0, 11.5, day), day, &mark), clock_at(0, 12.5, day), 1e-9, "正在歇晌那一秒之后是歇晌完");
+    check(next_day_mark(clock_at(0, 20.0, day), day, &mark) == clock_at(1, 6.0, day) && mark == DayMark::WORK_START, "夜里之后是第二天出工");
+    check(is_meal(DayMark::LUNCH_START) && is_meal(DayMark::WORK_END) && !is_meal(DayMark::WORK_START), "午饭、晚饭");
+    check_near(game_hours(day.day_seconds, day), 24.0, 1e-9, "一天 24 个钟头");
+
+    // 远近同源：同一个村、同一本初始账，一个逐帧近处跑、一个远处半小时一结，跑一整天（出工、歇晌、收工、两顿饭）
+    const double t0 = clock_at(0, 5.5, day), t1 = clock_at(1, 5.5, day);
+    SimBed near_bed, far_bed;
+    VillageState near_state, far_state;
+    near_bed.found(near_state, true, t0);
+    far_bed.found(far_state, false, t0);
+    int farmers = 0, carriers = 0;
+    for (const PersonState &p : near_state.people) {
+        farmers += p.mind.who.job == Job::FARMER ? 1 : 0;
+        carriers += p.mind.who.job == Job::CARRIER ? 1 : 0;
+    }
+    check(near_state.people.size() == far_state.people.size() && farmers > 0 && carriers > 0,
+            "平板岛的村：农夫 " + std::to_string(farmers) + "、挑水 " + std::to_string(carriers) + "，共 " + std::to_string(near_state.people.size()) + " 人");
+    const int grain0 = village_grain(near_state);
+    const auto started = std::chrono::steady_clock::now();
+    near_bed.run_near(near_state, t1);
+    const double near_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+    const auto far_started = std::chrono::steady_clock::now();
+    far_bed.run_far(far_state, t1);
+    const double far_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - far_started).count();
+    const VillageTally &a = near_state.tally, &b = far_state.tally;
+    std::printf("  一整天：近处 收 %d 播 %d 吃 %d 饿 %d 挑水 %.1f 担 串门 %d 巡村 %d 找不到路 %d（%.0f ms）\n", a.harvested, a.sown, a.eaten, a.hungry, a.water_in,
+            a.done[int(TaskKind::CHAT)], a.done[int(TaskKind::PATROL)], a.path_failures, near_ms);
+    std::printf("          远处 收 %d 播 %d 吃 %d 饿 %d 挑水 %.1f 担 串门 %d 巡村 %d（%.1f ms）\n", b.harvested, b.sown, b.eaten, b.hungry, b.water_in,
+            b.done[int(TaskKind::CHAT)], b.done[int(TaskKind::PATROL)], far_ms);
+    std::printf("          仓里的粮 近 %d / 远 %d，水缸 近 %.1f / 远 %.1f（容量 %.0f），认领 近 %zu / 远 %zu\n", village_grain(near_state), village_grain(far_state),
+            near_state.water, far_state.water, near_state.water_cap, near_state.claims.size(), far_state.claims.size());
+    auto within = [](double p_a, double p_b, double p_rel, double p_abs) { return std::abs(p_a - p_b) <= std::max(p_abs, p_rel * std::max(std::abs(p_a), std::abs(p_b))); };
+    check(a.harvested > 0 && within(a.harvested, b.harvested, 0.2, 4), "一天收的粮：远处结算与逐帧差不出两成");
+    check(within(a.sown, b.sown, 0.2, 3), "一天播的种子：差不出两成");
+    check(within(village_grain(near_state), village_grain(far_state), 0.2, 4), "一天下来村里的粮：差不出两成");
+    check(within(a.water_in, b.water_in, 0.2, 3), "一天挑进缸里的水：差不出两成");
+    check(a.eaten == b.eaten && a.hungry == b.hungry, "吃饭按人头，远近一样");
+    check(within(a.done[int(TaskKind::FETCH_WATER)], b.done[int(TaskKind::FETCH_WATER)], 0.2, 3), "打水的趟数：差不出两成");
+    check(far_ms * 5.0 < near_ms, "远处结算比逐帧省得多");
+    check(village_grain(near_state) == grain_ledger(near_state, grain0) && village_grain(far_state) == grain_ledger(far_state, grain0), "粮对得上账：起初 + 收 − 播 − 吃");
+    int indoors = 0;
+    for (const PersonState &p : far_state.people) {
+        indoors += p.phase == FolkPhase::INDOORS ? 1 : 0;
+    }
+    check(indoors == int(far_state.people.size()), "远处：天亮前全村在屋里");
+
+    // 展开 → 收回 → 再展开：账守恒，地块原样
+    SimBed bed;
+    VillageState s;
+    bed.found(s, true, clock_at(0, 5.9, day));
+    bed.run_near(s, clock_at(0, 9.0, day));
+    const int g0 = village_grain(s);
+    const size_t plots_before = bed.farm.plot_cells().size() / 2;
+    std::vector<std::pair<int, Plot>> before;
+    for (const Claim &c : s.claims) {
+        before.push_back({ c.owner, bed.farm.plot_at(c.i, c.j) });
+    }
+    check(plots_before > 0 && !s.claims.empty(), "上午三个钟头：农夫垦了 " + std::to_string(plots_before) + " 块地");
+    collapse_village(s, &bed.farm);
+    check(bed.farm.plot_cells().empty() && s.held.size() == plots_before && !s.deployed, "收回：认领的地连同长势记进账本，农田里没了");
+    check(village_grain(s) == g0, "收回：粮一份不少");
+    s.arable = survey_arable(bed.farm, 0.0, -70.0, 120.0);
+    check(s.arable.any() && !s.arable.arable(s.arable.i0, s.arable.j0), "村子周围能垦的格：溪边有，角上没有");
+    const std::string saved = save_village_state(s);
+    VillageState loaded;
+    std::string error;
+    check(load_village_state(saved, loaded, error), "账本存成文本再读回（" + error + "）");
+    check(save_village_state(loaded) == saved, "读回的账本再存一遍一字不差");
+    {
+        VillageWorld w = bed.world(true, &bed.near_fields);
+        deploy_village(s, w, &bed.farm);
+    }
+    bool same = s.held.empty() && bed.farm.plot_cells().size() / 2 == plots_before;
+    for (size_t k = 0; k < s.claims.size() && same; k++) {
+        const Plot p = bed.farm.plot_at(s.claims[k].i, s.claims[k].j);
+        same = p.state == before[k].second.state && p.growth == before[k].second.growth && p.crop == before[k].second.crop;
+    }
+    check(same, "马上再展开：地块原样放回农田（状态、长势、作物）");
+    check(village_grain(s) == g0 && s.deployed, "马上再展开：粮一份不多一份不少");
+    bool on_nav = true;
+    for (const PersonState &p : s.people) {
+        on_nav = on_nav && (p.phase == FolkPhase::INDOORS || bed.nav.walkable_at(p.mind.x, p.mind.z));
+        on_nav = on_nav && (p.phase != FolkPhase::WALKING || !p.path.empty());
+    }
+    check(on_nav, "展开：在外面的都站在导航格上，走着的都有路");
+
+    // 收回、远处过半天、再展开、再近处跑：账一直对得上
+    collapse_village(s, &bed.farm);
+    bed.run_far(s, clock_at(0, 15.0, day));
+    const int held_plots = int(s.held.size());
+    {
+        VillageWorld w = bed.world(true, &bed.near_fields);
+        deploy_village(s, w, &bed.farm);
+    }
+    check(int(bed.farm.plot_cells().size() / 2) == held_plots && held_plots >= int(plots_before), "远处半天后展开：地块都放回来了（" + std::to_string(held_plots) + " 块）");
+    bed.run_near(s, clock_at(0, 16.0, day));
+    check(village_grain(s) == grain_ledger(s, grain0), "近 → 远 → 近：粮对得上账（" + std::to_string(village_grain(s)) + "）");
+    int out = 0, at_door = 0;
+    for (const PersonState &p : s.people) {
+        if (p.phase == FolkPhase::INDOORS) {
+            continue;
+        }
+        out++;
+        const NavPoint door = building_door(bed.layout.at(p.mind.who.home));
+        at_door += std::hypot(p.mind.x - door.x, p.mind.z - door.z) < 3.0 ? 1 : 0;
+    }
+    check(out * 2 >= int(s.people.size()) && at_door * 3 <= out, "下午展开的村：多半人在外面，在自家门口的不到三成（在外 " + std::to_string(out) + "，门口 " + std::to_string(at_door) + "）");
+    check(s.water > 0.0 && s.water <= s.water_cap, "水缸有水、不溢出");
+
+    // 远处连着推进，拆成几段结算与一口气结算一样（结算的粒度不改规矩）
+    SimBed chunk_bed, whole_bed;
+    VillageState chunked, whole;
+    chunk_bed.found(chunked, false, t0);
+    whole_bed.found(whole, false, t0);
+    chunk_bed.run_far(chunked, t1);
+    {
+        HeldFields held(whole.held, &whole_bed.farm);
+        advance_village(whole, whole_bed.world(false, &held), t1);
+    }
+    check(save_village_state(chunked) == save_village_state(whole), "远处半小时一结与一口气结一整天：账本一字不差");
+}
+
 } // namespace
 
 int main() {
@@ -2118,6 +2329,7 @@ int main() {
     test_flight();
     test_settlement();
     test_villagers();
+    test_village_sim();
     test_world_grid();
     test_world_terrain();
     test_terrain_tiles();
