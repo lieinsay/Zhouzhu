@@ -117,7 +117,7 @@
     {
       "id": "flight-model",
       "label": "空艇飞行模型",
-      "detail": "纯函数 step(state, input, params, dt)：油门 → 前向速度、舵 → 偏航角速度、升降 → 垂直速度，各自一阶逼近；侧滑快速衰减。不碰撞、不积分位置（那是 Ship 的 move_and_slide）。",
+      "detail": "速度与航向随输入变的纯函数；另有档位表（泊 / 巡 / 疾：极速 ×1 / ×2.5 / ×4），apply_gear 乘到极速与升降上。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "zhouzhu_core_tests: 10 项通过（全油门到极速、松手停船、右舵 yaw 减小、爬升极速、侧滑衰减、帧率无关、输入夹断）",
       "sources": [
@@ -618,7 +618,7 @@
     {
       "id": "world-map",
       "label": "WorldMap 地图面板",
-      "detail": "只画：底图、岛号、邑治、村（放大写名）、码头、玩家箭头、比例尺、悬停读数；滚轮缩放、右键拖动；左键只发 teleport_requested，许不许瞬移由上层定。",
+      "detail": "晕渲底图 + 岛号、邑治、村、码头、玩家；码头画在实际岸缘点、能靠泊的描边高亮、目的码头金色、已铺的村子白圈（上层递进来）。点了只发 teleport_requested。",
       "tag": "引擎构件",
       "evidence": "world_e2e 用滚轮与左键驱动；截图目视",
       "sources": [
@@ -630,7 +630,7 @@
     {
       "id": "world-scene",
       "label": "WorldScene 编排",
-      "detail": "地图开没开、上一处站稳的地方、提示都在这里：出生在邑治，M 开合地图（开着时人站住、放开鼠标），dev_tools 下点哪瞬移到哪（云海就找 3 km 内最近的陆地），坠入云海回位，HUD 显示岛号 / 坐标 / 高程 / 待建块数。",
+      "detail": "岛群场景的编排：船停主码头泊位、人在坪上出生；Helm 掌舵飞到目的码头；焦点跟人或船头前方；地图开合与瞬移；坠落回位并召回船。",
       "tag": "切片编排（状态在此）",
       "evidence": "world_e2e PASS",
       "sources": [
@@ -696,6 +696,142 @@
         "game/tests/dev_tools_e2e.gd"
       ],
       "since": "e13"
+    },
+    {
+      "id": "ground-query",
+      "label": "地面查询接口",
+      "detail": "SiteGround（盖房子：地面高 + 禁区及原因等级）与 NavGround（村民走路：地面高 + 水深）。游戏尺度的岛与真实比例的岛群各写一个适配器，勘察、导航、铺村都只认接口。",
+      "tag": "原语",
+      "sources": [
+        "src/ground_query.h"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "dock-site",
+      "label": "码头几何",
+      "detail": "沿外法线自外向内找岸缘点、量泊位两侧岸线定栈桥长度、平均定坪高、压平权重、泊位接触线。Island 与岛群共用；抽出后旧岛高度场哈希逐位不变。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测：细岬、泊位不碰岸、坪高平均；24 座旧岛哈希逐位相同",
+      "sources": [
+        "src/dock_site.h",
+        "src/dock_site.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "village-plan",
+      "label": "铺村",
+      "detail": "给村心与户数铺一整村：一户一座民居，邑治加堂屋（村心）与仓；转角方格点由近及远试放，门朝下坡或朝村心，每座走 survey_site。确定性。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测：不压坪与溪涧、无陡坡、不重叠、确定性；2051 邑治 273 座全摆下",
+      "sources": [
+        "src/village_plan.h",
+        "src/village_plan.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "world-sites",
+      "label": "岛群落点与整群规划",
+      "detail": "sites.tsv 解析；岛群的码头 / 勘察 / 导航适配器（外法线 = 岸距负梯度，禁区 = 溪涧、河湖、码头坪）；plan_world_docks、plan_world_village。游戏与体检工具走同一条路径。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测：91 码头落地、#7/#2 压平后等高、村152 与邑治不压坪不上陡坡",
+      "sources": [
+        "src/world_sites.h",
+        "src/world_sites.cpp",
+        "src/world_ground.h",
+        "src/world_ground.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "site-survey-tool",
+      "label": "岛群体检工具",
+      "detail": "zhouzhu_site_survey：离线把整个岛群的码头与村落铺一遍，报找不到岸缘的码头、摆不下的房子、耗时，可写逐条明细；超标退出码 1，ctest 跑 2051。",
+      "tag": "工具",
+      "evidence": "2051：91/91 码头、9,571 座全摆下，Release 0.3 s",
+      "sources": [
+        "tools/site_survey.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "dock-builder",
+      "label": "栈桥与泊位（共用）",
+      "detail": "栈桥、系缆桩、碰撞的搭法，泊位接触线与出生位姿；Island 与 WorldDock 共用。",
+      "tag": "引擎构件",
+      "sources": [
+        "src/dock_builder.h",
+        "src/dock_builder.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "settlement-host",
+      "label": "聚落宿主接口",
+      "detail": "Settlement 与 Villagers 认的宿主：给地面查询、导航窗口、种子、rebuilt 信号。Island 与 WorldVillage 各实现一份。",
+      "tag": "引擎构件",
+      "sources": [
+        "src/settlement_host.h"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "helm",
+      "label": "Helm 掌舵",
+      "detail": "从 Voyage 抽出的上舵 / 换档 / 叫靠泊 / 滑行 / 离舵状态机与航行 HUD 文本；Voyage 与 WorldScene 各持一个，泊位候选由编排者当场给。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "Voyage 改用后旧航程、船坞、坠落回位 e2e 坐标逐位不变",
+      "sources": [
+        "src/helm.h",
+        "src/helm.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "world-village",
+      "label": "WorldVillage 村落",
+      "detail": "岛群里的一个村 / 散户：原点在村心，按 plan_world_village 铺清单交给 Settlement，走近了才挂 Villagers（封顶），导航格只铺村子周围一圈。",
+      "tag": "场景角色",
+      "sources": [
+        "src/world_village.h",
+        "src/world_village.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "world-dock",
+      "label": "WorldDock 码头",
+      "detail": "一个码头的栈桥与碰撞，放在岸缘点；地面已由地形压平。",
+      "tag": "场景角色",
+      "sources": [
+        "src/world_village.h",
+        "src/world_village.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "site-stream",
+      "label": "SiteStream 按需生成",
+      "detail": "跟着焦点：3 km 内建栈桥、2.5 km 内铺村（每帧一处）、900 m 内招村民，走远 ×1.25 就拆；瞬移时同步铺好落点周围。",
+      "tag": "场景角色",
+      "sources": [
+        "src/site_stream.h",
+        "src/site_stream.cpp"
+      ],
+      "since": "e14"
+    },
+    {
+      "id": "voyage-2051-e2e",
+      "label": "岛群跑船端到端测试",
+      "detail": "主码头出生 → 邑治（273 座站在地上、有人出门）→ 回主码头 → 上舵换疾档贴着地形飞 30 km → 乙岛 #2 靠泊下船 → 散户有人出门；--shots 存图。",
+      "tag": "验收",
+      "evidence": "PASS：模拟 322 s，途中最低离地 58 m",
+      "sources": [
+        "game/tests/voyage_2051_e2e.gd"
+      ],
+      "since": "e14"
     }
   ],
   "edges": [
@@ -1528,6 +1664,266 @@
       "chains": [
         "dev-tools"
       ]
+    },
+    {
+      "from": "dock-site",
+      "to": "ground-query",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "village-plan",
+      "to": "settlement-model",
+      "label": "survey_site",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "village-plan",
+      "to": "ground-query",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "settlement-model",
+      "to": "ground-query",
+      "label": "SiteGround",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "villager-nav",
+      "to": "ground-query",
+      "label": "NavGround",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-terrain",
+      "to": "dock-site",
+      "label": "停机坪压平",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-sites",
+      "to": "dock-site",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-sites",
+      "to": "village-plan",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-sites",
+      "to": "world-terrain",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-sites",
+      "to": "skyisle-export",
+      "label": "sites.tsv",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "site-survey-tool",
+      "to": "world-sites",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "world-sites",
+      "label": "码头表",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "dock-builder",
+      "to": "dock-site",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "island-node",
+      "to": "dock-builder",
+      "label": "栈桥 / 泊位",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "island-field",
+      "to": "dock-site",
+      "label": "build_dock",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "island-node",
+      "to": "settlement-host",
+      "label": "实现",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "settlement-node",
+      "to": "settlement-host",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "settlement-host",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-village",
+      "to": "settlement-host",
+      "label": "实现",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-village",
+      "to": "world-sites",
+      "label": "plan_world_village",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-village",
+      "to": "settlement-node",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-village",
+      "to": "villagers-node",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-village",
+      "to": "world-node",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-dock",
+      "to": "dock-builder",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "site-stream",
+      "to": "world-village",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "site-stream",
+      "to": "world-dock",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "site-stream",
+      "to": "world-node",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "helm",
+      "to": "ship",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "helm",
+      "to": "player",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "helm",
+      "to": "input-map",
+      "label": "R/F 换档",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "voyage",
+      "to": "helm",
+      "label": "掌舵",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-scene",
+      "to": "helm",
+      "label": "掌舵",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-scene",
+      "to": "site-stream",
+      "label": "焦点",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "world-scene",
+      "to": "ship",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "voyage-2051-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "world-voyage"
+      ]
     }
   ],
   "chains": [
@@ -2163,6 +2559,124 @@
         "player-god",
         "world-2051-scene"
       ]
+    },
+    {
+      "id": "world-voyage",
+      "title": "切片六：在岛群 #2051 里跑船，码头与村落照生成器的位置落地",
+      "story": "玩家站在岛群主码头的停机坪上，旁边的村子、远处的邑治都照生成器的位置盖好了房子、有人进出；走上停在泊位的空艇掌舵，换到高档越过主岛飞 30 km，在乙岛的码头靠泊下船，码头边的人家也有人出门；地图上的码头与村子和眼前的一一对应。",
+      "date": "2026-09-23",
+      "color": "#8d7bea",
+      "steps": [
+        {
+          "text": "离线导出：岛群的岛表与码头、村、散户点位另写一份平铺的 sites.tsv，随仓库提交",
+          "nodes": [
+            "skyisle-export"
+          ]
+        },
+        {
+          "text": "进入岛群场景：World 读点位，把 91 个码头都算出岸缘点、栈桥长度和坪高，再把停机坪压进连续地形里，然后才铺第一块地面",
+          "nodes": [
+            "world-2051-scene",
+            "world-node",
+            "dock-site",
+            "world-terrain",
+            "world-sites"
+          ]
+        },
+        {
+          "text": "空艇停在主码头的泊位上，人站在它的停机坪上；焦点周围 3 km 的码头搭起栈桥，2.5 km 的村子按户数自动铺房子，900 m 内的村子招出村民",
+          "nodes": [
+            "world-scene",
+            "site-stream",
+            "world-dock",
+            "world-village",
+            "village-plan",
+            "dock-builder",
+            "ship",
+            "player"
+          ]
+        },
+        {
+          "text": "每座房子都走同一套选址勘察：有地、坡不陡、不压码头的坪和溪涧、不挨着别的房子；村民在村子周围一圈的导航格上串门",
+          "nodes": [
+            "world-village",
+            "settlement-host",
+            "settlement-model",
+            "settlement-node",
+            "villagers-node",
+            "ground-query",
+            "villager-nav"
+          ]
+        },
+        {
+          "text": "按 M 开地图：码头画在实际的岸缘点上，能靠泊的高亮、目的码头标金色，已铺的村子套白圈；开发者点一下就瞬移，落点周围的码头村子先同步铺好",
+          "nodes": [
+            "world-map",
+            "world-scene",
+            "site-stream",
+            "input-map"
+          ]
+        },
+        {
+          "text": "走过栈桥上船按 E 掌舵，R 换到疾档（128 m/s）：焦点跟着船头前方，地面与码头提前铺出来；HUD 给目的码头的距离、方位与高差",
+          "nodes": [
+            "helm",
+            "flight-model",
+            "ship",
+            "world-scene",
+            "input-map"
+          ]
+        },
+        {
+          "text": "到了乙岛码头附近换回泊档、按 E 靠泊：船自己贴上泊位接触线，人下船站上乙岛的停机坪——抵达",
+          "nodes": [
+            "helm",
+            "dock-builder",
+            "world-dock",
+            "world-scene",
+            "player"
+          ]
+        },
+        {
+          "text": "兜底：掉进云海回到上一处站稳的地方，船漂远了召回最近的码头",
+          "nodes": [
+            "world-scene",
+            "ship",
+            "world-node"
+          ]
+        }
+      ],
+      "nodes": [
+        "ground-query",
+        "dock-site",
+        "village-plan",
+        "world-sites",
+        "site-survey-tool",
+        "dock-builder",
+        "settlement-host",
+        "helm",
+        "world-village",
+        "world-dock",
+        "site-stream",
+        "voyage-2051-e2e",
+        "flight-model",
+        "world-map",
+        "world-scene",
+        "skyisle-export",
+        "world-2051-scene",
+        "world-node",
+        "world-terrain",
+        "ship",
+        "player",
+        "settlement-model",
+        "settlement-node",
+        "villagers-node",
+        "villager-nav",
+        "input-map",
+        "island-node",
+        "island-field",
+        "voyage"
+      ]
     }
   ],
   "events": [
@@ -2605,6 +3119,85 @@
           "world-2051-scene"
         ],
         "updated": []
+      }
+    },
+    {
+      "id": "e14",
+      "type": "slice",
+      "date": "2026-09-23",
+      "title": "切片六：在岛群 #2051 里跑船，码头与村落照生成器的位置落地",
+      "summary": "玩家站在岛群主码头的停机坪上，旁边的村子、远处的邑治都照生成器的位置盖好了房子、有人进出；走上停在泊位的空艇掌舵，换到高档越过主岛飞 30 km，在乙岛的码头靠泊下船，码头边的人家也有人出门；地图上的码头与村子和眼前的一一对应。",
+      "chain": "world-voyage",
+      "nodes": [
+        "ground-query",
+        "dock-site",
+        "village-plan",
+        "world-sites",
+        "site-survey-tool",
+        "dock-builder",
+        "settlement-host",
+        "helm",
+        "world-village",
+        "world-dock",
+        "site-stream",
+        "voyage-2051-e2e",
+        "flight-model",
+        "world-map",
+        "world-scene",
+        "skyisle-export",
+        "world-2051-scene",
+        "world-node",
+        "world-terrain",
+        "ship",
+        "player",
+        "settlement-model",
+        "settlement-node",
+        "villagers-node",
+        "villager-nav",
+        "input-map",
+        "island-node",
+        "island-field",
+        "voyage"
+      ],
+      "info": {
+        "created": [
+          "ground-query",
+          "dock-site",
+          "village-plan",
+          "world-sites",
+          "site-survey-tool",
+          "dock-builder",
+          "settlement-host",
+          "helm",
+          "world-village",
+          "world-dock",
+          "site-stream",
+          "voyage-2051-e2e"
+        ],
+        "reused": [
+          "flight-model",
+          "world-map",
+          "world-scene",
+          "skyisle-export",
+          "world-2051-scene",
+          "world-node",
+          "world-terrain",
+          "ship",
+          "player",
+          "settlement-model",
+          "settlement-node",
+          "villagers-node",
+          "villager-nav",
+          "input-map",
+          "island-node",
+          "island-field",
+          "voyage"
+        ],
+        "updated": [
+          "flight-model",
+          "world-map",
+          "world-scene"
+        ]
       }
     }
   ],
