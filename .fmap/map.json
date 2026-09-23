@@ -28,18 +28,6 @@
       "since": "e1"
     },
     {
-      "id": "voyage",
-      "label": "Voyage 编排",
-      "detail": "切片编排（状态在此）：航程、靠泊与入坞、开垦播种收获、改装。改装时开装配视角：W/S、A/D、空格/Shift 三向挪光标，1/2/3 选模块，E 放或换、X 拆、Tab 合上，每步落到船上并按坞位接触线重摆。",
-      "tag": "切片编排（状态在此）",
-      "evidence": "shipyard_e2e PASS：船不在坞被拒、入坞、六步改装含两次拒绝、无动力拒上舵、补回、飞回靠泊；farm/voyage/respawn e2e 无回归",
-      "sources": [
-        "src/voyage.h",
-        "src/voyage.cpp"
-      ],
-      "since": "e1"
-    },
-    {
       "id": "island-node",
       "label": "Island 节点",
       "detail": "Island 节点：按属性生成高度场、网格、碰撞、栈桥、河水；泊位接触线、出生点、地面高度、路点与河中线点；has_yard 凿船坞坪；rebuilt 信号让 Farm / Shipyard / Settlement 跟着重建。",
@@ -203,16 +191,16 @@
     },
     {
       "id": "voyage-pack",
-      "label": "背包与手持种子",
-      "detail": "Voyage 里的背包状态：Inventory、手上拿着的种子（物品 id）、面板开合与光标。Tab 开合；开着时挡住 Player 输入、不种地，W/S 挪光标，E 把种子拿在手上（再按放下，不是种子会说明）。开局物品来自 starting_pack 属性。",
-      "tag": "切片编排（状态在此）",
+      "label": "PackHand 背包与手持",
+      "detail": "背包、手上的种子、面板开合与光标；Tab 开合、W/S 选、E 拿在手上。",
+      "tag": "玩法部件",
       "evidence": "farm_e2e PASS：只经 inventory / move_back / interact 动作选到菽",
       "sources": [
-        "src/voyage.h",
-        "src/voyage.cpp"
+        "src/pack_hand.h",
+        "src/pack_hand.cpp"
       ],
       "since": "e3",
-      "parent": "voyage"
+      "parent": "expedition"
     },
     {
       "id": "inventory",
@@ -266,13 +254,13 @@
     },
     {
       "id": "island-yard",
-      "label": "船坞坪",
-      "detail": "船坞坪：停机坪旁沿岸凿出的 44×20 m 石板坪，选内陆浅的一侧，河与路都绕开它；泊位半长 22 m。",
+      "label": "船坞坪选址（共用）",
+      "detail": "plan_yard：顺着码头的岸线找一块 60 × 28 m 的坪、凿平规则 yard_carve；岛（离岸 25 m 内）与岛群（放宽到 45 m）同一份。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "zhouzhu_core_tests island_yard 三种岛龄：在岛上、平、与停机坪同高、河 ≥ 15 m、路 ≥ 4 m、坪缘坡度、确定性",
       "sources": [
-        "src/island_field.h",
-        "src/island_field.cpp"
+        "src/yard_site.h",
+        "src/yard_site.cpp"
       ],
       "since": "e4"
     },
@@ -348,16 +336,16 @@
     },
     {
       "id": "voyage-build",
-      "label": "布置模式编排",
-      "detail": "步行时 B 开合（dev_tools 属性），光标贴地按相机方向 WASD 挪、Q/R 转 15°、1-4 选建筑、E 放、X 拆、F5 存盘、Tab 合上；开着时人站住；改的是脚下岛的 Settlement；规矩在聚落模型里，这里只转述原因。",
-      "tag": "切片编排（状态在此）",
+      "label": "BuildMode 布置模式",
+      "detail": "B 在脚下那处聚落（地图宿主说是哪处）开布置模式：光标、放、拆、F5 存改动。",
+      "tag": "玩法部件",
       "evidence": "build_e2e PASS：开合、停机坪 / 已有 / 挨得太近被拒、转 45° 放望楼、拆、存",
       "sources": [
-        "src/voyage.h",
-        "src/voyage.cpp"
+        "src/build_mode.h",
+        "src/build_mode.cpp"
       ],
       "since": "e6",
-      "parent": "voyage"
+      "parent": "expedition"
     },
     {
       "id": "buildings",
@@ -628,18 +616,6 @@
       "since": "e11"
     },
     {
-      "id": "world-scene",
-      "label": "WorldScene 编排",
-      "detail": "岛群场景的编排：船停主码头泊位、人在坪上出生；Helm 掌舵飞到目的码头；焦点跟人或船头前方；地图开合与瞬移；坠落回位并召回船。",
-      "tag": "切片编排（状态在此）",
-      "evidence": "world_e2e PASS",
-      "sources": [
-        "src/world_scene.h",
-        "src/world_scene.cpp"
-      ],
-      "since": "e11"
-    },
-    {
       "id": "world-2051-scene",
       "label": "岛群场景 world_2051",
       "detail": "WorldScene + World（data_dir = res://worlds/2051）+ Player + 云海 + 日光；与 main.tscn 并存，旧功能尚未迁入。",
@@ -769,11 +745,11 @@
     },
     {
       "id": "settlement-host",
-      "label": "聚落宿主接口",
-      "detail": "Settlement 与 Villagers 认的宿主：给地面查询、导航窗口、种子、rebuilt 信号。Island 与 WorldVillage 各实现一份。",
+      "label": "GroundHost 地面宿主",
+      "detail": "挂在下面的农田、船坞、聚落、村民只认它：局部坐标的地面（MapGround）、导航格铺多大、种子、村民种哪片田、船坞坪。Island、World、WorldVillage、FlatMap 各实现一份。",
       "tag": "引擎构件",
       "sources": [
-        "src/settlement_host.h"
+        "src/ground_host.h"
       ],
       "since": "e14"
     },
@@ -832,6 +808,127 @@
         "game/tests/voyage_2051_e2e.gd"
       ],
       "since": "e14"
+    },
+    {
+      "id": "expedition",
+      "since": "e15",
+      "label": "Expedition 玩家编排",
+      "detail": "哪张地图都是它：只认地图宿主（map 属性）。持有 Helm 与背包、农事、改装、布置四个部件并按优先级调度；开局、HUD、M 地图与瞬移、站稳与坠落回位、到达判定只写一份。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "旧 9 条 e2e 最终位置逐位一样；world_features_e2e、flat_map_e2e 通过",
+      "sources": [
+        "src/expedition.h",
+        "src/expedition.cpp"
+      ],
+      "mergedFrom": [
+        {
+          "id": "voyage",
+          "label": "Voyage 编排",
+          "detail": "切片编排（状态在此）：航程、靠泊与入坞、开垦播种收获、改装。改装时开装配视角：W/S、A/D、空格/Shift 三向挪光标，1/2/3 选模块，E 放或换、X 拆、Tab 合上，每步落到船上并按坞位接触线重摆。",
+          "tag": "切片编排（状态在此）",
+          "sources": [
+            "src/voyage.h",
+            "src/voyage.cpp"
+          ],
+          "event": "e15"
+        },
+        {
+          "id": "world-scene",
+          "label": "WorldScene 编排",
+          "detail": "岛群场景的编排：船停主码头泊位、人在坪上出生；Helm 掌舵飞到目的码头；焦点跟人或船头前方；地图开合与瞬移；坠落回位并召回船。",
+          "tag": "切片编排（状态在此）",
+          "sources": [
+            "src/world_scene.h",
+            "src/world_scene.cpp"
+          ],
+          "event": "e15"
+        }
+      ]
+    },
+    {
+      "id": "farm-hand",
+      "label": "FarmHand 农事",
+      "detail": "盯着视线前方那一格，按住 E 干满工时才落地；种子从背包扣、收成进背包；拒绝原因按地面说。",
+      "tag": "玩法部件",
+      "sources": [
+        "src/farm_hand.h",
+        "src/farm_hand.cpp"
+      ],
+      "since": "e16",
+      "parent": "expedition"
+    },
+    {
+      "id": "refit-bench",
+      "label": "RefitBench 改装",
+      "detail": "离哪座画样台够近、船在不在那座坞里；装配视角里挪光标、放 / 换 / 拆。",
+      "tag": "玩法部件",
+      "sources": [
+        "src/refit_bench.h",
+        "src/refit_bench.cpp"
+      ],
+      "since": "e16",
+      "parent": "expedition"
+    },
+    {
+      "id": "map-host",
+      "label": "MapHost 地图宿主",
+      "detail": "编排只认它：地面高、岛号、站稳；码头（泊位、出生、岸缘点、名字、能不能靠）；船坞、脚下的田与聚落；流式焦点与瞬移准备；HUD 位置行与目标行；岛群地图面板。",
+      "tag": "引擎构件",
+      "sources": [
+        "src/map_host.h",
+        "src/map_host.cpp"
+      ],
+      "since": "e16"
+    },
+    {
+      "id": "map-ground",
+      "label": "MapGround 地面接口",
+      "detail": "玩法问地面的全部问题（高、水、离水多远、水的中线、坪与路、熟地、岛号、地块格）；禁区原因 ground_block 只写一份。实现：IslandGround、WorldGround、FlatGround。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：三种地面同一套禁区与能垦规矩；金标逐位不变",
+      "sources": [
+        "src/map_ground.h",
+        "src/island_ground.h",
+        "src/world_ground.h",
+        "src/flat_ground.h"
+      ],
+      "since": "e16"
+    },
+    {
+      "id": "island-map",
+      "label": "IslandMap 两岛拼图",
+      "detail": "把 islands 里列的几座 Island 拼成一张地图（每岛一个码头）；甲乙两岛的目标行、航向行照旧。",
+      "tag": "场景角色",
+      "sources": [
+        "src/island_map.h",
+        "src/island_map.cpp"
+      ],
+      "since": "e16"
+    },
+    {
+      "id": "flat-map",
+      "label": "FlatMap 平板岛",
+      "detail": "新地图的样板：同时是地面宿主与地图宿主，只回答接口、搭圆盘与栈桥，一行玩法都没写；村子用 plan_village 自动铺。",
+      "tag": "场景角色",
+      "evidence": "flat_map_e2e 通过",
+      "sources": [
+        "src/flat_map.h",
+        "src/flat_map.cpp",
+        "game/flat_map.tscn"
+      ],
+      "since": "e16"
+    },
+    {
+      "id": "world-features-e2e",
+      "label": "岛群全部玩法端到端测试",
+      "detail": "feature_tour.gd 驱动：垦、选种、播、收；入坞改船；布置模式加拆存读；村民干活。flat_map_e2e 是同一驱动跑平板岛。",
+      "tag": "验收",
+      "sources": [
+        "game/tests/feature_tour.gd",
+        "game/tests/world_features_e2e.gd",
+        "game/tests/flat_map_e2e.gd"
+      ],
+      "since": "e16"
     }
   ],
   "edges": [
@@ -892,23 +989,25 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "player",
-      "label": "控制权 / 位姿",
+      "label": "控制权 / 位姿 / 位姿 / 挡输入",
       "chains": [
-        "voyage"
+        "voyage",
+        "real-scale-world"
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "ship",
       "label": "控制权 / 靠泊",
       "chains": [
-        "voyage"
+        "voyage",
+        "world-voyage"
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "island-node",
       "label": "码头位姿 / 出生点",
       "chains": [
@@ -916,16 +1015,17 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "input-map",
-      "label": "注册 + 交互键",
+      "label": "注册 + 交互键 / map（M）",
       "chains": [
-        "voyage"
+        "voyage",
+        "real-scale-world"
       ]
     },
     {
       "from": "main-scene",
-      "to": "voyage",
+      "to": "expedition",
       "chains": [
         "voyage"
       ]
@@ -994,7 +1094,7 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "farm-node",
       "label": "目标格 / 开垦·播种·收获",
       "chains": [
@@ -1153,7 +1253,7 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "shipyard",
       "label": "坞位 / 画样台",
       "chains": [
@@ -1161,7 +1261,7 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "refit-panel",
       "label": "布局 / 光标 / 船况",
       "chains": [
@@ -1169,7 +1269,7 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "ship-layout",
       "label": "编辑规则",
       "chains": [
@@ -1185,7 +1285,7 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "refit-overlay",
       "label": "布局 / 光标 / 候选格",
       "chains": [
@@ -1203,7 +1303,7 @@
       "label": "梯子位置"
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "ship-layout-rules",
       "label": "拒绝原因",
       "chains": [
@@ -1479,7 +1579,7 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "villagers-node",
       "label": "钟点文字",
       "chains": [
@@ -1573,7 +1673,7 @@
       ]
     },
     {
-      "from": "world-scene",
+      "from": "expedition",
       "to": "world-node",
       "label": "焦点 / 瞬移落点",
       "chains": [
@@ -1581,7 +1681,7 @@
       ]
     },
     {
-      "from": "world-scene",
+      "from": "expedition",
       "to": "world-map",
       "label": "玩家位置 / 瞬移请求",
       "chains": [
@@ -1589,24 +1689,8 @@
       ]
     },
     {
-      "from": "world-scene",
-      "to": "player",
-      "label": "位姿 / 挡输入",
-      "chains": [
-        "real-scale-world"
-      ]
-    },
-    {
-      "from": "world-scene",
-      "to": "input-map",
-      "label": "map（M）",
-      "chains": [
-        "real-scale-world"
-      ]
-    },
-    {
       "from": "world-2051-scene",
-      "to": "world-scene",
+      "to": "expedition",
       "chains": [
         "real-scale-world"
       ]
@@ -1888,7 +1972,7 @@
       ]
     },
     {
-      "from": "voyage",
+      "from": "expedition",
       "to": "helm",
       "label": "掌舵",
       "chains": [
@@ -1896,24 +1980,9 @@
       ]
     },
     {
-      "from": "world-scene",
-      "to": "helm",
-      "label": "掌舵",
-      "chains": [
-        "world-voyage"
-      ]
-    },
-    {
-      "from": "world-scene",
+      "from": "expedition",
       "to": "site-stream",
       "label": "焦点",
-      "chains": [
-        "world-voyage"
-      ]
-    },
-    {
-      "from": "world-scene",
-      "to": "ship",
       "chains": [
         "world-voyage"
       ]
@@ -1924,6 +1993,90 @@
       "chains": [
         "world-voyage"
       ]
+    },
+    {
+      "from": "expedition",
+      "to": "map-host",
+      "label": "地面、码头、田、聚落"
+    },
+    {
+      "from": "island-map",
+      "to": "island-node",
+      "label": "拼岛"
+    },
+    {
+      "from": "world-node",
+      "to": "settlement-host",
+      "label": "实现"
+    },
+    {
+      "from": "world-node",
+      "to": "map-ground",
+      "label": "WorldGround"
+    },
+    {
+      "from": "island-node",
+      "to": "map-ground",
+      "label": "IslandGround"
+    },
+    {
+      "from": "flat-map",
+      "to": "map-ground",
+      "label": "FlatGround"
+    },
+    {
+      "from": "flat-map",
+      "to": "island-yard",
+      "label": "船坞坪"
+    },
+    {
+      "from": "flat-map",
+      "to": "village-plan",
+      "label": "铺村"
+    },
+    {
+      "from": "farm-node",
+      "to": "settlement-host",
+      "label": "地面、地块格"
+    },
+    {
+      "from": "shipyard",
+      "to": "settlement-host",
+      "label": "船坞坪"
+    },
+    {
+      "from": "farm-model",
+      "to": "map-ground",
+      "label": "survey_plot"
+    },
+    {
+      "from": "world-features-e2e",
+      "to": "world-2051-scene"
+    },
+    {
+      "from": "world-node",
+      "to": "map-host",
+      "label": "实现"
+    },
+    {
+      "from": "island-map",
+      "to": "map-host",
+      "label": "实现"
+    },
+    {
+      "from": "flat-map",
+      "to": "map-host",
+      "label": "实现"
+    },
+    {
+      "from": "flat-map",
+      "to": "settlement-host",
+      "label": "实现"
+    },
+    {
+      "from": "settlement-host",
+      "to": "map-ground",
+      "label": "host_ground"
     }
   ],
   "chains": [
@@ -1959,7 +2112,7 @@
         {
           "text": "走到舵旁按 E 上舵：控制权和相机从角色切到空艇",
           "nodes": [
-            "voyage",
+            "expedition",
             "player",
             "ship",
             "input-map"
@@ -1971,13 +2124,13 @@
             "ship",
             "flight-model",
             "input-map",
-            "voyage"
+            "expedition"
           ]
         },
         {
           "text": "进入码头 45 m 内按 E：自动滑行靠泊，停稳后离舵",
           "nodes": [
-            "voyage",
+            "expedition",
             "ship",
             "island-node"
           ]
@@ -1992,7 +2145,7 @@
         {
           "text": "兜底：途中坠入云海就回到上一个安全落脚点，漂远的空艇召回最近码头",
           "nodes": [
-            "voyage",
+            "expedition",
             "player",
             "ship",
             "island-node"
@@ -2002,7 +2155,7 @@
       "nodes": [
         "e2e",
         "main-scene",
-        "voyage",
+        "expedition",
         "island-node",
         "player",
         "ship",
@@ -2042,7 +2195,7 @@
         {
           "text": "玩家在停机坪按 E：离河太远垦不了，提示里说明原因",
           "nodes": [
-            "voyage",
+            "expedition",
             "farm-node",
             "input-map"
           ]
@@ -2052,14 +2205,14 @@
           "nodes": [
             "player",
             "dock-trail",
-            "voyage",
+            "expedition",
             "farm-node"
           ]
         },
         {
           "text": "按住 E 1.5 秒开垦：荒地变成起了垄的田",
           "nodes": [
-            "voyage",
+            "expedition",
             "farm-node",
             "farm-model"
           ]
@@ -2079,7 +2232,7 @@
         {
           "text": "再按住 E 播种：背包里菽 −1，地块记着种的是菽，垄上冒出苗",
           "nodes": [
-            "voyage",
+            "expedition",
             "voyage-pack",
             "farm-node",
             "farm-model",
@@ -2098,7 +2251,7 @@
         {
           "text": "按住 E 收获：按地里的作物把收成放进背包（菽 +3），地还是垦好的，可以接着种",
           "nodes": [
-            "voyage",
+            "expedition",
             "voyage-pack",
             "farm-node",
             "farm-model",
@@ -2113,7 +2266,7 @@
         "farm-model",
         "farm-node",
         "farm-e2e",
-        "voyage",
+        "expedition",
         "island-node",
         "island-mesh",
         "main-scene",
@@ -2160,7 +2313,7 @@
         {
           "text": "玩家在画样台按 E：船不在坞里，被拒并说明",
           "nodes": [
-            "voyage",
+            "expedition",
             "shipyard",
             "player",
             "input-map"
@@ -2169,7 +2322,7 @@
         {
           "text": "走上空艇掌舵、升空，飞到船坞跟前（比泊位更近）按 E 入坞：船把朝跳板的舷边贴到坞位接触线上，停在坞墩梁上",
           "nodes": [
-            "voyage",
+            "expedition",
             "ship",
             "shipyard",
             "island-node",
@@ -2179,7 +2332,7 @@
         {
           "text": "下船顺跳板走到画样台按 E：进装配视角——相机跳到船外可绕着看，船上画出候选格、光标格与船头船尾左右舷标注，面板说光标在哪儿、能干什么、船况如何",
           "nodes": [
-            "voyage",
+            "expedition",
             "refit-overlay",
             "refit-panel",
             "ship-layout",
@@ -2190,7 +2343,7 @@
         {
           "text": "W/S、A/D、空格/Shift 三向挪光标，1/2/3 选模块，E 放或换、X 拆：每改一下船立刻重拼；悬空、盖住舷门排两头、拆有上层的节、改拆驾驶区都被拒并说明",
           "nodes": [
-            "voyage",
+            "expedition",
             "ship-layout",
             "ship-layout-rules",
             "ship",
@@ -2205,13 +2358,13 @@
             "player",
             "ship",
             "ship-layout-ladders",
-            "voyage"
+            "expedition"
           ]
         },
         {
           "text": "拆掉了动力区的船上不了舵：舵旁按 E 被拒，提示去画样台加一节",
           "nodes": [
-            "voyage",
+            "expedition",
             "ship",
             "ship-layout",
             "player"
@@ -2220,7 +2373,7 @@
         {
           "text": "掌舵升空，飞回泊位：船按自己的宽度把舷边贴到泊位接触线上靠泊；多了货的船航速从 32 掉到 20 m/s",
           "nodes": [
-            "voyage",
+            "expedition",
             "ship",
             "flight-model",
             "island-node"
@@ -2234,7 +2387,7 @@
         "refit-panel",
         "shipyard-e2e",
         "ship",
-        "voyage",
+        "expedition",
         "island-node",
         "island-field",
         "input-map",
@@ -2362,7 +2515,7 @@
         {
           "text": "HUD 第一行末尾走着脚下这座岛的钟点；到了卯时出工，村民错开几秒从家门口出来",
           "nodes": [
-            "voyage",
+            "expedition",
             "villagers-node",
             "villager-clock"
           ]
@@ -2413,7 +2566,7 @@
         "settlement-node",
         "island-field",
         "island-node",
-        "voyage",
+        "expedition",
         "farm-model",
         "crops",
         "farm-node",
@@ -2439,7 +2592,7 @@
           "text": "进入 world_2051 场景：World 读入栅格与岛表，玩家落在邑治，同步建好脚下一圈地面",
           "nodes": [
             "world-2051-scene",
-            "world-scene",
+            "expedition",
             "world-node",
             "world-grid",
             "player"
@@ -2465,7 +2618,7 @@
         {
           "text": "按 M 打开地图：晕渲底图上标岛号、邑治、村、码头和玩家箭头，滚轮缩放、右键拖动、悬停读出坐标与地表",
           "nodes": [
-            "world-scene",
+            "expedition",
             "world-map",
             "map-image",
             "input-map"
@@ -2475,7 +2628,7 @@
           "text": "开发者在地图上左键一点：先建好落点周围的地面再把人放上去，点到云海就挪到最近的陆地",
           "nodes": [
             "world-map",
-            "world-scene",
+            "expedition",
             "world-node",
             "player"
           ]
@@ -2483,7 +2636,7 @@
         {
           "text": "兜底：掉到云带顶以下就回到上一处站稳的地方",
           "nodes": [
-            "world-scene",
+            "expedition",
             "player",
             "world-node"
           ]
@@ -2497,7 +2650,7 @@
         "map-image",
         "world-node",
         "world-map",
-        "world-scene",
+        "expedition",
         "world-2051-scene",
         "world-e2e",
         "player",
@@ -2586,7 +2739,7 @@
         {
           "text": "空艇停在主码头的泊位上，人站在它的停机坪上；焦点周围 3 km 的码头搭起栈桥，2.5 km 的村子按户数自动铺房子，900 m 内的村子招出村民",
           "nodes": [
-            "world-scene",
+            "expedition",
             "site-stream",
             "world-dock",
             "world-village",
@@ -2612,7 +2765,7 @@
           "text": "按 M 开地图：码头画在实际的岸缘点上，能靠泊的高亮、目的码头标金色，已铺的村子套白圈；开发者点一下就瞬移，落点周围的码头村子先同步铺好",
           "nodes": [
             "world-map",
-            "world-scene",
+            "expedition",
             "site-stream",
             "input-map"
           ]
@@ -2623,7 +2776,7 @@
             "helm",
             "flight-model",
             "ship",
-            "world-scene",
+            "expedition",
             "input-map"
           ]
         },
@@ -2633,14 +2786,14 @@
             "helm",
             "dock-builder",
             "world-dock",
-            "world-scene",
+            "expedition",
             "player"
           ]
         },
         {
           "text": "兜底：掉进云海回到上一处站稳的地方，船漂远了召回最近的码头",
           "nodes": [
-            "world-scene",
+            "expedition",
             "ship",
             "world-node"
           ]
@@ -2661,7 +2814,7 @@
         "voyage-2051-e2e",
         "flight-model",
         "world-map",
-        "world-scene",
+        "expedition",
         "skyisle-export",
         "world-2051-scene",
         "world-node",
@@ -2674,8 +2827,102 @@
         "villager-nav",
         "input-map",
         "island-node",
-        "island-field",
-        "voyage"
+        "island-field"
+      ]
+    },
+    {
+      "id": "world-features",
+      "title": "重构：地图宿主——岛群与平板岛里样样都有",
+      "story": "玩家在岛群里走到村外的熟地垦地、从背包选种播下、收回收成；回主码头把船开进船坞加一节货舱再飞回泊位；在村里按 B 加一座房、拆一座自动铺的并存盘；村里的农夫下地、挑水的去打水。换到只实现了宿主接口的平板岛，这些照样都能做。",
+      "date": "2026-09-23",
+      "color": "#d97a9f",
+      "commits": "093f03a..84cb9cb",
+      "steps": [
+        {
+          "text": "进入岛群：编排只认地图宿主（World），主码头 #7 旁凿出船坞坪，World 下挂一片盖住全岛群的农田",
+          "nodes": [
+            "world-2051-scene",
+            "expedition",
+            "map-host",
+            "world-node",
+            "island-yard",
+            "farm-node",
+            "shipyard"
+          ]
+        },
+        {
+          "text": "M 开图点到村152 旁：熟地（地表是田）与近水 16 m 内的地可垦，按住 E 垦、Tab 选菽、播、收",
+          "nodes": [
+            "expedition",
+            "voyage-pack",
+            "farm-hand",
+            "farm-node",
+            "farm-model",
+            "map-ground"
+          ]
+        },
+        {
+          "text": "回主码头：画样台被拒 → 掌舵入坞 → 装配视角加一节 → 飞回泊位",
+          "nodes": [
+            "expedition",
+            "refit-bench",
+            "helm",
+            "shipyard",
+            "ship"
+          ]
+        },
+        {
+          "text": "回村按 B：布置模式改的是脚下那处自动铺的村子，F5 存下一加一拆两行改动，读回不变",
+          "nodes": [
+            "voyage-build",
+            "settlement-node",
+            "settlement-model",
+            "world-village",
+            "settlement-host"
+          ]
+        },
+        {
+          "text": "村里有熟地就有农夫、300 m 内有水就有挑水的：下地开荒播收、去溪边打水",
+          "nodes": [
+            "villagers-node",
+            "villager-brain",
+            "settlement-host",
+            "farm-node"
+          ]
+        },
+        {
+          "text": "换到平板岛：只实现两份宿主接口，同一套玩法全都照常",
+          "nodes": [
+            "flat-map",
+            "map-host",
+            "settlement-host",
+            "map-ground"
+          ]
+        }
+      ],
+      "nodes": [
+        "world-2051-scene",
+        "expedition",
+        "map-host",
+        "world-node",
+        "island-yard",
+        "farm-node",
+        "shipyard",
+        "voyage-pack",
+        "farm-hand",
+        "farm-model",
+        "map-ground",
+        "refit-bench",
+        "helm",
+        "ship",
+        "voyage-build",
+        "settlement-node",
+        "settlement-model",
+        "world-village",
+        "settlement-host",
+        "villagers-node",
+        "villager-brain",
+        "flat-map"
       ]
     }
   ],
@@ -3199,7 +3446,153 @@
           "world-scene"
         ]
       }
+    },
+    {
+      "id": "e15",
+      "type": "merge",
+      "date": "2026-09-23",
+      "title": "重构：地图宿主——Voyage 与 WorldScene 合成 Expedition",
+      "summary": "两份编排（甲乙两岛的 Voyage、岛群的 WorldScene）合成一个与地图无关的 Expedition，只认地图宿主；场景只配属性。",
+      "commits": "093f03a..84cb9cb",
+      "nodes": [
+        "expedition"
+      ],
+      "info": {
+        "into": "expedition",
+        "from": [
+          {
+            "id": "voyage",
+            "label": "Voyage 编排"
+          },
+          {
+            "id": "world-scene",
+            "label": "WorldScene 编排"
+          }
+        ],
+        "chains": [
+          "voyage",
+          "farming",
+          "shipyard",
+          "villagers",
+          "real-scale-world",
+          "world-voyage"
+        ]
+      }
+    },
+    {
+      "id": "e16",
+      "type": "extend",
+      "date": "2026-09-23",
+      "title": "拓展：重构：玩法拆成与场景无关的部件",
+      "summary": "背包、农事、改装、布置模式从编排里拆成不是节点的部件，编排持有、每帧推一下。",
+      "nodes": [
+        "expedition",
+        "voyage-pack",
+        "voyage-build",
+        "farm-hand",
+        "refit-bench",
+        "map-host",
+        "map-ground",
+        "island-map",
+        "flat-map",
+        "world-features-e2e"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "farm-hand",
+          "refit-bench"
+        ],
+        "adopted": [],
+        "peers": [
+          "map-host",
+          "map-ground",
+          "island-map",
+          "flat-map",
+          "world-features-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e17",
+      "type": "slice",
+      "date": "2026-09-23",
+      "title": "切片：重构：地图宿主——岛群与平板岛里样样都有",
+      "summary": "玩家在岛群里走到村外的熟地垦地、从背包选种播下、收回收成；回主码头把船开进船坞加一节货舱再飞回泊位；在村里按 B 加一座房、拆一座自动铺的并存盘；村里的农夫下地、挑水的去打水。换到只实现了宿主接口的平板岛，这些照样都能做。",
+      "commits": "093f03a..84cb9cb",
+      "chain": "world-features",
+      "nodes": [
+        "world-2051-scene",
+        "expedition",
+        "map-host",
+        "world-node",
+        "island-yard",
+        "farm-node",
+        "shipyard",
+        "voyage-pack",
+        "farm-hand",
+        "farm-model",
+        "map-ground",
+        "refit-bench",
+        "helm",
+        "ship",
+        "voyage-build",
+        "settlement-node",
+        "settlement-model",
+        "world-village",
+        "settlement-host",
+        "villagers-node",
+        "villager-brain",
+        "flat-map"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "world-2051-scene",
+          "expedition",
+          "map-host",
+          "world-node",
+          "island-yard",
+          "farm-node",
+          "shipyard",
+          "voyage-pack",
+          "farm-hand",
+          "farm-model",
+          "map-ground",
+          "refit-bench",
+          "helm",
+          "ship",
+          "voyage-build",
+          "settlement-node",
+          "settlement-model",
+          "world-village",
+          "settlement-host",
+          "villagers-node",
+          "villager-brain",
+          "flat-map"
+        ],
+        "updated": []
+      }
+    },
+    {
+      "id": "e18",
+      "type": "extend",
+      "date": "2026-09-23",
+      "title": "拓展：地图宿主的三份实现",
+      "summary": "IslandMap、World、FlatMap 实现地图宿主；FlatMap 也是地面宿主。",
+      "nodes": [
+        "map-host"
+      ],
+      "info": {
+        "node": "map-host",
+        "children": [],
+        "adopted": [],
+        "peers": []
+      }
     }
   ],
-  "aliases": {}
+  "aliases": {
+    "voyage": "expedition",
+    "world-scene": "expedition"
+  }
 }
