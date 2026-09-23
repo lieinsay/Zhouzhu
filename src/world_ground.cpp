@@ -61,14 +61,16 @@ double centerline_distance(const WorldGrid &g, double p_wx, double p_wz, Pred p_
     return best;
 }
 
-// 船坞坪的地：原地形的陆地，且不压溪涧河滩、不是水面
+// 船坞坪的地：原地形的陆地，且不压溪涧河滩、不是水面、不在河漫滩上
 class WorldYardGround : public WorldDockGround {
     WorldGround map;
 
 public:
     WorldYardGround(const WorldTerrain &p_terrain, const WorldGroundRules &p_rules) :
             WorldDockGround(p_terrain), map(p_terrain, 0.0, 0.0, p_rules) {}
-    bool land(double p_x, double p_z) const override { return WorldDockGround::land(p_x, p_z) && map.water_at(p_x, p_z) == WaterKind::NONE; }
+    bool land(double p_x, double p_z) const override {
+        return WorldDockGround::land(p_x, p_z) && map.water_at(p_x, p_z) == WaterKind::NONE && !map.on_floodplain(p_x, p_z);
+    }
 };
 
 } // namespace
@@ -130,6 +132,16 @@ WaterKind WorldGround::water_at(double p_x, double p_z) const {
     const double wx = origin_x + p_x, wz = origin_z + p_z;
     const WorldGrid &g = terrain.get_grid();
     const int cover = g.landcover[g.nearest_cell(wx, wz)];
+    if (terrain.has_rivers()) {
+        if (cover == LANDCOVER_LAKE) {
+            return WaterKind::POND;
+        }
+        RiverHit hit;
+        if (terrain.get_rivers().nearest(wx, wz, 1e9, hit) && hit.distance <= hit.at.half() + rules.channel_margin_m) {
+            return WaterKind::STREAM;
+        }
+        return WaterKind::NONE;
+    }
     if (cover == LANDCOVER_RIVER || cover == LANDCOVER_LAKE) {
         return WaterKind::POND;
     }
@@ -139,11 +151,71 @@ WaterKind WorldGround::water_at(double p_x, double p_z) const {
     return WaterKind::NONE;
 }
 
+bool WorldGround::on_floodplain(double p_x, double p_z) const {
+    RiverHit hit;
+    return terrain.has_rivers() && terrain.get_rivers().nearest(origin_x + p_x, origin_z + p_z, 1e9, hit) && hit.distance <= hit.at.core();
+}
+
+double WorldGround::water_depth(double p_x, double p_z) const {
+    if (!terrain.has_rivers()) {
+        return 0.0;
+    }
+    const double wx = origin_x + p_x, wz = origin_z + p_z;
+    RiverHit hit;
+    if (!terrain.get_rivers().nearest(wx, wz, 1e9, hit)) {
+        return 0.0;
+    }
+    const RiverStage st = river_stage(hit.at, rules.runoff, terrain.get_rivers().get_rules());
+    if (!st.wet || hit.distance > st.half_width) {
+        return 0.0;
+    }
+    double y = 0.0;
+    return terrain.surface(wx, wz, y) ? std::max(0.0, st.level - y) : 0.0;
+}
+
 double WorldGround::water_distance(double p_x, double p_z) const {
+    if (terrain.has_rivers()) {
+        RiverHit hit;
+        return terrain.get_rivers().nearest(origin_x + p_x, origin_z + p_z, 1e9, hit) ? hit.distance : FAR;
+    }
     return centerline_distance(terrain.get_grid(), origin_x + p_x, origin_z + p_z, is_water);
 }
 
 void WorldGround::water_lines(double p_x0, double p_z0, double p_x1, double p_z1, std::vector<WaterLine> &r_lines) const {
+    if (terrain.has_rivers()) {
+        // 河中线：框里的段按河连成一条条线（断开处另起一条），半宽取此刻（runoff）的水面；干了的不算
+        const WorldRivers &rivers = terrain.get_rivers();
+        std::vector<std::pair<int, int>> segs;
+        rivers.segments_in(origin_x + p_x0, origin_z + p_z0, origin_x + p_x1, origin_z + p_z1, [&](int s, int i) { segs.push_back({ s, i }); });
+        std::sort(segs.begin(), segs.end());
+        WaterLine line;
+        int prev_stem = -1, prev_seg = -1;
+        auto flush = [&]() {
+            if (line.size() >= 2) {
+                r_lines.push_back(line);
+            }
+            line.clear();
+        };
+        for (const auto &[s, i] : segs) {
+            const RiverStem &stem = rivers.get_stems()[size_t(s)];
+            if (s != prev_stem || i != prev_seg + 1) {
+                flush();
+            }
+            for (int e = (line.empty() ? 0 : 1); e < 2; e++) {
+                const RiverVertex &v = stem.v[size_t(i + e)];
+                const RiverStage st = river_stage(v, rules.runoff, rivers.get_rules());
+                if (!st.wet) {
+                    flush();
+                    continue;
+                }
+                line.push_back({ v.x - origin_x, v.z - origin_z, st.half_width });
+            }
+            prev_stem = s;
+            prev_seg = i;
+        }
+        flush();
+        return;
+    }
     const WorldGrid &g = terrain.get_grid();
     const int c0 = int(std::floor(g.col_of(origin_x + std::min(p_x0, p_x1)))), c1 = int(std::ceil(g.col_of(origin_x + std::max(p_x0, p_x1))));
     const int r0 = int(std::floor(g.row_of(origin_z + std::min(p_z0, p_z1)))), r1 = int(std::ceil(g.row_of(origin_z + std::max(p_z0, p_z1))));

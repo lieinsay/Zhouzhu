@@ -43,6 +43,9 @@ SiteBlock ground_block(const MapGround &p_ground, double p_x, double p_z, const 
         case WaterKind::NONE:
             break;
     }
+    if (p_ground.on_floodplain(p_x, p_z)) {
+        return { 0, "这是河滩，涨水会淹，盖不得" };
+    }
     if (p_ground.on_dock(p_x, p_z, p_rules.dock_margin_m)) {
         return { 1, "停机坪上不能盖" };
     }

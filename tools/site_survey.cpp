@@ -3,6 +3,7 @@
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051                  # 摘要
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --report out.tsv # 另写逐条明细（每个码头 / 村一行）
 //   build/Release/zhouzhu_site_survey.exe game/worlds/2051 --sim 24      # 另把全部村落开账、在远处结 24 个游戏小时，报花费
+//   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --rivers 河.tsv  # 另把河网逐点写出（河号、x、z、平岸水面、宽、深、汇流）
 //   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
 //         --sim H（远处结算几个游戏小时；0 = 不结）
 //
@@ -51,6 +52,7 @@ int main(int argc, char **argv) {
     std::string report_path;
     double max_missing = 0.02;
     double sim_hours = 0.0;
+    std::string rivers_path;
     for (int k = 2; k + 1 < argc; k += 2) {
         const std::string opt = argv[k];
         if (opt == "--seed") {
@@ -59,6 +61,8 @@ int main(int argc, char **argv) {
             report_path = argv[k + 1];
         } else if (opt == "--max-missing") {
             max_missing = std::atof(argv[k + 1]);
+        } else if (opt == "--rivers") {
+            rivers_path = argv[k + 1];
         } else if (opt == "--sim") {
             sim_hours = std::atof(argv[k + 1]);
         }
@@ -75,7 +79,58 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "资产坏了：%s\n", error.c_str());
         return 2;
     }
-    WorldTerrain terrain(grid, sites.terrain_islands(), seed);
+    // 河：年降水与一年几天取 weather.tsv（与 World 一致）
+    RiverRules river_rules;
+    RiverRegime regime = RiverRegime::steady();
+    std::string weather;
+    if (read_file(dir + "/weather.tsv", weather)) {
+        if (RiverRegime::parse(weather, regime, error)) {
+            river_rules.precip_mm = regime.precip_mm();
+            river_rules.year_days = regime.year_days();
+        } else {
+            std::fprintf(stderr, "weather.tsv 坏了：%s\n", error.c_str());
+            return 2;
+        }
+    }
+    auto river_started = std::chrono::steady_clock::now();
+    WorldTerrain terrain(grid, sites.terrain_islands(), seed, river_rules);
+    const double river_ms = since_ms(river_started);
+    if (terrain.has_rivers()) {
+        const WorldRivers &rivers = terrain.get_rivers();
+        int count = 0, mouths = 0;
+        double widest = 0.0, deepest = 0.0;
+        for (const RiverStem &stem : rivers.get_stems()) {
+            if (stem.v.empty()) {
+                continue;
+            }
+            count++;
+            mouths += stem.mouth ? 1 : 0;
+            for (const RiverVertex &v : stem.v) {
+                widest = std::max(widest, v.width);
+                deepest = std::max(deepest, v.depth);
+            }
+        }
+        double lo = 1e9, hi = 0.0;
+        for (double r : regime.get_daily()) {
+            lo = std::min(lo, r);
+            hi = std::max(hi, r);
+        }
+        std::printf("河网：%d 条（%d 条出岸缘），共 %.0f km，平岸最宽 %.1f m、最深 %.2f m；径流指数一年里 %.2f..%.2f（%.0f ms）\n",
+                count, mouths, rivers.total_length() / 1000.0, widest, deepest, lo, hi, river_ms);
+        if (!rivers_path.empty()) {
+            if (std::FILE *out = std::fopen(rivers_path.c_str(), "wb")) {
+                std::fprintf(out, "stem\tparent\tmouth\tx\tz\ts\tsurface\twidth\tdepth\tfloodplain\tacc_km2\tdry\n");
+                for (size_t k = 0; k < rivers.get_stems().size(); k++) {
+                    const RiverStem &stem = rivers.get_stems()[k];
+                    for (const RiverVertex &v : stem.v) {
+                        std::fprintf(out, "%zu\t%d\t%d\t%.1f\t%.1f\t%.1f\t%.2f\t%.2f\t%.2f\t%.1f\t%.2f\t%.3f\n", k, stem.parent, stem.mouth ? 1 : 0,
+                                v.x, v.z, v.s, v.surface, v.width, v.depth, v.floodplain, v.acc, v.dry);
+                    }
+                }
+                std::fclose(out);
+            }
+        }
+    }
 
     // 码头
     auto started = std::chrono::steady_clock::now();

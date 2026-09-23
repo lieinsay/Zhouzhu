@@ -36,8 +36,10 @@
 #include "village_sim.h"
 #include "village_state.h"
 #include "villager_model.h"
+#include "river_mesh.h"
 #include "world_grid.h"
 #include "world_ground.h"
+#include "world_river.h"
 #include "world_sites.h"
 #include "world_terrain.h"
 
@@ -1961,6 +1963,166 @@ void test_layout_edits() {
     check(!ok, "认不出时 r_ok 为假");
 }
 
+// ---------------------------------------------------------------- 河：河网、水情、凿河道、地面问水、水面网格（2051）
+
+void test_world_rivers() {
+    // v1 的栅格没有水文：河网是空的，地形照旧
+    {
+        const WorldGrid g = synthetic_grid();
+        const WorldTerrain t(g, {}, 7);
+        check(!g.has_hydro() && !t.has_rivers(), "v1 栅格没有水文、没有河网");
+    }
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary), wx_in(dir + "/weather.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in || !wx_in) {
+        std::printf("world_rivers（跳过：没有 2051 资产）\n");
+        return;
+    }
+    std::printf("world_rivers（2051）\n");
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    const std::string weather((std::istreambuf_iterator<char>(wx_in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    WorldSites sites;
+    std::string err;
+    check(parse_world_grid(bin.data(), bin.size(), g, err) && g.has_hydro(), "terrain.bin v2 带水文：" + err);
+    parse_world_sites(tsv, sites, err);
+
+    // 水情
+    RiverRegime regime;
+    check(RiverRegime::parse(weather, regime, err), "weather.tsv 能解析：" + err);
+    check(regime.get_daily().size() == 336 && std::abs(regime.precip_mm() - 901.0) < 1.0, "一年 336 天、年降水 901 mm");
+    double mean = 0.0, lo = 1e9, hi = 0.0;
+    for (double r : regime.get_daily()) {
+        mean += r / double(regime.get_daily().size());
+        lo = std::min(lo, r);
+        hi = std::max(hi, r);
+    }
+    check_near(mean, 1.0, 1e-9, "径流指数全年平均 = 1");
+    check(lo < 0.3 && hi > 3.0, "有枯水也有涨水（" + std::to_string(lo) + " .. " + std::to_string(hi) + "）");
+    check_near(regime.runoff(336.0 + 10.5), regime.get_daily()[10], 1e-9, "按年循环、日值在正午");
+    check(std::abs(regime.runoff(335.99) - regime.runoff(0.01)) < 0.5 * (hi - lo), "跨年不跳（年末与年初之间线性过渡）");
+    RiverRegime bad;
+    check(!RiverRegime::parse("# year_days 3\n0\t1\n2\t1\n", bad, err), "日序断了报错");
+
+    RiverRules rules;
+    rules.precip_mm = regime.precip_mm();
+    rules.year_days = regime.year_days();
+    const WorldTerrain t(g, sites.terrain_islands(), 2051, rules);
+    check(t.has_rivers(), "2051 有河网");
+    const WorldRivers &rivers = t.get_rivers();
+    int stems = 0, mouths = 0, rising = 0, drying_acc = 0, off_parent = 0;
+    const RiverStem *trunk = nullptr;
+    for (const RiverStem &stem : rivers.get_stems()) {
+        if (stem.v.empty()) {
+            continue;
+        }
+        stems++;
+        mouths += stem.mouth;
+        if (!trunk || stem.v.back().acc > trunk->v.back().acc) {
+            trunk = &stem;
+        }
+        for (size_t i = 0; i + 1 < stem.v.size(); i++) {
+            rising += stem.v[i + 1].surface > stem.v[i].surface + 1e-9;
+            drying_acc += stem.v[i + 1].acc < stem.v[i].acc - 1e-6;
+        }
+        if (stem.parent >= 0) {
+            const RiverStem &parent = rivers.get_stems()[size_t(stem.parent)];
+            double best = 1e18;
+            for (size_t i = 0; i + 1 < parent.v.size(); i++) {
+                const double dx = parent.v[i + 1].x - parent.v[i].x, dz = parent.v[i + 1].z - parent.v[i].z;
+                const double len2 = dx * dx + dz * dz;
+                const double u = len2 > 0 ? std::clamp(((stem.v.back().x - parent.v[i].x) * dx + (stem.v.back().z - parent.v[i].z) * dz) / len2, 0.0, 1.0) : 0.0;
+                best = std::min(best, std::hypot(stem.v.back().x - parent.v[i].x - u * dx, stem.v.back().z - parent.v[i].z - u * dz));
+            }
+            off_parent += best > 0.5;
+        }
+    }
+    check(stems > 400 && mouths > 100, "河 " + std::to_string(stems) + " 条、出岸缘 " + std::to_string(mouths) + " 条");
+    check(rivers.total_length() > 900e3, "河网总长 > 900 km（" + std::to_string(int(rivers.total_length() / 1000)) + " km）");
+    check(rising == 0, "平岸水面顺流不升（" + std::to_string(rising) + " 处）");
+    check(drying_acc == 0, "汇流面积顺流不减（" + std::to_string(drying_acc) + " 处）");
+    check(off_parent == 0, "支流末点都落在干流中线上（" + std::to_string(off_parent) + " 条没有）");
+    // 最大的河：下游宽过上游，宽窄在一条河里有变化
+    const RiverVertex &src = trunk->v.front(), &end = trunk->v.back();
+    check(end.width > 2.0 * src.width && end.depth > src.depth, "干流越往下越宽越深（" + std::to_string(src.width) + " → " + std::to_string(end.width) + " m）");
+    check(end.dry < src.dry, "大河的渗漏门槛低于源头");
+    check(trunk->mouth, "干流从岸缘跌下去");
+    check(t.get_grid().shore_at(end.x, end.z) + WorldTerrain::COAST_AMP_M * t.coast_noise(end.x, end.z) < 1.0, "河口截在岸线上");
+
+    // 凿河道：中线上的地面就是河床；年均水位时水面半宽内低于水位、外高于水位
+    int bed_off = 0, dry_bank = 0, samples = 0;
+    for (size_t i = trunk->v.size() / 4; i + 1 < trunk->v.size() * 3 / 4; i += 25) {
+        const RiverVertex &v = trunk->v[i];
+        RiverHit hits[WorldRivers::MAX_HITS];
+        const int n = rivers.near(v.x, v.z, hits, WorldRivers::MAX_HITS);
+        if (n != 1) {
+            continue; // 汇流口附近两条河叠着，跳过
+        }
+        samples++;
+        const TerrainSample s = t.sample_raw(v.x, v.z);
+        bed_off += std::abs(s.top - v.bed()) > 0.05;
+        const RiverStage mean_water = river_stage(v, 1.0, rules);
+        double lx = -(trunk->v[i + 1].z - v.z), lz = trunk->v[i + 1].x - v.x;
+        const double ll = std::hypot(lx, lz);
+        lx /= ll, lz /= ll;
+        const double inside = 0.8 * mean_water.half_width, outside = mean_water.half_width + 1.0;
+        dry_bank += !(t.sample_raw(v.x + lx * inside, v.z + lz * inside).top < mean_water.level && t.sample_raw(v.x + lx * outside, v.z + lz * outside).top > mean_water.level);
+    }
+    check(samples > 10, "干流上取样够（" + std::to_string(samples) + "）");
+    check(bed_off == 0, "中线上的地面就是河床（" + std::to_string(bed_off) + " 处不是）");
+    check(dry_bank == 0, "年均水位时水面半宽内是水、外是岸（" + std::to_string(dry_bank) + " 处不对）");
+
+    // 水情落到一点上：小溪先干、大河旱季也有水、涨水漫滩
+    check(!river_stage(src, 0.5, rules).wet && river_stage(end, 0.5, rules).wet, "径流 0.5：源头的溪干了、干流还有水");
+    const RiverStage low = river_stage(end, 0.5, rules), high = river_stage(end, 3.0, rules), flood = river_stage(end, 6.5, rules);
+    check(low.level < high.level && low.half_width < high.half_width, "水涨了：水位高、水面宽");
+    check(flood.half_width > end.half() && flood.half_width <= end.core() + 1e-9, "大水漫上河漫滩、不出滩");
+
+    // 地面问水：河槽是水、滩上不是水但不盖房；挑水线沿河
+    const WorldGround ground(t, 0.0, 0.0);
+    const size_t m = trunk->v.size() / 2;
+    const RiverVertex &mid = trunk->v[m];
+    check(ground.water_at(mid.x, mid.z) == WaterKind::STREAM, "中线上是水");
+    double lx = -(trunk->v[m + 1].z - mid.z), lz = trunk->v[m + 1].x - mid.x;
+    const double ll = std::hypot(lx, lz);
+    lx /= ll, lz /= ll;
+    const double on_bank = mid.half() + 0.5 * mid.floodplain;
+    const double bx = mid.x + lx * on_bank, bz = mid.z + lz * on_bank;
+    check(ground.water_at(bx, bz) == WaterKind::NONE && ground.on_floodplain(bx, bz), "河漫滩上不是水、但算滩");
+    const SiteBlock block = ground_block(ground, bx, bz, SiteRules());
+    check(block.reason && std::string(block.reason) == "这是河滩，涨水会淹，盖不得", "滩上不盖房，说得出为什么");
+    const double far = mid.core() + rules.blend_m + 30.0;
+    check(!ground.on_floodplain(mid.x + lx * far, mid.z + lz * far) && ground.water_at(mid.x + lx * far, mid.z + lz * far) == WaterKind::NONE, "滩外是干地");
+    check(ground.water_distance(mid.x + lx * 5.0, mid.z + lz * 5.0) < 5.5, "离水距离量到河中线");
+    check(ground.water_depth(mid.x, mid.z) > 0.1, "河心有水深（导航格按它蹚水）");
+    std::vector<WaterLine> lines;
+    ground.water_lines(mid.x - 100.0, mid.z - 100.0, mid.x + 100.0, mid.z + 100.0, lines);
+    check(!lines.empty() && lines.front().size() >= 2, "框里有挑水的线");
+
+    // 水面网格：块里有带子，顶点属性齐；河口有跌水帘
+    const std::vector<RiverChunkKey> chunks = river_chunks(t);
+    check(chunks.size() > 1000, "有河的块 " + std::to_string(chunks.size()));
+    const RiverMeshRules mesh_rules;
+    const RiverChunkKey key{ int(std::floor(mid.x / mesh_rules.chunk_m)), int(std::floor(mid.z / mesh_rules.chunk_m)) };
+    const RiverMesh mesh = build_river_mesh(t, key);
+    const size_t verts = mesh.positions.size() / 3;
+    check(!mesh.empty() && mesh.indices.size() % 3 == 0, "干流所在的块有水面");
+    check(mesh.normals.size() == verts * 3 && mesh.uvs.size() == verts * 2 && mesh.custom0.size() == verts * 4 && mesh.custom1.size() == verts * 4, "顶点属性一一对上");
+    int bad_index = 0;
+    for (int32_t ix : mesh.indices) {
+        bad_index += ix < 0 || size_t(ix) >= verts;
+    }
+    check(bad_index == 0, "下标都在顶点里");
+    const RiverChunkKey mouth_key{ int(std::floor(end.x / mesh_rules.chunk_m)), int(std::floor(end.z / mesh_rules.chunk_m)) };
+    const RiverMesh mouth_mesh = build_river_mesh(t, mouth_key);
+    bool fall = false;
+    for (size_t k = 1; k < mouth_mesh.custom1.size(); k += 4) {
+        fall = fall || mouth_mesh.custom1[k] > 0.5f;
+    }
+    check(fall, "河口块有跌水帘");
+}
+
 // ---------------------------------------------------------------- 金标：地图宿主重构前后逐位一致
 
 struct Fnv {
@@ -2099,7 +2261,8 @@ void test_goldens() {
             villages.mix(uint64_t(plan.missing));
         }
     }
-    report_golden("岛群远离主码头的村", villages.h, 0xb9346e12326159c4ull);
+    // 拓展「岛群的河」起地形凿了河道、河滩不许盖房，村落清单有意变了，此处重记
+    report_golden("岛群远离主码头的村", villages.h, 0x83f0952a0913ceecull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）
@@ -2497,6 +2660,7 @@ int main() {
     test_dock_site();
     test_village_plan();
     test_world_sites();
+    test_world_rivers();
     test_map_grounds();
     test_layout_edits();
     test_house_templates();

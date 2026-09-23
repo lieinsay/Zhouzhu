@@ -51,6 +51,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/map_image.cpp
     src/map_image.h
     src/rng.h
+    src/river_mesh.cpp
+    src/river_mesh.h
     src/settlement_model.cpp
     src/settlement_model.h
     src/ship_layout.cpp
@@ -71,6 +73,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/world_grid.h
     src/world_ledger.cpp
     src/world_ledger.h
+    src/world_river.cpp
+    src/world_river.h
     src/world_ground.cpp
     src/world_ground.h
     src/world_sites.cpp

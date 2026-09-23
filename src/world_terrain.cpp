@@ -46,6 +46,12 @@ double fade(double t) {
     return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 }
 
+// [0, 1] 夹住的 smoothstep
+double smooth01(double t) {
+    t = std::clamp(t, 0.0, 1.0);
+    return t * t * (3.0 - 2.0 * t);
+}
+
 } // namespace
 
 double hash_noise(uint64_t p_seed, double p_x, double p_z) {
@@ -72,7 +78,7 @@ double hash_fbm(uint64_t p_seed, double p_x, double p_z, double p_feature, int p
     return sum / norm;
 }
 
-WorldTerrain::WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIsland> &p_islands, uint64_t p_seed) :
+WorldTerrain::WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIsland> &p_islands, uint64_t p_seed, const RiverRules &p_river_rules) :
         grid(&p_grid), seed(p_seed) {
     int top = 0;
     for (const WorldIsland &isl : p_islands) {
@@ -90,6 +96,9 @@ WorldTerrain::WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIslan
             islands[size_t(isl.id)] = isl;
         }
     }
+    rivers = WorldRivers::build(p_grid, p_river_rules, p_seed, [this](double x, double z) {
+        return grid->shore_at(x, z) + COAST_AMP_M * coast_noise(x, z);
+    });
 }
 
 const WorldIsland &WorldTerrain::island_info(int p_id) const {
@@ -126,7 +135,29 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     s.landcover = g.landcover[cell];
     s.stream = g.stream[cell] != 0;
     s.land = s.shore > 0.0;
-    s.top = g.height_at(p_x, p_z) + detail(p_x, p_z);
+    RiverHit hits[WorldRivers::MAX_HITS];
+    const int n_hits = rivers ? rivers->near(p_x, p_z, hits, WorldRivers::MAX_HITS) : 0;
+    if (n_hits == 0) {
+        s.top = g.height_at(p_x, p_z) + detail(p_x, p_z);
+    } else {
+        // 河：细节噪声在滩外渐显；顶面在各条河的横断面与原地形之间取最低
+        const RiverRules &rr = rivers->get_rules();
+        double fade = 1.0;
+        for (int k = 0; k < n_hits; k++) {
+            fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core()) / rr.blend_m));
+        }
+        const double natural = g.height_at(p_x, p_z) + fade * detail(p_x, p_z);
+        double top = 1e18;
+        for (int k = 0; k < n_hits; k++) {
+            const RiverHit &h = hits[k];
+            const double target = river_profile(h.at, h.distance, rr);
+            const double w = 1.0 - smooth01((h.distance - h.at.core()) / rr.blend_m);
+            top = std::min(top, natural + w * (target - natural));
+            s.bed = std::max(s.bed, float(1.0 - smooth01((h.distance - h.at.half()) / 1.5)));
+            s.bank = std::max(s.bank, float(w));
+        }
+        s.top = top;
+    }
     const WorldIsland &isl = island_info(s.island);
     const double inward = std::clamp(s.shore / std::max(1.0, isl.max_shore_m), 0.0, 1.0);
     s.bottom = isl.rim_m - isl.cliff_m - isl.keel_m * std::sqrt(inward) + UNDERSIDE_AMP_M * hash_fbm(seed ^ STREAM_UNDERSIDE, p_x, p_z, UNDERSIDE_FEATURE_M, 3);
@@ -169,7 +200,8 @@ TerrainSample WorldTerrain::sample(double p_x, double p_z) const {
         if (found != pad_buckets.end()) {
             for (int index : found->second) {
                 const DockPlan &pad = pads[size_t(index)];
-                const double w = dock_pad_weight(pad, p_x, p_z);
+                // 河从坪上过：坪在河道、河漫滩与渐回带里让给河（生成器常把码头放在河口）
+                const double w = dock_pad_weight(pad, p_x, p_z) * (1.0 - double(s.bank));
                 if (w > 0.0) {
                     s.top += w * (pad.y - s.top);
                 }

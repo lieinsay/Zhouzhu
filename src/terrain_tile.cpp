@@ -8,6 +8,8 @@ namespace {
 
 constexpr GroundColor ROCK{ 0.46f, 0.43f, 0.39f };
 constexpr GroundColor WET{ 0.25f, 0.40f, 0.38f }; // 溪涧边的湿地皮
+constexpr GroundColor GRAVEL{ 0.50f, 0.47f, 0.41f }; // 河床的卵石
+constexpr GroundColor MEADOW{ 0.30f, 0.44f, 0.27f }; // 河漫滩的湿草
 constexpr GroundColor CLIFF_TOP{ 0.40f, 0.35f, 0.30f };
 constexpr GroundColor CLIFF_LOW{ 0.25f, 0.22f, 0.21f };
 constexpr GroundColor UNDERSIDE{ 0.20f, 0.18f, 0.18f };
@@ -21,7 +23,8 @@ GroundColor lerp(const GroundColor &a, const GroundColor &b, double t) {
     return { a.r + (b.r - a.r) * k, a.g + (b.g - a.g) * k, a.b + (b.b - a.b) * k };
 }
 
-GroundColor ground_color(const WorldGrid &g, double p_x, double p_z, double p_normal_y) {
+// p_sample：这一点的地形取样（河床、河漫滩的权重）；没有河网时按栅格的溪涧格染湿
+GroundColor ground_color(const WorldGrid &g, const TerrainSample &p_sample, bool p_rivers, double p_x, double p_z, double p_normal_y) {
     const double jx = p_x + COLOR_JITTER_M * hash_fbm(COLOR_SEED, p_x, p_z, 70.0, 3);
     const double jz = p_z + COLOR_JITTER_M * hash_fbm(COLOR_SEED + 1, p_x, p_z, 70.0, 3);
     const double fc = g.col_of(jx), fr = g.row_of(jz);
@@ -35,8 +38,14 @@ GroundColor ground_color(const WorldGrid &g, double p_x, double p_z, double p_no
     GroundColor out = lerp(lerp(color(r, c), color(r, c + 1), tc), lerp(color(r + 1, c), color(r + 1, c + 1), tc), tr);
     const double w0 = wet(r, c) + (wet(r, c + 1) - wet(r, c)) * tc;
     const double w1 = wet(r + 1, c) + (wet(r + 1, c + 1) - wet(r + 1, c)) * tc;
-    out = lerp(out, WET, 0.55 * (w0 + (w1 - w0) * tr));
-    out = lerp(out, ROCK, (0.86 - p_normal_y) / 0.16); // 约 30° 起露岩，45° 全岩
+    if (p_rivers) {
+        out = lerp(out, MEADOW, 0.45 * p_sample.bank);
+        out = lerp(out, ROCK, (0.86 - p_normal_y) / 0.16); // 约 30° 起露岩，45° 全岩
+        out = lerp(out, GRAVEL, p_sample.bed); // 河床不论坡度都是卵石
+    } else {
+        out = lerp(out, WET, 0.55 * (w0 + (w1 - w0) * tr));
+        out = lerp(out, ROCK, (0.86 - p_normal_y) / 0.16);
+    }
     const float shade = float(1.0 + 0.07 * hash_fbm(COLOR_SEED + 2, p_x, p_z, 30.0, 3));
     return { out.r * shade, out.g * shade, out.b * shade };
 }
@@ -210,7 +219,7 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             float nz = float(-(at(i + 1, j).top - at(i - 1, j).top) / (2.0 * step));
             float len = std::sqrt(nx * nx + 1.0f + nz * nz);
             const float ux = nx / len, uy = 1.0f / len, uz = nz / len;
-            top_color[k] = ground_color(grid, mesh.origin_x + x, mesh.origin_z + z, uy);
+            top_color[k] = ground_color(grid, c, p_terrain.has_rivers(), mesh.origin_x + x, mesh.origin_z + z, uy);
             top_id[k] = b.vertex(x, float(c.top), z, ux, uy, uz, top_color[k]);
             top_pos[k * 3] = x, top_pos[k * 3 + 1] = float(c.top), top_pos[k * 3 + 2] = z;
             top_normal[k * 3] = ux, top_normal[k * 3 + 1] = uy, top_normal[k * 3 + 2] = uz;

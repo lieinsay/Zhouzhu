@@ -72,6 +72,8 @@ public:
     virtual bool on_dock(double p_x, double p_z, double p_margin) const { return false; }
     virtual bool on_yard(double p_x, double p_z, double p_margin) const { return false; }
     virtual bool on_trail(double p_x, double p_z, double p_margin) const { return false; }
+    // 河漫滩：不是水，但涨水会淹（不盖房；能垦）
+    virtual bool on_floodplain(double p_x, double p_z) const { return false; }
 
     // 熟地：地表本来就是田（岛群的可耕地、梯田），不靠近水也能种
     virtual bool fertile(double p_x, double p_z) const { return false; }
@@ -83,7 +85,7 @@ public:
     virtual bool plot_node(const PlotLattice &p_lattice, int p_i, int p_j, PlotNode &r_node) const;
 };
 
-// 禁区规矩（盖房）：一点压着的最要紧的那一样。水 > 停机坪 > 船坞坪 > 路
+// 禁区规矩（盖房）：一点压着的最要紧的那一样。水 > 河漫滩 > 停机坪 > 船坞坪 > 路
 SiteBlock ground_block(const MapGround &p_ground, double p_x, double p_z, const SiteRules &p_rules);
 
 // 盖房用的地面：MapGround + 选址规矩。只持引用

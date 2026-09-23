@@ -1,11 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
 #include "dock_site.h"
 #include "world_grid.h"
+#include "world_river.h"
 #include "yard_site.h"
 
 // 岛群的连续地形：在任意 (x, z) 上给出有没有地、顶面多高、岛底多深、是什么地表。
@@ -13,7 +15,9 @@
 //   陆地 ⇔ 岸距 + 岸线噪声 > 0（岸线不再是 100 m 的锯齿）
 //   顶面 = 栅格高程 + 细节噪声（按地表调幅：岩多草少、田最平）
 //   岛底 = 岸缘 − 崖高 − 龙骨 × √向内程度（倒锥，与 skyisle-gen 的岛体一致）
-//   停机坪（set_pads）：顶面按 dock_pad_weight 拉向坪高——码头后面那一片是平的
+//   河（栅格有水文时，见 world_river.h）：构造时建好河网；河道 + 河漫滩内顶面全按横断面（挖河床、填 / 削滩），
+//     再外 blend_m 渐回原地形；河边的细节噪声同样渐隐（河谷是平顺的）。几条河的影响重叠时取最低的那个
+//   停机坪（set_pads）：顶面按 dock_pad_weight 拉向坪高——码头后面那一片是平的；河从坪上过时坪让给河（按河的影响权重）
 //   船坞坪（set_yards）：坪内全平、坪外按坡度挖 / 填方接回（yard_carve），在停机坪之后
 // 同一点无论哪一级网格来取，结果都一样，所以不同精度的地块拼得上。
 // 停机坪与船坞坪在建第一块地面之前设好、之后不再变；除此之外没有状态，取样线程安全。
@@ -34,12 +38,15 @@ struct TerrainSample {
     int island = 0; // 最近的岛
     int landcover = 0; // 最近格的地表类
     bool stream = false;
+    float bed = 0.0f; // 在河床里（1）→ 出了平岸（0），地表色用
+    float bank = 0.0f; // 在河漫滩上（1）→ 渐回原地形（0）
 };
 
 class WorldTerrain {
     const WorldGrid *grid = nullptr;
     std::vector<WorldIsland> islands; // 按 id 下标
     uint64_t seed = 0;
+    std::shared_ptr<const WorldRivers> rivers; // 建好就不再变，可以在拷贝之间共用
     std::vector<DockPlan> pads;
     std::unordered_map<int64_t, std::vector<int>> pad_buckets; // 桶 → 压着这个桶（含坪外 PAD_REACH_M）的坪
     std::vector<YardPlan> yards;
@@ -54,12 +61,14 @@ public:
     static constexpr double COAST_FEATURE_M = 90.0;
 
     WorldTerrain() = default;
-    // p_grid 须比本对象活得久
-    WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIsland> &p_islands, uint64_t p_seed);
+    // p_grid 须比本对象活得久。栅格有水文就按 p_river_rules 建河网
+    WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIsland> &p_islands, uint64_t p_seed, const RiverRules &p_river_rules = RiverRules());
 
     const WorldGrid &get_grid() const { return *grid; }
     bool valid() const { return grid && !grid->empty(); }
     const WorldIsland &island_info(int p_id) const;
+    const WorldRivers &get_rivers() const { return *rivers; }
+    bool has_rivers() const { return rivers && !rivers->empty(); }
 
     double coast_noise(double p_x, double p_z) const; // 约 [-1, 1]
     double detail(double p_x, double p_z) const; // 米
