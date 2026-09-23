@@ -21,7 +21,7 @@ const SLOW_DOWN_AT := 2000.0  # 离目的泊位这么近换回泊档
 
 enum Phase { SETTLE, CHECK_HOME, MAP_TO_SEAT, SEAT, MAP_TO_DOCK, BACK_AT_DOCK, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, CRUISE, APPROACH, MOORING, WALK_ASHORE, ASHORE_VILLAGE, VISIT, DONE }
 
-var main: WorldScene
+var main: Expedition
 var world: World
 var player: Player
 var ship: Ship

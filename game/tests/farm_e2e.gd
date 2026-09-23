@@ -17,7 +17,7 @@ const OTHER := "millet"
 
 enum Phase { REFUSED_AT_SPAWN, WALK_TO_RIVER, TILL, SOW_WITHOUT_SEED, PICK_SEED, SOW, GROW, HARVEST, DONE }
 
-var main: Voyage
+var main: Expedition
 var player: Player
 var farm: Farm
 var island: Island
@@ -33,7 +33,7 @@ var other_at_start := 0
 var released_for := 0  # E 已经松开了多少帧
 var mid_growth_shot := false
 var pack_shot := false
-# 翻背包的按键脚本：每步 [动作, 按住几帧]，步与步之间松开几帧，Voyage 才读得到「刚按下」
+# 翻背包的按键脚本：每步 [动作, 按住几帧]，步与步之间松开几帧，编排才读得到「刚按下」
 var taps: Array = []
 var tap_frames := 0
 var tap_gap := 0
@@ -175,7 +175,7 @@ func _physics_process(delta: float) -> void:
 			_finish(true, "垦了、选了种、种了、收了：%s %d → %d，%s 不变" % [SEED, seed_at_start, main.get_item_count(SEED), OTHER])
 
 
-## 面朝目标格按住 E，直到那一格变成 want；E 先松开几帧再按，Voyage 才读得到「刚按下」。
+## 面朝目标格按住 E，直到那一格变成 want；E 先松开几帧再按，编排才读得到「刚按下」。
 func _work_until(want: int) -> bool:
 	if farm.get_plot(cell) == want:
 		Input.action_release("interact")

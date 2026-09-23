@@ -13,7 +13,7 @@ const SETTLE_TIMEOUT := 30.0
 
 enum Phase { SETTLE, RUN, OPEN_MAP, ZOOM_OUT, CLICK_ISLAND, LAND_ISLAND, OPEN_MAP_2, CLICK_DOCK, LAND_DOCK, DROP, RESPAWN, DONE }
 
-var main: WorldScene
+var main: Expedition
 var world: World
 var player: Player
 var map: WorldMap

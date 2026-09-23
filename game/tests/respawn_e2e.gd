@@ -7,7 +7,7 @@ extends Node
 const MAIN := preload("res://main.tscn")
 const TIMEOUT := 40.0
 
-var main: Voyage
+var main: Expedition
 var player: Player
 var ship: Ship
 var origin: Island

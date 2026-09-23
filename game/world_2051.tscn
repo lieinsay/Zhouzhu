@@ -31,7 +31,13 @@ roughness = 1.0
 material = SubResource("cloud_material")
 size = Vector2(240000, 240000)
 
-[node name="World2051" type="WorldScene"]
+[node name="World2051" type="Expedition"]
+map = NodePath("World")
+origin_dock = 7
+destination_dock = 2
+kill_altitude = -40.0
+recall_distance = 200.0
+notice_seconds = 4.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("environment")
@@ -49,6 +55,10 @@ mesh = SubResource("cloud_mesh")
 [node name="World" type="World" parent="."]
 data_dir = "res://worlds/2051"
 terrain_seed = 2051
+
+[node name="Farm" type="Farm" parent="World"]
+
+[node name="Shipyard" type="Shipyard" parent="World"]
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 

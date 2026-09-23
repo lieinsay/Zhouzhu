@@ -15,7 +15,7 @@ const GROW_SECONDS := 12.0  # 测试里庄稼长快些
 
 enum Phase { WORK, EVENING, NIGHT, MORNING, DONE }
 
-var main: Voyage
+var main: Expedition
 var player: Player
 var island_a: Island
 var island_b: Island

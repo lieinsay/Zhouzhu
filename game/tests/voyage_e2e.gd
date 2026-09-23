@@ -13,7 +13,7 @@ const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend"
 
 enum Phase { WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, CRUISE, MOORING, WALK_ASHORE, DONE }
 
-var main: Voyage
+var main: Expedition
 var player: Player
 var ship: Ship
 var origin: Island
@@ -62,7 +62,7 @@ func _physics_process(delta: float) -> void:
 			if _follow_waypoints():
 				_enter(Phase.TAKE_HELM)
 		Phase.TAKE_HELM:
-			if main.get_state() == Voyage.PILOTING:
+			if main.get_state() == Expedition.PILOTING:
 				climb_from = ship.global_position.y
 				_enter(Phase.CLIMB_OUT)
 			elif _walk_toward(ship.get_helm_position(), main.helm_range - 0.3):
@@ -81,7 +81,7 @@ func _physics_process(delta: float) -> void:
 				_tap_interact()
 				_enter(Phase.MOORING)
 		Phase.MOORING:
-			if main.get_state() == Voyage.ON_FOOT:
+			if main.get_state() == Expedition.ON_FOOT:
 				waypoints = [ship.global_position, destination.get_pier_end_position(), destination.get_spawn_transform().origin]
 				_enter(Phase.WALK_ASHORE)
 		Phase.WALK_ASHORE:
@@ -93,7 +93,7 @@ func _physics_process(delta: float) -> void:
 			if main.has_arrived():
 				_finish(true, "玩家站在目的岛上")
 			elif elapsed - phase_started > 0.5:
-				_finish(false, "走完了路点，但 Voyage 没判定抵达")
+				_finish(false, "走完了路点，但编排没判定抵达")
 
 
 func _destination_berth() -> Vector3:
@@ -119,7 +119,7 @@ func _release_all() -> void:
 		Input.action_release(action)
 
 
-## 按一下 E，按住几帧再松：当帧按、下一帧就松，Voyage 那边读不到「刚按下」（实测）。
+## 按一下 E，按住几帧再松：当帧按、下一帧就松，编排那边读不到「刚按下」（实测）。
 func _tap_interact() -> void:
 	if interact_frames == 0:
 		Input.action_press("interact")
@@ -176,7 +176,7 @@ func _finish(ok: bool, why: String) -> void:
 	print("e2e: %s —— %s（阶段 %s，模拟 %.1f s；玩家 %s，船 %s）" % [
 		"PASS" if ok else "FAIL", why, Phase.keys()[phase], elapsed, player.global_position, ship.global_position])
 	if not ok:
-		print("e2e: 舵 %s（距玩家 %.2f m），Voyage 状态 %d，玩家着地 %s，提示「%s」" % [
+		print("e2e: 舵 %s（距玩家 %.2f m），编排状态 %d，玩家着地 %s，提示「%s」" % [
 			ship.get_helm_position(), player.global_position.distance_to(ship.get_helm_position()),
 			main.get_state(), player.is_on_floor(), main.get_node("Hud").get_child(1).text])
 	get_tree().quit(0 if ok else 1)

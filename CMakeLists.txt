@@ -73,6 +73,8 @@ target_sources(
         ${ZHOUZHU_CORE_SOURCES}
         src/backpack_panel.cpp
         src/backpack_panel.h
+        src/build_mode.cpp
+        src/build_mode.h
         src/build_overlay.cpp
         src/build_overlay.h
         src/build_panel.cpp
@@ -81,18 +83,32 @@ target_sources(
         src/dev_tools.h
         src/dock_builder.cpp
         src/dock_builder.h
+        src/expedition.cpp
+        src/expedition.h
         src/farm.cpp
         src/farm.h
+        src/farm_hand.cpp
+        src/farm_hand.h
+        src/ground_host.h
         src/helm.cpp
         src/helm.h
         src/input_actions.cpp
         src/input_actions.h
         src/island.cpp
         src/island.h
+        src/island_map.cpp
+        src/island_map.h
         src/island_mesh.cpp
         src/island_mesh.h
+        src/map_host.cpp
+        src/map_host.h
+        src/pack_hand.cpp
+        src/pack_hand.h
+        src/play_notice.h
         src/player.cpp
         src/player.h
+        src/refit_bench.cpp
+        src/refit_bench.h
         src/refit_overlay.cpp
         src/refit_overlay.h
         src/refit_panel.cpp
@@ -101,7 +117,6 @@ target_sources(
         src/register_types.h
         src/settlement.cpp
         src/settlement.h
-        src/settlement_host.h
         src/ship.cpp
         src/ship.h
         src/shipyard.cpp
@@ -110,14 +125,10 @@ target_sources(
         src/site_stream.h
         src/villagers.cpp
         src/villagers.h
-        src/voyage.cpp
-        src/voyage.h
         src/world.cpp
         src/world.h
         src/world_map.cpp
         src/world_map.h
-        src/world_scene.cpp
-        src/world_scene.h
         src/world_village.cpp
         src/world_village.h
 )

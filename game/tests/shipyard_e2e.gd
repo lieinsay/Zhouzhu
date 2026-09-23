@@ -4,7 +4,7 @@ extends Node
 ## → E 打开装配视角 → 在三维格子里改船：舷门后放一节储存区、往上再叠一节、悬空被拒、舷门排不是最宽被拒、
 ##   左舷加一节、选动力区再加一节、拆支撑被拒、拆驾驶区被拒 → Tab 合上
 ## → 走上跳板、爬梯子到第二层、下来走到舵位 → 掌舵升空飞回泊位靠泊。
-## 断言每一步的布局、船况与 Voyage 状态一路对得上。
+## 断言每一步的布局、船况与 编排状态一路对得上。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn
 ##
@@ -19,7 +19,7 @@ enum Phase {
 	WALK_DOWN, OPEN_REFIT, REFIT, WALK_UP, CLIMB_LADDER, WALK_TO_HELM, TAKE_HELM_AGAIN, CLIMB_OUT_AGAIN, FLY_TO_BERTH, MOORING, DONE,
 }
 
-var main: Voyage
+var main: Expedition
 var player: Player
 var ship: Ship
 var origin: Island
@@ -101,7 +101,7 @@ func _physics_process(delta: float) -> void:
 			if _follow_waypoints(0.6):
 				_enter(Phase.TAKE_HELM)
 		Phase.TAKE_HELM, Phase.TAKE_HELM_AGAIN:
-			if main.get_state() == Voyage.PILOTING:
+			if main.get_state() == Expedition.PILOTING:
 				climb_from = ship.global_position.y
 				_enter(Phase.CLIMB_OUT if phase == Phase.TAKE_HELM else Phase.CLIMB_OUT_AGAIN)
 			elif _walk_toward(ship.get_helm_position(), main.helm_range - 0.3):
@@ -116,7 +116,7 @@ func _physics_process(delta: float) -> void:
 				_tap_interact()
 				_enter(Phase.DOCKING)
 		Phase.DOCKING:
-			if main.get_state() == Voyage.ON_FOOT:
+			if main.get_state() == Expedition.ON_FOOT:
 				if not main.is_ship_in_yard():
 					_finish(false, "入坞后船舷没贴在坞位接触线上（船 %s）" % ship.global_position)
 				elif not player.is_on_floor():
@@ -227,7 +227,7 @@ func _physics_process(delta: float) -> void:
 				_tap_interact()
 				_enter(Phase.MOORING)
 		Phase.MOORING:
-			if main.get_state() == Voyage.ON_FOOT:
+			if main.get_state() == Expedition.ON_FOOT:
 				if not ship.is_at(_berth(), 0.5):
 					_finish(false, "靠泊后船舷没贴在泊位接触线上（船 %s）" % ship.global_position)
 				elif main.is_ship_in_yard():
@@ -252,7 +252,7 @@ func _start_step() -> void:
 	tap_gap = 4
 
 
-## 按脚本一步步敲键；全敲完返回 true。步与步之间松开几帧，Voyage 才读得到「刚按下」
+## 按脚本一步步敲键；全敲完返回 true。步与步之间松开几帧，编排才读得到「刚按下」
 func _run_taps() -> bool:
 	if tap_gap > 0:
 		tap_gap -= 1
@@ -337,7 +337,7 @@ func _follow_waypoints(last_radius: float) -> bool:
 
 
 ## 短途跳一下：舵对准目标、高度保持在目标之上 5 m、离得远就进车。
-## 目标比 other 更近、且在可靠泊的距离里时返回 true（这时按 E，Voyage 会挑最近的那个）。
+## 目标比 other 更近、且在可靠泊的距离里时返回 true（这时按 E，编排会挑最近的那个）。
 func _hop_toward(target: Vector3, other: Vector3) -> bool:
 	var to := target - ship.global_position
 	var local := ship.global_transform.basis.inverse() * to
@@ -357,7 +357,7 @@ func _finish(ok: bool, why: String) -> void:
 	for action in ["interact", "remove", "inventory", "kind_1", "kind_2", "kind_3"]:
 		Input.action_release(action)
 	set_physics_process(false)
-	print("shipyard_e2e: %s —— %s（阶段 %s，模拟 %.1f s；玩家 %s，船 %s，Voyage 状态 %d，布局 %s，提示「%s」）" % [
+	print("shipyard_e2e: %s —— %s（阶段 %s，模拟 %.1f s；玩家 %s，船 %s，编排状态 %d，布局 %s，提示「%s」）" % [
 		"PASS" if ok else "FAIL", why, Phase.keys()[phase], elapsed, player.global_position, ship.global_position,
 		main.get_state(), ship.get_layout(), main.get_node("Hud").get_child(1).text])
 	if not ok:

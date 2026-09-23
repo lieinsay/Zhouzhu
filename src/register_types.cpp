@@ -7,8 +7,10 @@
 #include "build_overlay.h"
 #include "build_panel.h"
 #include "dev_tools.h"
+#include "expedition.h"
 #include "farm.h"
 #include "island.h"
+#include "island_map.h"
 #include "player.h"
 #include "refit_overlay.h"
 #include "refit_panel.h"
@@ -17,10 +19,8 @@
 #include "ship.h"
 #include "shipyard.h"
 #include "villagers.h"
-#include "voyage.h"
 #include "world.h"
 #include "world_map.h"
-#include "world_scene.h"
 #include "world_village.h"
 
 using namespace godot;
@@ -36,7 +36,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Villagers);
     GDREGISTER_CLASS(Player);
     GDREGISTER_CLASS(Ship);
-    GDREGISTER_CLASS(Voyage);
+    GDREGISTER_CLASS(IslandMap);
     GDREGISTER_CLASS(BackpackPanel);
     GDREGISTER_CLASS(RefitPanel);
     GDREGISTER_CLASS(RefitOverlay);
@@ -47,7 +47,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(WorldVillage);
     GDREGISTER_CLASS(WorldDock);
     GDREGISTER_CLASS(SiteStream);
-    GDREGISTER_CLASS(WorldScene);
+    GDREGISTER_CLASS(Expedition);
     GDREGISTER_CLASS(DevTools);
 }
 

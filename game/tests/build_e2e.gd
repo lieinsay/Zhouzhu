@@ -21,7 +21,7 @@ enum Phase {
 	BACK_TO_HOUSE, REMOVE_HOUSE, SAVE, CLOSE, RELOAD, WALK_TO_TOWER, SHIPPED_VILLAGE, DONE,
 }
 
-var main: Voyage
+var main: Expedition
 var player: Player
 var island: Island
 var settlement: Settlement
@@ -263,7 +263,7 @@ func _queue(script: Array) -> void:
 	tap_gap = 4
 
 
-## 按脚本一步步敲键；全敲完（并且松开后又过了几帧）返回 true。步与步之间松开几帧，Voyage 才读得到「刚按下」
+## 按脚本一步步敲键；全敲完（并且松开后又过了几帧）返回 true。步与步之间松开几帧，编排才读得到「刚按下」
 func _run_taps() -> bool:
 	if tap_gap > 0:
 		tap_gap -= 1
