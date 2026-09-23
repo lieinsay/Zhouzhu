@@ -89,6 +89,8 @@ target_sources(
         src/farm.h
         src/farm_hand.cpp
         src/farm_hand.h
+        src/flat_map.cpp
+        src/flat_map.h
         src/ground_host.h
         src/helm.cpp
         src/helm.h

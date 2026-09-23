@@ -9,6 +9,7 @@
 #include "dev_tools.h"
 #include "expedition.h"
 #include "farm.h"
+#include "flat_map.h"
 #include "island.h"
 #include "island_map.h"
 #include "player.h"
@@ -37,6 +38,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Player);
     GDREGISTER_CLASS(Ship);
     GDREGISTER_CLASS(IslandMap);
+    GDREGISTER_CLASS(FlatMap);
     GDREGISTER_CLASS(BackpackPanel);
     GDREGISTER_CLASS(RefitPanel);
     GDREGISTER_CLASS(RefitOverlay);
