@@ -187,6 +187,7 @@ bool World::load() {
             river_material->set_shader_parameter("stage_exp", rr.stage_exp);
             river_material->set_shader_parameter("flood_max", rr.flood_max);
             river_material->set_shader_parameter("floodplain_slope", rr.floodplain_slope);
+            river_material->set_shader_parameter("bed_flat", rr.bed_flat);
             river_material->set_shader_parameter("wet_depth", rr.wet_depth_m);
             river_material->set_shader_parameter("fall_length", river_mesh_rules.fall_m);
         } else {

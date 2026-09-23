@@ -174,10 +174,14 @@ double RiverRules::dry_threshold(double p_acc_km2) const {
 
 double river_profile(const RiverVertex &p_at, double p_d, const RiverRules &p_rules) {
     const double b = std::max(1e-3, p_at.half());
+    const double flat = p_rules.bed_flat * b;
     const double d = std::abs(p_d);
+    if (d <= flat) {
+        return p_at.bed();
+    }
     if (d <= b) {
-        const double u = d / b;
-        return p_at.surface - p_at.depth * (1.0 - u * u);
+        const double u = (d - flat) / std::max(1e-6, b - flat);
+        return p_at.bed() + p_at.depth * u * u;
     }
     return p_at.surface + p_rules.floodplain_slope * (std::min(d, p_at.core()) - b);
 }
@@ -189,8 +193,11 @@ RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRule
     st.depth = p_at.depth * std::pow(st.flow, p_rules.stage_exp);
     st.level = p_at.bed() + st.depth;
     const double b = p_at.half();
-    st.half_width = st.depth <= p_at.depth ? b * std::sqrt(st.depth / std::max(1e-6, p_at.depth))
-                                           : std::min(b + (st.depth - p_at.depth) / p_rules.floodplain_slope, p_at.core());
+    // 岸坡是 u²：水深 d 时水边在 flat + (b − flat)·√(d / 平岸深)
+    const double flat = p_rules.bed_flat * b;
+    st.half_width = st.depth <= 0.0          ? 0.0
+            : st.depth <= p_at.depth ? flat + (b - flat) * std::sqrt(st.depth / std::max(1e-6, p_at.depth))
+                                     : std::min(b + (st.depth - p_at.depth) / p_rules.floodplain_slope, p_at.core());
     st.wet = st.depth > p_rules.wet_depth_m;
     return st;
 }

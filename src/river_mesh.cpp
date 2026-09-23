@@ -109,7 +109,10 @@ RiverMesh build_river_mesh(const WorldTerrain &p_terrain, const RiverChunkKey &p
             const RiverVertex &v = e == 0 ? a : b;
             double lx, lz;
             lateral(stem, i + size_t(e), lx, lz);
-            const double offs[5] = { -v.core(), -v.half(), 0.0, v.half(), v.core() };
+            // 近岸处带子收窄到离岸线的距离：河口一带岸线斜着切过河，整幅带子会伸到云海上空
+            const double room = std::max(0.5, p_terrain.sample_raw(v.x, v.z).shore - p_rules.coast_margin_m);
+            const double half = std::min(v.half(), room), core = std::min(v.core(), std::max(half, room));
+            const double offs[5] = { -core, -half, 0.0, half, core };
             for (int k = 0; k < 5; k++) {
                 row[e][k] = emit.vertex(v.x + lx * offs[k], v.bed(), v.z + lz * offs[k], v.s, offs[k], v, 0.0, speed);
             }

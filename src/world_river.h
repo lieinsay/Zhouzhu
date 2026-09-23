@@ -21,11 +21,11 @@
 //   平岸宽 = width_k · Q^width_exp、深 = depth_k · Q^depth_exp（水力几何，宽窄再按噪声 ±width_jitter 起伏），源头一段渐宽渐深；
 //   平岸水面 = 平滑地面（栅格双三次，不含细节噪声）− entrench_m，从下游往上游保证不降（支流末点接干流的水面）；
 //   河漫滩宽 = floodplain_k × 平岸宽（夹在 min..max），滩面从平岸水面按 floodplain_slope 缓缓升起。
-// 横断面（river_profile）：河床是抛物线（中线最深 = 平岸水面 − 深，平岸处 = 平岸水面），外面是河漫滩，再外 blend_m 渐回原地形。
+// 横断面（river_profile）：河床中间一段平底（bed_flat × 平岸半宽，= 平岸水面 − 深），两侧岸坡按 u² 升到平岸水面，外面是河漫滩，再外 blend_m 渐回原地形。
 //
 // 水情：逐日降水进快、慢两个线性水库，出流按全年平均归一成径流指数 r（1 = 年均）。某一点的流量 = 年均 × max(0, r − 渗漏门槛) / (1 − 门槛)，
-//   门槛按汇流面积定（dry_k · A^−dry_exp）：小溪门槛高、雨一停就干，大河门槛低、旱季也有水。
-//   水深 = 平岸深 × (流量 / 平岸流量)^stage_exp；没过平岸就漫上河漫滩。水面宽由抛物线河床与水深推出——所以河道宽窄随地点变、水面宽窄随时间变。
+//   门槛按汇流面积定（dry_k · A^−dry_exp）：只有源头的小溪旱季会干，汇流几 km² 以上的常年有水、只是枯水时变窄变浅。
+//   水深 = 平岸深 × (流量 / 平岸流量)^stage_exp；没过平岸就漫上河漫滩。水面宽由河床形状与水深推出——所以河道宽窄随地点变、水面宽窄随时间变。
 //   水面着色器（game/shaders/river.gdshader）按同一公式在顶点里算水位，改这里要一起改。
 
 struct RiverRules {
@@ -34,22 +34,24 @@ struct RiverRules {
     double year_days = 336.0; // 一年几天（同上）
     double runoff = 0.35; // 径流系数：降水里流进河的份额
     double bankfull_ratio = 3.0; // 平岸流量是年均流量的几倍
-    double width_k = 3.2, width_exp = 0.5; // 平岸宽 = k · Q^exp（米，Q 为 m³/s）
-    double depth_k = 0.32, depth_exp = 0.4; // 平岸深
-    double min_width_m = 3.0, min_depth_m = 0.35; // 再小的溪也有这么宽深的沟（2 m 一格的地面看得出来）
+    // 宽深按游戏尺度放大：真实的水力几何约 3.2·Q^0.5 与 0.32·Q^0.4，第三人称下 5 m 的河像条沟（房子当初也放大过），宽 ×3、深 ×2
+    double width_k = 9.6, width_exp = 0.5; // 平岸宽 = k · Q^exp（米，Q 为 m³/s）
+    double depth_k = 0.64, depth_exp = 0.4; // 平岸深
+    double min_width_m = 6.0, min_depth_m = 0.6; // 再小的溪也有这么宽深的河床
+    double bed_flat = 0.55; // 河床平底占平岸半宽的份额（外面是岸坡）：水浅时也整片盖住河床，不被 2 m 一格的地面拱穿成一个个水洼
     double width_jitter = 0.25; // 沿程宽窄起伏
-    double floodplain_k = 1.2, floodplain_min_m = 5.0, floodplain_max_m = 25.0; // 河漫滩宽（单侧）
+    double floodplain_k = 1.2, floodplain_min_m = 6.0, floodplain_max_m = 30.0; // 河漫滩宽（单侧）
     double floodplain_slope = 0.04; // 滩面横坡
     double blend_m = 30.0; // 滩外渐回原地形
     double entrench_m = 0.4; // 平岸水面低于平滑地面多少
     double min_fall = 0.0005; // 水面顺流每米至少降这么多
     double step_m = 8.0; // 中线点距
     double simplify_m = 45.0; // 格心折线先抽稀（离原线不超过这么远）再磨圆
-    double meander_k = 1.2, meander_min_m = 4.0, meander_max_m = 22.0; // 曲流摆幅 ≈ 宽 × k
+    double meander_k = 1.2, meander_min_m = 6.0, meander_max_m = 30.0; // 曲流摆幅 ≈ 宽 × k
     double meander_wave_k = 12.0; // 曲流波长 ≈ 宽 × 这个（夹在 60..300 m）
     double wander_m = 55.0, wander_wave_m = 900.0; // 大尺度的摆：D8 的格心连线是一段段横平竖直的长直线，靠它摆开
     double head_ramp_m = 80.0; // 源头这么长一段渐宽渐深
-    double dry_k = 0.9, dry_exp = 0.35, dry_min = 0.08, dry_max = 0.95; // 渗漏门槛
+    double dry_k = 0.7, dry_exp = 1.1, dry_min = 0.02, dry_max = 0.95; // 渗漏门槛：1 km² 0.7（旱季常干）、3 km² 0.2、5 km² 起约 0.1（2051 常年有水）
     double stage_exp = 0.4; // 水深 ∝ 流量^这个
     double flood_max = 3.0; // 流量最多到平岸的几倍（漫滩的上限）
     double wet_depth_m = 0.03; // 比这浅就算干了
@@ -99,7 +101,7 @@ struct RiverStage {
     bool wet = false;
 };
 
-// 横断面：离中线 p_d 米处地面该多高（河床抛物线 → 平岸 → 河漫滩），p_d 超过 core 按 core 算
+// 横断面：离中线 p_d 米处地面该多高（平底河床 → 岸坡 → 平岸 → 河漫滩），p_d 超过 core 按 core 算
 double river_profile(const RiverVertex &p_at, double p_d, const RiverRules &p_rules);
 // 径流指数为 p_runoff 时这一点的水
 RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRules &p_rules);

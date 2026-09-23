@@ -2074,7 +2074,8 @@ void test_world_rivers() {
     check(dry_bank == 0, "年均水位时水面半宽内是水、外是岸（" + std::to_string(dry_bank) + " 处不对）");
 
     // 水情落到一点上：小溪先干、大河旱季也有水、涨水漫滩
-    check(!river_stage(src, 0.5, rules).wet && river_stage(end, 0.5, rules).wet, "径流 0.5：源头的溪干了、干流还有水");
+    check(!river_stage(src, 0.25, rules).wet && river_stage(end, 0.25, rules).wet, "径流 0.25（旱季）：源头的溪干了、干流还有水");
+    check(river_stage(end, 0.15, rules).wet, "全年最枯时干流也有水");
     const RiverStage low = river_stage(end, 0.5, rules), high = river_stage(end, 3.0, rules), flood = river_stage(end, 6.5, rules);
     check(low.level < high.level && low.half_width < high.half_width, "水涨了：水位高、水面宽");
     check(flood.half_width > end.half() && flood.half_width <= end.core() + 1e-9, "大水漫上河漫滩、不出滩");
@@ -2261,8 +2262,8 @@ void test_goldens() {
             villages.mix(uint64_t(plan.missing));
         }
     }
-    // 拓展「岛群的河」起地形凿了河道、河滩不许盖房，村落清单有意变了，此处重记
-    report_golden("岛群远离主码头的村", villages.h, 0x83f0952a0913ceecull);
+    // 拓展「岛群的河」起地形凿了河道、河滩不许盖房，村落清单有意变了，此处重记（河按游戏尺度放宽后又记了一次）
+    report_golden("岛群远离主码头的村", villages.h, 0xd1230999ae5ee931ull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）

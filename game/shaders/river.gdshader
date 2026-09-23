@@ -2,7 +2,7 @@
 // 水位按径流指数在顶点里算——与 src/world_river.cpp 的 river_stage 同一个公式，改一处要改两处：
 //   流量 / 平岸流量 = min(max(0, r − 门槛) / ((1 − 门槛) · bankfull_ratio), flood_max)
 //   水深 = 平岸深 · (流量 / 平岸流量)^stage_exp；水位 = 河床 + 水深
-//   水面半宽 = 平岸半宽 · √(水深 / 平岸深)（抛物线河床）；没过平岸就按滩面横坡往外漫，最多漫到滩边
+//   水面半宽 = 平底半宽 + 岸坡宽 · √(水深 / 平岸深)（平底 = bed_flat · 平岸半宽，岸坡是 u²）；没过平岸就按滩面横坡往外漫，最多漫到滩边
 // 片元超出此刻水面半宽的丢掉：水面随水情变宽变窄，远处（地面块粗、河道凿不出来）也不会漫出河谷。
 // 远处的水面抬高一点（far_lift），免得被粗地面块盖住；近处不抬。
 shader_type spatial;
@@ -13,10 +13,11 @@ uniform float bankfull_ratio = 3.0;
 uniform float stage_exp = 0.4;
 uniform float flood_max = 3.0;
 uniform float floodplain_slope = 0.04;
+uniform float bed_flat = 0.55;
 uniform float wet_depth = 0.03;
 uniform float fall_length = 45.0;
-uniform float far_lift_start = 150.0;
-uniform float far_lift = 0.0025;
+uniform float far_lift_start = 100.0;
+uniform float far_lift = 0.004;
 uniform vec3 shallow_color : source_color = vec3(0.34, 0.50, 0.47);
 uniform vec3 deep_color : source_color = vec3(0.10, 0.23, 0.29);
 uniform vec3 foam_color : source_color = vec3(0.86, 0.89, 0.87);
@@ -36,8 +37,10 @@ void vertex() {
 	float floodplain = CUSTOM1.x;
 	float flow = min(max(0.0, runoff - dry) / ((1.0 - dry) * bankfull_ratio), flood_max);
 	float depth = flow > 0.0 ? bank_depth * pow(flow, stage_exp) : 0.0;
-	float half_w = depth <= bank_depth ? half_bank * sqrt(depth / bank_depth)
-									   : min(half_bank + (depth - bank_depth) / floodplain_slope, half_bank + floodplain);
+	float flat_half = bed_flat * half_bank;
+	float half_w = depth <= 0.0 ? 0.0
+			: depth <= bank_depth ? flat_half + (half_bank - flat_half) * sqrt(depth / bank_depth)
+								  : min(half_bank + (depth - bank_depth) / floodplain_slope, half_bank + floodplain);
 	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float lift = max(0.0, length(world.xz - CAMERA_POSITION_WORLD.xz) - far_lift_start) * far_lift;
 	VERTEX.y = bed + depth + lift - CUSTOM1.y * fall_length;
