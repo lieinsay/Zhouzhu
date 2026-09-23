@@ -13,6 +13,7 @@
 #include "refit_overlay.h"
 #include "refit_panel.h"
 #include "settlement.h"
+#include "site_stream.h"
 #include "ship.h"
 #include "shipyard.h"
 #include "villagers.h"
@@ -20,6 +21,7 @@
 #include "world.h"
 #include "world_map.h"
 #include "world_scene.h"
+#include "world_village.h"
 
 using namespace godot;
 
@@ -42,6 +44,9 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(BuildOverlay);
     GDREGISTER_CLASS(World);
     GDREGISTER_CLASS(WorldMap);
+    GDREGISTER_CLASS(WorldVillage);
+    GDREGISTER_CLASS(WorldDock);
+    GDREGISTER_CLASS(SiteStream);
     GDREGISTER_CLASS(WorldScene);
     GDREGISTER_CLASS(DevTools);
 }

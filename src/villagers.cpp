@@ -144,7 +144,7 @@ void Villagers::_ready() {
     ERR_FAIL_NULL_MSG(host, "Villagers 要挂在聚落宿主（Island / WorldVillage）下面");
     settlement = Object::cast_to<Settlement>(get_node_or_null(settlement_path));
     ERR_FAIL_NULL_MSG(settlement, "Villagers 找不到 Settlement（settlement_path）");
-    farm = Object::cast_to<Farm>(get_node_or_null(farm_path));
+    farm = farm_path.is_empty() ? nullptr : Object::cast_to<Farm>(get_node_or_null(farm_path));
 
     mat_skin = make_material(Color(0.86f, 0.68f, 0.52f));
     mat_hat = make_material(Color(0.78f, 0.68f, 0.42f)); // 斗笠

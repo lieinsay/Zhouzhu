@@ -98,6 +98,8 @@ target_sources(
         src/ship.h
         src/shipyard.cpp
         src/shipyard.h
+        src/site_stream.cpp
+        src/site_stream.h
         src/villagers.cpp
         src/villagers.h
         src/voyage.cpp
@@ -108,6 +110,8 @@ target_sources(
         src/world_map.h
         src/world_scene.cpp
         src/world_scene.h
+        src/world_village.cpp
+        src/world_village.h
 )
 
 target_include_directories(zhouzhu PRIVATE src)
