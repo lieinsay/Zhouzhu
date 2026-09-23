@@ -102,6 +102,14 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_build_yaw_deg"), &Expedition::get_build_yaw_deg);
     ClassDB::bind_method(D_METHOD("get_build_camera_yaw"), &Expedition::get_build_camera_yaw);
     ClassDB::bind_method(D_METHOD("get_build_target"), &Expedition::get_build_target);
+    ClassDB::bind_method(D_METHOD("get_build_style"), &Expedition::get_build_style);
+    ClassDB::bind_method(D_METHOD("is_interior_open"), &Expedition::is_interior_open);
+    ClassDB::bind_method(D_METHOD("get_interior_cursor"), &Expedition::get_interior_cursor);
+    ClassDB::bind_method(D_METHOD("get_interior_tool"), &Expedition::get_interior_tool);
+    ClassDB::bind_method(D_METHOD("get_interior_level"), &Expedition::get_interior_level);
+    ClassDB::bind_method(D_METHOD("get_interior_template"), &Expedition::get_interior_template);
+    ClassDB::bind_method(D_METHOD("get_interior_building"), &Expedition::get_interior_building);
+    ClassDB::bind_method(D_METHOD("get_interior_camera_yaw"), &Expedition::get_interior_camera_yaw);
 
     ClassDB::bind_method(D_METHOD("set_map_path", "value"), &Expedition::set_map_path);
     ClassDB::bind_method(D_METHOD("get_map_path"), &Expedition::get_map_path);
@@ -243,6 +251,12 @@ void Expedition::build_hud() {
     build_overlay->set_visible(false);
     add_child(build_overlay);
     build.setup(build_panel, build_overlay);
+    InteriorPanel *interior_panel = top_right_panel<InteriorPanel>(layer, "Interior");
+    InteriorOverlay *interior_overlay = memnew(InteriorOverlay);
+    interior_overlay->set_name("InteriorOverlay");
+    interior_overlay->set_visible(false);
+    add_child(interior_overlay);
+    interior.setup(interior_panel, interior_overlay);
 
     map_panel = map->map_make_panel();
     if (map_panel) {
@@ -313,6 +327,7 @@ void Expedition::close_panels() {
     pack.set_open(false);
     refit.close(player);
     build.close(player);
+    interior.close(player);
     player->set_input_blocked(map_open);
 }
 
@@ -332,7 +347,7 @@ void Expedition::set_map_open(bool p_open) {
     map_panel->set_visible(map_open);
     status_label->set_visible(!map_open); // 地图自己有标题，底下那行别透上来
     prompt_label->set_visible(!map_open);
-    player->set_input_blocked(map_open || pack.is_open() || refit.is_open() || build.is_open());
+    player->set_input_blocked(map_open || pack.is_open() || refit.is_open() || build.is_open() || interior.is_open());
     if (ship) {
         ship->set_controlled(!map_open && helm.get_state() == Helm::PILOTING);
     }
@@ -364,19 +379,26 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
     }
     const bool captured = input->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED;
     const Ref<InputEventMouseMotion> motion = p_event;
-    if (captured && motion.is_valid() && (refit.is_open() || build.is_open())) {
+    if (captured && motion.is_valid() && (refit.is_open() || build.is_open() || interior.is_open())) {
         const Vector2 rel = motion->get_relative();
         if (refit.is_open()) {
             refit.orbit(rel.x, rel.y);
-        } else {
+        } else if (build.is_open()) {
             build.orbit(rel.x, rel.y);
+        } else {
+            interior.orbit(rel.x, rel.y);
         }
         return;
     }
     const Ref<InputEventMouseButton> button = p_event;
-    if (captured && build.is_open() && button.is_valid() && button->is_pressed() &&
+    if (captured && (build.is_open() || interior.is_open()) && button.is_valid() && button->is_pressed() &&
             (button->get_button_index() == MOUSE_BUTTON_WHEEL_UP || button->get_button_index() == MOUSE_BUTTON_WHEEL_DOWN)) {
-        build.zoom(button->get_button_index() == MOUSE_BUTTON_WHEEL_UP);
+        const bool in = button->get_button_index() == MOUSE_BUTTON_WHEEL_UP;
+        if (build.is_open()) {
+            build.zoom(in);
+        } else {
+            interior.zoom(in);
+        }
         return;
     }
     if (!map_open && button.is_valid() && button->is_pressed() && !captured) {
@@ -409,7 +431,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
     const Vector3 at = player->get_global_position();
     if (!map_open) {
         if (input->is_action_just_pressed(input_actions::INVENTORY)) {
-            if (refit.is_open() || build.is_open()) {
+            if (refit.is_open() || build.is_open() || interior.is_open()) {
                 close_panels(); // Tab 先合上开着的那个
             } else {
                 set_pack_open(!pack.is_open());
@@ -424,9 +446,14 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
                 player->set_input_blocked(build.open_on(map->map_settlement_at(at), at, say_fn()) || map_open);
             }
         }
+        if (dev_tools && input->is_action_just_pressed(input_actions::EDIT_INTERIOR)) {
+            toggle_interior(at);
+        }
         Shipyard *bench = RefitBench::bench_near(map->map_shipyards(), at, helm_range);
         if (refit.is_open()) {
             refit.browse(ship, p_interact, say_fn()); // 开着改装：E 是加一节
+        } else if (interior.is_open()) {
+            interior.browse(p_delta, p_interact, say_fn()); // 开着室内编辑：E 是放家具、开门窗……
         } else if (build.is_open()) {
             build.browse(p_delta, p_interact, say_fn()); // 开着布置模式：E 是放一座
         } else if (pack.is_open()) {
@@ -453,6 +480,26 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
     if (player->get_global_position().y < kill_altitude) {
         respawn();
     }
+}
+
+// T：开着就合上；布置模式里光标下有房子就改那座；否则改人站在里面的那座
+void Expedition::toggle_interior(const Vector3 &p_at) {
+    if (interior.is_open()) {
+        close_panels();
+        return;
+    }
+    Settlement *settlement = nullptr;
+    int index = -1;
+    if (build.is_open()) {
+        settlement = build.get_target();
+        index = build.get_selected();
+    } else {
+        settlement = BuildMode::settlement_of(map->map_settlement_at(p_at));
+        index = settlement ? settlement->find_at(p_at) : -1;
+    }
+    close_panels();
+    farm_hand.stand_down();
+    player->set_input_blocked(interior.open_on(settlement, index, say_fn()) || map_open);
 }
 
 void Expedition::board() {
@@ -642,11 +689,18 @@ void Expedition::update_hud() {
                 prompt = String(U"W/S 前后 · A/D 左右 · 空格/Shift 上下 · 1/2/3 选模块 · E 放/换 · X 拆 · Tab 合上");
                 break;
             }
+            if (interior.is_open()) {
+                interior.refresh();
+                lines.clear();
+                lines.push_back(String(U"开发者室内编辑 · ") + interior.get_template_id());
+                prompt = String(U"WASD 挪光标 · Z/V 换工具 · Q/R 转向 · 空格/Ctrl 换层 · E 放 · X 拆 · N 另存 · F5 存盘 · Tab 合上");
+                break;
+            }
             if (build.is_open()) {
                 build.refresh();
                 lines.clear();
                 lines.push_back(String(U"开发者布置模式 · ") + String(build.get_target()->get_host()->host_node()->get_name()));
-                prompt = String(U"WASD 挪光标 · Q/R 转向 · 1-4 选建筑 · E 放 · X 拆 · F5 存盘 · Tab 合上");
+                prompt = String(U"WASD 挪光标 · Q/R 转向 · 1-4 选建筑 · V/Z 换模板 · E 放 · X 拆 · T 改屋里 · F5 存盘 · Tab 合上");
                 break;
             }
             Shipyard *bench = RefitBench::bench_near(map->map_shipyards(), at, helm_range);

@@ -114,6 +114,12 @@ target_sources(
         src/hinterland.h
         src/input_actions.cpp
         src/input_actions.h
+        src/interior_edit.cpp
+        src/interior_edit.h
+        src/interior_overlay.cpp
+        src/interior_overlay.h
+        src/interior_panel.cpp
+        src/interior_panel.h
         src/island.cpp
         src/island.h
         src/island_map.cpp

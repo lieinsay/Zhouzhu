@@ -11,6 +11,7 @@
 #include "build_mode.h"
 #include "farm_hand.h"
 #include "helm.h"
+#include "interior_edit.h"
 #include "map_host.h"
 #include "pack_hand.h"
 #include "player.h"
@@ -22,7 +23,8 @@
 // 地图只认地图宿主（MapHost，map 属性指过去）：地面、码头、船坞、农田、脚下的聚落、流式焦点、岛群地图面板都问它。
 // 玩法是几个与场景无关的部件，这里持有、按优先级调度：
 //   掌舵（Helm）：上舵、飞（R/F 换档）、叫靠泊 / 入坞、离舵；
-//   背包与手持（PackHand，Tab）、农事（FarmHand，按住 E）、改装（RefitBench，画样台按 E）、布置模式（BuildMode，B，开发者）。
+//   背包与手持（PackHand，Tab）、农事（FarmHand，按住 E）、改装（RefitBench，画样台按 E）、布置模式（BuildMode，B，开发者）、
+//   室内编辑（InteriorEdit，T，开发者：布置模式里光标下那座，或人站在里面的那座）。
 // 另外：开局把船停在出发码头的泊位上、人放在它的停机坪上；HUD（位置、目标、背包、钟点、提示）；M 开合岛群地图、开发者点图瞬移；
 // 站稳记落脚点、掉进云海回位并召回漂远的船；到了目的码头那座岛就算到了（arrived），之后目标改指回程。
 // 「现在是谁在受控」「哪个面板开着」「到没到过对岸」「上一处站稳的地方」这些状态只在这里（和它肚子里的部件）；
@@ -65,6 +67,7 @@ private:
     FarmHand farm_hand;
     RefitBench refit;
     BuildMode build;
+    InteriorEdit interior;
     int origin_index = -1; // 地图的码头下标
     int destination_index = -1;
     bool arrived = false;
@@ -94,6 +97,7 @@ private:
     void set_pack_open(bool p_open);
     void set_map_open(bool p_open);
     void on_foot(double p_delta, bool p_interact);
+    void toggle_interior(const godot::Vector3 &p_at);
     std::vector<Berth> berths() const;
     godot::Vector3 focus_point() const;
     void track_footing();
@@ -150,6 +154,14 @@ public:
     double get_build_yaw_deg() const { return build.get_yaw_deg(); }
     double get_build_camera_yaw() const { return build.get_camera_yaw(); } // 布置视角的相机方位：W 把光标往 (−sin, 0, −cos) 挪
     godot::Node *get_build_target() const { return build.get_target(); } // 布置模式改的是哪个 Settlement
+    godot::String get_build_style() const { return build.get_style(); }
+    bool is_interior_open() const { return interior.is_open(); }
+    godot::Vector3 get_interior_cursor() const { return interior.is_open() ? interior.get_cursor_global() : godot::Vector3(); }
+    godot::String get_interior_tool() const { return interior.get_tool_name(); }
+    int get_interior_level() const { return interior.get_level(); }
+    godot::String get_interior_template() const { return interior.is_open() ? interior.get_template_id() : godot::String(); }
+    int get_interior_building() const { return interior.is_open() ? interior.get_index() : -1; }
+    double get_interior_camera_yaw() const { return interior.get_camera_yaw(); } // 室内编辑视角的相机方位：W 把光标往 (−sin, 0, −cos) 挪
 
     void set_map_path(const godot::NodePath &p_value) { map_path = p_value; }
     godot::NodePath get_map_path() const { return map_path; }

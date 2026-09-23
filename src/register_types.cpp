@@ -24,6 +24,8 @@
 #include "world.h"
 #include "world_map.h"
 #include "world_village.h"
+#include "interior_overlay.h"
+#include "interior_panel.h"
 #include "template_library.h"
 #include "world_clock.h"
 
@@ -49,6 +51,8 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(RefitOverlay);
     GDREGISTER_CLASS(BuildPanel);
     GDREGISTER_CLASS(BuildOverlay);
+    GDREGISTER_CLASS(InteriorPanel);
+    GDREGISTER_CLASS(InteriorOverlay);
     GDREGISTER_CLASS(World);
     GDREGISTER_CLASS(WorldMap);
     GDREGISTER_CLASS(WorldVillage);

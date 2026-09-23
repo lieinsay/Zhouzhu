@@ -29,6 +29,10 @@ constexpr const char *GOD_MODE = "god_mode"; // 开发者：开关 god 模式
 constexpr const char *TIME_LAPSE = "time_lapse"; // 开发者：开关时间快进
 constexpr const char *GEAR_UP = "gear_up"; // 掌舵时升一档
 constexpr const char *GEAR_DOWN = "gear_down"; // 掌舵时降一档
+constexpr const char *NEXT_STYLE = "next_style"; // 布置时换下一套房屋模板；室内编辑时换下一样工具
+constexpr const char *PREV_STYLE = "prev_style"; // 上一套 / 上一样
+constexpr const char *EDIT_INTERIOR = "edit_interior"; // 开发者：开合室内编辑（改房屋模板）
+constexpr const char *SAVE_AS = "save_as"; // 室内编辑时另存为新模板
 constexpr const char *FLY_DOWN = "fly_down"; // god 模式下往下飞（Shift 已是加速，不能再用来降）
 
 // 幂等：已有的动作不重复注册

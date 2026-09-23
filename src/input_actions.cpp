@@ -53,6 +53,10 @@ void input_actions::register_all() {
     bind(GOD_MODE, { KEY_F3 });
     bind(TIME_LAPSE, { KEY_F4 });
     bind(FLY_DOWN, { KEY_CTRL, KEY_C });
+    bind(NEXT_STYLE, { KEY_V });
+    bind(PREV_STYLE, { KEY_Z });
+    bind(EDIT_INTERIOR, { KEY_T });
+    bind(SAVE_AS, { KEY_N });
     bind(GEAR_UP, { KEY_R, KEY_PAGEUP });
     bind(GEAR_DOWN, { KEY_F, KEY_PAGEDOWN });
 }

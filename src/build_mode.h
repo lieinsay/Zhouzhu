@@ -9,7 +9,7 @@
 
 // 布置模式（开发者）：相机绕着地面光标转，WASD 相对相机挪光标、Q/R 转向、1-4 选建筑、E 放、X 拆、F5 把改动存回文件。
 // 与场景无关的玩法部件（不是节点）：改哪一处聚落由编排递进来（地图宿主说脚下是哪处），这里只认它的 Settlement 与地面宿主；
-// 光标在宿主的局部坐标里按 0.5 m 取整、贴着地面走。规矩在 settlement_model 里，这里只转述原因。开着的时候人站不站住由编排定。
+// 光标在宿主的局部坐标里按 0.5 m 取整、贴着地面走。V / Z 换房屋模板：光标下有房子就换那座的，没有就换要放的那座的（见 TemplateLibrary）。规矩在 settlement_model 里，这里只转述原因。开着的时候人站不站住由编排定。
 class BuildMode {
     bool open = false;
     GroundHost *host = nullptr;
@@ -18,6 +18,7 @@ class BuildMode {
     double yaw = 0.0; // 弧度
     int kind = 0;
     int selected = -1; // 光标下已有的那一座
+    int style = 0; // 要放的那座用哪套模板：0 = 按位置自动挑，k = 这种外壳的第 k 套
     BuildPanel *panel = nullptr;
     BuildOverlay *overlay = nullptr;
 
@@ -44,6 +45,8 @@ public:
 
     godot::Vector3 cursor_snapped() const; // 光标按 0.5 m 格取整（宿主坐标）、贴地（全局）
     godot::String get_kind() const;
+    godot::String get_style() const; // 要放的那座的款式（空 = 自动）
+    godot::String style_text() const; // 面板上那一行
     int get_selected() const { return selected; }
     double get_yaw_deg() const;
     double get_camera_yaw() const { return overlay ? overlay->get_camera_yaw() : 0.0; }

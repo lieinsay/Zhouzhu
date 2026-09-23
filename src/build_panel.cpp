@@ -65,16 +65,19 @@ void BuildPanel::ensure_built() {
         column->add_child(palette[k]);
     }
 
+    style_label = make_label(16, ROW_CURSOR);
+    column->add_child(style_label);
+
     file_label = make_label(15, ROW_DIM);
     column->add_child(file_label);
 
     hint = make_label(14, ROW_DIM);
-    hint->set_text(String(U"WASD 挪光标（Shift 快）· Q/R 转向 · 鼠标转视角 · 滚轮远近\nE 放一座 · X 拆掉光标下的 · F5 存盘 · Tab 合上"));
+    hint->set_text(String(U"WASD 挪光标（Shift 快）· Q/R 转向 · 鼠标转视角 · 滚轮远近\nE 放一座 · X 拆掉光标下的 · V / Z 换房屋模板 · T 改屋里 · F5 存盘 · Tab 合上"));
     column->add_child(hint);
 }
 
 void BuildPanel::refresh(const String &p_island, const Vector3 &p_local_cursor, double p_yaw_deg, const String &p_status, bool p_ok,
-        int p_kind, int p_count, const String &p_layout_path, bool p_dirty) {
+        int p_kind, int p_count, const String &p_layout_path, bool p_dirty, const String &p_style) {
     ensure_built();
     title->set_text(String(U"布置建筑（开发者）· ") + p_island);
     cursor_label->set_text(vformat(String(U"光标：x %+.1f  z %+.1f  地面 %.1f m · 门朝 %d°"), p_local_cursor.x, p_local_cursor.z, p_local_cursor.y, int(std::lround(p_yaw_deg))));
@@ -87,6 +90,8 @@ void BuildPanel::refresh(const String &p_island, const Vector3 &p_local_cursor, 
         palette[k]->set_text((chosen ? String(U"▸ ") : String(U"   ")) + vformat(String(U"%d  %s    %.0f × %.0f m · 高 %.1f m"), k + 1, String::utf8(d.name), d.width_m, d.depth_m, d.plinth_m + d.wall_m + d.roof_m));
         palette[k]->add_theme_color_override("font_color", chosen ? ROW_CURSOR : ROW_PLAIN);
     }
+
+    style_label->set_text(String(U"房屋模板：") + p_style);
 
     String file = vformat(String(U"清单 %d 座 · "), p_count);
     if (p_layout_path.is_empty()) {
