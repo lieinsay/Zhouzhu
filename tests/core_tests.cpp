@@ -2377,6 +2377,9 @@ void test_house_templates() {
     check(!parse_template({ "name 无名" }, back) && !parse_template({ "id barn/x" }, back), "没 id、外壳不认识都读不成");
     HouseTemplate tw;
     check(parse_template({ "id tower/t", "ladder 1,1 2 @1" }, tw) && tw.ladders.size() == 1 && tw.ladders[0].level == 1 && tw.ladders[0].quarter == 2, "行尾 @层");
+    check(tw.auto_pick, "缺省参与自动挑");
+    t.auto_pick = false;
+    check(parse_template(template_lines(t), back) && !back.auto_pick && back == t, "auto no 写出去、读回来");
 
     // 放东西的规矩
     HouseTemplate e = bare_template(house);

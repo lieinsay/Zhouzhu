@@ -106,7 +106,7 @@ std::string HouseTemplate::style() const {
 }
 
 bool HouseTemplate::operator==(const HouseTemplate &p_other) const {
-    if (id != p_other.id || name != p_other.name || openings.size() != p_other.openings.size() || partitions.size() != p_other.partitions.size() ||
+    if (id != p_other.id || name != p_other.name || auto_pick != p_other.auto_pick || openings.size() != p_other.openings.size() || partitions.size() != p_other.partitions.size() ||
             doorways.size() != p_other.doorways.size() || items.size() != p_other.items.size() || ladders.size() != p_other.ladders.size()) {
         return false;
     }
@@ -232,6 +232,9 @@ std::vector<std::string> template_lines(const HouseTemplate &p_template) {
     std::vector<std::string> lines;
     lines.push_back("id " + p_template.id);
     lines.push_back("name " + p_template.name);
+    if (!p_template.auto_pick) {
+        lines.push_back("auto no");
+    }
     for (const Opening &o : p_template.openings) {
         lines.push_back(std::string(o.window ? "window " : "door ") + side_name(o.side) + " " + number(o.at) + " " + number(o.width) + at_level(o.level));
     }
@@ -282,6 +285,14 @@ bool parse_template(const std::vector<std::string> &p_lines, HouseTemplate &r_te
                 t.id = value;
             } else {
                 t.name = value;
+            }
+            continue;
+        }
+        if (cmd == "auto") {
+            if (words.size() != 2 || (words[1] != "yes" && words[1] != "no")) {
+                fail(n, "应是「auto yes」或「auto no」");
+            } else {
+                t.auto_pick = words[1] == "yes";
             }
             continue;
         }

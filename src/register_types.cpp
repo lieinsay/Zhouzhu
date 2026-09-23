@@ -24,6 +24,7 @@
 #include "world.h"
 #include "world_map.h"
 #include "world_village.h"
+#include "template_library.h"
 #include "world_clock.h"
 
 using namespace godot;
@@ -33,6 +34,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
         return;
     }
     GDREGISTER_CLASS(WorldClock);
+    GDREGISTER_CLASS(TemplateLibrary);
     GDREGISTER_CLASS(Island);
     GDREGISTER_CLASS(Farm);
     GDREGISTER_CLASS(Shipyard);

@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/character_body3d.hpp>
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/spring_arm3d.hpp>
 
 // 玩家角色：第三人称，相对相机朝向的 WASD、跳、疾跑。
 // 根节点自己从不旋转——转的是相机支点（鼠标）和身体模型（朝移动方向）。
@@ -13,6 +14,7 @@
 // set_input_blocked(true) 只挡输入（开着背包时 W/S 是在选东西，不是在走路），物理照常：重力、落地都还在。
 // 爬梯：Sensor（Area3D）碰到带 "ladder" 元数据的区域时，前 / 后变成沿梯子上 / 下（面朝墙按前是上，背对墙按前是下），
 // 水平速度放慢，不受重力。梯子是谁的（船）它不知道。
+// 屋里：头顶 6 m 内有东西（天花板、舱顶）就把相机的弹簧臂缓缓收到 indoor_arm，出来再放回场景里配的长度——还是第三人称，只是近些。
 // god 模式（开发者工具开的，它不知道是谁）：不受重力，按相机的水平朝向飞，空格升、Ctrl 降、Shift 加速；碰撞照旧，降到地上就站住。
 //
 // 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D、Sensor（Area3D）。
@@ -27,6 +29,9 @@ class Player : public godot::CharacterBody3D {
     double mouse_sensitivity = 0.0025;
     double god_speed = 30.0;
     double god_boost = 5.0; // 按住 Shift 时速度乘这么多
+    double indoor_arm = 2.6; // 屋里相机离人多远
+    double outdoor_arm = 5.0; // 屋外：开局从场景里的 SpringArm3D 读
+    bool indoors = false;
 
     bool controlled = true;
     bool input_blocked = false;
@@ -39,9 +44,11 @@ class Player : public godot::CharacterBody3D {
     godot::Node3D *body = nullptr;
     godot::Node3D *camera_pivot = nullptr;
     godot::Camera3D *camera = nullptr;
+    godot::SpringArm3D *arm = nullptr;
     std::vector<godot::Node3D *> ladders; // 眼下碰着的梯子区域（区域的 +Z 是离墙的方向）
 
     void apply_look();
+    void update_arm(double p_delta);
     void turn_body(const godot::Vector3 &p_wish, double p_delta); // 身体模型转向移动方向
     void on_sensor_area_entered(godot::Node3D *p_area);
     void on_sensor_area_exited(godot::Node3D *p_area);
@@ -59,6 +66,9 @@ public:
     void set_input_blocked(bool p_blocked) { input_blocked = p_blocked; }
     bool is_input_blocked() const { return input_blocked; }
     bool is_on_ladder() const { return !ladders.empty(); }
+    bool is_indoors() const { return indoors; }
+    void set_indoor_arm(double p_value) { indoor_arm = p_value; }
+    double get_indoor_arm() const { return indoor_arm; }
     void set_god_mode(bool p_enabled);
     bool is_god_mode() const { return god_mode; }
     void set_look_yaw(double p_yaw);

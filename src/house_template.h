@@ -18,6 +18,7 @@
 // 文本（game/buildings/<外壳>/<款式>.txt），一行一条，# 开头是注释，行尾可以带 @层（缺省 0 层）：
 //   id house/sanjian            模板 id = 外壳/款式
 //   name 三间                    显示名
+//   auto no                     不参与自动挑（缺省参与）
 //   door front 0 1.3            外墙开门：哪一面（front/right/back/left）、沿墙的位置（前后两面是 x，左右两面是 z）、宽
 //   window front -3.6 1.2       外墙开窗：同上
 //   wall -1.75,-2.95 -1.75,2.95 隔墙：两个端点（x,z），须横平竖直
@@ -83,6 +84,7 @@ struct LadderSpot {
 struct HouseTemplate {
     std::string id; // "house/sanjian"
     std::string name; // 显示名
+    bool auto_pick = true; // 清单里没写款式的房子能不能自动挑到它（另存出来的新模板默认不能，免得满村的房子都跟着换）
     std::vector<Opening> openings;
     std::vector<Partition> partitions;
     std::vector<Doorway> doorways;

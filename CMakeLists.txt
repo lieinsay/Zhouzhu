@@ -143,6 +143,8 @@ target_sources(
         src/shipyard.h
         src/site_stream.cpp
         src/site_stream.h
+        src/template_library.cpp
+        src/template_library.h
         src/villagers.cpp
         src/villagers.h
         src/world.cpp

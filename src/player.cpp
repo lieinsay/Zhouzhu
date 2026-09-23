@@ -7,6 +7,10 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
+#include <godot_cpp/classes/physics_direct_space_state3d.hpp>
+#include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
+#include <godot_cpp/classes/spring_arm3d.hpp>
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
@@ -22,6 +26,8 @@ constexpr double TURN_RATE = 12.0; // 身体转向移动方向的速率
 constexpr double GOD_ACCEL = 6.0; // god 模式下速度逼近目标的速率（1/s）
 constexpr double PITCH_MIN = -1.3;
 constexpr double PITCH_MAX = 0.6;
+constexpr double ROOF_PROBE = 6.0; // 头顶这么高以内有东西挡着，就算在屋里（屋檐下、舱房里）
+constexpr double ARM_RATE = 6.0; // 弹簧臂长度逼近目标的速率（1/s）
 
 } // namespace
 
@@ -35,6 +41,9 @@ void Player::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_facing_yaw", "yaw"), &Player::set_facing_yaw);
     ClassDB::bind_method(D_METHOD("get_camera"), &Player::get_camera);
     ClassDB::bind_method(D_METHOD("is_on_ladder"), &Player::is_on_ladder);
+    ClassDB::bind_method(D_METHOD("is_indoors"), &Player::is_indoors);
+    ClassDB::bind_method(D_METHOD("set_indoor_arm", "value"), &Player::set_indoor_arm);
+    ClassDB::bind_method(D_METHOD("get_indoor_arm"), &Player::get_indoor_arm);
     ClassDB::bind_method(D_METHOD("set_god_mode", "enabled"), &Player::set_god_mode);
     ClassDB::bind_method(D_METHOD("is_god_mode"), &Player::is_god_mode);
     ClassDB::bind_method(D_METHOD("set_god_speed", "value"), &Player::set_god_speed);
@@ -61,6 +70,7 @@ void Player::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "gravity", PROPERTY_HINT_RANGE, "0,60,0.1,suffix:m/s²"), "set_gravity", "get_gravity");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "god_speed", PROPERTY_HINT_RANGE, "1,200,1,suffix:m/s"), "set_god_speed", "get_god_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "god_boost", PROPERTY_HINT_RANGE, "1,20,0.5"), "set_god_boost", "get_god_boost");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "indoor_arm", PROPERTY_HINT_RANGE, "0.5,10,0.1,suffix:m"), "set_indoor_arm", "get_indoor_arm");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mouse_sensitivity", PROPERTY_HINT_RANGE, "0.0005,0.01,0.0001"), "set_mouse_sensitivity", "get_mouse_sensitivity");
 }
 
@@ -74,6 +84,10 @@ void Player::_ready() {
     body = get_node<Node3D>("Body");
     camera_pivot = get_node<Node3D>("CameraPivot");
     camera = get_node<Camera3D>("CameraPivot/SpringArm3D/Camera3D");
+    arm = get_node<SpringArm3D>("CameraPivot/SpringArm3D");
+    if (arm) {
+        outdoor_arm = arm->get_length();
+    }
     ERR_FAIL_COND_MSG(!body || !camera_pivot || !camera, "Player: 场景里缺 Body 或 CameraPivot/SpringArm3D/Camera3D");
     Area3D *sensor = get_node<Area3D>("Sensor");
     ERR_FAIL_NULL_MSG(sensor, "Player: 场景里缺 Sensor（Area3D）");
@@ -111,10 +125,25 @@ void Player::_unhandled_input(const Ref<InputEvent> &p_event) {
     }
 }
 
+// 屋里第三人称：头顶有顶就把相机拉近（弹簧臂顶到墙和天花板本来也会缩，但缩得忽长忽短、还会顺着门洞溜到屋外）
+void Player::update_arm(double p_delta) {
+    if (!arm || !camera_pivot) {
+        return;
+    }
+    const Vector3 head = camera_pivot->get_global_position();
+    Ref<PhysicsRayQueryParameters3D> query = PhysicsRayQueryParameters3D::create(head, head + Vector3(0, real_t(ROOF_PROBE), 0), arm->get_collision_mask());
+    query->set_exclude(TypedArray<RID>::make(get_rid()));
+    indoors = !get_world_3d()->get_direct_space_state()->intersect_ray(query).is_empty();
+    const double target = indoors ? indoor_arm : outdoor_arm;
+    const double length = arm->get_length();
+    arm->set_length(real_t(length + (target - length) * (1.0 - std::exp(-ARM_RATE * p_delta))));
+}
+
 void Player::_physics_process(double p_delta) {
     if (!controlled) {
         return;
     }
+    update_arm(p_delta);
     Input *input = Input::get_singleton();
     const Vector2 stick = input_blocked ? Vector2() : input->get_vector(input_actions::MOVE_LEFT, input_actions::MOVE_RIGHT, input_actions::MOVE_FORWARD, input_actions::MOVE_BACK);
     const Vector3 wish = Basis(Vector3(0, 1, 0), real_t(look_yaw)).xform(Vector3(stick.x, 0, stick.y));
