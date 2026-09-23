@@ -476,12 +476,13 @@
     },
     {
       "id": "villager-clock",
-      "label": "钟点",
-      "detail": "一天 day_seconds 秒；卯时 6 点出工、11:30–12:30 歇晌、18:30 收工；时辰名与「巳时 · 第 1 日 · 09:30」这种文字。",
+      "label": "一日钟点",
+      "detail": "时辰规则（出工、歇晌、收工）与「下一个钟点标记」；从村民决策挪出，远近模拟与 HUD 共用。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest：子夜 / 正午 / 次日卯时 / 时辰名",
       "sources": [
-        "src/villager_model.cpp"
+        "src/day_clock.h",
+        "src/day_clock.cpp"
       ],
       "since": "e10"
     },
@@ -929,6 +930,90 @@
         "game/tests/flat_map_e2e.gd"
       ],
       "since": "e16"
+    },
+    {
+      "id": "world-clock",
+      "label": "GameClock 世界时钟",
+      "detail": "唯一的钟，autoload，物理优先级 −1000 最先走；一日 2400 s，只许往前拨；F4 快进倍率在它身上。",
+      "tag": "引擎构件",
+      "evidence": "world_sim_e2e 逐帧查钟连续（40314 帧）",
+      "sources": [
+        "src/world_clock.h",
+        "src/world_clock.cpp",
+        "game/world_clock.tscn"
+      ],
+      "since": "e19"
+    },
+    {
+      "id": "field-book",
+      "label": "地账接口 FieldBook",
+      "detail": "村民决策只通过它看地、垦、播、收；近处包 Farm，远处是账上的 HeldFields + 开账时勘的能垦位图；认领表全岛群一份，村与村不抢同一格。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests 581 条",
+      "sources": [
+        "src/field_book.h",
+        "src/field_book.cpp"
+      ],
+      "since": "e19"
+    },
+    {
+      "id": "village-state",
+      "label": "村落账本",
+      "detail": "按人记账：每人的位置、活计、阶段、随机流、路；仓、水缸、认领与账上的地、流水。纯数据，可存成文本再读回。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：存取往返一致",
+      "sources": [
+        "src/village_state.h",
+        "src/village_state.cpp"
+      ],
+      "since": "e19"
+    },
+    {
+      "id": "village-sim",
+      "label": "村落模拟",
+      "detail": "按事件推进一本账：钟点标记、吃饭挑水、回家、到点的活计；近处每帧、远处半小时一结都走它，只有走路的解法不同（A* 路点 / 直线 × 1.25 估时）。found / deploy / collapse 负责建账、摆开、收回。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：近远一天等效在 20% 内、远处 ≥5 倍快、展开→收起→展开守恒、分段结算与整段一致",
+      "sources": [
+        "src/village_sim.h",
+        "src/village_sim.cpp"
+      ],
+      "since": "e19"
+    },
+    {
+      "id": "world-ledger",
+      "label": "岛群村落开账与结算",
+      "detail": "按落点铺村、找水、勘地，建一本账；按半小时结算。账房与体检工具共用。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "site_survey --sim 24：371 本账全平",
+      "sources": [
+        "src/world_ledger.h",
+        "src/world_ledger.cpp"
+      ],
+      "since": "e19"
+    },
+    {
+      "id": "hinterland",
+      "label": "Hinterland 远处账房",
+      "detail": "持有岛群每个村落的账；后台线程开账，逐帧轮流结算、每帧 0.5 ms 预算、按 5 分钟切片；借给近处村民节点、收回时记下布局。",
+      "tag": "场景角色",
+      "evidence": "Release 每次结算平均 0.098 ms；游戏内每帧平均约 0.1 ms",
+      "sources": [
+        "src/hinterland.h",
+        "src/hinterland.cpp"
+      ],
+      "since": "e19"
+    },
+    {
+      "id": "world-sim-e2e",
+      "label": "世界模拟端到端测试",
+      "detail": "村152 看人出门 → 飞 30 km 待到下午 → 飞回；逐帧查钟、核粮账、村民在岗、远处的账在走。",
+      "tag": "验收",
+      "evidence": "窗口模式带截图 PASS",
+      "sources": [
+        "game/tests/world_sim_e2e.gd"
+      ],
+      "since": "e19"
     }
   ],
   "edges": [
@@ -2077,6 +2162,208 @@
       "from": "settlement-host",
       "to": "map-ground",
       "label": "host_ground"
+    },
+    {
+      "from": "world-clock",
+      "to": "villager-clock",
+      "label": "日长",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "field-book",
+      "to": "farm-model",
+      "label": "地块",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "villager-brain",
+      "to": "field-book",
+      "label": "看地 / 认领",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "village-state",
+      "to": "villager-brain",
+      "label": "每人的心思",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "village-state",
+      "to": "field-book",
+      "label": "账上的地 / 能垦位图",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "village-sim",
+      "to": "village-state",
+      "label": "推进",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "village-sim",
+      "to": "villager-brain",
+      "label": "下一件做什么",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "village-sim",
+      "to": "villager-clock",
+      "label": "钟点标记",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "village-sim",
+      "to": "villager-nav",
+      "label": "近处寻路",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "village-sim",
+      "to": "field-book",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "world-ledger",
+      "to": "village-sim",
+      "label": "建账 / 结算",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "world-ledger",
+      "to": "village-plan",
+      "label": "铺村",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "world-ledger",
+      "to": "world-sites",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "hinterland",
+      "to": "world-ledger",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "hinterland",
+      "to": "world-clock",
+      "label": "当下几秒",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "hinterland",
+      "to": "world-node",
+      "label": "地形",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "village-sim",
+      "label": "近处推进 / 摆开 / 收回",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "world-clock",
+      "label": "当下几秒",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "field-book",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "farm-node",
+      "to": "world-clock",
+      "label": "长了几个钟头",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "world-village",
+      "to": "hinterland",
+      "label": "借账 / 还账",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "site-stream",
+      "to": "hinterland",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "expedition",
+      "to": "world-clock",
+      "label": "HUD 钟点",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "dev-tools-node",
+      "to": "world-clock",
+      "label": "F4 快进",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "site-survey-tool",
+      "to": "world-ledger",
+      "label": "--sim",
+      "chains": [
+        "world-sim"
+      ]
+    },
+    {
+      "from": "world-sim-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "world-sim"
+      ]
     }
   ],
   "chains": [
@@ -2924,6 +3211,110 @@
         "villager-brain",
         "flat-map"
       ]
+    },
+    {
+      "id": "world-sim",
+      "title": "切片七：全局世界时钟 + 远近分层的村落模拟",
+      "story": "玩家天亮时在村152 看着农夫、挑水的陆续出门，随后开船飞到 30 km 外的乙岛待到下午；这半天里看不见的村子照样按同一套规矩过日子——开荒、播种、收割、吃饭、挑水。飞回来时钟点一刻没断，村里的粮仓按收成与口粮涨了，人都在各自的地头与岗位上，垦过的田一块不少。",
+      "date": "2026-09-23",
+      "color": "#6c9a3b",
+      "commits": "252fff6..b4c22ad",
+      "steps": [
+        {
+          "text": "游戏一启动，全局只有一个世界钟 GameClock：一日 40 分钟，每帧最先走；HUD 与农田、村民都读它",
+          "nodes": [
+            "world-clock",
+            "villager-clock",
+            "expedition"
+          ]
+        },
+        {
+          "text": "进入岛群：远处账房给 371 个村落各开一本账（后台线程、近的先开），按户招人、勘好门口一圈能垦的地",
+          "nodes": [
+            "hinterland",
+            "world-ledger",
+            "village-sim",
+            "village-state",
+            "village-plan",
+            "world-sites"
+          ]
+        },
+        {
+          "text": "走近村152：SiteStream 铺好房子，村民节点从账房借来这本账，按钟点、日程与账把每个人摆到他此刻该在的地方",
+          "nodes": [
+            "site-stream",
+            "world-village",
+            "villagers-node",
+            "village-sim",
+            "village-state"
+          ]
+        },
+        {
+          "text": "近处每帧推进：村民沿导航格走路、下地、打水；决策只认地账接口，地块落在 Farm 上照常画出来",
+          "nodes": [
+            "villagers-node",
+            "village-sim",
+            "villager-brain",
+            "field-book",
+            "villager-nav",
+            "farm-node",
+            "farm-model"
+          ]
+        },
+        {
+          "text": "飞远了：村子拆掉前把人和地块折回账本，交还账房；远处每半小时按同一套规矩结一次账，走路按直线估时，每帧有预算",
+          "nodes": [
+            "world-village",
+            "villagers-node",
+            "hinterland",
+            "world-ledger",
+            "village-sim",
+            "field-book"
+          ]
+        },
+        {
+          "text": "开发者按 F4 快进 ×30：钟走得快，远近的村子与庄稼一起快",
+          "nodes": [
+            "dev-tools-node",
+            "world-clock",
+            "input-map"
+          ]
+        },
+        {
+          "text": "飞回村152：账从离开那刻结到当下再摆开——钟连续、粮仓按收播吃对得上、村民在岗、认领的田都回到农田里",
+          "nodes": [
+            "hinterland",
+            "villagers-node",
+            "village-sim",
+            "farm-node"
+          ]
+        }
+      ],
+      "nodes": [
+        "world-clock",
+        "villager-clock",
+        "field-book",
+        "village-state",
+        "village-sim",
+        "world-ledger",
+        "hinterland",
+        "world-sim-e2e",
+        "expedition",
+        "village-plan",
+        "world-sites",
+        "site-stream",
+        "world-village",
+        "villagers-node",
+        "villager-brain",
+        "villager-nav",
+        "farm-node",
+        "farm-model",
+        "dev-tools-node",
+        "input-map",
+        "world-node",
+        "site-survey-tool",
+        "world-2051-scene"
+      ]
     }
   ],
   "events": [
@@ -3588,6 +3979,72 @@
         "children": [],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e19",
+      "type": "slice",
+      "date": "2026-09-23",
+      "title": "切片七：全局世界时钟 + 远近分层的村落模拟",
+      "summary": "玩家天亮时在村152 看着农夫、挑水的陆续出门，随后开船飞到 30 km 外的乙岛待到下午；这半天里看不见的村子照样按同一套规矩过日子——开荒、播种、收割、吃饭、挑水。飞回来时钟点一刻没断，村里的粮仓按收成与口粮涨了，人都在各自的地头与岗位上，垦过的田一块不少。",
+      "commits": "252fff6..b4c22ad",
+      "chain": "world-sim",
+      "nodes": [
+        "world-clock",
+        "villager-clock",
+        "field-book",
+        "village-state",
+        "village-sim",
+        "world-ledger",
+        "hinterland",
+        "world-sim-e2e",
+        "expedition",
+        "village-plan",
+        "world-sites",
+        "site-stream",
+        "world-village",
+        "villagers-node",
+        "villager-brain",
+        "villager-nav",
+        "farm-node",
+        "farm-model",
+        "dev-tools-node",
+        "input-map",
+        "world-node",
+        "site-survey-tool",
+        "world-2051-scene"
+      ],
+      "info": {
+        "created": [
+          "world-clock",
+          "field-book",
+          "village-state",
+          "village-sim",
+          "world-ledger",
+          "hinterland",
+          "world-sim-e2e"
+        ],
+        "reused": [
+          "villager-clock",
+          "expedition",
+          "village-plan",
+          "world-sites",
+          "site-stream",
+          "world-village",
+          "villagers-node",
+          "villager-brain",
+          "villager-nav",
+          "farm-node",
+          "farm-model",
+          "dev-tools-node",
+          "input-map",
+          "world-node",
+          "site-survey-tool",
+          "world-2051-scene"
+        ],
+        "updated": [
+          "villager-clock"
+        ]
       }
     }
   ],
