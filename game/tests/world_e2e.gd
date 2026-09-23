@@ -1,6 +1,6 @@
 extends Node
 ## 真实比例岛群（world_2051.tscn）端到端测试，只通过输入（动作、鼠标）操作：
-## 出生在邑治、脚下有地 → 往前跑几秒一直踩在地上 → M 开地图 → 滚轮缩小 → 左键点乙岛（#1）→ 瞬移过去站在 #1 的地上
+## 出生在主码头的停机坪上、脚下有地 → 往前跑几秒一直踩在地上 → M 开地图 → 滚轮缩小 → 左键点乙岛（#1）→ 瞬移过去站在 #1 的地上
 ## → 再开地图点最远的码头 → 站在那座岛上 → 把人挪到云海上空 → 掉下去回到上一处站稳的地方。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/world_e2e.tscn
@@ -44,7 +44,7 @@ func _ready() -> void:
 	world = main.get_node("World")
 	player = main.get_node("Player")
 	map = main.get_map()
-	# 乙岛 = #1；最远的码头 = 离邑治最远、又不在主岛上的那个
+	# 乙岛 = #1；最远的码头 = 离出生点最远、又不在主岛上的那个
 	var info: Dictionary = world.get_info()
 	for isl in info["islands"]:
 		if int(isl["id"]) == 1:
@@ -59,7 +59,7 @@ func _ready() -> void:
 			best = d
 			dock_target = p
 			dock_island = int(dock["island"])
-	print("world_e2e: 邑治 %s，乙岛心 %s，最远码头 %s（岛 #%d，%.1f km）" % [spawn, target, dock_target, dock_island, best / 1000.0])
+	print("world_e2e: 出生点 %s，乙岛心 %s，最远码头 %s（岛 #%d，%.1f km）" % [spawn, target, dock_target, dock_island, best / 1000.0])
 
 
 func _process(_delta: float) -> void:
@@ -123,7 +123,7 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "出生后离出生点 %.1f m" % off)
 					return
 				if world.get_island_at(player.global_position.x, player.global_position.z) != 0:
-					_finish(false, "邑治不在主岛上")
+					_finish(false, "出生点不在主岛上")
 					return
 				print("world_e2e: 出生站稳（%.1f s），块 %d，待建 %d" % [in_phase, world.get_tile_count(), world.get_pending_count()])
 				_shot("1_spawn")
@@ -229,8 +229,12 @@ func _physics_process(delta: float) -> void:
 				for d in info["docks"]:
 					if d.get("main", false):
 						dock = Vector3(d["pos"][0], 0, d["pos"][1])
-				var spawn := main.get_spawn_point()
-				var out := Vector3(dock.x - spawn.x, 0, dock.z - spawn.z).normalized()
+				# 外法线方向：从邑治（岛内）指向主码头
+				var seat := Vector3.ZERO
+				for v in info["villages"]:
+					if v.get("seat", false):
+						seat = Vector3(v["pos"][0], 0, v["pos"][1])
+				var out := Vector3(dock.x - seat.x, 0, dock.z - seat.z).normalized()
 				var above := dock + out * 1500.0 + Vector3(0, 420, 0)
 				if not is_nan(world.get_surface_height(above.x, above.z)):
 					_finish(false, "主码头外 1.5 km 居然有地")
