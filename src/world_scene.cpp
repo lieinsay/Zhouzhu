@@ -89,6 +89,7 @@ void WorldScene::_ready() {
         return;
     }
     input_actions::register_all();
+    add_to_group(GROUP); // 开发者工具据此知道这张地图有岛群地图
     world = Object::cast_to<World>(get_node_or_null(world_path));
     player = Object::cast_to<Player>(get_node_or_null(player_path));
     // 子节点先于父节点 _ready：World 此刻已经读完数据

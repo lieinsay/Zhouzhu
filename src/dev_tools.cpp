@@ -247,7 +247,7 @@ void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
         return;
     }
     // 岛群场景自己管 M；别的场景没有地图，告诉开发者去哪儿找
-    if (p_event->is_action_pressed(input_actions::MAP) && !Object::cast_to<WorldScene>(get_tree()->get_current_scene())) {
+    if (p_event->is_action_pressed(input_actions::MAP) && !get_tree()->get_first_node_in_group(WorldScene::GROUP)) {
         show_notice(String(U"这张地图没有岛群地图——按 F2 换到有地图的「岛群 #2051」"));
     }
 }

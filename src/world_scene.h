@@ -24,6 +24,10 @@
 class WorldScene : public godot::Node3D {
     GDCLASS(WorldScene, godot::Node3D)
 
+public:
+    static constexpr const char *GROUP = "world_scene";
+
+private:
     godot::NodePath world_path = "World";
     godot::NodePath player_path = "Player";
     godot::NodePath ship_path = "Ship"; // 可以不接：那就只能走、只能瞬移
