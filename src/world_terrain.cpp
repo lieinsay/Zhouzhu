@@ -151,8 +151,9 @@ void WorldTerrain::set_pads(const std::vector<DockPlan> &p_pads) {
         }
         const int index = int(pads.size());
         pads.push_back(pad);
-        const int i0 = int(std::floor((pad.z - pad.apron_m) / PAD_BUCKET_M)), i1 = int(std::floor((pad.z + pad.apron_m) / PAD_BUCKET_M));
-        const int j0 = int(std::floor((pad.x - pad.apron_m) / PAD_BUCKET_M)), j1 = int(std::floor((pad.x + pad.apron_m) / PAD_BUCKET_M));
+        const double reach = pad.apron_m + PAD_REACH_M;
+        const int i0 = int(std::floor((pad.z - reach) / PAD_BUCKET_M)), i1 = int(std::floor((pad.z + reach) / PAD_BUCKET_M));
+        const int j0 = int(std::floor((pad.x - reach) / PAD_BUCKET_M)), j1 = int(std::floor((pad.x + reach) / PAD_BUCKET_M));
         for (int i = i0; i <= i1; i++) {
             for (int j = j0; j <= j1; j++) {
                 pad_buckets[pad_key(i, j)].push_back(index);
@@ -163,22 +164,50 @@ void WorldTerrain::set_pads(const std::vector<DockPlan> &p_pads) {
 
 TerrainSample WorldTerrain::sample(double p_x, double p_z) const {
     TerrainSample s = sample_raw(p_x, p_z);
-    if (pad_buckets.empty()) {
-        return s;
+    if (!pad_buckets.empty()) {
+        const auto found = pad_buckets.find(pad_key(int(std::floor(p_z / PAD_BUCKET_M)), int(std::floor(p_x / PAD_BUCKET_M))));
+        if (found != pad_buckets.end()) {
+            for (int index : found->second) {
+                const DockPlan &pad = pads[size_t(index)];
+                const double w = dock_pad_weight(pad, p_x, p_z);
+                if (w > 0.0) {
+                    s.top += w * (pad.y - s.top);
+                }
+            }
+        }
     }
-    const auto found = pad_buckets.find(pad_key(int(std::floor(p_z / PAD_BUCKET_M)), int(std::floor(p_x / PAD_BUCKET_M))));
-    if (found == pad_buckets.end()) {
-        return s;
-    }
-    for (int index : found->second) {
-        const DockPlan &pad = pads[size_t(index)];
-        const double w = dock_pad_weight(pad, p_x, p_z);
-        if (w > 0.0) {
-            s.top += w * (pad.y - s.top);
+    for (const YardPlan &yard : yards) {
+        if (std::abs(p_x - yard.x) <= 0.5 * (yard.length + yard.width) + YARD_REACH_M && std::abs(p_z - yard.z) <= 0.5 * (yard.length + yard.width) + YARD_REACH_M &&
+                yard.outside_distance(p_x, p_z) <= YARD_REACH_M) {
+            s.top = yard_carve(yard, yard_rules, p_x, p_z, s.top);
         }
     }
     s.bottom = std::min(s.bottom, s.top - MIN_THICKNESS_M);
     return s;
+}
+
+bool WorldTerrain::near_pad(double p_x, double p_z, double p_margin) const {
+    const auto found = pad_buckets.find(pad_key(int(std::floor(p_z / PAD_BUCKET_M)), int(std::floor(p_x / PAD_BUCKET_M))));
+    if (found == pad_buckets.end()) {
+        return false;
+    }
+    for (int index : found->second) {
+        const DockPlan &pad = pads[size_t(index)];
+        if (std::hypot(p_x - pad.x, p_z - pad.z) <= pad.apron_m + p_margin) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void WorldTerrain::set_yards(const std::vector<YardPlan> &p_yards, const YardRules &p_rules) {
+    yards.clear();
+    yard_rules = p_rules;
+    for (const YardPlan &yard : p_yards) {
+        if (yard.present) {
+            yards.push_back(yard);
+        }
+    }
 }
 
 bool WorldTerrain::is_land(double p_x, double p_z) const {

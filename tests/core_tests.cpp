@@ -16,9 +16,12 @@
 #include "crops.h"
 #include "dock_site.h"
 #include "farm_model.h"
+#include "flat_ground.h"
 #include "flight_model.h"
 #include "inventory.h"
 #include "island_field.h"
+#include "island_ground.h"
+#include "map_ground.h"
 #include "map_image.h"
 #include "settlement_model.h"
 #include "ship_layout.h"
@@ -47,6 +50,32 @@ void check(bool p_ok, const std::string &p_what) {
 void check_near(double p_actual, double p_expected, double p_tol, const std::string &p_what) {
     check(std::abs(p_actual - p_expected) <= p_tol,
             p_what + "（得到 " + std::to_string(p_actual) + "，应为 " + std::to_string(p_expected) + " ± " + std::to_string(p_tol) + "）");
+}
+
+// 岛上的农田模型：地面与模型一起活着
+struct IslandFarm {
+    IslandGround ground;
+    FarmModel model;
+    IslandFarm(const IslandField &p_field, double p_apron, const FarmRules &p_rules) :
+            ground(p_field, p_apron), model(&ground, ground.plot_lattice(), p_rules) {}
+    int arable_count() const {
+        const PlotLattice &l = model.get_lattice();
+        int n = 0;
+        for (int i = l.i_min; i < l.i_max; i++) {
+            for (int j = l.j_min; j < l.j_max; j++) {
+                n += model.land_at(i, j) == Arability::ARABLE ? 1 : 0;
+            }
+        }
+        return n;
+    }
+};
+
+// 整座岛的导航格（与 Island 宿主同一个窗口）
+NavGrid island_nav(const IslandField &p_field, const SettlementLayout &p_layout, const NavRules &p_rules) {
+    double x0 = 0.0, z0 = 0.0;
+    int cols = 0, rows = 0;
+    island_nav_window(p_field, p_rules, x0, z0, cols, rows);
+    return build_nav_grid(IslandGround(p_field, 20.0), x0, z0, cols, rows, p_layout, p_rules);
 }
 
 uint64_t field_hash(const IslandField &f) {
@@ -382,10 +411,12 @@ void test_trail(const char *p_name, double p_age) {
     check(flat_err < 1e-3, "停机坪仍是平的");
     check(field_hash(generate_island_field(p)) == field_hash(f), "同输入重跑，哈希一致");
 
-    const FarmSurvey survey = survey_farmland(f, p.dock_apron_m, FarmRules());
+    const IslandFarm survey(f, p.dock_apron_m, FarmRules());
     int on_trail = 0;
-    for (uint8_t a : survey.arability) {
-        on_trail += Arability(a) == Arability::TRAIL ? 1 : 0;
+    for (int i = 0; i < f.n - 1; i++) {
+        for (int j = 0; j < f.n - 1; j++) {
+            on_trail += survey.model.land_at(i, j) == Arability::TRAIL ? 1 : 0;
+        }
     }
     check(on_trail > 0 && survey.arable_count() >= 60, "路上不能垦，路外的河滩照样能垦");
 }
@@ -395,7 +426,7 @@ void test_farm() {
     const IslandParams p = river_island_params(0.8);
     const IslandField f = generate_island_field(p);
     FarmRules rules;
-    const FarmSurvey survey = survey_farmland(f, p.dock_apron_m, rules);
+    const IslandFarm survey(f, p.dock_apron_m, rules);
 
     // 勘察
     int water = 0, dry = 0;
@@ -403,7 +434,7 @@ void test_farm() {
     int near_i = -1, near_j = -1, far_i = -1, far_j = -1, dry_i = -1, dry_j = -1;
     for (int i = 0; i < f.n - 1; i++) {
         for (int j = 0; j < f.n - 1; j++) {
-            const Arability a = survey.at(i, j);
+            const Arability a = survey.model.land_at(i, j);
             water += a == Arability::WATER ? 1 : 0;
             dry += a == Arability::TOO_DRY ? 1 : 0;
             if (a == Arability::TOO_DRY) {
@@ -413,13 +444,13 @@ void test_farm() {
             if (a != Arability::ARABLE) {
                 continue;
             }
-            const float m = survey.moisture[survey.index(i, j)];
+            const float m = survey.model.survey(i, j).moisture;
             arable_ok = arable_ok && f.quad_solid(i, j) && f.river_depth[f.index(i, j)] == 0.0f && m >= 0.0f && m <= 1.0f;
-            if (near_i < 0 || m > survey.moisture[survey.index(near_i, near_j)]) {
+            if (near_i < 0 || m > survey.model.survey(near_i, near_j).moisture) {
                 near_i = i;
                 near_j = j;
             }
-            if (far_i < 0 || m < survey.moisture[survey.index(far_i, far_j)]) {
+            if (far_i < 0 || m < survey.model.survey(far_i, far_j).moisture) {
                 far_i = i;
                 far_j = j;
             }
@@ -428,10 +459,11 @@ void test_farm() {
     check(survey.arable_count() >= 60, "河边有成片可垦的地（" + std::to_string(survey.arable_count()) + " 格）");
     check(water > 0 && dry > survey.arable_count(), "河里不能垦，离河远的地占多数");
     check(arable_ok, "可垦的格子都有地面、不在水里");
-    check(survey.at(-1, 0) == Arability::NO_GROUND && survey.at(0, f.n - 1) == Arability::NO_GROUND, "界外算没有地面");
+    check(survey.model.land_at(-1, 0) == Arability::NO_GROUND && survey.model.land_at(0, f.n - 1) == Arability::NO_GROUND, "界外算没有地面");
     IslandParams no_river = p;
     no_river.river = false;
-    check(survey_farmland(generate_island_field(no_river), p.dock_apron_m, rules).arable_count() == 0, "没有河的岛无地可垦");
+    const IslandField dry_field = generate_island_field(no_river);
+    check(IslandFarm(dry_field, p.dock_apron_m, rules).arable_count() == 0, "没有河的岛无地可垦");
     if (near_i < 0 || dry_i < 0) {
         return;
     }
@@ -439,7 +471,7 @@ void test_farm() {
     // 地块状态机
     const CropDef *millet = catalog::crop("millet");
     const CropDef *bean = catalog::crop("bean");
-    FarmModel farm(survey, rules);
+    FarmModel farm(&survey.ground, survey.ground.plot_lattice(), rules);
     check(farm.available_action(dry_i, dry_j, true) == FarmAction::NONE, "离河太远：不能开垦");
     check(!farm.till(dry_i, dry_j) && farm.plot_at(dry_i, dry_j).state == PlotState::WILD, "硬垦也垦不动");
     check(farm.available_action(near_i, near_j, false) == FarmAction::TILL, "荒地：开垦（不要种子）");
@@ -466,7 +498,7 @@ void test_farm() {
             far_ripe_at = step / 60.0;
         }
     }
-    const double near_m = survey.moisture[survey.index(near_i, near_j)], far_m = survey.moisture[survey.index(far_i, far_j)];
+    const double near_m = survey.model.survey(near_i, near_j).moisture, far_m = survey.model.survey(far_i, far_j).moisture;
     check_near(near_ripe_at, rules.grow_seconds / (rules.dry_growth + (1 - rules.dry_growth) * near_m), 0.1, "河边的地按墒情算的时间成熟");
     check_near(far_ripe_at, rules.grow_seconds / (rules.dry_growth + (1 - rules.dry_growth) * far_m), 0.1, "远处的地也是");
     check(near_ripe_at < far_ripe_at, "离河近的先熟");
@@ -499,7 +531,7 @@ void test_yard(const char *p_name, double p_age) {
     p.trail = true;
     p.yard = true;
     const IslandField f = generate_island_field(p);
-    const IslandYard &y = f.yard;
+    const YardPlan &y = f.yard;
     check(y.present, "有船坞坪");
     if (!y.present) {
         return;
@@ -832,14 +864,16 @@ void test_settlement() {
     p.yard = true;
     const IslandField f = generate_island_field(p);
     const SiteRules rules;
+    const IslandGround island_map(f, p.dock_apron_m);
+    const MapSiteGround island_site(island_map, rules);
     SettlementLayout layout;
     // 停机坪：岸缘点周围几米是掩膜的锯齿边，往岛内退 0.7 个坪的半径（14 m）
     const double apron_x = f.dock.x - 0.7 * p.dock_apron_m * f.dock.out_x, apron_z = f.dock.z - 0.7 * p.dock_apron_m * f.dock.out_z;
-    check(survey_site(f, p.dock_apron_m, house, apron_x, apron_z, 0.0, layout, rules).reason == "停机坪上不能盖", "停机坪被拒");
-    check(survey_site(f, p.dock_apron_m, house, 2.0 * f.half_extent(), 0.0, 0.0, layout, rules).reason.find("没有地面") != std::string::npos, "岛外被拒");
+    check(survey_site(island_site, house, apron_x, apron_z, 0.0, layout, rules).reason == "停机坪上不能盖", "停机坪被拒");
+    check(survey_site(island_site, house, 2.0 * f.half_extent(), 0.0, 0.0, layout, rules).reason.find("没有地面") != std::string::npos, "岛外被拒");
     const RiverPoint &rp = f.river[f.river.size() / 2];
-    check(survey_site(f, p.dock_apron_m, house, rp.x, rp.z, 0.0, layout, rules).reason == "这是河，盖不了", "河里被拒");
-    check(f.yard.present && survey_site(f, p.dock_apron_m, house, f.yard.x, f.yard.z, 0.0, layout, rules).reason == "这是船坞的坪，盖不得", "船坞坪被拒");
+    check(survey_site(island_site, house, rp.x, rp.z, 0.0, layout, rules).reason == "这是河，盖不了", "河里被拒");
+    check(f.yard.present && survey_site(island_site, house, f.yard.x, f.yard.z, 0.0, layout, rules).reason == "这是船坞的坪，盖不得", "船坞坪被拒");
     // 路上：从路的中段（在坡上，两侧都有地）往两头找一处离停机坪、船坞都够远的路点
     int trail_checked = 0;
     const int mid = int(f.trail.size()) / 2;
@@ -850,7 +884,7 @@ void test_settlement() {
             }
             const TrailPoint &t = f.trail[size_t(k)];
             if (std::hypot(t.x - f.dock.x, t.z - f.dock.z) > p.dock_apron_m + rules.dock_margin_m + 8.0 && !f.yard.contains(t.x, t.z, rules.yard_margin_m + 8.0)) {
-                const std::string why = survey_site(f, p.dock_apron_m, house, t.x, t.z, 0.0, layout, rules).reason;
+                const std::string why = survey_site(island_site, house, t.x, t.z, 0.0, layout, rules).reason;
                 check(why == "压着路了", "路上被拒（" + why + "）");
                 trail_checked++;
             }
@@ -862,7 +896,7 @@ void test_settlement() {
     double site_x = 0.0, site_z = 0.0;
     for (int i = 0; i < f.n; i += 2) {
         for (int j = 0; j < f.n; j += 2) {
-            const SiteReport r = survey_site(f, p.dock_apron_m, house, f.coord(j), f.coord(i), 0.0, layout, rules);
+            const SiteReport r = survey_site(island_site, house, f.coord(j), f.coord(i), 0.0, layout, rules);
             if (r.ok()) {
                 if (sites == 0) {
                     site_x = f.coord(j);
@@ -876,15 +910,15 @@ void test_settlement() {
     }
     check(sites > 20, "岛上有不少能盖民居的地（" + std::to_string(sites) + "）");
     check(steep > 0, "岛缘有太陡的地（" + std::to_string(steep) + "）");
-    const SiteReport site = survey_site(f, p.dock_apron_m, house, site_x, site_z, 0.0, layout, rules);
+    const SiteReport site = survey_site(island_site, house, site_x, site_z, 0.0, layout, rules);
     check(site.ok() && site.ground_max - site.ground_min <= rules.max_rise_m, "选中的地高差在限内");
     check_near(site.floor_y, site.ground_max + house.plinth_m, 1e-9, "地坪 = 最高地面 + 台基");
     check_near(site.plinth_bottom, site.ground_min - rules.bury_m, 1e-9, "台基埋到最低地面之下");
-    check(settlement_place(layout, f, p.dock_apron_m, "house", site_x, site_z, 0.0, rules).empty() && layout.size() == 1, "放一座");
-    check(settlement_place(layout, f, p.dock_apron_m, "house", site_x, site_z, 0.0, rules) == "和民居挨得太近" && layout.size() == 1, "同一处再放被拒");
-    check(survey_site(f, p.dock_apron_m, house, site_x, site_z, 0.0, layout, rules, 0).ok(), "忽略自己就能过");
-    check(settlement_place(layout, f, p.dock_apron_m, "palace", site_x, site_z, 0.0, rules) == "没有这种建筑：palace", "不认识的建筑");
-    check(settlement_place(layout, f, p.dock_apron_m, "house", apron_x, apron_z, 0.0, rules) == "停机坪上不能盖" && layout.size() == 1, "被拒时清单不动");
+    check(settlement_place(layout, island_site, "house", site_x, site_z, 0.0, rules).empty() && layout.size() == 1, "放一座");
+    check(settlement_place(layout, island_site, "house", site_x, site_z, 0.0, rules) == "和民居挨得太近" && layout.size() == 1, "同一处再放被拒");
+    check(survey_site(island_site, house, site_x, site_z, 0.0, layout, rules, 0).ok(), "忽略自己就能过");
+    check(settlement_place(layout, island_site, "palace", site_x, site_z, 0.0, rules) == "没有这种建筑：palace", "不认识的建筑");
+    check(settlement_place(layout, island_site, "house", apron_x, apron_z, 0.0, rules) == "停机坪上不能盖" && layout.size() == 1, "被拒时清单不动");
     check(settlement_find(layout, site_x, site_z) == 0, "放下的那座找得到");
     layout.erase(0);
     check(layout.empty(), "拆掉");
@@ -896,6 +930,8 @@ void test_villagers() {
     p.trail = true;
     const IslandField f = generate_island_field(p);
     SiteRules site_rules;
+    const IslandGround island_map(f, p.dock_apron_m);
+    const MapSiteGround island_site(island_map, site_rules);
 
     // 地面高与网格一致：节点上正好是节点高
     double y = 0.0;
@@ -909,8 +945,8 @@ void test_villagers() {
             }
         }
     }
-    check(node_i >= 0 && surface_height(f, f.coord(node_j), f.coord(node_i), y) && std::abs(y - f.height[f.index(node_i, node_j)]) < 1e-4, "节点上的地面高 = 节点高");
-    check(!surface_height(f, 10.0 * f.half_extent(), 0.0, y), "岛外没有地面");
+    check(node_i >= 0 && island_map.walk_height(f.coord(node_j), f.coord(node_i), y) && std::abs(y - f.height[f.index(node_i, node_j)]) < 1e-4, "节点上的地面高 = 节点高");
+    check(!island_map.walk_height(10.0 * f.half_extent(), 0.0, y), "岛外没有地面");
 
     // 离河 18–30 m 找一块能盖民居的地，门朝河
     SettlementLayout layout;
@@ -931,7 +967,7 @@ void test_villagers() {
                 }
             }
             const double yaw = std::atan2(rx - f.coord(j), rz - f.coord(i));
-            if (settlement_place(layout, f, p.dock_apron_m, "house", f.coord(j), f.coord(i), yaw, site_rules).empty()) {
+            if (settlement_place(layout, island_site, "house", f.coord(j), f.coord(i), yaw, site_rules).empty()) {
                 hx = f.coord(j);
                 hz = f.coord(i);
                 hyaw = yaw;
@@ -947,7 +983,7 @@ void test_villagers() {
 
     // 导航格
     NavRules nav_rules;
-    const NavGrid nav = build_nav_grid(f, layout, nav_rules);
+    const NavGrid nav = island_nav(f, layout, nav_rules);
     check(nav.walkable_count() > 1000, "岛上大片地走得了（" + std::to_string(nav.walkable_count()) + " 格）");
     check(!nav.walkable_at(hx, hz), "房子里走不了");
     const NavPoint door = building_door(layout.at(0));
@@ -1060,14 +1096,18 @@ void test_villagers() {
     SettlementLayout village = layout;
     village.add({ "granary", hx + ux * 20.0, hz + uz * 20.0, hyaw });
     village.add({ "tower", hx - ux * 20.0, hz - uz * 20.0, hyaw });
-    const NavGrid vnav = build_nav_grid(f, village, nav_rules);
-    FarmModel farm(survey_farmland(f, p.dock_apron_m, FarmRules()), FarmRules());
+    const NavGrid vnav = island_nav(f, village, nav_rules);
+    FarmModel farm(&island_map, island_map.plot_lattice(), FarmRules());
+    const PlotLattice plots = island_map.plot_lattice();
+    std::vector<WaterLine> water;
+    island_map.water_lines(-f.half_extent(), -f.half_extent(), f.half_extent(), f.half_extent(), water);
     std::vector<Claim> claims;
     Inventory store;
     store.add("millet", 3);
     WorkRules work;
     VillageView view;
-    view.field = &f;
+    view.plots = &plots;
+    view.water = &water;
     view.layout = &village;
     view.nav = &vnav;
     view.farm = &farm;
@@ -1090,7 +1130,7 @@ void test_villagers() {
     view.hour = 8.0;
     t = decide_task(farmer, view, rng);
     check(t.kind == TaskKind::TILL && farm.available_action(t.cell_i, t.cell_j, false) == FarmAction::TILL, "农夫出门先开荒");
-    const NavPoint pc = plot_center(f, t.cell_i, t.cell_j);
+    const NavPoint pc = plot_center(plots, t.cell_i, t.cell_j);
     check(std::hypot(pc.x - snapped.x, pc.z - snapped.z) <= work.field_radius_m + 3.0 && vnav.dry_at(pc.x, pc.z), "开的地在家门口、站得住");
     check(std::abs(t.x - pc.x) < 1e-9 && t.seconds == work.till_s, "站在地里干");
     farm.till(t.cell_i, t.cell_j);
@@ -1598,13 +1638,13 @@ void test_world_sites() {
     check(!parse_world_sites("dock\t1\tx\t0\t0\t0\n", bad, err), "坏行报错");
 
     WorldTerrain t(g, sites.terrain_islands(), 2051);
-    const std::vector<DockPlan> docks = plan_world_docks(t, sites, world_dock_rules());
+    const WorldWorks works = lay_world_works(t, sites);
+    const std::vector<DockPlan> &docks = works.docks;
     int ok = 0;
     for (const DockPlan &d : docks) {
         ok += d.ok;
     }
     check(ok == 91, "91 个码头都找到岸缘（" + std::to_string(ok) + "）");
-    t.set_pads(docks);
     // 主码头 #7 与乙岛 #2：压平后泊位附近的地面等高
     for (int id : { 7, 2 }) {
         size_t k = 0;
@@ -1640,7 +1680,8 @@ void test_world_sites() {
         const VillagePlan plan = plan_world_village(t, *v, 2051, rules);
         const std::string tag = v->name;
         check(plan.missing == 0 && plan.layout.size() == plan.wanted, tag + "：全摆下（" + std::to_string(plan.layout.size()) + " 座）");
-        const WorldSiteGround ground(t, v->x, v->z, 2000.0);
+        const WorldGround map(t, v->x, v->z);
+        const MapSiteGround ground(map, rules.site);
         bool on_pad = false, steep = false;
         for (const Building &b : plan.layout.get_items()) {
             const BuildingDef &def = *buildings::by_id(b.kind);
@@ -1654,6 +1695,262 @@ void test_world_sites() {
         check(!steep, tag + "：没有一座在陡坡上");
         check(plan.layout == plan_world_village(t, *v, 2051, rules).layout, tag + "：同输入同清单");
     }
+}
+
+// ---------------------------------------------------------------- 地图地面：三种地面，同一套规矩
+
+// 一张地图上的几个探点：水里、停机坪上、船坞坪上、离水远的生地（不是熟地）；p_water_x/z 是水中线上的一点
+struct GroundProbe {
+    std::string name;
+    const MapGround *ground = nullptr;
+    double water_x = 0.0, water_z = 0.0;
+    double pad_x = 0.0, pad_z = 0.0;
+    double yard_x = 0.0, yard_z = 0.0;
+    double dry_x = 0.0, dry_z = 0.0;
+};
+
+// 格子 (i, j) 按规矩该有的墒情：四角离水平均距离的线性衰减（熟地另算）
+double expected_moisture(const MapGround &p_ground, const PlotLattice &p_l, int p_i, int p_j, const FarmRules &p_rules) {
+    double dist = 0.0;
+    for (int di = 0; di <= 1; di++) {
+        for (int dj = 0; dj <= 1; dj++) {
+            PlotNode node;
+            p_ground.plot_node(p_l, p_i + di, p_j + dj, node);
+            dist += 0.25 * node.water_m;
+        }
+    }
+    const double near = dist <= p_rules.max_river_m ? std::clamp(1.0 - dist / p_rules.max_river_m, 0.0, 1.0) : 0.0;
+    return std::max(near, p_ground.fertile(p_l.center_x(p_j), p_l.center_z(p_i)) ? p_rules.fertile_moisture : 0.0);
+}
+
+void check_probe(const GroundProbe &p) {
+    const MapGround &g = *p.ground;
+    const SiteRules site;
+    const FarmRules farm;
+    const PlotLattice l = g.plot_lattice();
+    const std::string tag = p.name + "：";
+    auto plot_at = [&](double x, double z) {
+        int i = 0, j = 0;
+        l.cell_of(x, z, i, j);
+        return survey_plot(g, l, i, j, farm).land;
+    };
+    // 禁区：同一种处境给出同一条原因
+    check(ground_block(g, p.water_x, p.water_z, site).rank == 0, tag + "水里不能盖（" + std::string(ground_block(g, p.water_x, p.water_z, site).reason ? ground_block(g, p.water_x, p.water_z, site).reason : "—") + "）");
+    check(std::string(ground_block(g, p.pad_x, p.pad_z, site).reason ? ground_block(g, p.pad_x, p.pad_z, site).reason : "") == "停机坪上不能盖", tag + "停机坪上不能盖");
+    check(std::string(ground_block(g, p.yard_x, p.yard_z, site).reason ? ground_block(g, p.yard_x, p.yard_z, site).reason : "") == "这是船坞的坪，盖不得", tag + "船坞坪上不能盖");
+    check(ground_block(g, p.dry_x, p.dry_z, site).rank < 0, tag + "生地不是禁区");
+    // 可耕：同一种处境同一个结论
+    check(plot_at(p.water_x, p.water_z) == Arability::WATER, tag + "水里不能垦");
+    check(plot_at(p.pad_x, p.pad_z) == Arability::DOCK, tag + "停机坪上不能垦");
+    check(plot_at(p.yard_x, p.yard_z) == Arability::YARD, tag + "船坞坪上不能垦");
+    check(plot_at(p.dry_x, p.dry_z) == Arability::TOO_DRY, tag + "离水远的生地引不到水");
+    // 水边一圈：能垦的格子墒情都按同一条算式，且水边确有能垦的地
+    int i0 = 0, j0 = 0;
+    l.cell_of(p.water_x, p.water_z, i0, j0);
+    int arable = 0, law_ok = 0;
+    for (int i = i0 - 12; i <= i0 + 12; i++) {
+        for (int j = j0 - 12; j <= j0 + 12; j++) {
+            const PlotSurvey s = survey_plot(g, l, i, j, farm);
+            if (s.land != Arability::ARABLE) {
+                continue;
+            }
+            arable++;
+            law_ok += std::abs(double(s.moisture) - expected_moisture(g, l, i, j, farm)) < 1e-6 ? 1 : 0;
+        }
+    }
+    check(arable > 0 && law_ok == arable, tag + "水边有能垦的地，墒情都按离水距离算（" + std::to_string(law_ok) + " / " + std::to_string(arable) + "）");
+    std::vector<WaterLine> lines;
+    g.water_lines(p.water_x - 100.0, p.water_z - 100.0, p.water_x + 100.0, p.water_z + 100.0, lines);
+    double nearest = 1e18;
+    for (const WaterLine &line : lines) {
+        for (const WaterPoint &w : line) {
+            nearest = std::min(nearest, std::hypot(w.x - p.water_x, w.z - p.water_z));
+        }
+    }
+    check(nearest < 15.0, tag + "挑水的水线就在水上（最近 " + std::to_string(nearest) + " m）");
+}
+
+void test_map_grounds() {
+    std::printf("map_ground（甲岛、岛群、平板岛同一套规矩）\n");
+    // 甲岛：河、码头、船坞坪
+    IslandParams p = river_island_params(0.8);
+    p.trail = true;
+    p.yard = true;
+    const IslandField f = generate_island_field(p);
+    const IslandGround island(f, p.dock_apron_m);
+    GroundProbe a;
+    a.name = "甲岛";
+    a.ground = &island;
+    const RiverPoint &rp = f.river[f.river.size() / 2];
+    a.water_x = rp.x;
+    a.water_z = rp.z;
+    a.pad_x = f.dock.x - 0.5 * p.dock_apron_m * f.dock.out_x;
+    a.pad_z = f.dock.z - 0.5 * p.dock_apron_m * f.dock.out_z;
+    a.yard_x = f.yard.x;
+    a.yard_z = f.yard.z;
+    for (int i = 0; i < f.n && a.dry_x == 0.0; i++) { // 离河 60 m 以上、缓坡、不在坪上的一格
+        for (int j = 0; j < f.n; j++) {
+            const double x = f.coord(j) + 1.25, z = f.coord(i) + 1.25;
+            if (f.quad_solid(i, j) && f.river_dist[f.index(i, j)] > 60.0 && !island.on_dock(x, z, 10.0) && !island.on_yard(x, z, 10.0) &&
+                    !island.on_trail(x, z, 10.0) && std::abs(f.height[f.index(i, j)] - f.height[f.index(i + 1, j + 1)]) < 0.1) {
+                a.dry_x = x;
+                a.dry_z = z;
+                break;
+            }
+        }
+    }
+    check_probe(a);
+
+    // 平板岛
+    const FlatIsland flat = lay_flat_island(FlatIslandSpec());
+    check(flat.dock.ok && flat.yard.present, "平板岛：码头与船坞坪都落得下");
+    const FlatGround plate(flat);
+    GroundProbe c;
+    c.name = "平板岛";
+    c.ground = &plate;
+    c.water_x = flat.spec.stream_x0;
+    c.water_z = 0.0;
+    c.pad_x = flat.dock.x - 0.5 * flat.spec.apron_m * flat.dock.out_x;
+    c.pad_z = flat.dock.z - 0.5 * flat.spec.apron_m * flat.dock.out_z;
+    c.yard_x = flat.yard.x;
+    c.yard_z = flat.yard.z;
+    c.dry_x = 20.0;
+    c.dry_z = -100.0;
+    check_probe(c);
+
+    // 岛群：主码头 #7 的坪与船坞坪、一处溪涧、离水远的生地
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in) {
+        return;
+    }
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    WorldSites sites;
+    std::string err;
+    parse_world_grid(bin.data(), bin.size(), g, err);
+    parse_world_sites(tsv, sites, err);
+    WorldTerrain t(g, sites.terrain_islands(), 2051);
+    const WorldWorks works = lay_world_works(t, sites);
+    size_t main_k = 0;
+    while (main_k < sites.docks.size() && sites.docks[main_k].id != 7) {
+        main_k++;
+    }
+    const DockPlan &dock = works.docks[main_k];
+    const YardPlan &yard = works.yards[main_k];
+    check(yard.present, "岛群：主码头 #7 旁凿得出船坞坪");
+    int yard_flat = 0, yard_samples = 0;
+    for (double u = -0.5 * yard.length; u <= 0.5 * yard.length; u += 5.0) {
+        for (double v = -0.5 * yard.width; v <= 0.5 * yard.width; v += 4.0) {
+            double x = 0.0, z = 0.0, y = 0.0;
+            yard.from_local(u, v, x, z);
+            yard_samples++;
+            yard_flat += t.surface(x, z, y) && std::abs(y - yard.y) < 1e-9 ? 1 : 0;
+        }
+    }
+    check(yard_samples > 50 && yard_flat == yard_samples, "岛群：船坞坪整块是地、全平、与停机坪同高（" + std::to_string(yard_flat) + " / " + std::to_string(yard_samples) + "）");
+    // 村子从主码头附近铺起时的地面：原点放在码头
+    const WorldGround world(t, dock.x, dock.z);
+    for (double u = -0.5 * yard.length; u <= 0.5 * yard.length; u += 10.0) {
+        double x = 0.0, z = 0.0;
+        yard.from_local(u, 0.0, x, z);
+        check(world.water_at(x - dock.x, z - dock.z) == WaterKind::NONE, "岛群：船坞坪不压溪涧与水面");
+    }
+    GroundProbe b;
+    b.name = "岛群";
+    b.ground = &world;
+    b.pad_x = -0.5 * dock.apron_m * dock.out_x;
+    b.pad_z = -0.5 * dock.apron_m * dock.out_z;
+    b.yard_x = yard.x - dock.x;
+    b.yard_z = yard.z - dock.z;
+    // 离码头最近的一处溪涧（格心在陆地上、四周也是地、不是河道湖泊）
+    double best = 1e18;
+    for (int r = 1; r < g.rows - 1; r++) {
+        for (int c = 1; c < g.cols - 1; c++) {
+            const size_t k = g.index(r, c);
+            const double x = g.x0 + c * g.res, z = g.z0 + r * g.res;
+            const double d = std::hypot(x - dock.x, z - dock.z);
+            if (!g.stream[k] || d >= best || !t.is_land(x, z) || !t.is_land(x + 60, z) || !t.is_land(x - 60, z) || !t.is_land(x, z + 60) || !t.is_land(x, z - 60)) {
+                continue;
+            }
+            if (world.fertile(x - dock.x, z - dock.z) || world.water_at(x - dock.x, z - dock.z) != WaterKind::STREAM) {
+                continue;
+            }
+            best = d;
+            b.water_x = x - dock.x;
+            b.water_z = z - dock.z;
+        }
+    }
+    check(best < 1e17, "岛群：找得到一处溪涧");
+    // 离水远的生地：码头往岛内 200 m 起找
+    bool dry_found = false;
+    for (double in = 200.0; in < 3000.0 && !dry_found; in += 25.0) {
+        const double x = -in * dock.out_x, z = -in * dock.out_z;
+        double y0 = 0.0, y1 = 0.0;
+        if (world.water_distance(x, z) > 1e17 && !world.fertile(x, z) && world.site_height(x, z, y0) && world.site_height(x + 2.5, z + 2.5, y1) && std::abs(y1 - y0) < 0.3) {
+            b.dry_x = x;
+            b.dry_z = z;
+            dry_found = true;
+        }
+    }
+    check(dry_found, "岛群：找得到离水远的生地");
+    check_probe(b);
+    // 熟地：可耕地 / 梯田不靠水也能垦，墒情 0.6
+    const FarmRules farm_rules;
+    const PlotLattice wl = world.plot_lattice();
+    bool fertile_ok = false;
+    for (double in = 100.0; in < 20000.0 && !fertile_ok; in += 50.0) {
+        const double x = -in * dock.out_x, z = -in * dock.out_z;
+        if (!world.fertile(x, z) || world.water_distance(x, z) < 1e17) {
+            continue;
+        }
+        int i = 0, j = 0;
+        wl.cell_of(x, z, i, j);
+        const PlotSurvey s = survey_plot(world, wl, i, j, farm_rules);
+        if (s.land == Arability::ARABLE) {
+            fertile_ok = std::abs(s.moisture - farm_rules.fertile_moisture) < 1e-6;
+            check(fertile_ok, "岛群：熟地墒情 = fertile_moisture");
+            FarmModel model(&world, wl, farm_rules);
+            check(model.any_arable_near(x, z, 10.0) && model.available_action(i, j, false) == FarmAction::TILL, "岛群：农田模型按需勘察，熟地能开垦");
+        }
+    }
+    check(fertile_ok, "岛群：离水远的熟地照样能垦");
+    // 地块格与岛群坐标对齐：从码头看与从岛群原点看，同一块地是同一格
+    const WorldGround origin(t, 0.0, 0.0);
+    int i1 = 0, j1 = 0, i2 = 0, j2 = 0;
+    wl.cell_of(b.water_x + 7.0, b.water_z + 3.0, i1, j1);
+    origin.plot_lattice().cell_of(dock.x + b.water_x + 7.0, dock.z + b.water_z + 3.0, i2, j2);
+    check(i1 == i2 && j1 == j2, "岛群：换个原点，同一块地还是同一格");
+}
+
+void test_layout_edits() {
+    std::printf("清单的改动（加 / 拆）\n");
+    const SettlementLayout base({ { "house", 10.123, 4.5, 0.3 }, { "hall", 0.0, 0.0, 0.0 }, { "house", -20.0, 7.25, 1.2 } });
+    SettlementLayout now = base;
+    now.erase(0);
+    now.add({ "tower", 30.0, 30.0, 0.0 });
+    now.add({ "granary", -5.5, 18.0, 1.5707963 });
+    const LayoutEdits edits = diff_layouts(base, now);
+    check(edits.removed.size() == 1 && edits.added.size() == 2, "改了什么：拆一座、加两座");
+    check(settlement_ids(apply_layout_edits(base, edits)) == settlement_ids(now), "底 + 改动 = 现在");
+    const std::vector<std::string> lines = layout_edit_lines(edits);
+    check(lines.size() == 3 && lines[0][0] == '-', "拆写成 -kind@…，加不带符号");
+    bool ok = false;
+    const LayoutEdits back = parse_layout_edits(lines, &ok);
+    check(ok && settlement_ids(apply_layout_edits(base, back)) == settlement_ids(now), "写出再读回，叠上去一样");
+    check(diff_layouts(base, base).empty(), "没改就没有改动");
+    int unmatched = 0;
+    LayoutEdits stale;
+    stale.removed.push_back("house@99.00,99.00,0.0");
+    check(apply_layout_edits(base, stale, &unmatched).size() == 3 && unmatched == 1, "底里没有的那座拆不了，如数报出");
+    // 旧的整份清单文件：底是空的，全是加
+    const std::vector<std::string> old_file = { "# 聚落清单", "house@125.50,-66.00,103.9", "", "tower@104.00,-46.00,103.9" };
+    const SettlementLayout from_old = apply_layout_edits(SettlementLayout(), parse_layout_edits(old_file, &ok));
+    check(ok && from_old == settlement_from_ids(old_file), "旧清单文件照样读");
+    check(layout_edit_lines(diff_layouts(SettlementLayout(), from_old)) == std::vector<std::string>({ "house@125.50,-66.00,103.9", "tower@104.00,-46.00,103.9" }), "空底上存回去，文件与旧格式一模一样");
+    check(!ok || parse_layout_edits({ "-palace@1,2,3" }, &ok).empty(), "认不出的行跳过");
+    check(!ok, "认不出时 r_ok 为假");
 }
 
 // ---------------------------------------------------------------- 金标：地图宿主重构前后逐位一致
@@ -1716,12 +2013,13 @@ void test_goldens() {
     report_golden("出发岛高度场与船坞坪", field.h, 0xd0e8efacdd581979ull);
 
     Fnv farm;
-    const FarmSurvey survey = survey_farmland(f, p.dock_apron_m, FarmRules());
+    const IslandFarm survey(f, p.dock_apron_m, FarmRules());
     for (int i = 0; i < f.n - 1; i++) {
         for (int j = 0; j < f.n - 1; j++) {
-            farm.mix(uint64_t(survey.at(i, j)));
-            if (survey.at(i, j) == Arability::ARABLE) {
-                farm.mix_d(double(survey.moisture[survey.index(i, j)]));
+            const PlotSurvey plot = survey.model.survey(i, j);
+            farm.mix(uint64_t(plot.land));
+            if (plot.land == Arability::ARABLE) {
+                farm.mix_d(double(plot.moisture));
             }
         }
     }
@@ -1729,7 +2027,8 @@ void test_goldens() {
 
     Fnv blocks, sites;
     const SiteRules site_rules;
-    const IslandSiteGround ground(f, p.dock_apron_m, site_rules);
+    const IslandGround island_map(f, p.dock_apron_m);
+    const MapSiteGround ground(island_map, site_rules);
     const BuildingDef &house = *buildings::by_id("house");
     const double ext = f.half_extent();
     for (double z = -ext; z <= ext; z += 1.3) {
@@ -1756,7 +2055,7 @@ void test_goldens() {
 
     Fnv nav;
     const SettlementLayout village = read_layout_file(std::string(ZHOUZHU_SOURCE_DIR) + "/game/settlements/island_a.txt");
-    const NavGrid grid = build_nav_grid(f, village, NavRules());
+    const NavGrid grid = island_nav(f, village, NavRules());
     nav.mix(uint64_t(grid.cols));
     nav.mix(uint64_t(grid.rows));
     nav.mix_d(grid.x0);
@@ -1780,7 +2079,7 @@ void test_goldens() {
     parse_world_grid(bin.data(), bin.size(), g, err);
     parse_world_sites(tsv, world_sites, err);
     WorldTerrain t(g, world_sites.terrain_islands(), 2051);
-    t.set_pads(plan_world_docks(t, world_sites, world_dock_rules()));
+    lay_world_works(t, world_sites);
     // 离主码头 #7 远的几处：邑治、乙岛码头边的散户175、两个普通村
     Fnv villages;
     for (const SiteSettlement &s : world_sites.settlements) {
@@ -1827,6 +2126,8 @@ int main() {
     test_dock_site();
     test_village_plan();
     test_world_sites();
+    test_map_grounds();
+    test_layout_edits();
     test_goldens();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;

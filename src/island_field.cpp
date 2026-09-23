@@ -34,10 +34,6 @@ constexpr double DIFFUSION_K = 0.1;
 constexpr double BERTH_HALF_LENGTH = 30.0; // 泊位两侧要空出的岸线（半个最长的船身还多一点：7 格 × 7 m + 船头楔）
 
 // 船坞坪
-constexpr double YARD_GAP = 6.0; // 坪与码头中线（栈桥、出生点、路头所在）之间留的空：路要从这儿上山
-constexpr double YARD_LAND_MARGIN = 2.0; // 坪四周还得有这么宽的陆地
-constexpr double YARD_CUT_SLOPE = 1.0; // 坪外挖方 45°
-constexpr double YARD_FILL_SLOPE = 0.8;
 
 enum Stream : uint64_t {
     STREAM_SHAPE = 1,
@@ -400,60 +396,29 @@ void build_dock(const IslandParams &p, IslandField &r, std::vector<double> &h) {
     }
 }
 
-// 船坞坪：停机坪旁沿岸的一块矩形，与停机坪同高。岸线不直，先在停机坪两侧各试一遍，
-// 找矩形整个落在陆地上的最小进深（取更浅的那一侧），再压平；坪外按固定坡度挖方 / 填方接回原地形。
+// 船坞坪（选址与凿坪的规矩见 yard_site.h）：在码头之后做，坪与停机坪同高、挨着它。
 void build_yard(const IslandParams &p, IslandField &r, std::vector<double> &h) {
-    IslandYard &yard = r.yard;
-    yard.present = false;
+    r.yard = YardPlan();
     if (!p.yard) {
         return;
     }
-    const IslandDock &dock = r.dock;
-    const double lat_x = -dock.out_z, lat_z = dock.out_x;
-    const double L = p.yard_length_m, W = p.yard_width_m;
-
-    int best_side = 0;
-    double best_inland = 1e18;
-    for (int side = 1; side >= -1; side -= 2) {
-        for (double inland = 1.0; inland <= p.yard_max_inland_m; inland += 1.0) {
-            bool solid = true;
-            for (double u = YARD_GAP - YARD_LAND_MARGIN; u <= YARD_GAP + L + YARD_LAND_MARGIN && solid; u += 1.0) {
-                for (double v = inland - YARD_LAND_MARGIN; v <= inland + W + YARD_LAND_MARGIN && solid; v += 1.0) {
-                    solid = land_at(r, dock.x + side * u * lat_x - v * dock.out_x, dock.z + side * u * lat_z - v * dock.out_z);
-                }
-            }
-            if (solid) {
-                if (inland < best_inland) {
-                    best_inland = inland;
-                    best_side = side;
-                }
-                break;
-            }
-        }
-    }
-    if (best_side == 0) {
+    DockPlan dock;
+    dock.x = r.dock.x;
+    dock.z = r.dock.z;
+    dock.y = r.dock.y;
+    dock.out_x = r.dock.out_x;
+    dock.out_z = r.dock.out_z;
+    r.yard = plan_yard(FieldDockGround(r, h), dock, p.yard_rules);
+    if (!r.yard.present) {
         return;
     }
-    yard.present = true;
-    yard.ux = best_side * lat_x;
-    yard.uz = best_side * lat_z;
-    yard.vx = -dock.out_x;
-    yard.vz = -dock.out_z;
-    yard.length = L;
-    yard.width = W;
-    yard.y = dock.y;
-    yard.x = dock.x + (YARD_GAP + 0.5 * L) * yard.ux + (best_inland + 0.5 * W) * yard.vx;
-    yard.z = dock.z + (YARD_GAP + 0.5 * L) * yard.uz + (best_inland + 0.5 * W) * yard.vz;
-
     const int n = r.n;
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             const size_t k = r.index(i, j);
-            if (!r.mask[k]) {
-                continue;
+            if (r.mask[k]) {
+                h[k] = yard_carve(r.yard, p.yard_rules, r.coord(j), r.coord(i), h[k]);
             }
-            const double beyond = yard.outside_distance(r.coord(j), r.coord(i));
-            h[k] = beyond <= 0.0 ? yard.y : std::clamp(h[k], yard.y - YARD_FILL_SLOPE * beyond, yard.y + YARD_CUT_SLOPE * beyond);
         }
     }
 }
@@ -485,14 +450,6 @@ void build_bottom(const IslandParams &p, IslandField &r) {
 
 IslandAge island_age_class(double p_age) {
     return p_age < AGE_YOUNG ? IslandAge::YOUNG : (p_age < AGE_OLD ? IslandAge::MID : IslandAge::OLD);
-}
-
-double IslandYard::outside_distance(double p_x, double p_z) const {
-    double u = 0.0, v = 0.0;
-    to_local(p_x, p_z, u, v);
-    const double du = std::max(0.0, std::abs(u) - 0.5 * length);
-    const double dv = std::max(0.0, std::abs(v) - 0.5 * width);
-    return std::hypot(du, dv);
 }
 
 int IslandField::land_count() const {

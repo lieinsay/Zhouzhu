@@ -23,6 +23,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/dock_site.h
     src/farm_model.cpp
     src/farm_model.h
+    src/flat_ground.cpp
+    src/flat_ground.h
     src/flight_model.cpp
     src/flight_model.h
     src/ground_query.h
@@ -30,8 +32,12 @@ set(ZHOUZHU_CORE_SOURCES
     src/inventory.h
     src/island_field.cpp
     src/island_field.h
+    src/island_ground.cpp
+    src/island_ground.h
     src/island_river.cpp
     src/island_river.h
+    src/map_ground.cpp
+    src/map_ground.h
     src/map_image.cpp
     src/map_image.h
     src/rng.h
@@ -55,6 +61,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/world_sites.h
     src/world_terrain.cpp
     src/world_terrain.h
+    src/yard_site.cpp
+    src/yard_site.h
 )
 
 add_library(zhouzhu SHARED)

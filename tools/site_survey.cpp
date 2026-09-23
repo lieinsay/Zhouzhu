@@ -73,9 +73,9 @@ int main(int argc, char **argv) {
 
     // 码头
     auto started = std::chrono::steady_clock::now();
-    const std::vector<DockPlan> docks = plan_world_docks(terrain, sites, world_dock_rules());
+    const WorldWorks works = lay_world_works(terrain, sites);
+    const std::vector<DockPlan> &docks = works.docks;
     const double dock_ms = since_ms(started);
-    terrain.set_pads(docks);
     int dock_failed = 0;
     double pier_max = 0.0, pier_sum = 0.0, shift_max = 0.0;
     for (size_t k = 0; k < docks.size(); k++) {
@@ -91,6 +91,20 @@ int main(int argc, char **argv) {
     const int dock_ok = int(docks.size()) - dock_failed;
     std::printf("码头 %zu 个：%d 个铺好、%d 个找不到岸缘；栈桥平均 %.1f m、最长 %.1f m；岸缘点离生成器的点最远 %.0f m（%.0f ms）\n",
             docks.size(), dock_ok, dock_failed, dock_ok ? pier_sum / dock_ok : 0.0, pier_max, shift_max, dock_ms);
+    // 船坞坪：主码头旁各一块
+    int yard_failed = 0;
+    for (size_t k = 0; k < docks.size(); k++) {
+        if (!sites.docks[k].main) {
+            continue;
+        }
+        const YardPlan &yard = works.yards[k];
+        if (!yard.present) {
+            yard_failed++;
+            std::printf("  主码头 #%d：旁边凿不出船坞坪\n", sites.docks[k].id);
+            continue;
+        }
+        std::printf("船坞坪：主码头 #%d 旁，中心离岸缘点 %.0f m，坪高 %.1f m\n", sites.docks[k].id, std::hypot(yard.x - docks[k].x, yard.z - docks[k].z), yard.y);
+    }
 
     // 村落
     const WorldVillageRules rules;
@@ -140,7 +154,7 @@ int main(int argc, char **argv) {
     std::printf("村落 %zu 处：要盖 %d 座，摆下 %d 座，摆不下 %d 座（%.2f%%，%d 处不全）；共 %.0f ms，最慢 %s %.0f ms\n",
             sites.settlements.size(), wanted, wanted - missing, missing, 100.0 * missing_ratio, short_sites, total_ms, worst_name.c_str(), worst_ms);
 
-    const bool pass = dock_failed == 0 && missing_ratio <= max_missing;
+    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing;
     std::printf("%s\n", pass ? "达标" : "不达标");
     return pass ? 0 : 1;
 }

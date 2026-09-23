@@ -6,6 +6,7 @@
 
 #include "dock_site.h"
 #include "world_grid.h"
+#include "yard_site.h"
 
 // 岛群的连续地形：在任意 (x, z) 上给出有没有地、顶面多高、岛底多深、是什么地表。
 // 大形全听栅格（Catmull-Rom 双三次），栅格量不到的 100 m 以下细节由确定性噪声补上：
@@ -13,8 +14,9 @@
 //   顶面 = 栅格高程 + 细节噪声（按地表调幅：岩多草少、田最平）
 //   岛底 = 岸缘 − 崖高 − 龙骨 × √向内程度（倒锥，与 skyisle-gen 的岛体一致）
 //   停机坪（set_pads）：顶面按 dock_pad_weight 拉向坪高——码头后面那一片是平的
+//   船坞坪（set_yards）：坪内全平、坪外按坡度挖 / 填方接回（yard_carve），在停机坪之后
 // 同一点无论哪一级网格来取，结果都一样，所以不同精度的地块拼得上。
-// 停机坪在建第一块地面之前设好、之后不再变；除此之外没有状态，取样线程安全。
+// 停机坪与船坞坪在建第一块地面之前设好、之后不再变；除此之外没有状态，取样线程安全。
 
 struct WorldIsland {
     int id = 0;
@@ -39,10 +41,14 @@ class WorldTerrain {
     std::vector<WorldIsland> islands; // 按 id 下标
     uint64_t seed = 0;
     std::vector<DockPlan> pads;
-    std::unordered_map<int64_t, std::vector<int>> pad_buckets; // 桶 → 压着这个桶的坪
+    std::unordered_map<int64_t, std::vector<int>> pad_buckets; // 桶 → 压着这个桶（含坪外 PAD_REACH_M）的坪
+    std::vector<YardPlan> yards;
+    YardRules yard_rules;
 
 public:
     static constexpr double PAD_BUCKET_M = 256.0;
+    static constexpr double PAD_REACH_M = 30.0; // near_pad 的让出最多问到坪外这么远
+    static constexpr double YARD_REACH_M = 200.0; // 船坞坪的挖 / 填方最远接到坪外这么远
 
     static constexpr double COAST_AMP_M = 28.0; // 岸线噪声幅度：岸线最多进退这么多
     static constexpr double COAST_FEATURE_M = 90.0;
@@ -64,6 +70,11 @@ public:
     // 停机坪：只收 ok 的；建地面之前调
     void set_pads(const std::vector<DockPlan> &p_pads);
     const std::vector<DockPlan> &get_pads() const { return pads; }
+    // 该点离哪个停机坪的圆心不到「坪半径 + p_margin」（p_margin ≤ PAD_REACH_M）
+    bool near_pad(double p_x, double p_z, double p_margin) const;
+    // 船坞坪：只收 present 的；在 set_pads 之后、建地面之前调
+    void set_yards(const std::vector<YardPlan> &p_yards, const YardRules &p_rules);
+    const std::vector<YardPlan> &get_yards() const { return yards; }
     // 只问有没有地（比 sample 省：不算高度）
     bool is_land(double p_x, double p_z) const;
     // 只要顶面（没有地返回 false）

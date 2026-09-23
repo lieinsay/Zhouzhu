@@ -34,46 +34,6 @@ int NavGrid::walkable_count() const {
     return n;
 }
 
-bool surface_height(const IslandField &p_field, double p_x, double p_z, double &r_y) {
-    const double ext = p_field.half_extent();
-    const double fx = (p_x + ext) / p_field.cell_m, fz = (p_z + ext) / p_field.cell_m;
-    const int j = int(std::floor(fx)), i = int(std::floor(fz));
-    if (!p_field.quad_solid(i, j)) {
-        return false;
-    }
-    const double u = fx - j, v = fz - i; // u 沿 j（x），v 沿 i（z）
-    const double h00 = p_field.height[p_field.index(i, j)], h01 = p_field.height[p_field.index(i, j + 1)];
-    const double h10 = p_field.height[p_field.index(i + 1, j)], h11 = p_field.height[p_field.index(i + 1, j + 1)];
-    // 与地面网格同样的切法：三角 (00, 01, 10) 与 (01, 11, 10)
-    r_y = u + v <= 1.0 ? h00 + (h01 - h00) * u + (h10 - h00) * v : h11 + (h10 - h11) * (1.0 - u) + (h01 - h11) * (1.0 - v);
-    return true;
-}
-
-namespace {
-
-// 该处（岛坐标）的水深：取最近的高度场节点
-double water_depth_at(const IslandField &p_field, double p_x, double p_z) {
-    if (p_field.river_depth.empty()) {
-        return 0.0;
-    }
-    const double ext = p_field.half_extent();
-    const int j = int(std::lround((p_x + ext) / p_field.cell_m)), i = int(std::lround((p_z + ext) / p_field.cell_m));
-    if (i < 0 || j < 0 || i >= p_field.n || j >= p_field.n) {
-        return 0.0;
-    }
-    return p_field.river_depth[p_field.index(i, j)];
-}
-
-} // namespace
-
-bool IslandNavGround::walk_height(double p_x, double p_z, double &r_y) const {
-    return surface_height(field, p_x, p_z, r_y);
-}
-
-double IslandNavGround::water_depth(double p_x, double p_z) const {
-    return water_depth_at(field, p_x, p_z);
-}
-
 NavGrid build_nav_grid(const NavGround &p_ground, double p_x0, double p_z0, int p_cols, int p_rows, const SettlementLayout &p_layout, const NavRules &p_rules) {
     NavGrid g;
     if (p_cols <= 0 || p_rows <= 0) {
@@ -118,15 +78,6 @@ NavGrid build_nav_grid(const NavGround &p_ground, double p_x0, double p_z0, int 
         }
     }
     return g;
-}
-
-NavGrid build_nav_grid(const IslandField &p_field, const SettlementLayout &p_layout, const NavRules &p_rules) {
-    if (p_field.n < 2) {
-        return NavGrid();
-    }
-    const double ext = p_field.half_extent();
-    const int cells = int(std::floor(2.0 * ext / p_rules.cell_m));
-    return build_nav_grid(IslandNavGround(p_field), -ext, -ext, cells, cells, p_layout, p_rules);
 }
 
 bool nav_nearest_walkable(const NavGrid &p_grid, double p_x, double p_z, double p_max_m, bool p_dry_only, NavPoint &r_point) {
@@ -389,7 +340,7 @@ const TaskDef &task(TaskKind p_kind) {
 
 } // namespace villagers
 
-std::vector<Resident> assign_residents(const SettlementLayout &p_layout, bool p_has_farm, bool p_has_river, int p_per_house, uint64_t p_seed) {
+std::vector<Resident> assign_residents(const SettlementLayout &p_layout, bool p_has_farm, bool p_has_water, int p_per_house, uint64_t p_seed) {
     std::vector<Resident> out;
     const std::vector<Building> &items = p_layout.get_items();
     int hall = -1;
@@ -399,7 +350,7 @@ std::vector<Resident> assign_residents(const SettlementLayout &p_layout, bool p_
             for (int m = 0; m < p_per_house; m++) {
                 Resident r;
                 r.home = k;
-                r.job = m == 0 ? (p_has_farm ? Job::FARMER : Job::IDLER) : m == 1 ? (p_has_river ? Job::CARRIER : Job::IDLER) : Job::IDLER;
+                r.job = m == 0 ? (p_has_farm ? Job::FARMER : Job::IDLER) : m == 1 ? (p_has_water ? Job::CARRIER : Job::IDLER) : Job::IDLER;
                 out.push_back(r);
             }
         } else if (b.kind == "hall") {
@@ -463,8 +414,8 @@ NavPoint building_door(const Building &p_building, double p_out_m) {
 
 // ================================================================ 决策
 
-NavPoint plot_center(const IslandField &p_field, int p_i, int p_j) {
-    return { p_field.coord(p_j) + 0.5 * p_field.cell_m, p_field.coord(p_i) + 0.5 * p_field.cell_m };
+NavPoint plot_center(const PlotLattice &p_plots, int p_i, int p_j) {
+    return { p_plots.center_x(p_j), p_plots.center_z(p_i) };
 }
 
 namespace {
@@ -508,7 +459,7 @@ Task at_plot(TaskKind p_kind, const VillagerMind &p_mind, const VillageView &p_v
     t.kind = p_kind;
     t.cell_i = p_i;
     t.cell_j = p_j;
-    const NavPoint c = plot_center(*p_view.field, p_i, p_j);
+    const NavPoint c = plot_center(*p_view.plots, p_i, p_j);
     t.x = c.x;
     t.z = c.z;
     // 面朝走来的方向（站在地里往前锄）
@@ -573,18 +524,25 @@ std::string pick_seed(const Inventory &p_store) {
 } // namespace
 
 bool pick_wild_plot(const VillageView &p_view, double p_home_x, double p_home_z, int &r_i, int &r_j) {
-    if (!p_view.farm || !p_view.field || !p_view.nav) {
+    if (!p_view.farm || !p_view.plots || !p_view.nav) {
         return false;
     }
-    const IslandField &f = *p_view.field;
+    const PlotLattice &l = *p_view.plots;
     const double radius = p_view.work->field_radius_m;
-    const double ext = f.half_extent();
-    const int i0 = std::max(0, int((p_home_z - radius + ext) / f.cell_m)), i1 = std::min(f.n - 2, int((p_home_z + radius + ext) / f.cell_m));
-    const int j0 = std::max(0, int((p_home_x - radius + ext) / f.cell_m)), j1 = std::min(f.n - 2, int((p_home_x + radius + ext) / f.cell_m));
+    // 与 PlotLattice::cell_of 同一算式（岛上与旧的 (z − r + ext) / cell 逐位一致）
+    auto index_of = [&l](double p_v, double p_zero) { return int(std::floor((p_v - p_zero + l.origin * l.cell_m) / l.cell_m)); };
+    int i0 = index_of(p_home_z - radius, l.z0), i1 = index_of(p_home_z + radius, l.z0);
+    int j0 = index_of(p_home_x - radius, l.x0), j1 = index_of(p_home_x + radius, l.x0);
+    if (l.bounded) {
+        i0 = std::max(i0, l.i_min);
+        j0 = std::max(j0, l.j_min);
+        i1 = std::min(i1, l.i_max - 1);
+        j1 = std::min(j1, l.j_max - 1);
+    }
     double best = std::numeric_limits<double>::infinity();
     for (int i = i0; i <= i1; i++) {
         for (int j = j0; j <= j1; j++) {
-            const NavPoint c = plot_center(f, i, j);
+            const NavPoint c = plot_center(l, i, j);
             const double d = std::hypot(c.x - p_home_x, c.z - p_home_z);
             if (d > radius || d >= best) {
                 continue;
@@ -593,7 +551,7 @@ bool pick_wild_plot(const VillageView &p_view, double p_home_x, double p_home_z,
                 continue;
             }
             // 格心与四角都得是干地：挨着房子（导航格里被让出去的那圈）的不开
-            const double h = 0.5 * f.cell_m - 0.05;
+            const double h = 0.5 * l.cell_m - 0.05;
             if (!p_view.nav->dry_at(c.x, c.z) || !p_view.nav->dry_at(c.x - h, c.z - h) || !p_view.nav->dry_at(c.x + h, c.z - h) ||
                     !p_view.nav->dry_at(c.x - h, c.z + h) || !p_view.nav->dry_at(c.x + h, c.z + h)) {
                 continue;
@@ -607,36 +565,40 @@ bool pick_wild_plot(const VillageView &p_view, double p_home_x, double p_home_z,
 }
 
 bool pick_water_spot(const VillageView &p_view, double p_x, double p_z, NavPoint &r_stand, NavPoint &r_water) {
-    if (!p_view.field || !p_view.nav || p_view.field->river.size() < 2) {
+    if (!p_view.water || !p_view.nav) {
         return false;
     }
-    const std::vector<RiverPoint> &river = p_view.field->river;
     double best = std::numeric_limits<double>::infinity();
-    for (size_t k = 0; k < river.size(); k++) {
-        const RiverPoint &a = river[k == 0 ? 0 : k - 1];
-        const RiverPoint &b = river[k == 0 ? 1 : k];
-        double tx = b.x - a.x, tz = b.z - a.z;
-        const double len = std::hypot(tx, tz);
-        if (len < 1e-6) {
+    for (const WaterLine &line : *p_view.water) {
+        if (line.size() < 2) {
             continue;
         }
-        tx /= len;
-        tz /= len;
-        const RiverPoint &p = river[k];
-        for (double side : { -1.0, 1.0 }) {
-            // 往岸上找第一块干地：水边上
-            for (double out = p.half_width; out <= p.half_width + 4.0; out += 0.5) {
-                const double sx = p.x - tz * side * out, sz = p.z + tx * side * out;
-                if (!p_view.nav->dry_at(sx, sz)) {
-                    continue;
+        for (size_t k = 0; k < line.size(); k++) {
+            const WaterPoint &a = line[k == 0 ? 0 : k - 1];
+            const WaterPoint &b = line[k == 0 ? 1 : k];
+            double tx = b.x - a.x, tz = b.z - a.z;
+            const double len = std::hypot(tx, tz);
+            if (len < 1e-6) {
+                continue;
+            }
+            tx /= len;
+            tz /= len;
+            const WaterPoint &p = line[k];
+            for (double side : { -1.0, 1.0 }) {
+                // 往岸上找第一块干地：水边上
+                for (double out = p.half_width; out <= p.half_width + 4.0; out += 0.5) {
+                    const double sx = p.x - tz * side * out, sz = p.z + tx * side * out;
+                    if (!p_view.nav->dry_at(sx, sz)) {
+                        continue;
+                    }
+                    const double d = std::hypot(sx - p_x, sz - p_z);
+                    if (d < best) {
+                        best = d;
+                        r_stand = { sx, sz };
+                        r_water = { p.x, p.z };
+                    }
+                    break;
                 }
-                const double d = std::hypot(sx - p_x, sz - p_z);
-                if (d < best) {
-                    best = d;
-                    r_stand = { sx, sz };
-                    r_water = { p.x, p.z };
-                }
-                break;
             }
         }
     }
@@ -656,7 +618,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 const int granary = first_of_kind(*p_view.layout, "granary");
                 return at_building(TaskKind::DELIVER, p_view, granary >= 0 ? granary : who.home, w.deliver_s);
             }
-            if (!p_view.farm || !p_view.field) {
+            if (!p_view.farm || !p_view.plots) {
                 return idle_task(r_mind, p_view, p_rng);
             }
             int owned = 0;
@@ -669,7 +631,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                     continue;
                 }
                 owned++;
-                const NavPoint at = plot_center(*p_view.field, c.i, c.j);
+                const NavPoint at = plot_center(*p_view.plots, c.i, c.j);
                 const double d = std::hypot(at.x - r_mind.x, at.z - r_mind.z);
                 switch (p_view.farm->plot_at(c.i, c.j).state) {
                     case PlotState::RIPE:

@@ -7,20 +7,20 @@
 #include "farm_model.h"
 #include "ground_query.h"
 #include "inventory.h"
-#include "island_field.h"
+#include "map_ground.h"
 #include "rng.h"
 #include "settlement_model.h"
 
 // 村民：住在聚落的房子里，按钟点出门、沿路走到干活的地方、干完一样再找下一样、收工回家。不含 Godot 头。
 //
 // 分四块，全是「值进、值出」：
-//   导航格（NavGrid）——高度场 + 建筑清单 → 哪里走得了；A* 找路再拉直，给出岛坐标的路点。
+//   导航格（NavGrid）——地面 + 建筑清单 → 哪里走得了；A* 找路再拉直，给出宿主坐标的路点。
 //   钟点（DayRules）——一天多少秒、几点出工几点收工、午间歇晌；时辰名。
-//   职业与住户（assign_residents）——按聚落里有什么建筑、岛上有没有农田和河，分派谁住哪、干哪一行。
+//   职业与住户（assign_residents）——按聚落里有什么建筑、附近有没有能种的地和水，分派谁住哪、干哪一行。
 //   决策（decide_task）——一个村民眼下该去哪、到了干什么、干多久。随机数流存在村民身上，由上层传进来。
 // 村民的状态（在哪、在干什么、背着什么、认领了哪些地）都在上层（Villagers 节点）；这里不存任何东西。
 //
-// 坐标同 IslandField：岛的局部坐标，x 向东、z 向南、y 向上。
+// 坐标是聚落宿主的局部坐标（岛的局部坐标 / 村心为原点的岛群坐标），x 向东、z 向南、y 向上。
 
 // ---------------------------------------------------------------- 导航格
 
@@ -59,21 +59,8 @@ struct NavGrid {
     int walkable_count() const;
 };
 
-// 一座游戏尺度的岛当作导航的地面：高与地面网格一致（三角切法），水深取最近节点。只持引用
-class IslandNavGround : public NavGround {
-    const IslandField &field;
-
-public:
-    explicit IslandNavGround(const IslandField &p_field) :
-            field(p_field) {}
-    bool walk_height(double p_x, double p_z, double &r_y) const override;
-    double water_depth(double p_x, double p_z) const override;
-};
-
 // 在 (x0, z0) 起、cols × rows 格的窗口里建导航格（只在村子周围建，不必铺满整座岛）
 NavGrid build_nav_grid(const NavGround &p_ground, double p_x0, double p_z0, int p_cols, int p_rows, const SettlementLayout &p_layout, const NavRules &p_rules);
-// 整座岛
-NavGrid build_nav_grid(const IslandField &p_field, const SettlementLayout &p_layout, const NavRules &p_rules);
 
 // 离 (x, z) 最近的可走格心，p_max_m 以内；p_dry_only 只要干地。找不到返回 false
 bool nav_nearest_walkable(const NavGrid &p_grid, double p_x, double p_z, double p_max_m, bool p_dry_only, NavPoint &r_point);
@@ -82,9 +69,6 @@ bool nav_line_clear(const NavGrid &p_grid, const NavRules &p_rules, double p_x0,
 // A* 找路（八方向，斜走不切角）再拉直。返回自起点之后的路点，末点就是终点（两端各自先吸到最近的可走格）；
 // 走不到返回空。起点与终点同格返回只含终点的一段
 std::vector<NavPoint> nav_find_path(const NavGrid &p_grid, const NavRules &p_rules, double p_x0, double p_z0, double p_x1, double p_z1);
-
-// 与地面网格一致的地面高（每格沿 (i, j+1)–(i+1, j) 那条对角线切成两个三角）；没有地面返回 false
-bool surface_height(const IslandField &p_field, double p_x, double p_z, double &r_y);
 
 // ---------------------------------------------------------------- 钟点
 
@@ -114,9 +98,9 @@ std::string clock_text(double p_seconds, const DayRules &p_rules);
 
 enum class Job : uint8_t {
     FARMER, // 农：种自己认领的地，收成送进仓
-    CARRIER, // 挑水：家门口的河边打水，挑到堂屋的公用水缸（没有堂屋就挑回家）
+    CARRIER, // 挑水：离家门最近的水边打水，挑到堂屋的公用水缸（没有堂屋就挑回家）
     WATCHMAN, // 守望：望楼下站班，隔一阵绕村巡一圈
-    IDLER, // 闲：串门聊天（岛上没地可种、没河可挑时，家里的人都是这样）
+    IDLER, // 闲：串门聊天（附近没地可种、没水可挑时，家里的人都是这样）
 };
 
 struct JobDef {
@@ -137,12 +121,12 @@ struct Resident {
     int post = -1; // 守望守的是哪座望楼；别的职业 −1
 };
 
-// 分派：每座民居 p_per_house 口（头一口在有农田的岛上种地、否则闲；第二口在有河的岛上挑水、否则闲；再多的闲），
+// 分派：每座民居 p_per_house 口（头一口在有地可种时种地、否则闲；第二口在有水可挑时挑水、否则闲；再多的闲），
 // 堂屋一口（闲），每座望楼一个守望——住在堂屋，没有堂屋就住离望楼最近的民居；聚落里没有能住的房子就没人。
 // 名字从名字表里按 p_seed 确定地取，不重复（人多过表就加「二」「三」）。
-std::vector<Resident> assign_residents(const SettlementLayout &p_layout, bool p_has_farm, bool p_has_river, int p_per_house, uint64_t p_seed);
+std::vector<Resident> assign_residents(const SettlementLayout &p_layout, bool p_has_farm, bool p_has_water, int p_per_house, uint64_t p_seed);
 
-// 建筑门前的站位（门外 p_out_m，岛坐标）
+// 建筑门前的站位（门外 p_out_m，宿主坐标）
 NavPoint building_door(const Building &p_building, double p_out_m = 1.8);
 
 // ---------------------------------------------------------------- 决策
@@ -154,7 +138,7 @@ enum class TaskKind : uint8_t {
     HARVEST, // 收割
     TEND, // 照看庄稼（锄草）
     DELIVER, // 把背着的东西放下（粮进仓 / 水进堂屋的缸）
-    FETCH_WATER, // 河边打水
+    FETCH_WATER, // 水边打水
     WATCH, // 望楼下站班
     PATROL, // 巡到某座房子前看一眼
     CHAT, // 串门，在人家门口聊一阵
@@ -190,6 +174,7 @@ struct Claim {
 struct WorkRules {
     int plots_per_farmer = 4; // 一个农夫最多认领几格地
     double field_radius_m = 55.0; // 只在家门口这么远以内开荒
+    double water_reach_m = 300.0; // 挑水只去村子这么远以内的水
     double till_s = 6.0, sow_s = 3.0, harvest_s = 4.0, tend_s = 8.0;
     double deliver_s = 3.0, fetch_s = 5.0;
     double watch_s = 45.0; // 站一班多久
@@ -201,10 +186,11 @@ struct WorkRules {
 
 // 决策要读的「村况」：全是只读的引用，谁也不在这儿改东西
 struct VillageView {
-    const IslandField *field = nullptr;
+    const PlotLattice *plots = nullptr; // 农田的地块格，换到宿主坐标（没有农田为 nullptr）
+    const std::vector<WaterLine> *water = nullptr; // 挑水去的水中线（宿主坐标）；没有水为空
     const SettlementLayout *layout = nullptr;
     const NavGrid *nav = nullptr;
-    const FarmModel *farm = nullptr; // 岛上没有农田为 nullptr
+    const FarmModel *farm = nullptr; // 没有农田为 nullptr
     const std::vector<Claim> *claims = nullptr;
     const Inventory *store = nullptr; // 村里的仓
     const DayRules *day = nullptr;
@@ -228,7 +214,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng);
 // 农夫挑地的规矩单独露出来，单测用：离 (x, z) 最近、离家门 field_radius_m 以内、没人认领、能开荒、格心在导航格上走得到干地的一格。
 // 找不到返回 false
 bool pick_wild_plot(const VillageView &p_view, double p_home_x, double p_home_z, int &r_i, int &r_j);
-// 挑水的站位：河边离 (x, z) 最近、站在干地上、紧挨着水的一点；r_water 是面朝的水面点。岛上没河返回 false
+// 挑水的站位：水边离 (x, z) 最近、站在干地上、紧挨着水的一点；r_water 是面朝的水面点。没有水返回 false
 bool pick_water_spot(const VillageView &p_view, double p_x, double p_z, NavPoint &r_stand, NavPoint &r_water);
-// 高度场格子 (i, j) 的格心（岛坐标）
-NavPoint plot_center(const IslandField &p_field, int p_i, int p_j);
+// 地块格 (i, j) 的格心（宿主坐标）
+NavPoint plot_center(const PlotLattice &p_plots, int p_i, int p_j);

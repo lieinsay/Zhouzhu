@@ -125,8 +125,24 @@ std::vector<DockPlan> plan_world_docks(const WorldTerrain &p_terrain, const Worl
     return plans;
 }
 
+WorldWorks lay_world_works(WorldTerrain &r_terrain, const WorldSites &p_sites) {
+    WorldWorks works;
+    works.docks = plan_world_docks(r_terrain, p_sites, world_dock_rules());
+    r_terrain.set_pads(works.docks);
+    const YardRules yard_rules = world_yard_rules();
+    works.yards.resize(works.docks.size());
+    for (size_t k = 0; k < works.docks.size(); k++) {
+        if (p_sites.docks[k].main) {
+            works.yards[k] = plan_world_yard(r_terrain, works.docks[k], yard_rules);
+        }
+    }
+    r_terrain.set_yards(works.yards, yard_rules);
+    return works;
+}
+
 VillagePlan plan_world_village(const WorldTerrain &p_terrain, const SiteSettlement &p_site, uint64_t p_seed, const WorldVillageRules &p_rules) {
-    const WorldSiteGround ground(p_terrain, p_site.x, p_site.z, p_rules.village.max_radius_m, p_rules.ground);
+    const WorldGround map(p_terrain, p_site.x, p_site.z, p_rules.ground);
+    const MapSiteGround ground(map, p_rules.site);
     VillageRequest request;
     request.households = p_site.households;
     request.seat = p_site.seat;

@@ -53,11 +53,19 @@ bool parse_world_sites(const std::string &p_text, WorldSites &r_sites, std::stri
 // 所有码头（与 sites.docks 一一对应；找不到岸缘的 ok = false）。在原地形上量，所以在 set_pads 之前之后调都一样
 std::vector<DockPlan> plan_world_docks(const WorldTerrain &p_terrain, const WorldSites &p_sites, const DockRules &p_rules);
 
+// 岛群里的「工程」：码头（与 sites.docks 一一对应）与船坞坪（同样一一对应，只有主码头旁的 present）
+struct WorldWorks {
+    std::vector<DockPlan> docks;
+    std::vector<YardPlan> yards;
+};
+// 规划全部码头与主码头旁的船坞坪，并把停机坪压进、船坞坪凿进地形。游戏、体检工具、单测都走这一个入口，建地面之前调
+WorldWorks lay_world_works(WorldTerrain &r_terrain, const WorldSites &p_sites);
+
 struct WorldVillageRules {
     SiteRules site;
     VillageRules village;
-    WorldSiteRules ground;
+    WorldGroundRules ground;
 };
 
-// 一个村 / 散户：清单在村子的局部坐标里（原点 = 村心，世界坐标 = 村心 + 局部）。p_terrain 应已 set_pads
+// 一个村 / 散户：清单在村子的局部坐标里（原点 = 村心，世界坐标 = 村心 + 局部）。p_terrain 应已 lay_world_works
 VillagePlan plan_world_village(const WorldTerrain &p_terrain, const SiteSettlement &p_site, uint64_t p_seed, const WorldVillageRules &p_rules);

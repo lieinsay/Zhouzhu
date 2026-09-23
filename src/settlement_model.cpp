@@ -32,17 +32,6 @@ void survey_points(const BuildingDef &p_def, double p_x, double p_z, double p_ya
     }
 }
 
-// 离 (x, z) 最近的高度场节点；不在栅格里返回 false
-bool nearest_node(const IslandField &f, double p_x, double p_z, size_t &r_k) {
-    const double ext = f.half_extent();
-    const int j = int(std::lround((p_x + ext) / f.cell_m)), i = int(std::lround((p_z + ext) / f.cell_m));
-    if (i < 0 || j < 0 || i >= f.n || j >= f.n) {
-        return false;
-    }
-    r_k = f.index(i, j);
-    return true;
-}
-
 // 把矩形投到一根轴上：中心的投影 ± 半长
 void project(const Building &p_b, const BuildingDef &p_def, double p_grow, double p_ax, double p_az, double &r_lo, double &r_hi) {
     double ux = 0.0, uz = 0.0, vx = 0.0, vz = 0.0;
@@ -129,28 +118,6 @@ bool footprints_overlap(const Building &p_a, const Building &p_b, double p_gap) 
     return true;
 }
 
-bool IslandSiteGround::site_height(double p_x, double p_z, double &r_y) const {
-    return field.sample_height(p_x, p_z, r_y);
-}
-
-SiteBlock IslandSiteGround::site_block(double p_x, double p_z) const {
-    size_t node = 0;
-    const bool in_grid = nearest_node(field, p_x, p_z, node);
-    if (in_grid && field.has_river() && field.river_depth[node] > 0.0f) {
-        return { 0, "这是河，盖不了" };
-    }
-    if (std::hypot(p_x - field.dock.x, p_z - field.dock.z) <= dock_apron_m + rules.dock_margin_m) {
-        return { 1, "停机坪上不能盖" };
-    }
-    if (field.yard.contains(p_x, p_z, rules.yard_margin_m)) {
-        return { 2, "这是船坞的坪，盖不得" };
-    }
-    if (in_grid && field.has_trail() && field.trail_dist[node] <= rules.trail_margin_m) {
-        return { 3, "压着路了" };
-    }
-    return SiteBlock();
-}
-
 SiteReport survey_site(const SiteGround &p_ground, const BuildingDef &p_def, double p_x, double p_z, double p_yaw,
         const SettlementLayout &p_others, const SiteRules &p_rules, int p_ignore) {
     SiteReport r;
@@ -199,11 +166,6 @@ SiteReport survey_site(const SiteGround &p_ground, const BuildingDef &p_def, dou
     return r;
 }
 
-SiteReport survey_site(const IslandField &f, double p_dock_apron_m, const BuildingDef &p_def, double p_x, double p_z, double p_yaw,
-        const SettlementLayout &p_others, const SiteRules &p_rules, int p_ignore) {
-    return survey_site(IslandSiteGround(f, p_dock_apron_m, p_rules), p_def, p_x, p_z, p_yaw, p_others, p_rules, p_ignore);
-}
-
 std::string settlement_place(SettlementLayout &p_layout, const SiteGround &p_ground, const std::string &p_kind,
         double p_x, double p_z, double p_yaw, const SiteRules &p_rules) {
     const BuildingDef *def = buildings::by_id(p_kind);
@@ -216,11 +178,6 @@ std::string settlement_place(SettlementLayout &p_layout, const SiteGround &p_gro
     }
     p_layout.add(Building{ p_kind, p_x, p_z, normalize_yaw(p_yaw) });
     return std::string();
-}
-
-std::string settlement_place(SettlementLayout &p_layout, const IslandField &p_field, double p_dock_apron_m, const std::string &p_kind,
-        double p_x, double p_z, double p_yaw, const SiteRules &p_rules) {
-    return settlement_place(p_layout, IslandSiteGround(p_field, p_dock_apron_m, p_rules), p_kind, p_x, p_z, p_yaw, p_rules);
 }
 
 int settlement_find(const SettlementLayout &p_layout, double p_px, double p_pz) {
@@ -303,4 +260,92 @@ SettlementLayout settlement_from_ids(const std::vector<std::string> &p_ids, bool
         *r_ok = ok;
     }
     return layout;
+}
+
+SettlementLayout apply_layout_edits(const SettlementLayout &p_base, const LayoutEdits &p_edits, int *r_unmatched) {
+    std::vector<bool> gone(size_t(p_base.size()), false);
+    int unmatched = 0;
+    for (const std::string &id : p_edits.removed) {
+        bool found = false;
+        for (int k = 0; k < p_base.size() && !found; k++) {
+            if (!gone[size_t(k)] && building_id(p_base.at(k)) == id) {
+                gone[size_t(k)] = true;
+                found = true;
+            }
+        }
+        unmatched += found ? 0 : 1;
+    }
+    SettlementLayout out;
+    for (int k = 0; k < p_base.size(); k++) {
+        if (!gone[size_t(k)]) {
+            out.add(p_base.at(k));
+        }
+    }
+    for (const Building &b : p_edits.added) {
+        out.add(b);
+    }
+    if (r_unmatched) {
+        *r_unmatched = unmatched;
+    }
+    return out;
+}
+
+LayoutEdits diff_layouts(const SettlementLayout &p_base, const SettlementLayout &p_now) {
+    const std::vector<std::string> base_ids = settlement_ids(p_base), now_ids = settlement_ids(p_now);
+    std::vector<bool> used(now_ids.size(), false);
+    LayoutEdits edits;
+    for (const std::string &id : base_ids) {
+        bool found = false;
+        for (size_t k = 0; k < now_ids.size() && !found; k++) {
+            if (!used[k] && now_ids[k] == id) {
+                used[k] = true;
+                found = true;
+            }
+        }
+        if (!found) {
+            edits.removed.push_back(id);
+        }
+    }
+    for (size_t k = 0; k < now_ids.size(); k++) {
+        if (!used[k]) {
+            edits.added.push_back(p_now.at(int(k)));
+        }
+    }
+    return edits;
+}
+
+std::vector<std::string> layout_edit_lines(const LayoutEdits &p_edits) {
+    std::vector<std::string> lines;
+    for (const std::string &id : p_edits.removed) {
+        lines.push_back("-" + id);
+    }
+    for (const Building &b : p_edits.added) {
+        lines.push_back(building_id(b));
+    }
+    return lines;
+}
+
+LayoutEdits parse_layout_edits(const std::vector<std::string> &p_lines, bool *r_ok) {
+    LayoutEdits edits;
+    bool ok = true;
+    for (const std::string &raw : p_lines) {
+        const size_t begin = raw.find_first_not_of(" \t\r");
+        if (begin == std::string::npos || raw[begin] == '#') {
+            continue;
+        }
+        const char sign = raw[begin];
+        const std::string body = raw.substr(sign == '+' || sign == '-' ? begin + 1 : begin);
+        Building b;
+        if (!parse_building_id(body, b)) {
+            ok = false;
+        } else if (sign == '-') {
+            edits.removed.push_back(building_id(b));
+        } else {
+            edits.added.push_back(b);
+        }
+    }
+    if (r_ok) {
+        *r_ok = ok;
+    }
+    return edits;
 }
