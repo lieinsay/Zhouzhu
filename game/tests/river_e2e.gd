@@ -1,6 +1,7 @@
 extends Node
 ## 岛群的河（world_2051.tscn）端到端测试：
-## 主码头附近找一条大河 → 瞬移到河滩上、面朝下游 → 脚下有河况、HUD 报河宽水深 → 河心的地面是河床、水面高过河床
+## 开局（不钉径流，跟着钟与 world_2051 的 calendar_offset）：雨季里水不小，出生点最近的溪沿途 200 m 处处有水、有水深
+## → 主码头附近找一条大河 → 瞬移到河滩上、面朝下游 → 脚下有河况、HUD 报河宽水深 → 河心的地面是河床、水面高过河床
 ## → 径流钉在年均 / 枯水 / 大水三档：水深、水面宽跟着涨落，大水漫出平岸 → 源头的小溪枯水时断流 → 放开钉子后跟着钟走、换日子水情变
 ## → 到这条河的河口看跌水 → 飞到河的上空往下游看。
 ##
@@ -12,8 +13,9 @@ const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 120.0  # 模拟秒
 const BIG_RIVER_KM2 := 60.0  # 找汇流至少这么大的河
 const SMALL_STREAM_KM2 := 1.0
+const OPENING_MIN_DEPTH := 0.3  # 开局出生点附近的溪至少这么深
 
-enum Phase { SETTLE, FIND, LAND, MEAN, LOW, FLOOD, BROOK, CLOCK, MOUTH, AERIAL, DONE }
+enum Phase { SETTLE, OPENING, FIND, LAND, MEAN, LOW, FLOOD, BROOK, CLOCK, MOUTH, AERIAL, DONE }
 
 var main: Expedition
 var world: World
@@ -101,7 +103,34 @@ func _physics_process(delta: float) -> void:
 	match phase:
 		Phase.SETTLE:
 			if world.is_loaded() and _standing() and _in_phase() > 1.0:
-				_goto(Phase.FIND)
+				_goto(Phase.OPENING)
+		Phase.OPENING:
+			var spawn := main.get_spawn_point()
+			if not _expect(world.get_runoff() > 1.0, "开局径流 %.2f，没对上雨季" % world.get_runoff()):
+				return
+			var near: Dictionary = world.find_river_near(spawn.x, spawn.z, 3000.0, SMALL_STREAM_KM2)
+			if not _expect(not near.is_empty(), "出生点 3 km 内没有河"):
+				return
+			# 顺着这条溪往上游走 200 m，每 8 m 贴回中线查一次：处处有水
+			var shallow := 0
+			var least := INF
+			var at: Dictionary = near
+			for k in range(25):
+				var here: Dictionary = world.get_river_at(at["x"], at["z"])
+				if here.is_empty() or not bool(here["wet"]) or float(here["depth"]) < OPENING_MIN_DEPTH:
+					shallow += 1
+				else:
+					least = minf(least, float(here["depth"]))
+				var next: Dictionary = world.find_river_near(float(at["x"]) - float(at["dir_x"]) * 8.0, float(at["z"]) - float(at["dir_z"]) * 8.0, 6.0, SMALL_STREAM_KM2)
+				if next.is_empty():
+					break
+				at = next
+			print("river_e2e: 开局径流 %.2f；出生点最近的河（%.0f m 外，汇流 %.1f km²）往上游 200 m 有 %d 处水浅于 %.1f m，最浅 %.2f m" % [
+				world.get_runoff(), Vector2(near["x"] - spawn.x, near["z"] - spawn.z).length(), near["acc_km2"], shallow, OPENING_MIN_DEPTH, least])
+			# 河口前后、支流汇口会偏离中线几米：容一两处
+			if not _expect(shallow <= 2, "开局出生点附近的河断断续续"):
+				return
+			_goto(Phase.FIND)
 		Phase.FIND:
 			var spawn := main.get_spawn_point()
 			river = world.find_river_near(spawn.x, spawn.z, 40000.0, BIG_RIVER_KM2)
@@ -160,21 +189,21 @@ func _physics_process(delta: float) -> void:
 					return
 				_goto(Phase.BROOK)
 		Phase.BROOK:
-			# 小溪：枯水时断流，年均时有水
+			# 源头的小溪：旱季断流，来水了又有水
 			# find_river_near 取最近的一点，在大河边上找常就是大河本身；绕着它换几处找源头附近的小溪
 			var probe := {}
 			for offset in [Vector2(-3000, 0), Vector2(3000, 0), Vector2(0, -3000), Vector2(0, 3000), Vector2(-2000, 2000), Vector2(2000, -2000)]:
 				var cand: Dictionary = world.find_river_near(river["x"] + offset.x, river["z"] + offset.y, 1500.0, SMALL_STREAM_KM2)
-				if not cand.is_empty() and float(cand["acc_km2"]) < 3.0:
+				if not cand.is_empty() and float(cand["acc_km2"]) < 2.5:
 					probe = cand
 					break
-			if not _expect(not probe.is_empty(), "大河附近找不到汇流 < 3 km² 的小溪"):
+			if not _expect(not probe.is_empty(), "大河附近找不到汇流 < 2.5 km² 的小溪"):
 				return
-			world.set_runoff_override(0.3)
+			world.set_runoff_override(0.2)
 			var dry: Dictionary = world.get_river_at(probe["x"], probe["z"])
 			world.set_runoff_override(1.5)
 			var wet: Dictionary = world.get_river_at(probe["x"], probe["z"])
-			print("river_e2e: 小溪（汇流 %.1f km²）：径流 0.3 时 %s，1.5 时水深 %.2f" % [probe["acc_km2"], "有水" if dry["wet"] else "断流", wet["depth"]])
+			print("river_e2e: 小溪（汇流 %.1f km²）：径流 0.2 时 %s，1.5 时水深 %.2f" % [probe["acc_km2"], "有水" if dry["wet"] else "断流", wet["depth"]])
 			if not _expect(not bool(dry["wet"]) and bool(wet["wet"]), "小溪没有随水情断流 / 来水"):
 				return
 			_goto(Phase.CLOCK)

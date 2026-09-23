@@ -55,6 +55,7 @@ mesh = SubResource("cloud_mesh")
 [node name="World" type="World" parent="."]
 data_dir = "res://worlds/2051"
 terrain_seed = 2051
+calendar_offset = 3.0
 
 [node name="Farm" type="Farm" parent="World"]
 
