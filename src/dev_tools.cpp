@@ -13,6 +13,7 @@
 #include "input_actions.h"
 #include "player.h"
 #include "expedition.h"
+#include "world_clock.h"
 
 using namespace godot;
 
@@ -36,6 +37,8 @@ void DevTools::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_god", "enabled"), &DevTools::set_god);
     ClassDB::bind_method(D_METHOD("is_god"), &DevTools::is_god);
     ClassDB::bind_method(D_METHOD("toggle_god"), &DevTools::toggle_god);
+    ClassDB::bind_method(D_METHOD("set_time_lapse", "enabled"), &DevTools::set_time_lapse);
+    ClassDB::bind_method(D_METHOD("is_time_lapse"), &DevTools::is_time_lapse);
     ClassDB::bind_method(D_METHOD("switch_to_index", "index"), &DevTools::switch_to_index);
     ClassDB::bind_method(D_METHOD("switch_to", "path"), &DevTools::switch_to);
     ClassDB::bind_method(D_METHOD("is_menu_open"), &DevTools::is_menu_open);
@@ -190,6 +193,18 @@ Player *DevTools::find_player() {
     return player;
 }
 
+void DevTools::set_time_lapse(bool p_enabled) {
+    if (WorldClock *clock = WorldClock::get_singleton()) {
+        clock->set_fast_forward(p_enabled);
+        show_notice(p_enabled ? vformat(String(U"时间快进 ×%d（远近的村子、庄稼都跟着快）· F4 关"), int(clock->get_fast_scale())) : String(U"时间照常走"));
+    }
+}
+
+bool DevTools::is_time_lapse() const {
+    const WorldClock *clock = WorldClock::get_singleton();
+    return clock && clock->is_fast_forward();
+}
+
 void DevTools::set_god(bool p_enabled) {
     god = p_enabled;
     Player *player = find_player();
@@ -246,6 +261,11 @@ void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
         get_viewport()->set_input_as_handled();
         return;
     }
+    if (p_event->is_action_pressed(input_actions::TIME_LAPSE)) {
+        set_time_lapse(!is_time_lapse());
+        get_viewport()->set_input_as_handled();
+        return;
+    }
     // 岛群场景自己管 M；别的场景没有地图，告诉开发者去哪儿找
     if (p_event->is_action_pressed(input_actions::MAP) && !get_tree()->get_first_node_in_group(Expedition::MAP_GROUP)) {
         show_notice(String(U"这张地图没有岛群地图——按 F2 换到有地图的「岛群 #2051」"));
@@ -258,10 +278,15 @@ void DevTools::_process(double p_delta) {
     if (player && player->is_god_mode() != god) {
         player->set_god_mode(god);
     }
-    badge->set_visible(god && player);
+    PackedStringArray lines;
     if (god && player) {
-        badge->set_text(vformat(String(U"GOD · %d m/s（Shift ×%s）· F3 关"), int(player->get_god_speed()), String::num(player->get_god_boost(), 1)));
+        lines.push_back(vformat(String(U"GOD · %d m/s（Shift ×%s）· F3 关"), int(player->get_god_speed()), String::num(player->get_god_boost(), 1)));
     }
+    if (is_time_lapse()) {
+        lines.push_back(vformat(String(U"快进 ×%d · F4 关"), int(WorldClock::get_singleton()->get_fast_scale())));
+    }
+    badge->set_visible(!lines.is_empty());
+    badge->set_text(String("\n").join(lines));
     if (notice_time > 0.0) {
         notice_time -= p_delta;
         if (notice_time <= 0.0) {

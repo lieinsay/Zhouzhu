@@ -26,6 +26,7 @@ constexpr const char *SAVE = "save"; // 布置时把清单存盘
 constexpr const char *MAP = "map"; // 开合岛群地图
 constexpr const char *SWITCH_MAP = "switch_map"; // 开发者：开合换地图清单
 constexpr const char *GOD_MODE = "god_mode"; // 开发者：开关 god 模式
+constexpr const char *TIME_LAPSE = "time_lapse"; // 开发者：开关时间快进
 constexpr const char *GEAR_UP = "gear_up"; // 掌舵时升一档
 constexpr const char *GEAR_DOWN = "gear_down"; // 掌舵时降一档
 constexpr const char *FLY_DOWN = "fly_down"; // god 模式下往下飞（Shift 已是加速，不能再用来降）

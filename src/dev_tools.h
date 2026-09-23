@@ -16,6 +16,7 @@ class Player;
 // 全局开发者工具（autoload，见 game/dev_tools.tscn），哪张地图里都在：
 //   F2 开合「换地图」清单（maps：场景路径 → 名字），点一项或按数字键就换过去；
 //   F3 开关 god 模式——当前场景里的 Player 能飞、飞得快（Player::set_god_mode），换了地图照样开着；
+//   F4 开关时间快进——全局的世界时钟（WorldClock）按它的 fast_scale 倍走，近处远处的村子、农田都跟着快；
 //   没有岛群地图的场景里按 M，提示去 F2 换一张有地图的。
 // 当前场景的根节点有 dev_tools 属性且为假时，这些键都不理。
 // 「god 开没开」「清单开没开」只在这里；它不认识各场景的编排，只找场景里的 Player。
@@ -52,6 +53,8 @@ public:
     void _process(double p_delta) override;
     void _unhandled_input(const godot::Ref<godot::InputEvent> &p_event) override;
 
+    void set_time_lapse(bool p_enabled); // 开关快进（改的是 WorldClock）
+    bool is_time_lapse() const;
     void set_god(bool p_enabled);
     bool is_god() const { return god; }
     void toggle_god() { set_god(!god); }
