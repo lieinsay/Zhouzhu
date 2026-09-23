@@ -1,0 +1,10 @@
+# 房屋模板：仓。高台基防潮，门前一溜台阶；四个粮囤、两垛麻袋，当中留走道；两山墙开气窗。
+id granary/cang
+name 仓
+door front 0 1.3
+window left 0 0.8
+window right 0 0.8
+item bin -1.8,-1.8 0
+item bin 1.8,-1.8 0
+item sacks -2,0.6 1
+item sacks 2,0.6 1

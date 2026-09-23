@@ -1,0 +1,25 @@
+# 房屋模板：堂屋·祠堂。当中一大间，后墙下供桌祭祖，两排长凳；两头各一间：西头看祠人住，东头放杂物。
+id hall/citang
+name 祠堂
+door front 0 2
+window front -3.4 1.6
+window front 3.4 1.6
+window front -6.6 1.2
+window front 6.6 1.2
+window back -3.4 1.6
+window back 3.4 1.6
+wall -5,-4.45 -5,4.45
+wall 5,-4.45 5,4.45
+doorway -5,2.5
+doorway 5,2.5
+item altar 0,-3.95 0
+item table 0,-2.6 0
+item bench -2.2,-0.5 1
+item bench -2.2,1.2 1
+item bench 2.2,-0.5 1
+item bench 2.2,1.2 1
+item bed -6.9,-3.4 0
+item chest -7.85,1 3
+item shelf 6.6,-4.1 0
+item sacks 7.5,0.5 1
+item vat 6,-2.8 0

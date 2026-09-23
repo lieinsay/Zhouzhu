@@ -1,0 +1,22 @@
+# 房屋模板：堂屋·公所。一整间不隔，当中长桌议事，门边公用水缸（挑水的挑到这里），后头一口大灶、两个架子，后墙也开门。
+id hall/gongsuo
+name 公所
+door front 0 2
+door back 5.5 1.3
+window front -4.5 1.6
+window front 4.5 1.6
+window left 0 1.4
+window right -1 1.4
+item table -0.75,-0.5 0
+item table 0.75,-0.5 0
+item bench -0.75,-1.5 0
+item bench 0.75,-1.5 0
+item bench -0.75,0.5 0
+item bench 0.75,0.5 0
+item vat -2,3.6 0
+item vat 2,3.6 0
+item stove -6.9,-3.8 0
+item shelf -3.5,-4.2 0
+item shelf -1.5,-4.2 0
+item chest 7.85,1.5 3
+item sacks 7.5,-1.8 1

@@ -1,0 +1,21 @@
+# 房屋模板：民居·三间（一明两暗）。堂屋居中供祖、待客；东间卧房，西间灶屋。
+# 格式见 src/house_template.h；在游戏里走进这种房子按 T（开发者）改，F5 存回这里。
+id house/sanjian
+name 三间
+door front 0 1.3
+window front -3.6 1.2
+window front 3.6 1.2
+window back 3.6 1.2
+wall -1.8,-2.95 -1.8,2.95
+wall 1.8,-2.95 1.8,2.95
+doorway -1.8,0.9
+doorway 1.8,0.9
+item altar 0,-2.6 0
+item table 0,-1.5 0
+item bench -0.3,-0.6 0
+item bed 3.8,-1.9 0
+item chest 4.6,1.8 3
+item mat 3.9,0.4 0
+item stove -4.2,-2.3 0
+item vat -2.6,-2.4 0
+item shelf -4.85,1 1

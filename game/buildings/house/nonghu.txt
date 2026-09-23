@@ -1,0 +1,16 @@
+# 房屋模板：民居·农户。一间通屋，东北角隔出一个小粮间；灶、缸、床都在大间里。
+id house/nonghu
+name 农户
+door front 0.5 1.3
+window front -3.6 1.2
+window left 0 1.2
+wall 2.6,-0.5 5.2,-0.5
+doorway 4.6,-0.5
+item bin 3.4,-1.8 0
+item sacks 4.6,-2.3 1
+item stove -4.2,-2.3 0
+item vat -2.6,-2.4 0
+item table -0.5,-1 0
+item bench -0.5,-0.2 0
+item bed -4.1,1.8 0
+item chest 3.4,2.3 0
