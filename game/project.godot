@@ -8,6 +8,7 @@ config/features=PackedStringArray("4.4", "Forward Plus")
 
 [autoload]
 
+GameClock="*res://world_clock.tscn"
 DeveloperTools="*res://dev_tools.tscn"
 
 [dotnet]

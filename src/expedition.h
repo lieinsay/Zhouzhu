@@ -102,6 +102,11 @@ private:
     bool nearest_land(const godot::Vector3 &p_point, godot::Vector3 &r_point) const;
     godot::String clock_text() const;
 
+public:
+    godot::String get_status_text() const; // HUD 左上那几行（给测试看）
+
+private:
+
 protected:
     static void _bind_methods();
 

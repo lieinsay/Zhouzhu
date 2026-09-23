@@ -12,6 +12,8 @@
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
+#include "world_clock.h"
+
 using namespace godot;
 
 const Vector2i Farm::NO_CELL = Vector2i(-1, -1);
@@ -240,11 +242,11 @@ void Farm::_bind_methods() {
 
     ClassDB::bind_method(D_METHOD("set_max_river_distance", "value"), &Farm::set_max_river_distance);
     ClassDB::bind_method(D_METHOD("get_max_river_distance"), &Farm::get_max_river_distance);
-    ClassDB::bind_method(D_METHOD("set_grow_seconds", "value"), &Farm::set_grow_seconds);
-    ClassDB::bind_method(D_METHOD("get_grow_seconds"), &Farm::get_grow_seconds);
+    ClassDB::bind_method(D_METHOD("set_grow_hours", "value"), &Farm::set_grow_hours);
+    ClassDB::bind_method(D_METHOD("get_grow_hours"), &Farm::get_grow_hours);
 
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_river_distance", PROPERTY_HINT_RANGE, "4,60,0.5,suffix:m"), "set_max_river_distance", "get_max_river_distance");
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "grow_seconds", PROPERTY_HINT_RANGE, "1,1800,1,suffix:s"), "set_grow_seconds", "get_grow_seconds");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "grow_hours", PROPERTY_HINT_RANGE, "0.01,48,0.01,suffix:h"), "set_grow_hours", "get_grow_hours");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "search_radius", PROPERTY_HINT_RANGE, "10,1000,1,suffix:m"), "set_search_radius", "get_search_radius");
 
     ADD_SIGNAL(MethodInfo("plot_changed", PropertyInfo(Variant::VECTOR2I, "cell")));
@@ -273,6 +275,7 @@ void Farm::_ready() {
         set_physics_process(false);
         return;
     }
+    set_physics_process_priority(-10); // 地先长、村民后动（村子收回 / 展开搬地时，地里的长势已是这一帧的）
     host = GroundHost::of(get_parent());
     ERR_FAIL_NULL_MSG(host, "Farm 要挂在地面宿主（Island / World / FlatMap）下面");
 
@@ -308,7 +311,15 @@ void Farm::apply_rules() {
 }
 
 void Farm::_physics_process(double p_delta) {
-    const std::vector<int> changed = model.advance(p_delta);
+    // 按世界钟走过的游戏小时长（快进时一起快）；没有钟（不该发生）就按帧时与默认的一天长度
+    const WorldClock *clock = WorldClock::get_singleton();
+    double hours = game_hours(p_delta, DayRules());
+    if (clock) {
+        const double now = clock->get_seconds();
+        hours = clock_seen < 0.0 ? 0.0 : game_hours(std::max(0.0, now - clock_seen), clock->get_rules());
+        clock_seen = now;
+    }
+    const std::vector<int> changed = model.advance(hours);
     for (size_t k = 0; k + 1 < changed.size(); k += 2) {
         refresh_plot(Vector2i(changed[k], changed[k + 1]));
     }
@@ -492,7 +503,13 @@ void Farm::set_max_river_distance(double p_value) {
     }
 }
 
-void Farm::set_grow_seconds(double p_value) {
-    rules.grow_seconds = p_value;
+void Farm::refresh_cells(const std::vector<Vector2i> &p_cells) {
+    for (const Vector2i &cell : p_cells) {
+        refresh_plot(cell);
+    }
+}
+
+void Farm::set_grow_hours(double p_value) {
+    rules.grow_hours = p_value;
     apply_rules();
 }

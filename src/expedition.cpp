@@ -16,7 +16,7 @@
 #include "input_actions.h"
 #include "settlement.h"
 #include "shipyard.h"
-#include "villagers.h"
+#include "world_clock.h"
 
 using namespace godot;
 
@@ -76,6 +76,7 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("has_arrived"), &Expedition::has_arrived);
     ClassDB::bind_method(D_METHOD("get_notice"), &Expedition::get_notice);
     ClassDB::bind_method(D_METHOD("get_prompt"), &Expedition::get_prompt);
+    ClassDB::bind_method(D_METHOD("get_status_text"), &Expedition::get_status_text);
     ClassDB::bind_method(D_METHOD("get_spawn_point"), &Expedition::get_spawn_point);
     ClassDB::bind_method(D_METHOD("get_origin_berth"), &Expedition::get_origin_berth);
     ClassDB::bind_method(D_METHOD("get_destination_berth"), &Expedition::get_destination_berth);
@@ -604,19 +605,14 @@ void Expedition::on_teleport_requested(const Vector3 &p_position) {
 
 // ---------------------------------------------------------------- HUD
 
+String Expedition::get_status_text() const {
+    return status_label ? status_label->get_text() : String();
+}
+
 String Expedition::clock_text() const {
-    const Vector3 at = helm.get_state() == Helm::ON_FOOT || !ship ? player->get_global_position() : ship->get_global_position();
-    GroundHost *host = map->map_settlement_at(at);
-    if (!host) {
-        return String();
-    }
-    const TypedArray<Node> children = host->host_node()->get_children();
-    for (int64_t k = 0; k < children.size(); k++) {
-        if (const Villagers *villagers = Object::cast_to<Villagers>(children[k])) {
-            return villagers->get_clock_text();
-        }
-    }
-    return String();
+    // 全局只有一个钟：到哪都一样
+    const WorldClock *clock = WorldClock::get_singleton();
+    return clock ? clock->get_clock_text() : String();
 }
 
 void Expedition::update_hud() {

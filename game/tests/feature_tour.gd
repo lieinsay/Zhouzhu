@@ -83,7 +83,7 @@ func _ready() -> void:
 	main = _scene().instantiate()
 	_setup()
 	farm = _farm()
-	farm.grow_seconds = GROW_SECONDS
+	farm.grow_hours = GROW_SECONDS * 24.0 / GameClock.get_day_seconds()  # 生长按钟点算：12 秒折成游戏小时
 	yard = _yard()
 	add_child(main)
 	world = main.get_map_node() as World  # 不是岛群就是 null

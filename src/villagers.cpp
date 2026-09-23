@@ -15,12 +15,15 @@
 #include <godot_cpp/core/math.hpp>
 
 #include "crops.h"
+#include "world_clock.h"
 
 using namespace godot;
 
 namespace {
 
 const char *GENERATED_META = "villagers_generated";
+// 钟一下跳过这么多秒（拨钟、卡了一大下）：不逐段找路了，先估着走过去再展开
+constexpr double CATCH_UP_S = 10.0;
 
 Ref<StandardMaterial3D> make_material(const Color &p_albedo) {
     Ref<StandardMaterial3D> material;
@@ -71,6 +74,30 @@ double facing(double p_dx, double p_dz, double p_fallback) {
     return (std::abs(p_dx) + std::abs(p_dz)) < 1e-6 ? p_fallback : std::atan2(p_dx, p_dz);
 }
 
+// 近处的田：地图的农田节点。动地走 Farm::perform，好让地块重画
+class FarmFields : public FieldBook {
+    Farm *farm;
+
+public:
+    explicit FarmFields(Farm *p_farm) :
+            farm(p_farm) {}
+    Plot plot_at(int p_i, int p_j) const override { return farm->get_model().plot_at(p_i, p_j); }
+    FarmAction available(int p_i, int p_j, bool p_has_seed) const override { return farm->get_model().available_action(p_i, p_j, p_has_seed); }
+    bool till(int p_i, int p_j) override {
+        return available(p_i, p_j, false) == FarmAction::TILL && (farm->perform(Vector2i(p_i, p_j), Farm::ACTION_TILL, String()), true);
+    }
+    bool sow(int p_i, int p_j, const CropDef *p_crop) override {
+        return p_crop && available(p_i, p_j, true) == FarmAction::SOW && (farm->perform(Vector2i(p_i, p_j), Farm::ACTION_SOW, String(p_crop->id)), true);
+    }
+    Harvest harvest(int p_i, int p_j) override {
+        const Plot plot = farm->get_model().plot_at(p_i, p_j);
+        if (plot.state != PlotState::RIPE || !plot.crop) {
+            return Harvest();
+        }
+        return { plot.crop->product, farm->perform(Vector2i(p_i, p_j), Farm::ACTION_HARVEST, String()) };
+    }
+};
+
 } // namespace
 
 void Villagers::_bind_methods() {
@@ -82,17 +109,21 @@ void Villagers::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_villager_phase", "index"), &Villagers::get_villager_phase);
     ClassDB::bind_method(D_METHOD("get_villager_position", "index"), &Villagers::get_villager_position);
     ClassDB::bind_method(D_METHOD("get_villager_target", "index"), &Villagers::get_villager_target);
+    ClassDB::bind_method(D_METHOD("get_villager_door", "index"), &Villagers::get_villager_door);
     ClassDB::bind_method(D_METHOD("get_villager_carrying", "index"), &Villagers::get_villager_carrying);
     ClassDB::bind_method(D_METHOD("get_villager_home", "index"), &Villagers::get_villager_home);
     ClassDB::bind_method(D_METHOD("is_villager_visible", "index"), &Villagers::is_villager_visible);
     ClassDB::bind_method(D_METHOD("get_claimed_cells"), &Villagers::get_claimed_cells);
     ClassDB::bind_method(D_METHOD("get_store_count", "item"), &Villagers::get_store_count);
+    ClassDB::bind_method(D_METHOD("get_grain"), &Villagers::get_grain);
+    ClassDB::bind_method(D_METHOD("get_water"), &Villagers::get_water);
+    ClassDB::bind_method(D_METHOD("get_water_cap"), &Villagers::get_water_cap);
     ClassDB::bind_method(D_METHOD("get_tally", "task"), &Villagers::get_tally);
+    ClassDB::bind_method(D_METHOD("get_ledger_summary"), &Villagers::get_ledger_summary);
     ClassDB::bind_method(D_METHOD("get_path_failures"), &Villagers::get_path_failures);
     ClassDB::bind_method(D_METHOD("get_hour"), &Villagers::get_hour);
     ClassDB::bind_method(D_METHOD("get_day"), &Villagers::get_day);
     ClassDB::bind_method(D_METHOD("get_clock_text"), &Villagers::get_clock_text);
-    ClassDB::bind_method(D_METHOD("set_hour", "hour"), &Villagers::set_hour);
     ClassDB::bind_method(D_METHOD("get_nav_height", "global_position"), &Villagers::get_nav_height);
     ClassDB::bind_method(D_METHOD("on_host_rebuilt"), &Villagers::on_host_rebuilt);
     ClassDB::bind_method(D_METHOD("on_layout_changed"), &Villagers::on_layout_changed);
@@ -105,10 +136,6 @@ void Villagers::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_max_folk"), &Villagers::get_max_folk);
     ClassDB::bind_method(D_METHOD("set_per_house", "value"), &Villagers::set_per_house);
     ClassDB::bind_method(D_METHOD("get_per_house"), &Villagers::get_per_house);
-    ClassDB::bind_method(D_METHOD("set_day_seconds", "value"), &Villagers::set_day_seconds);
-    ClassDB::bind_method(D_METHOD("get_day_seconds"), &Villagers::get_day_seconds);
-    ClassDB::bind_method(D_METHOD("set_start_hour", "value"), &Villagers::set_start_hour);
-    ClassDB::bind_method(D_METHOD("get_start_hour"), &Villagers::get_start_hour);
     ClassDB::bind_method(D_METHOD("set_walk_speed", "value"), &Villagers::set_walk_speed);
     ClassDB::bind_method(D_METHOD("get_walk_speed"), &Villagers::get_walk_speed);
     ClassDB::bind_method(D_METHOD("set_seed", "value"), &Villagers::set_seed);
@@ -119,8 +146,6 @@ void Villagers::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "settlement_path"), "set_settlement_path", "get_settlement_path");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "per_house", PROPERTY_HINT_RANGE, "0,6,1"), "set_per_house", "get_per_house");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "max_folk", PROPERTY_HINT_RANGE, "0,500,1"), "set_max_folk", "get_max_folk");
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "day_seconds", PROPERTY_HINT_RANGE, "10,7200,1,suffix:s"), "set_day_seconds", "get_day_seconds");
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "start_hour", PROPERTY_HINT_RANGE, "0,23.99,0.25"), "set_start_hour", "get_start_hour");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "walk_speed", PROPERTY_HINT_RANGE, "0.3,6,0.05,suffix:m/s"), "set_walk_speed", "get_walk_speed");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
     ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "starting_store"), "set_starting_store", "get_starting_store");
@@ -131,8 +156,16 @@ void Villagers::_bind_methods() {
 }
 
 Villagers::Villagers() {
-    starting_store["millet"] = 8;
-    starting_store["bean"] = 4;
+    const Inventory store = village_starting_store();
+    for (const ItemStack &s : store.get_stacks()) {
+        starting_store[String(s.item.c_str())] = s.count;
+    }
+}
+
+void Villagers::set_ledger(const std::shared_ptr<VillageState> &p_state, const std::shared_ptr<ClaimRegistry> &p_taken) {
+    state = p_state;
+    taken = p_taken;
+    borrowed = state != nullptr;
 }
 
 void Villagers::_ready() {
@@ -154,9 +187,9 @@ void Villagers::_ready() {
     mat_job[int(Job::CARRIER)] = make_material(Color(0.33f, 0.40f, 0.52f)); // 靛青
     mat_job[int(Job::WATCHMAN)] = make_material(Color(0.55f, 0.20f, 0.17f)); // 赭红
     mat_job[int(Job::IDLER)] = make_material(Color(0.36f, 0.50f, 0.44f)); // 青绿
+    rules.walk_speed = walk_speed;
 
-    clock = day.day_seconds * start_hour / 24.0;
-    // 聚落与农田都在岛 rebuilt 时重建，它们排在前面、先连的信号，所以这里收到时它们已经好了
+    // 聚落与农田都在宿主 rebuilt 时重建，它们排在前面、先连的信号，所以这里收到时它们已经好了
     host->host_node()->connect("rebuilt", Callable(this, "on_host_rebuilt"));
     settlement->connect("changed", Callable(this, "on_layout_changed"));
     if (host->host_ready()) {
@@ -164,129 +197,192 @@ void Villagers::_ready() {
     }
 }
 
+void Villagers::_notification(int p_what) {
+    if (p_what == NOTIFICATION_EXIT_TREE) {
+        collapse();
+    }
+}
+
+double Villagers::now() const {
+    const WorldClock *clock = WorldClock::get_singleton();
+    return clock ? clock->get_seconds() : 0.0;
+}
+
+const DayRules &Villagers::day() const {
+    static const DayRules fallback;
+    const WorldClock *clock = WorldClock::get_singleton();
+    return clock ? clock->get_rules() : fallback;
+}
+
+Inventory Villagers::starting_inventory() const {
+    Inventory store;
+    const Array keys = starting_store.keys();
+    for (int64_t k = 0; k < keys.size(); k++) {
+        store.add(to_std(String(keys[k])), int(starting_store[keys[k]]));
+    }
+    return store;
+}
+
 void Villagers::on_host_rebuilt() {
     ground = host->host_ground();
-    populate();
+    prepare();
+    bring_up(!borrowed); // 自己的账：地形换了，地块都没了，从头招人；借来的账：接着记
 }
 
 void Villagers::on_layout_changed() {
     if (!ground) {
         return; // 宿主还没好：等它的 rebuilt
     }
-    populate();
+    prepare();
+    bring_up(true);
 }
 
-void Villagers::clear_folk() {
-    for (Folk &f : folk) {
-        if (f.root) {
-            f.root->queue_free();
-        }
-    }
-    folk.clear();
-}
-
-void Villagers::populate() {
-    clear_folk();
-    claims.clear();
-    store = Inventory();
-    const Array keys = starting_store.keys();
-    for (int64_t k = 0; k < keys.size(); k++) {
-        store.add(to_std(String(keys[k])), int(starting_store[keys[k]]));
-    }
+void Villagers::prepare() {
     const SettlementLayout &layout = settlement->get_model();
     double x0 = 0.0, z0 = 0.0;
     int cols = 0, rows = 0;
-    host->host_nav_window(layout, nav_rules, x0, z0, cols, rows);
+    host->host_nav_window(layout, rules.nav, x0, z0, cols, rows);
 
-    // 村子的范围（本宿主坐标）：房子的外接圆
-    double cx = 0.0, cz = 0.0, reach = 0.0;
-    for (const Building &b : layout.get_items()) {
-        cx += b.x / layout.size();
-        cz += b.z / layout.size();
-    }
-    for (const Building &b : layout.get_items()) {
-        reach = std::max(reach, std::hypot(b.x - cx, b.z - cz));
-    }
-
-    // 农田：宿主指给的那一片，地块格换到本宿主的坐标；村子周围（离房子 field_radius_m 以内）有能垦的地才算有田
+    // 农田：宿主指给的那一片，地块格换到本宿主的坐标
     farm = host->host_farm();
-    bool has_farm = false;
-    if (farm && farm->get_host() && !layout.empty()) {
+    fields.reset();
+    if (farm && farm->get_host()) {
         double fx = 0.0, fz = 0.0, vx = 0.0, vz = 0.0;
         farm->get_host()->host_origin(fx, fz);
         host->host_origin(vx, vz);
         plots = farm->get_model().get_lattice().shifted(vx - fx, vz - fz);
-        has_farm = farm->get_model().any_arable_near(cx + vx - fx, cz + vz - fz, reach + work.field_radius_m);
+        fields = std::make_unique<FarmFields>(farm);
+    } else {
+        farm = nullptr;
     }
 
     // 水：村子 water_reach_m 以内的水中线；导航格够不着最近的那处水，就往那边扩
-    water.clear();
-    std::vector<WaterLine> lines;
-    const double far = reach + work.water_reach_m;
-    ground->water_lines(cx - far, cz - far, cx + far, cz + far, lines);
+    water = village_water(*ground, layout, rules.work);
+    double cx = 0.0, cz = 0.0, reach = 0.0;
+    village_extent(layout, cx, cz, reach);
     double near_d = 1e18, near_x = 0.0, near_z = 0.0;
-    for (WaterLine &line : lines) {
-        bool close = false;
+    for (const WaterLine &line : water) {
         for (const WaterPoint &p : line) {
             const double d = std::hypot(p.x - cx, p.z - cz);
-            close = close || d <= far;
             if (d < near_d) {
                 near_d = d;
                 near_x = p.x;
                 near_z = p.z;
             }
         }
-        if (close) {
-            water.push_back(std::move(line));
-        }
     }
-    const bool water_inside = near_x >= x0 && near_z >= z0 && near_x <= x0 + cols * nav_rules.cell_m && near_z <= z0 + rows * nav_rules.cell_m;
+    const double cell = rules.nav.cell_m;
+    const bool water_inside = near_x >= x0 && near_z >= z0 && near_x <= x0 + cols * cell && near_z <= z0 + rows * cell;
     if (!water.empty() && cols > 0 && !water_inside) {
         const double margin = 10.0;
         const double lo_x = std::min(x0, near_x - margin), lo_z = std::min(z0, near_z - margin);
-        const double hi_x = std::max(x0 + cols * nav_rules.cell_m, near_x + margin), hi_z = std::max(z0 + rows * nav_rules.cell_m, near_z + margin);
-        cols = int(std::ceil((hi_x - lo_x) / nav_rules.cell_m));
-        rows = int(std::ceil((hi_z - lo_z) / nav_rules.cell_m));
+        const double hi_x = std::max(x0 + cols * cell, near_x + margin), hi_z = std::max(z0 + rows * cell, near_z + margin);
+        cols = int(std::ceil((hi_x - lo_x) / cell));
+        rows = int(std::ceil((hi_z - lo_z) / cell));
         x0 = lo_x;
         z0 = lo_z;
     }
-    nav = build_nav_grid(*ground, x0, z0, cols, rows, layout, nav_rules);
-    std::vector<Resident> residents = assign_residents(layout, has_farm, !water.empty(), per_house, uint64_t(seed) ^ host->host_seed());
-    if (max_folk > 0 && int(residents.size()) > max_folk) {
-        residents.resize(size_t(max_folk)); // 封顶：其余的算在屋里
+    nav = build_nav_grid(*ground, x0, z0, cols, rows, layout, rules.nav);
+}
+
+VillageWorld Villagers::world(bool p_near) {
+    VillageWorld w;
+    w.layout = &settlement->get_model();
+    w.plots = farm ? &plots : nullptr;
+    w.water = &water;
+    w.nav = p_near ? &nav : nullptr;
+    w.ground = ground.get();
+    w.fields = fields.get();
+    w.taken = taken.get();
+    w.day = &day();
+    w.rules = &rules;
+    return w;
+}
+
+void Villagers::bring_up(bool p_refound) {
+    clear_bodies();
+    if (!state) {
+        state = std::make_shared<VillageState>();
+        borrowed = false;
     }
-    const Rng base(uint64_t(seed) * 0x9E3779B97F4A7C15ull + host->host_seed());
-    folk.resize(residents.size());
-    for (int k = 0; k < int(residents.size()); k++) {
-        Folk &f = folk[size_t(k)];
-        f.mind.index = k;
-        f.mind.who = residents[size_t(k)];
-        f.rng = base.fork(uint64_t(k));
-        f.speed = walk_speed * f.rng.uniform(0.85, 1.15);
-        NavPoint door = building_door(layout.at(f.mind.who.home));
-        NavPoint snapped;
-        if (nav_nearest_walkable(nav, door.x, door.z, 6.0, true, snapped)) {
-            door = snapped;
+    const SettlementLayout &layout = settlement->get_model();
+    VillageState &s = *state;
+    if (p_refound || !s.founded || s.layout_sig != layout_signature(layout)) {
+        // 开账（或按新清单重招）：仓与水缸留着
+        const bool had = s.founded;
+        const Inventory store = had ? s.store : starting_inventory();
+        const double water_before = s.water;
+        double fx = 0.0, fz = 0.0, vx = 0.0, vz = 0.0;
+        if (farm) {
+            farm->get_host()->host_origin(fx, fz);
+            host->host_origin(vx, vz);
         }
-        f.mind.x = door.x;
-        f.mind.z = door.z;
-        f.task = Task();
-        f.task.kind = TaskKind::GO_HOME;
-        f.task.building = f.mind.who.home;
-        build_body(f, k);
-        enter_home(f);
-        f.timer = f.rng.uniform(0.5, 12.0); // 出门错开些
-        place_body(f);
+        const bool has_farm = farm && village_has_farm(farm->get_model(), vx - fx, vz - fz, layout, rules.work);
+        found_village(s, world(true), has_farm, !water.empty(), per_house, max_folk, uint64_t(seed) ^ host->host_seed(), store, now());
+        if (had) {
+            s.water = std::min(water_before, s.water_cap);
+        }
+    } else if (!s.deployed) {
+        // 借来的账本还在远处：先在远处结到此刻，再展开（地块放回农田、人摆到各自此刻该在的地方）
+        {
+            HeldFields held(s.held, farm ? &farm->get_model() : nullptr, &s.arable);
+            VillageWorld w = world(false);
+            w.fields = farm ? &held : nullptr;
+            advance_village(s, w, now());
+        }
+        std::vector<Vector2i> cells;
+        for (const HeldPlot &h : s.held) {
+            cells.push_back(Vector2i(h.i, h.j));
+        }
+        deploy_village(s, world(true), farm ? &farm->edit_model() : nullptr);
+        if (farm) {
+            farm->refresh_cells(cells);
+        }
+    }
+    bodies.resize(s.people.size());
+    for (int k = 0; k < int(s.people.size()); k++) {
+        build_body(bodies[size_t(k)], s.people[size_t(k)], k);
+        place_body(bodies[size_t(k)], s.people[size_t(k)], 0.0);
     }
 }
 
-void Villagers::build_body(Folk &r_folk, int p_index) {
-    const Job job = r_folk.mind.who.job;
+void Villagers::collapse() {
+    if (!state || !borrowed || !state->deployed) {
+        return;
+    }
+    // 还回远处账房：认领的地连同长势从农田里拿出来记进账本
+    FarmModel *model = nullptr;
+    std::vector<Vector2i> cells;
+    if (farm && farm->is_inside_tree()) {
+        model = &farm->edit_model();
+        for (const Claim &c : state->claims) {
+            if (c.owner >= 0) {
+                cells.push_back(Vector2i(c.i, c.j));
+            }
+        }
+    }
+    collapse_village(*state, model);
+    if (model) {
+        farm->refresh_cells(cells);
+    }
+}
+
+void Villagers::clear_bodies() {
+    for (Body &b : bodies) {
+        if (b.root) {
+            b.root->queue_free();
+        }
+    }
+    bodies.clear();
+}
+
+void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_index) {
+    const Job job = p_person.mind.who.job;
     Node3D *root = memnew(Node3D);
     root->set_name(vformat("Villager%d", p_index));
     root->set_meta(GENERATED_META, true);
     add_child(root);
-    r_folk.root = root;
+    r_body.root = root;
 
     Ref<CapsuleMesh> body;
     body.instantiate();
@@ -311,11 +407,11 @@ void Villagers::build_body(Folk &r_folk, int p_index) {
     tool->set_name("Tool");
     tool->set_position(Vector3(-0.3f, 1.2f, 0.05f));
     root->add_child(tool);
-    r_folk.tool = tool;
+    r_body.tool = tool;
     Node3D *load = memnew(Node3D);
     load->set_name("Load");
     root->add_child(load);
-    r_folk.load = load;
+    r_body.load = load;
     switch (job) {
         case Job::FARMER:
             add_mesh(tool, "Handle", box(Vector3(0.05f, 1.3f, 0.05f), mat_wood), Vector3(0, -0.35f, 0.2f));
@@ -350,361 +446,246 @@ void Villagers::build_body(Folk &r_folk, int p_index) {
     label->set_pixel_size(0.006f);
     label->set_visibility_range_end(40.0f);
     root->add_child(label);
-    r_folk.label = label;
+    r_body.label = label;
+    r_body.yaw = facing(p_person.task.face_x - p_person.mind.x, p_person.task.face_z - p_person.mind.z, 0.0);
 }
 
-VillageView Villagers::view() const {
-    VillageView v;
-    v.plots = farm ? &plots : nullptr;
-    v.water = &water;
-    v.layout = &settlement->get_model();
-    v.nav = &nav;
-    v.farm = farm ? &farm->get_model() : nullptr;
-    v.claims = &claims;
-    v.store = &store;
-    v.day = &day;
-    v.work = &work;
-    v.hour = hour();
-    return v;
-}
-
-void Villagers::assign(int p_index) {
-    Folk &f = folk[size_t(p_index)];
-    f.task = decide_task(f.mind, view(), f.rng);
-    if (f.task.kind == TaskKind::TILL) {
-        claims.push_back({ f.task.cell_i, f.task.cell_j, p_index }); // 先占上，免得两个人挑中同一块
-    }
-    f.path = nav_find_path(nav, nav_rules, f.mind.x, f.mind.z, f.task.x, f.task.z);
-    f.next = 0;
-    f.root->set_visible(true);
-    if (f.path.empty()) {
-        path_failures++;
-        if (f.task.kind == TaskKind::TILL) {
-            claims.back().owner = -1; // 够不着：记下来，谁也别再挑它
-        }
-        if (f.task.kind == TaskKind::GO_HOME) {
-            enter_home(f); // 回不了家也不能在外面过夜
-            return;
-        }
-        f.task.kind = TaskKind::WAIT;
-        f.task.x = f.mind.x;
-        f.task.z = f.mind.z;
-        f.task.face_x = f.mind.x + std::sin(f.yaw);
-        f.task.face_z = f.mind.z + std::cos(f.yaw);
-        f.task.seconds = work.wait_s;
-        f.phase = WORKING;
-        f.timer = f.task.seconds;
-    } else {
-        f.phase = WALKING;
-    }
-    refresh_label(f);
-}
-
-void Villagers::remove_claim(int p_i, int p_j) {
-    for (size_t k = 0; k < claims.size(); k++) {
-        if (claims[k].i == p_i && claims[k].j == p_j) {
-            claims.erase(claims.begin() + long(k));
-            return;
-        }
-    }
-}
-
-void Villagers::finish(int p_index) {
-    Folk &f = folk[size_t(p_index)];
-    const Vector2i cell(f.task.cell_i, f.task.cell_j);
-    bool done = true;
-    switch (f.task.kind) {
-        case TaskKind::TILL:
-            done = farm && farm->available_action(cell, false) == Farm::ACTION_TILL;
-            if (done) {
-                farm->perform(cell, Farm::ACTION_TILL, String());
-            } else {
-                remove_claim(cell.x, cell.y); // 让人抢先垦了（或地形换了）：这块不算他的
-            }
-            break;
-        case TaskKind::SOW:
-            done = farm && farm->available_action(cell, true) == Farm::ACTION_SOW && store.remove(f.task.seed, 1);
-            if (done) {
-                farm->perform(cell, Farm::ACTION_SOW, utf8(f.task.seed.c_str()));
-            }
-            break;
-        case TaskKind::HARVEST: {
-            done = farm && farm->available_action(cell, false) == Farm::ACTION_HARVEST;
-            if (done) {
-                const CropDef *crop = catalog::crop(to_std(farm->get_crop(cell)));
-                const int got = farm->perform(cell, Farm::ACTION_HARVEST, String());
-                if (crop && got > 0) {
-                    f.mind.carrying = crop->product;
-                    f.mind.carry_count = got;
-                }
-            }
-        } break;
-        case TaskKind::DELIVER:
-            if (!f.mind.carrying.empty() && f.mind.carrying != "water") {
-                store.add(f.mind.carrying, f.mind.carry_count);
-            }
-            f.mind.carrying.clear();
-            f.mind.carry_count = 0;
-            break;
-        case TaskKind::FETCH_WATER:
-            f.mind.carrying = "water";
-            f.mind.carry_count = 1;
-            break;
-        default:
-            break;
-    }
-    if (done) {
-        tallies[int(f.task.kind)]++;
-    }
-}
-
-void Villagers::enter_home(Folk &r_folk) {
-    // 背着的粮顺手放进仓里（天黑了不再跑一趟），水倒进自家缸里
-    if (!r_folk.mind.carrying.empty() && r_folk.mind.carrying != "water") {
-        store.add(r_folk.mind.carrying, r_folk.mind.carry_count);
-    }
-    r_folk.mind.carrying.clear();
-    r_folk.mind.carry_count = 0;
-    r_folk.phase = INDOORS;
-    r_folk.path.clear();
-    r_folk.timer = r_folk.rng.uniform(1.0, 25.0);
-    if (r_folk.root) {
-        r_folk.root->set_visible(false);
-    }
-    refresh_label(r_folk);
-}
-
-void Villagers::step_walk(Folk &r_folk, double p_delta) {
-    double budget = r_folk.speed * p_delta;
-    while (budget > 0.0 && r_folk.next < r_folk.path.size()) {
-        const NavPoint &target = r_folk.path[r_folk.next];
-        const double dx = target.x - r_folk.mind.x, dz = target.z - r_folk.mind.z;
-        const double dist = std::hypot(dx, dz);
-        if (dist > 1e-6) {
-            // 朝向慢慢转过去，不是一下子掉头
-            const double want = std::atan2(dx, dz);
-            r_folk.yaw = Math::lerp_angle(r_folk.yaw, want, std::min(1.0, 10.0 * p_delta));
-        }
-        if (dist <= budget) {
-            r_folk.mind.x = target.x;
-            r_folk.mind.z = target.z;
-            budget -= dist;
-            r_folk.next++;
-        } else {
-            r_folk.mind.x += dx / dist * budget;
-            r_folk.mind.z += dz / dist * budget;
-            budget = 0.0;
-        }
-    }
-}
-
-void Villagers::place_body(Folk &r_folk) {
-    if (!r_folk.root) {
+void Villagers::place_body(Body &r_body, const PersonState &p_person, double p_delta) {
+    if (!r_body.root) {
         return;
     }
-    const double y = ground_y(r_folk.mind.x, r_folk.mind.z);
+    const VillagerMind &m = p_person.mind;
+    r_body.anim += p_delta;
+    r_body.root->set_visible(p_person.phase != FolkPhase::INDOORS);
+    // 朝向慢慢转过去，不是一下子掉头：走着朝下一个路点，干活朝活计面朝的点
+    double want = r_body.yaw;
+    if (p_person.phase == FolkPhase::WALKING) {
+        const bool on_path = !p_person.estimated && p_person.next < p_person.path.size();
+        const double tx = on_path ? p_person.path[p_person.next].x : p_person.task.x;
+        const double tz = on_path ? p_person.path[p_person.next].z : p_person.task.z;
+        want = facing(tx - m.x, tz - m.z, r_body.yaw);
+    } else if (p_person.phase == FolkPhase::WORKING) {
+        want = facing(p_person.task.face_x - m.x, p_person.task.face_z - m.z, r_body.yaw);
+    }
+    r_body.yaw = p_delta > 0.0 ? Math::lerp_angle(r_body.yaw, want, std::min(1.0, 10.0 * p_delta)) : want;
+
     double bob = 0.0, lean = 0.0, sway = 0.0;
     Vector3 tool_rot;
-    if (r_folk.phase == WALKING) {
-        bob = 0.04 * std::abs(std::sin(r_folk.anim * 7.0));
-    } else if (r_folk.phase == WORKING) {
-        switch (r_folk.task.kind) {
+    if (p_person.phase == FolkPhase::WALKING) {
+        bob = 0.04 * std::abs(std::sin(r_body.anim * 7.0));
+    } else if (p_person.phase == FolkPhase::WORKING) {
+        switch (p_person.task.kind) {
             case TaskKind::TILL:
             case TaskKind::TEND:
                 // 抡锄：举起来、砸下去
-                tool_rot.x = real_t(-0.9 + 0.9 * std::sin(r_folk.anim * 4.0));
+                tool_rot.x = real_t(-0.9 + 0.9 * std::sin(r_body.anim * 4.0));
                 lean = 0.18;
                 break;
             case TaskKind::HARVEST:
             case TaskKind::SOW:
-                lean = 0.45 + 0.1 * std::sin(r_folk.anim * 3.0); // 弯腰
+                lean = 0.45 + 0.1 * std::sin(r_body.anim * 3.0); // 弯腰
                 break;
             case TaskKind::FETCH_WATER:
                 lean = 0.35;
                 break;
             case TaskKind::CHAT:
-                sway = 0.25 * std::sin(r_folk.anim * 1.7);
+                sway = 0.25 * std::sin(r_body.anim * 1.7);
                 break;
             default:
                 break;
         }
     }
-    r_folk.root->set_position(Vector3(real_t(r_folk.mind.x), real_t(y + bob), real_t(r_folk.mind.z)));
-    r_folk.root->set_rotation(Vector3(real_t(lean), real_t(r_folk.yaw + sway), 0));
-    if (r_folk.tool && r_folk.mind.who.job != Job::CARRIER) {
-        r_folk.tool->set_rotation(tool_rot);
+    const double y = ground_y(m.x, m.z);
+    r_body.root->set_position(Vector3(real_t(m.x), real_t(y + bob), real_t(m.z)));
+    r_body.root->set_rotation(Vector3(real_t(lean), real_t(r_body.yaw + sway), 0));
+    if (r_body.tool && m.who.job != Job::CARRIER) {
+        r_body.tool->set_rotation(tool_rot);
     }
-    if (r_folk.load) {
-        r_folk.load->set_visible(!r_folk.mind.carrying.empty());
+    if (r_body.load) {
+        r_body.load->set_visible(!m.carrying.empty());
     }
+    refresh_label(r_body, p_person);
 }
 
-void Villagers::refresh_label(const Folk &r_folk) {
-    if (r_folk.label) {
-        r_folk.label->set_text(utf8(r_folk.mind.who.name.c_str()) + String(U" · ") + get_villager_activity(r_folk.mind.index));
+void Villagers::refresh_label(Body &r_body, const PersonState &p_person) {
+    if (!r_body.label) {
+        return;
     }
+    const std::string key = std::to_string(int(p_person.phase)) + "/" + std::to_string(int(p_person.task.kind)) + "/" + p_person.mind.carrying + "/" +
+            std::to_string(p_person.mind.carry_count);
+    if (key == r_body.label_key) {
+        return;
+    }
+    r_body.label_key = key;
+    r_body.label->set_text(utf8(p_person.mind.who.name.c_str()) + String(U" · ") + get_villager_activity(p_person.mind.index));
 }
 
 void Villagers::_physics_process(double p_delta) {
-    if (!host || !settlement || nav.cols == 0) {
+    if (!host || !settlement || !state || !state->founded || nav.cols == 0) {
         return;
     }
-    clock += p_delta;
-    const bool home_time = is_home_hour(hour(), day);
-    for (int k = 0; k < int(folk.size()); k++) {
-        Folk &f = folk[size_t(k)];
-        f.anim += p_delta;
-        switch (f.phase) {
-            case INDOORS:
-                if (!home_time) {
-                    f.timer -= p_delta;
-                    if (f.timer <= 0.0) {
-                        assign(k);
-                    }
-                }
-                break;
-            case WALKING:
-                if (home_time && f.task.kind != TaskKind::GO_HOME) {
-                    assign(k); // 收工 / 歇晌：半路掉头回家
-                    break;
-                }
-                step_walk(f, p_delta);
-                if (f.next >= f.path.size()) {
-                    if (f.task.kind == TaskKind::GO_HOME) {
-                        enter_home(f);
-                    } else {
-                        f.phase = WORKING;
-                        f.timer = f.task.seconds;
-                        f.yaw = facing(f.task.face_x - f.mind.x, f.task.face_z - f.mind.z, f.yaw);
-                        refresh_label(f);
-                    }
-                }
-                break;
-            case WORKING:
-                if (home_time) {
-                    assign(k);
-                    break;
-                }
-                f.timer -= p_delta;
-                if (f.timer <= 0.0) {
-                    finish(k);
-                    assign(k);
-                }
-                break;
-        }
-        place_body(f);
+    const double t = now();
+    if (t - state->clock > CATCH_UP_S) {
+        // 钟一下跳远了（拨钟）：这一段估着走过去，再从各自此刻的位置重新找路
+        advance_village(*state, world(false), t);
+        deploy_village(*state, world(true), farm ? &farm->edit_model() : nullptr);
+    } else {
+        advance_village(*state, world(true), t);
+    }
+    for (size_t k = 0; k < bodies.size() && k < state->people.size(); k++) {
+        place_body(bodies[k], state->people[k], p_delta);
     }
 }
 
 // ---------------------------------------------------------------- 查询
 
 String Villagers::get_villager_name(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), String());
-    return utf8(folk[size_t(p_index)].mind.who.name.c_str());
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), String());
+    return utf8(state->people[size_t(p_index)].mind.who.name.c_str());
 }
 
 String Villagers::get_villager_job(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), String());
-    return String(villagers::job(folk[size_t(p_index)].mind.who.job).id);
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), String());
+    return String(villagers::job(state->people[size_t(p_index)].mind.who.job).id);
 }
 
 String Villagers::get_villager_task(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), String());
-    return String(villagers::task(folk[size_t(p_index)].task.kind).id);
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), String());
+    return String(villagers::task(state->people[size_t(p_index)].task.kind).id);
 }
 
 String Villagers::get_villager_activity(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), String());
-    const Folk &f = folk[size_t(p_index)];
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), String());
+    const PersonState &p = state->people[size_t(p_index)];
     String text;
-    const String task_name = utf8(villagers::task(f.task.kind).name);
-    switch (f.phase) {
-        case INDOORS:
+    const String task_name = utf8(villagers::task(p.task.kind).name);
+    switch (p.phase) {
+        case FolkPhase::INDOORS:
             text = String(U"在屋里");
             break;
-        case WALKING:
-            text = f.task.kind == TaskKind::GO_HOME ? task_name : String(U"去") + task_name;
+        case FolkPhase::WALKING:
+            text = p.task.kind == TaskKind::GO_HOME ? task_name : String(U"去") + task_name;
             break;
-        case WORKING:
+        case FolkPhase::WORKING:
             text = task_name;
             break;
     }
-    if (f.mind.carrying == "water") {
+    if (p.mind.carrying == "water") {
         text += String(U"（挑着水）");
-    } else if (!f.mind.carrying.empty()) {
-        text += vformat(String(U"（背着%s %d）"), utf8(catalog::item_name(f.mind.carrying).c_str()), f.mind.carry_count);
+    } else if (!p.mind.carrying.empty()) {
+        text += vformat(String(U"（背着%s %d）"), utf8(catalog::item_name(p.mind.carrying).c_str()), p.mind.carry_count);
     }
     return text;
 }
 
 Villagers::Phase Villagers::get_villager_phase(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), INDOORS);
-    return folk[size_t(p_index)].phase;
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), INDOORS);
+    return Phase(state->people[size_t(p_index)].phase);
 }
 
 Vector3 Villagers::get_villager_position(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), Vector3());
-    const Folk &f = folk[size_t(p_index)];
-    return host_transform().xform(Vector3(real_t(f.mind.x), real_t(ground_y(f.mind.x, f.mind.z)), real_t(f.mind.z)));
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), Vector3());
+    const VillagerMind &m = state->people[size_t(p_index)].mind;
+    return host_transform().xform(Vector3(real_t(m.x), real_t(ground_y(m.x, m.z)), real_t(m.z)));
 }
 
 Vector3 Villagers::get_villager_target(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), Vector3());
-    const Task &t = folk[size_t(p_index)].task;
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), Vector3());
+    const Task &t = state->people[size_t(p_index)].task;
     return host_transform().xform(Vector3(real_t(t.x), real_t(ground_y(t.x, t.z)), real_t(t.z)));
 }
 
+Vector3 Villagers::get_villager_door(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), Vector3());
+    const NavPoint door = building_door(settlement->get_model().at(state->people[size_t(p_index)].mind.who.home));
+    return host_transform().xform(Vector3(real_t(door.x), real_t(ground_y(door.x, door.z)), real_t(door.z)));
+}
+
 String Villagers::get_villager_carrying(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), String());
-    return String(folk[size_t(p_index)].mind.carrying.c_str());
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), String());
+    return String(state->people[size_t(p_index)].mind.carrying.c_str());
 }
 
 int Villagers::get_villager_home(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), -1);
-    return folk[size_t(p_index)].mind.who.home;
+    ERR_FAIL_INDEX_V(p_index, get_villager_count(), -1);
+    return state->people[size_t(p_index)].mind.who.home;
 }
 
 bool Villagers::is_villager_visible(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(folk.size()), false);
-    const Folk &f = folk[size_t(p_index)];
-    return f.root && f.root->is_visible();
+    ERR_FAIL_INDEX_V(p_index, int(bodies.size()), false);
+    const Body &b = bodies[size_t(p_index)];
+    return b.root && b.root->is_visible();
 }
 
 Array Villagers::get_claimed_cells() const {
     Array cells;
-    for (const Claim &c : claims) {
-        if (c.owner >= 0) {
-            cells.push_back(Vector2i(c.i, c.j));
+    if (state) {
+        for (const Claim &c : state->claims) {
+            if (c.owner >= 0) {
+                cells.push_back(Vector2i(c.i, c.j));
+            }
         }
     }
     return cells;
 }
 
 int Villagers::get_store_count(const String &p_item) const {
-    return store.count(to_std(p_item));
+    return state ? state->store.count(to_std(p_item)) : 0;
+}
+
+int Villagers::get_grain() const {
+    return state ? village_grain(*state) : 0;
+}
+
+double Villagers::get_water() const {
+    return state ? state->water : 0.0;
+}
+
+double Villagers::get_water_cap() const {
+    return state ? state->water_cap : 0.0;
 }
 
 int Villagers::get_tally(const String &p_task) const {
+    if (!state) {
+        return 0;
+    }
     const std::string id = to_std(p_task);
     for (int k = 0; k <= int(TaskKind::WAIT); k++) {
         if (id == villagers::task(TaskKind(k)).id) {
-            return tallies[k];
+            return state->tally.done[k];
         }
     }
     return 0;
 }
 
-String Villagers::get_clock_text() const {
-    return utf8(clock_text(clock, day).c_str());
+Dictionary Villagers::get_ledger_summary() const {
+    Dictionary d;
+    if (!state) {
+        return d;
+    }
+    const VillageTally &t = state->tally;
+    d["harvested"] = t.harvested;
+    d["sown"] = t.sown;
+    d["eaten"] = t.eaten;
+    d["hungry"] = t.hungry;
+    d["water_in"] = t.water_in;
+    d["water_used"] = t.water_used;
+    d["clock"] = state->clock;
+    d["grain"] = village_grain(*state);
+    d["water"] = state->water;
+    return d;
 }
 
-void Villagers::set_hour(double p_hour) {
-    const ClockReading now = read_clock(clock, day);
-    int target_day = now.day;
-    if (p_hour < now.hour) {
-        target_day++;
-    }
-    clock = (target_day + Math::clamp(p_hour, 0.0, 23.999) / 24.0) * day.day_seconds;
+double Villagers::get_hour() const {
+    return read_clock(now(), day()).hour;
+}
+
+int Villagers::get_day() const {
+    return read_clock(now(), day()).day;
+}
+
+String Villagers::get_clock_text() const {
+    return utf8(clock_text(now(), day()).c_str());
 }
 
 double Villagers::get_nav_height(const Vector3 &p_global) const {

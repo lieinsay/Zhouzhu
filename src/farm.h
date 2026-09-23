@@ -7,6 +7,7 @@
 #include <godot_cpp/variant/vector2i.hpp>
 
 #include <memory>
+#include <vector>
 
 #include "farm_model.h"
 #include "ground_host.h"
@@ -52,6 +53,7 @@ private:
     FarmRules rules;
     double search_radius = 120.0; // find_nearest_arable 在无边的地块格上找多远
     GroundHost *host = nullptr;
+    double clock_seen = -1.0; // 上一帧读到的世界钟（秒）；生长按钟走过的游戏小时推进
     std::unique_ptr<MapGround> ground; // 宿主给的地面；宿主 rebuilt 时换新
     FarmModel model;
 
@@ -98,6 +100,9 @@ public:
 
     // 给同在 C++ 里的上层读（村民据此挑地；动地仍走 perform，好让地块重画）
     const FarmModel &get_model() const { return model; }
+    // 村子走远 / 走近时整块搬地（收回、展开）：直接改模型，改完调 refresh_cells 重画那些格
+    FarmModel &edit_model() { return model; }
+    void refresh_cells(const std::vector<godot::Vector2i> &p_cells);
     GroundHost *get_host() const { return host; }
 
     // 目标格的描边；NO_CELL = 不画
@@ -105,8 +110,8 @@ public:
 
     void set_max_river_distance(double p_value);
     double get_max_river_distance() const { return rules.max_river_m; }
-    void set_grow_seconds(double p_value);
-    double get_grow_seconds() const { return rules.grow_seconds; }
+    void set_grow_hours(double p_value);
+    double get_grow_hours() const { return rules.grow_hours; }
     void set_search_radius(double p_value) { search_radius = p_value; }
     double get_search_radius() const { return search_radius; }
 };

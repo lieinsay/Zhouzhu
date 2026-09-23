@@ -137,6 +137,8 @@ target_sources(
         src/villagers.h
         src/world.cpp
         src/world.h
+        src/world_clock.cpp
+        src/world_clock.h
         src/world_map.cpp
         src/world_map.h
         src/world_village.cpp

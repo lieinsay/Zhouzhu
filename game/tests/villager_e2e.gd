@@ -42,7 +42,7 @@ var checked_frames := 0
 func _ready() -> void:
 	main = MAIN.instantiate()
 	farm = main.get_node("IslandA/Farm")
-	farm.grow_seconds = GROW_SECONDS
+	farm.grow_hours = GROW_SECONDS * 24.0 / GameClock.get_day_seconds()  # 生长按钟点算：12 秒折成游戏小时
 	add_child(main)
 	player = main.get_node("Player")
 	island_a = main.get_node("IslandA")
@@ -108,8 +108,8 @@ func _physics_process(delta: float) -> void:
 			var missing := _missing_work()
 			if missing.is_empty():
 				print("villager_e2e: %.0f s 里各样活都干过了（%s）；%s" % [elapsed, folk_a.get_clock_text(), _summary()])
-				folk_a.set_hour(18.45)
-				folk_b.set_hour(18.45)
+				GameClock.set_hour(18.45)  # 只有一个钟：拨它，两岛一起到点
+				last_pos.clear()  # 拨钟 = 这段时间真的过去了，人都在各自此刻该在的地方：这一帧不查「一帧挪多远」（贴地、不进房照查）
 				_enter(Phase.EVENING)
 			elif elapsed > WORK_DEADLINE:
 				_finish(false, "%.0f s 里还没干过：%s；%s" % [elapsed, missing, _summary()])
@@ -127,8 +127,8 @@ func _physics_process(delta: float) -> void:
 				_finish(false, "夜里有人出门：%s" % _outside(folk_a) + _outside(folk_b))
 				return
 			if elapsed - phase_started > 5.0:
-				folk_a.set_hour(5.98)
-				folk_b.set_hour(5.98)
+				GameClock.set_hour(5.98)  # 只有一个钟：拨它，两岛一起到点
+				last_pos.clear()  # 拨钟 = 这段时间真的过去了，人都在各自此刻该在的地方：这一帧不查「一帧挪多远」（贴地、不进房照查）
 				_enter(Phase.MORNING)
 		Phase.MORNING:
 			var out := 0

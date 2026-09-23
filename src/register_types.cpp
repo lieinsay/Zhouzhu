@@ -23,6 +23,7 @@
 #include "world.h"
 #include "world_map.h"
 #include "world_village.h"
+#include "world_clock.h"
 
 using namespace godot;
 
@@ -30,6 +31,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
+    GDREGISTER_CLASS(WorldClock);
     GDREGISTER_CLASS(Island);
     GDREGISTER_CLASS(Farm);
     GDREGISTER_CLASS(Shipyard);
