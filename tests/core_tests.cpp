@@ -20,6 +20,7 @@
 #include "farm_model.h"
 #include "flat_ground.h"
 #include "flight_model.h"
+#include "freight.h"
 #include "building_parts.h"
 #include "house_template.h"
 #include "interior_rules.h"
@@ -41,6 +42,7 @@
 #include "world_ground.h"
 #include "world_river.h"
 #include "world_sites.h"
+#include "world_ledger.h"
 #include "world_terrain.h"
 
 namespace {
@@ -2630,6 +2632,146 @@ void test_house_templates() {
     check(shells[0] && shells[1] && shells[2] && shells[3], "四种外壳都有模板");
 }
 
+// ---------------------------------------------------------------- 跑货：货位、港口村、委托、货箱账
+
+void test_freight() {
+    std::printf("freight\n");
+    // 货位：储存区每节 4 个，数目 = 船况的货舱格数；舱体里的够不着
+    check(hold_slots(default_layout()).empty(), "开局小艇（没有储存区）没有货位");
+    ShipLayout cargo = default_layout();
+    check(layout_place(cargo, { 0, 0, 1 }, ModuleKind::STORAGE).empty(), "舷门后面加一节储存区");
+    std::vector<HoldSlot> slots = hold_slots(cargo);
+    check(int(slots.size()) == layout_stats(cargo).hold && slots.size() == 4, "4 个货位 = 货舱 4 格");
+    bool placed = true;
+    for (const HoldSlot &s : slots) {
+        placed = placed && s.open && std::abs(std::abs(s.x) - HOLD_SLOT_SIDE_M) < 1e-9 && std::abs(std::abs(s.z - 7.0) - HOLD_SLOT_ALONG_M) < 1e-9 && s.y == 0.0;
+    }
+    check(placed, "货位在那一节甲板上、两舷各前后两个");
+    check(slots[0].x < 0 && slots[0].z < slots[1].z && slots[2].x > 0, "编号：左前、左后、右前、右后");
+    ShipLayout stacked = cargo;
+    check(layout_place(stacked, { 0, 1, 1 }, ModuleKind::STORAGE).empty(), "储存区上再摞一节");
+    slots = hold_slots(stacked);
+    int open = 0;
+    for (const HoldSlot &s : slots) {
+        open += s.open ? 1 : 0;
+    }
+    check(slots.size() == 8 && open == 4, "被盖住的那节货位够不着，顶上那节够得着");
+
+    // 土产：确定、在表里、不是粮
+    const char *sp = freight::specialty_of(2051, 152, false);
+    check(std::string(sp) == freight::specialty_of(2051, 152, false), "同种子同村同土产");
+    check(catalog::item(sp) && !catalog::crop_of_seed(sp) && catalog::item("coin"), "土产与铜钱在物品表里，不是种子");
+    int kinds = 0;
+    for (const char *id : { "cloth", "pottery", "lacquer" }) {
+        bool seen = false;
+        for (int v = 1; v <= 60; v++) {
+            seen = seen || std::string(freight::specialty_of(2051, v, false)) == id;
+        }
+        kinds += seen ? 1 : 0;
+    }
+    check(kinds == 3, "三样土产都有村子出");
+    VillageState vs;
+    vs.store.add("millet", 3);
+    vs.store.add("cloth", 20);
+    check(village_grain(vs) == 3, "土产不算粮");
+
+    // 委托与货箱账：三个港口，甲、乙同岛，丙在别的岛
+    std::vector<FreightPort> ports(3);
+    ports[0].island = 0, ports[0].dock_x = 0.0, ports[0].name = "甲村";
+    ports[1].island = 0, ports[1].dock_x = 2000.0, ports[1].name = "乙村";
+    ports[2].island = 1, ports[2].dock_x = 9000.0, ports[2].name = "丙村";
+    FreightRules rules;
+    Inventory a_store, c_store, purse;
+    a_store.add("cloth", 7);
+    FreightOrder order;
+    std::string why;
+    check(offer_freight(ports, 0, a_store, "cloth", rules, order, why), "甲村开得出一单");
+    check(order.to == 2 && order.crates == 1 && order.per_crate == 5, "开到别岛最近的丙村；7 份只够一箱");
+    check(order.fee == 8 + 9 && std::abs(order.km - 9.0) < 1e-9, "运费 = 每箱 8 + 每 km 1");
+    a_store.add("cloth", 8);
+    check(offer_freight(ports, 0, a_store, "cloth", rules, order, why) && order.crates == 2 && order.fee == 34, "15 份开满两箱");
+    FreightOrder none;
+    check(!offer_freight(ports, 0, Inventory(), "cloth", rules, none, why) && why.find("不够一箱") != std::string::npos, "仓里没货开不出来");
+    std::vector<FreightPort> lonely(ports.begin(), ports.begin() + 2);
+    check(!offer_freight(lonely, 0, a_store, "cloth", rules, none, why) && why.find("别的岛") != std::string::npos, "别的岛上没有港口");
+
+    CargoBook book;
+    check(book.set_slot_count(4) && book.free_slots() == 4, "船上 4 个货位");
+    check(!book.pack(2, order, c_store).empty(), "不在起运村接不了这单");
+    check(book.pack(0, order, a_store).empty() && book.is_active() && book.is_holding() && a_store.count("cloth") == 10, "接单、打包一箱：村仓少 5 份");
+    check(book.pack(0, order, a_store).empty() && !book.is_holding() && !book.is_active() && a_store.count("cloth") == 15, "抱着箱子再按一下：放回仓里，这单退了");
+    check(book.pack(0, order, a_store).empty() && book.get_packed() == 1 && book.is_holding(), "重新接单打包");
+    check(book.pack(2, order, c_store) == "手上已经抱着一箱了", "抱着箱子在别处打不了包");
+    check(book.stow(9) == "这里不是货位" && book.stow(1).empty() && book.aboard() == 1, "放上 1 号货位");
+    check(book.stow(1) == "手上没有货", "手上空了");
+    check(book.lift(0) == "这个货位是空的", "空货位抱不起来");
+    check(book.pack(0, order, a_store).empty() && book.stow(1) == "这个货位上已经有一箱了" && book.stow(2).empty(), "第二箱放 2 号");
+    check(book.pack(0, order, a_store).find("都打包了") != std::string::npos && a_store.count("cloth") == 5, "两箱都打包了，不再多扣");
+    check(!book.set_slot_count(2) && book.get_slots().size() == 4, "货位上有箱子时船不能改小");
+    check(book.lift(1).empty() && book.is_holding(), "抱起 1 号");
+    bool done = false;
+    check(book.deliver(0, a_store, purse, done) == "这箱不是送这儿的", "送回起运村不算交货");
+    check(book.deliver(2, c_store, purse, done).empty() && !done && c_store.count("cloth") == 5 && purse.count("coin") == 0, "交一箱：丙村仓多 5 份，没交齐不给钱");
+    check(book.lift(2).empty() && book.deliver(2, c_store, purse, done).empty() && done, "交齐");
+    check(purse.count("coin") == 34 && c_store.count("cloth") == 10 && !book.is_active() && book.aboard() == 0, "付运费 34 文，这单结了");
+    check(a_store.count("cloth") + c_store.count("cloth") == 15, "货一份不多一份不少");
+
+    // 村仓：有仓房用仓房，没有用离村心最近的民居
+    SettlementLayout layout;
+    layout.add({ "house", 30.0, 0.0, 0.0, "" });
+    layout.add({ "house", 5.0, 4.0, 0.0, "" });
+    layout.add({ "tower", 1.0, 0.0, 0.0, "" });
+    check(freight_post_building(layout, 0.0, 0.0) == 1, "没有仓房：离村心最近的民居（望楼不算）");
+    layout.add({ "granary", 50.0, 0.0, 0.0, "" });
+    check(freight_post_building(layout, 0.0, 0.0) == 3, "有仓房用仓房");
+    double px, pz, qx, qz, yaw;
+    freight_post_spot(layout.get_items()[1], px, pz, qx, qz, yaw);
+    check(pz > 4.0 + 3.25 && std::abs(px - 5.0) < 1e-6 && std::abs(qz - pz) < 2.0 && std::abs(qx - px) > 2.0, "门前站人，货箱堆在门边");
+
+    // 2051：村152（主码头 #7）的委托开到码头 #8 旁的村103
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in) {
+        std::printf("  （跳过 2051：没有资产）\n");
+        return;
+    }
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    WorldSites sites;
+    std::string err;
+    parse_world_grid(bin.data(), bin.size(), g, err);
+    parse_world_sites(tsv, sites, err);
+    WorldTerrain t(g, sites.terrain_islands(), 2051);
+    const WorldWorks works = lay_world_works(t, sites);
+    const std::vector<FreightPort> world_ports = plan_freight_ports(sites, works.docks, rules);
+    int from = -1;
+    for (size_t k = 0; k < world_ports.size(); k++) {
+        from = world_ports[k].site_id == 152 ? int(k) : from;
+    }
+    std::printf("  港口村 %zu 个\n", world_ports.size());
+    check(from >= 0 && world_ports[size_t(from)].dock_id == 7, "村152 是港口村，码头是主码头 #7");
+    const SiteSettlement *v152 = sites.village_by_id(152);
+    const WorldGround land_ground(t, 0.0, 0.0);
+    const FarmModel land(&land_ground, land_ground.plot_lattice(), FarmRules());
+    WorldLedgerSpec spec;
+    spec.site = *v152;
+    spec.lattice = land.get_lattice();
+    spec.farm_rules = land.get_rules();
+    const WorldLedger ledger = open_world_ledger(t, spec, SimRules());
+    const std::string item = freight::specialty_of(2051, 152, false);
+    check(ledger.state->store.count(item) == 28 && ledger.state->store.count("millet") == 8, "村152 开账：仓里 " + catalog::item_name(item) + " 28 份（14 户 × 2），粟照旧 8");
+    check(freight_post_building(ledger.layout, 0.0, 0.0) >= 0, "村152 有村仓");
+    FreightOrder o;
+    check(offer_freight(world_ports, from, ledger.state->store, item, rules, o, why), "村152 开得出委托：" + why);
+    if (o.valid()) {
+        const FreightPort &to = world_ports[size_t(o.to)];
+        std::printf("  村152 → %s（码头 #%d，%.1f km）%d 箱，运费 %d\n", to.name.c_str(), to.dock_id, o.km, o.crates, o.fee);
+        check(to.site_id == 103 && to.dock_id == 8, "开到码头 #8 旁的村103");
+        check(o.crates == 2 && o.km > 7.0 && o.km < 10.0, "两箱，八九公里");
+    }
+}
+
 int main() {
     test_rng();
     test_noise();
@@ -2665,6 +2807,7 @@ int main() {
     test_map_grounds();
     test_layout_edits();
     test_house_templates();
+    test_freight();
     test_goldens();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;

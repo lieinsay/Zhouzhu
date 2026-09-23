@@ -118,6 +118,18 @@ struct ShipStats {
 
 ShipStats layout_stats(const ShipLayout &p_layout);
 
+// 货位：每节储存区 4 个（两舷各前后两个，中间留走道），货箱就放在这些位置上；总数 = 船况的 hold。
+// 按布局里节的顺序排、每节内 左前 / 左后 / 右前 / 右后，所以改船不动的节，货位编号不变。
+// 坐标是船的局部坐标，y 是那一节的甲板面。open：这一节是顶层的开放甲板，人够得着；被上面盖住的舱体里的货位眼下还装卸不了。
+constexpr double HOLD_SLOT_SIDE_M = 2.2; // 货位中心离节中线
+constexpr double HOLD_SLOT_ALONG_M = 1.6; // 货位中心离节中心（前后）
+struct HoldSlot {
+    Cell cell;
+    double x = 0.0, y = 0.0, z = 0.0;
+    bool open = true;
+};
+std::vector<HoldSlot> hold_slots(const ShipLayout &p_layout);
+
 // 梯子：从低的那一列的甲板（第 from_level 层顶，即 from_level 层数）爬到高的那一列顶上。
 // 挂在高列面向低列的那面墙上；低列 (low_x, low_z) 可以是船外（列高 0）的格子？不——只在两列都有节时才有梯子。
 struct Ladder {

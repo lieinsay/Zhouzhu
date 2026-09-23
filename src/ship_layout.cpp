@@ -196,6 +196,28 @@ double stern_z(const ShipLayout &p_layout) {
     return cell_center_z(p_layout.max_z()) + 0.5 * CELL_LENGTH_M;
 }
 
+std::vector<HoldSlot> hold_slots(const ShipLayout &p_layout) {
+    std::vector<HoldSlot> out;
+    for (const Module &m : p_layout.get_modules()) {
+        if (m.kind != ModuleKind::STORAGE) {
+            continue;
+        }
+        const bool open = !p_layout.has({ m.at.x, m.at.y + 1, m.at.z });
+        for (int side = -1; side <= 1; side += 2) {
+            for (int end = -1; end <= 1; end += 2) {
+                HoldSlot slot;
+                slot.cell = m.at;
+                slot.x = cell_center_x(m.at.x) + side * HOLD_SLOT_SIDE_M;
+                slot.y = cell_deck_y(m.at.y);
+                slot.z = cell_center_z(m.at.z) + end * HOLD_SLOT_ALONG_M;
+                slot.open = open;
+                out.push_back(slot);
+            }
+        }
+    }
+    return out;
+}
+
 ShipStats layout_stats(const ShipLayout &p_layout) {
     ShipStats s;
     s.sections = p_layout.size();

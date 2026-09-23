@@ -1,5 +1,7 @@
 #include "world_ledger.h"
 
+#include "freight.h"
+
 uint64_t world_village_seed(uint64_t p_stream_seed, const SiteSettlement &p_site) {
     const uint64_t host = p_stream_seed * 2654435761ull + uint64_t(p_site.id) * 2ull + (p_site.hamlet ? 1ull : 0ull);
     return (host & 0x7FFFFFFFull) ^ host;
@@ -31,8 +33,11 @@ WorldLedger open_world_ledger(const WorldTerrain &p_terrain, const WorldLedgerSp
     w.ground = out.ground.get();
     w.day = &p_spec.day;
     w.rules = &p_rules;
+    // 仓 = 粮种 + 这村的土产（托运的货，见 freight.h；不是粮，吃饭播种都不动它）
+    Inventory store = village_starting_store();
+    store.add(freight::specialty_of(p_spec.seed, site.id, site.hamlet), freight::specialty_stock(site.households, FreightRules()));
     found_village(*out.state, w, out.has_farm, !out.water.empty(), p_spec.per_house, p_spec.max_folk, world_village_seed(p_spec.seed, site),
-            village_starting_store(), p_spec.now);
+            store, p_spec.now);
     out.state->arable = std::move(arable);
     return out;
 }

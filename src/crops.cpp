@@ -7,6 +7,11 @@ namespace catalog {
 const ItemDef ITEMS[] = {
     { "millet", "粟" },
     { "bean", "菽" },
+    // 土产：各村记在仓账上、托运的货（见 freight.h）；不是种子也不是粮
+    { "cloth", "麻布" },
+    { "pottery", "陶罐" },
+    { "lacquer", "漆器" },
+    { "coin", "铜钱" }, // 运费
 };
 const int ITEM_COUNT = int(sizeof(ITEMS) / sizeof(ITEMS[0]));
 

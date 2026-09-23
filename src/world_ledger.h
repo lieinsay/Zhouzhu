@@ -11,6 +11,7 @@
 // 岛群里一处村落 / 散户的账：开账与远处结算。不含 Godot 头。
 // 游戏里由远处账房（Hinterland 节点）持有、后台线程开账、分帧结算；岛群体检工具（site_survey --sim）离线把整个岛群开账、结一整天，量出花费。
 // 两边调的是这同一份：开账 = 铺村（与 WorldVillage 同一个 plan_world_village）+ 叠布置模式的改动 + 找水、看附近有没有田 + found_village；
+// 开账时的仓 = 粮种 + 这村的土产（freight::specialty_of，按户数）；
 // 结算 = village_sim 的远处模式（没有导航格），地块记在账本里（HeldFields），勘察问岛群的农田（p_land）。
 
 struct WorldLedgerSpec {
