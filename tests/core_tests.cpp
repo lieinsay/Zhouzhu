@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -1655,6 +1656,145 @@ void test_world_sites() {
     }
 }
 
+// ---------------------------------------------------------------- 金标：地图宿主重构前后逐位一致
+
+struct Fnv {
+    uint64_t h = 1469598103934665603ull;
+    void mix(uint64_t v) { h = (h ^ v) * 1099511628211ull; }
+    void mix_d(double v) {
+        uint64_t bits = 0;
+        std::memcpy(&bits, &v, sizeof(bits));
+        mix(bits);
+    }
+    void mix_s(const std::string &s) {
+        for (unsigned char c : s) {
+            mix(c);
+        }
+        mix(0xFF);
+    }
+};
+
+// main.tscn 的出发岛（IslandA）
+IslandParams island_a_params() {
+    IslandParams p;
+    p.seed = 1165;
+    p.area_m2 = 120000.0;
+    p.age = 0.8;
+    p.peak_m = 24.0;
+    p.dock_bearing = -18.6 * (3.14159265358979323846 / 180.0); // 与 Math::deg_to_rad 同一算法
+    p.river = true;
+    p.trail = true;
+    p.yard = true;
+    return p;
+}
+
+SettlementLayout read_layout_file(const std::string &p_path) {
+    std::ifstream in(p_path);
+    std::vector<std::string> ids;
+    for (std::string line; std::getline(in, line);) {
+        ids.push_back(line);
+    }
+    return settlement_from_ids(ids);
+}
+
+void report_golden(const char *p_what, uint64_t p_hash, uint64_t p_expected) {
+    std::printf("  %s = 0x%016llxull\n", p_what, (unsigned long long)p_hash);
+    check(p_hash == p_expected, std::string("金标：") + p_what);
+}
+
+void test_goldens() {
+    std::printf("金标（地图宿主重构前后逐位一致）\n");
+    const IslandParams p = island_a_params();
+    const IslandField f = generate_island_field(p);
+
+    Fnv field;
+    field.mix(field_hash(f));
+    for (double v : { f.yard.x, f.yard.z, f.yard.ux, f.yard.uz, f.yard.vx, f.yard.vz, f.yard.y, f.yard.length, f.yard.width }) {
+        field.mix_d(v);
+    }
+    field.mix(f.yard.present);
+    report_golden("出发岛高度场与船坞坪", field.h, 0xd0e8efacdd581979ull);
+
+    Fnv farm;
+    const FarmSurvey survey = survey_farmland(f, p.dock_apron_m, FarmRules());
+    for (int i = 0; i < f.n - 1; i++) {
+        for (int j = 0; j < f.n - 1; j++) {
+            farm.mix(uint64_t(survey.at(i, j)));
+            if (survey.at(i, j) == Arability::ARABLE) {
+                farm.mix_d(double(survey.moisture[survey.index(i, j)]));
+            }
+        }
+    }
+    report_golden("出发岛农田勘察", farm.h, 0x68431c2ace2c61b6ull);
+
+    Fnv blocks, sites;
+    const SiteRules site_rules;
+    const IslandSiteGround ground(f, p.dock_apron_m, site_rules);
+    const BuildingDef &house = *buildings::by_id("house");
+    const double ext = f.half_extent();
+    for (double z = -ext; z <= ext; z += 1.3) {
+        for (double x = -ext; x <= ext; x += 1.3) {
+            const SiteBlock b = ground.site_block(x, z);
+            blocks.mix(uint64_t(b.rank + 1));
+            if (b.reason) {
+                blocks.mix_s(b.reason);
+            }
+        }
+    }
+    for (double z = -ext; z <= ext; z += 4.1) {
+        for (double x = -ext; x <= ext; x += 4.1) {
+            const SiteReport r = survey_site(ground, house, x, z, 0.3, SettlementLayout(), site_rules);
+            sites.mix_s(r.reason);
+            if (r.ok()) {
+                sites.mix_d(r.floor_y);
+                sites.mix_d(r.plinth_bottom);
+            }
+        }
+    }
+    report_golden("出发岛禁区", blocks.h, 0x1c212dbdec9c0029ull);
+    report_golden("出发岛选址勘察", sites.h, 0xd58287e5b2d1ed82ull);
+
+    Fnv nav;
+    const SettlementLayout village = read_layout_file(std::string(ZHOUZHU_SOURCE_DIR) + "/game/settlements/island_a.txt");
+    const NavGrid grid = build_nav_grid(f, village, NavRules());
+    nav.mix(uint64_t(grid.cols));
+    nav.mix(uint64_t(grid.rows));
+    nav.mix_d(grid.x0);
+    nav.mix_d(grid.z0);
+    for (size_t k = 0; k < grid.walk.size(); k++) {
+        nav.mix(grid.walk[k]);
+        nav.mix_d(double(grid.y[k]));
+    }
+    report_golden("出发岛导航格", nav.h, 0x2a3e1b14d039d760ull);
+
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in) {
+        return;
+    }
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    WorldSites world_sites;
+    std::string err;
+    parse_world_grid(bin.data(), bin.size(), g, err);
+    parse_world_sites(tsv, world_sites, err);
+    WorldTerrain t(g, world_sites.terrain_islands(), 2051);
+    t.set_pads(plan_world_docks(t, world_sites, world_dock_rules()));
+    // 离主码头 #7 远的几处：邑治、乙岛码头边的散户175、两个普通村
+    Fnv villages;
+    for (const SiteSettlement &s : world_sites.settlements) {
+        if ((!s.hamlet && (s.id == 1 || s.id == 40 || s.id == 120)) || (s.hamlet && s.id == 175)) {
+            const VillagePlan plan = plan_world_village(t, s, 2051, WorldVillageRules());
+            for (const std::string &id : settlement_ids(plan.layout)) {
+                villages.mix_s(id);
+            }
+            villages.mix(uint64_t(plan.missing));
+        }
+    }
+    report_golden("岛群远离主码头的村", villages.h, 0xb9346e12326159c4ull);
+}
+
 } // namespace
 
 int main() {
@@ -1687,6 +1827,7 @@ int main() {
     test_dock_site();
     test_village_plan();
     test_world_sites();
+    test_goldens();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }
