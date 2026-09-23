@@ -2,7 +2,9 @@
 //
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051                  # 摘要
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --report out.tsv # 另写逐条明细（每个码头 / 村一行）
-//   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）
+//   build/Release/zhouzhu_site_survey.exe game/worlds/2051 --sim 24      # 另把全部村落开账、在远处结 24 个游戏小时，报花费
+//   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
+//         --sim H（远处结算几个游戏小时；0 = 不结）
 //
 // 游戏里走近了才铺的东西，这里一次全铺：同一套纯算法（world_sites.h），所以这里铺得好，游戏里就铺得好。
 // 退出码：0 = 全部达标；1 = 有码头找不到岸缘，或摆不下的房子超过上限；2 = 读不了资产。
@@ -18,6 +20,7 @@
 #include <vector>
 
 #include "world_grid.h"
+#include "world_ledger.h"
 #include "world_sites.h"
 #include "world_terrain.h"
 
@@ -47,6 +50,7 @@ int main(int argc, char **argv) {
     uint64_t seed = 2051;
     std::string report_path;
     double max_missing = 0.02;
+    double sim_hours = 0.0;
     for (int k = 2; k + 1 < argc; k += 2) {
         const std::string opt = argv[k];
         if (opt == "--seed") {
@@ -55,6 +59,8 @@ int main(int argc, char **argv) {
             report_path = argv[k + 1];
         } else if (opt == "--max-missing") {
             max_missing = std::atof(argv[k + 1]);
+        } else if (opt == "--sim") {
+            sim_hours = std::atof(argv[k + 1]);
         }
     }
 
@@ -154,7 +160,74 @@ int main(int argc, char **argv) {
     std::printf("村落 %zu 处：要盖 %d 座，摆下 %d 座，摆不下 %d 座（%.2f%%，%d 处不全）；共 %.0f ms，最慢 %s %.0f ms\n",
             sites.settlements.size(), wanted, wanted - missing, missing, 100.0 * missing_ratio, short_sites, total_ms, worst_name.c_str(), worst_ms);
 
-    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing;
+    // 远处结算：与游戏里的远处账房（Hinterland）同一份开账与结算（world_ledger），全部村落从卯时前开账，每处半个钟头一结
+    bool sim_ok = true;
+    if (sim_hours > 0.0) {
+        const DayRules day;
+        const SimRules sim_rules;
+        const WorldGround land_ground(terrain, 0.0, 0.0);
+        const FarmModel land(&land_ground, land_ground.plot_lattice(), FarmRules());
+        ClaimRegistry taken;
+        std::vector<WorldLedger> ledgers;
+        const double t0 = clock_at(0, 5.5, day);
+        started = std::chrono::steady_clock::now();
+        int people = 0, farmers = 0, carriers = 0;
+        for (const SiteSettlement &s : sites.settlements) {
+            WorldLedgerSpec spec;
+            spec.site = s;
+            spec.seed = seed;
+            spec.lattice = land.get_lattice();
+            spec.farm_rules = land.get_rules();
+            spec.day = day;
+            spec.now = t0;
+            ledgers.push_back(open_world_ledger(terrain, spec, sim_rules));
+            for (const PersonState &p : ledgers.back().state->people) {
+                people++;
+                farmers += p.mind.who.job == Job::FARMER ? 1 : 0;
+                carriers += p.mind.who.job == Job::CARRIER ? 1 : 0;
+            }
+        }
+        const double open_ms = since_ms(started);
+        std::printf("远处开账 %zu 处：%d 人（农 %d、挑水 %d），%.0f ms（每处 %.2f ms）\n", ledgers.size(), people, farmers, carriers, open_ms, open_ms / ledgers.size());
+        const double step = game_seconds(0.5, day), until = t0 + game_seconds(sim_hours, day);
+        double worst_ms = 0.0, total_ms = 0.0;
+        int settles = 0;
+        std::string worst;
+        for (double t = t0 + step; t <= until + 1e-6; t += step) {
+            for (size_t k = 0; k < ledgers.size(); k++) {
+                const auto s0 = std::chrono::steady_clock::now();
+                settle_world_ledger(ledgers[k], land, &taken, day, sim_rules, t);
+                const double ms = since_ms(s0);
+                total_ms += ms;
+                settles++;
+                if (ms > worst_ms) {
+                    worst_ms = ms;
+                    worst = sites.settlements[k].name;
+                }
+            }
+        }
+        int harvested = 0, eaten = 0, hungry = 0, grain = 0, plots = 0, grain0 = 0;
+        double water_in = 0.0;
+        for (const WorldLedger &l : ledgers) {
+            const VillageTally &t = l.state->tally;
+            harvested += t.harvested;
+            eaten += t.eaten;
+            hungry += t.hungry;
+            water_in += t.water_in;
+            grain += village_grain(*l.state);
+            grain0 += 12;
+            plots += int(l.state->held.size());
+            sim_ok = sim_ok && village_grain(*l.state) == 12 + t.harvested - t.sown - t.eaten;
+        }
+        const double game_s = game_seconds(sim_hours, day);
+        std::printf("远处结算 %.1f 个钟头（%d 次半小时一结）：共 %.0f ms，每次平均 %.3f ms、最慢 %s %.2f ms；"
+                    "合游戏里 %.0f s：每秒游戏时间花 %.2f ms（60 fps 下每帧约 %.3f ms）\n",
+                sim_hours, settles, total_ms, total_ms / std::max(1, settles), worst.c_str(), worst_ms, game_s, total_ms / game_s, total_ms / game_s / 60.0);
+        std::printf("  全岛群：收粮 %d、吃 %d（饿 %d 人次）、挑水 %.0f 担；垦了 %d 块地；仓里的粮 %d → %d；账%s\n", harvested, eaten, hungry, water_in, plots, grain0, grain,
+                sim_ok ? "都对得上" : "有对不上的");
+    }
+
+    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing && sim_ok;
     std::printf("%s\n", pass ? "达标" : "不达标");
     return pass ? 0 : 1;
 }
