@@ -19,7 +19,7 @@ const NEAR_VILLAGE_ID := 152  # 主码头 1 km 外的村子
 const CRUISE_CLEARANCE := 60.0  # 飞越陆地时离地至少这么高
 const SLOW_DOWN_AT := 2000.0  # 离目的泊位这么近换回泊档
 
-enum Phase { SETTLE, CHECK_HOME, MAP_TO_SEAT, SEAT, MAP_TO_DOCK, BACK_AT_DOCK, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, CRUISE, APPROACH, MOORING, WALK_ASHORE, ASHORE_VILLAGE, DONE }
+enum Phase { SETTLE, CHECK_HOME, MAP_TO_SEAT, SEAT, MAP_TO_DOCK, BACK_AT_DOCK, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, CRUISE, APPROACH, MOORING, WALK_ASHORE, ASHORE_VILLAGE, VISIT, DONE }
 
 var main: WorldScene
 var world: World
@@ -350,7 +350,7 @@ func _physics_process(delta: float) -> void:
 						_finish(false, "邑治 271 户该有 271 座民居 + 堂屋 + 仓，实为 %d 座" % count)
 						return
 					_log("邑治：%d 座房子都站在地上，村民 %d 人" % [count, seat_village.get_villagers().get_villager_count() if seat_village.get_villagers() else 0])
-					player.set_look_yaw(PI)  # 回头望着村子（村在北边）
+					player.set_look_yaw(0.0)  # 望着村子：落点在村心南边 250 m，look_yaw 0 朝北
 					map_step = 1
 				elif _folk_walking(seat_village) > 0:
 					_log("邑治：%.1f s 后有 %d 人出了门" % [in_phase, _folk_walking(seat_village)])
@@ -478,10 +478,21 @@ func _physics_process(delta: float) -> void:
 				map_step = 1
 			elif _folk_walking(v) > 0:
 				_log("%s：%d 座房子站在地上，%.1f s 后有人出门" % [v.get_site_name(), v.get_settlement().get_count(), in_phase])
-				_shot("10_dest_village")
-				_goto(Phase.DONE)
+				_goto(Phase.VISIT)
 			elif in_phase > FOLK_TIMEOUT:
 				_finish(false, "%s %.0f s 里没人出门（村民 %d）" % [v.get_site_name(), FOLK_TIMEOUT, v.get_villagers().get_villager_count() if v.get_villagers() else 0])
+		Phase.VISIT:
+			# 只为截图：疾跑到那户人家门前 35 m 看一眼（走不到也不算失败，断言上面都做过了）
+			var v := _dest_village()
+			var house: Vector3 = v.get_settlement().get_building_position(0)
+			_hold("sprint", true)
+			if _walk_toward(house, 35.0) or in_phase > 150.0:
+				_release_all()
+				var to := house - player.global_position
+				player.set_look_yaw(atan2(-to.x, -to.z))
+				_log("走到%s跟前 %.0f m" % [v.get_site_name(), Vector2(to.x, to.z).length()])
+				_shot("10_dest_village")
+				_goto(Phase.DONE)
 		Phase.DONE:
 			if in_phase > 0.3:
 				_finish(true, "主码头出生 → 邑治 → 回主码头 → 上舵换档飞 %.1f km → 乙岛 #%d 码头靠泊下船；途中最高 %.0f m、最低离地 %.0f m" % [
