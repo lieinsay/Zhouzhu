@@ -559,12 +559,14 @@
     {
       "id": "world-terrain",
       "label": "连续地形",
-      "detail": "任意 (x, z) 上有没有地、顶面、岛底、地表：陆地 = 岸距 + 岸线噪声 > 0，顶面 = 栅格 + 按地表调幅的哈希值噪声，岛底 = 岸缘 − 崖高 − 龙骨 × √向内程度。无状态、线程安全，任何精度取样结果一致。",
+      "detail": "连续地形：大形听栅格，细节噪声补 100 m 以下；构造时建好河网，河道 + 河漫滩按横断面凿出，外面渐回原地形、细节噪声渐隐；停机坪在河上让给河。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest world_terrain：确定、连续、岸线进退在噪声幅度内",
       "sources": [
         "src/world_terrain.h",
-        "src/world_terrain.cpp"
+        "src/world_terrain.cpp",
+        "src/world_river.h",
+        "src/world_river.cpp"
       ],
       "since": "e11"
     },
@@ -1137,6 +1139,57 @@
       ],
       "since": "e22",
       "parent": "player"
+    },
+    {
+      "id": "world-river-net",
+      "label": "河网",
+      "detail": "沿 D8 树按主干追出一条条河，抽稀、磨圆、松弛后加游移与曲流；支流末点落在干流中线上；平岸宽深按汇流的水力几何，平岸水面顺流不升；桶索引查最近河段；横断面 river_profile。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest world_rivers：588 条、1160 km，水面顺流不升、支流接干流、越往下越宽",
+      "sources": [
+        "src/world_river.h",
+        "src/world_river.cpp"
+      ],
+      "since": "e23",
+      "parent": "world-terrain"
+    },
+    {
+      "id": "world-river-regime",
+      "label": "水情",
+      "detail": "weather.tsv 的逐日降水进快慢两个线性水库 → 径流指数（1 = 年均）；river_stage 按渗漏门槛（小溪先干）与水力几何给此刻的水深、水位、水面半宽，没过平岸就漫滩。着色器用同一公式。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：年均 = 1、0.15..6.7、小溪 0.5 时断流、大水漫滩不出滩",
+      "sources": [
+        "src/world_river.h",
+        "src/world_river.cpp"
+      ],
+      "since": "e23",
+      "parent": "world-terrain"
+    },
+    {
+      "id": "world-river-water",
+      "label": "河的水面",
+      "detail": "水面按 512 m 块切成带子（river_mesh 纯算法），焦点 4 km 内挂上，共用 river.gdshader 材质；每帧由 GameClock 算径流设进去；河口挂跌水帘；runoff_override / calendar_offset 调试用。",
+      "tag": "场景角色",
+      "evidence": "river_e2e：年均 / 枯水 / 大水三档水深水面宽涨落、小溪断流、换日子水情变；开窗截图目视",
+      "sources": [
+        "src/river_mesh.h",
+        "src/river_mesh.cpp",
+        "src/world.cpp",
+        "game/shaders/river.gdshader"
+      ],
+      "since": "e24",
+      "parent": "world-node"
+    },
+    {
+      "id": "river-e2e",
+      "label": "河 e2e",
+      "detail": "岛群大河河滩上 HUD 报河宽水深、河心地面是河床、三档水情涨落、小溪断流、换日子水情变、河口跌水、上空看河。",
+      "tag": "测试",
+      "sources": [
+        "game/tests/river_e2e.gd"
+      ],
+      "since": "e24"
     }
   ],
   "edges": [
@@ -2552,6 +2605,40 @@
       "from": "interior-e2e",
       "to": "flat-map",
       "label": "场景"
+    },
+    {
+      "from": "world-river-net",
+      "to": "world-grid",
+      "label": "流向 / 汇流"
+    },
+    {
+      "from": "world-river-regime",
+      "to": "skyisle-export",
+      "label": "weather.tsv"
+    },
+    {
+      "from": "map-ground",
+      "to": "world-river-net",
+      "label": "河槽是水 / 河滩不盖房 / 挑水线"
+    },
+    {
+      "from": "world-river-water",
+      "to": "world-river-net",
+      "label": "河段"
+    },
+    {
+      "from": "world-river-water",
+      "to": "world-river-regime",
+      "label": "径流指数"
+    },
+    {
+      "from": "world-river-water",
+      "to": "world-clock",
+      "label": "今天第几日"
+    },
+    {
+      "from": "river-e2e",
+      "to": "world-river-water"
     }
   ],
   "chains": [
@@ -4342,6 +4429,49 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e23",
+      "type": "extend",
+      "date": "2026-09-23",
+      "title": "拓展：岛群里有真的河了——河网、河道宽窄、凿河道",
+      "summary": "溪涧原来只是 100 m 栅格上的颜色与禁区；现在按导出的 D8 流向建出河网，河道随汇流变宽变深，凿进地形里，码头的坪让给河。",
+      "nodes": [
+        "world-terrain",
+        "world-river-net",
+        "world-river-regime"
+      ],
+      "info": {
+        "node": "world-terrain",
+        "children": [
+          "world-river-net",
+          "world-river-regime"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e24",
+      "type": "extend",
+      "date": "2026-09-23",
+      "title": "拓展：岛群的河——水面随钟涨落",
+      "summary": "World 读 weather.tsv、按焦点挂水面块，每帧按全局钟设径流指数，水面在着色器里涨落；HUD 报河宽水深。",
+      "nodes": [
+        "world-node",
+        "world-river-water",
+        "river-e2e"
+      ],
+      "info": {
+        "node": "world-node",
+        "children": [
+          "world-river-water"
+        ],
+        "adopted": [],
+        "peers": [
+          "river-e2e"
+        ]
       }
     }
   ],
