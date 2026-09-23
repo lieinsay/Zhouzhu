@@ -374,7 +374,7 @@
     {
       "id": "settlement-node",
       "label": "Settlement 聚落",
-      "detail": "Island 的子节点（StaticBody3D）。layout_path 指向 game/settlements/*.txt，进树时读、岛 rebuilt 后重建几何：台基（埋进坡里架平地坪）+ 夯土墙 + 悬山顶（PrismMesh）+ 门，台基与墙带碰撞。对外 survey / place / remove / find_at / find_site / save / load，dirty 标记。",
+      "detail": "按清单盖房：每座 = 外壳（建筑表）+ 房屋模板（模板库给）经 building_parts 拼出的盒子，合成分组网格（地面、各层、顶）和一个凹多边形碰撞，望楼挂爬梯区域、每层一盏暖光；模板改了就地重画，室内编辑时按组剖开。",
       "tag": "场景角色",
       "evidence": "build_e2e PASS：放 / 拒 / 拆 / 存 / 读回一致，望楼挡住人，仓库村落 8 座 survey_building 全过",
       "sources": [
@@ -1014,6 +1014,129 @@
         "game/tests/world_sim_e2e.gd"
       ],
       "since": "e19"
+    },
+    {
+      "id": "house-template",
+      "label": "房屋模板",
+      "detail": "外墙门窗、隔墙与门洞、家具（十三种）、梯子，按层记；一行一条的文本 game/buildings/<外壳>/<款式>.txt；auto no 不参与自动挑。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：文本往返、认不出的行、@层、auto no",
+      "sources": [
+        "src/house_template.h",
+        "src/house_template.cpp"
+      ],
+      "since": "e20",
+      "parent": "settlement-node"
+    },
+    {
+      "id": "interior-rules",
+      "label": "室内规矩：放 / 拆 / 走得通",
+      "detail": "放家具、开门窗、画隔墙、搭梯子的规矩与中文原因；0.25 m 格按人的半径从正门连片找、经梯子跨层，报走不到的面积与正面没门。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：各项拒绝、隔死报走不到、仓库七套都过",
+      "sources": [
+        "src/interior_rules.h",
+        "src/interior_rules.cpp"
+      ],
+      "since": "e20",
+      "parent": "settlement-node"
+    },
+    {
+      "id": "building-parts",
+      "label": "建筑几何：盒子清单",
+      "detail": "外壳 + 模板 + 地面落差 → 台基、门前坡道与台阶、按层开洞的墙、楼板梯口、隔墙、家具、天花板（带碰撞，相机停在屋里）、梯子区域；带分组给剖视。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：门洞无碰撞、天花板实、坡道贴地坪、梯口开洞",
+      "sources": [
+        "src/building_parts.h",
+        "src/building_parts.cpp"
+      ],
+      "since": "e20",
+      "parent": "settlement-node"
+    },
+    {
+      "id": "template-library",
+      "label": "模板库 BuildingTemplates",
+      "detail": "autoload（类 TemplateLibrary）：读 res://buildings（测试可加 write_dir），按款式给模板、没写就按位置哈希挑，put 发 changed，save 写回文件。",
+      "tag": "引擎构件",
+      "evidence": "interior_e2e 另存 / 存盘读回",
+      "sources": [
+        "src/template_library.h",
+        "src/template_library.cpp",
+        "game/building_templates.tscn"
+      ],
+      "since": "e20",
+      "parent": "settlement-node"
+    },
+    {
+      "id": "house-templates-data",
+      "label": "七套房屋模板",
+      "detail": "民居·三间 / 织户 / 农户，堂屋·祠堂 / 公所，仓，望楼（三层两段梯）。",
+      "tag": "资产",
+      "evidence": "ctest 逐套 interior_report 没毛病",
+      "sources": [
+        "game/buildings"
+      ],
+      "since": "e20",
+      "parent": "settlement-node"
+    },
+    {
+      "id": "interior-edit",
+      "label": "InteriorEdit 室内编辑",
+      "detail": "光标在建筑局部坐标 0.25 m 一格；工具板、转向、换层；每改一步 put 进模板库，用这套的房子就地重画；N 另存（不参与自动挑）并让这座改用，F5 存模板与清单。",
+      "tag": "玩法部件",
+      "evidence": "interior_e2e：放水缸、画隔墙、拆、另存、存盘读回",
+      "sources": [
+        "src/interior_edit.h",
+        "src/interior_edit.cpp"
+      ],
+      "since": "e21",
+      "parent": "expedition"
+    },
+    {
+      "id": "interior-overlay",
+      "label": "InteriorOverlay 室内编辑视角",
+      "detail": "绕光标的相机、贴地光标、要放那样的幽灵（绿 / 红 / 白）；幽灵没变不重建。",
+      "tag": "引擎构件",
+      "sources": [
+        "src/interior_overlay.h",
+        "src/interior_overlay.cpp"
+      ],
+      "since": "e21"
+    },
+    {
+      "id": "interior-panel",
+      "label": "InteriorPanel 室内编辑面板",
+      "detail": "只画：模板名与层、光标、能不能放、工具板、整套的毛病、存到哪。",
+      "tag": "引擎构件",
+      "sources": [
+        "src/interior_panel.h",
+        "src/interior_panel.cpp"
+      ],
+      "since": "e21"
+    },
+    {
+      "id": "interior-e2e",
+      "label": "进屋与室内编辑测试",
+      "detail": "平板岛：进三间、上仓、爬望楼，相机在屋里；B 里换款式；T 编辑、另存、存盘。",
+      "tag": "验收",
+      "evidence": "headless 通过",
+      "sources": [
+        "game/tests/interior_e2e.gd"
+      ],
+      "since": "e21"
+    },
+    {
+      "id": "player-indoor-arm",
+      "label": "屋里相机拉近",
+      "detail": "每帧朝上打一条射线，6 m 内有东西就算在屋里，弹簧臂逼近 indoor_arm（2.6 m）。",
+      "tag": "场景角色",
+      "evidence": "interior_e2e：东间、仓、望楼各层相机都在屋里",
+      "sources": [
+        "src/player.cpp"
+      ],
+      "since": "e22",
+      "parent": "player"
     }
   ],
   "edges": [
@@ -2364,6 +2487,71 @@
       "chains": [
         "world-sim"
       ]
+    },
+    {
+      "from": "interior-rules",
+      "to": "house-template",
+      "label": "模板"
+    },
+    {
+      "from": "building-parts",
+      "to": "house-template",
+      "label": "模板"
+    },
+    {
+      "from": "building-parts",
+      "to": "buildings",
+      "label": "外壳尺寸 / 层数"
+    },
+    {
+      "from": "template-library",
+      "to": "house-template",
+      "label": "读写"
+    },
+    {
+      "from": "template-library",
+      "to": "house-templates-data",
+      "label": "文件"
+    },
+    {
+      "from": "voyage-build",
+      "to": "template-library",
+      "label": "V/Z 换款式"
+    },
+    {
+      "from": "interior-edit",
+      "to": "interior-overlay",
+      "label": "视角 / 幽灵"
+    },
+    {
+      "from": "interior-edit",
+      "to": "interior-panel",
+      "label": "面板"
+    },
+    {
+      "from": "interior-edit",
+      "to": "interior-rules",
+      "label": "放 / 拆 / 毛病"
+    },
+    {
+      "from": "interior-edit",
+      "to": "template-library",
+      "label": "put / save"
+    },
+    {
+      "from": "interior-edit",
+      "to": "settlement-node",
+      "label": "剖视 / 换款式"
+    },
+    {
+      "from": "interior-overlay",
+      "to": "building-parts",
+      "label": "家具样子"
+    },
+    {
+      "from": "interior-e2e",
+      "to": "flat-map",
+      "label": "场景"
     }
   ],
   "chains": [
@@ -2739,15 +2927,16 @@
           ]
         },
         {
-          "text": "光标挪到已有的建筑上它描成白框：X 拆掉，E 会提醒先拆再放",
+          "text": "光标挪到已有的建筑上它描成白框：X 拆掉，E 会提醒先拆再放；V / Z 给它换一套房屋模板，屋里立刻换了样子",
           "nodes": [
             "voyage-build",
             "build-overlay",
-            "settlement-node"
+            "settlement-node",
+            "template-library"
           ]
         },
         {
-          "text": "F5 把清单存回 layout_path 指的文本文件（一座一行 kind@x,z,yaw°），Tab 合上回到人身上；文件随仓库提交，重进游戏照样盖起来",
+          "text": "F5 把清单存回 layout_path 指的文本文件（一座一行 kind@x,z,yaw°，指定了模板写 kind/style@…），Tab 合上回到人身上；文件随仓库提交，重进游戏照样盖起来",
           "nodes": [
             "voyage-build",
             "settlement-node",
@@ -2760,6 +2949,30 @@
             "seed-villages",
             "settlement-node",
             "island-node"
+          ]
+        },
+        {
+          "text": "走进一座房子：顺门前台阶进门、穿隔墙上的门洞进里间，家具挡路；屋里第三人称相机拉近、停在天花板和墙里；望楼面朝梯子按 W 爬上二层、三层",
+          "nodes": [
+            "player",
+            "player-indoor-arm",
+            "settlement-node",
+            "building-parts",
+            "house-template",
+            "template-library",
+            "house-templates-data"
+          ]
+        },
+        {
+          "text": "开发者在房子上按 T 开室内编辑：屋子剖开，Z/V 挑工具、E 放家具 / 开门窗 / 两点画隔墙 / 搭梯子、X 拆，面板随时说哪儿走不到；N 另存为新模板，F5 写回 game/buildings",
+          "nodes": [
+            "interior-edit",
+            "interior-overlay",
+            "interior-panel",
+            "interior-rules",
+            "template-library",
+            "settlement-node",
+            "input-map"
           ]
         }
       ],
@@ -2776,7 +2989,16 @@
         "voyage-build",
         "player",
         "input-map",
-        "island-field"
+        "island-field",
+        "template-library",
+        "player-indoor-arm",
+        "building-parts",
+        "house-template",
+        "house-templates-data",
+        "interior-edit",
+        "interior-overlay",
+        "interior-panel",
+        "interior-rules"
       ]
     },
     {
@@ -4045,6 +4267,81 @@
         "updated": [
           "villager-clock"
         ]
+      }
+    },
+    {
+      "id": "e20",
+      "type": "extend",
+      "date": "2026-09-23",
+      "title": "拓展：房子能进去，屋里按房屋模板布局",
+      "summary": "四种建筑都能走进去（门前台阶、望楼三层两段梯、天花板带碰撞）；屋里长什么样由房屋模板说，七套随仓库带，没写款式的按位置自动挑。",
+      "commits": "78d9fd7..036b855",
+      "nodes": [
+        "settlement-node",
+        "house-template",
+        "interior-rules",
+        "building-parts",
+        "template-library",
+        "house-templates-data"
+      ],
+      "info": {
+        "node": "settlement-node",
+        "children": [
+          "house-template",
+          "interior-rules",
+          "building-parts",
+          "template-library",
+          "house-templates-data"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e21",
+      "type": "extend",
+      "date": "2026-09-23",
+      "title": "拓展：开发者室内编辑",
+      "summary": "T 在一座房子上开室内编辑，改它用的那套模板：门窗、隔墙、家具、梯子，N 另存、F5 存盘。",
+      "commits": "cdce8fb..af50bef",
+      "nodes": [
+        "expedition",
+        "interior-edit",
+        "interior-overlay",
+        "interior-panel",
+        "interior-e2e"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "interior-edit"
+        ],
+        "adopted": [],
+        "peers": [
+          "interior-overlay",
+          "interior-panel",
+          "interior-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e22",
+      "type": "extend",
+      "date": "2026-09-23",
+      "title": "拓展：屋里的第三人称",
+      "summary": "头顶有顶时弹簧臂缓缓收到 2.6 m，出来再放回；不揭顶。",
+      "commits": "036b855",
+      "nodes": [
+        "player",
+        "player-indoor-arm"
+      ],
+      "info": {
+        "node": "player",
+        "children": [
+          "player-indoor-arm"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
