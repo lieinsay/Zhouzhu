@@ -24,6 +24,9 @@ const Color OUTLINE(0, 0, 0, 0.9f);
 const Color SEAT(0.95f, 0.35f, 0.25f);
 const Color VILLAGE(0.98f, 0.86f, 0.55f);
 const Color DOCK(0.45f, 0.75f, 0.98f);
+const Color DOCK_OFF(0.45f, 0.47f, 0.50f); // 靠不了的码头
+const Color DESTINATION(1.0f, 0.82f, 0.25f);
+const Color BUILT_RING(1.0f, 1.0f, 1.0f);
 const Color PLAYER(1.0f, 1.0f, 1.0f);
 const Color PLAYER_EDGE(0.85f, 0.15f, 0.1f);
 
@@ -54,6 +57,10 @@ void WorldMap::_bind_methods() {
     ClassDB::bind_method(D_METHOD("world_to_screen", "x", "z"), &WorldMap::world_to_screen);
     ClassDB::bind_method(D_METHOD("screen_to_world", "screen"), &WorldMap::screen_to_world);
     ClassDB::bind_method(D_METHOD("get_zoom"), &WorldMap::get_zoom);
+    ClassDB::bind_method(D_METHOD("get_dock_marker", "id"), &WorldMap::get_dock_marker);
+    ClassDB::bind_method(D_METHOD("is_village_marked_built", "id"), &WorldMap::is_village_marked_built);
+    ClassDB::bind_method(D_METHOD("is_dock_marked_berthable", "id"), &WorldMap::is_dock_marked_berthable);
+    ClassDB::bind_method(D_METHOD("set_built_sites", "docks", "villages"), &WorldMap::set_built_sites);
     ADD_SIGNAL(MethodInfo("teleport_requested", PropertyInfo(Variant::VECTOR3, "position")));
 }
 
@@ -93,6 +100,7 @@ void WorldMap::setup(const WorldGrid &p_grid, const Dictionary &p_info) {
         const Dictionary row = villages[k];
         const bool seat = bool(row.get("seat", false));
         Marker m{ seat ? Marker::SEAT : Marker::VILLAGE, 0, 0, to_std(row.get("name", "")) };
+        m.id = int(row.get("id", -1));
         if (seat) {
             m.label = to_std(String(U"邑治 · ")) + m.label;
         }
@@ -104,6 +112,7 @@ void WorldMap::setup(const WorldGrid &p_grid, const Dictionary &p_info) {
         const Dictionary row = docks[k];
         const bool main = bool(row.get("main", false));
         Marker m{ main ? Marker::MAIN_DOCK : Marker::DOCK, 0, 0, main ? to_std(String(U"主码头")) : "" };
+        m.id = int(row.get("id", -1));
         pos_of(row, m.x, m.z);
         markers.push_back(m);
     }
@@ -257,6 +266,9 @@ void WorldMap::_notification(int p_what) {
                 }
                 break;
             case Marker::SEAT: {
+                if (m.built) {
+                    draw_circle(p, 11.0f, BUILT_RING, false, 2.0f);
+                }
                 const real_t r = 7;
                 const PackedVector2Array diamond({ p + Vector2(0, -r), p + Vector2(r, 0), p + Vector2(0, r), p + Vector2(-r, 0) });
                 draw_colored_polygon(diamond, SEAT);
@@ -264,20 +276,33 @@ void WorldMap::_notification(int p_what) {
                 break;
             }
             case Marker::VILLAGE:
-                draw_circle(p, zoom > VILLAGE_NAMES_ZOOM ? 4.0f : 2.5f, VILLAGE);
+                if (m.built) {
+                    draw_circle(p, 7.0f, BUILT_RING, false, 2.0f); // 已铺出来的村：白圈
+                }
+                draw_circle(p, zoom > VILLAGE_NAMES_ZOOM || m.built ? 4.0f : 2.5f, VILLAGE);
                 if (zoom > VILLAGE_NAMES_ZOOM) {
                     text(p + Vector2(7, 5), to_godot(m.label), 14, TEXT);
                 }
                 break;
             case Marker::MAIN_DOCK:
-                draw_rect(Rect2(p - Vector2(5, 5), Vector2(10, 10)), DOCK);
-                text(p + Vector2(9, 16), to_godot(m.label), 16, DOCK);
-                break;
-            case Marker::DOCK:
-                if (zoom > DOCKS_ZOOM) {
-                    draw_rect(Rect2(p - Vector2(3, 3), Vector2(6, 6)), DOCK);
+            case Marker::DOCK: {
+                const bool main = m.kind == Marker::MAIN_DOCK, destination = m.id == destination_dock;
+                if (!main && !destination && zoom <= DOCKS_ZOOM) {
+                    break;
+                }
+                const real_t r = main || destination ? 5 : 3;
+                const Color fill = destination ? DESTINATION : (m.berthable ? DOCK : DOCK_OFF);
+                if (m.berthable) {
+                    draw_rect(Rect2(p - Vector2(r + 2, r + 2), Vector2(2 * r + 4, 2 * r + 4)), m.built ? BUILT_RING : OUTLINE); // 能靠泊：描边高亮
+                }
+                draw_rect(Rect2(p - Vector2(r, r), Vector2(2 * r, 2 * r)), fill);
+                if (destination) {
+                    text(p + Vector2(9, 16), String(U"目的码头 #") + String::num_int64(m.id), 16, DESTINATION);
+                } else if (main) {
+                    text(p + Vector2(9, 16), to_godot(m.label), 16, DOCK);
                 }
                 break;
+            }
         }
     }
 
@@ -326,4 +351,67 @@ void WorldMap::_notification(int p_what) {
         }
         text(Vector2(size.x * 0.5f, size.y - 30), line, 18, TEXT, HORIZONTAL_ALIGNMENT_CENTER);
     }
+}
+
+void WorldMap::set_dock(int p_id, bool p_berthable, const Vector3 &p_position) {
+    for (Marker &m : markers) {
+        if ((m.kind == Marker::DOCK || m.kind == Marker::MAIN_DOCK) && m.id == p_id) {
+            m.berthable = p_berthable;
+            m.x = p_position.x;
+            m.z = p_position.z;
+        }
+    }
+    queue_redraw();
+}
+
+void WorldMap::set_destination_dock(int p_id) {
+    destination_dock = p_id;
+    queue_redraw();
+}
+
+void WorldMap::set_built_sites(const PackedInt32Array &p_docks, const PackedInt32Array &p_villages) {
+    for (Marker &m : markers) {
+        if (m.kind == Marker::DOCK || m.kind == Marker::MAIN_DOCK) {
+            m.built = p_docks.has(m.id);
+        } else if (m.kind == Marker::VILLAGE || m.kind == Marker::SEAT) {
+            m.built = p_villages.has(m.id);
+        }
+    }
+    queue_redraw();
+}
+
+bool WorldMap::get_marker(const String &p_kind, int p_id, Vector3 &r_position, bool &r_built) const {
+    const bool dock = p_kind == "dock";
+    for (const Marker &m : markers) {
+        const bool is_dock = m.kind == Marker::DOCK || m.kind == Marker::MAIN_DOCK;
+        const bool is_village = m.kind == Marker::VILLAGE || m.kind == Marker::SEAT;
+        if (m.id == p_id && ((dock && is_dock) || (!dock && is_village))) {
+            r_position = Vector3(real_t(m.x), 0, real_t(m.z));
+            r_built = m.built;
+            return true;
+        }
+    }
+    return false;
+}
+
+Vector3 WorldMap::get_dock_marker(int p_id) const {
+    Vector3 position;
+    bool built = false;
+    get_marker("dock", p_id, position, built);
+    return position;
+}
+
+bool WorldMap::is_village_marked_built(int p_id) const {
+    Vector3 position;
+    bool built = false;
+    return get_marker("village", p_id, position, built) && built;
+}
+
+bool WorldMap::is_dock_marked_berthable(int p_id) const {
+    for (const Marker &m : markers) {
+        if ((m.kind == Marker::DOCK || m.kind == Marker::MAIN_DOCK) && m.id == p_id) {
+            return m.berthable;
+        }
+    }
+    return false;
 }

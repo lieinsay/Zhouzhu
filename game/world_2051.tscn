@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3 uid="uid://b0zhouzhuw2051"]
+[gd_scene load_steps=9 format=3 uid="uid://b0zhouzhuw2051"]
 
 [ext_resource type="PackedScene" path="res://player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://ship.tscn" id="2_ship"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_material"]
 sky_top_color = Color(0.24, 0.43, 0.72, 1)
@@ -50,3 +51,8 @@ data_dir = "res://worlds/2051"
 terrain_seed = 2051
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
+
+[node name="SiteStream" type="SiteStream" parent="."]
+seed = 2051
+
+[node name="Ship" parent="." instance=ExtResource("2_ship")]
