@@ -20,6 +20,9 @@
 #include "farm_model.h"
 #include "flat_ground.h"
 #include "flight_model.h"
+#include "building_parts.h"
+#include "house_template.h"
+#include "interior_rules.h"
 #include "inventory.h"
 #include "island_field.h"
 #include "island_ground.h"
@@ -2307,6 +2310,159 @@ void test_village_sim() {
 
 } // namespace
 
+// 仓库里的房屋模板：game/buildings/<外壳>/<款式>.txt
+std::vector<HouseTemplate> shipped_templates(std::vector<std::string> &r_files) {
+    std::vector<HouseTemplate> out;
+    for (int k = 0; k < buildings::COUNT; k++) {
+        const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/buildings/" + buildings::at(k).id;
+        for (const char *style : { "sanjian", "zhihu", "nonghu", "citang", "gongsuo", "cang", "wanglou" }) {
+            std::ifstream in(dir + "/" + style + ".txt");
+            if (!in) {
+                continue;
+            }
+            std::vector<std::string> lines;
+            for (std::string line; std::getline(in, line);) {
+                lines.push_back(line);
+            }
+            HouseTemplate t;
+            std::vector<std::string> errors;
+            const bool ok = parse_template(lines, t, &errors);
+            check(ok && errors.empty(), std::string("模板读得进来：") + buildings::at(k).id + "/" + style + (errors.empty() ? "" : "：" + errors[0]));
+            if (ok) {
+                out.push_back(t);
+                r_files.push_back(dir + "/" + style + ".txt");
+            }
+        }
+    }
+    return out;
+}
+
+// 盒子里挡人的那些有没有一块压着这一点
+bool solid_at(const BuildingParts &p_parts, double p_x, double p_y, double p_z) {
+    for (const BoxPart &b : p_parts.boxes) {
+        if (b.solid && part_contains(b, p_x, p_y, p_z)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void test_house_templates() {
+    std::printf("房屋模板：文本、室内规矩、走得通、几何\n");
+    const BuildingDef &house = *buildings::by_id("house");
+    const BuildingDef &tower = *buildings::by_id("tower");
+
+    // 清单里的款式
+    Building b;
+    check(parse_building_id("house/zhihu@1.50,-2.00,90.0", b) && b.kind == "house" && b.style == "zhihu", "清单行 kind/style@… 读得出款式");
+    check(building_id(b) == "house/zhihu@1.50,-2.00,90.0", "款式写回清单行");
+    check(parse_building_id("house@1,2,0", b) && b.style.empty(), "不带款式的旧行照读，款式空");
+    check(!parse_building_id("house/@1,2,0", b) && !parse_building_id("barn/x@1,2,0", b), "空款式、不认识的外壳都不认");
+
+    // 文本往返
+    HouseTemplate t;
+    t.id = "house/test";
+    t.name = "试 验";
+    t.openings.push_back(Opening{ false, WallSide::FRONT, 0.0, 1.3, 0 });
+    t.openings.push_back(Opening{ true, WallSide::LEFT, -0.5, 1.2, 0 });
+    t.partitions.push_back(Partition{ 1.8, -2.95, 1.8, 2.95, 0 });
+    t.doorways.push_back(Doorway{ 1.8, 1.0, 0 });
+    t.items.push_back(Furnishing{ "bed", 3.8, -1.9, 0, 0 });
+    HouseTemplate back;
+    std::vector<std::string> errors;
+    check(parse_template(template_lines(t), back, &errors) && back == t && errors.empty(), "模板写成文本再读回来一模一样（名字里有空格也行）");
+    check(back.shell() == "house" && back.style() == "test", "id 拆成外壳 / 款式");
+    errors.clear();
+    check(parse_template({ "id house/x", "item throne 0,0 0", "door up 0 1", "wall 1,2" }, back, &errors) && errors.size() == 3, "认不出的行记下来、跳过");
+    check(!parse_template({ "name 无名" }, back) && !parse_template({ "id barn/x" }, back), "没 id、外壳不认识都读不成");
+    HouseTemplate tw;
+    check(parse_template({ "id tower/t", "ladder 1,1 2 @1" }, tw) && tw.ladders.size() == 1 && tw.ladders[0].level == 1 && tw.ladders[0].quarter == 2, "行尾 @层");
+
+    // 放东西的规矩
+    HouseTemplate e = bare_template(house);
+    check(interior_report(e, house).ok(), "只有一扇正门的空屋没毛病");
+    check(interior_place_item(e, house, "bed", 3.8, -1.9, 0, 0).empty(), "床放在屋角");
+    check(interior_place_item(e, house, "chest", 3.8, -1.9, 0, 0) == "压着床了", "压着床放不了");
+    check(interior_place_item(e, house, "chest", 5.0, 0.0, 0, 0).find("伸到墙外") != std::string::npos, "伸出墙外放不了");
+    check(interior_place_item(e, house, "table", 0.0, 2.4, 0, 0) == "挡着门了", "挡门放不了");
+    check(interior_place_item(e, house, "table", 0.0, 0.0, 0, 1).find("只有 1 层") != std::string::npos, "民居没有二层");
+    check(interior_place_opening(e, house, true, -3.6, 2.8, 0).empty(), "光标在正面墙边：开窗");
+    check(e.openings.back().side == WallSide::FRONT && std::abs(e.openings.back().at + 3.6) < 1e-9, "窗开在正面 x = −3.6");
+    check(interior_place_opening(e, house, true, -3.0, 2.8, 0).find("挨得太近") != std::string::npos, "紧挨着的窗开不了");
+    check(interior_place_opening(e, house, false, 0.0, 0.0, 0).find("墙边") != std::string::npos, "屋当中开不了门");
+    check(interior_place_opening(e, house, true, 5.1, 2.5, 0).find("墙角") != std::string::npos, "离墙角太近开不了窗");
+    // 隔墙：两点取直、接到墙上
+    check(interior_place_wall(e, house, -1.8, -2.8, -1.7, 2.8, 0).empty(), "隔墙");
+    const Partition &p = e.partitions.back();
+    check(p.x0 == p.x1 && std::abs(p.x0 + 1.8) < 1e-9 && std::abs(p.z0 + 2.95) < 1e-9 && std::abs(p.z1 - 2.95) < 1e-9, "取直成竖墙、两头接到前后墙上");
+    check(interior_place_wall(e, house, 0.5, 0.0, 1.0, 0.1, 0).find("太短") != std::string::npos, "太短的隔墙不要");
+    check(interior_place_wall(e, house, 3.8, -2.95, 3.8, 0.0, 0) == "穿过床了", "隔墙穿不过床");
+    InteriorReport r = interior_report(e, house);
+    check(!r.ok() && r.unreachable_m2[0] > 5.0, "西间被隔死：报走不到");
+    check(interior_place_opening(e, house, true, -1.8, 1.0, 0) == "隔墙上不开窗", "隔墙上不开窗");
+    check(interior_place_opening(e, house, false, -1.85, 1.0, 0).empty() && e.doorways.size() == 1, "隔墙上开门洞");
+    check(interior_report(e, house).ok(), "开了门洞就都走得到");
+    InteriorHit hit = interior_find(e, house, -1.8, 1.1, 0);
+    check(hit.kind == InteriorHit::DOORWAY && interior_hit_name(e, hit) == "门洞", "点中门洞");
+    hit = interior_find(e, house, -1.8, -2.0, 0);
+    check(hit.kind == InteriorHit::PARTITION && interior_remove(e, hit) && e.partitions.empty() && e.doorways.empty(), "拆隔墙，墙上的门洞跟着拆");
+    hit = interior_find(e, house, 0.0, 2.9, 0);
+    check(hit.kind == InteriorHit::OPENING && interior_remove(e, hit), "点中正门、拆掉");
+    r = interior_report(e, house);
+    check(std::any_of(r.problems.begin(), r.problems.end(), [](const std::string &p_text) { return p_text.find("没有门") != std::string::npos; }), "没门：报进不去");
+
+    // 梯子与多层
+    HouseTemplate w = bare_template(tower);
+    check(interior_place_ladder(w, tower, -1.5, -1.3, 0, 0).empty(), "望楼底层搭梯");
+    check(interior_place_ladder(w, tower, 1.5, 1.3, 2, 2).find("顶层") != std::string::npos, "顶层没法再往上搭");
+    check(interior_place_item(w, tower, "bed", -1.5, -0.6, 0, 1) == "挡着梯口了", "楼上梯口不能放东西");
+    check(interior_place_item(w, tower, "chest", -1.5, -0.7, 0, 0) == "挡着梯脚了", "梯脚不能放东西");
+    r = interior_report(w, tower);
+    check(!r.ok() && r.unreachable_m2[1] < 0.1 && r.unreachable_m2[2] > 5.0, "二层顺梯子走得到，三层还上不去");
+    check(interior_place_ladder(w, tower, 1.5, 1.3, 2, 1).empty() && interior_report(w, tower).ok(), "再搭一段就都走得到");
+
+    // 几何
+    const HouseTemplate s = bare_template(house);
+    auto flat = [](double, double) { return 0.5; }; // 地面比地坪低半米
+    const BuildingParts parts = building_parts(house, s, 1.1, flat);
+    check(!solid_at(parts, 0.0, 1.2, 3.1), "正门那儿（墙厚里）没有挡人的");
+    check(solid_at(parts, 2.0, 1.2, 3.1) && solid_at(parts, 5.4, 1.2, 0.0), "别处的墙挡人");
+    check(solid_at(parts, 0.0, house.wall_m - 0.05, 0.0), "天花板挡人（相机停在屋里）");
+    check(!solid_at(parts, 0.0, 1.0, 0.0), "屋里是空的");
+    const double edge = 0.5 * house.depth_m + house_dims::PLINTH_MARGIN;
+    check(parts.doors.size() == 1 && std::abs(parts.doors[0].out_y + 0.5) < 1e-6 && parts.doors[0].out_z > edge, "门外那点在坡道脚下的地面上");
+    // 坡道：台基边上贴着地坪
+    check(solid_at(parts, 0.0, -0.1, edge + 0.1) && !solid_at(parts, 0.0, 0.1, edge + 0.1), "坡道上沿贴着地坪");
+    bool all_inside = true;
+    for (const BoxPart &bp : parts.boxes) {
+        all_inside = all_inside && std::abs(bp.x) <= 0.5 * house.width_m + 0.7 && bp.z >= -0.5 * house.depth_m - 0.7 && bp.z <= edge + 1.5;
+    }
+    check(all_inside, "盒子都在台基与坡道里");
+    HouseTemplate tw2 = bare_template(tower);
+    interior_place_ladder(tw2, tower, -1.5, -1.3, 0, 0);
+    const BuildingParts tparts = building_parts(tower, tw2, 0.8, flat);
+    check(tparts.ladders.size() == 1 && std::abs(tparts.ladders[0].top_y - 4.0) < 1e-6, "一段梯子，上到 4 m");
+    check(!solid_at(tparts, -1.5, 3.95, -0.6) && solid_at(tparts, 1.5, 3.95, 1.5), "二层楼板在梯口处开了洞，别处是实的");
+    check(solid_at(tparts, -1.5, 2.0, -1.3), "梯板挡人（人贴着它爬）");
+
+    // 仓库里的模板都没毛病、四种外壳都有
+    std::vector<std::string> files;
+    const std::vector<HouseTemplate> shipped = shipped_templates(files);
+    check(shipped.size() >= 7, "仓库里至少七套模板（得到 " + std::to_string(shipped.size()) + "）");
+    bool shells[4] = { false, false, false, false };
+    for (size_t k = 0; k < shipped.size(); k++) {
+        const HouseTemplate &st = shipped[k];
+        const BuildingDef *def = buildings::by_id(st.shell());
+        shells[buildings::index_of(st.shell())] = true;
+        const InteriorReport sr = interior_report(st, *def);
+        check(sr.ok(), st.id + " 没毛病" + (sr.ok() ? std::string() : "：" + sr.problems[0]));
+        check(files[k].find(st.id) != std::string::npos, st.id + " 放在对应的文件里");
+        const BuildingParts sp = building_parts(*def, st, def->plinth_m + 0.6, flat);
+        check(int(sp.ladders.size()) == def->levels - 1, st.id + " 每层之间都有梯子");
+    }
+    check(shells[0] && shells[1] && shells[2] && shells[3], "四种外壳都有模板");
+}
+
 int main() {
     test_rng();
     test_noise();
@@ -2340,6 +2496,7 @@ int main() {
     test_world_sites();
     test_map_grounds();
     test_layout_edits();
+    test_house_templates();
     test_goldens();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;

@@ -15,12 +15,13 @@
 // 高差不超过 max_rise_m（台基把地坪架平，太陡就架不平）；与别的建筑之间留 gap_m 的空。
 // 通过了就给出地坪高（占地内最高地面 + 台基高）与台基该埋到多深（最低地面再往下一点）；不通过给出中文原因，一次只说最要紧的一条。
 //
-// 与场景文件 / 脚本之间用 "kind@x,z,yaw°" 文本，一座一行（yaw 以度计，一位小数）。
+// 与场景文件 / 脚本之间用 "kind@x,z,yaw°" 文本，一座一行（yaw 以度计，一位小数）；指定了房屋模板的写成 "kind/style@x,z,yaw°"。
 
 struct Building {
     std::string kind; // BuildingDef::id
     double x = 0.0, z = 0.0;
     double yaw = 0.0; // 弧度
+    std::string style; // 用哪套房屋模板（模板 id 是 "kind/style"，见 house_template.h）；空 = 按位置自动挑
 };
 
 struct SiteRules {
@@ -56,6 +57,7 @@ public:
     // 不检查合法性的直接改动（编辑函数在检查后调用）
     void add(const Building &p_building) { items.push_back(p_building); }
     void erase(int p_index) { items.erase(items.begin() + p_index); }
+    void set_style(int p_index, const std::string &p_style) { items[size_t(p_index)].style = p_style; } // 换房屋模板：占地不变，不用勘察
 
     bool operator==(const SettlementLayout &p_other) const;
     bool operator!=(const SettlementLayout &p_other) const { return !(*this == p_other); }
@@ -76,7 +78,7 @@ SiteReport survey_site(const SiteGround &p_ground, const BuildingDef &p_def, dou
 
 // 编辑：返回空串表示做了；否则原因，清单不动
 std::string settlement_place(SettlementLayout &p_layout, const SiteGround &p_ground, const std::string &p_kind,
-        double p_x, double p_z, double p_yaw, const SiteRules &p_rules);
+        double p_x, double p_z, double p_yaw, const SiteRules &p_rules, const std::string &p_style = std::string());
 // 点落在哪一座的占地里；没有返回 −1（重叠时取清单里靠后的，即最近放的）
 int settlement_find(const SettlementLayout &p_layout, double p_px, double p_pz);
 

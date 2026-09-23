@@ -15,6 +15,8 @@ add_subdirectory(extern/godot-cpp)
 
 # 不含 Godot 头的纯算法文件：扩展与单元测试各编一份。
 set(ZHOUZHU_CORE_SOURCES
+    src/building_parts.cpp
+    src/building_parts.h
     src/buildings.cpp
     src/buildings.h
     src/crops.cpp
@@ -32,6 +34,10 @@ set(ZHOUZHU_CORE_SOURCES
     src/flight_model.cpp
     src/flight_model.h
     src/ground_query.h
+    src/house_template.cpp
+    src/house_template.h
+    src/interior_rules.cpp
+    src/interior_rules.h
     src/inventory.cpp
     src/inventory.h
     src/island_field.cpp

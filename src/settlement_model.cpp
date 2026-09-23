@@ -61,7 +61,7 @@ bool SettlementLayout::operator==(const SettlementLayout &p_other) const {
     }
     for (size_t k = 0; k < items.size(); k++) {
         const Building &a = items[k], &b = p_other.items[k];
-        if (a.kind != b.kind || std::abs(a.x - b.x) > 1e-6 || std::abs(a.z - b.z) > 1e-6 || std::abs(normalize_yaw(a.yaw) - normalize_yaw(b.yaw)) > 1e-6) {
+        if (a.kind != b.kind || a.style != b.style || std::abs(a.x - b.x) > 1e-6 || std::abs(a.z - b.z) > 1e-6 || std::abs(normalize_yaw(a.yaw) - normalize_yaw(b.yaw)) > 1e-6) {
             return false;
         }
     }
@@ -167,7 +167,7 @@ SiteReport survey_site(const SiteGround &p_ground, const BuildingDef &p_def, dou
 }
 
 std::string settlement_place(SettlementLayout &p_layout, const SiteGround &p_ground, const std::string &p_kind,
-        double p_x, double p_z, double p_yaw, const SiteRules &p_rules) {
+        double p_x, double p_z, double p_yaw, const SiteRules &p_rules, const std::string &p_style) {
     const BuildingDef *def = buildings::by_id(p_kind);
     if (!def) {
         return "没有这种建筑：" + p_kind;
@@ -176,7 +176,7 @@ std::string settlement_place(SettlementLayout &p_layout, const SiteGround &p_gro
     if (!report.ok()) {
         return report.reason;
     }
-    p_layout.add(Building{ p_kind, p_x, p_z, normalize_yaw(p_yaw) });
+    p_layout.add(Building{ p_kind, p_x, p_z, normalize_yaw(p_yaw), p_style });
     return std::string();
 }
 
@@ -192,7 +192,8 @@ int settlement_find(const SettlementLayout &p_layout, double p_px, double p_pz) 
 }
 
 std::string building_id(const Building &p_building) {
-    return p_building.kind + "@" + format_number(p_building.x, 2) + "," + format_number(p_building.z, 2) + "," + format_number(normalize_yaw(p_building.yaw) * 180.0 / PI, 1);
+    const std::string head = p_building.style.empty() ? p_building.kind : p_building.kind + "/" + p_building.style;
+    return head + "@" + format_number(p_building.x, 2) + "," + format_number(p_building.z, 2) + "," + format_number(normalize_yaw(p_building.yaw) * 180.0 / PI, 1);
 }
 
 bool parse_building_id(const std::string &p_text, Building &r_building) {
@@ -200,7 +201,15 @@ bool parse_building_id(const std::string &p_text, Building &r_building) {
     if (at == std::string::npos || at == 0) {
         return false;
     }
-    const std::string kind = p_text.substr(0, at);
+    std::string kind = p_text.substr(0, at), style;
+    const size_t slash = kind.find('/');
+    if (slash != std::string::npos) {
+        style = kind.substr(slash + 1);
+        kind = kind.substr(0, slash);
+        if (style.empty() || style.find_first_of(" \t,@/") != std::string::npos) {
+            return false;
+        }
+    }
     if (!buildings::by_id(kind)) {
         return false;
     }
@@ -227,6 +236,7 @@ bool parse_building_id(const std::string &p_text, Building &r_building) {
         return false;
     }
     r_building.kind = kind;
+    r_building.style = style;
     r_building.x = values[0];
     r_building.z = values[1];
     r_building.yaw = normalize_yaw(values[2] * PI / 180.0);
