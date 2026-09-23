@@ -4,11 +4,11 @@
     python tools/export_skyisle.py D:/Project/My/skyisle-gen/out/seed42/islands/2051 game/worlds/2051
     python tools/export_skyisle.py --sites game/worlds/2051      # 只按已有的 world.json 重写 sites.tsv
 
-读 terrain.npz / island.json / settlements.json，写三份文件：
+读 terrain.npz / island.json / settlements.json / weather_y0.csv，写四份文件：
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
-    u32      版本 = 1
+    u32      版本 = 2（1 没有最后两段水文；游戏两版都读）
     u32      rows, cols
     f64      res_m（格距）
     f64      x0, z0（格 (0, 0) 格心的游戏坐标，米）
@@ -17,6 +17,16 @@ terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北�
     u8 [rows·cols]  最近的岛号（陆地即本岛；虚空取最近陆地格的岛）
     u8 [rows·cols]  地表类（island.json landcover.classes 的下标，0 = 虚空）
     u8 [rows·cols]  1 = 溪涧
+    u8 [rows·cols]  D8 流向（v2）：0 = 不流（虚空格），1..8 = 流向邻格 (dr, dc) = FLOW_OFFSETS[k − 1]；
+                    或上 0x10 = 那个邻格是虚空（河口：水从岸缘跌下去）
+    f32[rows·cols]  汇流面积（v2）：平方公里，含本格；虚空格为 0
+
+    流向与汇流按 skyisle-gen island/terrain.py 的 priority_fill + d8 + accumulate 在导出的高程上逐岛重算
+    （导出的高程已经是它抬过洼地之后的，填平面不变，所以与生成器的 flowacc_km2 一致，导出时会对照）。
+
+weather.tsv —— 一年的逐日天气（skyisle-gen 的 weather_y0.csv），给河的水情：
+    # year_days <一年几天>  precip_mm <年降水>
+    day  precip_mm  temp_c  type
 
 world.json —— 岛表与点位，坐标全换成游戏的米：x 向东、z 向南，原点 = 群心。
 
@@ -38,8 +48,85 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 
-VERSION = 1
+VERSION = 2
 HEIGHT_SCALE = 100.0
+
+
+# D8 流向的邻格（行、列偏移），下标 + 1 即 terrain.bin 里的流向码
+FLOW_OFFSETS = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+FLOW_TO_VOID = 0x10
+FILL_EPS_M = 0.001  # skyisle-gen hydro.fill_eps_m
+
+
+def priority_fill(h, mask, eps=FILL_EPS_M):
+    """洼地填平（Barnes 优先泛洪），同 skyisle-gen island/terrain.py：掩膜外 = 出口；填后每格严格高于其下游。"""
+    import heapq
+    H, W = h.shape
+    edge = mask & ~ndimage.binary_erosion(mask, structure=np.ones((3, 3)), border_value=0)
+    hl = np.where(mask, h, -np.inf).tolist()
+    closed = (~mask | edge).tolist()
+    res = [row[:] for row in hl]
+    heap = [(hl[i][j], int(i), int(j)) for i, j in zip(*np.where(edge))]
+    heapq.heapify(heap)
+    while heap:
+        z, i, j = heapq.heappop(heap)
+        for di, dj in FLOW_OFFSETS:
+            a, b = i + di, j + dj
+            if a < 0 or b < 0 or a >= H or b >= W or closed[a][b]:
+                continue
+            closed[a][b] = True
+            zn = max(hl[a][b], z + eps)
+            res[a][b] = zn
+            heapq.heappush(heap, (zn, a, b))
+    return np.where(mask, np.array(res), np.nan)
+
+
+def flow_directions(height, island, res):
+    """逐岛填洼 + D8：返回 (流向码 u8, 汇流面积 km²)。规则同 skyisle-gen 的 d8：有虚空邻格就流出去（河口），否则取最陡的下坡邻格。"""
+    H, W = height.shape
+    flow = np.zeros((H, W), dtype=np.uint8)
+    acc = np.zeros((H, W))
+    cell_km2 = (res / 1000.0) ** 2
+    for k in range(int(island.max()) + 1):
+        m = island == k
+        if not m.any():
+            continue
+        rr, cc = np.where(m)
+        r0, r1, c0, c1 = max(rr.min() - 1, 0), min(rr.max() + 2, H), max(cc.min() - 1, 0), min(cc.max() + 2, W)
+        mk = m[r0:r1, c0:c1]
+        hf = priority_fill(height[r0:r1, c0:c1], mk)
+        h, w = mk.shape
+        best = np.full((h, w), -np.inf)
+        code = np.zeros((h, w), dtype=np.uint8)
+        hh = np.where(mk, hf, np.inf)
+        for n, (di, dj) in enumerate(FLOW_OFFSETS):
+            nb = np.full((h, w), np.nan)
+            nm = np.zeros((h, w), dtype=bool)
+            si, sj = slice(max(0, -di), h - max(0, di)), slice(max(0, -dj), w - max(0, dj))
+            ti, tj = slice(max(0, di), h - max(0, -di)), slice(max(0, dj), w - max(0, -dj))
+            nb[si, sj] = hf[ti, tj]
+            nm[si, sj] = mk[ti, tj]
+            dist = res * (2 ** 0.5 if di and dj else 1.0)
+            with np.errstate(invalid="ignore"):
+                drop = np.where(nm, (hh - nb) / dist, 1e6)  # 虚空邻格：视作出口
+            better = mk & (drop > best)
+            best = np.where(better, drop, best)
+            code = np.where(better, (n + 1) | np.where(nm, 0, FLOW_TO_VOID), code).astype(np.uint8)
+        code = np.where(mk & (best > 0), code, 0).astype(np.uint8)
+        # 汇流：按填平面从高到低累加
+        idx = np.where(mk.ravel())[0]
+        order = idx[np.argsort(-hf.ravel()[idx], kind="stable")]
+        A = np.where(mk, 1.0, 0.0).ravel()
+        cl = code.ravel()
+        for q in order.tolist():
+            c = int(cl[q])
+            if c and not c & FLOW_TO_VOID:
+                di, dj = FLOW_OFFSETS[(c & 0x0F) - 1]
+                A[q + di * w + dj] += A[q]
+        sub = (slice(r0, r1), slice(c0, c1))
+        flow[sub] = np.where(mk, code, flow[sub])
+        acc[sub] = np.where(mk, A.reshape(h, w) * cell_km2, acc[sub])
+    return flow, acc
 
 
 def to_game(km):
@@ -64,6 +151,11 @@ def export(src: Path, dst: Path) -> None:
     height = terrain["height"].astype(np.float64)
     assert height.shape == (rows, cols)
 
+    flow, acc = flow_directions(height, island, res)
+    ref = terrain["flowacc_km2"].astype(np.float64)
+    off = np.abs(acc - ref)[land]
+    print(f"汇流对照 skyisle-gen：最大差 {off.max():.3f} km²，差 > 0.05 km² 的格 {int((off > 0.05).sum())} / {int(land.sum())}")
+
     # 虚空格取最近陆地格：高程与岛号都外推
     _, (ri, ci) = ndimage.distance_transform_edt(~land, return_indices=True)
     height = height[ri, ci]
@@ -87,6 +179,10 @@ def export(src: Path, dst: Path) -> None:
         f.write(nearest.astype(np.uint8).tobytes())
         f.write(terrain["landcover"].astype(np.uint8).tobytes())
         f.write((terrain["stream"] > 0).astype(np.uint8).tobytes())
+        f.write(flow.tobytes())
+        f.write(acc.astype("<f4").tobytes())
+
+    write_weather(src, info, dst)
 
     islands = []
     for isl in info["islands"]:
@@ -138,6 +234,17 @@ def export(src: Path, dst: Path) -> None:
     (dst / "world.json").write_text(json.dumps(world, ensure_ascii=False, indent=1), encoding="utf-8")
     write_sites(world, dst)
     print(f"{dst}: {rows}×{cols} @ {res:g} m, {len(islands)} 岛, {len(world['villages'])} 村, {len(world['docks'])} 码头")
+
+
+def write_weather(src: Path, info: dict, dst: Path) -> None:
+    import csv
+    climate = json.loads((src / "climate.json").read_text(encoding="utf-8"))
+    year_days = int(climate["calendar"]["year_days"])
+    lines = [f"# 由 tools/export_skyisle.py 从 weather_y0.csv 导出，别手改。year_days {year_days}  precip_mm {info['hydro']['precip_mm']:g}"]
+    with open(src / "weather_y0.csv", encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            lines.append("\t".join((row["day"], row["precip_mm"], row["temp_c"], row["type"])))
+    (dst / "weather.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
 def write_sites(world: dict, dst: Path) -> None:

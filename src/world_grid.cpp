@@ -6,7 +6,7 @@
 
 namespace {
 
-constexpr uint32_t VERSION = 1;
+constexpr uint32_t VERSION = 2; // 最新版；1 也读（没有水文）
 constexpr double HEIGHT_SCALE = 100.0;
 
 struct Reader {
@@ -98,7 +98,7 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         r_error = "不是 terrain.bin（开头应为 ZZWG）";
         return false;
     }
-    if (!in.u32(version) || version != VERSION) {
+    if (!in.u32(version) || version < 1 || version > VERSION) {
         r_error = "terrain.bin 版本不对：" + std::to_string(version);
         return false;
     }
@@ -109,8 +109,9 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
     g.rows = int(rows);
     g.cols = int(cols);
     const size_t n = size_t(rows) * size_t(cols);
-    if (in.size - in.at != n * 7) {
-        r_error = "terrain.bin 长度不对：应有 " + std::to_string(n * 7) + " 字节数据，实有 " + std::to_string(in.size - in.at);
+    const size_t payload = n * (version >= 2 ? 12 : 7);
+    if (in.size - in.at != payload) {
+        r_error = "terrain.bin 长度不对：应有 " + std::to_string(payload) + " 字节数据，实有 " + std::to_string(in.size - in.at);
         return false;
     }
     std::vector<uint16_t> height(n);
@@ -123,6 +124,12 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
     in.take(g.island.data(), n);
     in.take(g.landcover.data(), n);
     in.take(g.stream.data(), n);
+    if (version >= 2) {
+        g.flow.resize(n);
+        g.flow_acc.resize(n);
+        in.take(g.flow.data(), n);
+        in.take(g.flow_acc.data(), n * 4);
+    }
     g.height.resize(n);
     g.shore.resize(n);
     for (size_t k = 0; k < n; k++) {

@@ -20,7 +20,14 @@ struct WorldGrid {
     std::vector<uint8_t> island; // 最近的岛号
     std::vector<uint8_t> landcover; // 地表类下标，0 = 虚空
     std::vector<uint8_t> stream; // 1 = 溪涧
+    // 水文（v2 才有；v1 为空，那就没有河网）：D8 流向码与汇流面积，见 export_skyisle.py
+    std::vector<uint8_t> flow; // 0 = 不流；低四位 1..8 = FLOW_OFFSETS 的下标 + 1；FLOW_TO_VOID = 流出岸缘
+    std::vector<float> flow_acc; // 平方公里，含本格
 
+    static constexpr uint8_t FLOW_TO_VOID = 0x10;
+    static constexpr int FLOW_OFFSETS[8][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } }; // (dr, dc)
+
+    bool has_hydro() const { return !flow.empty(); }
     size_t index(int p_r, int p_c) const { return size_t(p_r) * size_t(cols) + size_t(p_c); }
     bool empty() const { return rows == 0 || cols == 0; }
     double min_x() const { return x0 - 0.5 * res; }
