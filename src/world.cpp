@@ -11,6 +11,8 @@
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/static_body3d.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/class_db.hpp>
@@ -20,6 +22,7 @@
 #include "farm.h"
 #include "shipyard.h"
 #include "site_stream.h"
+#include "world_clock.h"
 #include "world_ground.h"
 #include "world_map.h"
 
@@ -28,6 +31,9 @@ using namespace godot;
 namespace {
 
 constexpr uint64_t ADOPT_BUDGET_USEC = 6000; // 每帧最多花这么久往场景里挂块
+constexpr uint64_t RIVER_BUDGET_USEC = 3000; // 每帧最多花这么久建水面块
+constexpr double RIVER_RETARGET_M = 64.0; // 焦点挪了这么远才重新挑水面块
+constexpr const char *RIVER_SHADER = "res://shaders/river.gdshader";
 
 double tile_distance(const TileLayout &p_layout, const TileKey &p_key, double p_x, double p_z) {
     double x, z;
@@ -58,6 +64,16 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_dock_berth", "index"), &World::get_dock_berth);
     ClassDB::bind_method(D_METHOD("get_dock_spawn", "index"), &World::get_dock_spawn);
     ClassDB::bind_method(D_METHOD("get_dock_position", "index"), &World::get_dock_position);
+    ClassDB::bind_method(D_METHOD("get_runoff"), &World::get_runoff);
+    ClassDB::bind_method(D_METHOD("get_river_at", "x", "z"), &World::get_river_at);
+    ClassDB::bind_method(D_METHOD("get_river_chunk_count"), &World::get_river_chunk_count);
+    ClassDB::bind_method(D_METHOD("find_river_near", "x", "z", "radius", "min_acc_km2"), &World::find_river_near);
+    ClassDB::bind_method(D_METHOD("set_river_radius", "value"), &World::set_river_radius);
+    ClassDB::bind_method(D_METHOD("get_river_radius"), &World::get_river_radius);
+    ClassDB::bind_method(D_METHOD("set_calendar_offset", "value"), &World::set_calendar_offset);
+    ClassDB::bind_method(D_METHOD("get_calendar_offset"), &World::get_calendar_offset);
+    ClassDB::bind_method(D_METHOD("set_runoff_override", "value"), &World::set_runoff_override);
+    ClassDB::bind_method(D_METHOD("get_runoff_override"), &World::get_runoff_override);
 
     ClassDB::bind_method(D_METHOD("set_data_dir", "value"), &World::set_data_dir);
     ClassDB::bind_method(D_METHOD("get_data_dir"), &World::get_data_dir);
@@ -76,6 +92,9 @@ void World::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::INT, "terrain_seed"), "set_terrain_seed", "get_terrain_seed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "split", PROPERTY_HINT_RANGE, "0.5,4,0.05"), "set_split", "get_split");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "build_threads", PROPERTY_HINT_RANGE, "1,16,1"), "set_build_threads", "get_build_threads");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "river_radius", PROPERTY_HINT_RANGE, "500,20000,100"), "set_river_radius", "get_river_radius");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "calendar_offset", PROPERTY_HINT_RANGE, "0,400,1"), "set_calendar_offset", "get_calendar_offset");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "runoff_override", PROPERTY_HINT_RANGE, "-1,8,0.05"), "set_runoff_override", "get_runoff_override");
 }
 
 World::~World() {
@@ -123,7 +142,22 @@ bool World::load() {
         isl.max_shore_m = double(row.get("max_shore_m", 1000.0));
         islands.push_back(isl);
     }
-    terrain = WorldTerrain(grid, islands, uint64_t(terrain_seed));
+    // 河的水情：weather.tsv（没有就常年一个样）；年降水与一年几天也给河网定尺度
+    RiverRules river_rules;
+    const String weather_path = data_dir.path_join("weather.tsv");
+    if (FileAccess::file_exists(weather_path)) {
+        const PackedByteArray weather = FileAccess::get_file_as_bytes(weather_path);
+        if (RiverRegime::parse(std::string(reinterpret_cast<const char *>(weather.ptr()), size_t(weather.size())), regime, error)) {
+            river_rules.precip_mm = regime.precip_mm();
+            river_rules.year_days = regime.year_days();
+        } else {
+            ERR_PRINT(String("World: 读不了 ") + weather_path + "：" + String::utf8(error.c_str()));
+            regime = RiverRegime::steady();
+        }
+    } else {
+        regime = RiverRegime::steady();
+    }
+    terrain = WorldTerrain(grid, islands, uint64_t(terrain_seed), river_rules);
     layout = TileLayout(grid);
 
     // 码头：在原地形上量好，再把停机坪压进地形里——都在第一块地面开建之前
@@ -141,7 +175,201 @@ bool World::load() {
     ground_material->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
     // 顶点色是按 sRGB 调的；不声明的话引擎当线性值用，整片地会发白
     ground_material->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
+
+    if (terrain.has_rivers()) {
+        river_chunk_keys = river_chunks(terrain, river_mesh_rules);
+        const Ref<Shader> shader = ResourceLoader::get_singleton()->load(RIVER_SHADER);
+        if (shader.is_valid()) {
+            const RiverRules &rr = terrain.get_rivers().get_rules();
+            river_material.instantiate();
+            river_material->set_shader(shader);
+            river_material->set_shader_parameter("bankfull_ratio", rr.bankfull_ratio);
+            river_material->set_shader_parameter("stage_exp", rr.stage_exp);
+            river_material->set_shader_parameter("flood_max", rr.flood_max);
+            river_material->set_shader_parameter("floodplain_slope", rr.floodplain_slope);
+            river_material->set_shader_parameter("wet_depth", rr.wet_depth_m);
+            river_material->set_shader_parameter("fall_length", river_mesh_rules.fall_m);
+        } else {
+            ERR_PRINT(String("World: 读不了水面着色器 ") + RIVER_SHADER + String(U"，河只凿河道、不画水"));
+        }
+    }
+    update_runoff();
     return true;
+}
+
+void World::set_runoff_override(double p_value) {
+    runoff_override = p_value;
+    if (loaded) {
+        update_runoff();
+    }
+}
+
+void World::update_runoff() {
+    if (runoff_override >= 0.0) {
+        runoff = runoff_override;
+    } else {
+        const WorldClock *clock = WorldClock::get_singleton();
+        const double day = clock ? clock->get_seconds() / clock->get_rules().day_seconds : 0.0;
+        runoff = regime.runoff(day + calendar_offset);
+    }
+    if (river_material.is_valid()) {
+        river_material->set_shader_parameter("runoff", runoff);
+    }
+}
+
+Node3D *World::make_river_node(const RiverMesh &m) {
+    if (m.empty() || river_material.is_null()) {
+        return nullptr;
+    }
+    const int64_t n = int64_t(m.positions.size() / 3);
+    PackedVector3Array vertices, normals;
+    PackedVector2Array uvs;
+    PackedFloat32Array custom0, custom1;
+    PackedInt32Array indices;
+    vertices.resize(n);
+    normals.resize(n);
+    uvs.resize(n);
+    for (int64_t k = 0; k < n; k++) {
+        vertices.set(k, Vector3(m.positions[k * 3], m.positions[k * 3 + 1], m.positions[k * 3 + 2]));
+        normals.set(k, Vector3(m.normals[k * 3], m.normals[k * 3 + 1], m.normals[k * 3 + 2]));
+        uvs.set(k, Vector2(m.uvs[k * 2], m.uvs[k * 2 + 1]));
+    }
+    custom0.resize(int64_t(m.custom0.size()));
+    std::copy(m.custom0.begin(), m.custom0.end(), custom0.ptrw());
+    custom1.resize(int64_t(m.custom1.size()));
+    std::copy(m.custom1.begin(), m.custom1.end(), custom1.ptrw());
+    indices.resize(int64_t(m.indices.size()));
+    std::copy(m.indices.begin(), m.indices.end(), indices.ptrw());
+    Array arrays;
+    arrays.resize(Mesh::ARRAY_MAX);
+    arrays[Mesh::ARRAY_VERTEX] = vertices;
+    arrays[Mesh::ARRAY_NORMAL] = normals;
+    arrays[Mesh::ARRAY_TEX_UV] = uvs;
+    arrays[Mesh::ARRAY_CUSTOM0] = custom0;
+    arrays[Mesh::ARRAY_CUSTOM1] = custom1;
+    arrays[Mesh::ARRAY_INDEX] = indices;
+    const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) |
+            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT);
+    Ref<ArrayMesh> mesh;
+    mesh.instantiate();
+    mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
+    mesh->surface_set_material(0, river_material);
+    // 顶点的 y 是河床；着色器往上抬到水位（远处再抬一点），跌水帘往下垂：包围盒两头放宽
+    const double chunk = river_mesh_rules.chunk_m;
+    mesh->set_custom_aabb(AABB(Vector3(-40.0f, real_t(m.min_y - river_mesh_rules.fall_m - 5.0), -40.0f),
+            Vector3(real_t(chunk + 80.0), real_t(m.max_y - m.min_y + river_mesh_rules.fall_m + 30.0), real_t(chunk + 80.0))));
+    MeshInstance3D *view = memnew(MeshInstance3D);
+    view->set_name(vformat("River_%d_%d", m.key.ix, m.key.iz));
+    view->set_mesh(mesh);
+    view->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
+    view->set_position(Vector3(real_t(m.origin_x), 0, real_t(m.origin_z)));
+    add_child(view);
+    return view;
+}
+
+void World::stream_rivers(bool p_all) {
+    if (river_chunk_keys.empty()) {
+        return;
+    }
+    const double chunk = river_mesh_rules.chunk_m;
+    auto distance = [&](const RiverChunkKey &k) {
+        const double x0 = k.ix * chunk, z0 = k.iz * chunk;
+        const double dx = std::max({ x0 - focus.x, 0.0, double(focus.x) - (x0 + chunk) });
+        const double dz = std::max({ z0 - focus.z, 0.0, double(focus.z) - (z0 + chunk) });
+        return std::hypot(dx, dz);
+    };
+    // 远了拆
+    for (auto it = river_nodes.begin(); it != river_nodes.end();) {
+        const RiverChunkKey key{ int(it->first >> 32), int(int32_t(uint32_t(it->first))) };
+        if (distance(key) > river_radius * 1.25) {
+            if (it->second) {
+                it->second->queue_free();
+            }
+            it = river_nodes.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // 近的先建，每帧有预算（瞬移时 p_all 一次建完）
+    std::vector<std::pair<double, RiverChunkKey>> wanted;
+    for (const RiverChunkKey &key : river_chunk_keys) {
+        const double d = distance(key);
+        if (d <= river_radius && river_nodes.find(key.packed()) == river_nodes.end()) {
+            wanted.push_back({ d, key });
+        }
+    }
+    std::sort(wanted.begin(), wanted.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
+    const uint64_t started = Time::get_singleton()->get_ticks_usec();
+    river_more = false;
+    for (const auto &[d, key] : wanted) {
+        if (!p_all && Time::get_singleton()->get_ticks_usec() - started > RIVER_BUDGET_USEC) {
+            river_more = true;
+            break;
+        }
+        river_nodes[key.packed()] = make_river_node(build_river_mesh(terrain, key, river_mesh_rules));
+    }
+}
+
+int World::get_river_chunk_count() const {
+    int n = 0;
+    for (const auto &[key, node] : river_nodes) {
+        n += node != nullptr;
+    }
+    return n;
+}
+
+Dictionary World::get_river_at(double p_x, double p_z) const {
+    Dictionary out;
+    RiverHit hit;
+    if (!loaded || !terrain.has_rivers() || !terrain.get_rivers().nearest(p_x, p_z, 1e9, hit) || hit.distance > hit.at.core()) {
+        return out;
+    }
+    const RiverStage st = river_stage(hit.at, runoff, terrain.get_rivers().get_rules());
+    out["distance"] = hit.distance;
+    out["bankfull_width"] = hit.at.width;
+    out["bankfull_depth"] = hit.at.depth;
+    out["floodplain"] = hit.at.floodplain;
+    out["bed"] = hit.at.bed();
+    out["level"] = st.level;
+    out["depth"] = st.depth;
+    out["width"] = st.wet ? 2.0 * st.half_width : 0.0;
+    out["flow"] = st.flow;
+    out["wet"] = st.wet;
+    out["acc_km2"] = hit.at.acc;
+    return out;
+}
+
+Dictionary World::find_river_near(double p_x, double p_z, double p_radius, double p_min_acc_km2) const {
+    Dictionary out;
+    if (!loaded || !terrain.has_rivers()) {
+        return out;
+    }
+    const WorldRivers &rivers = terrain.get_rivers();
+    double best = p_radius;
+    rivers.segments_in(p_x - p_radius, p_z - p_radius, p_x + p_radius, p_z + p_radius, [&](int s, int i) {
+        const RiverStem &stem = rivers.get_stems()[size_t(s)];
+        const RiverVertex &v = stem.v[size_t(i)], &w = stem.v[size_t(i) + 1];
+        const double d = std::hypot(v.x - p_x, v.z - p_z);
+        if (v.acc >= p_min_acc_km2 && d < best && !terrain.near_pad(v.x, v.z, WorldTerrain::PAD_REACH_M)) {
+            best = d;
+            const double len = std::max(1e-6, std::hypot(w.x - v.x, w.z - v.z));
+            out["x"] = v.x;
+            out["z"] = v.z;
+            out["dir_x"] = (w.x - v.x) / len; // 顺水方向
+            out["dir_z"] = (w.z - v.z) / len;
+            out["width"] = v.width;
+            out["floodplain"] = v.floodplain;
+            out["acc_km2"] = v.acc;
+            out["mouth"] = stem.mouth;
+            const RiverVertex &last = stem.v.back(), &before = stem.v[stem.v.size() - 2];
+            const double mouth_len = std::max(1e-6, std::hypot(last.x - before.x, last.z - before.z));
+            out["mouth_x"] = last.x;
+            out["mouth_z"] = last.z;
+            out["mouth_dir_x"] = (last.x - before.x) / mouth_len;
+            out["mouth_dir_z"] = (last.z - before.z) / mouth_len;
+        }
+    });
+    return out;
 }
 
 void World::start_workers() {
@@ -318,6 +546,13 @@ void World::_process(double /* p_delta */) {
     if (!has_target || Vector2(focus.x - targeted_focus.x, focus.z - targeted_focus.z).length() > retarget_distance) {
         retarget();
     }
+    update_runoff();
+    if (!river_targeted || Vector2(focus.x - river_focus.x, focus.z - river_focus.z).length() > RIVER_RETARGET_M ||
+            river_more) {
+        river_focus = focus;
+        river_targeted = true;
+        stream_rivers(false);
+    }
     std::vector<std::unique_ptr<TileMesh>> ready;
     {
         std::lock_guard<std::mutex> lock(queue_mutex);
@@ -348,6 +583,9 @@ void World::prepare_at(const Vector3 &p_point, double p_radius) {
     }
     focus = p_point;
     retarget();
+    river_focus = focus;
+    river_targeted = true;
+    stream_rivers(true);
     for (const TileKey &key : target) {
         if (key.level == layout.get_max_level() && tiles.find(key.packed()) == tiles.end() &&
                 tile_distance(layout, key, p_point.x, p_point.z) <= p_radius) {
@@ -498,8 +736,21 @@ int World::map_pending() const {
 }
 
 String World::map_location_text(const Vector3 &p_global) const {
-    return vformat(String(U"岛 #%d · 东 %s km  南 %s km · 高 %d m"), get_island_at(p_global.x, p_global.z),
+    String text = vformat(String(U"岛 #%d · 东 %s km  南 %s km · 高 %d m"), get_island_at(p_global.x, p_global.z),
             String::num(p_global.x / 1000.0, 2), String::num(p_global.z / 1000.0, 2), int(std::lround(p_global.y)));
+    // 站在河边：这条河此刻的水情
+    const Dictionary river = get_river_at(p_global.x, p_global.z);
+    if (!river.is_empty()) {
+        const double flow = river["flow"];
+        const String state = !bool(river["wet"]) ? String(U"断流了，河床是干的")
+                : flow > 1.0                     ? String(U"涨水漫滩")
+                : flow > 0.6                     ? String(U"水大")
+                : flow < 0.15                    ? String(U"水浅")
+                                                 : String(U"水平");
+        text += vformat(String(U" · 河宽 %s m（平岸 %s m）· 水深 %s m · %s"), String::num(double(river["width"]), 1),
+                String::num(double(river["bankfull_width"]), 1), String::num(double(river["depth"]), 2), state);
+    }
+    return text;
 }
 
 WorldMap *World::map_make_panel() {

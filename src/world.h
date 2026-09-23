@@ -9,12 +9,14 @@
 #include <vector>
 
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/string.hpp>
 
 #include "ground_host.h"
 #include "map_host.h"
+#include "river_mesh.h"
 #include "terrain_tile.h"
 #include "world_grid.h"
 #include "world_sites.h"
@@ -30,6 +32,9 @@ class SiteStream;
 // 泊位接触线、出生位姿由此给出。栈桥与村落这些实物不归这里管（SiteStream 节点，走近了才建）。
 // 它是地面宿主（GroundHost）：下面挂的 Farm（整个岛群一片农田，地块格与岛群坐标对齐）与 Shipyard（主码头旁）用它的坐标；
 // 也是地图宿主（MapHost）：码头、脚下的聚落（SiteStream 铺好的村）、流式焦点、岛群地图面板都由它回答。
+// 河（world_river.h）：栅格有水文就在建地形时建好河网、凿好河道；weather.tsv 给一年的水情。水面按 river_mesh 切成块，
+// 焦点 river_radius 内的块挂上、远了拆；共用一份水面材质（game/shaders/river.gdshader），每帧按全局钟算出今天的径流指数设进去，
+// 所以水涨水落不用重建网格。第 0 天对上 weather.tsv 的第 calendar_offset 天；runoff_override ≥ 0 时不看钟（测试、调试用）。
 // 加载完发 rebuilt（只一次）。节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
 class World : public godot::Node3D, public GroundHost, public MapHost {
     GDCLASS(World, godot::Node3D)
@@ -61,6 +66,20 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     bool has_target = false;
     godot::Ref<godot::StandardMaterial3D> ground_material;
 
+    // 河
+    double river_radius = 4000.0; // 焦点这么远以内的水面块挂上（×1.25 以外拆）
+    double calendar_offset = 0.0; // 游戏第 0 天是 weather.tsv 的第几天
+    double runoff_override = -1.0; // ≥ 0：径流指数钉死在这个值
+    RiverRegime regime;
+    RiverMeshRules river_mesh_rules;
+    std::vector<RiverChunkKey> river_chunk_keys; // 有河的块
+    std::map<int64_t, godot::Node3D *> river_nodes; // 已挂上的水面块（空块为 nullptr）
+    godot::Ref<godot::ShaderMaterial> river_material;
+    double runoff = 1.0; // 这一帧的径流指数
+    godot::Vector3 river_focus;
+    bool river_targeted = false;
+    bool river_more = false; // 上一回预算用完、还有近处的块没建
+
     // 后台建网格：主线程排 jobs、取 results；线程只读 terrain / layout（建好后不再变）
     std::vector<std::thread> workers;
     std::mutex queue_mutex;
@@ -78,6 +97,9 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     void adopt(std::unique_ptr<TileMesh> p_mesh);
     void prune();
     bool target_has(const TileKey &p_key) const;
+    void update_runoff();
+    void stream_rivers(bool p_all);
+    godot::Node3D *make_river_node(const RiverMesh &p_mesh);
 
 protected:
     static void _bind_methods();
@@ -100,6 +122,14 @@ public:
     godot::Dictionary get_info() const { return info; }
     bool is_loaded() const { return loaded; }
     int get_tile_count() const { return int(tiles.size()); }
+    // 河：此刻的径流指数（1 = 年均）；该处（世界 xz）的河况——没有河返回空字典，
+    // 有则 { distance, bankfull_width, bankfull_depth, floodplain, level, depth, width, flow, wet, bed, acc_km2 }
+    double get_runoff() const { return runoff; }
+    godot::Dictionary get_river_at(double p_x, double p_z) const;
+    int get_river_chunk_count() const;
+    // 该处附近（p_radius 以内）汇流至少 p_min_acc_km2 的河中线上最近一点：
+    // { x, z, dir_x, dir_z（顺水）, width, floodplain, acc_km2, mouth（这条河出不出岸缘）, mouth_x, mouth_z, mouth_dir_x, mouth_dir_z（河口的流向）}；没有返回空字典
+    godot::Dictionary find_river_near(double p_x, double p_z, double p_radius, double p_min_acc_km2) const;
     int get_pending_count() const;
 
     // 码头（下标与 sites.docks 一致）
@@ -163,4 +193,10 @@ public:
     double get_split() const { return split; }
     void set_build_threads(int p_value) { build_threads = p_value; }
     int get_build_threads() const { return build_threads; }
+    void set_river_radius(double p_value) { river_radius = p_value; }
+    double get_river_radius() const { return river_radius; }
+    void set_calendar_offset(double p_value) { calendar_offset = p_value; }
+    double get_calendar_offset() const { return calendar_offset; }
+    void set_runoff_override(double p_value);
+    double get_runoff_override() const { return runoff_override; }
 };
