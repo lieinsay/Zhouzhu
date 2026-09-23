@@ -13,7 +13,7 @@ cmake -B build && cmake --build build --config Debug      # 扩展 → game/bin/
 ```
 
 步行：WASD 移动、鼠标转视角、空格跳、Shift 疾跑；走到舵旁按 E 掌舵。
-掌舵：W/S 进退、A/D 转舵、空格升、Shift 降；离泊位 45 m 内按 E 自动靠泊并离舵。Esc 放开鼠标。
+掌舵：W/S 进退、A/D 转舵、空格升、Shift 降、R/F 换档（见切片六）；离泊位 45 m 内按 E 自动靠泊并离舵。Esc 放开鼠标。
 
 岛是运行时按种子生成的（`src/island_field.*`，算法移植自 skyisle-gen 的 `island/terrain.py`，缩到游戏尺度），
 在 `game/main.tscn` 里改 `Island` 节点的属性即可换岛。
@@ -121,7 +121,7 @@ Godot --headless --path game --script res://tools/seed_villages.gd
 
 原来的甲乙两岛只有十几公顷，按 skyisle-gen 的尺度连「孤石」都算不上（它最小的岛也有 0.3 km²）。
 新场景 `game/world_2051.tscn` 直接用生成器里节点 2051（seed42，中疏诸岛）的整个岛群：84 × 101 km、32 座岛，主岛 1,794 km²，
-邑治、180 个村、91 个码头都在生成器定的位置上。出生在邑治；`main.tscn` 和上面五个切片的功能原样没动，之后再一样样迁过来。
+邑治、180 个村、91 个码头都在生成器定的位置上。（切片六起出生点挪到了主码头。）`main.tscn` 和上面五个切片的功能原样没动，之后再一样样迁过来。
 
 - **数据**：`tools/export_skyisle.py` 把 skyisle-gen 的 `out/<run>/islands/<节点>/` 转成 `game/worlds/<节点>/` 下的
   `terrain.bin`（100 m 栅格：高程、有符号岸距、最近岛号、地表类、溪涧，格式见脚本开头）和 `world.json`（岛表与点位，坐标全换成米：x 东、z 南、原点 = 群心、y = 云带顶以上的高度）。
@@ -137,6 +137,45 @@ Godot --headless --path game --script res://tools/seed_villages.gd
 
 已知的：地面偏平、还没有树；溪涧只是颜色；地图不标散户 / 前哨 / 桥；世界坐标到 ±50 km，单精度下有毫米级的抖动。
 
+## 切片六：在岛群 #2051 里跑船，码头与村落照生成器的位置落地
+
+现在岛群里有码头、有村子、有船了。开局人站在**主码头 #7** 的停机坪上，空艇停在它的泊位上（邑治在 8.5 km 外的岛内，照样按位置盖好、有人进出）。
+走过栈桥上船，按 E 掌舵，飞到乙岛（#1）上与本岛对开的**码头 #2**（30 km），按 E 靠泊下船；那座码头 600 多米外是一户散户（散户175），也有人。
+按 M 开地图：码头标在它实际的岸缘点上，能靠泊的描边高亮、目的码头标金色，已经铺出来的村子套一圈白圈——地图上的点和 3D 里一一对应。
+
+- **码头**：全部 91 个都由算法落地，不手摆。生成器给的点在 100 m 格上，离真正的岸线还差几十米：外法线取岸距场的负梯度，
+  沿它自外向内找岸缘点（它和身后 8 m 都得是陆地），再量泊位两侧 ±30 m 的岸线最远伸出多少定栈桥长度（船身碰不到岸），
+  坪高取岸缘点周围 15 m 内地面的平均，再把半径 30 m 的停机坪**压进连续地形里**（半径内一半全平、外一半渐回原地形）——压平在建第一块地面之前做，所以地面网格、碰撞、村子的勘察看到的都是平的坪。
+  这套几何（`src/dock_site.*`）与甲乙两岛的 `Island` 是同一份：`Island::build_dock` 改用它之后，旧岛的高度场哈希逐位不变。栈桥、系缆桩、泊位接触线、出生位姿也共用（`src/dock_builder.*`）。
+- **村落**：同样全自动。`plan_village`（`src/village_plan.*`）给一个村心和户数就铺出一整村：一户一座民居，邑治另加堂屋（落在村心）和仓；
+  以村心为原点、按种子转一个角度的 17 m 方格点（每点抖 ±3 m）由近及远一个个试，有坡就让门朝下坡（面阔顺着等高线、台基最矮），平地门朝村心，不行再转 90°；
+  每一座都走选址勘察（`survey_site`，与布置模式同一套规矩：九点有地、高差不超过 2.5 m、不挨着别的房子），岛群这边的禁区是溪涧、河湖和码头的坪。
+  邑治 271 户铺开半径约 176 m。散户也照做（1–7 户就 1–7 座民居）。
+- **按距离生成**：`SiteStream` 节点跟着焦点（步行时是人，掌舵时是船头前方 3 秒）：3 km 内的码头建栈桥，2.5 km 内的村落铺房子（每帧最多一处，由近及远），
+  900 m 内的村子才招村民（每户 2 口，每村最多 40 人，其余算在屋里），走远了（×1.25）就拆。瞬移时先把落点周围的一次同步建好。
+  村民还是切片五那一套（`Villagers`），只是导航格只铺村子周围一圈；岛群里没有农田和河，所以除了守望都是串门的闲人。
+- **航程**：掌舵的状态机从 `Voyage` 里抽成了 `Helm`（`src/helm.*`），甲乙两岛与岛群共用：上舵、叫靠泊 / 入坞、滑行、离舵、航行 HUD。
+  新加**速度档位**（两张地图都有）：掌舵时 **R** 升一档、**F** 降一档——泊（船本身的航速，开局小艇 32 m/s）、巡（×2.5）、疾（×4，128 m/s、升降 ×2），靠泊后回到泊档。
+  30 km 用疾档四分钟上下。HUD 写着档位、目的码头的距离（远了按 km）、方位和高差。掉进云海回到上一处站稳的地方，船漂远了召回离那儿最近的码头。
+
+聚落与村民不再写死挂在 `Island` 下：它们认的是**聚落宿主**（`SettlementHost`，`src/settlement_host.h`）——给出地面查询（`SiteGround` / `NavGround`，`src/ground_query.h`）、导航格铺多大、种子。
+`Island` 与岛群里的 `WorldVillage`（`src/world_village.*`，节点放在村心，局部坐标离原点近、单精度不抖）各实现一份。
+
+### 批量体检：换岛群、改规矩之后不用进游戏一个个看
+
+```
+cmake --build build --config Release --target zhouzhu_site_survey
+build/Release/zhouzhu_site_survey.exe game/worlds/2051                        # 摘要
+build/Release/zhouzhu_site_survey.exe game/worlds/2051 --report 明细.tsv       # 每个码头 / 村一行
+```
+
+它离线把整个岛群的码头与村落用游戏里同一套纯算法铺一遍，报出找不到岸缘的码头、摆不下的房子（按村排出最缺的十个）和耗时；有码头落不了地、或摆不下的房子超过 2%（`--max-missing`）就退出码 1。
+2051 眼下是：91 个码头全部落地（栈桥平均 9.4 m、最长 21 m，岸缘点离生成器的点最远 64 m），371 处村落与散户要盖 9,571 座、全摆下，Release 下 0.3 秒。ctest 里也跑它。
+点位来自 `game/worlds/<节点>/sites.tsv`：导出脚本和 `world.json` 一起写出（平铺的一行一条，纯 C++ 直接读）；只改了 `world.json` 时可以 `python tools/export_skyisle.py --sites game/worlds/2051` 单独重写。
+
+已知的：房子是一座座独立节点，邑治一次铺 273 座可能卡一下（还没量过帧时）；远处（2.5 km 外）的村子干脆不画，从天上看岛是空的；村子与相邻的散户之间不查重叠；
+村民没有活可干（没有田、没有河），只是串门；飞得快时远处的地面块来不及细化，贴着地飞可能穿过没带碰撞的粗块。
+
 ## 开发者工具（哪张地图里都能用）
 
 全局 autoload `DeveloperTools`（类 `DevTools`，`game/dev_tools.tscn`；场景根的 `dev_tools` 为假时不理这些键）：
@@ -149,13 +188,14 @@ Godot --headless --path game --script res://tools/seed_villages.gd
 ## 测试
 
 ```
-ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址 / 村民的导航格、钟点、分派与决策 / 岛群栅格、连续地形、分块、地图底图，含 2051 资产）
+ctest --test-dir build -C Debug --output-on-failure        # 纯算法单测（噪声 / 岛屿高度场 / 河与路 / 船坞坪 / 布局与船况 / 背包 / 作物表 / 农田 / 飞行模型 / 建筑表与选址 / 村民的导航格、钟点、分派与决策 / 岛群栅格、连续地形、分块、地图底图，含 2051 资产 / 码头几何与压平 / 铺村 / 速度档位），外加岛群体检 site_survey_2051
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_e2e.tscn    # 整条航程，只经输入动作驱动
 Godot --headless --path game --fixed-fps 60 res://tests/respawn_e2e.tscn   # 坠入云海 → 回位 + 召回空艇
 Godot --headless --path game --fixed-fps 60 res://tests/farm_e2e.tscn      # 沿路走到河滩 → 开垦 → 没种子被拒 → 背包里选菽 → 播种 → 成熟 → 收进背包
 Godot --headless --path game --fixed-fps 60 res://tests/shipyard_e2e.tscn  # 画样台被拒 → 掌舵入坞 → 装配视角里放 / 换 / 拆、违规被拒 → 爬梯子上二层再下到舵旁 → 飞回泊位
 Godot --headless --path game --fixed-fps 60 res://tests/build_e2e.tscn     # B 进布置模式 → 停机坪被拒 → 河滩放民居 → 已有 / 挨得太近被拒 → 转 45° 放望楼 → X 拆 → F5 存、读回 → 走到望楼被墙挡住 → 仓库里的村落都站得住
 Godot --headless --path game --fixed-fps 60 res://tests/villager_e2e.tscn  # 两岛人数与职业 → 陆续出门 → 每帧贴地、不进房子、不瞬移 → 开荒播种收割、粮进仓、挑水、站班巡村、串门 → 玩家的地没人碰 → 收工全村进门 → 天亮又出门
-Godot --headless --path game --fixed-fps 60 res://tests/world_e2e.tscn     # 真实比例岛群：邑治站稳 → 跑 → M 开地图、滚轮缩小、点乙岛瞬移 → 点 57 km 外的码头瞬移 → 坠落回位
+Godot --headless --path game --fixed-fps 60 res://tests/voyage_2051_e2e.tscn # 岛群跑船：主码头出生、旁边的村子站在地上、地图与 3D 对得上 → 点地图去邑治：273 座都站在地上、有人出门 → 点回主码头 → 上船掌舵、换疾档、贴着地形飞 30 km → 乙岛 #2 靠泊下船 → 码头边散户站在地上、有人出门
+Godot --headless --path game --fixed-fps 60 res://tests/world_e2e.tscn     # 真实比例岛群：主码头站稳 → 跑 → M 开地图、滚轮缩小、点乙岛瞬移 → 点 57 km 外的码头瞬移 → 坠落回位
 Godot --headless --path game --fixed-fps 60 res://tests/dev_tools_e2e.tscn # 开发者工具：甲乙两岛按 M 提示 → F3 god 升 / 降 / Shift 150 m/s → 关 god 重力回来 → F2 按 2 换到 2051（god 跟着）→ 换回
 ```
