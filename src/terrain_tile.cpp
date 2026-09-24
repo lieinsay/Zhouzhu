@@ -13,14 +13,30 @@ constexpr GroundColor MEADOW{ 0.30f, 0.44f, 0.27f }; // 河漫滩的湿草
 constexpr GroundColor CLIFF_TOP{ 0.40f, 0.35f, 0.30f };
 constexpr GroundColor CLIFF_LOW{ 0.25f, 0.22f, 0.21f };
 constexpr GroundColor UNDERSIDE{ 0.20f, 0.18f, 0.18f };
+constexpr GroundColor PUMICE{ 0.52f, 0.49f, 0.44f }; // 浮石的灰白层
+
+constexpr double WALL_ROW_M = 5.0; // 崖壁竖着每这么高分一段，好染岩层（比岩层薄，层才染得出来）
+constexpr int WALL_ROWS_MAX = 40;
+constexpr double WALL_FADE_M = 160.0; // 崖顶往下这么深从崖顶色渐成崖脚色
+constexpr double STRATA_M = 9.0; // 岩层大约这么厚
+constexpr uint64_t STRATA_SEED = 0x57A7Aull;
 
 constexpr double COLOR_JITTER_M = 45.0; // 取地表色的位置抖这么多：地表类的边界不再是 100 m 的方格
 constexpr uint64_t COLOR_SEED = 0x51EDC0105ull;
-constexpr int UNDERSIDE_STRIDE = 8; // 须整除 TileLayout::CELLS
+constexpr int UNDERSIDE_STRIDE = 4; // 须整除 TileLayout::CELLS（岛底垂上千米、带着几十米的岩棱，隔 8 格插值太粗，块与块之间裂缝）
 
 GroundColor lerp(const GroundColor &a, const GroundColor &b, double t) {
     const float k = float(std::clamp(t, 0.0, 1.0));
     return { a.r + (b.r - a.r) * k, a.g + (b.g - a.g) * k, a.b + (b.b - a.b) * k };
+}
+
+// 崖壁与岛底的岩色：上浅下深（p_t：0 崖顶 → 1 崖脚），按绝对高度一层层夹着浮石的灰白层（同一高度在各处是同一层，相邻的崖面对得上）
+GroundColor rock_color(double p_y, double p_t) {
+    const GroundColor base = lerp(CLIFF_TOP, CLIFF_LOW, p_t);
+    const double layer = hash_fbm(STRATA_SEED, p_y / STRATA_M, 0.5, 1.0, 2);
+    const GroundColor banded = lerp(base, PUMICE, std::clamp((layer - 0.15) * 1.6, 0.0, 0.55));
+    const float shade = float(1.0 + 0.10 * hash_noise(STRATA_SEED + 1, p_y / (0.37 * STRATA_M), 0.25));
+    return { banded.r * shade, banded.g * shade, banded.b * shade };
 }
 
 // p_sample：这一点的地形取样（河床、河漫滩的权重）；没有河网时按栅格的溪涧格染湿
@@ -53,6 +69,7 @@ GroundColor ground_color(const WorldGrid &g, const TerrainSample &p_sample, bool
 struct Builder {
     TileMesh &mesh;
     bool collide;
+    double wall_row = WALL_ROW_M; // 崖壁分段高：粗块（远处）按格距分，不必那么细
 
     int vertex(float x, float y, float z, float nx, float ny, float nz, const GroundColor &c) {
         mesh.positions.insert(mesh.positions.end(), { x, y, z });
@@ -69,13 +86,34 @@ struct Builder {
             }
         }
     }
-    // 竖着的四边形 p0 p1（上）p2 p3（下）；按朝外的方向 (ox, oz) 定绕向
+    // 崖壁：竖着的四边形 p0 p1（上）p2 p3（下），竖着切成每段约 WALL_ROW_M 高；每个顶点按它自己的绝对高度染岩层，
+    // 相邻的崖面在同一高度就是同一种色（按段取一个色的话，两列崖顶不一样高，色带就错开成一道道竖条）
+    void cliff(const float *p0, const float *p1, const float *p2, const float *p3, float ox, float oz, bool p_solid) {
+        const double drop = std::max(p0[1] - p3[1], p1[1] - p2[1]);
+        const int rows = std::clamp(int(std::ceil(drop / wall_row)), 1, WALL_ROWS_MAX);
+        const double top = 0.5 * (p0[1] + p1[1]);
+        auto color = [&](const float *q) { return rock_color(q[1], (top - q[1]) / WALL_FADE_M); };
+        float a_hi[3] = { p0[0], p0[1], p0[2] }, b_hi[3] = { p1[0], p1[1], p1[2] };
+        for (int k = 1; k <= rows; k++) {
+            const float t = float(k) / float(rows);
+            const float a_lo[3] = { p0[0] + (p3[0] - p0[0]) * t, p0[1] + (p3[1] - p0[1]) * t, p0[2] + (p3[2] - p0[2]) * t };
+            const float b_lo[3] = { p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t, p1[2] + (p2[2] - p1[2]) * t };
+            wall(a_hi, b_hi, b_lo, a_lo, ox, oz, color(a_hi), color(b_hi), color(b_lo), color(a_lo), p_solid);
+            std::copy(a_lo, a_lo + 3, a_hi);
+            std::copy(b_lo, b_lo + 3, b_hi);
+        }
+    }
     void wall(const float *p0, const float *p1, const float *p2, const float *p3, float ox, float oz,
             const GroundColor &top, const GroundColor &low, bool p_solid) {
-        const int v0 = vertex(p0[0], p0[1], p0[2], ox, 0, oz, top);
-        const int v1 = vertex(p1[0], p1[1], p1[2], ox, 0, oz, top);
-        const int v2 = vertex(p2[0], p2[1], p2[2], ox, 0, oz, low);
-        const int v3 = vertex(p3[0], p3[1], p3[2], ox, 0, oz, low);
+        wall(p0, p1, p2, p3, ox, oz, top, top, low, low, p_solid);
+    }
+    // 竖着的四边形 p0 p1（上）p2 p3（下），四角各一个色；按朝外的方向 (ox, oz) 定绕向
+    void wall(const float *p0, const float *p1, const float *p2, const float *p3, float ox, float oz,
+            const GroundColor &c0, const GroundColor &c1, const GroundColor &c2, const GroundColor &c3, bool p_solid) {
+        const int v0 = vertex(p0[0], p0[1], p0[2], ox, 0, oz, c0);
+        const int v1 = vertex(p1[0], p1[1], p1[2], ox, 0, oz, c1);
+        const int v2 = vertex(p2[0], p2[1], p2[2], ox, 0, oz, c2);
+        const int v3 = vertex(p3[0], p3[1], p3[2], ox, 0, oz, c3);
         // Godot 的面法线 = (a − c) × (a − b)
         const float ax = p0[0] - p2[0], ay = p0[1] - p2[1], az = p0[2] - p2[2];
         const float bx = p0[0] - p1[0], by = p0[1] - p1[1], bz = p0[2] - p1[2];
@@ -199,7 +237,7 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
         return at(qi, qj).land && at(qi, qj + 1).land && at(qi + 1, qj).land && at(qi + 1, qj + 1).land;
     };
 
-    Builder b{ mesh, leaf };
+    Builder b{ mesh, leaf, std::max(WALL_ROW_M, step) };
     std::vector<int> top_id(size_t(N + 1) * (N + 1), -1), bottom_id(size_t(N + 1) * (N + 1), -1);
     std::vector<float> top_pos(size_t(N + 1) * (N + 1) * 3), bottom_pos(size_t(N + 1) * (N + 1) * 3);
     std::vector<GroundColor> top_color(size_t(N + 1) * (N + 1));
@@ -227,7 +265,9 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             nx = float((at(i, j + 1).bottom - at(i, j - 1).bottom) / (2.0 * step));
             nz = float((at(i + 1, j).bottom - at(i - 1, j).bottom) / (2.0 * step));
             len = std::sqrt(nx * nx + 1.0f + nz * nz);
-            bottom_id[k] = b.vertex(x, float(c.bottom), z, nx / len, -1.0f / len, nz / len, UNDERSIDE);
+            // 岛底：崖脚附近还带着崖壁最下面的岩色，往里渐成岛底的暗色
+            const double deep = std::clamp((at(i, j).top - c.bottom) / 400.0, 0.0, 1.0);
+            bottom_id[k] = b.vertex(x, float(c.bottom), z, nx / len, -1.0f / len, nz / len, lerp(rock_color(c.bottom, 1.0), UNDERSIDE, deep));
             bottom_pos[k * 3] = x, bottom_pos[k * 3 + 1] = float(c.bottom), bottom_pos[k * 3 + 2] = z;
         }
     }
@@ -240,6 +280,18 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
         }
     }
     const int bottom_stride = interior ? UNDERSIDE_STRIDE : 1;
+    // 画出来的岛底在节点 (i, j) 处多高：隔格铺时是所在那片的四角插值（块边上就是沿边的线性插值）
+    auto rendered_bottom = [&](int i, int j) {
+        if (bottom_stride == 1) {
+            return double(bottom_pos[node(i, j) * 3 + 1]);
+        }
+        const int i0 = std::min(i / bottom_stride * bottom_stride, N - bottom_stride), j0 = std::min(j / bottom_stride * bottom_stride, N - bottom_stride);
+        const double ti = double(i - i0) / bottom_stride, tj = double(j - j0) / bottom_stride;
+        auto y = [&](int ii, int jj) { return double(bottom_pos[node(ii, jj) * 3 + 1]); };
+        const double a = y(i0, j0) + (y(i0, j0 + bottom_stride) - y(i0, j0)) * tj;
+        const double c = y(i0 + bottom_stride, j0) + (y(i0 + bottom_stride, j0 + bottom_stride) - y(i0 + bottom_stride, j0)) * tj;
+        return a + (c - a) * ti;
+    };
 
     // 裙边垂多深：比相邻两级精度之差大就行
     const float skirt = float(2.0 + step);
@@ -256,8 +308,9 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             if (i % bottom_stride == 0 && j % bottom_stride == 0) {
                 const int d = bottom_stride;
                 const size_t b00 = node(i, j), b01 = node(i, j + d), b10 = node(i + d, j), b11 = node(i + d, j + d);
-                b.triangle(bottom_id[b00], bottom_id[b10], bottom_id[b01], false);
-                b.triangle(bottom_id[b01], bottom_id[b10], bottom_id[b11], false);
+                // 岛底也进碰撞：岛体垂下去上千米，船贴着崖脚往里飞会一头扎进岩体
+                b.triangle(bottom_id[b00], bottom_id[b10], bottom_id[b01], true);
+                b.triangle(bottom_id[b01], bottom_id[b10], bottom_id[b11], true);
             }
 
             struct Edge {
@@ -276,7 +329,7 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                 const bool on_border = e.qi < 0 || e.qj < 0 || e.qi >= N || e.qj >= N;
                 if (!solid(e.qi, e.qj)) {
                     // 崖壁：从顶面垂到岛底
-                    b.wall(&top_pos[ka * 3], &top_pos[kb * 3], &bottom_pos[kb * 3], &bottom_pos[ka * 3], e.nx, e.nz, CLIFF_TOP, CLIFF_LOW, true);
+                    b.cliff(&top_pos[ka * 3], &top_pos[kb * 3], &bottom_pos[kb * 3], &bottom_pos[ka * 3], e.nx, e.nz, true);
                 } else if (on_border) {
                     // 裙边：邻块精度不同，两边的面对不齐，垂一圈同色的面把缝遮住（两面都画，从哪边看都有）
                     const float a_low[3] = { top_pos[ka * 3], top_pos[ka * 3 + 1] - skirt, top_pos[ka * 3 + 2] };
@@ -290,12 +343,16 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                     b.triangle(va, vc, vb, false);
                     b.triangle(va, vd, vc, false);
 
-                    // 岛底也一样：往上（岛里）翘一圈，从下面看不漏天
-                    const float lift = float(2.0 + step * bottom_stride * 0.5);
-                    const int ua = b.vertex(bottom_pos[ka * 3], bottom_pos[ka * 3 + 1], bottom_pos[ka * 3 + 2], 0, -1, 0, UNDERSIDE);
-                    const int ub = b.vertex(bottom_pos[kb * 3], bottom_pos[kb * 3 + 1], bottom_pos[kb * 3 + 2], 0, -1, 0, UNDERSIDE);
-                    const int uc = b.vertex(bottom_pos[kb * 3], bottom_pos[kb * 3 + 1] + lift, bottom_pos[kb * 3 + 2], 0, -1, 0, UNDERSIDE);
-                    const int ud = b.vertex(bottom_pos[ka * 3], bottom_pos[ka * 3 + 1] + lift, bottom_pos[ka * 3 + 2], 0, -1, 0, UNDERSIDE);
+                    // 岛底也一样：往上（岛里）翘一圈，从下面看不漏天。翘边的底要贴着画出来的岛底（隔格铺时是插值线，不是这一点的真值），
+                    // 翘多高按格距放（相邻两块插值的差随跨度长），但不高过这里的岛体厚度，免得从地面上戳出来
+                    const float ya = float(rendered_bottom(e.ai, e.aj)), yb = float(rendered_bottom(e.bi, e.bj));
+                    const float reach = float(2.0 + step * bottom_stride);
+                    const float lift_a = std::max(0.5f, std::min(reach, 0.9f * (top_pos[ka * 3 + 1] - ya)));
+                    const float lift_b = std::max(0.5f, std::min(reach, 0.9f * (top_pos[kb * 3 + 1] - yb)));
+                    const int ua = b.vertex(bottom_pos[ka * 3], ya, bottom_pos[ka * 3 + 2], 0, -1, 0, UNDERSIDE);
+                    const int ub = b.vertex(bottom_pos[kb * 3], yb, bottom_pos[kb * 3 + 2], 0, -1, 0, UNDERSIDE);
+                    const int uc = b.vertex(bottom_pos[kb * 3], yb + lift_b, bottom_pos[kb * 3 + 2], 0, -1, 0, UNDERSIDE);
+                    const int ud = b.vertex(bottom_pos[ka * 3], ya + lift_a, bottom_pos[ka * 3 + 2], 0, -1, 0, UNDERSIDE);
                     b.triangle(ua, ub, uc, false);
                     b.triangle(ua, uc, ud, false);
                     b.triangle(ua, uc, ub, false);

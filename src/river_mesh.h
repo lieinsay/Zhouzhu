@@ -36,8 +36,8 @@ struct RiverMesh {
 
 struct RiverMeshRules {
     double chunk_m = 512.0;
-    double fall_m = 45.0; // 跌水帘垂多长
-    double fall_throw_m = 6.0; // 帘底往外抛多远
+    double fall_m = 150.0; // 跌水帘垂多长（崖壁几十到一百多米高，帘子沿着它散成白雾）
+    double fall_throw_m = 14.0; // 帘底往外抛多远
     double yard_margin_m = 6.0; // 离船坞坪这么近就不画
     double coast_margin_m = 1.0; // 带子两侧离岸线至少留这么多
 };

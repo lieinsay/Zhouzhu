@@ -13,8 +13,8 @@
 // 岛群的连续地形：在任意 (x, z) 上给出有没有地、顶面多高、岛底多深、是什么地表。
 // 大形全听栅格（Catmull-Rom 双三次），栅格量不到的 100 m 以下细节由确定性噪声补上：
 //   陆地 ⇔ 岸距 + 岸线噪声 > 0（岸线不再是 100 m 的锯齿）
-//   顶面 = 栅格高程 + 细节噪声（按地表调幅：岩多草少、田最平）
-//   岛底 = 岸缘 − 崖高 − 龙骨 × √向内程度（倒锥，与 skyisle-gen 的岛体一致）
+//   顶面 = 栅格高程 + 细节噪声（按地表调幅：岩多草少、田最平；栅格有地形区时再按区加减，山地另加几百米一道的岩梁）
+//   岛底 = 岸缘 − 崖壁 − 龙骨 × √向内程度 + 岩棱起伏（倒锥的浮山，见 island_body）
 //   河（栅格有水文时，见 world_river.h）：构造时建好河网；河道 + 河漫滩内顶面全按横断面（挖河床、填 / 削滩），
 //     再外 blend_m 渐回原地形；河边的细节噪声同样渐隐（河谷是平顺的）。几条河的影响重叠时取最低的那个
 //   停机坪（set_pads）：顶面按 dock_pad_weight 拉向坪高——码头后面那一片是平的；河从坪上过时坪让给河（按河的影响权重）
@@ -25,10 +25,21 @@
 struct WorldIsland {
     int id = 0;
     double rim_m = 0.0; // 岸缘高
-    double cliff_m = 20.0; // 岸缘到岛底边的崖高
-    double keel_m = 100.0; // 岛底最深处在岸缘之下多少
+    double cliff_m = 20.0; // 生成器的崖高（岸缘到岛底边）
+    double keel_m = 100.0; // 生成器的龙骨：岛底最深处在崖脚之下多少（2051 的数恰好让最深处落在云带顶上）
     double max_shore_m = 1000.0; // 岛上最深的岸距
 };
+
+// 游戏里的岛体：生成器把低矮的群当薄片（2051 主岛崖高 27 m、42 km 宽的岛最厚才 380 m，像一张饼），
+// 游戏按「浮山」画——岸缘下先是一段竖直的崖壁，再往下收成倒锥，龙骨深随岛的尺度长（最深岸距 R 米：25·√R，
+// 主岛 R 17 km → 约 3.3 km；15 km² 的岛 R 1.9 km → 约 1.1 km；0.3 km² 的小礁 R 250 m → 约 400 m，小岛看着像一块倒悬的山石）。
+// 生成器的崖高 / 龙骨只作下限。
+// 岛底最深处落到云带顶（y = 0）以下，所以云海要放在所有岛底之下（world_2051.tscn 的 CloudSea）。
+struct IslandBody {
+    double wall_m = 0.0; // 岸缘下竖直崖壁的高
+    double keel_m = 0.0; // 崖脚之下倒锥还垂多深（最深处 = 岸缘 − wall − keel）
+};
+IslandBody island_body(const WorldIsland &p_island);
 
 struct TerrainSample {
     bool land = false;
@@ -45,6 +56,7 @@ struct TerrainSample {
 class WorldTerrain {
     const WorldGrid *grid = nullptr;
     std::vector<WorldIsland> islands; // 按 id 下标
+    std::vector<IslandBody> bodies; // 同上
     uint64_t seed = 0;
     std::shared_ptr<const WorldRivers> rivers; // 建好就不再变，可以在拷贝之间共用
     std::vector<DockPlan> pads;
@@ -67,6 +79,9 @@ public:
     const WorldGrid &get_grid() const { return *grid; }
     bool valid() const { return grid && !grid->empty(); }
     const WorldIsland &island_info(int p_id) const;
+    const IslandBody &island_body_of(int p_id) const;
+    // 所有岛底能垂到的最低处（含岩棱起伏的上限），云海要在它之下
+    double lowest_bottom() const;
     const WorldRivers &get_rivers() const { return *rivers; }
     bool has_rivers() const { return rivers && !rivers->empty(); }
 

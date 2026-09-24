@@ -1476,6 +1476,121 @@ void test_world_2051() {
     check(tiles.size() > 20 && tiles.size() < 600, "块数在几十到几百之间（" + std::to_string(tiles.size()) + "）");
 }
 
+// 2051 的地形 v3：生成器下切过的河道、地形区与游戏的厚岛体
+void test_terrain_v3_2051() {
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in) {
+        std::printf("terrain v3（跳过：没有 2051 资产）\n");
+        return;
+    }
+    std::printf("terrain v3（2051）\n");
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    WorldSites sites;
+    std::string err;
+    check(parse_world_grid(bin.data(), bin.size(), g, err) && g.has_hydro() && g.has_channels() && g.zone.size() == g.height.size(), "terrain.bin v3 带河道与地形区：" + err);
+    check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
+    // 河道格：有宽深、汇流到溪涧门槛；河床顺流不升（生成器保证单调，导出按汇流反推的流向要接得上）
+    int chan = 0, chan_small = 0, uphill = 0, off_channel = 0;
+    double widest = 0.0;
+    for (int r = 0; r < g.rows; r++) {
+        for (int c = 0; c < g.cols; c++) {
+            const size_t k = g.index(r, c);
+            if (g.river_width[k] <= 0.0f) {
+                continue;
+            }
+            chan++;
+            widest = std::max(widest, double(g.river_width[k]));
+            chan_small += g.flow_acc[k] < 0.9f ? 1 : 0;
+            const uint8_t code = g.flow[k];
+            if ((code & WorldGrid::FLOW_TO_VOID) || (code & 0x0F) == 0) {
+                continue;
+            }
+            const size_t down = g.index(r + WorldGrid::FLOW_OFFSETS[(code & 0x0F) - 1][0], c + WorldGrid::FLOW_OFFSETS[(code & 0x0F) - 1][1]);
+            uphill += g.height[down] > g.height[k] + 0.05f ? 1 : 0;
+            off_channel += g.river_width[down] <= 0.0f ? 1 : 0;
+        }
+    }
+    std::printf("  河道格 %d，最宽 %.1f m，顺流上坡 %d 格、流出河道 %d 格\n", chan, widest, uphill, off_channel);
+    check(chan > 10000 && widest > 20.0 && widest < 60.0, "河道格上万、最宽二三十米（2051 只有溪涧）");
+    check(chan_small == 0, "河道格的汇流都到了 1 km² 的溪涧门槛");
+    check(uphill < chan / 1000, "河床顺流几乎处处不升（" + std::to_string(uphill) + " 格例外）");
+    check(off_channel == 0, "河道格顺流总流到下一个河道格（流向按生成器的汇流反推）");
+
+    // 地形区：山里比台地崎岖
+    const WorldTerrain t(g, sites.terrain_islands(), 2051);
+    double rough[8] = {}, count[8] = {};
+    for (int r = 2; r < g.rows - 2; r += 3) {
+        for (int c = 2; c < g.cols - 2; c += 3) {
+            const size_t k = g.index(r, c);
+            if (g.shore[k] < 300.0f || g.zone[k] >= 8) {
+                continue;
+            }
+            const double x = g.x0 + c * g.res, z = g.z0 + r * g.res;
+            rough[g.zone[k]] += std::abs(t.detail(x, z));
+            count[g.zone[k]] += 1.0;
+        }
+    }
+    auto mean_of = [&](int z) { return count[z] > 0 ? rough[z] / count[z] : 0.0; };
+    std::printf("  细节起伏均值：高山 %.1f、山地 %.1f、丘陵 %.1f、台地平原 %.1f m\n", mean_of(1), mean_of(2), mean_of(3), mean_of(4));
+    check(count[2] > 50 && count[4] > 50, "2051 有山地也有台地平原");
+    check(mean_of(2) > 2.0 * mean_of(4), "山地的细节起伏是台地的两倍以上");
+
+    // 厚岛体：主岛崖壁上百米、岛心垂到云带顶以下一千多米；所有岛底都在云海之上
+    const WorldIsland &main = t.island_info(0);
+    const IslandBody body = island_body(main);
+    check(body.wall_m >= 100.0 && body.keel_m > 2500.0 && body.keel_m < 4500.0, "主岛：崖壁 ≥ 100 m、龙骨 2.5–4.5 km（" + std::to_string(body.wall_m) + " / " + std::to_string(body.keel_m) + "）");
+    const IslandBody tiny = island_body(t.island_info(int(sites.islands.size()) - 1));
+    check(tiny.keel_m < body.keel_m * 0.5 && tiny.wall_m >= 30.0, "小岛薄些，但崖壁也有 30 m 起");
+    // 岛心（最深岸距处）
+    size_t core = 0;
+    for (size_t k = 0; k < g.shore.size(); k++) {
+        if (g.island[k] == 0 && g.shore[k] > g.shore[core]) {
+            core = k;
+        }
+    }
+    const double cx = g.x0 + double(core % size_t(g.cols)) * g.res, cz = g.z0 + double(core / size_t(g.cols)) * g.res;
+    const TerrainSample deep = t.sample(cx, cz);
+    std::printf("  主岛：崖壁 %.0f m、龙骨 %.0f m；岛心顶 %.0f m、底 %.0f m（厚 %.0f m）；全群最低 %.0f m\n", body.wall_m, body.keel_m, deep.top, deep.bottom, deep.top - deep.bottom, t.lowest_bottom());
+    check(deep.top - deep.bottom > 3000.0, "主岛岛心厚三千米以上");
+    constexpr double CLOUD_SEA_Y = -3800.0; // game/world_2051.tscn 的 CloudSea
+    check(t.lowest_bottom() > CLOUD_SEA_Y + 100.0, "所有岛底都在云海之上一百米以外（" + std::to_string(t.lowest_bottom()) + "）");
+    // 崖脚：离岸线二十米处岛底还贴着崖壁下沿
+    int near_edge = 0, near_ok = 0;
+    for (int k = 0; k < 400; k++) {
+        const size_t cell = size_t(k) * 997 % g.shore.size();
+        if (g.island[cell] != 0 || g.shore[cell] < 50.0f || g.shore[cell] > 150.0f) {
+            continue;
+        }
+        const double x = g.x0 + double(cell % size_t(g.cols)) * g.res, z = g.z0 + double(cell / size_t(g.cols)) * g.res;
+        const TerrainSample s = t.sample(x, z);
+        near_edge++;
+        near_ok += s.top - s.bottom > body.wall_m && s.top - s.bottom < body.wall_m + 0.3 * body.keel_m ? 1 : 0;
+    }
+    check(near_edge > 0 && near_ok == near_edge, "近岸处厚度 = 崖壁再多一点（" + std::to_string(near_ok) + " / " + std::to_string(near_edge) + "）");
+
+    // 河用生成器的河道：中线落在河道格上的点，平岸宽不窄于生成器的一半（源头渐宽）、水面不高于生成器的 河床 + 水深
+    int on = 0, narrow = 0, above = 0;
+    for (const RiverStem &stem : t.get_rivers().get_stems()) {
+        for (size_t i = 1; i + 1 < stem.v.size(); i++) {
+            const RiverVertex &v = stem.v[i];
+            const size_t k = g.nearest_cell(v.x, v.z);
+            if (g.river_width[k] <= 0.0f || v.s < 200.0) {
+                continue;
+            }
+            on++;
+            narrow += v.width < 0.7 * g.river_width[k] ? 1 : 0;
+            above += v.surface > double(g.height[k]) + g.river_depth[k] + 1.5 ? 1 : 0;
+        }
+    }
+    std::printf("  河中线落在河道格上的点 %d：比生成器窄三成以上 %d、水面高出生成器 1.5 m 以上 %d\n", on, narrow, above);
+    check(on > 10000, "河网的中线大都走在生成器的河道上");
+    check(narrow < on / 50, "平岸宽跟得上生成器的河宽");
+    check(above < on / 20, "水面贴着生成器下切出的河床");
+}
+
 // ---------------------------------------------------------------- 码头几何与铺村（两边共用的纯算法）
 
 // 圆岛：半径 200 m，东边泊位旁有一根细岬（宽 3 m，伸到 x = 225），地面起伏
@@ -2265,8 +2380,9 @@ void test_goldens() {
             villages.mix(uint64_t(plan.missing));
         }
     }
-    // 拓展「岛群的河」起地形凿了河道、河滩不许盖房，村落清单有意变了，此处重记（河按游戏尺度放宽后又记了一次；拓展「船台」村里多盖一座船台，又记了一次）
-    report_golden("岛群远离主码头的村", villages.h, 0x6918accb517a9c9aull);
+    // 拓展「岛群的河」起地形凿了河道、河滩不许盖房，村落清单有意变了，此处重记（河按游戏尺度放宽后又记了一次；拓展「船台」村里多盖一座船台，又记了一次；
+    // 拓展「按新版生成器优化地形」换了下切过河道的栅格、按地形区加减起伏，又记了一次）
+    report_golden("岛群远离主码头的村", villages.h, 0xaffc1edc65ab0bfcull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）
@@ -2823,6 +2939,7 @@ int main() {
     test_terrain_tiles();
     test_map_image();
     test_world_2051();
+    test_terrain_v3_2051();
     test_dock_site();
     test_village_plan();
     test_world_sites();
