@@ -6,7 +6,7 @@
 
 namespace {
 
-constexpr uint32_t VERSION = 2; // 最新版；1 也读（没有水文）
+constexpr uint32_t VERSION = 3; // 最新版；1（没有水文）、2（没有河道与地形区）也读
 constexpr double HEIGHT_SCALE = 100.0;
 
 struct Reader {
@@ -109,7 +109,7 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
     g.rows = int(rows);
     g.cols = int(cols);
     const size_t n = size_t(rows) * size_t(cols);
-    const size_t payload = n * (version >= 2 ? 12 : 7);
+    const size_t payload = n * (version >= 3 ? 17 : version >= 2 ? 12 : 7);
     if (in.size - in.at != payload) {
         r_error = "terrain.bin 长度不对：应有 " + std::to_string(payload) + " 字节数据，实有 " + std::to_string(in.size - in.at);
         return false;
@@ -129,6 +129,19 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         g.flow_acc.resize(n);
         in.take(g.flow.data(), n);
         in.take(g.flow_acc.data(), n * 4);
+    }
+    if (version >= 3) {
+        std::vector<uint16_t> width(n), depth(n);
+        in.take(width.data(), n * 2);
+        in.take(depth.data(), n * 2);
+        g.zone.resize(n);
+        in.take(g.zone.data(), n);
+        g.river_width.resize(n);
+        g.river_depth.resize(n);
+        for (size_t k = 0; k < n; k++) {
+            g.river_width[k] = float(width[k] / 10.0);
+            g.river_depth[k] = float(depth[k] / 100.0);
+        }
     }
     g.height.resize(n);
     g.shore.resize(n);

@@ -3,7 +3,7 @@
   "run": "seed42",
   "node": 2051,
   "seed": 42,
-  "generator": "zhouzhu_gen.island",
+  "generator": "skyisle_gen.island",
   "cls_zh": "中疏诸岛",
   "lat": -31.652283793862644,
   "lon": 152.15278346036462

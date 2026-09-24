@@ -23,11 +23,16 @@ struct WorldGrid {
     // 水文（v2 才有；v1 为空，那就没有河网）：D8 流向码与汇流面积，见 export_skyisle.py
     std::vector<uint8_t> flow; // 0 = 不流；低四位 1..8 = FLOW_OFFSETS 的下标 + 1；FLOW_TO_VOID = 流出岸缘
     std::vector<float> flow_acc; // 平方公里，含本格
+    // 河道与地形区（v3 才有；旧版为空）：生成器下切过的河道格的河宽 / 水深（米，溪涧为湿季值，非河道格 0），地形区下标
+    std::vector<float> river_width;
+    std::vector<float> river_depth;
+    std::vector<uint8_t> zone; // 0 虚空 1 高山 2 山地 3 丘陵 4 台地平原 5 河谷 6 崖缘 7 水域（skyisle-gen resources.py 的 ZONE_NAMES）
 
     static constexpr uint8_t FLOW_TO_VOID = 0x10;
     static constexpr int FLOW_OFFSETS[8][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } }; // (dr, dc)
 
     bool has_hydro() const { return !flow.empty(); }
+    bool has_channels() const { return !river_width.empty(); }
     size_t index(int p_r, int p_c) const { return size_t(p_r) * size_t(cols) + size_t(p_c); }
     bool empty() const { return rows == 0 || cols == 0; }
     double min_x() const { return x0 - 0.5 * res; }
