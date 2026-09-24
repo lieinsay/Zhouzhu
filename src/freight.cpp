@@ -4,15 +4,10 @@
 #include <cmath>
 
 #include "crops.h"
-#include "villager_model.h"
 
 namespace {
 
 const char *SPECIALTIES[] = { "cloth", "pottery", "lacquer" };
-
-constexpr double POST_OUT_M = 2.2; // 村仓门前人站在门外多远（村民在 1.8 m 处进出，让开一点）
-constexpr double PILE_SIDE_M = 3.0; // 货箱堆在门边：沿墙挪开多远
-constexpr double PILE_OUT_M = 1.2;
 
 std::string name_of(const std::string &p_item) {
     return catalog::item_name(p_item);
@@ -48,26 +43,11 @@ void crate_color(const std::string &p_item, float &r_r, float &r_g, float &r_b) 
 
 } // namespace freight
 
-std::vector<FreightPort> plan_freight_ports(const WorldSites &p_sites, const std::vector<DockPlan> &p_docks, const FreightRules &p_rules) {
+std::vector<FreightPort> plan_freight_ports(const WorldSites &p_sites) {
     std::vector<FreightPort> out;
     for (size_t s = 0; s < p_sites.settlements.size(); s++) {
         const SiteSettlement &v = p_sites.settlements[s];
         if (v.hamlet) {
-            continue;
-        }
-        int best = -1;
-        double best_d = p_rules.port_radius_m;
-        for (size_t d = 0; d < p_sites.docks.size() && d < p_docks.size(); d++) {
-            if (!p_docks[d].ok || p_sites.docks[d].island != v.island) {
-                continue;
-            }
-            const double dist = std::hypot(p_sites.docks[d].x - v.x, p_sites.docks[d].z - v.z);
-            if (dist <= best_d) {
-                best_d = dist;
-                best = int(d);
-            }
-        }
-        if (best < 0) {
             continue;
         }
         FreightPort p;
@@ -75,10 +55,6 @@ std::vector<FreightPort> plan_freight_ports(const WorldSites &p_sites, const std
         p.site_id = v.id;
         p.name = v.name;
         p.island = v.island;
-        p.dock = best;
-        p.dock_id = p_sites.docks[size_t(best)].id;
-        p.dock_x = p_docks[size_t(best)].x;
-        p.dock_z = p_docks[size_t(best)].z;
         p.x = v.x;
         p.z = v.z;
         out.push_back(p);
@@ -95,44 +71,21 @@ int find_port(const std::vector<FreightPort> &p_ports, int p_site) {
     return -1;
 }
 
-int freight_post_building(const SettlementLayout &p_layout, double p_cx, double p_cz) {
-    int best = -1;
-    int best_rank = 3;
-    double best_d = 1e18;
+int freight_post_building(const SettlementLayout &p_layout) {
     const std::vector<Building> &items = p_layout.get_items();
     for (size_t k = 0; k < items.size(); k++) {
-        const Building &b = items[k];
-        const int rank = b.kind == "granary" ? 0 : (b.kind == "house" ? 1 : 3);
-        if (rank >= 3) {
-            continue;
-        }
-        const double d = std::hypot(b.x - p_cx, b.z - p_cz);
-        if (rank < best_rank || (rank == best_rank && d < best_d)) {
-            best_rank = rank;
-            best_d = d;
-            best = int(k);
+        if (items[k].kind == "berth") {
+            return int(k);
         }
     }
-    return best;
-}
-
-void freight_post_spot(const Building &p_building, double &r_x, double &r_z, double &r_pile_x, double &r_pile_z, double &r_pile_yaw) {
-    const NavPoint door = building_door(p_building, POST_OUT_M);
-    r_x = door.x;
-    r_z = door.z;
-    double ux = 0, uz = 0, vx = 0, vz = 0;
-    building_axes(p_building.yaw, ux, uz, vx, vz);
-    const NavPoint wall = building_door(p_building, PILE_OUT_M);
-    r_pile_x = wall.x + ux * PILE_SIDE_M;
-    r_pile_z = wall.z + uz * PILE_SIDE_M;
-    r_pile_yaw = p_building.yaw;
+    return -1;
 }
 
 bool offer_freight(const std::vector<FreightPort> &p_ports, int p_from, const Inventory &p_store, const std::string &p_item, const FreightRules &p_rules,
         FreightOrder &r_order, std::string &r_why) {
     r_order = FreightOrder();
     if (p_from < 0 || p_from >= int(p_ports.size())) {
-        r_why = "这里不是港口村，没人托运";
+        r_why = "这里不是村子，没人托运";
         return false;
     }
     const FreightPort &from = p_ports[size_t(p_from)];
@@ -143,14 +96,14 @@ bool offer_freight(const std::vector<FreightPort> &p_ports, int p_from, const In
         if (p.island == from.island) {
             continue;
         }
-        const double d = std::hypot(p.dock_x - from.dock_x, p.dock_z - from.dock_z);
+        const double d = std::hypot(p.x - from.x, p.z - from.z);
         if (d <= best) {
             best = d;
             to = int(k);
         }
     }
     if (to < 0) {
-        r_why = "近处别的岛上没有港口村，托运不出去";
+        r_why = "近处别的岛上没有村子，托运不出去";
         return false;
     }
     const int per_crate = std::max(1, p_rules.per_crate);
