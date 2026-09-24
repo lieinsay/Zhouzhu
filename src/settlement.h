@@ -24,6 +24,11 @@
 class Settlement : public godot::StaticBody3D {
     GDCLASS(Settlement, godot::StaticBody3D)
 
+public:
+    static constexpr const char *GROUP = "settlements";
+
+private:
+
     godot::String layout_path;
     GroundHost *host = nullptr;
     std::unique_ptr<MapGround> map; // 宿主给的地面；宿主 rebuilt 时换新
@@ -80,6 +85,11 @@ public:
     const SettlementLayout &get_model() const { return layout; } // 给同在 C++ 里的上层读（村民据此找家门、绕开房子）
     godot::String get_building_kind(int p_index) const;
     godot::Vector3 get_building_position(int p_index) const; // 全局，地坪中心
+    // 船台（land_berth.h）：盖好了的那几座的清单下标；某座的接触线（全局，X 指向跳板）；某座台面上的一点（船台局部 x、z → 全局，台面高）
+    std::vector<int> find_berths() const;
+    godot::PackedInt32Array get_berth_indices() const;
+    godot::Transform3D get_berth_contact(int p_index) const;
+    godot::Vector3 get_berth_point(int p_index, double p_x, double p_z) const;
     double get_building_yaw_deg(int p_index) const;
     godot::Transform3D get_building_transform(int p_index) const; // 全局：原点在地坪中心，−z 是门朝向的反面
 

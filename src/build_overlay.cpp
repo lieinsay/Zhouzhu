@@ -9,6 +9,8 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
+#include "land_berth.h"
+
 using namespace godot;
 
 namespace {
@@ -87,6 +89,13 @@ void BuildOverlay::rebuild_ghost(const BuildingDef &p_def) {
     ghost_def = &p_def;
     const real_t w = real_t(p_def.width_m), d = real_t(p_def.depth_m), plinth = real_t(p_def.plinth_m), wall = real_t(p_def.wall_m), roof = real_t(p_def.roof_m);
     make_box(ghost, "Plinth", Vector3(w + 2 * PLINTH_MARGIN, plinth, d + 2 * PLINTH_MARGIN), Transform3D(Basis(), Vector3(0, -0.5f * plinth, 0)));
+    if (!p_def.house) {
+        // 船台：台面 + 停着的船占的那一条（半透明的一列）+ 跳板
+        const real_t lift = real_t(land_berth::LIFT_M), contact = real_t(land_berth::CONTACT_Z), run = real_t(land_berth::GANGWAY_RUN_M);
+        make_box(ghost, "ShipBand", Vector3(w, 0.4f, 7.0f), Transform3D(Basis(), Vector3(0, lift - 0.2f, contact - 3.5f)));
+        const real_t len = std::sqrt(run * run + lift * lift);
+        make_box(ghost, "Gangway", Vector3(1.8f, 0.2f, len), Transform3D(Basis(Vector3(1, 0, 0), std::atan2(lift, run)), Vector3(0, 0.5f * lift, contact + 0.5f * run)));
+    } else {
     make_box(ghost, "Walls", Vector3(w, wall, d), Transform3D(Basis(), Vector3(0, 0.5f * wall, 0)));
     Ref<PrismMesh> prism;
     prism.instantiate();
@@ -98,6 +107,7 @@ void BuildOverlay::rebuild_ghost(const BuildingDef &p_def) {
     roof_instance->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(Math_PI / 2)), Vector3(0, wall + 0.5f * roof, 0)));
     roof_instance->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
     ghost->add_child(roof_instance);
+    }
     // 门的位置画一根竖条，转向时看得出正面朝哪
     make_box(ghost, "DoorMark", Vector3(1.3f, 2.5f, EDGE_T), Transform3D(Basis(), Vector3(0, 1.25f, 0.5f * d + 0.1f)));
     // 占地描边：四条棱，贴地坪

@@ -18,6 +18,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "building_parts.h"
+#include "land_berth.h"
 #include "template_library.h"
 
 using namespace godot;
@@ -104,6 +105,8 @@ void Settlement::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_building_style", "index", "style"), &Settlement::set_building_style);
     ClassDB::bind_method(D_METHOD("get_building_template", "index"), &Settlement::get_building_template);
     ClassDB::bind_method(D_METHOD("get_building_entry", "index"), &Settlement::get_building_entry);
+    ClassDB::bind_method(D_METHOD("get_berth_contact", "index"), &Settlement::get_berth_contact);
+    ClassDB::bind_method(D_METHOD("get_berth_indices"), &Settlement::get_berth_indices);
     ClassDB::bind_method(D_METHOD("get_building_ladders", "index"), &Settlement::get_building_ladders);
     ClassDB::bind_method(D_METHOD("set_cutaway", "index", "level"), &Settlement::set_cutaway);
     ClassDB::bind_method(D_METHOD("on_templates_changed", "id"), &Settlement::on_templates_changed);
@@ -129,6 +132,7 @@ void Settlement::_bind_methods() {
 }
 
 void Settlement::_ready() {
+    add_to_group(GROUP); // 编排据此找各处的船台（落地靠港）
     host = GroundHost::of(get_parent());
     ERR_FAIL_NULL_MSG(host, "Settlement 要挂在地面宿主（Island / WorldVillage / FlatMap）下面");
     // 按 PartMaterial 的次序
@@ -231,7 +235,11 @@ void Settlement::build_one(int p_index) {
     }
     const Transform3D frame(Basis(Vector3(0, 1, 0), real_t(b.yaw)), Vector3(real_t(b.x), real_t(floor_y), real_t(b.z)));
     const TemplateLibrary *library = TemplateLibrary::get_singleton();
-    const HouseTemplate tmpl = library ? library->resolve(b) : bare_template(*def);
+    // 船台不是房屋：不挑模板（building_parts 照 land_berth 拼）
+    HouseTemplate tmpl = !def->house ? HouseTemplate() : (library ? library->resolve(b) : bare_template(*def));
+    if (!def->house) {
+        tmpl.id = def->id;
+    }
     double ux = 0.0, uz = 0.0, vx = 0.0, vz = 0.0;
     building_axes(b.yaw, ux, uz, vx, vz);
     const MapGround *ground_map = map.get();
@@ -264,11 +272,13 @@ void Settlement::build_one(int p_index) {
             append_box_faces(faces, xf, size);
         }
     }
-    // 屋顶：悬山，脊沿面阔；与天花板同在顶那一组
+    // 屋顶：悬山，脊沿面阔；与天花板同在顶那一组（船台没有顶）
     const int roof_group = parts.roof_group();
     const real_t w = real_t(def->width_m), d = real_t(def->depth_m), wall = real_t(def->wall_m), roof = real_t(def->roof_m);
-    append_box(buffers[size_t(roof_group)][size_t(PartMaterial::ROOF)], Transform3D(Basis(), Vector3(0, wall + roof, 0)),
-            Vector3(w + 2 * real_t(house_dims::ROOF_OVERHANG) + 0.4f, 0.35f, 0.5f), nullptr);
+    if (def->house) {
+        append_box(buffers[size_t(roof_group)][size_t(PartMaterial::ROOF)], Transform3D(Basis(), Vector3(0, wall + roof, 0)),
+                Vector3(w + 2 * real_t(house_dims::ROOF_OVERHANG) + 0.4f, 0.35f, 0.5f), nullptr);
+    }
     std::vector<Node3D *> group_nodes;
     for (int g = 0; g < parts.group_count; g++) {
         Node3D *group = memnew(Node3D);
@@ -299,7 +309,7 @@ void Settlement::build_one(int p_index) {
     }
     // 屋里：每层一盏不投影的暖光，只照屋里那一圈；远了就淡掉（村子里几十座，远处的不点）
     const real_t level_h = real_t(level_height(*def));
-    for (int l = 0; l < def->levels; l++) {
+    for (int l = 0; l < (def->house ? def->levels : 0); l++) {
         OmniLight3D *light = memnew(OmniLight3D);
         light->set_name("Lamp");
         light->set_color(Color(1.0f, 0.86f, 0.66f));
@@ -312,16 +322,18 @@ void Settlement::build_one(int p_index) {
         light->set_position(Vector3(0, real_t(l) * level_h + std::min(level_h, wall) - 0.6f, 0));
         group_nodes[size_t(1 + l)]->add_child(light);
     }
-    Ref<PrismMesh> prism;
-    prism.instantiate();
-    prism->set_left_to_right(0.5f);
-    prism->set_size(Vector3(d + 2 * real_t(house_dims::ROOF_OVERHANG), roof, w + 2 * real_t(house_dims::ROOF_OVERHANG)));
-    prism->set_material(materials[size_t(PartMaterial::ROOF)]);
-    MeshInstance3D *roof_instance = memnew(MeshInstance3D);
-    roof_instance->set_name("Gable");
-    roof_instance->set_mesh(prism);
-    roof_instance->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(Math_PI / 2)), Vector3(0, wall + 0.5f * roof, 0)));
-    group_nodes[size_t(roof_group)]->add_child(roof_instance);
+    if (def->house) {
+        Ref<PrismMesh> prism;
+        prism.instantiate();
+        prism->set_left_to_right(0.5f);
+        prism->set_size(Vector3(d + 2 * real_t(house_dims::ROOF_OVERHANG), roof, w + 2 * real_t(house_dims::ROOF_OVERHANG)));
+        prism->set_material(materials[size_t(PartMaterial::ROOF)]);
+        MeshInstance3D *roof_instance = memnew(MeshInstance3D);
+        roof_instance->set_name("Gable");
+        roof_instance->set_mesh(prism);
+        roof_instance->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(Math_PI / 2)), Vector3(0, wall + 0.5f * roof, 0)));
+        group_nodes[size_t(roof_group)]->add_child(roof_instance);
+    }
 
     // 碰撞：整座一个凹多边形（两面都挡：墙薄，人与相机从哪边碰都算）；碰撞形状得是 StaticBody3D 的直接子节点
     Ref<ConcavePolygonShape3D> shape;
@@ -621,6 +633,31 @@ String Settlement::get_building_template(int p_index) const {
     return library ? String::utf8(library->resolve_id(layout.at(p_index)).c_str()) : String();
 }
 
+std::vector<int> Settlement::find_berths() const {
+    std::vector<int> out;
+    for (int k = 0; k < layout.size(); k++) {
+        if (layout.at(k).kind == "berth" && size_t(k) < built_list.size() && built_list[size_t(k)].root) {
+            out.push_back(k);
+        }
+    }
+    return out;
+}
+
+Transform3D Settlement::get_berth_contact(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, int(built_list.size()), Transform3D());
+    ERR_FAIL_NULL_V(built_list[size_t(p_index)].root, Transform3D());
+    // 船台的局部：X 指向跳板（+z），原点在跳板顶那条甲板边缘线上
+    const Basis toward_gangway(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(-1, 0, 0));
+    return built_list[size_t(p_index)].root->get_global_transform() *
+            Transform3D(toward_gangway, Vector3(0, real_t(land_berth::LIFT_M), real_t(land_berth::CONTACT_Z)));
+}
+
+Vector3 Settlement::get_berth_point(int p_index, double p_x, double p_z) const {
+    ERR_FAIL_INDEX_V(p_index, int(built_list.size()), Vector3());
+    ERR_FAIL_NULL_V(built_list[size_t(p_index)].root, Vector3());
+    return built_list[size_t(p_index)].root->get_global_transform().xform(Vector3(real_t(p_x), 0, real_t(p_z)));
+}
+
 PackedVector3Array Settlement::get_building_entry(int p_index) const {
     PackedVector3Array out;
     ERR_FAIL_INDEX_V(p_index, int(built_list.size()), out);
@@ -695,4 +732,12 @@ void Settlement::rebuild_one(int p_index) {
     }
     b = Built();
     build_one(p_index);
+}
+
+PackedInt32Array Settlement::get_berth_indices() const {
+    PackedInt32Array out;
+    for (int k : find_berths()) {
+        out.push_back(k);
+    }
+    return out;
 }

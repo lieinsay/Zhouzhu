@@ -58,7 +58,7 @@ void BuildPanel::ensure_built() {
     column->add_child(status_label);
 
     palette_title = make_label(15, ROW_DIM);
-    palette_title->set_text(String(U"要放的建筑（1 / 2 / 3 / 4 选）"));
+    palette_title->set_text(String(U"要放的建筑（1 / 2 / 3 / 4 / 5 选）"));
     column->add_child(palette_title);
     for (int k = 0; k < buildings::COUNT && k < 8; k++) {
         palette[k] = make_label(18, ROW_PLAIN);

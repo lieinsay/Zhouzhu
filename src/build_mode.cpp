@@ -150,8 +150,8 @@ void BuildMode::browse(double p_delta, bool p_interact, const Say &p_say) {
     }
     yaw += Math::deg_to_rad(YAW_STEP) * (double(pressed(input_actions::ROTATE_RIGHT)) - double(pressed(input_actions::ROTATE_LEFT)));
     yaw = std::fmod(yaw + 4.0 * Math_PI, 2.0 * Math_PI);
-    const char *kind_keys[4] = { input_actions::KIND_1, input_actions::KIND_2, input_actions::KIND_3, input_actions::KIND_4 };
-    for (int k = 0; k < 4 && k < buildings::COUNT; k++) {
+    const char *kind_keys[5] = { input_actions::KIND_1, input_actions::KIND_2, input_actions::KIND_3, input_actions::KIND_4, input_actions::KIND_5 };
+    for (int k = 0; k < 5 && k < buildings::COUNT; k++) {
         if (pressed(kind_keys[k]) && kind != k) {
             kind = k;
             style = 0;
@@ -161,7 +161,10 @@ void BuildMode::browse(double p_delta, bool p_interact, const Say &p_say) {
     const Vector3 spot = cursor_snapped();
     selected = target->find_at(spot);
     const int turn = int(pressed(input_actions::NEXT_STYLE)) - int(pressed(input_actions::PREV_STYLE));
-    if (turn != 0 && selected >= 0) {
+    const BuildingDef *selected_def = selected >= 0 ? buildings::by_id(play::to_std(target->get_building_kind(selected))) : nullptr;
+    if (turn != 0 && selected_def && !selected_def->house) {
+        p_say(String::utf8(selected_def->name) + String(U"不是房屋，没有模板可换"));
+    } else if (turn != 0 && selected >= 0) {
         // 光标下那座换一套：自动 → 第一套 → …… → 自动
         const std::string k = play::to_std(target->get_building_kind(selected));
         const std::vector<std::string> styles = styles_of(k);

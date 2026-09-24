@@ -75,6 +75,10 @@ bool InteriorEdit::open_on(Settlement *p_settlement, int p_index, const Say &p_s
     if (!def) {
         return false;
     }
+    if (!def->house) {
+        p_say(String::utf8(def->name) + String(U"不是房屋，没有屋里可改"));
+        return false;
+    }
     // 自动挑的要按位置挑，得带上位置：直接问聚落这座实际用的哪套
     const HouseTemplate *used = library->find(play::to_std(p_settlement->get_building_template(p_index)));
     work = used ? *used : bare_template(*def);

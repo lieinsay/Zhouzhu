@@ -19,6 +19,7 @@ constexpr const char *KIND_1 = "kind_1"; // 改装时选模块：驾驶区
 constexpr const char *KIND_2 = "kind_2"; // 储存区
 constexpr const char *KIND_3 = "kind_3"; // 动力区
 constexpr const char *KIND_4 = "kind_4"; // 布置时选第四种建筑
+constexpr const char *KIND_5 = "kind_5"; // 布置时选第五种（船台）
 constexpr const char *BUILD_MODE = "build_mode"; // 开发者：开合布置模式
 constexpr const char *ROTATE_LEFT = "rotate_left"; // 布置时把建筑转向
 constexpr const char *ROTATE_RIGHT = "rotate_right";
