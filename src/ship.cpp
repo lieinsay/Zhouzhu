@@ -19,6 +19,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
+#include "freight.h"
 #include "input_actions.h"
 
 using namespace godot;
@@ -35,6 +36,7 @@ constexpr double CAMERA_PITCH_MIN = -1.2;
 constexpr double CAMERA_PITCH_MAX = 0.5;
 
 const char *GENERATED_META = "ship_generated";
+const char *CARGO_META = "ship_cargo"; // 货箱：换货时只重画它们
 constexpr uint32_t LADDER_LAYER = 8; // Player 的 Sensor 只看这一层
 
 // 几何（米）
@@ -49,6 +51,7 @@ constexpr real_t HELM_AFT = 1.7f; // 舵柱在驾驶区中心之后多少
 constexpr real_t SEAT_AFT = 2.9f;
 constexpr real_t BOW_WEDGE = 4.5f; // 船头楔的长（与 ship_layout 的 BOW_M 配：楔尖再多出一点）
 constexpr real_t LADDER_W = 0.9f;
+constexpr real_t CRATE_SIZE = 1.4f, CRATE_H = 1.1f; // 货位上的货箱（人抱着时画小一号，见 Player）
 constexpr real_t LADDER_ZONE_DEPTH = 1.0f; // 爬梯区域离墙多深
 constexpr real_t LADDER_ZONE_OVER = 1.2f; // 爬梯区域超出梯顶甲板多高：人到这儿才松开，正好落在甲板上
 
@@ -101,6 +104,12 @@ void add_mesh(Node3D *p_visual, const String &p_name, const Ref<Mesh> &p_mesh, c
     instance->set_mesh(p_mesh);
     instance->set_transform(p_xf);
     adopt(p_visual, instance, p_name);
+}
+
+Color cargo_color(const String &p_item) {
+    float r = 0, g = 0, b = 0;
+    freight::crate_color(p_item.utf8().get_data(), r, g, b);
+    return Color(r, g, b);
 }
 
 Transform3D at(real_t p_x, real_t p_y, real_t p_z) {
@@ -157,6 +166,13 @@ void Ship::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_port_edge_x"), &Ship::get_port_edge_x);
     ClassDB::bind_method(D_METHOD("get_starboard_edge_x"), &Ship::get_starboard_edge_x);
     ClassDB::bind_method(D_METHOD("get_levels"), &Ship::get_levels);
+    ClassDB::bind_method(D_METHOD("get_hold_slot_count"), &Ship::get_hold_slot_count);
+    ClassDB::bind_method(D_METHOD("get_hold_slot_position", "slot"), &Ship::get_hold_slot_position);
+    ClassDB::bind_method(D_METHOD("is_hold_slot_open", "slot"), &Ship::is_hold_slot_open);
+    ClassDB::bind_method(D_METHOD("find_hold_slot", "global", "range"), &Ship::find_hold_slot);
+    ClassDB::bind_method(D_METHOD("set_cargo", "slot", "item"), &Ship::set_cargo);
+    ClassDB::bind_method(D_METHOD("get_cargo", "slot"), &Ship::get_cargo);
+    ClassDB::bind_method(D_METHOD("get_cargo_count"), &Ship::get_cargo_count);
     ClassDB::bind_method(D_METHOD("get_max_speed"), &Ship::get_max_speed);
 
     ClassDB::bind_method(D_METHOD("set_layout", "ids"), &Ship::set_layout);
@@ -318,10 +334,12 @@ void Ship::build_module(const Module &p_module) {
         } break;
 
         case ModuleKind::STORAGE: {
+            // 货位上的垫木（不挡脚）；货箱另画（build_cargo）
             for (int side = -1; side <= 1; side += 2) {
-                const real_t x = cx + side * 2.2f;
-                add_box(visual, this, prefix + vformat("Crate%dA", side), Vector3(2.0f, 1.1f, 3.4f), at(x, deck + 0.55f, cz), mat_crate, true);
-                add_box(visual, this, prefix + vformat("Crate%dB", side), Vector3(1.4f, 0.8f, 2.2f), at(x, deck + 1.5f, cz - 0.3f), mat_crate, true);
+                for (int end = -1; end <= 1; end += 2) {
+                    const real_t x = cx + side * real_t(HOLD_SLOT_SIDE_M), z = cz + end * real_t(HOLD_SLOT_ALONG_M);
+                    add_box(visual, this, prefix + vformat("Pallet%d%d", side, end), Vector3(CRATE_SIZE + 0.2f, 0.06f, CRATE_SIZE + 0.2f), at(x, deck + 0.03f, z), mat_rail, false);
+                }
             }
         } break;
 
@@ -412,6 +430,9 @@ void Ship::rebuild() {
     for (const Ladder &ladder : layout_ladders(layout)) {
         build_ladder(ladder);
     }
+    slots = hold_slots(layout);
+    cargo.resize(slots.size());
+    build_cargo();
 
     // 船头楔：最前一排第 0 层的每一节前面各一只
     const Basis lay_flat(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, -1, 0)); // 三棱柱躺倒：高 → z
@@ -440,6 +461,87 @@ void Ship::rebuild() {
     }
 
     emit_signal("refitted");
+}
+
+// 货箱：每个放着货的货位一只（带碰撞），箱顶一块按货物着色的盖板
+void Ship::build_cargo() {
+    if (!visual) {
+        return;
+    }
+    for (Node *parent : { static_cast<Node *>(this), static_cast<Node *>(visual) }) {
+        const TypedArray<Node> children = parent->get_children();
+        for (int64_t k = 0; k < children.size(); k++) {
+            Node *child = Object::cast_to<Node>(children[k]);
+            if (child && child->has_meta(CARGO_META)) {
+                parent->remove_child(child);
+                child->queue_free();
+            }
+        }
+    }
+    ensure_materials();
+    for (size_t k = 0; k < slots.size() && k < cargo.size(); k++) {
+        if (cargo[k].is_empty() || !slots[k].open) {
+            continue;
+        }
+        const HoldSlot &s = slots[k];
+        const real_t x = real_t(s.x), y = real_t(s.y), z = real_t(s.z);
+        const String name = vformat("Cargo%d", int(k));
+        add_box(visual, this, name, Vector3(CRATE_SIZE, CRATE_H, CRATE_SIZE), at(x, y + 0.06f + 0.5f * CRATE_H, z), mat_crate, true);
+        Ref<StandardMaterial3D> lid = make_material(cargo_color(cargo[k]), 0.9f);
+        add_box(visual, this, name + String("Lid"), Vector3(CRATE_SIZE - 0.2f, 0.05f, CRATE_SIZE - 0.2f), at(x, y + 0.06f + CRATE_H + 0.025f, z), lid, false);
+        for (const String &part : { name, name + String("Shape"), name + String("Lid") }) {
+            Node *node = visual->get_node_or_null(NodePath(part));
+            node = node ? node : get_node_or_null(NodePath(part));
+            if (node) {
+                node->set_meta(CARGO_META, true);
+            }
+        }
+    }
+}
+
+Vector3 Ship::get_hold_slot_position(int p_slot) const {
+    ERR_FAIL_INDEX_V(p_slot, int(slots.size()), get_global_position());
+    const HoldSlot &s = slots[size_t(p_slot)];
+    return to_global(Vector3(real_t(s.x), real_t(s.y), real_t(s.z)));
+}
+
+bool Ship::is_hold_slot_open(int p_slot) const {
+    return p_slot >= 0 && p_slot < int(slots.size()) && slots[size_t(p_slot)].open;
+}
+
+int Ship::find_hold_slot(const Vector3 &p_global, double p_range) const {
+    int best = -1;
+    double best_d = p_range;
+    for (int k = 0; k < int(slots.size()); k++) {
+        if (!slots[size_t(k)].open) {
+            continue;
+        }
+        const Vector3 at_slot = get_hold_slot_position(k);
+        const double d = Vector2(p_global.x - at_slot.x, p_global.z - at_slot.z).length();
+        if (d <= best_d && std::abs(p_global.y - at_slot.y) <= 1.5) {
+            best_d = d;
+            best = k;
+        }
+    }
+    return best;
+}
+
+void Ship::set_cargo(int p_slot, const String &p_item) {
+    ERR_FAIL_INDEX(p_slot, int(cargo.size()));
+    cargo[size_t(p_slot)] = p_item;
+    build_cargo();
+}
+
+String Ship::get_cargo(int p_slot) const {
+    return p_slot >= 0 && p_slot < int(cargo.size()) ? cargo[size_t(p_slot)] : String();
+}
+
+int Ship::get_cargo_count() const {
+    int n = 0;
+    for (const String &item : cargo) {
+        n += item.is_empty() ? 0 : 1;
+    }
+    return n;
 }
 
 void Ship::set_layout(const PackedStringArray &p_ids) {

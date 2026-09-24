@@ -15,6 +15,7 @@
 // 爬梯：Sensor（Area3D）碰到带 "ladder" 元数据的区域时，前 / 后变成沿梯子上 / 下（面朝墙按前是上，背对墙按前是下），
 // 水平速度放慢，不受重力。梯子是谁的（船）它不知道。
 // 屋里：头顶 6 m 内有东西（天花板、舱顶）就把相机的弹簧臂缓缓收到 indoor_arm，出来再放回场景里配的长度——还是第三人称，只是近些。
+// 抱着货箱（上层 set_carrying）：身前画一只箱子，只能慢走（carry_speed），不能疾跑、不能跳；箱子是谁的、装的什么它不知道。
 // god 模式（开发者工具开的，它不知道是谁）：不受重力，按相机的水平朝向飞，空格升、Ctrl 降、Shift 加速；碰撞照旧，降到地上就站住。
 //
 // 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D、Sensor（Area3D）。
@@ -26,6 +27,7 @@ class Player : public godot::CharacterBody3D {
     double jump_speed = 7.5;
     double gravity = 22.0;
     double climb_speed = 2.5;
+    double carry_speed = 4.0; // 抱着货箱时
     double mouse_sensitivity = 0.0025;
     double god_speed = 30.0;
     double god_boost = 5.0; // 按住 Shift 时速度乘这么多
@@ -36,6 +38,7 @@ class Player : public godot::CharacterBody3D {
     bool controlled = true;
     bool input_blocked = false;
     bool god_mode = false;
+    bool carrying = false;
     double look_yaw = 0.0;
     double look_pitch = -0.25;
     uint32_t saved_layer = 0;
@@ -45,6 +48,7 @@ class Player : public godot::CharacterBody3D {
     godot::Node3D *camera_pivot = nullptr;
     godot::Camera3D *camera = nullptr;
     godot::SpringArm3D *arm = nullptr;
+    godot::Node3D *crate = nullptr; // 抱着的箱子（Body 下，用时才建）
     std::vector<godot::Node3D *> ladders; // 眼下碰着的梯子区域（区域的 +Z 是离墙的方向）
 
     void apply_look();
@@ -70,6 +74,11 @@ public:
     void set_indoor_arm(double p_value) { indoor_arm = p_value; }
     double get_indoor_arm() const { return indoor_arm; }
     void set_god_mode(bool p_enabled);
+    // 抱起 / 放下货箱；p_color 是箱盖的颜色（货物）
+    void set_carrying(bool p_carrying, const godot::Color &p_color = godot::Color(0.86f, 0.82f, 0.7f));
+    bool is_carrying() const { return carrying; }
+    void set_carry_speed(double p_value) { carry_speed = p_value; }
+    double get_carry_speed() const { return carry_speed; }
     bool is_god_mode() const { return god_mode; }
     void set_look_yaw(double p_yaw);
     double get_look_yaw() const { return look_yaw; }

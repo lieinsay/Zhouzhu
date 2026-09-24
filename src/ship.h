@@ -15,9 +15,10 @@
 // 空艇。原点在舷门格 (0,0,0) 的第 0 层甲板面中心，船头朝 −z，x 向右舷；甲板可站人。
 // 船是三维格子里拼的（layout："x,y,z:kind" 序列，见 ship_layout.h）：
 //   · 每列最上面那一节是开放甲板：甲板板（第 0 层）或下面舱体的顶、按邻列高度取舍的舷栏、模块的陈设
-//     （驾驶区舵柱舵轮舵楼顶，储存区两侧货箱中间走道，动力区一对侧桅帆）；
+//     （驾驶区舵柱舵轮舵楼顶，储存区两舷各两个货位、中间走道，动力区一对侧桅帆）；
 //   · 被上面盖住的节是封闭舱体（储存区 = 货舱，墙上有舱门；动力区 = 机舱，墙上透着浮石的光）；
 //   · 第 0 层每节下面吊船体，动力区再吊浮石；最前一排前面一只船头楔；
+//   · 货位（hold_slots）：空着是一块垫木，放了货是一只带碰撞的货箱，箱顶按货物着色；哪个货位上是什么由上层（跑货的货箱账）set_cargo 告诉它，它只画；
 //   · 相邻两列高度不同处生成梯子：踏板 + 带 "ladder" 元数据的 Area3D（+Z 离墙）+ 舷栏缺口，Player 靠它上下。
 // 舷门在舷门那一排（z = 0、第 0 层）两头的船边，z ∈ ±0.9 不设栏。
 // 泊位 / 坞位是「接触线」：X 指向码头的位姿，船按面向码头那一侧的船边算原点该在哪，所以船怎么改都不用挪码头。
@@ -49,6 +50,8 @@ class Ship : public godot::CharacterBody3D {
     godot::Vector3 exit_local;
     godot::PackedVector3Array ladder_feet_local;
     godot::PackedVector3Array ladder_tops_local;
+    std::vector<HoldSlot> slots;
+    std::vector<godot::String> cargo; // 与 slots 一一对应：物品 id，空 = 空位
 
     godot::Node3D *visual = nullptr;
     godot::Node3D *camera_rig = nullptr;
@@ -61,6 +64,7 @@ class Ship : public godot::CharacterBody3D {
     void rebuild();
     void build_module(const Module &p_module);
     void build_ladder(const Ladder &p_ladder);
+    void build_cargo();
     void step_flight(double p_delta);
     void step_mooring(double p_delta);
     // 把面向接触线那一侧的船边贴到接触线上，原点该在哪；r_flipped：船头是否与接触线的 Z 反向
@@ -111,6 +115,17 @@ public:
     double get_port_edge_x() const { return port_edge_x(layout); }
     double get_starboard_edge_x() const { return starboard_edge_x(layout); }
     int get_levels() const { return layout.levels(); }
+
+    // 货位（编号见 hold_slots）：全局位置是那一格的甲板面；open = 人够得着
+    int get_hold_slot_count() const { return int(slots.size()); }
+    godot::Vector3 get_hold_slot_position(int p_slot) const;
+    bool is_hold_slot_open(int p_slot) const;
+    // 离 p_global 最近、水平 p_range 以内、高差 1.5 m 以内的够得着的货位；没有 −1
+    int find_hold_slot(const godot::Vector3 &p_global, double p_range) const;
+    // 货位上放着什么（物品 id；空串 = 空位）。改船重拼时照旧画着，货位变少时多出来的丢掉（上层保证改船前船是空的）
+    void set_cargo(int p_slot, const godot::String &p_item);
+    godot::String get_cargo(int p_slot) const;
+    int get_cargo_count() const; // 放着几箱
 
     void set_min_altitude(double p_value) { min_altitude = p_value; }
     double get_min_altitude() const { return min_altitude; }

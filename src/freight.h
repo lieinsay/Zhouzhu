@@ -45,6 +45,8 @@ namespace freight {
 // 这处村落的土产（物品 id）；p_seed 是岛群铺村的种子
 const char *specialty_of(uint64_t p_seed, int p_site_id, bool p_hamlet);
 int specialty_stock(int p_households, const FreightRules &p_rules);
+// 货箱盖板的颜色（sRGB 0–1）：一样货一种颜色，远远就认得出装的是什么
+void crate_color(const std::string &p_item, float &r_r, float &r_g, float &r_b);
 
 } // namespace freight
 

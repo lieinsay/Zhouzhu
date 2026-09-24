@@ -4,6 +4,9 @@
 #include <cmath>
 
 #include <godot_cpp/classes/area3d.hpp>
+#include <godot_cpp/classes/box_mesh.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
@@ -50,6 +53,10 @@ void Player::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_god_speed"), &Player::get_god_speed);
     ClassDB::bind_method(D_METHOD("set_god_boost", "value"), &Player::set_god_boost);
     ClassDB::bind_method(D_METHOD("get_god_boost"), &Player::get_god_boost);
+    ClassDB::bind_method(D_METHOD("set_carrying", "carrying", "color"), &Player::set_carrying, DEFVAL(Color(0.86f, 0.82f, 0.7f)));
+    ClassDB::bind_method(D_METHOD("is_carrying"), &Player::is_carrying);
+    ClassDB::bind_method(D_METHOD("set_carry_speed", "value"), &Player::set_carry_speed);
+    ClassDB::bind_method(D_METHOD("get_carry_speed"), &Player::get_carry_speed);
     ClassDB::bind_method(D_METHOD("on_sensor_area_entered", "area"), &Player::on_sensor_area_entered);
     ClassDB::bind_method(D_METHOD("on_sensor_area_exited", "area"), &Player::on_sensor_area_exited);
 
@@ -67,6 +74,7 @@ void Player::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "walk_speed", PROPERTY_HINT_RANGE, "0,20,0.1,suffix:m/s"), "set_walk_speed", "get_walk_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "sprint_speed", PROPERTY_HINT_RANGE, "0,30,0.1,suffix:m/s"), "set_sprint_speed", "get_sprint_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "jump_speed", PROPERTY_HINT_RANGE, "0,20,0.1,suffix:m/s"), "set_jump_speed", "get_jump_speed");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "carry_speed", PROPERTY_HINT_RANGE, "0,20,0.1,suffix:m/s"), "set_carry_speed", "get_carry_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "gravity", PROPERTY_HINT_RANGE, "0,60,0.1,suffix:m/s²"), "set_gravity", "get_gravity");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "god_speed", PROPERTY_HINT_RANGE, "1,200,1,suffix:m/s"), "set_god_speed", "get_god_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "god_boost", PROPERTY_HINT_RANGE, "1,20,0.5"), "set_god_boost", "get_god_boost");
@@ -147,7 +155,7 @@ void Player::_physics_process(double p_delta) {
     Input *input = Input::get_singleton();
     const Vector2 stick = input_blocked ? Vector2() : input->get_vector(input_actions::MOVE_LEFT, input_actions::MOVE_RIGHT, input_actions::MOVE_FORWARD, input_actions::MOVE_BACK);
     const Vector3 wish = Basis(Vector3(0, 1, 0), real_t(look_yaw)).xform(Vector3(stick.x, 0, stick.y));
-    const double speed = input->is_action_pressed(input_actions::SPRINT) ? sprint_speed : walk_speed;
+    const double speed = carrying ? carry_speed : (input->is_action_pressed(input_actions::SPRINT) ? sprint_speed : walk_speed);
 
     Vector3 velocity = get_velocity();
     if (god_mode) {
@@ -187,7 +195,7 @@ void Player::_physics_process(double p_delta) {
         velocity.x += (wish.x * real_t(speed) - velocity.x) * blend;
         velocity.z += (wish.z * real_t(speed) - velocity.z) * blend;
         if (grounded) {
-            velocity.y = !input_blocked && input->is_action_just_pressed(input_actions::JUMP) ? real_t(jump_speed) : 0;
+            velocity.y = !input_blocked && !carrying && input->is_action_just_pressed(input_actions::JUMP) ? real_t(jump_speed) : 0;
         } else {
             velocity.y -= real_t(gravity * p_delta);
         }
@@ -203,6 +211,48 @@ void Player::turn_body(const Vector3 &p_wish, double p_delta) {
         const double current = body->get_rotation().y;
         body->set_rotation(Vector3(0, real_t(Math::lerp_angle(current, target, 1.0 - std::exp(-TURN_RATE * p_delta))), 0));
     }
+}
+
+void Player::set_carrying(bool p_carrying, const Color &p_color) {
+    carrying = p_carrying;
+    if (!body) {
+        return;
+    }
+    if (!crate) {
+        crate = memnew(Node3D);
+        crate->set_name("Crate");
+        body->add_child(crate);
+        crate->set_position(Vector3(0, 1.05f, -0.55f)); // 身前、齐胸
+        Ref<StandardMaterial3D> wood;
+        wood.instantiate();
+        wood->set_albedo(Color(0.58f, 0.44f, 0.26f));
+        wood->set_roughness(0.95f);
+        Ref<BoxMesh> box;
+        box.instantiate();
+        box->set_size(Vector3(0.8f, 0.6f, 0.7f));
+        box->set_material(wood);
+        MeshInstance3D *mesh = memnew(MeshInstance3D);
+        mesh->set_name("Box");
+        mesh->set_mesh(box);
+        crate->add_child(mesh);
+        Ref<BoxMesh> lid;
+        lid.instantiate();
+        lid->set_size(Vector3(0.7f, 0.04f, 0.6f));
+        MeshInstance3D *lid_mesh = memnew(MeshInstance3D);
+        lid_mesh->set_name("Lid");
+        lid_mesh->set_mesh(lid);
+        lid_mesh->set_position(Vector3(0, 0.32f, 0));
+        crate->add_child(lid_mesh);
+    }
+    MeshInstance3D *lid_mesh = Object::cast_to<MeshInstance3D>(crate->get_node_or_null("Lid"));
+    if (lid_mesh) {
+        Ref<StandardMaterial3D> paint;
+        paint.instantiate();
+        paint->set_albedo(p_color);
+        paint->set_roughness(0.9f);
+        lid_mesh->set_material_override(paint);
+    }
+    crate->set_visible(carrying);
 }
 
 void Player::set_god_mode(bool p_enabled) {

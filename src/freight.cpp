@@ -34,6 +34,18 @@ int specialty_stock(int p_households, const FreightRules &p_rules) {
     return std::max(0, p_households) * p_rules.specialty_per_house;
 }
 
+void crate_color(const std::string &p_item, float &r_r, float &r_g, float &r_b) {
+    if (p_item == "cloth") { // 麻布：本色
+        r_r = 0.86f, r_g = 0.82f, r_b = 0.7f;
+    } else if (p_item == "pottery") { // 陶：赭
+        r_r = 0.7f, r_g = 0.38f, r_b = 0.22f;
+    } else if (p_item == "lacquer") { // 漆：朱黑
+        r_r = 0.5f, r_g = 0.08f, r_b = 0.07f;
+    } else {
+        r_r = 0.45f, r_g = 0.5f, r_b = 0.35f;
+    }
+}
+
 } // namespace freight
 
 std::vector<FreightPort> plan_freight_ports(const WorldSites &p_sites, const std::vector<DockPlan> &p_docks, const FreightRules &p_rules) {
