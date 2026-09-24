@@ -252,7 +252,7 @@ func _fly_toward(berth: Vector3) -> bool:
 	_hold("ascend", climb > 2.0)
 	_hold("descend", climb < -2.0)
 	# 高度差太多先别往前冲，免得撞上山
-	_hold("move_forward", flat > 110.0 and absf(bearing) < 60.0 and climb < 40.0)
+	_hold("move_forward", flat > 30.0 and absf(bearing) < 60.0 and climb < 40.0)
 	var below: float = world.get_surface_height(ship.global_position.x, ship.global_position.z)
 	if not is_nan(below):
 		min_clearance = minf(min_clearance, ship.global_position.y - below)
@@ -346,8 +346,8 @@ func _physics_process(delta: float) -> void:
 						_finish(false, why)
 						return
 					var count: int = seat_village.get_settlement().get_count()
-					if count != 273:
-						_finish(false, "邑治 271 户该有 271 座民居 + 堂屋 + 仓，实为 %d 座" % count)
+					if count != 274:
+						_finish(false, "邑治 271 户该有 271 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
 						return
 					_log("邑治：%d 座房子都站在地上，村民 %d 人" % [count, seat_village.get_villagers().get_villager_count() if seat_village.get_villagers() else 0])
 					player.set_look_yaw(0.0)  # 望着村子：落点在村心南边 250 m，look_yaw 0 朝北
