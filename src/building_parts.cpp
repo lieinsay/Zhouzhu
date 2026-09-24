@@ -1,5 +1,7 @@
 #include "building_parts.h"
 
+#include "land_berth.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -203,10 +205,16 @@ void furniture_parts(const Furnishing &p_item, double p_base_y, int p_group, std
     }
 }
 
-BuildingParts building_parts(const BuildingDef &p_def, const HouseTemplate &p_template, double p_plinth_h, const GroundDrop &p_ground_drop) {
+BuildingParts building_parts(const BuildingDef &p_def, const HouseTemplate &p_house_template, double p_plinth_h, const GroundDrop &p_ground_drop) {
     BuildingParts parts;
     const int levels = std::max(1, p_def.levels);
-    parts.group_count = levels + 2;
+    parts.group_count = p_def.house ? levels + 2 : 2;
+    // 船台不用房屋模板：前沿当中一道宽坡道，别的都在 land_berth 里
+    HouseTemplate berth_template;
+    if (!p_def.house) {
+        berth_template.openings.push_back(Opening{ false, WallSide::FRONT, 0.0, land_berth::RAMP_W - 0.6, 0 });
+    }
+    const HouseTemplate &p_template = p_def.house ? p_house_template : berth_template;
     std::vector<BoxPart> &out = parts.boxes;
     const double w = p_def.width_m, d = p_def.depth_m, hx = interior_half_x(p_def), hz = interior_half_z(p_def);
     const double plinth_h = std::max(0.05, p_plinth_h);
@@ -280,6 +288,11 @@ BuildingParts building_parts(const BuildingDef &p_def, const HouseTemplate &p_te
         point(s + run + 0.6, entry.out_x, entry.out_z);
         entry.out_y = -drop;
         parts.doors.push_back(entry);
+    }
+
+    if (!p_def.house) {
+        land_berth::add_parts(p_def, out);
+        return parts;
     }
 
     // 底层木地板（只画，碰撞是台基面）

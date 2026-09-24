@@ -48,6 +48,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/island_ground.h
     src/island_river.cpp
     src/island_river.h
+    src/land_berth.cpp
+    src/land_berth.h
     src/map_ground.cpp
     src/map_ground.h
     src/map_image.cpp

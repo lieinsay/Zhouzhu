@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include "freight.h"
 #include "world_grid.h"
 #include "world_ledger.h"
 #include "world_sites.h"
@@ -184,6 +185,8 @@ int main(int argc, char **argv) {
         int missing, wanted;
     };
     std::vector<Short> shorts;
+    int village_count = 0;
+    std::vector<const SiteSettlement *> no_berth; // 村里没摆下船台的
     for (const SiteSettlement &s : sites.settlements) {
         started = std::chrono::steady_clock::now();
         const VillagePlan plan = plan_world_village(terrain, s, seed, rules);
@@ -195,6 +198,12 @@ int main(int argc, char **argv) {
         }
         wanted += plan.wanted;
         missing += plan.missing;
+        if (!s.hamlet) {
+            village_count++;
+            if (freight_post_building(plan.layout) < 0) {
+                no_berth.push_back(&s);
+            }
+        }
         if (plan.missing > 0) {
             short_sites++;
             shorts.push_back({ &s, plan.missing, plan.wanted });
@@ -212,6 +221,12 @@ int main(int argc, char **argv) {
         std::printf("  %s（岛 %d，%d 户）：%d 座摆不下\n", shorts[k].site->name.c_str(), shorts[k].site->island, shorts[k].site->households, shorts[k].missing);
     }
     const double missing_ratio = wanted ? double(missing) / wanted : 0.0;
+    const double no_berth_ratio = village_count ? double(no_berth.size()) / village_count : 0.0;
+    std::printf("船台：%d 个村里 %d 个盖上了", village_count, village_count - int(no_berth.size()));
+    for (size_t k = 0; k < no_berth.size() && k < 10; k++) {
+        std::printf("%s%s（岛 %d，%d 户）", k == 0 ? "；没摆下的：" : "、", no_berth[k]->name.c_str(), no_berth[k]->island, no_berth[k]->households);
+    }
+    std::printf("\n");
     std::printf("村落 %zu 处：要盖 %d 座，摆下 %d 座，摆不下 %d 座（%.2f%%，%d 处不全）；共 %.0f ms，最慢 %s %.0f ms\n",
             sites.settlements.size(), wanted, wanted - missing, missing, 100.0 * missing_ratio, short_sites, total_ms, worst_name.c_str(), worst_ms);
 
@@ -282,7 +297,7 @@ int main(int argc, char **argv) {
                 sim_ok ? "都对得上" : "有对不上的");
     }
 
-    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing && sim_ok;
+    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing && no_berth_ratio <= max_missing && sim_ok;
     std::printf("%s\n", pass ? "达标" : "不达标");
     return pass ? 0 : 1;
 }

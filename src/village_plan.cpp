@@ -10,7 +10,7 @@
 namespace {
 
 constexpr double PI = 3.14159265358979323846;
-constexpr double BUCKET_M = 40.0; // 邻居查找的桶：比最大的建筑外接圆直径（堂屋约 19 m）加空隙还大
+constexpr double BUCKET_M = 60.0; // 邻居查找的桶：比最大的建筑外接圆直径（船台约 48 m）加空隙还大
 constexpr double SLOPE_PROBE_M = 4.0;
 
 struct Candidate {
@@ -35,6 +35,9 @@ VillagePlan plan_village(const SiteGround &p_ground, const VillageRequest &p_req
     if (p_request.seat) {
         queue.push_back(buildings::by_id("hall"));
         queue.push_back(buildings::by_id("granary"));
+    }
+    if (p_request.berth) {
+        queue.push_back(buildings::by_id("berth"));
     }
     const BuildingDef *house = buildings::by_id("house");
     for (int k = 0; k < std::max(0, p_request.households); k++) {

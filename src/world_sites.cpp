@@ -146,6 +146,7 @@ VillagePlan plan_world_village(const WorldTerrain &p_terrain, const SiteSettleme
     VillageRequest request;
     request.households = p_site.households;
     request.seat = p_site.seat;
+    request.berth = !p_site.hamlet; // 村都有船台，散户没有
     // 村与散户的 id 各自从 1 起：散户另起一条种子流
     request.seed = p_seed * 1000003ull + uint64_t(p_site.id) * 2ull + (p_site.hamlet ? 1ull : 0ull);
     return plan_village(ground, request, p_rules.site, p_rules.village);

@@ -454,16 +454,33 @@ int first_of_kind(const SettlementLayout &p_layout, const char *p_kind) {
     return -1;
 }
 
-// 除了 p_except 之外随便挑一座；只有它自己就返回 −1
+// 除了 p_except 之外随便挑一座房屋（船台不算）；没有别的就返回 −1
 int random_other(const SettlementLayout &p_layout, int p_except, Rng &p_rng) {
-    if (p_layout.size() < 2) {
+    std::vector<int> others;
+    bool all_houses = true;
+    for (int k = 0; k < p_layout.size(); k++) {
+        const BuildingDef *def = buildings::by_id(p_layout.at(k).kind);
+        const bool house = !def || def->house;
+        all_houses = all_houses && house;
+        if (house && k != p_except) {
+            others.push_back(k);
+        }
+    }
+    if (all_houses) {
+        // 全是房屋：照原来的抽法（随机流与以前逐位一致）
+        if (p_layout.size() < 2) {
+            return -1;
+        }
+        int k = p_rng.range(0, p_layout.size() - 1);
+        if (k >= p_except && p_except >= 0) {
+            k++;
+        }
+        return k;
+    }
+    if (others.empty()) {
         return -1;
     }
-    int k = p_rng.range(0, p_layout.size() - 1);
-    if (k >= p_except && p_except >= 0) {
-        k++;
-    }
-    return k;
+    return others[size_t(p_rng.range(0, int(others.size())))];
 }
 
 Task idle_task(const VillagerMind &p_mind, const VillageView &p_view, Rng &p_rng) {
