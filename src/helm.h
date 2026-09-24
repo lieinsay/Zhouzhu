@@ -16,7 +16,9 @@
 struct Berth {
     godot::Transform3D contact; // 接触线（见 dock_builder::berth_contact）
     bool yard = false; // 是坞位（入坞）不是泊位（靠泊）
+    bool land = false; // 是村里的船台（落地靠港）
     int id = -1; // 编排者自己认的号（码头号），这里不用
+    godot::String refusal; // 非空：这里停不下这条船（原因）
 };
 
 class Helm {
@@ -31,6 +33,7 @@ public:
         MOOR_STARTED, // 叫了靠泊 / 入坞，船开始滑
         DISEMBARKED, // 人下了船
         STILL_MOVING, // 想离舵，船还没停稳
+        REFUSED, // 叫了靠泊，那儿停不下这条船（原因在 get_refusal）
     };
 
     double helm_range = 2.2; // 离舵多近能上舵
@@ -42,6 +45,7 @@ private:
     Player *player = nullptr;
     State state = ON_FOOT;
     Berth moor_berth; // 正在滑向的那一个
+    godot::String refusal;
 
 public:
     void attach(Ship *p_ship, Player *p_player);
@@ -49,6 +53,7 @@ public:
     State get_state() const { return state; }
     bool is_mooring_to_yard() const { return state == MOORING && moor_berth.yard; }
     const Berth &get_moor_berth() const { return moor_berth; }
+    const godot::String &get_refusal() const { return refusal; }
     bool near_helm() const;
 
     void board();
@@ -60,6 +65,6 @@ public:
 
     // 航行 HUD：「航速 · 档位 · 高度」一行，「<目标名> 距离 · 方位 · 高差」一行
     godot::String course_text(const godot::Transform3D &p_target, const godot::String &p_target_name) const;
-    // 掌舵时的操作提示（泊位附近换成「按 E 靠泊 / 入坞 / 离舵」）
+    // 掌舵时的操作提示（泊位附近换成「按 E 靠泊 / 入坞 / 落上船台 / 离舵」，停不下就说为什么）
     godot::String piloting_prompt(const std::vector<Berth> &p_berths) const;
 };

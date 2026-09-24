@@ -11,6 +11,7 @@
 
 #include "dock_builder.h"
 #include "freight.h"
+#include "land_berth.h"
 #include "hinterland.h"
 
 using namespace godot;
@@ -49,7 +50,7 @@ void WorldVillage::_ready() {
     settlement->set_base(plan.layout);
     add_child(settlement); // 宿主已经好了：Settlement 进树就叠上改动、盖起来
     if (world->find_freight_port(site_index) >= 0) {
-        build_freight_post();
+        build_freight_post(); // 村（不是散户）：船台跳板脚边就是村仓
     }
 }
 
@@ -77,24 +78,16 @@ void add_block(Node3D *p_parent, const String &p_name, const Vector3 &p_size, co
 
 } // namespace
 
-// 村仓门边：三只货箱（箱盖是这村土产的颜色）+ 一根木杆挂牌子。只是摆设，不挡人
+// 村仓：船台跳板脚边三只货箱（箱盖是这村土产的颜色）+ 一根木杆挂牌子。只是摆设，不挡人
 void WorldVillage::build_freight_post() {
-    const SettlementLayout &layout = settlement->get_model();
-    const int k = freight_post_building(layout, 0.0, 0.0);
+    const int k = freight_post_building(settlement->get_model());
     if (k < 0) {
-        return;
-    }
-    double x = 0, z = 0, px = 0, pz = 0, yaw = 0;
-    freight_post_spot(layout.get_items()[size_t(k)], x, z, px, pz, yaw);
-    const double y = world->get_surface_height(site.x + px, site.z + pz);
-    if (std::isnan(y)) {
         return;
     }
     freight_post = memnew(Node3D);
     freight_post->set_name("FreightPost");
-    freight_post->set_position(Vector3(real_t(px), real_t(y), real_t(pz)));
-    freight_post->set_rotation(Vector3(0, real_t(yaw), 0));
     add_child(freight_post);
+    freight_post->set_global_transform(settlement->get_building_transform(k) * Transform3D(Basis(), Vector3(real_t(land_berth::PILE_X), 0, real_t(land_berth::PILE_Z))));
     float r = 0, g = 0, b = 0;
     freight::crate_color(freight::specialty_of(seed, site.id, site.hamlet), r, g, b);
     const Ref<StandardMaterial3D> wood = plain(Color(0.58f, 0.44f, 0.26f)), lid = plain(Color(r, g, b)), pole = plain(Color(0.33f, 0.22f, 0.15f));
@@ -121,16 +114,11 @@ bool WorldVillage::get_freight_post(Vector3 &r_global) const {
     if (!freight_post || !settlement) {
         return false;
     }
-    const SettlementLayout &layout = settlement->get_model();
-    const int k = freight_post_building(layout, 0.0, 0.0);
+    const int k = freight_post_building(settlement->get_model());
     if (k < 0) {
         return false;
     }
-    double x = 0, z = 0, px = 0, pz = 0, yaw = 0;
-    freight_post_spot(layout.get_items()[size_t(k)], x, z, px, pz, yaw);
-    const double gx = site.x + x, gz = site.z + z;
-    const double y = world->get_surface_height(gx, gz);
-    r_global = Vector3(real_t(gx), real_t(std::isnan(y) ? 0.0 : y), real_t(gz));
+    r_global = settlement->get_berth_point(k, 0.0, land_berth::POST_Z);
     return true;
 }
 

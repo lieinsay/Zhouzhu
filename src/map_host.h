@@ -72,9 +72,11 @@ public:
     virtual void map_refresh_panel(WorldMap *p_panel) const {}
     virtual double map_view_distance() const { return 0.0; }
 
-    // 跑货（可选，默认没有）：全图的港口村；离 p_global 水平 p_range 以内、已经铺出来的村仓
+    // 跑货（可选，默认没有）：全图能托运的村；离 p_global 水平 p_range 以内、已经铺出来的村仓（船台跳板脚前）；
+    // 托运的目的地往哪儿飞（铺出来了是它船台的接触线，还远就是村心）
     virtual const std::vector<FreightPort> &map_freight_ports() const;
     virtual FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) { return FreightPost(); }
+    virtual bool map_freight_target(int p_port, godot::Transform3D &r_target) const { return false; }
 
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
 };

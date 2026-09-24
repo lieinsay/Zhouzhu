@@ -172,7 +172,7 @@ bool World::load() {
         sites = WorldSites();
     }
     works = lay_world_works(terrain, sites);
-    freight_ports = plan_freight_ports(sites, works.docks, FreightRules());
+    freight_ports = plan_freight_ports(sites);
 
     ground_material.instantiate();
     ground_material->set_roughness(1.0);
@@ -735,6 +735,24 @@ FreightPost World::map_freight_post_near(const Vector3 &p_global, double p_range
     VillageState *state = hinterland ? hinterland->get_state(village->get_site_index()) : nullptr;
     post.store = state ? &state->store : nullptr;
     return post;
+}
+
+bool World::map_freight_target(int p_port, Transform3D &r_target) const {
+    if (p_port < 0 || p_port >= int(freight_ports.size())) {
+        return false;
+    }
+    const FreightPort &port = freight_ports[size_t(p_port)];
+    // 铺出来了：指着它的船台；还远：指着村心
+    WorldVillage *village = site_stream ? site_stream->get_village(port.site_id) : nullptr;
+    Settlement *settlement = village ? village->get_settlement() : nullptr;
+    const int k = settlement ? freight_post_building(settlement->get_model()) : -1;
+    if (k >= 0 && !settlement->find_berths().empty()) {
+        r_target = settlement->get_berth_contact(k);
+        return true;
+    }
+    const double y = get_surface_height(port.x, port.z);
+    r_target = Transform3D(Basis(), Vector3(real_t(port.x), real_t(std::isnan(y) ? 0.0 : y), real_t(port.z)));
+    return true;
 }
 
 Vector3 World::get_freight_post(int p_village_id) const {

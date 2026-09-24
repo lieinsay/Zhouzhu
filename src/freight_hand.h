@@ -9,7 +9,7 @@
 #include "player.h"
 #include "ship.h"
 
-// 跑货：港口村的村仓前接委托、打包一箱抱起来，走上船放到货位上；飞到目的港，从货位上抱起来，送到那村的村仓前交货，交齐了拿运费。
+// 跑货：村仓（船台的跳板脚前）接委托、打包一箱抱起来，走上跳板放到货位上；飞到目的村的船台，从货位上抱起来，走下跳板交货，交齐了拿运费。
 // 与场景无关的玩法部件（不是节点），编排持有、步行时每帧推一下。账在货箱账（CargoBook，纯数据）里；
 // 村仓在哪、仓账是哪本由地图宿主答（map_freight_post_near），货位在哪、画不画箱子问船，抱着箱子走得慢由 Player 管。
 // 按 E 的先后：够得着村仓或货位、这一下又有事可做，就归它；否则编排再问画样台、舵、农事。
@@ -25,7 +25,6 @@ class FreightHand {
 
     void look_around(MapHost *p_map, Ship *p_ship, Player *p_player);
     void sync_player(Player *p_player) const;
-    godot::String port_name(const MapHost *p_map, int p_port) const;
 
 public:
     // 每个物理帧（步行、没开面板时）。按了 E 且被它用了返回 true（编排就别再拿这一下 E 干别的）
@@ -35,11 +34,12 @@ public:
     int cargo_aboard() const { return book.aboard(); }
     bool is_active() const { return book.is_active(); }
     const CargoBook &get_book() const { return book; }
-    // 这单要去的码头（地图的码头号）；没接单为 −1
-    int destination_dock_id(const MapHost *p_map) const;
+    // 这单要送去的村（map_freight_ports 的下标）；没接单为 −1
+    int destination_port() const { return book.is_active() ? book.get_order().to : -1; }
+    godot::String port_name(const MapHost *p_map, int p_port) const;
 
     // 底部提示：够得着村仓 / 货位时能干什么；无事可说返回空
     godot::String prompt(const MapHost *p_map) const;
-    // HUD：「托运 麻布 2 箱 → 村103（码头 #8）· 手上 1 · 船上 1 · 已交 0 · 运费 32 文」；没接单时空
+    // HUD：「托运 麻布 2 箱 → 村127（岛 #4）· 手上 1 · 船上 1 · 已交 0 · 运费 30 文」；没接单时空
     godot::String status_text(const MapHost *p_map) const;
 };

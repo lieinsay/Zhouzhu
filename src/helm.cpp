@@ -74,6 +74,10 @@ Helm::Event Helm::step(bool p_interact, const std::vector<Berth> &p_berths) {
         return NONE;
     }
     Berth target;
+    if (moor_target(p_berths, target) && !target.refusal.is_empty() && !ship->is_at(target.contact, 0.5)) {
+        refusal = target.refusal;
+        return REFUSED;
+    }
     if (moor_target(p_berths, target)) {
         ship->moor_at(target.contact);
         ship->set_controlled(false);
@@ -124,7 +128,13 @@ String Helm::course_text(const Transform3D &p_target, const String &p_target_nam
 String Helm::piloting_prompt(const std::vector<Berth> &p_berths) const {
     Berth target;
     if (moor_target(p_berths, target)) {
-        return ship->is_at(target.contact, 0.5) ? String(U"按 E 离舵") : (target.yard ? String(U"按 E 入坞") : String(U"按 E 靠泊"));
+        if (ship->is_at(target.contact, 0.5)) {
+            return String(U"按 E 离舵");
+        }
+        if (!target.refusal.is_empty()) {
+            return target.refusal;
+        }
+        return target.yard ? String(U"按 E 入坞") : (target.land ? String(U"按 E 落上船台") : String(U"按 E 靠泊"));
     }
     const String keys = String(U"W/S 进退 · A/D 转舵 · 空格 升 · Shift 降 · R/F 换档");
     return ship->get_speed() <= leave_helm_speed ? keys + String(U" · E 离舵") : keys;

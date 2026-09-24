@@ -22,16 +22,7 @@ String FreightHand::port_name(const MapHost *p_map, int p_port) const {
         return String();
     }
     const FreightPort &p = ports[size_t(p_port)];
-    return vformat(String(U"%s（码头 #%d）"), utf8(p.name), p.dock_id);
-}
-
-int FreightHand::destination_dock_id(const MapHost *p_map) const {
-    if (!book.is_active()) {
-        return -1;
-    }
-    const std::vector<FreightPort> &ports = p_map->map_freight_ports();
-    const int to = book.get_order().to;
-    return to >= 0 && to < int(ports.size()) ? ports[size_t(to)].dock_id : -1;
+    return vformat(String(U"%s（岛 #%d）"), utf8(p.name), p.island);
 }
 
 void FreightHand::look_around(MapHost *p_map, Ship *p_ship, Player *p_player) {

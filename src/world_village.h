@@ -19,7 +19,7 @@ class Hinterland;
 // 它是地面宿主：地面、禁区（溪涧、码头的坪、船坞坪）都从 World 的连续地形来（WorldGround，原点挪到村心），
 // 村民种的是 World 下面那片农田。建与拆都由 SiteStream 按距离决定。
 // 村子的账（谁住哪、在干什么、仓、水缸、认领的地）在远处账房（Hinterland）：招村民时借来交给 Villagers，散了还回去接着在远处记。
-// 港口村（freight.h）在村仓那户门边摆一堆货箱、立一块「村仓 · 托运」的牌子（按进树时的清单摆，布置模式改了不挪）。
+// 村（不是散户）在船台（land_berth.h）的跳板脚边摆一堆货箱、立一块「村仓 · 托运」的牌子：那儿就是村仓（按进树时的清单摆，布置模式挪了船台不跟着挪）。
 class WorldVillage : public godot::Node3D, public GroundHost {
     GDCLASS(WorldVillage, godot::Node3D)
 
@@ -33,7 +33,7 @@ class WorldVillage : public godot::Node3D, public GroundHost {
     Villagers *villagers = nullptr;
     Hinterland *hinterland = nullptr; // 可以没有：那就走近了从头招人
     int site_index = -1; // sites.settlements 下标（账房里的账号）
-    godot::Node3D *freight_post = nullptr; // 港口村：村仓门前的货堆与牌子
+    godot::Node3D *freight_post = nullptr; // 村仓：船台跳板脚边的货堆与牌子
 
     void build_freight_post();
 
@@ -61,7 +61,7 @@ public:
     Villagers *get_villagers() const { return villagers; }
     int get_site_index() const { return site_index; }
     Hinterland *get_hinterland() const { return hinterland; }
-    // 港口村的村仓门前（全局）；不是港口村或还没盖好返回 false
+    // 村仓那一点（船台跳板脚前，全局）；没有船台或还没盖好返回 false
     bool get_freight_post(godot::Vector3 &r_global) const;
     bool is_edited() const { return settlement && settlement->is_dirty(); } // 布置模式改过、还没存
 

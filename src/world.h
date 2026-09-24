@@ -147,10 +147,10 @@ public:
     const WorldTerrain &get_terrain() const { return terrain; }
     const WorldSites &get_sites() const { return sites; }
     const std::vector<DockPlan> &get_docks() const { return works.docks; }
-    int find_freight_port(int p_site_index) const { return find_port(freight_ports, p_site_index); } // sites.settlements 下标 → 港口下标；不是港口 −1
-    // 测试与调试：某村（村号）村仓门前的全局位置；村子还没铺或不是港口村返回 (0,0,0)
+    int find_freight_port(int p_site_index) const { return find_port(freight_ports, p_site_index); } // sites.settlements 下标 → 托运用的下标；散户 −1
+    // 测试与调试：某村（村号）村仓那一点（船台跳板脚前）的全局位置；村子还没铺或没有船台返回 (0,0,0)
     godot::Vector3 get_freight_post(int p_village_id) const;
-    godot::PackedInt32Array get_freight_port_ids() const; // 港口村的村号
+    godot::PackedInt32Array get_freight_port_ids() const; // 能托运的村的村号
     SiteStream *get_site_stream() const { return site_stream; }
 
     // GroundHost（Farm、Shipyard 挂在它下面）
@@ -188,6 +188,7 @@ public:
     double map_view_distance() const override { return 60000.0; } // 岛群近百公里宽，远处的岛也要看得见
     const std::vector<FreightPort> &map_freight_ports() const override { return freight_ports; }
     FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) override;
+    bool map_freight_target(int p_port, godot::Transform3D &r_target) const override;
 
     void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
     godot::NodePath get_sites_path() const { return sites_path; }
