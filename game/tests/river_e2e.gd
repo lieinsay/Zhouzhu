@@ -225,11 +225,22 @@ func _physics_process(delta: float) -> void:
 			# 河口：河槽凿到岸缘；再开 god 模式悬在岸外 35 m、比岸缘低 8 m，回头看水从岸缘跌下去
 			var mouth := Vector3(river["mouth_x"], 0, river["mouth_z"])
 			var flow := Vector3(river["mouth_dir_x"], 0, river["mouth_dir_z"])
+			# 岸线常斜着切过河口：离河口 20 / 40 / 60 m、左右两岸里取第一个还在岛上的岸点来比
 			var up := mouth - flow * 20.0
 			var mid: float = world.get_surface_height(up.x, up.z)
-			var side := up + Vector3(-flow.z, 0, flow.x) * (float(river["width"]) + 4.0)
-			var bank_y: float = world.get_surface_height(side.x, side.z)
-			print("river_e2e: 河口在 (%.0f, %.0f)，上游 20 m 处河心地面 %.2f、岸上 %.2f" % [mouth.x, mouth.z, mid, bank_y])
+			var bank_y := NAN
+			var back := 20.0
+			for d in [20.0, 40.0, 60.0]:
+				for sgn in [1.0, -1.0]:
+					var at: Vector3 = mouth - flow * float(d)
+					var side: Vector3 = at + Vector3(-flow.z, 0, flow.x) * float(sgn) * (float(river["width"]) + 4.0)
+					var y: float = world.get_surface_height(side.x, side.z)
+					if is_nan(bank_y) and not is_nan(y):
+						bank_y = y
+						back = float(d)
+						up = at
+						mid = world.get_surface_height(at.x, at.z)
+			print("river_e2e: 河口在 (%.0f, %.0f)，上游 %.0f m 处河心地面 %.2f、岸上 %.2f" % [mouth.x, mouth.z, back, mid, bank_y])
 			if not _expect(mid < bank_y - 0.2, "河口前的河槽没凿出来"):
 				return
 			main.teleport_to(up)
