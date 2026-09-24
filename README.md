@@ -459,7 +459,7 @@ Godot --headless --path game --fixed-fps 60 res://tests/build_e2e.tscn     # B �
 Godot --headless --path game --fixed-fps 60 res://tests/villager_e2e.tscn  # 两岛人数与职业 → 陆续出门 → 每帧贴地、不进房子、不瞬移 → 开荒播种收割、粮进仓、挑水、站班巡村、串门 → 玩家的地没人碰 → 收工全村进门 → 天亮又出门
 Godot --headless --path game --fixed-fps 60 res://tests/voyage_2051_e2e.tscn # 岛群跑船：主码头出生、旁边的村子站在地上、地图与 3D 对得上 → 点地图去邑治：274 座（含船台）都站在地上、有人出门 → 点回主码头 → 上船掌舵、换疾档、贴着地形飞 30 km → 乙岛 #2 靠泊下船 → 码头边散户站在地上、有人出门
 Godot --headless --path game --fixed-fps 60 res://tests/world_e2e.tscn     # 真实比例岛群：主码头站稳 → 跑 → M 开地图、滚轮缩小、点乙岛瞬移 → 点 57 km 外的码头瞬移 → 坠落回位
-Godot --headless --path game --fixed-fps 60 res://tests/world_sim_e2e.tscn  # 远近分层：清早村152 有人出门 → 飞 30 km 到乙岛 #2，F4 快进待到下午（村152、邑治的账在远处推进）→ 飞回：钟点连续、HUD 就是全局钟、粮对得上账、村民在各自岗位上、地块回到农田
+Godot --headless --path game --fixed-fps 60 res://tests/world_sim_e2e.tscn  # 远近分层：清早村152 有人出门 → 飞 30 km 到乙岛 #2，F4 快进待到 11 点（村152、邑治的账在远处推进）→ 飞回：钟点连续、HUD 就是全局钟、粮对得上账、村民在各自岗位上、地块回到农田
 Godot --headless --path game --fixed-fps 60 res://tests/dev_tools_e2e.tscn # 开发者工具：甲乙两岛按 M 提示 → F3 god 升 / 降 / Shift 150 m/s → 关 god 重力回来 → F2 按 2 换到 2051（god 跟着）→ 换回
 Godot --headless --path game --fixed-fps 60 res://tests/world_features_e2e.tscn # 岛群里全部玩法：点图去村152 旁垦 → 背包选菽 → 播、收 → 点回主码头：画样台被拒 → 入坞、放一节储存区 → 飞回泊位 → 点回村：B 加一座、拆一座、F5 存、读回 → 农夫与挑水的在干活
 Godot --headless --path game --fixed-fps 60 res://tests/flat_map_e2e.tscn  # 平板岛上同一套（走过去）：只实现了宿主接口的新地图，玩法全都照常

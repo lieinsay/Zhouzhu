@@ -2,7 +2,7 @@ extends Node
 ## 看不见的地方也在按自己的逻辑运转（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
 ## 清早 05:45 主码头 #7 出生 → M 开地图点到村152 旁：卯时一到有人出门，记下仓、水缸、账
 ## → 点回主码头、上船掌舵、换疾档飞 30 km 到乙岛 #2（途中村152 的村民散了、账收回远处账房，远处的账接着记）
-## → 下船，F4 快进待到下午（途中断言村152 与 8.5 km 外邑治的账都在远处推进）→ F4 关
+## → 下船，F4 快进待到 11 点（途中断言村152 与 8.5 km 外邑治的账都在远处推进）→ F4 关
 ## → 上船飞回主码头 → 点地图回村152：钟点一路连续（没倒流、没跳）、HUD 与全局钟一致；
 ##   仓里的粮按规矩变了（起初 + 收 − 播 − 吃，对得上账）、水缸有水；村民散在各自的岗位上，不在自家门口扎堆；地块都回到了农田里。
 ##
@@ -13,7 +13,7 @@ extends Node
 const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 2400.0  # 模拟秒
 const START_HOUR := 5.75
-const STAY_UNTIL_HOUR := 14.5  # 在乙岛快进待到这个钟点再飞回去
+const STAY_UNTIL_HOUR := 11.0  # 在乙岛快进待到这个钟点再飞回去（船 20 m/s，疾档回程近 5 个钟头，得赶在收工前回到村里）
 const VILLAGE_A := 152  # 主码头 1 km 外的村子（有田有水：农夫、挑水的都有）
 const SEAT_ID := 1  # 邑治：8.5 km 外，这一趟一直在远处
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
@@ -238,7 +238,7 @@ func _fly_toward(berth: Vector3) -> bool:
 	_hold("move_left", bearing < -3.0)
 	_hold("ascend", climb > 2.0)
 	_hold("descend", climb < -2.0)
-	_hold("move_forward", flat > 110.0 and absf(bearing) < 60.0 and climb < 40.0)
+	_hold("move_forward", flat > 30.0 and absf(bearing) < 60.0 and climb < 40.0)
 	return to.length() < main.get_dock_range() - 5.0
 
 
