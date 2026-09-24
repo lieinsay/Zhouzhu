@@ -534,7 +534,7 @@
     {
       "id": "skyisle-export",
       "label": "岛群导出脚本",
-      "detail": "tools/export_skyisle.py：读 skyisle-gen 的 terrain.npz / island.json / settlements.json，写 terrain.bin（高程、有符号岸距、最近岛号、地表类、溪涧）与 world.json（岛表与点位，米制坐标）。游戏运行时不依赖它。",
+      "detail": "tools/export_skyisle.py：skyisle-gen 岛群产物 → terrain.bin（v3：高程含下切河谷、流向按生成器汇流反推、河宽水深、地形区）、weather.tsv、world.json、sites.tsv；--terrain-only 只换地形、点位沿用旧的。",
       "tag": "工具",
       "evidence": "2051：1012×837 格、陆地格数与 skyisle-gen 一致（ctest）",
       "sources": [
@@ -547,7 +547,7 @@
     {
       "id": "world-grid",
       "label": "岛群栅格",
-      "detail": "解析 terrain.bin；Catmull-Rom 双三次取高程与岸距，最近格取岛号与地表类；地表类配色表（地图与地面共用）。",
+      "detail": "解析 terrain.bin v1–v3，按连续坐标双三次取样；v3 多河宽 / 水深 / 地形区。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest world_grid / world 2051",
       "sources": [
@@ -559,7 +559,7 @@
     {
       "id": "world-terrain",
       "label": "连续地形",
-      "detail": "连续地形：大形听栅格，细节噪声补 100 m 以下；构造时建好河网，河道 + 河漫滩按横断面凿出，外面渐回原地形、细节噪声渐隐；停机坪在河上让给河。",
+      "detail": "任意 (x, z) 上的有没有地、顶面、岛底、地表。大形听栅格（v3 起高程已含生成器下切的河谷），细节噪声按地表 × 地形区调幅；岛底是崖壁 + 倒锥（见 island-body）；河按河网的横断面凿。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest world_terrain：确定、连续、岸线进退在噪声幅度内",
       "sources": [
@@ -1143,7 +1143,7 @@
     {
       "id": "world-river-net",
       "label": "河网",
-      "detail": "沿 D8 树按主干追出一条条河，抽稀、磨圆、松弛后加游移与曲流；支流末点落在干流中线上；平岸宽深按汇流的水力几何，平岸水面顺流不升；桶索引查最近河段；横断面 river_profile。",
+      "detail": "按汇流建河网（干流 + 支流、磨圆摆开、河口截在岸线）；栅格 v3 时宽深与生成器取大、平岸水面不高于生成器的 河床 + 水深。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest world_rivers：588 条、1160 km，水面顺流不升、支流接干流、越往下越宽",
       "sources": [
@@ -1239,6 +1239,43 @@
         "game/tests/freight_e2e.gd"
       ],
       "since": "e27"
+    },
+    {
+      "id": "world-terrain-zones",
+      "label": "地形区起伏",
+      "detail": "细节噪声幅度 = 地表类幅度 × 地形区倍率（高山 2.2、山地 1.8、丘陵 1.3、台地 0.8、河谷 0.6），山地另加 700 m 一道的岩梁（14 / 9 / 4 m）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest terrain v3：细节起伏均值山地 2.5 m、台地 0.5 m",
+      "sources": [
+        "src/world_terrain.cpp"
+      ],
+      "since": "e28",
+      "parent": "world-terrain"
+    },
+    {
+      "id": "world-terrain-body",
+      "label": "厚岛体（浮山）",
+      "detail": "island_body：崖壁 = 龙骨的 12%（30–160 m），龙骨 = 25·√最深岸距（主岛 3.3 km），岛底 = 岸缘 − 崖壁 − 龙骨·√向内 + 岩棱；lowest_bottom 给云海定下限。生成器的崖高 / 龙骨只作下限。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest terrain v3：主岛岛心厚 3.6 km，全群最低 −3484 m 在云海 −3800 m 之上",
+      "sources": [
+        "src/world_terrain.h",
+        "src/world_terrain.cpp"
+      ],
+      "since": "e28",
+      "parent": "world-terrain"
+    },
+    {
+      "id": "terrain-tile-cliff",
+      "label": "崖壁与岛底网格",
+      "detail": "崖壁每 5 m（粗块按格距）一段、顶点按自己的高度取岩层色；岛底三角进碰撞（船撞得上），内部块隔 4 格铺，接缝翘边按格距放高、不超过岛体厚度。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "terrain_shots 目视：岛底无裂缝；邑治处 2.77 M 三角面",
+      "sources": [
+        "src/terrain_tile.cpp"
+      ],
+      "since": "e29",
+      "parent": "terrain-tile"
     }
   ],
   "edges": [
@@ -2793,6 +2830,21 @@
       "chains": [
         "freight"
       ]
+    },
+    {
+      "from": "world-terrain-zones",
+      "to": "world-grid",
+      "label": "地形区"
+    },
+    {
+      "from": "world-terrain-body",
+      "to": "world-grid",
+      "label": "岸距 / 岛号"
+    },
+    {
+      "from": "terrain-tile-cliff",
+      "to": "world-terrain-body",
+      "label": "顶面 / 岛底"
     }
   ],
   "chains": [
@@ -4827,6 +4879,48 @@
           "voyage-pack"
         ],
         "updated": []
+      }
+    },
+    {
+      "id": "e28",
+      "type": "extend",
+      "date": "2026-09-24",
+      "title": "拓展：按新版生成器的数据优化岛群地形",
+      "summary": "skyisle-gen 38a1491 给了下切的河谷、逐格河宽水深与地形区：起伏按地形区加减，河贴着生成器的河床，岛体加厚成倒锥的浮山、云海下移到所有岛底之下。",
+      "commits": "0a82976..0d5b286",
+      "nodes": [
+        "world-terrain",
+        "world-terrain-zones",
+        "world-terrain-body"
+      ],
+      "info": {
+        "node": "world-terrain",
+        "children": [
+          "world-terrain-zones",
+          "world-terrain-body"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e29",
+      "type": "extend",
+      "date": "2026-09-24",
+      "title": "拓展：崖壁岩层与岛底",
+      "summary": "崖壁竖着分段、按绝对高度染岩层；岛底进碰撞、隔 4 格铺，接缝翘边贴着插值后的岛底。",
+      "commits": "8748350",
+      "nodes": [
+        "terrain-tile",
+        "terrain-tile-cliff"
+      ],
+      "info": {
+        "node": "terrain-tile",
+        "children": [
+          "terrain-tile-cliff"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
