@@ -10,6 +10,7 @@
 
 #include "build_mode.h"
 #include "farm_hand.h"
+#include "freight_hand.h"
 #include "helm.h"
 #include "interior_edit.h"
 #include "map_host.h"
@@ -24,9 +25,10 @@
 // 玩法是几个与场景无关的部件，这里持有、按优先级调度：
 //   掌舵（Helm）：上舵、飞（R/F 换档）、叫靠泊 / 入坞、离舵；
 //   背包与手持（PackHand，Tab）、农事（FarmHand，按住 E）、改装（RefitBench，画样台按 E）、布置模式（BuildMode，B，开发者）、
+//   跑货（FreightHand：港口村的村仓前接托运、打包、交货，船上货位前装卸；抱着货箱不能掌舵、不能改船，船上有货也不能改船）、
 //   室内编辑（InteriorEdit，T，开发者：布置模式里光标下那座，或人站在里面的那座）。
 // 另外：开局把船停在出发码头的泊位上、人放在它的停机坪上；HUD（位置、目标、背包、钟点、提示）；M 开合岛群地图、开发者点图瞬移；
-// 站稳记落脚点、掉进云海回位并召回漂远的船；到了目的码头那座岛就算到了（arrived），之后目标改指回程。
+// 站稳记落脚点、掉进云海回位并召回漂远的船；到了目的码头那座岛就算到了（arrived），之后目标改指回程；接了托运时目标改指托运的目的港。
 // 「现在是谁在受控」「哪个面板开着」「到没到过对岸」「上一处站稳的地方」这些状态只在这里（和它肚子里的部件）；
 // Player、Ship、Farm、Shipyard、Settlement、各面板互不相识，各自只回答自己的事。
 class Expedition : public godot::Node3D {
@@ -65,10 +67,12 @@ private:
     Helm helm;
     PackHand pack;
     FarmHand farm_hand;
+    FreightHand freight;
     RefitBench refit;
     BuildMode build;
     InteriorEdit interior;
     int origin_index = -1; // 地图的码头下标
+    int shown_destination = -1; // 地图面板上标成目的的码头号
     int destination_index = -1;
     bool arrived = false;
     bool has_safe_footing = false;
@@ -101,6 +105,7 @@ private:
     std::vector<Berth> berths() const;
     godot::Vector3 focus_point() const;
     void track_footing();
+    int course_target() const; // 航行目标（码头下标）：托运的目的港，否则目的码头 / 回程
     void respawn();
     int nearest_open_dock(const godot::Vector3 &p_point) const;
     bool nearest_land(const godot::Vector3 &p_point, godot::Vector3 &r_point) const;
@@ -138,6 +143,14 @@ public:
     WorldMap *get_map() const { return map_panel; }
     godot::Node3D *get_map_node() const { return map ? map->map_node() : nullptr; }
     bool is_working() const { return farm_hand.is_working(); }
+    // 跑货（给测试查）
+    bool is_carrying() const { return freight.is_holding(); }
+    int get_cargo_aboard() const { return freight.cargo_aboard(); }
+    bool has_freight_order() const { return freight.is_active(); }
+    int get_freight_delivered() const { return freight.get_book().get_delivered(); }
+    int get_freight_destination_dock() const { return map ? freight.destination_dock_id(map) : -1; }
+    godot::String get_freight_status() const { return map ? freight.status_text(map) : godot::String(); }
+    godot::Dictionary get_freight_order() const; // 接下的那一单：from / to（村号）、dock（目的码头号）、item、crates、per_crate、fee；没接单为空
     bool is_pack_open() const { return pack.is_open(); }
     int get_pack_cursor() const { return pack.get_cursor(); }
     godot::String get_held_seed() const { return godot::String::utf8(pack.held_seed().c_str()); }

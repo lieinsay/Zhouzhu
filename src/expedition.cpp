@@ -86,6 +86,13 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_map"), &Expedition::get_map);
     ClassDB::bind_method(D_METHOD("get_map_node"), &Expedition::get_map_node);
     ClassDB::bind_method(D_METHOD("is_working"), &Expedition::is_working);
+    ClassDB::bind_method(D_METHOD("is_carrying"), &Expedition::is_carrying);
+    ClassDB::bind_method(D_METHOD("get_cargo_aboard"), &Expedition::get_cargo_aboard);
+    ClassDB::bind_method(D_METHOD("has_freight_order"), &Expedition::has_freight_order);
+    ClassDB::bind_method(D_METHOD("get_freight_delivered"), &Expedition::get_freight_delivered);
+    ClassDB::bind_method(D_METHOD("get_freight_destination_dock"), &Expedition::get_freight_destination_dock);
+    ClassDB::bind_method(D_METHOD("get_freight_status"), &Expedition::get_freight_status);
+    ClassDB::bind_method(D_METHOD("get_freight_order"), &Expedition::get_freight_order);
     ClassDB::bind_method(D_METHOD("is_pack_open"), &Expedition::is_pack_open);
     ClassDB::bind_method(D_METHOD("get_pack_cursor"), &Expedition::get_pack_cursor);
     ClassDB::bind_method(D_METHOD("get_held_seed"), &Expedition::get_held_seed);
@@ -265,6 +272,7 @@ void Expedition::build_hud() {
         map_panel->set_visible(false);
         layer->add_child(map_panel);
         map_panel->set_destination_dock(destination_dock);
+        shown_destination = destination_dock;
         map_panel->set_teleport_enabled(dev_tools);
         map_panel->connect("teleport_requested", Callable(this, "on_teleport_requested"));
     }
@@ -297,6 +305,23 @@ PackedStringArray Expedition::get_pack_items() const {
         items.push_back(String::utf8(stack.item.c_str()));
     }
     return items;
+}
+
+Dictionary Expedition::get_freight_order() const {
+    Dictionary d;
+    if (!map || !freight.is_active()) {
+        return d;
+    }
+    const FreightOrder &order = freight.get_book().get_order();
+    const std::vector<FreightPort> &ports = map->map_freight_ports();
+    d["from"] = ports[size_t(order.from)].site_id;
+    d["to"] = ports[size_t(order.to)].site_id;
+    d["dock"] = ports[size_t(order.to)].dock_id;
+    d["item"] = String::utf8(order.item.c_str());
+    d["crates"] = order.crates;
+    d["per_crate"] = order.per_crate;
+    d["fee"] = order.fee;
+    return d;
 }
 
 Vector3i Expedition::get_refit_cursor() const {
@@ -354,6 +379,12 @@ void Expedition::set_map_open(bool p_open) {
     Input::get_singleton()->set_mouse_mode(map_open ? Input::MOUSE_MODE_VISIBLE : Input::MOUSE_MODE_CAPTURED);
     if (map_open) {
         const Vector3 at = player->get_global_position();
+        const int freight_dock = freight.destination_dock_id(map);
+        const int shown = freight_dock >= 0 ? freight_dock : destination_dock;
+        if (shown != shown_destination) {
+            map_panel->set_destination_dock(shown);
+            shown_destination = shown;
+        }
         map->map_refresh_panel(map_panel);
         map_panel->look_at_world(at.x, at.z, map_viewed ? 0.0 : MAP_FIRST_VIEW_M); // 之后再开沿用上次的缩放
         map_viewed = true;
@@ -458,17 +489,29 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
             build.browse(p_delta, p_interact, say_fn()); // 开着布置模式：E 是放一座
         } else if (pack.is_open()) {
             pack.browse(p_interact, say_fn()); // 开着背包：E 是拿东西，不是上舵、不是干活
+        } else if (freight.step(map, ship, player, pack, p_interact, say_fn())) {
+            farm_hand.stand_down(); // 这一下 E 是村仓前 / 货位前的事
         } else if (p_interact && bench) {
-            close_panels();
-            farm_hand.stand_down();
-            player->set_input_blocked(refit.open_at(bench, ship, say_fn()) || map_open);
+            if (freight.is_holding()) {
+                say(String(U"抱着货箱改不了船，先放下"));
+            } else if (freight.cargo_aboard() > 0) {
+                say(String(U"船上有货，卸了再改船"));
+            } else {
+                close_panels();
+                farm_hand.stand_down();
+                player->set_input_blocked(refit.open_at(bench, ship, say_fn()) || map_open);
+            }
         } else if (p_interact && ship && helm.near_helm()) {
-            if (!ship->can_fly()) {
+            if (freight.is_holding()) {
+                say(String(U"抱着货箱掌不了舵：先放到货位上"));
+            } else if (!ship->can_fly()) {
                 say(String(U"没有动力区，飞不起来：去船坞的画样台加一节"));
             } else {
                 board();
                 return;
             }
+        } else if (freight.is_holding()) {
+            farm_hand.stand_down(); // 抱着货箱腾不出手干农活
         } else {
             const FarmHand::Worked worked = farm_hand.step(map->map_farm_at(at), player, pack, reach, p_delta, p_interact, say_fn());
             if (worked.done) {
@@ -538,6 +581,17 @@ void Expedition::_process(double) {
 }
 
 // ---------------------------------------------------------------- 落脚、到达、回位、瞬移
+
+int Expedition::course_target() const {
+    const int freight_dock = freight.destination_dock_id(map);
+    if (freight_dock >= 0) {
+        const int index = map->map_find_dock(freight_dock);
+        if (index >= 0) {
+            return index;
+        }
+    }
+    return arrived ? origin_index : destination_index;
+}
 
 // 记下最近一次站稳的位置（坠落后回到这里），顺便判定是否已踏上目的码头那座岛
 void Expedition::track_footing() {
@@ -674,13 +728,18 @@ void Expedition::update_hud() {
         }
         lines.push_back(line);
     }
-    // 航行目标：没到过对岸就是目的码头，到过了就是回程
-    const int target = arrived ? origin_index : destination_index;
+    // 航行目标：接了托运就是托运的目的港；否则没到过对岸就是目的码头，到过了就是回程
+    const int target = course_target();
+    const bool toward_freight = freight.destination_dock_id(map) >= 0;
     String prompt;
     switch (helm.get_state()) {
         case Helm::ON_FOOT: {
             if (ship && target >= 0) {
-                lines.push_back(map->map_goal_text(target, arrived, at));
+                lines.push_back(map->map_goal_text(target, arrived && !toward_freight, at));
+            }
+            const String freight_line = freight.status_text(map);
+            if (!freight_line.is_empty()) {
+                lines.push_back(freight_line);
             }
             const bool near_helm = ship && helm.near_helm();
             prompt = near_helm ? (ship->can_fly() ? String(U"按 E 掌舵") : String(U"没有动力区，飞不起来")) : String(U"WASD 移动 · 空格 跳 · Shift 疾跑");
@@ -719,6 +778,11 @@ void Expedition::update_hud() {
                 prompt = String(U"W/S 选 · E 拿在手上 · Tab 合上");
                 break;
             }
+            const String cargo = freight.prompt(map);
+            if (!cargo.is_empty()) {
+                prompt = cargo; // 村仓 / 货位前、抱着货箱：先说这个
+                break;
+            }
             if (near_helm || bench) {
                 break;
             }
@@ -730,7 +794,7 @@ void Expedition::update_hud() {
         case Helm::PILOTING:
             if (target >= 0) {
                 lines.clear();
-                lines.push_back(helm.course_text(map->map_dock_berth(target), map->map_course_name(target, arrived)));
+                lines.push_back(helm.course_text(map->map_dock_berth(target), toward_freight ? String(U"托运 ") + map->map_dock_label(target) : map->map_course_name(target, arrived)));
             }
             prompt = helm.piloting_prompt(berths());
             break;
