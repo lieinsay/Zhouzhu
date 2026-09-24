@@ -21,6 +21,7 @@
 #include "dock_builder.h"
 #include "farm.h"
 #include "shipyard.h"
+#include "hinterland.h"
 #include "site_stream.h"
 #include "world_clock.h"
 #include "world_ground.h"
@@ -59,6 +60,8 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_pending_count"), &World::get_pending_count);
     ClassDB::bind_method(D_METHOD("get_dock_count"), &World::get_dock_count);
     ClassDB::bind_method(D_METHOD("find_dock", "id"), &World::find_dock);
+    ClassDB::bind_method(D_METHOD("get_freight_post", "village_id"), &World::get_freight_post);
+    ClassDB::bind_method(D_METHOD("get_freight_port_ids"), &World::get_freight_port_ids);
     ClassDB::bind_method(D_METHOD("get_dock_id", "index"), &World::get_dock_id);
     ClassDB::bind_method(D_METHOD("is_dock_berthable", "index"), &World::is_dock_berthable);
     ClassDB::bind_method(D_METHOD("get_dock_berth", "index"), &World::get_dock_berth);
@@ -169,6 +172,7 @@ bool World::load() {
         sites = WorldSites();
     }
     works = lay_world_works(terrain, sites);
+    freight_ports = plan_freight_ports(sites, works.docks, FreightRules());
 
     ground_material.instantiate();
     ground_material->set_roughness(1.0);
@@ -712,6 +716,39 @@ std::vector<Shipyard *> World::map_shipyards() const {
         }
     }
     return out;
+}
+
+FreightPost World::map_freight_post_near(const Vector3 &p_global, double p_range) {
+    FreightPost post;
+    WorldVillage *village = site_stream ? site_stream->village_at(p_global) : nullptr;
+    const int port = village ? find_freight_port(village->get_site_index()) : -1;
+    Vector3 at;
+    if (port < 0 || !village->get_freight_post(at) || Vector2(at.x - p_global.x, at.z - p_global.z).length() > p_range) {
+        return post;
+    }
+    post.port = port;
+    post.position = at;
+    post.name = village->get_site_name();
+    const SiteSettlement &site = village->get_site();
+    post.specialty = freight::specialty_of(uint64_t(site_stream->get_seed()), site.id, site.hamlet);
+    Hinterland *hinterland = village->get_hinterland();
+    VillageState *state = hinterland ? hinterland->get_state(village->get_site_index()) : nullptr;
+    post.store = state ? &state->store : nullptr;
+    return post;
+}
+
+Vector3 World::get_freight_post(int p_village_id) const {
+    WorldVillage *village = site_stream ? site_stream->get_village(p_village_id) : nullptr;
+    Vector3 at;
+    return village && village->get_freight_post(at) ? at : Vector3();
+}
+
+PackedInt32Array World::get_freight_port_ids() const {
+    PackedInt32Array ids;
+    for (const FreightPort &p : freight_ports) {
+        ids.push_back(p.site_id);
+    }
+    return ids;
 }
 
 GroundHost *World::map_settlement_at(const Vector3 &p_global) const {

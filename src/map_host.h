@@ -7,10 +7,21 @@
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
+#include "freight.h"
+
 class Farm;
 class GroundHost;
 class Shipyard;
 class WorldMap;
+
+// 一处村仓（跑货在它门前接单、打包、交货）
+struct FreightPost {
+    int port = -1; // map_freight_ports 的下标；−1 = 附近没有村仓
+    godot::Vector3 position; // 门前（全局）
+    Inventory *store = nullptr; // 村仓的账（村子的账本里的仓）；账还没开为 nullptr
+    std::string specialty; // 这村的土产（托运的货）
+    godot::String name; // 村名
+};
 
 // 地图宿主：玩家编排（Expedition）只认它。一张地图要让所有玩法跑起来，最少回答这些：
 //   地面（全局坐标）——多高、属于哪座岛、站在这儿稳不稳（地面块铺好了没有）；
@@ -60,6 +71,10 @@ public:
     virtual WorldMap *map_make_panel() { return nullptr; }
     virtual void map_refresh_panel(WorldMap *p_panel) const {}
     virtual double map_view_distance() const { return 0.0; }
+
+    // 跑货（可选，默认没有）：全图的港口村；离 p_global 水平 p_range 以内、已经铺出来的村仓
+    virtual const std::vector<FreightPort> &map_freight_ports() const;
+    virtual FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) { return FreightPost(); }
 
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
 };

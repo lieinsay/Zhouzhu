@@ -249,6 +249,10 @@ const WorldLedger *Hinterland::get_ledger(int p_index) const {
     return p_index >= 0 && p_index < int(ledgers.size()) ? ledgers[size_t(p_index)].get() : nullptr;
 }
 
+VillageState *Hinterland::get_state(int p_index) {
+    return p_index >= 0 && p_index < int(ledgers.size()) && ledgers[size_t(p_index)] ? ledgers[size_t(p_index)]->state.get() : nullptr;
+}
+
 int Hinterland::find_site(int p_site_id, bool p_hamlet) const {
     if (!world) {
         return -1;
@@ -293,6 +297,11 @@ Dictionary Hinterland::get_ledger_summary(int p_site_id, bool p_hamlet) const {
     d["working"] = working;
     d["outside"] = outside;
     d["plots"] = int(s.deployed ? s.claims.size() : s.held.size());
+    Dictionary store; // 仓里的：物品 id → 份数（粮种、土产）
+    for (const ItemStack &stack : s.store.get_stacks()) {
+        store[String::utf8(stack.item.c_str())] = stack.count;
+    }
+    d["store"] = store;
     return d;
 }
 

@@ -70,10 +70,11 @@ public:
     void set_layout(int p_index, const SettlementLayout &p_layout);
     std::shared_ptr<ClaimRegistry> get_registry() const { return taken; }
     const WorldLedger *get_ledger(int p_index) const;
+    VillageState *get_state(int p_index); // 这处的账本（跑货从它的仓里扣、往里交）；没开账为 nullptr
 
     // 查询（给测试、HUD）
     int find_site(int p_site_id, bool p_hamlet) const; // sites.settlements 下标；没有 −1
-    godot::Dictionary get_ledger_summary(int p_site_id, bool p_hamlet) const; // opened / deployed / clock / grain / water / harvested / people / working
+    godot::Dictionary get_ledger_summary(int p_site_id, bool p_hamlet) const; // opened / deployed / clock / grain / water / harvested / people / working / store
     godot::Dictionary get_stats() const;
     godot::String get_ledger_text(int p_site_id, bool p_hamlet) const; // save_village_state 的文本
 

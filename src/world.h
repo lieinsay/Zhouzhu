@@ -52,6 +52,7 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     godot::Dictionary info; // world.json
     WorldSites sites; // sites.tsv
     WorldWorks works; // 码头与船坞坪，与 sites.docks 一一对应
+    std::vector<FreightPort> freight_ports; // 港口村（跑货）
     bool loaded = false;
     SiteStream *site_stream = nullptr;
 
@@ -146,6 +147,10 @@ public:
     const WorldTerrain &get_terrain() const { return terrain; }
     const WorldSites &get_sites() const { return sites; }
     const std::vector<DockPlan> &get_docks() const { return works.docks; }
+    int find_freight_port(int p_site_index) const { return find_port(freight_ports, p_site_index); } // sites.settlements 下标 → 港口下标；不是港口 −1
+    // 测试与调试：某村（村号）村仓门前的全局位置；村子还没铺或不是港口村返回 (0,0,0)
+    godot::Vector3 get_freight_post(int p_village_id) const;
+    godot::PackedInt32Array get_freight_port_ids() const; // 港口村的村号
     SiteStream *get_site_stream() const { return site_stream; }
 
     // GroundHost（Farm、Shipyard 挂在它下面）
@@ -181,6 +186,8 @@ public:
     WorldMap *map_make_panel() override;
     void map_refresh_panel(WorldMap *p_panel) const override;
     double map_view_distance() const override { return 60000.0; } // 岛群近百公里宽，远处的岛也要看得见
+    const std::vector<FreightPort> &map_freight_ports() const override { return freight_ports; }
+    FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) override;
 
     void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
     godot::NodePath get_sites_path() const { return sites_path; }

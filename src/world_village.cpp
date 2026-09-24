@@ -3,9 +3,14 @@
 #include <algorithm>
 #include <cmath>
 
+#include <godot_cpp/classes/box_mesh.hpp>
+#include <godot_cpp/classes/label3d.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
 #include "dock_builder.h"
+#include "freight.h"
 #include "hinterland.h"
 
 using namespace godot;
@@ -43,6 +48,90 @@ void WorldVillage::_ready() {
     settlement->set_layout_path(layout_path);
     settlement->set_base(plan.layout);
     add_child(settlement); // 宿主已经好了：Settlement 进树就叠上改动、盖起来
+    if (world->find_freight_port(site_index) >= 0) {
+        build_freight_post();
+    }
+}
+
+namespace {
+
+Ref<StandardMaterial3D> plain(const Color &p_color) {
+    Ref<StandardMaterial3D> m;
+    m.instantiate();
+    m->set_albedo(p_color);
+    m->set_roughness(0.95f);
+    return m;
+}
+
+void add_block(Node3D *p_parent, const String &p_name, const Vector3 &p_size, const Vector3 &p_at, const Ref<StandardMaterial3D> &p_material) {
+    Ref<BoxMesh> mesh;
+    mesh.instantiate();
+    mesh->set_size(p_size);
+    mesh->set_material(p_material);
+    MeshInstance3D *instance = memnew(MeshInstance3D);
+    instance->set_name(p_name);
+    instance->set_mesh(mesh);
+    instance->set_position(p_at);
+    p_parent->add_child(instance);
+}
+
+} // namespace
+
+// 村仓门边：三只货箱（箱盖是这村土产的颜色）+ 一根木杆挂牌子。只是摆设，不挡人
+void WorldVillage::build_freight_post() {
+    const SettlementLayout &layout = settlement->get_model();
+    const int k = freight_post_building(layout, 0.0, 0.0);
+    if (k < 0) {
+        return;
+    }
+    double x = 0, z = 0, px = 0, pz = 0, yaw = 0;
+    freight_post_spot(layout.get_items()[size_t(k)], x, z, px, pz, yaw);
+    const double y = world->get_surface_height(site.x + px, site.z + pz);
+    if (std::isnan(y)) {
+        return;
+    }
+    freight_post = memnew(Node3D);
+    freight_post->set_name("FreightPost");
+    freight_post->set_position(Vector3(real_t(px), real_t(y), real_t(pz)));
+    freight_post->set_rotation(Vector3(0, real_t(yaw), 0));
+    add_child(freight_post);
+    float r = 0, g = 0, b = 0;
+    freight::crate_color(freight::specialty_of(seed, site.id, site.hamlet), r, g, b);
+    const Ref<StandardMaterial3D> wood = plain(Color(0.58f, 0.44f, 0.26f)), lid = plain(Color(r, g, b)), pole = plain(Color(0.33f, 0.22f, 0.15f));
+    const Vector3 crates[3] = { Vector3(-0.8f, 0.0f, 0.0f), Vector3(0.8f, 0.0f, 0.1f), Vector3(-0.1f, 1.1f, 0.05f) };
+    for (int c = 0; c < 3; c++) {
+        add_block(freight_post, vformat("Crate%d", c), Vector3(1.4f, 1.1f, 1.4f), crates[c] + Vector3(0, 0.55f, 0), wood);
+        add_block(freight_post, vformat("Lid%d", c), Vector3(1.2f, 0.05f, 1.2f), crates[c] + Vector3(0, 1.125f, 0), lid);
+    }
+    add_block(freight_post, "Pole", Vector3(0.14f, 3.2f, 0.14f), Vector3(1.9f, 1.6f, 0.0f), pole);
+    add_block(freight_post, "Board", Vector3(1.3f, 0.5f, 0.06f), Vector3(1.9f, 2.7f, 0.1f), plain(Color(0.8f, 0.7f, 0.5f)));
+    Label3D *label = memnew(Label3D);
+    label->set_name("Sign");
+    label->set_text(String(U"村仓 · 托运"));
+    label->set_position(Vector3(1.9f, 3.45f, 0.0f));
+    label->set_billboard_mode(BaseMaterial3D::BILLBOARD_ENABLED);
+    label->set_font_size(48);
+    label->set_outline_size(12);
+    label->set_pixel_size(0.008f);
+    label->set_visibility_range_end(80.0f);
+    freight_post->add_child(label);
+}
+
+bool WorldVillage::get_freight_post(Vector3 &r_global) const {
+    if (!freight_post || !settlement) {
+        return false;
+    }
+    const SettlementLayout &layout = settlement->get_model();
+    const int k = freight_post_building(layout, 0.0, 0.0);
+    if (k < 0) {
+        return false;
+    }
+    double x = 0, z = 0, px = 0, pz = 0, yaw = 0;
+    freight_post_spot(layout.get_items()[size_t(k)], x, z, px, pz, yaw);
+    const double gx = site.x + x, gz = site.z + z;
+    const double y = world->get_surface_height(gx, gz);
+    r_global = Vector3(real_t(gx), real_t(std::isnan(y) ? 0.0 : y), real_t(gz));
+    return true;
 }
 
 void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk) {

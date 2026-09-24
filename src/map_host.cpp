@@ -11,6 +11,11 @@ bool MapHost::map_footing(const godot::Vector3 &p_global) const {
     return !std::isnan(ground) && std::abs(p_global.y - ground) <= 1.0;
 }
 
+const std::vector<FreightPort> &MapHost::map_freight_ports() const {
+    static const std::vector<FreightPort> none;
+    return none;
+}
+
 int MapHost::map_find_dock(int p_id) const {
     for (int k = 0; k < map_dock_count(); k++) {
         if (map_dock_id(k) == p_id) {
