@@ -69,3 +69,4 @@ seed = 2051
 [node name="Hinterland" type="Hinterland" parent="."]
 
 [node name="Ship" parent="." instance=ExtResource("2_ship")]
+layout = PackedStringArray("0,0,-2:storage", "0,0,-1:power", "0,0,0:bridge")
