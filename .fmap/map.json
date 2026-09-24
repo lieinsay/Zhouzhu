@@ -350,7 +350,7 @@
     {
       "id": "buildings",
       "label": "建筑表",
-      "detail": "四种建筑的尺寸表：面阔 × 进深、台基高、墙高、屋脊高与显示名；按 id 查。尺度按人（1.8 m）定、比真实略大一成。眼下只是摆设：进不去、用不了。",
+      "detail": "民居 / 堂屋 / 仓 / 望楼四种房屋 + 非房屋的船台（house=false：没有模板与屋里，村民不住不串门）；尺寸、台基、门都在表里。",
       "tag": "原语",
       "evidence": "zhouzhu_core_tests settlement_model 段",
       "sources": [
@@ -1190,6 +1190,55 @@
         "game/tests/river_e2e.gd"
       ],
       "since": "e24"
+    },
+    {
+      "id": "land-berth",
+      "label": "船台几何",
+      "detail": "台面上的坞墩（立在格与格交界、不顶浮石）、30° 跳板接舷门、系船桩；接触线在跳板顶，甲板比台面高 5.3 m；ship_problem 说一条船停不停得下（一列宽、半长 ≤ 22 m）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：坞墩与跳板几何、停不停得下；site_survey：2051 的 180 个村全有船台",
+      "sources": [
+        "src/land_berth.h",
+        "src/land_berth.cpp"
+      ],
+      "since": "e25",
+      "parent": "buildings"
+    },
+    {
+      "id": "freight-hand",
+      "label": "FreightHand 跑货",
+      "detail": "村仓（船台跳板脚前）接托运、打包 / 放回 / 交货，货位前装卸；让船画货箱、让 Player 抱箱子；HUD 托运行与航向改指目的村的船台。",
+      "tag": "场景角色",
+      "evidence": "freight_e2e PASS",
+      "sources": [
+        "src/freight_hand.h",
+        "src/freight_hand.cpp"
+      ],
+      "since": "e26",
+      "parent": "expedition"
+    },
+    {
+      "id": "freight",
+      "label": "跑货规矩",
+      "detail": "能托运的村（全部非散户）、各村土产、开委托（别岛最近的村、40 km 内、每箱 8 文 + 1 文/km）、货箱账 CargoBook（打包 / 放回 / 装卸货位 / 交货付钱）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests 753 项 0 失败；2051 村152 → 村127，运费 30 文",
+      "sources": [
+        "src/freight.h",
+        "src/freight.cpp"
+      ],
+      "since": "e27"
+    },
+    {
+      "id": "freight-e2e",
+      "label": "跑货端到端测试",
+      "detail": "主码头上船 → 落上村152 船台 → 接单打包两箱装船 → 飞到村127 船台 → 抱下交齐；全程不瞬移。",
+      "tag": "验收",
+      "evidence": "PASS：两边仓账各挪 10 份、得运费 30 文，模拟 266.8 s",
+      "sources": [
+        "game/tests/freight_e2e.gd"
+      ],
+      "since": "e27"
     }
   ],
   "edges": [
@@ -2639,6 +2688,111 @@
     {
       "from": "river-e2e",
       "to": "world-river-water"
+    },
+    {
+      "from": "building-parts",
+      "to": "land-berth",
+      "label": "非房屋的台面部件"
+    },
+    {
+      "from": "land-berth",
+      "to": "ship-layout",
+      "label": "船宽与船长"
+    },
+    {
+      "from": "freight-hand",
+      "to": "freight",
+      "label": "委托与货箱账",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "freight-hand",
+      "to": "map-host",
+      "label": "村仓与仓账",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "freight-hand",
+      "to": "ship",
+      "label": "货位与货箱",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "freight-hand",
+      "to": "player",
+      "label": "抱着箱子",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "freight",
+      "to": "crops",
+      "label": "土产与铜钱",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "freight",
+      "to": "inventory",
+      "label": "仓账",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "expedition",
+      "to": "settlement-node",
+      "label": "船台泊位",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "helm",
+      "to": "land-berth",
+      "label": "停不下的原因",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "freight",
+      "label": "能托运的村",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "world-village",
+      "to": "land-berth",
+      "label": "村仓的位置",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "village-plan",
+      "to": "buildings",
+      "label": "排一座船台",
+      "chains": [
+        "freight"
+      ]
+    },
+    {
+      "from": "freight-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "freight"
+      ]
     }
   ],
   "chains": [
@@ -3624,6 +3778,106 @@
         "site-survey-tool",
         "world-2051-scene"
       ]
+    },
+    {
+      "id": "freight",
+      "title": "切片八：跑货——在一个村子打包货物，飞到另一个村子交货",
+      "story": "玩家把空艇落上村152 的船台，走下跳板在村仓接下一单托运，把麻布打成两箱一箱箱抱上船放到货位上，飞 6.6 km 落上另一座岛上村127 的船台，抱下来交进那村的仓，拿到运费。",
+      "date": "2026-09-24",
+      "color": "#4f8ff7",
+      "commits": "1c821d2..",
+      "steps": [
+        {
+          "text": "进入岛群：每个村（不算散户）铺村时都排了一座船台，开账时仓里按户数记上本村土产；开局空艇多一节储存区（4 个货位，20 m/s）",
+          "nodes": [
+            "village-plan",
+            "buildings",
+            "land-berth",
+            "world-ledger",
+            "village-state",
+            "ship",
+            "ship-layout",
+            "world-2051-scene"
+          ]
+        },
+        {
+          "text": "掌舵飞到村152 的船台上空按 E：船把舷门贴到跳板顶、坐在坞墩上；船太宽太长就不让落并说明",
+          "nodes": [
+            "helm",
+            "expedition",
+            "settlement-node",
+            "land-berth",
+            "ship"
+          ]
+        },
+        {
+          "text": "走下跳板到村仓：提示这村眼下的托运（最近的别岛村子、箱数、运费），按 E 接下并打包一箱，仓账扣 5 份",
+          "nodes": [
+            "freight-hand",
+            "freight",
+            "map-host",
+            "world-node",
+            "world-village",
+            "hinterland",
+            "village-state",
+            "player"
+          ]
+        },
+        {
+          "text": "抱着箱子只能慢走、不能跑跳、掌不了舵；走上跳板在货位旁按 E 放上去，船上出现货箱，再回去打第二箱",
+          "nodes": [
+            "freight-hand",
+            "player",
+            "ship",
+            "freight"
+          ]
+        },
+        {
+          "text": "掌舵起飞：航向行改指目的村的船台，飞过去落上船台",
+          "nodes": [
+            "expedition",
+            "helm",
+            "map-host",
+            "world-node",
+            "freight-hand"
+          ]
+        },
+        {
+          "text": "从货位抱起箱子走下跳板，在村仓前按 E 交货：货进目的村的仓，交齐了运费铜钱进背包",
+          "nodes": [
+            "freight-hand",
+            "freight",
+            "inventory",
+            "crops",
+            "village-state",
+            "voyage-pack"
+          ]
+        }
+      ],
+      "nodes": [
+        "freight",
+        "freight-e2e",
+        "village-plan",
+        "buildings",
+        "land-berth",
+        "world-ledger",
+        "village-state",
+        "ship",
+        "ship-layout",
+        "world-2051-scene",
+        "helm",
+        "expedition",
+        "settlement-node",
+        "freight-hand",
+        "map-host",
+        "world-node",
+        "world-village",
+        "hinterland",
+        "player",
+        "inventory",
+        "crops",
+        "voyage-pack"
+      ]
     }
   ],
   "events": [
@@ -4472,6 +4726,107 @@
         "peers": [
           "river-e2e"
         ]
+      }
+    },
+    {
+      "id": "e25",
+      "type": "extend",
+      "date": "2026-09-24",
+      "title": "拓展：船台——船在陆地上靠港",
+      "summary": "建筑表多一种非房屋的船台（44 × 17 m）：台面、坞墩、跳板、系船桩；铺村给每个村排一座，布置模式按 5 能放；空艇掌舵时把它当泊位落上去，停不下太宽 / 太长的船。",
+      "commits": "dd012fe..",
+      "nodes": [
+        "buildings",
+        "land-berth"
+      ],
+      "info": {
+        "node": "buildings",
+        "children": [
+          "land-berth"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e26",
+      "type": "extend",
+      "date": "2026-09-24",
+      "title": "拓展：编排多一个跑货部件",
+      "summary": "FreightHand：按 E 时先问它；抱着箱子不能掌舵、改船、种地。",
+      "nodes": [
+        "expedition",
+        "freight-hand"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "freight-hand"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e27",
+      "type": "slice",
+      "date": "2026-09-24",
+      "title": "切片八：跑货——在一个村子打包货物，飞到另一个村子交货",
+      "summary": "玩家把空艇落上村152 的船台，走下跳板在村仓接下一单托运，把麻布打成两箱一箱箱抱上船放到货位上，飞 6.6 km 落上另一座岛上村127 的船台，抱下来交进那村的仓，拿到运费。",
+      "commits": "1c821d2..",
+      "chain": "freight",
+      "nodes": [
+        "freight",
+        "freight-e2e",
+        "village-plan",
+        "buildings",
+        "land-berth",
+        "world-ledger",
+        "village-state",
+        "ship",
+        "ship-layout",
+        "world-2051-scene",
+        "helm",
+        "expedition",
+        "settlement-node",
+        "freight-hand",
+        "map-host",
+        "world-node",
+        "world-village",
+        "hinterland",
+        "player",
+        "inventory",
+        "crops",
+        "voyage-pack"
+      ],
+      "info": {
+        "created": [
+          "freight",
+          "freight-e2e"
+        ],
+        "reused": [
+          "village-plan",
+          "buildings",
+          "land-berth",
+          "world-ledger",
+          "village-state",
+          "ship",
+          "ship-layout",
+          "world-2051-scene",
+          "helm",
+          "expedition",
+          "settlement-node",
+          "freight-hand",
+          "map-host",
+          "world-node",
+          "world-village",
+          "hinterland",
+          "player",
+          "inventory",
+          "crops",
+          "voyage-pack"
+        ],
+        "updated": []
       }
     }
   ],
