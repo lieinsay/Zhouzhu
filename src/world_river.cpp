@@ -34,6 +34,7 @@ int64_t bucket_key(int p_i, int p_j) {
 
 struct RawPoint {
     double x, z, acc;
+    int64_t cell = -1; // 来自哪一格（抽稀磨圆后按最近的原格补上；河宽水深从这格取）
 };
 
 // 端点不动的 Chaikin 磨角
@@ -287,7 +288,7 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
         for (size_t c : cells) {
             double x, z;
             center(c, x, z);
-            raw.push_back({ x, z, double(g.flow_acc[c]) });
+            raw.push_back({ x, z, double(g.flow_acc[c]), int64_t(c) });
         }
         const size_t last = cells.back();
         const uint8_t code = g.flow[last];
@@ -295,12 +296,12 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
         if (job.junction >= 0) {
             double x, z;
             center(size_t(job.junction), x, z);
-            raw.push_back({ x, z, raw.back().acc });
+            raw.push_back({ x, z, raw.back().acc, raw.back().cell });
         } else if ((code & WorldGrid::FLOW_TO_VOID) && (code & 0x0F) >= 1 && (code & 0x0F) <= 8) {
             const int *off = WorldGrid::FLOW_OFFSETS[(code & 0x0F) - 1];
             double x, z;
             center(last, x, z);
-            raw.push_back({ x + off[1] * g.res, z + off[0] * g.res, raw.back().acc });
+            raw.push_back({ x + off[1] * g.res, z + off[0] * g.res, raw.back().acc, raw.back().cell });
             to_void = true;
         }
         if (raw.size() < 2) {
@@ -329,6 +330,7 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
                 j++;
             }
             pts[i].acc = cells_raw[j].acc;
+            pts[i].cell = cells_raw[j].cell;
         }
 
         RiverStem stem;
@@ -397,6 +399,7 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
                     const RawPoint mid{ 0.5 * (lo.x + hi.x), 0.5 * (lo.z + hi.z), 0.5 * (lo.acc + hi.acc) };
                     (p_shore(mid.x, mid.z) > 0.0 ? lo : hi) = mid;
                 }
+                lo.cell = pts[cut - 1].cell;
                 pts.resize(cut);
                 if (std::hypot(lo.x - pts.back().x, lo.z - pts.back().z) > 0.5) {
                     pts.push_back(lo);
@@ -426,6 +429,12 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
             const double jitter = 1.0 + rules.width_jitter * hash_fbm(stem_seed ^ SEED_WIDTH, arc, 0.0, 90.0, 2);
             v.width = base_width(v.acc) * jitter * (0.5 + 0.5 * ramp);
             v.depth = std::max(rules.min_depth_m, rules.depth_k * std::pow(q, rules.depth_exp)) * (0.35 + 0.65 * ramp);
+            if (g.has_channels() && pts[i].cell >= 0) {
+                // 生成器的河道（栅格 v3）：宽深取大——生成器夸张过的河宽更贴它自己下切出的河谷，游戏的公式兜住它没算宽的小溪
+                const size_t c = size_t(pts[i].cell);
+                v.width = std::max(v.width, double(g.river_width[c]) * jitter * (0.5 + 0.5 * ramp));
+                v.depth = std::max(v.depth, double(g.river_depth[c]) * (0.35 + 0.65 * ramp));
+            }
             v.floodplain = std::clamp(rules.floodplain_k * v.width, rules.floodplain_min_m, rules.floodplain_max_m);
             v.dry = rules.dry_threshold(v.acc);
         }
@@ -433,6 +442,11 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
         const size_t m = stem.v.size();
         for (size_t i = 0; i < m; i++) {
             stem.v[i].surface = g.height_at(stem.v[i].x, stem.v[i].z) - rules.entrench_m;
+            if (g.has_channels() && pts[i].cell >= 0 && g.river_width[size_t(pts[i].cell)] > 0.0f) {
+                // 生成器的河道格高程就是下切后的河床：中线摆离格心时双三次会爬上沟坡，水面不高于生成器的 河床 + 水深
+                const size_t c = size_t(pts[i].cell);
+                stem.v[i].surface = std::min(stem.v[i].surface, double(g.height[c]) + double(g.river_depth[c]));
+            }
         }
         if (joined) {
             stem.v[m - 1].surface = join.surface;
