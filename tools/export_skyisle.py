@@ -1,22 +1,24 @@
 """把 skyisle-gen 的一个岛群（第三层产物）转成游戏资产。
 
     python tools/export_skyisle.py <岛群目录> <输出目录>
-    python tools/export_skyisle.py D:/Project/My/skyisle-gen/out/seed42/islands/2051 game/worlds/2051
+    python tools/export_skyisle.py D:/Project/skyisle-gen/out/seed42/islands/2051 game/worlds/2051
     python tools/export_skyisle.py --sites game/worlds/2051      # 只按已有的 world.json 重写 sites.tsv
     python tools/export_skyisle.py --terrain-only <岛群目录> game/worlds/2051
                                    # 只换地形（terrain.bin / weather.tsv / world.json 的岛表与栅格）：村、码头等点位沿用已有的 world.json
     python tools/export_skyisle.py --resources <岛群目录> game/worlds/2051
                                    # 只写 resources.tsv（资源点），别的文件不动
 
-读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json，写五份文件：
+读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json，写五份文件。
+生成器（台面口径那一版起）的 height_m 是主岛陆地高程的中位数，峰由第三层长出来；聚落层没有码头、只有泊场——
+码头由这里从泊场推出来（docks_from_landings），村里并进镇的非农户与专业聚落（见 export）：
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
-    u32      版本 = 3（1 没有水文；2 没有最后三段河道与地形区；游戏三版都读）
+    u32      版本 = 4（1 没有水文；2 没有最后三段河道与地形区；3 的高程是 u16 厘米、封顶 655 m；游戏四版都读）
     u32      rows, cols
     f64      res_m（格距）
     f64      x0, z0（格 (0, 0) 格心的游戏坐标，米）
-    u16[rows·cols]  高程：云带顶以上的米数 × 100；虚空格填最近陆地格的值（插值到岸外不跳变）
+    f32[rows·cols]  高程：云带顶以上的米数（v4；v1–v3 是 u16 厘米，生成器有了真山以后装不下）；虚空格填最近陆地格的值（插值到岸外不跳变）
     i16[rows·cols]  岸距：到岸线的有符号距离（米），陆地为正、虚空为负
     u8 [rows·cols]  最近的岛号（陆地即本岛；虚空取最近陆地格的岛）
     u8 [rows·cols]  地表类（island.json landcover.classes 的下标，0 = 虚空）
@@ -37,6 +39,8 @@ weather.tsv —— 一年的逐日天气（skyisle-gen 的 weather_y0.csv），�
     day  precip_mm  temp_c  type
 
 world.json —— 岛表与点位，坐标全换成游戏的米：x 向东、z 向南，原点 = 群心。
+    villages：生成器的村（镇的市户并进镇所在的村，记 town），其后是专业聚落（记 special，村号接着往下编）；
+    docks：从泊场推的码头（landing 是推出它的泊场，serves 是并进来的泊场所属的村号）。
 
 sites.tsv —— 同一份岛表与点位的平铺版，给不读 JSON 的纯 C++（src/world_sites.*：游戏里铺码头与村落、批量体检工具）。
     UTF-8，制表符分隔，# 开头是注释，一行一条：
@@ -63,8 +67,7 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 
-VERSION = 3
-HEIGHT_SCALE = 100.0
+VERSION = 4
 
 
 # D8 流向的邻格（行、列偏移），下标 + 1 即 terrain.bin 里的流向码
@@ -208,6 +211,47 @@ def to_game(km):
     return [round(km[0] * 1000.0, 1), round(-km[1] * 1000.0, 1)]
 
 
+DOCK_SHORE_MAX_M = 1000.0  # 泊场离岸（格心到岸线）这么近才在岸边设码头
+DOCK_MERGE_KM = 2.0  # 同岛的码头这么近就并成一个
+
+
+def docks_from_landings(settle, island, res, origin_km, owner_of):
+    """生成器的聚落层没有码头（飞船随处可停，每个聚落旁一块泊场）；游戏的码头（栈桥、出生、船坞）从泊场推：
+    离岸 DOCK_SHORE_MAX_M 内的泊场在同岛最近的岸缘格（挨着虚空的陆地格，同旧生成器的码头点）设一个码头，
+    同岛 DOCK_MERGE_KM 内已有码头的并进去；主泊场（仓场）一定有码头，就是主码头。
+    owner_of(泊场) → 游戏里的村号（serves 记这些）。按主码头在前、再按泊场号编号。"""
+    land = island >= 0
+    edge = land & ~ndimage.binary_erosion(land, structure=np.ones((3, 3)), border_value=0)
+    inside = ndimage.distance_transform_edt(land) * res - 0.5 * res
+    ox_km, oy_km = origin_km
+    res_km = res / 1000.0
+
+    def cell_km(i, j):
+        return [ox_km + (j + 0.5) * res_km, oy_km - (i + 0.5) * res_km]
+
+    kept = []
+    for l in sorted(settle.get("landings") or [], key=lambda l: (not l.get("main"), l["id"])):
+        i, j = l["cell"]
+        if not l.get("main") and inside[i, j] > DOCK_SHORE_MAX_M:
+            continue
+        k = l["island"]
+        # 同岛最近的岸缘格
+        ei, ej = np.where(edge & (island == k))
+        n = int(np.argmin((ei - i) ** 2 + (ej - j) ** 2))
+        km = cell_km(int(ei[n]), int(ej[n]))
+        owner = owner_of(l)
+        near = next((d for d in kept if d["island"] == k and np.hypot(d["km"][0] - km[0], d["km"][1] - km[1]) < DOCK_MERGE_KM), None)
+        if near is not None:
+            if owner is not None and owner not in near["serves"]:
+                near["serves"].append(owner)
+            continue
+        kept.append({"island": k, "km": km, "main": bool(l.get("main")), "landing": l["id"], "serves": [owner] if owner is not None else []})
+    docks = []
+    for n, d in enumerate(kept):
+        docks.append({"id": n + 1, "island": d["island"], "pos": to_game(d["km"]), "main": d["main"], "landing": d["landing"], "serves": d["serves"]})
+    return docks
+
+
 def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
     terrain = np.load(src / "terrain.npz")
     info = json.loads((src / "island.json").read_text(encoding="utf-8"))
@@ -252,7 +296,7 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
         f.write(b"ZZWG")
         f.write(struct.pack("<III", VERSION, rows, cols))
         f.write(struct.pack("<ddd", res, x0, z0))
-        f.write(np.clip(np.round(height * HEIGHT_SCALE), 0, 65535).astype("<u2").tobytes())
+        f.write(height.astype("<f4").tobytes())
         f.write(np.clip(np.round(shore), -32767, 32767).astype("<i2").tobytes())
         f.write(nearest.astype(np.uint8).tobytes())
         f.write(terrain["landcover"].astype(np.uint8).tobytes())
@@ -276,6 +320,7 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
             "main": bool(isl.get("is_main", isl["id"] == 0)),
             "rim_m": isl["rim_m"],
             "peak_m": isl["peak_m"],
+            "surface_m": isl.get("surface_m"),
             "cliff_m": isl["cliff_m"],
             "keel_m": isl["keel_m"],
             "max_shore_m": round(float(max_shore[isl["id"]]), 1),
@@ -291,6 +336,23 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
             out.append(row)
         return out
 
+    # 村：生成器的村，镇的非农户住进它所在的村（邑治 = 村001 + 邑里的市户）；专业聚落（浮石采石村、窑村……）也是村，接着村号往下编
+    villages = places("villages", ["name", "households", "seat", "elev_m", "landing"])
+    by_id = {v["id"]: v for v in villages}
+    owner = {v["name"]: v["id"] for v in villages}
+    for town in settle.get("towns") or []:
+        v = by_id[town["village"]]
+        v["households"] += int(town.get("households_market", 0))
+        v["town"] = town["name"]
+        owner[town["name"]] = v["id"]
+    next_id = max(by_id, default=0) + 1
+    for sp in settle.get("specials") or []:
+        row = {"id": next_id, "island": sp["island"], "pos": to_game(sp["km"]), "name": sp["name"], "households": sp["households"],
+               "special": sp["kind"], "landing": sp.get("landing")}
+        villages.append(row)
+        owner[sp["name"]] = next_id
+        next_id += 1
+
     world = {
         "source": {
             "run": info["meta"]["run"],
@@ -301,13 +363,13 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
             "lat": info["meta"]["lat"],
             "lon": info["meta"]["lon"],
         },
-        "grid": {"rows": rows, "cols": cols, "res_m": res, "x0": x0, "z0": z0, "height_scale": HEIGHT_SCALE},
+        "grid": {"rows": rows, "cols": cols, "res_m": res, "x0": x0, "z0": z0},
         "landcover": {"classes": info["landcover"]["classes"], "palette": info["landcover"]["palette"]},
         "islands": islands,
         "links": [{"a": l["a"], "b": l["b"], "kind": l["kind"], "gap_km": l["gap_km"]} for l in info["links"]],
-        "villages": places("villages", ["name", "households", "seat", "elev_m"]),
+        "villages": villages,
         "hamlets": places("hamlets", ["name", "households", "elev_m"]),
-        "docks": places("docks", ["main", "serves"]),
+        "docks": docks_from_landings(settle, island, res, (ox_km, oy_km), lambda l: owner.get(l.get("of"))) if not terrain_only else [],
         "outposts": places("outposts", ["settlement", "households"]),
         "bridgeheads": places("bridgeheads", ["to", "gap_km"]),
         "population": settle.get("population"),
