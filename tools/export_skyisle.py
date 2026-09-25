@@ -6,7 +6,7 @@
     python tools/export_skyisle.py --terrain-only <岛群目录> game/worlds/2051
                                    # 只换地形（terrain.bin / weather.tsv / world.json 的岛表与栅格）：村、码头等点位沿用已有的 world.json
     python tools/export_skyisle.py --resources <岛群目录> game/worlds/2051
-                                   # 只写 resources.tsv（资源点），别的文件不动
+                                   # 只写 resources.tsv（点 / 片 / 赋存区 / 采场），别的文件不动（采场挂的村号按生成器的聚落层算，须与已有 world.json 同一版）
 
 读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json，写五份文件。
 生成器（台面口径那一版起）的 height_m 是主岛陆地高程的中位数，峰由第三层长出来；聚落层没有码头、只有泊场——
@@ -14,7 +14,7 @@
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
-    u32      版本 = 4（1 没有水文；2 没有最后三段河道与地形区；3 的高程是 u16 厘米、封顶 655 m；游戏四版都读）
+    u32      版本 = 5（1 没有水文；2 没有河道与地形区；3 的高程是 u16 厘米、封顶 655 m；4 没有最后两段资源栅格；游戏各版都读）
     u32      rows, cols
     f64      res_m（格距）
     f64      x0, z0（格 (0, 0) 格心的游戏坐标，米）
@@ -29,6 +29,8 @@ terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北�
     u16[rows·cols]  河宽（v3）：分米；生成器 river.py 的水力几何（夸张后的数；溪涧为湿季值），非河道格为 0
     u16[rows·cols]  水深（v3）：厘米，同上。河道格的高程是河床（生成器已下切），水面 = 河床 + 水深
     u8 [rows·cols]  地形区（v3）：resources.py 的 ZONE_NAMES 下标（0 虚空 1 高山 2 山地 3 丘陵 4 台地平原 5 河谷 6 崖缘 7 水域）
+    u8 [6][rows·cols] 赋存场（v5）：生成器的 res_field，每类一层、品位 × 255，各类可叠在同一格；层序 = FIELD_KINDS（金属矿、硫磺、砂金、黏土、砂砾、石料）
+    u16[rows·cols]  片号（v5）：生成器的 patch_id + 1（片 = 林木 / 泥炭芦苇 / 浮石露头 / 鸟粪石，即 resources.tsv 里 form = patch 的 deposit id）；0 = 不在片里
 
     流向由生成器的汇流面积（flowacc_km2）反推：挨着虚空的格同生成器一律流出去（河口）；其余格按汇流守恒配给下游——生成器的 D8 走在它自己的「路由面」上（填平面 + 弯曲噪声 + 朝岸缘微倾，
     河道据此下切），导出的高程上重算的 D8 会把整片流域改道。下游格的汇流 = 本格 + 各上游格的汇流，所以按汇流从大到小，
@@ -49,12 +51,17 @@ sites.tsv —— 同一份岛表与点位的平铺版，给不读 JSON 的纯 C+
     village  id  island  x  z  households  seat(0/1)  name
     hamlet   id  island  x  z  households  0           name
 
-resources.tsv —— 资源点（skyisle-gen resources.py 的 deposits；src/resource_sites.*：游戏里铺采集点、体检工具）。
+resources.tsv —— 资源的三种形态（skyisle-gen resources.py，它的 DESIGN-NOTES 四点二十一；src/resource_sites.*：游戏里铺采场、地标与散布，体检工具）。
     UTF-8，制表符分隔，# 开头是注释，一行一条：
-    deposit  id  kind  island  x  z  area_km2  grade  subtype
-    kind 是生成器的键（quarry / clay / floatstone / timber / gravel / placer / ore / peat / sulfur / guano / spring / hotspring / cave），
-    x z 是矿点的格心（米，游戏坐标；露天矿取带内第一个矿坑），grade 是 上 / 中 / 下，subtype 没有就空着。
-    斑块的其余格不导出：游戏只在矿点附近落一处采集点。
+    deposit     id  kind  island  x  z  area_km2  grade  subtype  form
+    occurrence  id  kind  island  x  z  area_km2  grade  subtype  length_km  axis_deg
+    working     id  kind  island  x  z  occurrence  grade  subtype  villages
+    deposit 是点（form = point：泉眼 / 温泉 / 洞穴）与片（form = patch：林木 / 泥炭芦苇 / 浮石露头 / 鸟粪石；片占的格见 terrain.bin 的片号），x z 是代表格；
+    occurrence 是散的赋存区（金属矿 / 硫磺 / 砂金 / 黏土 / 砂砾 / 石料：品位 ≥ 阈值的连通块；逐格品位见 terrain.bin 的赋存场），x z 是品位峰值格；
+    working 是采场（矿坑 / 硫磺坑 / 采石场 / 土坑 / 采砂场 / 淘金点），occurrence 是它所在的赋存区，grade 是那一格的品位（0–1），subtype 随赋存区，
+    villages 是用它的村（游戏的村号，逗号分隔，专业聚落按导出时接着编的村号；没有写 -）。
+    kind 是生成器的键（stone / clay / gravel / placer / ore / sulfur / timber / peat / floatstone / guano / spring / hotspring / cave），
+    x z 是格心（米，游戏坐标），deposit / occurrence 的 grade 是 上 / 中 / 下，subtype 没有就空着。
 
 只依赖 numpy + scipy。游戏运行时不需要它，也不读 skyisle-gen 的 out/。
 """
@@ -67,7 +74,8 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 
-VERSION = 4
+VERSION = 5
+FIELD_KINDS = ["ore", "sulfur", "placer", "clay", "gravel", "stone"]  # terrain.bin 赋存场的层序（同生成器的 res_field）
 
 
 # D8 流向的邻格（行、列偏移），下标 + 1 即 terrain.bin 里的流向码
@@ -306,6 +314,15 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
         f.write(np.clip(np.round(np.where(land, terrain["river_width_m"], 0) * 10.0), 0, 65535).astype("<u2").tobytes())
         f.write(np.clip(np.round(np.where(land, terrain["river_depth_m"], 0) * 100.0), 0, 65535).astype("<u2").tobytes())
         f.write(np.where(land, terrain["terrain_zone"], 0).astype(np.uint8).tobytes())
+        # v5：赋存场（6 层品位）与片号
+        kinds = json.loads((src / "resources.json").read_text(encoding="utf-8"))["fields"]["kinds"]
+        assert kinds == FIELD_KINDS, kinds
+        field = terrain["res_field"]
+        assert field.shape == (len(FIELD_KINDS), rows, cols)
+        f.write(np.where(land[None, :, :], field, 0).astype(np.uint8).tobytes())
+        patch = terrain["patch_id"].astype(np.int64)
+        assert patch.max() < 65535
+        f.write(np.where(land & (patch >= 0), patch + 1, 0).astype("<u2").tobytes())
 
     write_weather(src, info, dst)
 
@@ -412,7 +429,8 @@ def write_sites(world: dict, dst: Path) -> None:
 
 def write_resources(src: Path, dst: Path) -> None:
     info = json.loads((src / "island.json").read_text(encoding="utf-8"))
-    deposits = json.loads((src / "resources.json").read_text(encoding="utf-8"))["deposits"]
+    resources = json.loads((src / "resources.json").read_text(encoding="utf-8"))
+    settle = json.loads((src / "settlements.json").read_text(encoding="utf-8"))
     ox_km, oy_km = info["raster"]["origin_km"]
     res_km = float(info["raster"]["res_m"]) / 1000.0
 
@@ -420,14 +438,31 @@ def write_resources(src: Path, dst: Path) -> None:
         i, j = cell
         return [ox_km + (j + 0.5) * res_km, oy_km - (i + 0.5) * res_km]
 
+    # 采场挂的村 → 游戏的村号：生成器的村号不变，专业聚落接着村号往下编（同 export）
+    next_id = max((v["id"] for v in settle.get("villages") or []), default=0) + 1
+    special_ids = {sp["id"]: next_id + k for k, sp in enumerate(settle.get("specials") or [])}
+    occ_subtype = {o["id"]: o.get("subtype") or "" for o in resources["occurrences"]}
+
     lines = ["# 由 tools/export_skyisle.py 从 resources.json 导出，别手改。格式见那个脚本开头。"]
-    for d in deposits:
-        km = cell_km(d["pits"][0]) if d.get("pits") else d["km"]
-        x, z = to_game(km)
-        row = ("deposit", d["id"], d["kind"], d["island"], x, z, d["area_km2"], d["grade"], d.get("subtype") or "")
+    for d in resources["deposits"]:
+        x, z = to_game(cell_km(d["cell"]))
+        row = ("deposit", d["id"], d["kind"], d["island"], x, z, d["area_km2"], d["grade"], d.get("subtype") or "", d["form"])
+        lines.append("\t".join(str(v) for v in row))
+    for o in resources["occurrences"]:
+        x, z = to_game(cell_km(o["cell"]))
+        row = ("occurrence", o["id"], o["kind"], o["island"], x, z, o["area_km2"], o["grade"], o.get("subtype") or "", o.get("length_km", 0.0),
+               o.get("axis_deg", 0.0))
+        lines.append("\t".join(str(v) for v in row))
+    for w in resources["workings"]:
+        x, z = to_game(cell_km(w["cell"]))
+        users = list(w.get("villages") or [])
+        if w.get("special") is not None:
+            users.append(special_ids[w["special"]])
+        row = ("working", w["id"], w["kind"], w["island"], x, z, w["occurrence"], w["grade"], occ_subtype.get(w["occurrence"], ""),
+               ",".join(str(v) for v in users) or "-")
         lines.append("\t".join(str(v) for v in row))
     (dst / "resources.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
-    print(f"{dst / 'resources.tsv'}: {len(deposits)} 处资源")
+    print(f"{dst / 'resources.tsv'}: 点与片 {len(resources['deposits'])}、赋存区 {len(resources['occurrences'])}、采场 {len(resources['workings'])}")
 
 
 if __name__ == "__main__":
