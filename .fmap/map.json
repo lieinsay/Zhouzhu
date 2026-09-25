@@ -549,7 +549,7 @@
     {
       "id": "world-grid",
       "label": "岛群栅格",
-      "detail": "解析 terrain.bin v1–v4，按连续坐标双三次取样；v3 多河宽 / 水深 / 地形区；v4 的高程是 f32 米（v1–v3 是 u16 厘米、封顶 655 m）。",
+      "detail": "岛群 100 m 栅格（terrain.bin v1–v5）：高程、岸距、岛号、地表、水文、河道、地形区；v5 起另有赋存场（field_at 双线性品位）与片号（patch_at）。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest world_grid / world 2051",
       "sources": [
@@ -1282,7 +1282,7 @@
     {
       "id": "gather-hand",
       "label": "GatherHand 采集",
-      "detail": "采掘面前 2.6 m 内按住 E 起工，满一份（种类表的工时；手上拿着对口的工具减半）进背包、扣存量，按着就接着采；抱着箱子、背包满了不采；采空了说几时回来一份。存量账在地图宿主手里。",
+      "detail": "按住 E 一份份采：采场的采掘面，或够得着的一株散布物（看着什么采什么：面前 ±45° 按偏离视线的角度挑）；采了一份告诉地图（map_resource_taken），散布物采空了就倒。",
       "tag": "玩法部件",
       "evidence": "gather_e2e：按住 E 连采 5 份 ×2，存量同步减少",
       "sources": [
@@ -1295,7 +1295,7 @@
     {
       "id": "deposit-kinds",
       "label": "资源种类表",
-      "detail": "生成器的矿点种类在游戏里是什么：能采的十种各出一样原料（石料、黏土、浮石、木料、砂石、砂金、各色矿石、泥炭 / 芦苇、硫磺、鸟粪），工时、存量（按品位与面积）、回满钟头、场名与样子；泉眼、温泉、洞穴只标不采。",
+      "detail": "生成器的资源种类在游戏里是什么：形态（点 / 片 / 散）、采场名、工时、存量（按品位）、回满钟头、样子；物品表加了柴。",
       "tag": "原语",
       "evidence": "core_tests gather：十种能采、产物在物品表、存量按品位面积",
       "sources": [
@@ -1306,10 +1306,10 @@
     },
     {
       "id": "resource-sites",
-      "label": "资源点落地与存量账",
-      "detail": "读 resources.tsv；矿点起一圈圈找采掘面（有地、离崖边 12 m、非水 / 河滩 / 坪、坡缓、不在村子估的半径里），旁边 7 m 放堆场，还要够得着船（子节点）；离矿点最远 150 m；150 m 内的并掉。各处并行找、按矿点号定并不并。存量账 {存量, 钟点} 按全局钟线性回满。游戏与体检同一入口。",
+      "label": "采场、地标与存量账",
+      "detail": "resources.tsv 三种行（点与片、赋存区、采场）。生成器按村挑的采场（土坑、采石场、采砂场、矿坑、淘金点）落采掘面 + 堆场，够得着船并记下泊地；点落地标（岛底的洞不摆）；片与散不再落采集点，交给散布。采场存量按那一格的品位、按全局钟回满。2051：采场 257 → 落地 234、98.3% 够得着船。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "core_tests：2051 落 760 处、0 处落不了、处处站得住、确定性；存量满→采→回满",
+      "evidence": "ctest core 945 项；site_survey_2051 达标；gather_e2e 在土坑规划的泊地野泊、采土装两箱",
       "sources": [
         "src/resource_sites.h",
         "src/resource_sites.cpp"
@@ -1343,7 +1343,7 @@
     {
       "id": "gather-e2e",
       "label": "采集端到端测试",
-      "detail": "主码头上船 → 民居上空、采掘面上空野泊被拒 → 平地野泊、舷梯落地 → 按住 E 采 → 堆场打箱（拆过一次）→ 抱上舷梯放货位 ×2 → 上舵收梯升空、开地图；全程不瞬移。",
+      "detail": "砍灌丛 → 伐树（树干碰撞拆掉）→ 拨钟 60 h 长回 → 民居、林子上空野泊被拒 → 最近的土坑按规划的泊地野泊 → 采土打两箱装船 → 地图换资源底图；全程不瞬移。",
       "tag": "验收",
       "evidence": "PASS，模拟 304 s",
       "sources": [
@@ -1366,7 +1366,7 @@
     {
       "id": "resource-reach",
       "label": "够得着船",
-      "detail": "resource_reach：采掘面周围 20–60 m、每 10 m 一圈 12 个方位、船头朝北或朝东，找开局的船（储存区 + 动力区 + 驾驶区）野泊得下的位姿；先查船底四角（landing_corners_ok）再细查。规划记下 reach_m，体检直接读。",
+      "detail": "采掘面 60 m 内给开局的船找一个野泊得下的位姿（先查船底四角再细查），找到的位姿记成采场的泊地——散布在泊地上不长树，所以规划说够得着，游戏里就落得下。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "site_survey 2051：够得着船 97.3%（原 88.7%）；ctest 单独量与规划记的一样",
       "sources": [
@@ -1477,6 +1477,99 @@
         "game/tests/craft_e2e.tscn"
       ],
       "since": "e35"
+    },
+    {
+      "id": "resource-scatter",
+      "label": "散布生成",
+      "detail": "按 128 m 块确定性生成一株株、一块块：每层（树、灌丛、苇、石、土砂）一张全岛群共用的抖动网格，格点抖动后落进哪块归哪块；概率看地表（扭过 ±35 m 再取格，林缘不成方格）、片号、品位。让开村子、坪、船坞、采掘面与堆场、采场的泊地、地标；树不上河滩与陡坡。键 = 块 + 序号。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest test_scatter：两遍一样、树九成以上在林地格、村里不长、泊地 17 m 内让开；2051 全岛群约 3,670 万株、每块 Release 0.7 ms",
+      "sources": [
+        "src/resource_scatter.h",
+        "src/resource_scatter.cpp"
+      ],
+      "since": "e36",
+      "parent": "resource-sites"
+    },
+    {
+      "id": "scatter-ledger",
+      "label": "散布物的账",
+      "detail": "按键记存量：没记的是满的、立着的；采空就倒（树桩 / 茬 / 没了），按全局钟回满才立回来。账在 World。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：采空倒下、48 h 回满才立回、一份份采到空才倒；gather_e2e 拨钟 60 h 树与灌丛都长回",
+      "sources": [
+        "src/resource_scatter.h",
+        "src/resource_scatter.cpp"
+      ],
+      "since": "e36",
+      "parent": "resource-sites"
+    },
+    {
+      "id": "resource-landmarks",
+      "label": "地标落地",
+      "detail": "泉眼、温泉、洞穴在点旁 80 m 内找一块站得住的地摆样子；岛底的洞（底面洞）人到不了，只在地图上标。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：2051 地标 139 处全摆得出、岛底的洞 14 处不摆",
+      "sources": [
+        "src/resource_sites.cpp"
+      ],
+      "since": "e36",
+      "parent": "resource-sites"
+    },
+    {
+      "id": "scatter-stream",
+      "label": "ScatterStream 散布摆放",
+      "detail": "900 m 内的块交给 World 的后台线程生成，主线程每种样子挂一个 MultiMesh（低模、顶点色 + 实例色）；110 m 内树干带碰撞；按铺出来的房子藏掉压着的；采空重摆、每 4 秒看长回来没有。回答够得着的那一株（看着什么采什么）。",
+      "tag": "场景角色",
+      "evidence": "scatter_shots 目视；scatter_perf 主码头帧时 P99 10.7 ms；gather_e2e 伐倒树干碰撞 92 → 91",
+      "sources": [
+        "src/scatter_stream.h",
+        "src/scatter_stream.cpp",
+        "src/scatter_meshes.h",
+        "src/scatter_meshes.cpp"
+      ],
+      "since": "e36"
+    },
+    {
+      "id": "skyisle-export-resources",
+      "label": "资源三形态导出",
+      "detail": "terrain.bin v5：v4 后面追加 res_field（6 层 u8，品位 × 255，层序 金属矿、硫磺、砂金、黏土、砂砾、石料）与 patch_id + 1（u16）；resources.tsv：deposit（form = point / patch）、occurrence、working（villages = 游戏村号，专业聚落按接着编的号）。",
+      "tag": "工具",
+      "evidence": "2051：点与片 709、赋存区 499、采场 257；ctest 片号与赋存场对得上清单",
+      "sources": [
+        "tools/export_skyisle.py",
+        "game/worlds/2051/resources.tsv"
+      ],
+      "since": "e37",
+      "parent": "skyisle-export"
+    },
+    {
+      "id": "deposit-kinds-scatter",
+      "label": "散布物表",
+      "detail": "十一种散布物的产物（按子类：矿种、泥炭 / 芦苇、硫磺 / 鸟粪）、一株几份（按大小²）、工时、长回钟头、挡不挡（树干挡）、占地半径。灌丛出柴。",
+      "tag": "原语",
+      "evidence": "ctest：每种都采得出物品表里的东西；石斧砍柴快一倍；柴扎火把",
+      "sources": [
+        "src/deposit_kinds.h",
+        "src/deposit_kinds.cpp",
+        "src/crops.cpp",
+        "src/recipes.cpp"
+      ],
+      "since": "e38",
+      "parent": "deposit-kinds"
+    },
+    {
+      "id": "world-map-resources",
+      "label": "资源分布底图",
+      "detail": "金属矿 > 硫磺 > 砂金 > 浮石 > 鸟粪 > 泥炭 > 黏土 > 砂砾 > 石料 > 林木，品位够门槛才画；底是压暗的山影。纯算法在 map_image（dominant_resource / build_resource_image）。",
+      "tag": "引擎构件",
+      "evidence": "ctest dominant_resource；gather_e2e 点左上换成资源底图",
+      "sources": [
+        "src/world_map.cpp",
+        "src/map_image.cpp"
+      ],
+      "since": "e39",
+      "parent": "world-map"
     }
   ],
   "edges": [
@@ -3387,6 +3480,136 @@
       "chains": [
         "craft"
       ]
+    },
+    {
+      "from": "resource-scatter",
+      "to": "world-grid",
+      "label": "赋存场 / 片号 / 地表"
+    },
+    {
+      "from": "resource-scatter",
+      "to": "world-terrain",
+      "label": "地面高、河、坪"
+    },
+    {
+      "from": "resource-scatter",
+      "to": "deposit-kinds",
+      "label": "散布物表"
+    },
+    {
+      "from": "resource-scatter",
+      "to": "resource-reach",
+      "label": "让开泊地"
+    },
+    {
+      "from": "scatter-ledger",
+      "to": "deposit-kinds",
+      "label": "一株几份、长回钟头"
+    },
+    {
+      "from": "resource-landmarks",
+      "to": "world-terrain",
+      "label": "站得住的地"
+    },
+    {
+      "from": "world-node",
+      "to": "resource-scatter",
+      "label": "后台按块生成",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "scatter-ledger",
+      "label": "采空 / 长回",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "scatter-stream",
+      "to": "world-node",
+      "label": "块的生成、散布的账",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "scatter-stream",
+      "to": "resource-scatter",
+      "label": "块的清单",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "scatter-stream",
+      "to": "scatter-ledger",
+      "label": "立着没有",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "scatter-stream",
+      "to": "site-stream",
+      "label": "铺出来的村子占地",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "world-resource",
+      "to": "resource-landmarks",
+      "label": "画地标",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "expedition",
+      "to": "scatter-stream",
+      "label": "野泊压着树干",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "world-grid",
+      "to": "skyisle-export-resources",
+      "label": "terrain.bin v5"
+    },
+    {
+      "from": "resource-sites",
+      "to": "skyisle-export-resources",
+      "label": "resources.tsv",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "resource-scatter",
+      "to": "deposit-kinds-scatter",
+      "label": "样子与产物"
+    },
+    {
+      "from": "scatter-stream",
+      "to": "deposit-kinds-scatter",
+      "label": "网格、挡不挡",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "world-map-resources",
+      "to": "map-image",
+      "label": "资源底图像素"
+    },
+    {
+      "from": "world-map-resources",
+      "to": "world-grid",
+      "label": "赋存场 / 片号"
     }
   ],
   "chains": [
@@ -4477,46 +4700,65 @@
     {
       "id": "gather",
       "title": "切片九：采集——去资源点采石挖土，打包装船（野泊）",
-      "story": "玩家驾着空艇飞到生成器定下的浮石崖旁，在一块平地上方就地野泊，顺着船放下的舷梯走下去，在采掘面按住 E 凿下一份份浮石，到堆场打成箱，抱上舷梯装进货位，再上舵收梯飞走。",
+      "story": "玩家在岛群里走到林边，看着一丛灌丛按住 E 砍出柴、伐倒一棵树（倒成树桩，过两天又长回来）；再驾着空艇飞到生成器按村定下的土坑旁，在规划好的泊地上就地野泊，顺着舷梯走下去按住 E 挖出一份份黏土，到堆场打成箱，抱上舷梯装进货位，再上舵收梯飞走。",
       "date": "2026-09-25",
       "color": "#f08c3a",
       "commits": "84cbdc3..a845e66",
       "steps": [
         {
-          "text": "离线导出：生成器给岛群的矿点（现 1,237 处）（采石场、黏土、浮石、林木、泉眼、洞穴……）写成 resources.tsv，随仓库提交",
+          "text": "离线导出：生成器的资源按点 / 片 / 散写成 resources.tsv（点与片 709、赋存区 499、采场 257）与 terrain.bin 的赋存场、片号",
           "nodes": [
-            "skyisle-export"
+            "skyisle-export",
+            "skyisle-export-resources"
           ]
         },
         {
-          "text": "进入岛群：World 按矿点落采集点（现 1,022 处）——采掘面避开水、码头的坪、村子与崖边，旁边留出堆场，60 m 内还得有船落得下的地方（够不着就在矿体里往外挪）；每处按品位与面积开一笔存量账",
+          "text": "进入岛群：World 落采场（234 处：采掘面、堆场，60 m 内记下船落得下的泊地）与地标，按品位开存量账",
           "nodes": [
             "world-2051-scene",
             "world-node",
             "resource-sites",
+            "resource-reach",
+            "resource-landmarks",
             "deposit-kinds",
             "world-terrain",
             "world-sites"
           ]
         },
         {
-          "text": "走近 1.5 km：资源点摆出实物（凿开的石壁、土坑、浮石露头、原木……和堆场的箱子、牌子）；M 地图上标着种类色的小三角",
+          "text": "走近：900 m 内长出树、灌丛、苇丛、石块、土坡……（后台按块生成），110 m 内树干带碰撞；采场与地标摆出实物；M 地图能换成资源分布底图",
           "nodes": [
+            "scatter-stream",
+            "resource-scatter",
+            "deposit-kinds-scatter",
+            "world-node",
             "site-stream",
             "world-resource",
             "world-map",
-            "map-host"
+            "world-map-resources"
           ]
         },
         {
-          "text": "掌舵飞到资源点旁、慢下来贴近平地：落得下就提示按 E 野泊；船底下压着房子、石头，地太不平或悬在崖边就说为什么",
+          "text": "看着一丛灌丛、一棵树按住 E：一份份采进背包（柴、木料），采空了倒成茬、树桩，树干的碰撞跟着拆掉，按全局钟长回来",
+          "nodes": [
+            "gather-hand",
+            "map-host",
+            "world-node",
+            "scatter-stream",
+            "scatter-ledger",
+            "voyage-pack",
+            "world-clock"
+          ]
+        },
+        {
+          "text": "掌舵飞到采场旁：民居上空、林子上空落不下（有房子、有树），停在规划的泊地上空提示按 E 野泊",
           "nodes": [
             "helm",
             "expedition",
             "wild-landing",
             "ship",
             "map-host",
-            "world-node"
+            "scatter-stream"
           ]
         },
         {
@@ -4529,29 +4771,20 @@
           ]
         },
         {
-          "text": "走下舷梯到采掘面按住 E：一份份凿进背包，存量随之减少、按全局钟慢慢回满",
+          "text": "走下舷梯到采掘面按住 E 挖土，存量随之减少、按钟回满；到堆场打成箱，抱上舷梯放上货位",
           "nodes": [
             "player",
             "gather-hand",
-            "voyage-pack",
             "resource-sites",
-            "world-clock",
-            "map-host"
-          ]
-        },
-        {
-          "text": "到堆场按 E 把 5 份原料打成一箱抱起（抱着自家的箱子再按 E 拆回背包），抱上舷梯放上货位",
-          "nodes": [
             "freight-hand",
             "freight",
             "voyage-pack",
             "crops",
-            "ship",
-            "player"
+            "ship"
           ]
         },
         {
-          "text": "上舵：舷梯收起，船载着两箱浮石升空",
+          "text": "上舵：舷梯收起，船载着两箱黏土升空",
           "nodes": [
             "helm",
             "ship",
@@ -4585,19 +4818,26 @@
         "crops",
         "ship-layout",
         "site-survey-tool",
-        "resource-reach"
+        "resource-reach",
+        "resource-scatter",
+        "scatter-ledger",
+        "scatter-stream",
+        "resource-landmarks",
+        "skyisle-export-resources",
+        "deposit-kinds-scatter",
+        "world-map-resources"
       ]
     },
     {
       "id": "craft",
       "title": "切片十：合成与摆放——MC 式格子背包、船舱、工作台与窑",
-      "story": "玩家在林场采了几份木料，打开背包在格子里点配方劈板、钉出工作台，放上快捷栏拿在手上摆到地上；在工作台旁合出木箱、石斧和窑，把东西在背包、木箱和船舱之间用鼠标拖来拖去，拿着石斧伐木快了一倍，窑里烧出陶罐，最后走上船把陶罐搬进船舱。",
+      "story": "玩家在林子边伐倒两棵树得了几份木料，打开背包在格子里点配方劈板、钉出工作台，放上快捷栏拿在手上摆到地上；在工作台旁合出木箱、石斧和窑，把东西在背包、木箱和船舱之间用鼠标拖来拖去，拿着石斧伐木快了一倍，窑里烧出陶罐，最后走上船把陶罐搬进船舱。",
       "date": "2026-09-25",
       "color": "#3fb27f",
       "commits": "0269ac5..997a112",
       "steps": [
         {
-          "text": "开局背包是 36 格（最下面 9 格是快捷栏，屏幕底下常驻），开局的东西在主区、快捷栏空着；到林场按住 E 采木料，空手 4 秒一份，背包放不下就不采",
+          "text": "开局背包是 36 格（最下面 9 格是快捷栏，屏幕底下常驻），开局的东西在主区、快捷栏空着；到林子边看着一棵树按住 E 伐木，空手 4 秒一份，一棵伐倒了换下一棵，背包放不下就不采",
           "nodes": [
             "expedition",
             "voyage-pack",
@@ -4605,7 +4845,7 @@
             "hotbar-bar",
             "crops",
             "gather-hand",
-            "world-resource"
+            "scatter-stream"
           ]
         },
         {
@@ -4629,7 +4869,7 @@
           ]
         },
         {
-          "text": "按 1 拿起工作台：身前出虚影，摆不下是红的并说为什么（坡、崖边、水、房子、资源点的堆场），绿了按 E 摆下，实物带碰撞",
+          "text": "按 1 拿起工作台：身前出虚影，摆不下是红的并说为什么（坡、崖边、水、房子、树、采场的堆场），绿了按 E 摆下，实物带碰撞",
           "nodes": [
             "place-hand",
             "placed-props",
@@ -4661,13 +4901,14 @@
           ]
         },
         {
-          "text": "石斧放上快捷栏拿着伐木，一份只要 2 秒；再摆一座窑烧出陶罐，插一支火把照亮",
+          "text": "石斧放上快捷栏拿着伐木，一份只要 2 秒；再摆一座窑烧出陶罐，插一支火把照亮（柴也能扎火把）",
           "nodes": [
             "gather-hand",
             "crops",
             "place-hand",
             "placed-props",
-            "recipes"
+            "recipes",
+            "scatter-stream"
           ]
         },
         {
@@ -4703,7 +4944,8 @@
         "ship",
         "ship-layout",
         "wild-landing",
-        "world-2051-scene"
+        "world-2051-scene",
+        "scatter-stream"
       ]
     }
   ],
@@ -5918,6 +6160,93 @@
           "crops",
           "gather-hand"
         ]
+      }
+    },
+    {
+      "id": "e36",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：资源按生成器的点 / 片 / 散长出来——满山的树、灌丛、石块，一株一块都能采",
+      "summary": "生成器把资源分成点（泉眼、温泉、洞穴）、片（林木、泥炭芦苇、浮石露头，逐格片号）、散（金属矿、石料、黏土、砂砾……逐格品位，另按村挑了采场）。游戏照着重导 2051：采场落采掘面与堆场并记下泊地，点落地标，片与散按块散布成一株株、一块块能采的东西，采空倒下、按全局钟长回；树干挡人挡船。",
+      "commits": "d65e7d1..f984068",
+      "nodes": [
+        "resource-sites",
+        "resource-scatter",
+        "scatter-ledger",
+        "resource-landmarks",
+        "scatter-stream"
+      ],
+      "info": {
+        "node": "resource-sites",
+        "children": [
+          "resource-scatter",
+          "scatter-ledger",
+          "resource-landmarks"
+        ],
+        "adopted": [],
+        "peers": [
+          "scatter-stream"
+        ]
+      }
+    },
+    {
+      "id": "e37",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：导出资源的三种形态",
+      "summary": "terrain.bin v5 追加赋存场（6 层品位）与片号；resources.tsv 写点与片、赋存区、采场三种行，采场挂游戏的村号；这回全量重导，聚落层也跟上生成器新版。",
+      "commits": "d65e7d1..89ad252",
+      "nodes": [
+        "skyisle-export",
+        "skyisle-export-resources"
+      ],
+      "info": {
+        "node": "skyisle-export",
+        "children": [
+          "skyisle-export-resources"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e38",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：种类表按点 / 片 / 散重做，加散布物表",
+      "summary": "生成器改键（stone 取代 quarry）；散的有采场、点是地标、片没有采场；另有十一种散布物（阔叶树、针叶树、灌丛、苇丛、石块、浮石块、黏土坡、砂砾堆、淘金沙、矿石、结壳）。",
+      "commits": "7a96620",
+      "nodes": [
+        "deposit-kinds",
+        "deposit-kinds-scatter"
+      ],
+      "info": {
+        "node": "deposit-kinds",
+        "children": [
+          "deposit-kinds-scatter"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e39",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：地图的资源分布底图",
+      "summary": "地图左上点「地表 / 资源」换底图：每格画最稀的那一类（散的越富越浓），带图例，悬停读各类品位与所在的片。",
+      "commits": "7a96620..77f1e6f",
+      "nodes": [
+        "world-map",
+        "world-map-resources"
+      ],
+      "info": {
+        "node": "world-map",
+        "children": [
+          "world-map-resources"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
