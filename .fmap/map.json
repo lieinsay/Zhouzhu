@@ -55,7 +55,7 @@
     {
       "id": "ship",
       "label": "Ship 空艇",
-      "detail": "按三维布局拼装：下面有节的节封成舱房（储存区舱口、动力区浮石光缝），顶上的节才是甲板与家具；相邻列高矮不同处搭梯子（Area3D 标 ladder、舷栏留缺口）；origin_for / place_at / moor_at / is_at 按接触线摆船。对外给甲板点、梯脚梯顶、舷边与层数。",
+      "detail": "按三维布局拼出的空艇：甲板、舱房、船体、浮石、舷栏、梯子、货位与货箱；野泊时从一舷的舷门放下带碰撞的舷梯（上舵收起），并能在落地位姿上查船身与舷梯压着什么。",
       "tag": "场景角色",
       "evidence": "shipyard_e2e 改装重拼 6 次、航速 32 → 20.4；voyage/respawn/farm e2e 无回归；截图目视货箱 / 舵楼顶 / 侧桅帆",
       "sources": [
@@ -759,7 +759,7 @@
     {
       "id": "helm",
       "label": "Helm 掌舵",
-      "detail": "从 Voyage 抽出的上舵 / 换档 / 叫靠泊 / 滑行 / 离舵状态机与航行 HUD 文本；Voyage 与 WorldScene 各持一个，泊位候选由编排者当场给。",
+      "detail": "掌舵的状态机：上舵、飞（R/F 换档）、叫靠泊 / 入坞 / 落上船台 / 野泊（码头、船坞、船台在 45 m 内先靠它们，都没有才野泊）、离舵；野泊不了不拦着离舵，提示里说原因。",
       "tag": "切片编排（状态在此）",
       "evidence": "Voyage 改用后旧航程、船坞、坠落回位 e2e 坐标逐位不变",
       "sources": [
@@ -1207,7 +1207,7 @@
     {
       "id": "freight-hand",
       "label": "FreightHand 跑货",
-      "detail": "村仓（船台跳板脚前）接托运、打包 / 放回 / 交货，货位前装卸；让船画货箱、让 Player 抱箱子；HUD 托运行与航向改指目的村的船台。",
+      "detail": "村仓前接托运 / 打包 / 交货，货位前装卸；资源点堆场把背包里的原料打成自家的一箱，抱着自家的箱子在堆场或村仓拆回背包。",
       "tag": "场景角色",
       "evidence": "freight_e2e PASS",
       "sources": [
@@ -1220,7 +1220,7 @@
     {
       "id": "freight",
       "label": "跑货规矩",
-      "detail": "能托运的村（全部非散户）、各村土产、开委托（别岛最近的村、40 km 内、每箱 8 文 + 1 文/km）、货箱账 CargoBook（打包 / 放回 / 装卸货位 / 交货付钱）。",
+      "detail": "能托运的村、土产、开委托、货箱账（CargoBook）；箱子分托运的与自家的，交货只认这单托运的箱子，自家的从背包打、拆回背包。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "core_tests 753 项 0 失败；2051 村152 → 村127，运费 30 文",
       "sources": [
@@ -1276,6 +1276,78 @@
       ],
       "since": "e29",
       "parent": "terrain-tile"
+    },
+    {
+      "id": "gather-hand",
+      "label": "GatherHand 采集",
+      "detail": "采掘面前 2.6 m 内按住 E 起工，满一份（种类表的工时）进背包、扣存量，按着就接着采；抱着箱子不能采；采空了说几时回来一份。存量账在地图宿主手里。",
+      "tag": "玩法部件",
+      "evidence": "gather_e2e：按住 E 连采 5 份 ×2，存量同步减少",
+      "sources": [
+        "src/gather_hand.h",
+        "src/gather_hand.cpp"
+      ],
+      "since": "e30",
+      "parent": "expedition"
+    },
+    {
+      "id": "deposit-kinds",
+      "label": "资源种类表",
+      "detail": "生成器的矿点种类在游戏里是什么：能采的十种各出一样原料（石料、黏土、浮石、木料、砂石、砂金、各色矿石、泥炭 / 芦苇、硫磺、鸟粪），工时、存量（按品位与面积）、回满钟头、场名与样子；泉眼、温泉、洞穴只标不采。",
+      "tag": "原语",
+      "evidence": "core_tests gather：十种能采、产物在物品表、存量按品位面积",
+      "sources": [
+        "src/deposit_kinds.h",
+        "src/deposit_kinds.cpp"
+      ],
+      "since": "e31"
+    },
+    {
+      "id": "resource-sites",
+      "label": "资源点落地与存量账",
+      "detail": "读 resources.tsv；矿点起一圈圈找采掘面（有地、离崖边 12 m、非水 / 河滩 / 坪、坡缓、不在村子估的半径里），旁边 7 m 放堆场；150 m 内的并掉。存量账 {存量, 钟点} 按全局钟线性回满。游戏与体检同一入口。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：2051 落 760 处、0 处落不了、处处站得住、确定性；存量满→采→回满",
+      "sources": [
+        "src/resource_sites.h",
+        "src/resource_sites.cpp"
+      ],
+      "since": "e31"
+    },
+    {
+      "id": "wild-landing",
+      "label": "野泊",
+      "detail": "给地面、船的布局与位姿：船底下处处有地、高低差不过 4 m，甲板落在最高处之上 5.6 m（悬停不着地）；两舷各试一道舷梯（≤32°、梯脚干地、梯板下不顶地），挑朝着目标或更短的一舷；放不下都说原因。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests wild landing：平地 / 转向 / 太高 / 崖边 / 悬空 / 水 / 坡 / 土埂",
+      "sources": [
+        "src/wild_landing.h",
+        "src/wild_landing.cpp"
+      ],
+      "since": "e31"
+    },
+    {
+      "id": "world-resource",
+      "label": "WorldResource 资源点实物",
+      "detail": "节点放在采掘面：按种类画采掘面的样子（石壁、土坑、浮石露头、原木与树、砂砾滩、溜槽、矿坑、苇丛、结壳），大石头与原木带碰撞；堆场两只货箱加牌子。只画，由 SiteStream 按距离建拆。",
+      "tag": "场景角色",
+      "evidence": "gather_e2e 截图：浮石露头、堆场货箱与牌子",
+      "sources": [
+        "src/world_resource.h",
+        "src/world_resource.cpp"
+      ],
+      "since": "e31"
+    },
+    {
+      "id": "gather-e2e",
+      "label": "采集端到端测试",
+      "detail": "主码头上船 → 民居上空、采掘面上空野泊被拒 → 平地野泊、舷梯落地 → 按住 E 采 → 堆场打箱（拆过一次）→ 抱上舷梯放货位 ×2 → 上舵收梯升空、开地图；全程不瞬移。",
+      "tag": "验收",
+      "evidence": "PASS，模拟 304 s",
+      "sources": [
+        "game/tests/gather_e2e.gd"
+      ],
+      "since": "e31"
     }
   ],
   "edges": [
@@ -2845,6 +2917,156 @@
       "from": "terrain-tile-cliff",
       "to": "world-terrain-body",
       "label": "顶面 / 岛底"
+    },
+    {
+      "from": "gather-hand",
+      "to": "map-host",
+      "label": "附近的资源点、存量账"
+    },
+    {
+      "from": "gather-hand",
+      "to": "voyage-pack",
+      "label": "原料进背包"
+    },
+    {
+      "from": "gather-hand",
+      "to": "world-clock",
+      "label": "回满的钟"
+    },
+    {
+      "from": "resource-sites",
+      "to": "deposit-kinds",
+      "label": "种类、产物、存量",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "resource-sites",
+      "to": "world-terrain",
+      "label": "地面与禁区",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "resource-sites",
+      "to": "world-sites",
+      "label": "村子估的半径",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "resource-sites",
+      "to": "skyisle-export",
+      "label": "resources.tsv",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "deposit-kinds",
+      "to": "crops",
+      "label": "原料物品",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "wild-landing",
+      "to": "ship-layout",
+      "label": "船身、舷门",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "world-resource",
+      "to": "resource-sites",
+      "label": "采掘面、堆场、种类",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "resource-sites",
+      "label": "规划、存量账",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "world-map",
+      "label": "资源点标注",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "site-stream",
+      "to": "world-resource",
+      "label": "按距离摆",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "expedition",
+      "to": "wild-landing",
+      "label": "落不落得下",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "gather-hand",
+      "to": "resource-sites",
+      "label": "取一份、回满",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "freight-hand",
+      "to": "voyage-pack",
+      "label": "背包打箱 / 拆箱",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "freight",
+      "to": "deposit-kinds",
+      "label": "原料的箱盖色",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "site-survey-tool",
+      "to": "resource-sites",
+      "label": "全岛群落一遍",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "site-survey-tool",
+      "to": "wild-landing",
+      "label": "野泊覆盖",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "gather-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "gather"
+      ]
     }
   ],
   "chains": [
@@ -3930,6 +4152,119 @@
         "crops",
         "voyage-pack"
       ]
+    },
+    {
+      "id": "gather",
+      "title": "切片九：采集——去资源点采石挖土，打包装船（野泊）",
+      "story": "玩家驾着空艇飞到生成器定下的浮石崖旁，在一块平地上方就地野泊，顺着船放下的舷梯走下去，在采掘面按住 E 凿下一份份浮石，到堆场打成箱，抱上舷梯装进货位，再上舵收梯飞走。",
+      "date": "2026-09-25",
+      "color": "#f08c3a",
+      "commits": "84cbdc3..a845e66",
+      "steps": [
+        {
+          "text": "离线导出：生成器给岛群的 944 处矿点（采石场、黏土、浮石、林木、泉眼、洞穴……）写成 resources.tsv，随仓库提交",
+          "nodes": [
+            "skyisle-export"
+          ]
+        },
+        {
+          "text": "进入岛群：World 按矿点落 760 处采集点——采掘面避开水、码头的坪、村子与崖边，旁边留出堆场；每处按品位与面积开一笔存量账",
+          "nodes": [
+            "world-2051-scene",
+            "world-node",
+            "resource-sites",
+            "deposit-kinds",
+            "world-terrain",
+            "world-sites"
+          ]
+        },
+        {
+          "text": "走近 1.5 km：资源点摆出实物（凿开的石壁、土坑、浮石露头、原木……和堆场的箱子、牌子）；M 地图上标着种类色的小三角",
+          "nodes": [
+            "site-stream",
+            "world-resource",
+            "world-map",
+            "map-host"
+          ]
+        },
+        {
+          "text": "掌舵飞到资源点旁、慢下来贴近平地：落得下就提示按 E 野泊；船底下压着房子、石头，地太不平或悬在崖边就说为什么",
+          "nodes": [
+            "helm",
+            "expedition",
+            "wild-landing",
+            "ship",
+            "map-host",
+            "world-node"
+          ]
+        },
+        {
+          "text": "按 E：船自己降下去悬停落定，从舷门放下舷梯，人下船",
+          "nodes": [
+            "helm",
+            "ship",
+            "expedition",
+            "player"
+          ]
+        },
+        {
+          "text": "走下舷梯到采掘面按住 E：一份份凿进背包，存量随之减少、按全局钟慢慢回满",
+          "nodes": [
+            "player",
+            "gather-hand",
+            "voyage-pack",
+            "resource-sites",
+            "world-clock",
+            "map-host"
+          ]
+        },
+        {
+          "text": "到堆场按 E 把 5 份原料打成一箱抱起（抱着自家的箱子再按 E 拆回背包），抱上舷梯放上货位",
+          "nodes": [
+            "freight-hand",
+            "freight",
+            "voyage-pack",
+            "crops",
+            "ship",
+            "player"
+          ]
+        },
+        {
+          "text": "上舵：舷梯收起，船载着两箱浮石升空",
+          "nodes": [
+            "helm",
+            "ship",
+            "expedition"
+          ]
+        }
+      ],
+      "nodes": [
+        "deposit-kinds",
+        "resource-sites",
+        "wild-landing",
+        "world-resource",
+        "gather-e2e",
+        "helm",
+        "ship",
+        "freight-hand",
+        "freight",
+        "skyisle-export",
+        "world-2051-scene",
+        "world-node",
+        "world-terrain",
+        "world-sites",
+        "site-stream",
+        "world-map",
+        "map-host",
+        "expedition",
+        "player",
+        "gather-hand",
+        "voyage-pack",
+        "world-clock",
+        "crops",
+        "ship-layout",
+        "site-survey-tool"
+      ]
     }
   ],
   "events": [
@@ -4921,6 +5256,98 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e30",
+      "type": "extend",
+      "date": "2026-09-25",
+      "title": "拓展：编排多一个采集部件、会算野泊",
+      "summary": "采掘面前按住 E 的事归 GatherHand；掌舵慢下来时编排按船的位姿算野泊候选，落定放舷梯、上舵收起。",
+      "nodes": [
+        "expedition",
+        "gather-hand"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "gather-hand"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e31",
+      "type": "slice",
+      "date": "2026-09-25",
+      "title": "切片九：采集——去资源点采石挖土，打包装船（野泊）",
+      "summary": "玩家驾着空艇飞到生成器定下的浮石崖旁，在一块平地上方就地野泊，顺着船放下的舷梯走下去，在采掘面按住 E 凿下一份份浮石，到堆场打成箱，抱上舷梯装进货位，再上舵收梯飞走。",
+      "commits": "84cbdc3..a845e66",
+      "chain": "gather",
+      "nodes": [
+        "deposit-kinds",
+        "resource-sites",
+        "wild-landing",
+        "world-resource",
+        "gather-e2e",
+        "helm",
+        "ship",
+        "freight-hand",
+        "freight",
+        "skyisle-export",
+        "world-2051-scene",
+        "world-node",
+        "world-terrain",
+        "world-sites",
+        "site-stream",
+        "world-map",
+        "map-host",
+        "expedition",
+        "player",
+        "gather-hand",
+        "voyage-pack",
+        "world-clock",
+        "crops",
+        "ship-layout",
+        "site-survey-tool"
+      ],
+      "info": {
+        "created": [
+          "deposit-kinds",
+          "resource-sites",
+          "wild-landing",
+          "world-resource",
+          "gather-e2e"
+        ],
+        "reused": [
+          "helm",
+          "ship",
+          "freight-hand",
+          "freight",
+          "skyisle-export",
+          "world-2051-scene",
+          "world-node",
+          "world-terrain",
+          "world-sites",
+          "site-stream",
+          "world-map",
+          "map-host",
+          "expedition",
+          "player",
+          "gather-hand",
+          "voyage-pack",
+          "world-clock",
+          "crops",
+          "ship-layout",
+          "site-survey-tool"
+        ],
+        "updated": [
+          "helm",
+          "ship",
+          "freight-hand",
+          "freight"
+        ]
       }
     }
   ],
