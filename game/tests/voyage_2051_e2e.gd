@@ -1,9 +1,9 @@
 extends Node
 ## 真实比例岛群里跑一趟船（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
-## 主码头 #7 的停机坪上出生 → 旁边的村子已经铺出来、房子站在地上、地图上的码头与村子和 3D 里一一对应
-## → M 开地图点邑治瞬移过去：271 户的房子站在地上、村民陆续出门 → 再开地图点回主码头
-## → 走过栈桥上船 → 掌舵、升空、R 换到疾档 → 越过主岛飞 30 km 到乙岛 #2 码头（途中贴着地形保持高度）→ 近了换回泊档
-## → 按 E 靠泊 → 下船走上乙岛的停机坪 → 码头边的散户房子站在地上、有人出门。
+## 主码头 #1 的停机坪上出生 → 旁边的邑治（409 户）已经铺出来、房子站在地上、地图上的码头与村子和 3D 里一一对应
+## → M 开地图点 8.5 km 外的村004 瞬移过去：253 户的房子站在地上、村民陆续出门 → 再开地图点回主码头
+## → 走过栈桥上船 → 掌舵、升空、R 换到疾档 → 飞 23 km 到岛 #2 的码头 #26（途中贴着地形保持高度）→ 近了换回泊档
+## → 按 E 靠泊 → 下船走上岛 #2 的停机坪 → 码头边的村子房子站在地上、有人出门。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/voyage_2051_e2e.tscn
 ##
@@ -14,12 +14,12 @@ const TIMEOUT := 1500.0  # 模拟秒
 const SETTLE_TIMEOUT := 30.0
 const FOLK_TIMEOUT := 60.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const SEAT_ID := 1
-const NEAR_VILLAGE_ID := 152  # 主码头 1 km 外的村子
+const SEAT_ID := 1  # 邑治：主码头 #1 旁 400 m
+const FAR_VILLAGE_ID := 4  # 村004：主码头 8.5 km 外、253 户
 const CRUISE_CLEARANCE := 60.0  # 飞越陆地时离地至少这么高
 const SLOW_DOWN_AT := 2000.0  # 离目的泊位这么近换回泊档
 
-enum Phase { SETTLE, CHECK_HOME, MAP_TO_SEAT, SEAT, MAP_TO_DOCK, BACK_AT_DOCK, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, CRUISE, APPROACH, MOORING, WALK_ASHORE, ASHORE_VILLAGE, VISIT, DONE }
+enum Phase { SETTLE, CHECK_HOME, MAP_TO_FAR, FAR_VILLAGE, MAP_TO_DOCK, BACK_AT_DOCK, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, CRUISE, APPROACH, MOORING, WALK_ASHORE, ASHORE_VILLAGE, VISIT, DONE }
 
 var main: Expedition
 var world: World
@@ -61,7 +61,7 @@ func _ready() -> void:
 	sites = main.get_node("SiteStream")
 	map = main.get_map()
 	dest_index = world.find_dock(main.destination_dock)
-	# 目的码头边上最近的聚落（乙岛 #2 边上是散户）
+	# 目的码头边上最近的聚落（#26 边上是村126）
 	var dock := world.get_dock_position(dest_index)
 	var best := INF
 	var info: Dictionary = world.get_info()
@@ -283,30 +283,34 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "出生点不在主岛")
 					return
 				if sites.get_dock(main.origin_dock) == null or sites.get_dock(main.destination_dock) != null:
-					_finish(false, "主码头的栈桥该铺出来、30 km 外的目的码头该还没铺（%s）" % [sites.get_built_docks()])
+					_finish(false, "主码头的栈桥该铺出来、23 km 外的目的码头该还没铺（%s）" % [sites.get_built_docks()])
 					return
 				_shot("1_spawn_dock")
 				_goto(Phase.CHECK_HOME)
 			elif in_phase > SETTLE_TIMEOUT:
 				_finish(false, "出生 %.0f s 还没站稳：%s" % [SETTLE_TIMEOUT, player.global_position])
 		Phase.CHECK_HOME:
-			# 等附近的村子铺出来（每帧最多铺一处）
-			var near := sites.get_village(NEAR_VILLAGE_ID)
+			# 等旁边的邑治铺出来（每帧最多铺一处，由近及远）
+			var near := sites.get_village(SEAT_ID)
 			if near == null:
 				if in_phase > 10.0:
-					_finish(false, "主码头 1 km 外的村%03d 没铺出来（已铺 %s）" % [NEAR_VILLAGE_ID, sites.get_built_villages()])
+					_finish(false, "主码头旁的邑治没铺出来（已铺 %s）" % [sites.get_built_villages()])
 				return
 			var why := _houses_stand(near)
 			if not why.is_empty():
 				_finish(false, why)
 				return
-			if sites.get_village(SEAT_ID) != null:
-				_finish(false, "8.5 km 外的邑治不该铺出来")
+			var count: int = near.get_settlement().get_count()
+			if count != 412:
+				_finish(false, "邑治 409 户该有 409 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
+				return
+			if sites.get_village(FAR_VILLAGE_ID) != null:
+				_finish(false, "8.5 km 外的村%03d 不该铺出来" % FAR_VILLAGE_ID)
 				return
 			_log("主码头边的%s：%d 座房子都站在地上；已铺村 %s、散户 %d 处、码头 %s" % [
-				near.get_site_name(), near.get_settlement().get_count(), sites.get_built_villages(), sites.get_built_hamlet_count(), sites.get_built_docks()])
-			_goto(Phase.MAP_TO_SEAT)
-		Phase.MAP_TO_SEAT:
+				near.get_site_name(), count, sites.get_built_villages(), sites.get_built_hamlet_count(), sites.get_built_docks()])
+			_goto(Phase.MAP_TO_FAR)
+		Phase.MAP_TO_FAR:
 			match map_step:
 				0:
 					_press_key_action("map")
@@ -322,10 +326,10 @@ func _physics_process(delta: float) -> void:
 						if not map.is_dock_marked_berthable(main.origin_dock) or not map.is_dock_marked_berthable(main.destination_dock):
 							_finish(false, "出发、目的码头在地图上该标成能靠泊")
 							return
-						if not map.is_village_marked_built(NEAR_VILLAGE_ID) or map.is_village_marked_built(SEAT_ID):
-							_finish(false, "地图上该标出已铺的村%03d、不标还没铺的邑治" % NEAR_VILLAGE_ID)
+						if not map.is_village_marked_built(SEAT_ID) or map.is_village_marked_built(FAR_VILLAGE_ID):
+							_finish(false, "地图上该标出已铺的邑治、不标还没铺的村%03d" % FAR_VILLAGE_ID)
 							return
-						# 滚轮缩小一格，邑治（8.5 km 外）就在屏幕里
+						# 滚轮缩小一格，村004（8.5 km 外）就在屏幕里
 						_mouse(MOUSE_BUTTON_WHEEL_DOWN, Vector2(640, 360))
 						map_step = 2
 				2:
@@ -333,33 +337,33 @@ func _physics_process(delta: float) -> void:
 					map_step = 3
 				3:
 					if in_phase > 0.3:
-						# 点邑治南边 250 m（村心是堂屋，别落在房顶上）
-						var seat := _seat_pos() + Vector3(0, 0, 250)
-						_mouse(MOUSE_BUTTON_LEFT, map.world_to_screen(seat.x, seat.z))
-						_goto(Phase.SEAT)
-		Phase.SEAT:
-			var seat_village := sites.get_village(SEAT_ID)
-			if in_phase > 1.0 and _standing_on_ground() and seat_village != null:
+						# 点村004 南边 250 m（村心一圈是房子，别落在房顶上）
+						var far := _village_pos(FAR_VILLAGE_ID) + Vector3(0, 0, 250)
+						_mouse(MOUSE_BUTTON_LEFT, map.world_to_screen(far.x, far.z))
+						_goto(Phase.FAR_VILLAGE)
+		Phase.FAR_VILLAGE:
+			var far_village := sites.get_village(FAR_VILLAGE_ID)
+			if in_phase > 1.0 and _standing_on_ground() and far_village != null:
 				if map_step == 0:
-					var why := _houses_stand(seat_village)
+					var why := _houses_stand(far_village)
 					if not why.is_empty():
 						_finish(false, why)
 						return
-					var count: int = seat_village.get_settlement().get_count()
-					if count != 274:
-						_finish(false, "邑治 271 户该有 271 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
+					var count: int = far_village.get_settlement().get_count()
+					if count != 254:
+						_finish(false, "村004 253 户该有 253 座民居 + 船台，实为 %d 座" % count)
 						return
-					_log("邑治：%d 座房子都站在地上，村民 %d 人" % [count, seat_village.get_villagers().get_villager_count() if seat_village.get_villagers() else 0])
+					_log("村004：%d 座房子都站在地上，村民 %d 人" % [count, far_village.get_villagers().get_villager_count() if far_village.get_villagers() else 0])
 					player.set_look_yaw(0.0)  # 望着村子：落点在村心南边 250 m，look_yaw 0 朝北
 					map_step = 1
-				elif _folk_walking(seat_village) > 0:
-					_log("邑治：%.1f s 后有 %d 人出了门" % [in_phase, _folk_walking(seat_village)])
-					_shot("3_seat")
+				elif _folk_walking(far_village) > 0:
+					_log("村004：%.1f s 后有 %d 人出了门" % [in_phase, _folk_walking(far_village)])
+					_shot("3_far_village")
 					_goto(Phase.MAP_TO_DOCK)
 				elif in_phase > FOLK_TIMEOUT:
-					_finish(false, "邑治 %.0f s 里没人出门" % FOLK_TIMEOUT)
+					_finish(false, "村004 %.0f s 里没人出门" % FOLK_TIMEOUT)
 			elif in_phase > SETTLE_TIMEOUT:
-				_finish(false, "瞬移到邑治 %.0f s 还没站稳 / 没铺出来：%s" % [SETTLE_TIMEOUT, player.global_position])
+				_finish(false, "瞬移到村004 %.0f s 还没站稳 / 没铺出来：%s" % [SETTLE_TIMEOUT, player.global_position])
 		Phase.MAP_TO_DOCK:
 			match map_step:
 				0:
@@ -381,8 +385,8 @@ func _physics_process(delta: float) -> void:
 				if off > 15.0:
 					_finish(false, "点回主码头落在 %.0f m 外" % off)
 					return
-				if sites.get_village(SEAT_ID) != null and sites.get_village(SEAT_ID).has_folk():
-					_finish(false, "离开邑治后它的村民该散掉")
+				if sites.get_village(FAR_VILLAGE_ID) != null and sites.get_village(FAR_VILLAGE_ID).has_folk():
+					_finish(false, "离开村004 后它的村民该散掉")
 					return
 				var berth: Transform3D = main.get_origin_berth()
 				waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
@@ -452,7 +456,7 @@ func _physics_process(delta: float) -> void:
 				if main.has_arrived() and _standing_on_ground():
 					var island: int = world.get_island_at(player.global_position.x, player.global_position.z)
 					if island != int(dest_site["island"]):
-						_finish(false, "下了船站在岛 #%d 上，不是乙岛" % island)
+						_finish(false, "下了船站在岛 #%d 上，不是目的码头那座岛" % island)
 						return
 					_log("到了：站在岛 #%d 的停机坪上 %s" % [island, player.global_position])
 					_shot("9_ashore")
@@ -495,13 +499,13 @@ func _physics_process(delta: float) -> void:
 				_goto(Phase.DONE)
 		Phase.DONE:
 			if in_phase > 0.3:
-				_finish(true, "主码头出生 → 邑治 → 回主码头 → 上舵换档飞 %.1f km → 乙岛 #%d 码头靠泊下船；途中最高 %.0f m、最低离地 %.0f m" % [
+				_finish(true, "主码头出生（邑治在旁）→ 村004 → 回主码头 → 上舵换档飞 %.1f km → 码头 #%d 靠泊下船；途中最高 %.0f m、最低离地 %.0f m" % [
 					main.get_origin_berth().origin.distance_to(main.get_destination_berth().origin) / 1000.0, main.destination_dock, cruise_top, min_clearance])
 
 
-func _seat_pos() -> Vector3:
+func _village_pos(id: int) -> Vector3:
 	for v in world.get_info()["villages"]:
-		if v.get("seat", false):
+		if int(v["id"]) == id:
 			return Vector3(v["pos"][0], 0, v["pos"][1])
 	return Vector3.ZERO
 

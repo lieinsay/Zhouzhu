@@ -1,7 +1,7 @@
 extends Node
 ## 采集（world_2051.tscn），只通过输入（动作、转视角）操作，一路不瞬移：
-## 主码头 #7 出生，找离得最近的资源点（浮石崖 #345，1.1 km）
-## → 走上船掌舵，先飞到近处村里一座民居上空、降低：野泊不了（船底下有房子）→ 再到采掘面正上空：提示「野泊不了：…挡着」
+## 主码头 #1 出生，找离得最近的浮石崖（露头的石块挡着船；最近的黏土坑是个平坑，船落得下，测不到「挡着」）
+## → 走上船掌舵、升过船坞的门架，先飞到近处村里一座民居上空、降低：野泊不了（船底下有房子）→ 再到采掘面正上空：提示「野泊不了：…挡着」
 ## → 飞到资源点旁 28 m 的平地上空、降到离地二十来米、停稳：提示「按 E 野泊（舷梯放…）」→ E：状态行「野泊中」，
 ##   船悬停落定、舷梯从舷门斜下到地面（梯脚贴地），人下船
 ## → 顺着舷梯走下去、到采掘面：提示按住 E → 按住 E 一份份采进背包、存量跟着少；到堆场按 E 打成一箱抱着（背包少 5 份）
@@ -265,9 +265,9 @@ func _physics_process(delta: float) -> void:
 		Phase.SETTLE:
 			if in_phase > 1.0 and _standing():
 				var at := player.global_position
-				site_id = world.find_resource_near(at.x, at.z, 3000.0)
+				site_id = world.find_resource_near(at.x, at.z, 3000.0, "floatstone")
 				if site_id < 0:
-					_finish(false, "主码头 3 km 内该有资源点")
+					_finish(false, "主码头 3 km 内该有浮石崖")
 					return
 				site = world.get_resource_site(site_id)
 				item = site["item"]
@@ -294,7 +294,7 @@ func _physics_process(delta: float) -> void:
 					if in_phase > 5.0:
 						_finish(false, "近处该有铺出来的村")
 					return
-				_log("资源点 #%d %s（%s）采掘面 %s、堆场 %s，存 %.0f / %d；村%d 挑的民居 %s（离船台 %.0f m）" % [site_id, site["name"], item, face, pile, float(site["stock"]), int(site["cap"]), village_id, house, farthest])
+				_log("资源点 #%d %s（%s）采掘面 %s、堆场 %s，存 %.0f / %d；村%03d 挑的民居 %s（离船台 %.0f m）" % [site_id, site["name"], item, face, pile, float(site["stock"]), int(site["cap"]), village_id, house, farthest])
 				_shot("1_spawn")
 				var dock: Transform3D = main.get_origin_berth()
 				waypoints = [dock.origin + dock.basis.x * 0.8, ship.global_position]
@@ -315,18 +315,20 @@ func _physics_process(delta: float) -> void:
 			elif in_phase > 30.0:
 				_finish(false, "30 s 没上舵（%s）" % main.get_prompt())
 		Phase.CLIMB_OUT:
+			# 先升过旁边船坞的门架（20 m）再转向：船头离原点二十来米，原地转会扫到门架柱
 			_hold("ascend", true)
-			if ship.global_position.y > climb_from + 12.0:
+			if ship.global_position.y > climb_from + 24.0:
 				_hold("ascend", false)
 				_goto(Phase.FLY_VILLAGE)
 		Phase.FLY_VILLAGE:
-			# 村里一座民居上空，甲板离地 12 m
-			var target := Vector3(house.x, house.y + 12.0, house.z)
+			# 村里一座民居上空，甲板离地 12 m；路上离地 30 m（邑治一大片房子，贴着房顶飞会挂住）
+			var far := Vector2(house.x - ship.global_position.x, house.z - ship.global_position.z).length() > 15.0
+			var target := Vector3(house.x, house.y + (30.0 if far else 12.0), house.z)
 			if _fly_to(target, 4.0):
 				_release_all()
 				_goto(Phase.OVER_HOUSE)
 			elif in_phase > 120.0:
-				_finish(false, "120 s 没飞到村%d 的民居上空（离 %.0f m）" % [village_id, Vector2(house.x - ship.global_position.x, house.z - ship.global_position.z).length()])
+				_finish(false, "120 s 没飞到村%03d 的民居上空（离 %.0f m）" % [village_id, Vector2(house.x - ship.global_position.x, house.z - ship.global_position.z).length()])
 		Phase.OVER_HOUSE:
 			if in_phase < 0.5:
 				return
@@ -578,7 +580,7 @@ func _physics_process(delta: float) -> void:
 				if ship.get_cargo_count() != 2 or cargo[0] != item or cargo[2] != item or gathered_total != 2 * PER_CRATE:
 					_finish(false, "船上该有两箱%s（%s），共采 %d 份" % [item, cargo, gathered_total])
 					return
-				_finish(true, "主码头 → 村%d 民居上空野泊被拒 → 资源点 #%d %s 旁野泊、舷梯落地 → 采 %d 份%s、打两箱（拆过一次）、走上舷梯装上货位 0 / 2 → 上舵收梯升空；存量还剩 %.1f / %d" % [
+				_finish(true, "主码头 → 村%03d 民居上空野泊被拒 → 资源点 #%d %s 旁野泊、舷梯落地 → 采 %d 份%s、打两箱（拆过一次）、走上舷梯装上货位 0 / 2 → 上舵收梯升空；存量还剩 %.1f / %d" % [
 					village_id, site_id, site["name"], gathered_total, item, _stock(), int(site["cap"])])
 
 

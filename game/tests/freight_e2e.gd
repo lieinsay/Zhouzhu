@@ -1,11 +1,11 @@
 extends Node
 ## 跑货（world_2051.tscn），只通过输入（动作、转视角）操作，一路不瞬移：
-## 主码头 #7 出生：船上带一节储存区、4 个货位；村152、村127 都有船台
-## → 走上船掌舵，飞 1 km 到村152 的船台，提示「按 E 落上船台」→ 落上去：船舷贴着跳板顶
+## 主码头 #1 出生：船上带一节储存区、4 个货位；村031、窑村37（专业聚落也是村）都有船台
+## → 走上船掌舵，飞 2.5 km 到村031 的船台，提示「按 E 落上船台」→ 落上去：船舷贴着跳板顶
 ## → 走下跳板到村仓（跳板脚前）：提示里有托运 → E 接下、打包第一箱：村仓少 5 份，人抱着箱子
 ## → 抱着箱子走上跳板：慢、跳不起来；到舵旁按 E 被拒（抱着箱子掌不了舵）→ 放上 0 号货位
-## → 下跳板打包第二箱、上来放上 2 号货位 → 掌舵：航向行指着托运的目的村 → 飞 6.6 km 到 4 号岛村127 的船台落下
-## → 从货位抱起一箱走下跳板交货：村127 的仓多 5 份、还没给钱 → 再抱一箱交：交齐，背包里多了运费、这单结了；两边村仓一共挪了 10 份。
+## → 下跳板打包第二箱、上来放上 2 号货位 → 掌舵：航向行指着托运的目的村 → 飞 7.7 km 到 8 号岛窑村37 的船台落下
+## → 从货位抱起一箱走下跳板交货：窑村37 的仓多 5 份、还没给钱 → 再抱一箱交：交齐，背包里多了运费、这单结了；两边村仓一共挪了 10 份。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/freight_e2e.tscn
 ##
@@ -15,8 +15,9 @@ const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 900.0  # 模拟秒
 const SETTLE_TIMEOUT := 30.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const ORIGIN_VILLAGE := 152
-const DEST_VILLAGE := 127
+const ORIGIN_VILLAGE := 31  # 村031：主码头 2.5 km 外、66 户
+const DEST_VILLAGE := 197  # 窑村37：8 号岛上、离村031 最近的别岛村子
+const ORIGIN_STORE := 132  # 村031 开账时的土产：66 户 × 2
 const CRUISE_CLEARANCE := 60.0
 const SLOW_DOWN_AT := 1500.0
 
@@ -51,7 +52,8 @@ var helm_tried := false
 var carry_top_speed := 0.0
 var carry_rise := 0.0
 var jump_tapped := false
-var dest_center := Vector3.ZERO
+var centers := {}  # 村号 → 村心
+var names := {}  # 村号 → 名字
 
 
 func _ready() -> void:
@@ -68,9 +70,9 @@ func _ready() -> void:
 	sites = main.get_node("SiteStream")
 	hinterland = main.get_node("Hinterland")
 	for v in world.get_info()["villages"]:
-		if int(v["id"]) == DEST_VILLAGE:
-			dest_center = Vector3(v["pos"][0], 0, v["pos"][1])
-	_log("出生 %s；村%d 村心 %s" % [player.global_position, DEST_VILLAGE, dest_center])
+		centers[int(v["id"])] = Vector3(v["pos"][0], 0, v["pos"][1])
+		names[int(v["id"])] = v["name"]
+	_log("出生 %s；%s 村心 %s，%s 村心 %s" % [player.global_position, names[ORIGIN_VILLAGE], centers[ORIGIN_VILLAGE], names[DEST_VILLAGE], centers[DEST_VILLAGE]])
 
 
 func _log(line: String) -> void:
@@ -267,13 +269,13 @@ func _physics_process(delta: float) -> void:
 				if ship.get_hold_slot_count() != 4 or int(ship.get_stats()["hold"]) != 4:
 					_finish(false, "开局的船该有一节储存区、4 个货位（%d）" % ship.get_hold_slot_count())
 					return
-				_log("船 %s：货位 4 个，航速 %.1f m/s；村%d 的船台接触线在 %s" % [ship.get_layout(), ship.get_max_speed(), ORIGIN_VILLAGE, _berth_contact(ORIGIN_VILLAGE).origin])
+				_log("船 %s：货位 4 个，航速 %.1f m/s；%s 的船台接触线在 %s" % [ship.get_layout(), ship.get_max_speed(), names[ORIGIN_VILLAGE], _berth_contact(ORIGIN_VILLAGE).origin])
 				_shot("1_spawn")
 				var berth: Transform3D = main.get_origin_berth()
 				waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
 				_goto(Phase.WALK_TO_SHIP)
 			elif in_phase > SETTLE_TIMEOUT:
-				_finish(false, "出生 %.0f s 还没站稳 / 村%d 没铺出来或没有船台" % [SETTLE_TIMEOUT, ORIGIN_VILLAGE])
+				_finish(false, "出生 %.0f s 还没站稳 / %s 没铺出来或没有船台" % [SETTLE_TIMEOUT, names[ORIGIN_VILLAGE]])
 		Phase.WALK_TO_SHIP:
 			if _follow_waypoints():
 				_goto(Phase.TAKE_HELM)
@@ -284,8 +286,8 @@ func _physics_process(delta: float) -> void:
 				climb_from = ship.global_position.y
 				if leg == 1:
 					var course := main.get_status_text()
-					if not course.contains("托运") or not course.contains("村%d" % DEST_VILLAGE):
-						_finish(false, "掌舵时航向行该指着托运的目的村%d，实为「%s」" % [DEST_VILLAGE, course])
+					if not course.contains("托运") or not course.contains(names[DEST_VILLAGE]):
+						_finish(false, "掌舵时航向行该指着托运的目的村%s，实为「%s」" % [names[DEST_VILLAGE], course])
 						return
 					_log("航向：%s" % course.replace("\n", " / "))
 				_goto(Phase.CLIMB_OUT)
@@ -301,7 +303,8 @@ func _physics_process(delta: float) -> void:
 		Phase.FLY:
 			var vid := _village_id()
 			var s := _berth_settlement(vid)
-			var target := Vector3(dest_center.x, world.get_surface_height(dest_center.x, dest_center.z), dest_center.z)
+			var center: Vector3 = centers[vid]  # 村子还没铺出来时先朝村心飞
+			var target := Vector3(center.x, world.get_surface_height(center.x, center.z), center.z)
 			if s != null:
 				target = _berth_contact(vid).origin
 			var flat := Vector2(target.x - ship.global_position.x, target.z - ship.global_position.z).length()
@@ -322,14 +325,14 @@ func _physics_process(delta: float) -> void:
 				_tap("interact")
 				_goto(Phase.MOORING)
 			elif in_phase > 300.0:
-				_finish(false, "300 s 没飞到村%d 的船台（离 %.0f m）" % [vid, flat])
+				_finish(false, "300 s 没飞到%s 的船台（离 %.0f m）" % [names[vid], flat])
 		Phase.MOORING:
 			if main.get_state() == Expedition.ON_FOOT:
 				var contact := _berth_contact(_village_id())
 				if not ship.is_at(contact, 0.5):
 					_finish(false, "落上船台后船舷该贴着跳板顶（船 %s，接触线 %s）" % [ship.global_position, contact.origin])
 					return
-				_log("落上村%d 的船台；途中最低离地 %.0f m" % [_village_id(), min_clearance])
+				_log("落上%s 的船台；途中最低离地 %.0f m" % [names[_village_id()], min_clearance])
 				_shot("%d_landed" % (3 + leg * 5))
 				crate_no = 0
 				if leg == 0:
@@ -371,11 +374,11 @@ func _physics_process(delta: float) -> void:
 						item = order["item"]
 						if crate_no == 0:
 							if int(order["from"]) != ORIGIN_VILLAGE or int(order["to"]) != DEST_VILLAGE or int(order["crates"]) != 2:
-								_finish(false, "托运单该是村%d → 村%d 两箱，实为 %s" % [ORIGIN_VILLAGE, DEST_VILLAGE, order])
+								_finish(false, "托运单该是%s → %s 两箱，实为 %s" % [names[ORIGIN_VILLAGE], names[DEST_VILLAGE], order])
 								return
 							origin_before = _store(ORIGIN_VILLAGE) + int(order["per_crate"])
-							if origin_before != 28:
-								_finish(false, "村%d 的仓开账时该有 28 份%s（打包前推算得 %d）" % [ORIGIN_VILLAGE, item, origin_before])
+							if origin_before != ORIGIN_STORE:
+								_finish(false, "%s 的仓开账时该有 %d 份%s（打包前推算得 %d）" % [names[ORIGIN_VILLAGE], ORIGIN_STORE, item, origin_before])
 								return
 							_log("接下托运 %s；%s" % [order, main.get_notice()])
 						elif _store(ORIGIN_VILLAGE) != origin_before - 10:
@@ -481,7 +484,7 @@ func _physics_process(delta: float) -> void:
 				4:
 					if not main.get_prompt().contains("按 E 交货"):
 						if in_phase > 2.0:
-							_finish(false, "村%d 的村仓前该提示交货，实为「%s」" % [DEST_VILLAGE, main.get_prompt()])
+							_finish(false, "%s 的村仓前该提示交货，实为「%s」" % [names[DEST_VILLAGE], main.get_prompt()])
 						return
 					_tap("interact")
 					_goto(Phase.DELIVER)
@@ -490,7 +493,7 @@ func _physics_process(delta: float) -> void:
 				var got := _store(DEST_VILLAGE) - dest_before
 				var want := (crate_no + 1) * int(order["per_crate"])
 				if main.is_carrying() or got != want:
-					_finish(false, "交第 %d 箱：村%d 的仓该多 %d 份，实多 %d（%s）" % [crate_no + 1, DEST_VILLAGE, want, got, main.get_notice()])
+					_finish(false, "交第 %d 箱：%s 的仓该多 %d 份，实多 %d（%s）" % [crate_no + 1, names[DEST_VILLAGE], want, got, main.get_notice()])
 					return
 				_log("交第 %d 箱：%s" % [crate_no + 1, main.get_notice()])
 				if crate_no == 0:
@@ -514,8 +517,8 @@ func _physics_process(delta: float) -> void:
 					_goto(Phase.DONE)
 		Phase.DONE:
 			if in_phase > 0.3:
-				_finish(true, "主码头 → 村%d 船台接托运打包两箱、走上跳板装船 → 飞到村%d 船台卸下交齐：%s 各 %d 份挪了 10 份，得运费 %d 文；途中最低离地 %.0f m" % [
-					ORIGIN_VILLAGE, DEST_VILLAGE, item, int(order["per_crate"]), int(order["fee"]), min_clearance])
+				_finish(true, "主码头 → %s 船台接托运打包两箱、走上跳板装船 → 飞到%s 船台卸下交齐：%s 各 %d 份挪了 10 份，得运费 %d 文；途中最低离地 %.0f m" % [
+					names[ORIGIN_VILLAGE], names[DEST_VILLAGE], item, int(order["per_crate"]), int(order["fee"]), min_clearance])
 
 
 func _finish(ok: bool, why: String) -> void:

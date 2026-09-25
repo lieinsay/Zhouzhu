@@ -1,9 +1,9 @@
 extends Node
 ## 看不见的地方也在按自己的逻辑运转（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
-## 清早 05:45 主码头 #7 出生 → M 开地图点到村152 旁：卯时一到有人出门，记下仓、水缸、账
-## → 点回主码头、上船掌舵、换疾档飞 30 km 到乙岛 #2（途中村152 的村民散了、账收回远处账房，远处的账接着记）
-## → 下船，F4 快进待到 11 点（途中断言村152 与 8.5 km 外邑治的账都在远处推进）→ F4 关
-## → 上船飞回主码头 → 点地图回村152：钟点一路连续（没倒流、没跳）、HUD 与全局钟一致；
+## 清早 05:45 主码头 #1 出生 → M 开地图点到村031 旁：卯时一到有人出门，记下仓、水缸、账
+## → 点回主码头、上船掌舵、换疾档飞 23 km 到岛 #2 的码头 #26（途中村031 的村民散了、账收回远处账房，远处的账接着记）
+## → 下船，F4 快进待到 11 点（途中断言村031 与 8.5 km 外村004 的账都在远处推进）→ F4 关
+## → 上船飞回主码头 → 点地图回村031：钟点一路连续（没倒流、没跳）、HUD 与全局钟一致；
 ##   仓里的粮按规矩变了（起初 + 收 − 播 − 吃，对得上账）、水缸有水；村民散在各自的岗位上，不在自家门口扎堆；地块都回到了农田里。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/world_sim_e2e.tscn
@@ -13,9 +13,9 @@ extends Node
 const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 2400.0  # 模拟秒
 const START_HOUR := 5.75
-const STAY_UNTIL_HOUR := 11.0  # 在乙岛快进待到这个钟点再飞回去（船 20 m/s，疾档回程近 5 个钟头，得赶在收工前回到村里）
-const VILLAGE_A := 152  # 主码头 1 km 外的村子（有田有水：农夫、挑水的都有）
-const SEAT_ID := 1  # 邑治：8.5 km 外，这一趟一直在远处
+const STAY_UNTIL_HOUR := 11.0  # 在目的码头快进待到这个钟点再飞回去（船 20 m/s，疾档回程三个多钟头，得赶在收工前回到村里）
+const VILLAGE_A := 31  # 主码头 2.5 km 外的村子（有田有水：农夫、挑水的都有）
+const VILLAGE_B := 4  # 村004：8.5 km 外，这一趟一直在远处（邑治就在主码头旁，不合适）
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
 const CRUISE_CLEARANCE := 60.0
 const SLOW_DOWN_AT := 2000.0
@@ -48,7 +48,7 @@ var climb_from := 0.0
 var map_step := 0
 var map_target := Vector3.ZERO
 var village_a_pos := Vector3.ZERO
-var seat_pos := Vector3.ZERO
+var b_pos := Vector3.ZERO
 
 # 钟
 var last_clock := -1.0
@@ -60,8 +60,8 @@ var base := {}
 var saw_collapse := false
 var far_a_first := {}  # 村 A 在远处头一回看到的账
 var far_a_last := {}
-var seat_first := {}
-var seat_last := {}
+var b_first := {}  # 村 B（一直在远处）头一回看到的账
+var b_last := {}
 var far_checks := 0
 var lapse_off_at := -1.0  # 关掉快进时的模拟秒（之后给远处一段时间补账）
 var stale_max := 0.0  # 不快进时远处落后得最多的一次
@@ -87,11 +87,11 @@ func _ready() -> void:
 	for v in info["villages"]:
 		if int(v["id"]) == VILLAGE_A:
 			village_a_pos = Vector3(v["pos"][0], 0, v["pos"][1])
-		if v.get("seat", false):
-			seat_pos = Vector3(v["pos"][0], 0, v["pos"][1])
-	_log("出生 %s，钟 %s；村%03d 在 %s（%.0f m），邑治 %.1f km" % [player.global_position, GameClock.get_clock_text(), VILLAGE_A, village_a_pos,
+		if int(v["id"]) == VILLAGE_B:
+			b_pos = Vector3(v["pos"][0], 0, v["pos"][1])
+	_log("出生 %s，钟 %s；村%03d 在 %s（%.0f m），村%03d %.1f km" % [player.global_position, GameClock.get_clock_text(), VILLAGE_A, village_a_pos,
 		Vector2(village_a_pos.x - player.global_position.x, village_a_pos.z - player.global_position.z).length(),
-		Vector2(seat_pos.x - player.global_position.x, seat_pos.z - player.global_position.z).length() / 1000.0])
+		VILLAGE_B, Vector2(b_pos.x - player.global_position.x, b_pos.z - player.global_position.z).length() / 1000.0])
 
 
 func _log(line: String) -> void:
@@ -296,10 +296,10 @@ func _check_clock(delta: float) -> bool:
 	return true
 
 
-## 远处的账：村 A 散了之后账收回账房（不再在近处），账上的钟跟着全局钟往前记；邑治一直在远处，也在记
+## 远处的账：村 A 散了之后账收回账房（不再在近处），账上的钟跟着全局钟往前记；村 B 一直在远处，也在记
 func _check_far() -> bool:
 	var a: Dictionary = hinterland.get_ledger_summary(VILLAGE_A, false)
-	var seat: Dictionary = hinterland.get_ledger_summary(SEAT_ID, false)
+	var b: Dictionary = hinterland.get_ledger_summary(VILLAGE_B, false)
 	if not saw_collapse and sites.get_village(VILLAGE_A) != null and sites.get_village(VILLAGE_A).has_folk():
 		return true
 	if not saw_collapse:
@@ -324,13 +324,13 @@ func _check_far() -> bool:
 	if far_a_first.is_empty():
 		far_a_first = a
 	far_a_last = a
-	if seat.get("opened", false):
-		if seat["deployed"]:
-			_finish(false, "邑治一直在远处，账却在近处")
+	if b.get("opened", false):
+		if b["deployed"]:
+			_finish(false, "村%03d 一直在远处，账却在近处" % VILLAGE_B)
 			return false
-		if seat_first.is_empty():
-			seat_first = seat
-		seat_last = seat
+		if b_first.is_empty():
+			b_first = b
+		b_last = b
 	far_checks += 1
 	return true
 
@@ -446,7 +446,7 @@ func _physics_process(delta: float) -> void:
 			if _follow_waypoints():
 				_release_all()
 				if main.has_arrived() and _standing_on_ground():
-					_log("到了乙岛 #%d 码头（%s）：离村%03d %.1f km" % [main.destination_dock, GameClock.get_clock_text(), VILLAGE_A,
+					_log("到了码头 #%d（%s）：离村%03d %.1f km" % [main.destination_dock, GameClock.get_clock_text(), VILLAGE_A,
 						Vector2(village_a_pos.x - player.global_position.x, village_a_pos.z - player.global_position.z).length() / 1000.0])
 					_shot("3_far_dock")
 					_press_key_action("time_lapse")  # F4 快进
@@ -472,21 +472,21 @@ func _physics_process(delta: float) -> void:
 				if in_phase > 1.0:
 					_finish(false, "再按 F4 没关掉快进")
 				return
-			# 远处的账在推进：村 A 与邑治的账钟都跟上了全局钟，村 A 在远处收了粮、两处都开过饭
-			if far_a_first.is_empty() or seat_first.is_empty():
-				_finish(false, "远处的账没看到（村 A %s，邑治 %s）" % [far_a_first, seat_first])
+			# 远处的账在推进：村 A 与村 B 的账钟都跟上了全局钟，村 A 在远处收了粮、两处都开过饭
+			if far_a_first.is_empty() or b_first.is_empty():
+				_finish(false, "远处的账没看到（村 A %s，村 B %s）" % [far_a_first, b_first])
 				return
 			var a_gain: int = int(far_a_last["harvested"]) - int(far_a_first["harvested"])
 			var a_ate: int = int(far_a_last["eaten"]) - int(far_a_first["eaten"])
 			var a_span: float = float(far_a_last["clock"]) - float(far_a_first["clock"])
-			var seat_done: int = int(seat_last["done"]) - int(seat_first["done"])
-			var seat_span: float = float(seat_last["clock"]) - float(seat_first["clock"])
-			_log("在远处待到 %s：村%03d 的账从 %.0f s 记到 %.0f s，收 +%d、吃 +%d、水缸 %.1f；邑治的账推进了 %.0f s（%d 人），干完 +%d 件活；账房 %s" % [
+			var b_done: int = int(b_last["done"]) - int(b_first["done"])
+			var b_span: float = float(b_last["clock"]) - float(b_first["clock"])
+			_log("在远处待到 %s：村%03d 的账从 %.0f s 记到 %.0f s，收 +%d、吃 +%d、水缸 %.1f；村 B 的账推进了 %.0f s（%d 人），干完 +%d 件活；账房 %s" % [
 				GameClock.get_clock_text(), VILLAGE_A, far_a_first["clock"], far_a_last["clock"], a_gain, a_ate, far_a_last["water"],
-				seat_span, seat_last["people"], seat_done, hinterland.get_stats()])
-			# 快进时远处每帧仍只花那么多预算，Debug 下会落后几个钟头（见 README）：这里只要求两处的账都在往前记、村 A 在远处收了粮、邑治有活干完；
+				b_span, b_last["people"], b_done, hinterland.get_stats()])
+			# 快进时远处每帧仍只花那么多预算，Debug 下会落后几个钟头（见 README）：这里只要求两处的账都在往前记、村 A 在远处收了粮、村 B 有活干完；
 			# 饭点、账对不对得上，等飞回去展开时（先补到此刻）一并查
-			if a_gain <= 0 or seat_done <= 0 or a_span < GameClock.get_day_seconds() * 0.1 or seat_span < GameClock.get_day_seconds() * 0.1:
+			if a_gain <= 0 or b_done <= 0 or a_span < GameClock.get_day_seconds() * 0.1 or b_span < GameClock.get_day_seconds() * 0.1:
 				_finish(false, "远处的账没按规矩推进")
 				return
 			var berth: Transform3D = main.get_destination_berth()
@@ -519,7 +519,7 @@ func _physics_process(delta: float) -> void:
 			_check_return(folk)
 		Phase.DONE:
 			if in_phase > 0.5:
-				_finish(true, "村%03d 出门 → 飞 30 km 待到下午 → 飞回：钟点连续（查了 %d 帧）、账对得上、村民在各自岗位上；远处的账一路在记（不快进时最多落后 %.0f s）" % [VILLAGE_A, clock_checks, stale_max])
+				_finish(true, "村%03d 出门 → 飞 23 km 待到下午 → 飞回：钟点连续（查了 %d 帧）、账对得上、村民在各自岗位上；远处的账一路在记（不快进时最多落后 %.0f s）" % [VILLAGE_A, clock_checks, stale_max])
 
 
 func _flight_berth() -> Vector3:
