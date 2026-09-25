@@ -165,6 +165,11 @@ double FlatMap::map_surface(const Vector3 &p_global) const {
     return y + get_global_position().y;
 }
 
+bool FlatMap::map_water_at(double p_x, double p_z) const {
+    const Vector3 origin = get_global_position();
+    return FlatGround(island).water_at(p_x - origin.x, p_z - origin.z) != WaterKind::NONE;
+}
+
 int FlatMap::map_island_at(const Vector3 &p_global) const {
     return std::isnan(map_surface(p_global)) ? -1 : 0;
 }

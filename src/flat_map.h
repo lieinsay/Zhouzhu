@@ -48,6 +48,7 @@ public:
     godot::Node3D *map_node() override { return this; }
     bool map_ready() const override { return built; }
     double map_surface(const godot::Vector3 &p_global) const override;
+    bool map_water_at(double p_x, double p_z) const override; // 溪（野泊的舷梯不落进去）
     int map_island_at(const godot::Vector3 &p_global) const override;
     int map_dock_count() const override { return island.dock.ok ? 1 : 0; }
     godot::Transform3D map_dock_berth(int p_index) const override;

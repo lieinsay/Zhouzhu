@@ -28,13 +28,16 @@ class WorldMap : public godot::Control {
             VILLAGE,
             DOCK,
             MAIN_DOCK,
+            RESOURCE, // 能采的资源点（采掘面）
+            LANDMARK, // 采不了的：泉眼、温泉、洞穴
         } kind;
         double x, z; // 世界坐标
         std::string label;
         double area_km2 = 0.0; // 岛：按面积决定多小时还标
         int id = -1; // 村号 / 码头号
         bool berthable = true; // 码头：能靠泊
-        bool built = false; // 码头 / 村：3D 里已经铺出来了
+        bool built = false; // 码头 / 村 / 资源点：3D 里已经铺出来了
+        godot::Color color; // 资源点：种类的颜色
     };
 
     const WorldGrid *grid = nullptr;
@@ -78,6 +81,10 @@ public:
     void set_destination_dock(int p_id);
     // 哪些码头 / 村（号）已在 3D 里铺出来了
     void set_built_sites(const godot::PackedInt32Array &p_docks, const godot::PackedInt32Array &p_villages);
+    // 资源点（矿点号、世界 xz、种类的颜色、名字；p_landmark：采不了、只是标个地名）与哪些已摆出来
+    void add_resource(int p_id, double p_x, double p_z, const godot::Color &p_color, const std::string &p_label, bool p_landmark);
+    void set_built_resources(const godot::PackedInt32Array &p_ids);
+    bool is_resource_marked(int p_id) const; // 给测试：地图上标了这一处（能采的）
     // 给测试：某码头 / 村标在哪（世界 xz，y = 0）、是否标为已铺；没有这个号返回 false
     bool get_marker(const godot::String &p_kind, int p_id, godot::Vector3 &r_position, bool &r_built) const;
     godot::Vector3 get_dock_marker(int p_id) const;

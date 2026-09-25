@@ -44,6 +44,18 @@ double IslandMap::map_surface(const Vector3 &p_global) const {
     return std::numeric_limits<double>::quiet_NaN();
 }
 
+bool IslandMap::map_water_at(double p_x, double p_z) const {
+    const Vector3 at(real_t(p_x), 0, real_t(p_z));
+    for (const Island *isl : resolved) {
+        if (std::isnan(isl->get_surface_height(at))) {
+            continue;
+        }
+        const Vector3 local = at - isl->get_global_position(); // 宿主只平移
+        return isl->host_ground()->water_at(local.x, local.z) != WaterKind::NONE;
+    }
+    return false;
+}
+
 int IslandMap::map_island_at(const Vector3 &p_global) const {
     for (int k = 0; k < int(resolved.size()); k++) {
         if (!std::isnan(resolved[size_t(k)]->get_surface_height(p_global))) {

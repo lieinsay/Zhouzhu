@@ -62,6 +62,9 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("find_dock", "id"), &World::find_dock);
     ClassDB::bind_method(D_METHOD("get_freight_post", "village_id"), &World::get_freight_post);
     ClassDB::bind_method(D_METHOD("get_freight_port_ids"), &World::get_freight_port_ids);
+    ClassDB::bind_method(D_METHOD("get_resource_site", "deposit_id"), &World::get_resource_site);
+    ClassDB::bind_method(D_METHOD("get_resource_ids"), &World::get_resource_ids);
+    ClassDB::bind_method(D_METHOD("find_resource_near", "x", "z", "radius", "kind"), &World::find_resource_near, DEFVAL(String()));
     ClassDB::bind_method(D_METHOD("get_dock_id", "index"), &World::get_dock_id);
     ClassDB::bind_method(D_METHOD("is_dock_berthable", "index"), &World::is_dock_berthable);
     ClassDB::bind_method(D_METHOD("get_dock_berth", "index"), &World::get_dock_berth);
@@ -173,6 +176,20 @@ bool World::load() {
     }
     works = lay_world_works(terrain, sites);
     freight_ports = plan_freight_ports(sites);
+
+    // 资源点：码头的坪压好之后规划（采掘面让开坪）；没有 resources.tsv 就没有
+    const String resources_path = data_dir.path_join("resources.tsv");
+    if (FileAccess::file_exists(resources_path)) {
+        const PackedByteArray res_bytes = FileAccess::get_file_as_bytes(resources_path);
+        const std::string res_text(reinterpret_cast<const char *>(res_bytes.ptr()), size_t(res_bytes.size()));
+        if (parse_resource_deposits(res_text, deposits, error)) {
+            resource_plan = plan_resource_sites(terrain, sites, deposits);
+            resource_stocks.assign(resource_plan.sites.size(), ResourceStock());
+        } else {
+            ERR_PRINT(String("World: 读不了 ") + resources_path + "：" + String::utf8(error.c_str()));
+            deposits.clear();
+        }
+    }
 
     ground_material.instantiate();
     ground_material->set_roughness(1.0);
@@ -755,6 +772,85 @@ bool World::map_freight_target(int p_port, Transform3D &r_target) const {
     return true;
 }
 
+ResourceStock *World::resource_stock(int p_index) {
+    return p_index >= 0 && p_index < int(resource_stocks.size()) ? &resource_stocks[size_t(p_index)] : nullptr;
+}
+
+double World::clock_hours() {
+    const WorldClock *clock = WorldClock::get_singleton();
+    return clock ? clock->get_total_hours() : 0.0;
+}
+
+ResourceSpot World::map_resource_near(const Vector3 &p_global, double p_range) {
+    ResourceSpot spot;
+    WorldResource *node = site_stream ? site_stream->resource_near(p_global, p_range) : nullptr;
+    if (!node) {
+        return spot;
+    }
+    const ResourceSite &site = node->get_site();
+    spot.site = node->get_index();
+    spot.face = node->get_face();
+    spot.pile = node->get_pile();
+    spot.item = site.item;
+    spot.name = String::utf8(site.name.c_str());
+    spot.verb = String::utf8(deposits::verb_of(*site.kind, site.subtype).c_str());
+    spot.grade = site.grade;
+    spot.gather_s = site.kind->gather_s;
+    spot.cap = site.cap;
+    spot.refill_hours = site.kind->refill_hours;
+    spot.stock = resource_stock(spot.site);
+    return spot;
+}
+
+bool World::map_water_at(double p_x, double p_z) const {
+    return WorldLandingGround(terrain).water(p_x, p_z);
+}
+
+Dictionary World::get_resource_site(int p_deposit_id) const {
+    Dictionary d;
+    for (size_t k = 0; k < resource_plan.sites.size(); k++) {
+        const ResourceSite &s = resource_plan.sites[k];
+        if (s.id != p_deposit_id) {
+            continue;
+        }
+        d["index"] = int(k);
+        d["kind"] = String(s.kind->key);
+        d["face"] = Vector3(real_t(s.face_x), real_t(s.face_y), real_t(s.face_z));
+        d["pile"] = Vector3(real_t(s.pile_x), real_t(s.pile_y), real_t(s.pile_z));
+        d["item"] = String::utf8(s.item.c_str());
+        d["name"] = String::utf8(s.name.c_str());
+        d["grade"] = s.grade;
+        d["cap"] = s.cap;
+        d["island"] = s.island;
+        d["stock"] = stock_amount(resource_stocks[k], s.cap, s.kind->refill_hours, clock_hours());
+        d["built"] = site_stream && site_stream->get_resource(s.id) != nullptr;
+        return d;
+    }
+    return d;
+}
+
+PackedInt32Array World::get_resource_ids() const {
+    PackedInt32Array ids;
+    for (const ResourceSite &s : resource_plan.sites) {
+        ids.push_back(s.id);
+    }
+    return ids;
+}
+
+int World::find_resource_near(double p_x, double p_z, double p_radius, const String &p_kind) const {
+    int best = -1;
+    double best_d = p_radius;
+    const std::string kind = p_kind.utf8().get_data();
+    for (const ResourceSite &s : resource_plan.sites) {
+        const double d = std::hypot(s.face_x - p_x, s.face_z - p_z);
+        if (d <= best_d && (kind.empty() || kind == s.kind->key)) {
+            best_d = d;
+            best = s.id;
+        }
+    }
+    return best;
+}
+
 Vector3 World::get_freight_post(int p_village_id) const {
     WorldVillage *village = site_stream ? site_stream->get_village(p_village_id) : nullptr;
     Vector3 at;
@@ -794,6 +890,13 @@ int World::map_pending() const {
 String World::map_location_text(const Vector3 &p_global) const {
     String text = vformat(String(U"岛 #%d · 东 %s km  南 %s km · 高 %d m"), get_island_at(p_global.x, p_global.z),
             String::num(p_global.x / 1000.0, 2), String::num(p_global.z / 1000.0, 2), int(std::lround(p_global.y)));
+    // 走到资源点跟前：报它的名字与存量
+    WorldResource *resource = site_stream ? site_stream->resource_near(p_global, 60.0) : nullptr;
+    if (resource) {
+        const ResourceSite &s = resource->get_site();
+        const double stock = stock_amount(resource_stocks[size_t(resource->get_index())], s.cap, s.kind->refill_hours, clock_hours());
+        text += vformat(String(U" · %s（%s品）存 %d / %d"), String::utf8(s.name.c_str()), String::utf8(deposits::grade_name(s.grade)), int(std::floor(stock + 1e-9)), s.cap);
+    }
     // 站在河边：这条河此刻的水情
     const Dictionary river = get_river_at(p_global.x, p_global.z);
     if (!river.is_empty()) {
@@ -815,11 +918,24 @@ WorldMap *World::map_make_panel() {
     for (int k = 0; k < get_dock_count(); k++) {
         panel->set_dock(get_dock_id(k), is_dock_berthable(k), get_dock_position(k));
     }
+    // 资源点标在采掘面上；采不了的（泉眼、温泉、洞穴）标在矿点上
+    for (const ResourceSite &s : resource_plan.sites) {
+        const std::string label = s.name + " · " + deposits::grade_name(s.grade) + "品";
+        panel->add_resource(s.id, s.face_x, s.face_z, Color(s.kind->r, s.kind->g, s.kind->b), label, false);
+    }
+    for (const ResourceDeposit &d : deposits) {
+        const DepositKind *kind = deposits::kind(d.kind);
+        if (kind && !deposits::gatherable(*kind)) {
+            const std::string label = d.subtype.empty() ? std::string(kind->name) : std::string(kind->name) + "（" + d.subtype + "）";
+            panel->add_resource(d.id, d.x, d.z, Color(kind->r, kind->g, kind->b), label, true);
+        }
+    }
     return panel;
 }
 
 void World::map_refresh_panel(WorldMap *p_panel) const {
     if (site_stream) {
         p_panel->set_built_sites(site_stream->get_built_docks(), site_stream->get_built_villages());
+        p_panel->set_built_resources(site_stream->get_built_resources());
     }
 }

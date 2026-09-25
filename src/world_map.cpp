@@ -34,6 +34,10 @@ constexpr double ZOOM_MIN = 0.3; // 屏幕像素 / 底图像素（一底图像�
 constexpr double ZOOM_MAX = 60.0;
 constexpr double VILLAGE_NAMES_ZOOM = 5.0; // 放到这么大才写村名
 constexpr double DOCKS_ZOOM = 2.0;
+constexpr double RESOURCES_ZOOM = 1.5; // 放到这么大才画资源点
+constexpr double LANDMARKS_ZOOM = 3.0; // 泉眼、洞穴
+constexpr double RESOURCE_NAMES_ZOOM = 9.0; // 写资源点的名字
+constexpr real_t HOVER_PICK_PX = 9.0f; // 悬停离标记这么近就读出它的名字
 
 String to_godot(const std::string &p_text) {
     return String::utf8(p_text.c_str());
@@ -60,6 +64,7 @@ void WorldMap::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_dock_marker", "id"), &WorldMap::get_dock_marker);
     ClassDB::bind_method(D_METHOD("is_village_marked_built", "id"), &WorldMap::is_village_marked_built);
     ClassDB::bind_method(D_METHOD("is_dock_marked_berthable", "id"), &WorldMap::is_dock_marked_berthable);
+    ClassDB::bind_method(D_METHOD("is_resource_marked", "id"), &WorldMap::is_resource_marked);
     ClassDB::bind_method(D_METHOD("set_built_sites", "docks", "villages"), &WorldMap::set_built_sites);
     ADD_SIGNAL(MethodInfo("teleport_requested", PropertyInfo(Variant::VECTOR3, "position")));
 }
@@ -284,6 +289,31 @@ void WorldMap::_notification(int p_what) {
                     text(p + Vector2(7, 5), to_godot(m.label), 14, TEXT);
                 }
                 break;
+            case Marker::RESOURCE: {
+                if (zoom <= RESOURCES_ZOOM && !m.built) {
+                    break;
+                }
+                // 小三角：种类的颜色，摆出来了描白边
+                const real_t r = zoom > RESOURCE_NAMES_ZOOM ? 6 : 4;
+                const PackedVector2Array tri({ p + Vector2(0, -r), p + Vector2(r, r * 0.8f), p + Vector2(-r, r * 0.8f) });
+                if (m.built) {
+                    const PackedVector2Array ring({ p + Vector2(0, -r - 3), p + Vector2(r + 3, r * 0.8f + 2), p + Vector2(-r - 3, r * 0.8f + 2) });
+                    draw_colored_polygon(ring, BUILT_RING);
+                }
+                draw_colored_polygon(tri, m.color);
+                if (zoom > RESOURCE_NAMES_ZOOM) {
+                    text(p + Vector2(8, 5), to_godot(m.label), 13, m.color.lightened(0.3f));
+                }
+                break;
+            }
+            case Marker::LANDMARK:
+                if (zoom > LANDMARKS_ZOOM) {
+                    draw_circle(p, 3.5f, m.color, false, 1.5f);
+                    if (zoom > RESOURCE_NAMES_ZOOM) {
+                        text(p + Vector2(7, 5), to_godot(m.label), 12, TEXT_DIM);
+                    }
+                }
+                break;
             case Marker::MAIN_DOCK:
             case Marker::DOCK: {
                 const bool main = m.kind == Marker::MAIN_DOCK, destination = m.id == destination_dock;
@@ -349,6 +379,23 @@ void WorldMap::_notification(int p_what) {
         } else {
             line += String(U" · 云海");
         }
+        // 光标下的资源点：读出名字
+        const bool show_resources = zoom > RESOURCES_ZOOM, show_landmarks = zoom > LANDMARKS_ZOOM;
+        real_t best = HOVER_PICK_PX;
+        String picked;
+        for (const Marker &m : markers) {
+            if (!((m.kind == Marker::RESOURCE && (show_resources || m.built)) || (m.kind == Marker::LANDMARK && show_landmarks))) {
+                continue;
+            }
+            const real_t d = world_to_screen(m.x, m.z).distance_to(hover);
+            if (d < best) {
+                best = d;
+                picked = to_godot(m.label);
+            }
+        }
+        if (!picked.is_empty()) {
+            line += String(U" · ") + picked;
+        }
         text(Vector2(size.x * 0.5f, size.y - 30), line, 18, TEXT, HORIZONTAL_ALIGNMENT_CENTER);
     }
 }
@@ -378,6 +425,32 @@ void WorldMap::set_built_sites(const PackedInt32Array &p_docks, const PackedInt3
         }
     }
     queue_redraw();
+}
+
+void WorldMap::add_resource(int p_id, double p_x, double p_z, const Color &p_color, const std::string &p_label, bool p_landmark) {
+    Marker m{ p_landmark ? Marker::LANDMARK : Marker::RESOURCE, p_x, p_z, p_label };
+    m.id = p_id;
+    m.color = p_color;
+    markers.push_back(m);
+    queue_redraw();
+}
+
+void WorldMap::set_built_resources(const PackedInt32Array &p_ids) {
+    for (Marker &m : markers) {
+        if (m.kind == Marker::RESOURCE) {
+            m.built = p_ids.has(m.id);
+        }
+    }
+    queue_redraw();
+}
+
+bool WorldMap::is_resource_marked(int p_id) const {
+    for (const Marker &m : markers) {
+        if (m.kind == Marker::RESOURCE && m.id == p_id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool WorldMap::get_marker(const String &p_kind, int p_id, Vector3 &r_position, bool &r_built) const {

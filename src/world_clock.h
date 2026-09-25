@@ -35,6 +35,7 @@ public:
 
     const DayRules &get_rules() const { return rules; }
     double get_seconds() const { return seconds; }
+    double get_total_hours() const { return seconds / (rules.day_seconds / 24.0); } // 从第 0 天子夜起的游戏钟头（资源点的存量按它回满）
     double get_hour() const { return read_clock(seconds, rules).hour; }
     int get_day() const { return read_clock(seconds, rules).day; }
     godot::String get_clock_text() const;

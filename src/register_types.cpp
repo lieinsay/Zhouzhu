@@ -23,6 +23,7 @@
 #include "villagers.h"
 #include "world.h"
 #include "world_map.h"
+#include "world_resource.h"
 #include "world_village.h"
 #include "interior_overlay.h"
 #include "interior_panel.h"
@@ -57,6 +58,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(WorldMap);
     GDREGISTER_CLASS(WorldVillage);
     GDREGISTER_CLASS(WorldDock);
+    GDREGISTER_CLASS(WorldResource);
     GDREGISTER_CLASS(SiteStream);
     GDREGISTER_CLASS(Hinterland);
     GDREGISTER_CLASS(Expedition);

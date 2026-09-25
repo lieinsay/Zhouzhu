@@ -7,6 +7,7 @@
 #include <godot_cpp/variant/packed_int32_array.hpp>
 
 #include "world.h"
+#include "world_resource.h"
 #include "world_village.h"
 
 class Hinterland;
@@ -15,7 +16,8 @@ class Hinterland;
 // 上层（WorldScene）每帧 set_focus（人，或掌舵时的船）；每隔 check_interval 秒按焦点重算一次：
 //   码头：dock_radius 以内建栈桥（便宜，一次建齐）；
 //   村与散户：离村子边缘 village_radius 以内铺房子，每帧最多铺一处（由近及远），免得一帧卡住；
-//   村民：folk_radius 以内才招，每村 max_folk 封顶。
+//   村民：folk_radius 以内才招，每村 max_folk 封顶；
+//   资源点：resource_radius 以内摆出采掘面与堆场（便宜，每回最多摆 resource_budget 处，由近及远）。
 // 都带回滞：拆的距离比建的远 hysteresis 倍；布置模式改过还没存的村不拆（拆了改动就丢了）。瞬移前调 ensure_near，把落点周围的一次同步建好。
 // 这里只持有「哪些建了」；码头几何在 World，村子清单在 WorldVillage，村子的账（人、仓、田）在远处账房 Hinterland（可以不接：那就走近了从头招人）。
 class SiteStream : public godot::Node3D {
@@ -27,6 +29,8 @@ class SiteStream : public godot::Node3D {
     double dock_radius = 3000.0;
     double village_radius = 2500.0;
     double folk_radius = 900.0;
+    double resource_radius = 1500.0;
+    int resource_budget = 4;
     double hysteresis = 1.25;
     int per_house = 2;
     int max_folk = 40;
@@ -40,6 +44,7 @@ class SiteStream : public godot::Node3D {
     double since_check = 0.0;
     std::map<int, WorldDock *> docks; // World 的码头下标 → 节点
     std::map<int, WorldVillage *> villages; // sites.settlements 下标 → 节点
+    std::map<int, WorldResource *> resources; // World 的资源点下标 → 节点
 
     // 村子边缘到焦点的距离（村子还没铺时按户数估个半径）
     double edge_distance(int p_index) const;
@@ -65,6 +70,10 @@ public:
     WorldVillage *get_village(int p_village_id) const; // 已建的村；没有返回 nullptr
     WorldVillage *get_hamlet(int p_hamlet_id) const;
     WorldDock *get_dock(int p_dock_id) const;
+    godot::PackedInt32Array get_built_resources() const; // 摆出来的资源点的矿点号
+    WorldResource *get_resource(int p_deposit_id) const;
+    // 采掘面或堆场离 p_point 水平 p_range 以内、最近的那一处摆出来的资源点；没有返回 nullptr
+    WorldResource *resource_near(const godot::Vector3 &p_point, double p_range) const;
     // 该点所在的那处已铺的村 / 散户（离村心不超过它的半径 + p_margin）；最近的那处，没有返回 nullptr
     WorldVillage *village_at(const godot::Vector3 &p_point, double p_margin = 40.0) const;
 
@@ -80,6 +89,8 @@ public:
     void set_village_radius(double p_value) { village_radius = p_value; }
     double get_village_radius() const { return village_radius; }
     void set_folk_radius(double p_value) { folk_radius = p_value; }
+    void set_resource_radius(double p_value) { resource_radius = p_value; }
+    double get_resource_radius() const { return resource_radius; }
     double get_folk_radius() const { return folk_radius; }
     void set_per_house(int p_value) { per_house = p_value; }
     int get_per_house() const { return per_house; }

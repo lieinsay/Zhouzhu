@@ -35,6 +35,7 @@ class SiteStream;
 // 河（world_river.h）：栅格有水文就在建地形时建好河网、凿好河道；weather.tsv 给一年的水情。水面按 river_mesh 切成块，
 // 焦点 river_radius 内的块挂上、远了拆；共用一份水面材质（game/shaders/river.gdshader），每帧按全局钟算出今天的径流指数设进去，
 // 所以水涨水落不用重建网格。第 0 天对上 weather.tsv 的第 calendar_offset 天；runoff_override ≥ 0 时不看钟（测试、调试用）。
+// 资源点（resource_sites.h）：加载时按 resources.tsv 把全部资源点规划好（只有位置），存量账也在这里（按全局钟回满）；实物由 SiteStream 走近了才摆。
 // 加载完发 rebuilt（只一次）。节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
 class World : public godot::Node3D, public GroundHost, public MapHost {
     GDCLASS(World, godot::Node3D)
@@ -53,6 +54,9 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     WorldSites sites; // sites.tsv
     WorldWorks works; // 码头与船坞坪，与 sites.docks 一一对应
     std::vector<FreightPort> freight_ports; // 港口村（跑货）
+    std::vector<ResourceDeposit> deposits; // resources.tsv（没有这份文件就是空的）
+    ResourcePlan resource_plan; // 落了地的资源点
+    std::vector<ResourceStock> resource_stocks; // 与 resource_plan.sites 一一对应
     bool loaded = false;
     SiteStream *site_stream = nullptr;
 
@@ -153,6 +157,17 @@ public:
     godot::PackedInt32Array get_freight_port_ids() const; // 能托运的村的村号
     SiteStream *get_site_stream() const { return site_stream; }
 
+    // 资源点（下标与 get_resource_plan().sites 一致）
+    const std::vector<ResourceDeposit> &get_deposits() const { return deposits; }
+    const ResourcePlan &get_resource_plan() const { return resource_plan; }
+    ResourceStock *resource_stock(int p_index);
+    static double clock_hours(); // 全局钟：从第 0 天子夜起的游戏钟头
+    // 测试与调试：按矿点号查一处资源点 { index, face, pile, item, name, grade, cap, stock（此刻）, built }；没落地返回空字典
+    godot::Dictionary get_resource_site(int p_deposit_id) const;
+    godot::PackedInt32Array get_resource_ids() const; // 落了地的矿点号
+    // 离 (x, z) 最近的一处落了地的资源点的矿点号（p_kind 非空时只找这种）；p_radius 内没有返回 −1
+    int find_resource_near(double p_x, double p_z, double p_radius, const godot::String &p_kind = godot::String()) const;
+
     // GroundHost（Farm、Shipyard 挂在它下面）
     godot::Node3D *host_node() override { return this; }
     const godot::Node3D *host_node() const override { return this; }
@@ -189,6 +204,9 @@ public:
     const std::vector<FreightPort> &map_freight_ports() const override { return freight_ports; }
     FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) override;
     bool map_freight_target(int p_port, godot::Transform3D &r_target) const override;
+    ResourceSpot map_resource_near(const godot::Vector3 &p_global, double p_range) override;
+    bool map_landing_height(double p_x, double p_z, double &r_y) const override { return terrain.surface(p_x, p_z, r_y); }
+    bool map_water_at(double p_x, double p_z) const override;
 
     void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
     godot::NodePath get_sites_path() const { return sites_path; }

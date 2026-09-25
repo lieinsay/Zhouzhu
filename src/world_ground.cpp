@@ -277,3 +277,7 @@ PlotLattice WorldGround::plot_lattice() const {
     l.bounded = false;
     return l;
 }
+
+bool WorldLandingGround::water(double p_x, double p_z) const {
+    return WorldGround(terrain, 0.0, 0.0).water_at(p_x, p_z) != WaterKind::NONE;
+}

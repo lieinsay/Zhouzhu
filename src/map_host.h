@@ -8,6 +8,7 @@
 #include <godot_cpp/variant/vector3.hpp>
 
 #include "freight.h"
+#include "resource_sites.h"
 
 class Farm;
 class GroundHost;
@@ -21,6 +22,21 @@ struct FreightPost {
     Inventory *store = nullptr; // 村仓的账（村子的账本里的仓）；账还没开为 nullptr
     std::string specialty; // 这村的土产（托运的货）
     godot::String name; // 村名
+};
+
+// 一处资源点（采集在采掘面前按住 E，打包在堆场）
+struct ResourceSpot {
+    int site = -1; // 地图自己的资源点下标；−1 = 附近没有
+    godot::Vector3 face; // 采掘面（全局）
+    godot::Vector3 pile; // 堆场（全局）
+    std::string item; // 采出来的物品
+    godot::String name; // 「采石场（安山岩 / 凝灰岩）」
+    godot::String verb; // 「凿石」
+    int grade = 1; // 0 下 1 中 2 上
+    double gather_s = 0.0; // 按住 E 几秒一份
+    int cap = 0; // 存量上限
+    double refill_hours = 0.0; // 从空到满几个钟头
+    ResourceStock *stock = nullptr; // 存量账（地图持有）
 };
 
 // 地图宿主：玩家编排（Expedition）只认它。一张地图要让所有玩法跑起来，最少回答这些：
@@ -77,6 +93,12 @@ public:
     virtual const std::vector<FreightPort> &map_freight_ports() const;
     virtual FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) { return FreightPost(); }
     virtual bool map_freight_target(int p_port, godot::Transform3D &r_target) const { return false; }
+
+    // 采集（可选，默认没有）：离 p_global 水平 p_range 以内、已经摆出来的资源点（采掘面或堆场够得着的最近那一处）
+    virtual ResourceSpot map_resource_near(const godot::Vector3 &p_global, double p_range) { return ResourceSpot(); }
+    // 野泊问的地面（全局 xz）：多高（默认按 map_surface）、是不是水（默认不是）
+    virtual bool map_landing_height(double p_x, double p_z, double &r_y) const;
+    virtual bool map_water_at(double p_x, double p_z) const { return false; }
 
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
 };

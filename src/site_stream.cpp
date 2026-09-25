@@ -20,6 +20,10 @@ void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_village", "village_id"), &SiteStream::get_village);
     ClassDB::bind_method(D_METHOD("get_hamlet", "hamlet_id"), &SiteStream::get_hamlet);
     ClassDB::bind_method(D_METHOD("get_dock", "dock_id"), &SiteStream::get_dock);
+    ClassDB::bind_method(D_METHOD("get_built_resources"), &SiteStream::get_built_resources);
+    ClassDB::bind_method(D_METHOD("get_resource", "deposit_id"), &SiteStream::get_resource);
+    ClassDB::bind_method(D_METHOD("set_resource_radius", "value"), &SiteStream::set_resource_radius);
+    ClassDB::bind_method(D_METHOD("get_resource_radius"), &SiteStream::get_resource_radius);
     ClassDB::bind_method(D_METHOD("get_focus"), &SiteStream::get_focus);
     ClassDB::bind_method(D_METHOD("get_hinterland"), &SiteStream::get_hinterland);
     ClassDB::bind_method(D_METHOD("set_hinterland_path", "value"), &SiteStream::set_hinterland_path);
@@ -49,6 +53,7 @@ void SiteStream::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dock_radius", PROPERTY_HINT_RANGE, "200,20000,10,suffix:m"), "set_dock_radius", "get_dock_radius");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "village_radius", PROPERTY_HINT_RANGE, "200,20000,10,suffix:m"), "set_village_radius", "get_village_radius");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "folk_radius", PROPERTY_HINT_RANGE, "0,5000,10,suffix:m"), "set_folk_radius", "get_folk_radius");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "resource_radius", PROPERTY_HINT_RANGE, "100,10000,10,suffix:m"), "set_resource_radius", "get_resource_radius");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "per_house", PROPERTY_HINT_RANGE, "0,6,1"), "set_per_house", "get_per_house");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "max_folk", PROPERTY_HINT_RANGE, "0,500,1"), "set_max_folk", "get_max_folk");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
@@ -152,6 +157,61 @@ void SiteStream::refresh(int p_build_budget) {
             village->set_folk(true, per_house, max_folk);
         }
     }
+
+    // 资源点：先拆远的，再由近及远摆
+    const std::vector<ResourceSite> &sites = world->get_resource_plan().sites;
+    std::vector<std::pair<double, int>> wanted_resources;
+    for (int k = 0; k < int(sites.size()); k++) {
+        const double d = std::hypot(sites[size_t(k)].face_x - focus.x, sites[size_t(k)].face_z - focus.z);
+        const auto found = resources.find(k);
+        if (found != resources.end()) {
+            if (d > resource_radius * hysteresis) {
+                found->second->queue_free();
+                resources.erase(found);
+            }
+        } else if (d <= resource_radius) {
+            wanted_resources.emplace_back(d, k);
+        }
+    }
+    std::sort(wanted_resources.begin(), wanted_resources.end());
+    const int budget = p_build_budget > 1 ? p_build_budget : resource_budget;
+    for (size_t k = 0; k < wanted_resources.size() && int(k) < budget; k++) {
+        WorldResource *node = memnew(WorldResource);
+        node->setup(sites[size_t(wanted_resources[k].second)], wanted_resources[k].second);
+        add_child(node);
+        resources[wanted_resources[k].second] = node;
+    }
+}
+
+PackedInt32Array SiteStream::get_built_resources() const {
+    PackedInt32Array ids;
+    for (const auto &entry : resources) {
+        ids.push_back(entry.second->get_deposit_id());
+    }
+    return ids;
+}
+
+WorldResource *SiteStream::get_resource(int p_deposit_id) const {
+    for (const auto &entry : resources) {
+        if (entry.second->get_deposit_id() == p_deposit_id) {
+            return entry.second;
+        }
+    }
+    return nullptr;
+}
+
+WorldResource *SiteStream::resource_near(const Vector3 &p_point, double p_range) const {
+    WorldResource *best = nullptr;
+    double best_d = p_range;
+    for (const auto &entry : resources) {
+        const ResourceSite &s = entry.second->get_site();
+        const double d = std::min(std::hypot(s.face_x - p_point.x, s.face_z - p_point.z), std::hypot(s.pile_x - p_point.x, s.pile_z - p_point.z));
+        if (d <= best_d) {
+            best_d = d;
+            best = entry.second;
+        }
+    }
+    return best;
 }
 
 PackedInt32Array SiteStream::get_built_docks() const {

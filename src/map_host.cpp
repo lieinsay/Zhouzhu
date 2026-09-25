@@ -16,6 +16,11 @@ const std::vector<FreightPort> &MapHost::map_freight_ports() const {
     return none;
 }
 
+bool MapHost::map_landing_height(double p_x, double p_z, double &r_y) const {
+    r_y = map_surface(godot::Vector3(godot::real_t(p_x), 0, godot::real_t(p_z)));
+    return !std::isnan(r_y);
+}
+
 int MapHost::map_find_dock(int p_id) const {
     for (int k = 0; k < map_dock_count(); k++) {
         if (map_dock_id(k) == p_id) {

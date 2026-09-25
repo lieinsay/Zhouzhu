@@ -4,6 +4,7 @@
 
 #include "dock_site.h"
 #include "map_ground.h"
+#include "wild_landing.h"
 #include "world_terrain.h"
 #include "yard_site.h"
 
@@ -51,6 +52,17 @@ struct WorldGroundRules {
 YardRules world_yard_rules();
 // 码头旁的船坞坪；在 set_pads 之后调（量的是原地形的陆地，另避开溪涧与水面）
 YardPlan plan_world_yard(const WorldTerrain &p_terrain, const DockPlan &p_dock, const YardRules &p_rules, const WorldGroundRules &p_ground = WorldGroundRules());
+
+// 野泊问的地面：岛群的连续地形（顶面）与水（河槽、湖；与 WorldGround::water_at 同一条规矩）。坐标是岛群坐标
+class WorldLandingGround : public LandingGround {
+    const WorldTerrain &terrain;
+
+public:
+    explicit WorldLandingGround(const WorldTerrain &p_terrain) :
+            terrain(p_terrain) {}
+    bool height(double p_x, double p_z, double &r_y) const override { return terrain.surface(p_x, p_z, r_y); }
+    bool water(double p_x, double p_z) const override;
+};
 
 class WorldGround : public MapGround {
     const WorldTerrain &terrain;
