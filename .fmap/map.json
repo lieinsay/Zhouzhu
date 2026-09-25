@@ -191,10 +191,10 @@
     },
     {
       "id": "voyage-pack",
-      "label": "PackHand 背包与手持",
-      "detail": "背包、手上的种子、面板开合与光标；Tab 开合、W/S 选、E 拿在手上。",
+      "label": "PackHand 背包与快捷栏",
+      "detail": "36 格背包（前 9 格快捷栏），手上拿着的是快捷栏选中那格；开着面板时鼠标照 MC 点、键盘 WASD + E / Q / F，另一边是船舱或木箱；点配方合一回、Shift 合到料用完；合上时拖着的那叠放回去。",
       "tag": "玩法部件",
-      "evidence": "farm_e2e PASS：只经 inventory / move_back / interact 动作选到菽",
+      "evidence": "craft_e2e：左键 / 右键 / Shift / 悬停按数字键 / 键盘全过；farm_e2e：D 挪到菽、按 1 放上快捷栏",
       "sources": [
         "src/pack_hand.h",
         "src/pack_hand.cpp"
@@ -204,8 +204,8 @@
     },
     {
       "id": "inventory",
-      "label": "背包模型",
-      "detail": "物品 id → 数量的堆栈表，保留放入顺序，归零即移除；add / remove（不够则失败且不动）/ count。不含 Godot 头，不认识物品是什么。",
+      "label": "村仓的账与 ItemBag",
+      "detail": "物品 id → 数量的堆栈表（不限格数），村仓的账还是它；ItemBag 接口（count / room_for / put / take）让格子背包与账都能给跑货打箱、拆箱、付运费用。",
       "tag": "原语",
       "evidence": "zhouzhu_core_tests inventory：叠堆 / 顺序 / 不够不动 / 拿光即除，全过",
       "sources": [
@@ -218,7 +218,7 @@
     {
       "id": "crops",
       "label": "物品与作物表",
-      "detail": "静态表：物品（id、中文名）与作物（种子物品、产物物品、生长期倍率、单产）。粟：种粟得粟 ×4；菽：种菽得菽 ×3、生长期 1.5 倍。crop_of_seed 把手上的物品映射成作物。不含 Godot 头。",
+      "detail": "静态表：物品（id、中文名、一格叠几份、图标颜色——原料、土产、合成的东西都在这里）与作物（种子、产物、生长期倍率、单产），另有工具（石斧伐木、石镐凿石采矿、木锹挖土淘砂，对口快一倍）。不含 Godot 头。",
       "tag": "原语",
       "evidence": "zhouzhu_core_tests crops：种子与产物都在物品表、种一收多、由种子查回作物，全过",
       "sources": [
@@ -230,13 +230,13 @@
     },
     {
       "id": "backpack-panel",
-      "label": "BackpackPanel 背包面板",
-      "detail": "只负责画：给它背包内容、光标位置与手持物品，列出「名字 ×数量」，种子标出来、手持的标「手持」、光标那行描亮。自己不存状态、不读输入。",
+      "label": "InventoryPanel 背包面板",
+      "detail": "只画、只答落在哪：另一边的容器（船舱 / 木箱）、背包主区 3 × 9、快捷栏、右边配方清单（能合的亮、料不够的暗、缺设施写「要工作台」）、拖着的那叠跟着鼠标、底下一行说悬停的是什么；键盘在格子与配方之间挪一步落到哪。切片十前是右上角一列「名字 ×数量」的 BackpackPanel。",
       "tag": "引擎构件",
-      "evidence": "开窗截图：面板在右上，粟 / 菽两行，光标与「种子 · 手持」标记正确",
+      "evidence": "craft_e2e 鼠标点格子 / 配方都对得上；截图：主区、快捷栏、木箱 18 格、船舱 12 格、配方",
       "sources": [
-        "src/backpack_panel.h",
-        "src/backpack_panel.cpp"
+        "src/inventory_panel.h",
+        "src/inventory_panel.cpp"
       ],
       "since": "e3"
     },
@@ -1282,7 +1282,7 @@
     {
       "id": "gather-hand",
       "label": "GatherHand 采集",
-      "detail": "采掘面前 2.6 m 内按住 E 起工，满一份（种类表的工时）进背包、扣存量，按着就接着采；抱着箱子不能采；采空了说几时回来一份。存量账在地图宿主手里。",
+      "detail": "采掘面前 2.6 m 内按住 E 起工，满一份（种类表的工时；手上拿着对口的工具减半）进背包、扣存量，按着就接着采；抱着箱子、背包满了不采；采空了说几时回来一份。存量账在地图宿主手里。",
       "tag": "玩法部件",
       "evidence": "gather_e2e：按住 E 连采 5 份 ×2，存量同步减少",
       "sources": [
@@ -1377,6 +1377,106 @@
       ],
       "since": "e33",
       "parent": "resource-sites"
+    },
+    {
+      "id": "place-hand",
+      "label": "PlaceHand 摆放",
+      "detail": "手上拿着能摆的东西时身前出虚影（0.5 m 对齐、正面朝人、Q/R 转 90°），绿了 E 摆下；看着木箱 / 工作台 / 窑按 E 打开背包，X 收回（木箱有东西不让）；让开资源点的采掘面与堆场 3 m；给合成报身边 3 m 的设施。摆出来的账（Placements）在它手里。",
+      "tag": "玩法部件",
+      "evidence": "craft_e2e：找朝向摆下工作台、木箱、窑、火把，让开堆场；E 开木箱 / 工作台 / 窑；X 收木箱（有东西被拒）",
+      "sources": [
+        "src/place_hand.h",
+        "src/place_hand.cpp"
+      ],
+      "since": "e34",
+      "parent": "expedition"
+    },
+    {
+      "id": "ship-hold",
+      "label": "船舱",
+      "detail": "编排持有的船舱格子（ItemSlots），每节储存区 12 格，跟着船的布局改大小；人站在船上开背包时列在背包上面；改船装不下里面的东西就不改。货位照旧只摆抱上来的货箱。",
+      "tag": "玩法部件",
+      "evidence": "craft_e2e：船上开背包是「船舱（12 格）」、陶罐 Shift 搬进去；下船开背包没有船舱",
+      "sources": [
+        "src/expedition.h",
+        "src/expedition.cpp",
+        "src/refit_bench.cpp"
+      ],
+      "since": "e34",
+      "parent": "expedition"
+    },
+    {
+      "id": "item-slots",
+      "label": "格子容器与 MC 点法",
+      "detail": "定长格子，一格一叠、叠数看物品表；放东西先并旧叠、再占主区空格、最后才占快捷栏，拿从后往前；左键拿放换并、右键拿一半放一份、Shift 整叠搬到另一边、数字键对调、拖着的放回去；改格数先并叠挪前、装不下不改。ItemBag 接口让格子背包与村仓的账都能给跑货用。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests item slots：放拿顺序、点法、Shift 搬、对调、放回、resize、拆箱放不下，全过",
+      "sources": [
+        "src/item_slots.h",
+        "src/item_slots.cpp",
+        "src/inventory.h"
+      ],
+      "since": "e35"
+    },
+    {
+      "id": "recipes",
+      "label": "配方与设施",
+      "detail": "11 条配方（随身 3、工作台 6、窑 2），每条至多三样料；合一回先在副本上扣料放产物，缺设施 > 料不够 > 放不下（含拖着的那叠没处放回）依次说原因。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests recipes：随身劈板钉台、木箱要工作台、陶罐只认窑、放不下不合",
+      "sources": [
+        "src/recipes.h",
+        "src/recipes.cpp"
+      ],
+      "since": "e35"
+    },
+    {
+      "id": "placeables",
+      "label": "摆放物与摆放规矩",
+      "detail": "摆放物表（工作台、窑、木箱 18 格、火把、篱笆）；人面前对齐 0.5 m、朝向取整 90°，占地处处有地、不在水里、高低差 ≤ 0.5 m、不挤；摆出来的账：看着哪件、身边有哪些设施、木箱有东西不让拆。地面走野泊的 LandingGround 接口。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "zhouzhu_core_tests placeables：平地对齐、崖边 / 水 / 坡、转向顺坡、挤、看着哪件、设施、木箱不空不让拆",
+      "sources": [
+        "src/placeables.h",
+        "src/placeables.cpp"
+      ],
+      "since": "e35"
+    },
+    {
+      "id": "hotbar-bar",
+      "label": "HotbarBar 快捷栏",
+      "detail": "只画：屏幕底部常驻 9 格，选中那格描亮；开着背包时藏起（面板里有那一行）。",
+      "tag": "引擎构件",
+      "evidence": "craft_e2e 截图：底部 9 格、数字、选中描绿",
+      "sources": [
+        "src/hotbar_bar.h",
+        "src/hotbar_bar.cpp"
+      ],
+      "since": "e35"
+    },
+    {
+      "id": "placed-props",
+      "label": "PlacedProps 摆出来的实物",
+      "detail": "照摆出来的账摆工作台、窑、木箱、火把（带暖光）、篱笆，各带盒子碰撞、地不平垫底座；虚影绿 / 红；占地盒子碰着什么实物的查询（房子、船、石头）。",
+      "tag": "场景角色",
+      "evidence": "craft_e2e：工作台是 StaticBody3D、火把带 OmniLight3D；截图看得见窑、工作台、火把",
+      "sources": [
+        "src/placed_props.h",
+        "src/placed_props.cpp"
+      ],
+      "since": "e35"
+    },
+    {
+      "id": "craft-e2e",
+      "label": "合成与摆放端到端测试",
+      "detail": "岛群里瞬移到林场采木料 → 点配方 → 鼠标 / 键盘搬东西 → 摆工作台、木箱、窑、火把 → 石斧快一倍 → 陶罐搬进船舱。",
+      "tag": "验收",
+      "evidence": "craft_e2e PASS（无头模拟约 70 s）",
+      "sources": [
+        "game/tests/craft_e2e.gd",
+        "game/tests/craft_e2e.tscn"
+      ],
+      "since": "e35"
     }
   ],
   "edges": [
@@ -3120,6 +3220,173 @@
       "chains": [
         "gather"
       ]
+    },
+    {
+      "from": "item-slots",
+      "to": "crops",
+      "label": "叠数",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "item-slots",
+      "to": "inventory",
+      "label": "ItemBag",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "recipes",
+      "to": "crops",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "recipes",
+      "to": "item-slots",
+      "label": "扣料 / 放产物",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "placeables",
+      "to": "item-slots",
+      "label": "木箱的格子",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "placeables",
+      "to": "recipes",
+      "label": "设施",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "placeables",
+      "to": "wild-landing",
+      "label": "地面接口",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "backpack-panel",
+      "to": "item-slots",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "backpack-panel",
+      "to": "recipes",
+      "label": "配方行",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "hotbar-bar",
+      "to": "crops",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "placed-props",
+      "to": "placeables",
+      "label": "摆出来的账",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "item-slots",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "recipes",
+      "label": "合成",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "voyage-pack",
+      "to": "hotbar-bar",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "place-hand",
+      "to": "placeables",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "place-hand",
+      "to": "placed-props",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "place-hand",
+      "to": "map-host",
+      "label": "地面 / 资源点",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "place-hand",
+      "to": "voyage-pack",
+      "label": "手上拿着的",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "ship-hold",
+      "to": "item-slots",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "ship-hold",
+      "to": "ship",
+      "label": "船舱格数 / 在不在船上",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "gather-hand",
+      "to": "crops",
+      "label": "工具",
+      "chains": [
+        "craft"
+      ]
+    },
+    {
+      "from": "craft-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "craft"
+      ]
     }
   ],
   "chains": [
@@ -3261,7 +3528,7 @@
           ]
         },
         {
-          "text": "对着垦好的地按 E 会被拦下：手上没种子。Tab 打开背包，W/S 挪到菽，E 拿在手上，Tab 合上；开着背包时人站住不动",
+          "text": "对着垦好的地按 E 会被拦下：手上没种子。Tab 打开背包，把菽放上快捷栏（切片十起背包是 MC 式格子，快捷栏选中的那格才是手上拿着的），Tab 合上；开着背包时人站住不动",
           "nodes": [
             "voyage-pack",
             "backpack-panel",
@@ -3911,7 +4178,7 @@
     {
       "id": "world-features",
       "title": "重构：地图宿主——岛群与平板岛里样样都有",
-      "story": "玩家在岛群里走到村外的熟地垦地、从背包选种播下、收回收成；回主码头把船开进船坞加一节货舱再飞回泊位；在村里按 B 加一座房、拆一座自动铺的并存盘；村里的农夫下地、挑水的去打水。换到只实现了宿主接口的平板岛，这些照样都能做。",
+      "story": "玩家在岛群里走到村外的熟地垦地、把种子放上快捷栏播下、收回收成；回主码头把船开进船坞加一节货舱再飞回泊位；在村里按 B 加一座房、拆一座自动铺的并存盘；村里的农夫下地、挑水的去打水。换到只实现了宿主接口的平板岛，这些照样都能做。",
       "date": "2026-09-23",
       "color": "#d97a9f",
       "commits": "093f03a..84cb9cb",
@@ -3929,7 +4196,7 @@
           ]
         },
         {
-          "text": "M 开图点到村031 旁：熟地（地表是田）与近水 16 m 内的地可垦，按住 E 垦、Tab 选菽、播、收",
+          "text": "M 开图点到村031 旁：熟地（地表是田）与近水 16 m 内的地可垦，按住 E 垦、菽放上快捷栏、播、收",
           "nodes": [
             "expedition",
             "voyage-pack",
@@ -4319,6 +4586,124 @@
         "ship-layout",
         "site-survey-tool",
         "resource-reach"
+      ]
+    },
+    {
+      "id": "craft",
+      "title": "切片十：合成与摆放——MC 式格子背包、船舱、工作台与窑",
+      "story": "玩家在林场采了几份木料，打开背包在格子里点配方劈板、钉出工作台，放上快捷栏拿在手上摆到地上；在工作台旁合出木箱、石斧和窑，把东西在背包、木箱和船舱之间用鼠标拖来拖去，拿着石斧伐木快了一倍，窑里烧出陶罐，最后走上船把陶罐搬进船舱。",
+      "date": "2026-09-25",
+      "color": "#3fb27f",
+      "commits": "0269ac5..997a112",
+      "steps": [
+        {
+          "text": "开局背包是 36 格（最下面 9 格是快捷栏，屏幕底下常驻），开局的东西在主区、快捷栏空着；到林场按住 E 采木料，空手 4 秒一份，背包放不下就不采",
+          "nodes": [
+            "expedition",
+            "voyage-pack",
+            "item-slots",
+            "hotbar-bar",
+            "crops",
+            "gather-hand",
+            "world-resource"
+          ]
+        },
+        {
+          "text": "Tab 打开背包：MC 式格子面板，右边是配方清单——随身能做的亮着，点「木板」「工作台」就合；木箱写着「要工作台」",
+          "nodes": [
+            "voyage-pack",
+            "backpack-panel",
+            "recipes",
+            "item-slots",
+            "crops"
+          ]
+        },
+        {
+          "text": "鼠标照 MC 点：左键拿起放下、右键拿一半、Shift+左键搬过去、悬停按数字键对调，把工作台放上快捷栏；键盘 WASD + E / Q / F 也能全做",
+          "nodes": [
+            "voyage-pack",
+            "backpack-panel",
+            "item-slots",
+            "input-map",
+            "expedition"
+          ]
+        },
+        {
+          "text": "按 1 拿起工作台：身前出虚影，摆不下是红的并说为什么（坡、崖边、水、房子、资源点的堆场），绿了按 E 摆下，实物带碰撞",
+          "nodes": [
+            "place-hand",
+            "placed-props",
+            "placeables",
+            "map-host",
+            "hotbar-bar",
+            "player"
+          ]
+        },
+        {
+          "text": "看着工作台按 E：身边 3 m 有工作台，木箱、石斧、木锹、窑的配方亮起来，一样样合出来",
+          "nodes": [
+            "place-hand",
+            "voyage-pack",
+            "recipes",
+            "placeables",
+            "backpack-panel"
+          ]
+        },
+        {
+          "text": "摆下木箱按 E 打开：18 格列在背包上面，东西搬进搬出；里面有东西 X 收不起，搬空了收回背包",
+          "nodes": [
+            "place-hand",
+            "placed-props",
+            "placeables",
+            "voyage-pack",
+            "item-slots",
+            "backpack-panel"
+          ]
+        },
+        {
+          "text": "石斧放上快捷栏拿着伐木，一份只要 2 秒；再摆一座窑烧出陶罐，插一支火把照亮",
+          "nodes": [
+            "gather-hand",
+            "crops",
+            "place-hand",
+            "placed-props",
+            "recipes"
+          ]
+        },
+        {
+          "text": "回主码头走上船开背包：上面是船舱 12 格，把陶罐搬进去；下了船开背包就没有船舱",
+          "nodes": [
+            "ship-hold",
+            "ship",
+            "ship-layout",
+            "voyage-pack",
+            "backpack-panel"
+          ]
+        }
+      ],
+      "nodes": [
+        "item-slots",
+        "recipes",
+        "placeables",
+        "hotbar-bar",
+        "placed-props",
+        "craft-e2e",
+        "backpack-panel",
+        "voyage-pack",
+        "inventory",
+        "crops",
+        "gather-hand",
+        "expedition",
+        "world-resource",
+        "input-map",
+        "place-hand",
+        "map-host",
+        "player",
+        "ship-hold",
+        "ship",
+        "ship-layout",
+        "wild-landing",
+        "world-2051-scene"
       ]
     }
   ],
@@ -5443,6 +5828,96 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e34",
+      "type": "extend",
+      "date": "2026-09-25",
+      "title": "拓展：编排长出摆放部件与船舱",
+      "summary": "切片十：手上拿着能摆的东西时出虚影、E 摆 X 收；船舱的账在编排里、格数跟着船走；E 的先后多了「虚影绿着摆 > 看着木箱 / 工作台 / 窑打开 > 堆场、村仓」。",
+      "commits": "bdb8c54",
+      "nodes": [
+        "expedition",
+        "place-hand",
+        "ship-hold"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "place-hand",
+          "ship-hold"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e35",
+      "type": "slice",
+      "date": "2026-09-25",
+      "title": "切片十：合成与摆放——MC 式格子背包、船舱、工作台与窑",
+      "summary": "玩家在林场采了几份木料，打开背包在格子里点配方劈板、钉出工作台，放上快捷栏拿在手上摆到地上；在工作台旁合出木箱、石斧和窑，把东西在背包、木箱和船舱之间用鼠标拖来拖去，拿着石斧伐木快了一倍，窑里烧出陶罐，最后走上船把陶罐搬进船舱。",
+      "commits": "0269ac5..997a112",
+      "chain": "craft",
+      "nodes": [
+        "item-slots",
+        "recipes",
+        "placeables",
+        "hotbar-bar",
+        "placed-props",
+        "craft-e2e",
+        "backpack-panel",
+        "voyage-pack",
+        "inventory",
+        "crops",
+        "gather-hand",
+        "expedition",
+        "world-resource",
+        "input-map",
+        "place-hand",
+        "map-host",
+        "player",
+        "ship-hold",
+        "ship",
+        "ship-layout",
+        "wild-landing",
+        "world-2051-scene"
+      ],
+      "info": {
+        "created": [
+          "item-slots",
+          "recipes",
+          "placeables",
+          "hotbar-bar",
+          "placed-props",
+          "craft-e2e"
+        ],
+        "reused": [
+          "backpack-panel",
+          "voyage-pack",
+          "inventory",
+          "crops",
+          "gather-hand",
+          "expedition",
+          "world-resource",
+          "input-map",
+          "place-hand",
+          "map-host",
+          "player",
+          "ship-hold",
+          "ship",
+          "ship-layout",
+          "wild-landing",
+          "world-2051-scene"
+        ],
+        "updated": [
+          "backpack-panel",
+          "voyage-pack",
+          "inventory",
+          "crops",
+          "gather-hand"
+        ]
       }
     }
   ],
