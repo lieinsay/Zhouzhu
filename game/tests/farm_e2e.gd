@@ -1,7 +1,7 @@
 extends Node
 ## 农事端到端测试：加载主场景，只通过输入动作操作。
 ## 出生点按 E（离河太远，垦不动）→ 顺着码头后面的路走上河滩 → 路尽头最近的一块可垦地
-## → 按住 E 开垦 → 手上没种子，按住 E 播不了 → Tab 打开背包、S 把光标挪到菽、E 拿在手上、Tab 合上
+## → 按住 E 开垦 → 手上没种子，按住 E 播不了 → Tab 打开背包（光标在主区第一格的粟上）、D 挪到菽、按 1 把菽放上快捷栏第 1 格（选中的就是它）、Tab 合上
 ## → 按住 E 播种（背包里菽 −1，地块记着种的是菽）→ 等它熟 → 按住 E 收获（菽 += 单产，粟一份没动），
 ## 断言地块状态、作物与背包数量一路对得上。
 ##
@@ -123,7 +123,7 @@ func _physics_process(delta: float) -> void:
 				if main.get_item_count(SEED) != seed_at_start:
 					_finish(false, "没播种却扣了种子（%s）" % _pack_text())
 				else:
-					_queue_taps([["inventory", 1], ["move_back", 1], ["interact", 1], ["inventory", 1]])
+					_queue_taps([["inventory", 1], ["move_right", 1], ["hotbar_1", 1], ["inventory", 1]])
 					_enter(Phase.PICK_SEED)
 		Phase.PICK_SEED:
 			if not pack_shot and main.is_pack_open() and main.get_held_seed() == SEED:

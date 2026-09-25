@@ -4,7 +4,7 @@ extends Node
 ## 场景、农田与船坞是哪个节点、村子在哪（地面宿主节点、村心、半径）、从哪儿找要垦的地、改动存到哪儿。
 ## 去远处：地图有岛群地图面板就 M 开图点过去（开发者瞬移），没有就走过去。依次：
 ##   ① 开垦、播种、收获：去村外的一块熟地 → 按住 E 开垦 → 手上没种子播不了
-##   ② 从背包选种：Tab 打开背包、S 挪到菽、E 拿在手上、Tab 合上 → 按住 E 播菽 → 等它熟 → 按住 E 收获（菽 += 单产）
+##   ② 从背包选种：Tab 打开背包、D 挪到菽、按 1 放上快捷栏第 1 格（选中的就是它）、Tab 合上 → 按住 E 播菽 → 等它熟 → 按住 E 收获（菽 += 单产）
 ##   ③ 船坞改船：回出发码头 → 走到画样台按 E（船不在坞里，被拒）→ 上船掌舵飞到坞口、E 入坞
 ##      → 下跳板到画样台 E 打开装配视角 → S、E 在舷门后放一节储存区 → Tab 合上 → 走上跳板掌舵、飞回泊位靠泊
 ##   ④ 布置模式：回村 → B 在脚下这处村落里开布置模式 → 挪到空地 E 放一座民居 → 挪到自动铺出的一座房子上 X 拆掉
@@ -20,7 +20,7 @@ const SEED := "bean"
 const OTHER := "millet"
 const FOLK_TIMEOUT := 300.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const KEYS := ["interact", "remove", "inventory", "build_mode", "rotate_left", "rotate_right", "kind_1", "kind_2", "kind_3", "kind_4", "save"]
+const KEYS := ["interact", "remove", "inventory", "build_mode", "rotate_left", "rotate_right", "kind_1", "kind_2", "kind_3", "kind_4", "save", "hotbar_1"]
 
 enum Phase {
 	SETTLE,
@@ -228,7 +228,7 @@ func _physics_process(delta: float) -> void:
 				Input.action_press("interact")
 			else:
 				Input.action_release("interact")
-				_queue([["inventory", 1], ["move_back", 1], ["interact", 1], ["inventory", 1]])
+				_queue([["inventory", 1], ["move_right", 1], ["hotbar_1", 1], ["inventory", 1]])
 				_enter(Phase.PICK_SEED)
 		Phase.PICK_SEED:
 			if main.is_pack_open():
