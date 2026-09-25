@@ -77,6 +77,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/village_state.h
     src/villager_model.cpp
     src/villager_model.h
+    src/wild_landing.cpp
+    src/wild_landing.h
     src/world_grid.cpp
     src/world_grid.h
     src/world_ledger.cpp

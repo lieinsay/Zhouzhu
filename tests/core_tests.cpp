@@ -47,6 +47,7 @@
 #include "world_river.h"
 #include "world_sites.h"
 #include "world_ledger.h"
+#include "wild_landing.h"
 #include "world_terrain.h"
 
 namespace {
@@ -3038,6 +3039,92 @@ void test_gather() {
     check(clay && clay->item == "clay" && clay->island == 0, "主码头 #7 旁有一处黏土坑（矿点 98）");
 }
 
+// 野泊：平地、斜坡、崖边、水边、太高
+struct TestLandingGround : LandingGround {
+    std::function<bool(double, double, double &)> h;
+    std::function<bool(double, double)> w;
+    bool height(double p_x, double p_z, double &r_y) const override { return h(p_x, p_z, r_y); }
+    bool water(double p_x, double p_z) const override { return w ? w(p_x, p_z) : false; }
+};
+
+void test_wild_landing() {
+    std::printf("wild landing\n");
+    ShipLayout ship = default_layout();
+    layout_place(ship, { 0, 0, -2 }, ModuleKind::STORAGE); // 岛群开局那条：储存区 + 动力区 + 驾驶区
+    TestLandingGround flat;
+    flat.h = [](double, double, double &r_y) {
+        r_y = 100.0;
+        return true;
+    };
+    const LandingRules rules;
+    WildLanding w = plan_wild_landing(flat, ship, 0.0, 120.0, 0.0, 0.0);
+    check(w.ok && std::abs(w.deck_y - 105.6) < 1e-9 && w.ground_hi == 100.0 && w.ground_lo == 100.0, "平地：甲板落在地面上 5.6 m：" + w.why);
+    check(w.side == 1 && std::abs(w.door_x - starboard_edge_x(ship)) < 1e-9 && w.door_z == 0.0 && w.out_x == 1.0, "一样短挑右舷，舷梯从右舷舷门往外");
+    check(std::abs(w.run - 9.5) < 1e-9 && std::abs(w.rise - 5.6) < 1e-9 && w.rise / w.run <= rules.max_slope && w.foot_y == 100.0, "舷梯 9.5 m 长、落差 5.6 m（不陡过 32°）");
+    check(std::abs(w.foot_x - (starboard_edge_x(ship) + 9.5)) < 1e-9, "梯脚在舷门外 9.5 m");
+    w = plan_wild_landing(flat, ship, 0.0, 120.0, 0.0, 0.0, rules, -50.0, 0.0);
+    check(w.ok && w.side == -1 && w.out_x == -1.0, "想让舷梯朝左边就放左舷");
+    w = plan_wild_landing(flat, ship, 10.0, 120.0, 20.0, 1.5707963267948966);
+    check(w.ok && std::abs(w.door_x - 10.0) < 1e-9 && std::abs(w.door_z - (20.0 - starboard_edge_x(ship))) < 1e-9 && std::abs(w.out_z + 1.0) < 1e-9,
+            "船头朝西（yaw 90°）：右舷朝北");
+    w = plan_wild_landing(flat, ship, 0.0, 150.0, 0.0, 0.0);
+    check(!w.ok && w.why.find("离地太高") != std::string::npos, "离地 44 m：先降下来");
+
+    TestLandingGround cliff = flat;
+    cliff.h = [](double p_x, double, double &r_y) {
+        r_y = 100.0;
+        return p_x < 8.0;
+    };
+    w = plan_wild_landing(cliff, ship, 0.0, 110.0, 0.0, 0.0);
+    check(w.ok && w.side == -1, "右舷外是崖：舷梯放左舷");
+    cliff.h = [](double p_x, double, double &r_y) {
+        r_y = 100.0;
+        return p_x < 1.0;
+    };
+    w = plan_wild_landing(cliff, ship, 0.0, 110.0, 0.0, 0.0);
+    check(!w.ok && w.why.find("悬空") != std::string::npos, "船底下一半悬空：不行");
+
+    TestLandingGround wet = flat;
+    wet.w = [](double p_x, double) { return p_x > 6.0 || p_x < -6.0; };
+    w = plan_wild_landing(wet, ship, 0.0, 110.0, 0.0, 0.0);
+    check(!w.ok && w.why.find("水") != std::string::npos, "两舷外都是水：放不下舷梯");
+
+    TestLandingGround slope = flat;
+    slope.h = [](double, double p_z, double &r_y) {
+        r_y = 100.0 + 0.3 * p_z;
+        return true;
+    };
+    w = plan_wild_landing(slope, ship, 0.0, 110.0, 0.0, 0.0);
+    check(!w.ok && w.why.find("太不平") != std::string::npos, "顺着船身 30% 的坡：船底下高低差太大");
+    slope.h = [](double p_x, double, double &r_y) {
+        r_y = 100.0 + 0.2 * p_x;
+        return true;
+    };
+    w = plan_wild_landing(slope, ship, 0.0, 110.0, 0.0, 0.0);
+    check(w.ok && w.side == 1 && w.run < 9.5, "横着 20% 的坡：高的那一舷舷梯短：" + w.why);
+    check(std::abs(w.deck_y - (100.0 + 0.2 * 2.6 + rules.deck_lift_m)) < 1e-9, "甲板按船底下最高处定");
+
+    TestLandingGround mound = flat;
+    mound.h = [](double p_x, double, double &r_y) {
+        r_y = std::abs(p_x) > 4.0 && std::abs(p_x) < 7.0 ? 104.0 : 100.0; // 两舷外各一道土埂
+        return true;
+    };
+    w = plan_wild_landing(mound, ship, 0.0, 110.0, 0.0, 0.0);
+    check(w.ok && w.foot_y == 104.0 && w.run < 3.6, "舷门外是土埂：舷梯短短一段搭到埂上");
+    mound.h = [](double p_x, double, double &r_y) {
+        r_y = std::abs(p_x) > 5.0 && std::abs(p_x) < 6.0 ? 105.4 : 100.0; // 埂顶快到甲板高：落不下脚，往外搭又顶着梯板
+        return true;
+    };
+    w = plan_wild_landing(mound, ship, 0.0, 110.0, 0.0, 0.0);
+    check(!w.ok && w.why.find("顶着梯板") != std::string::npos, "舷门外一道高埂顶着梯板：放不下（" + w.why + "）");
+    mound.h = [](double p_x, double, double &r_y) {
+        r_y = p_x > 5.0 && p_x < 6.0 ? 105.4 : 100.0; // 只有右舷外有
+        return true;
+    };
+    w = plan_wild_landing(mound, ship, 0.0, 110.0, 0.0, 0.0);
+    check(w.ok && w.side == -1, "只有右舷外有埂：放左舷");
+}
+
 int main() {
     test_rng();
     test_noise();
@@ -3076,6 +3163,7 @@ int main() {
     test_house_templates();
     test_freight();
     test_gather();
+    test_wild_landing();
     test_goldens();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
