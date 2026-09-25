@@ -1456,13 +1456,13 @@ void test_world_2051() {
     check(parse_world_grid(bin.data(), bin.size(), g, err), "2051 的 terrain.bin 能解析：" + err);
     check(g.rows == 1012 && g.cols == 837 && g.res == 100.0, "1012 × 837 格、100 m");
     check(g.land_count() == 258847, "陆地格数与 skyisle-gen 一致（" + std::to_string(g.land_count()) + "）");
-    // 邑治（村001，skyisle 的 km (-10.05, 2.35)）
-    const double sx = -10050.0, sz = -2350.0;
-    check(g.shore[g.nearest_cell(sx, sz)] > 0 && std::abs(g.height_at(sx, sz) - 317.0) < 6.0, "邑治在陆地上、高约 317 m（" + std::to_string(g.height_at(sx, sz)) + "）");
+    // 邑治（村001，skyisle 的 km (10.35, 21.85)，主岛东北的岸边低地）
+    const double sx = 10350.0, sz = -21850.0;
+    check(g.shore[g.nearest_cell(sx, sz)] > 0 && std::abs(g.height_at(sx, sz) - 238.0) < 6.0, "邑治在陆地上、高约 238 m（" + std::to_string(g.height_at(sx, sz)) + "）");
     check(g.island[g.nearest_cell(sx, sz)] == 0, "邑治在主岛");
     WorldIsland main;
-    main.rim_m = 217.8;
-    main.cliff_m = 26.8;
+    main.rim_m = 236.1;
+    main.cliff_m = 45.1;
     main.keel_m = 191.0;
     main.max_shore_m = 15000.0;
     const WorldTerrain t(g, { main }, 2051);
@@ -1518,7 +1518,7 @@ void test_terrain_v3_2051() {
         }
     }
     std::printf("  河道格 %d，最宽 %.1f m，顺流上坡 %d 格、流出河道 %d 格\n", chan, widest, uphill, off_channel);
-    check(chan > 10000 && widest > 20.0 && widest < 60.0, "河道格上万、最宽二三十米（2051 只有溪涧）");
+    check(chan > 10000 && widest > 50.0 && widest < 80.0, "河道格上万、常年河最宽六十多米（台面口径起 2051 有常年河）");
     check(chan_small == 0, "河道格的汇流都到了 1 km² 的溪涧门槛");
     check(uphill < chan / 1000, "河床顺流几乎处处不升（" + std::to_string(uphill) + " 格例外）");
     check(off_channel == 0, "河道格顺流总流到下一个河道格（流向按生成器的汇流反推）");
@@ -1761,11 +1761,11 @@ void test_world_sites() {
     std::string err;
     check(parse_world_grid(bin.data(), bin.size(), g, err), "terrain.bin 能解析");
     check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
-    check(sites.islands.size() == 32 && sites.docks.size() == 91 && sites.settlements.size() == 371, "32 岛、91 码头、180 村 + 191 散户");
+    check(sites.islands.size() == 32 && sites.docks.size() == 67 && sites.settlements.size() == 1206, "32 岛、67 码头、215 村（含专业聚落 55）+ 991 散户");
     const SiteSettlement *seat = sites.village_by_id(1);
-    check(seat && seat->seat && seat->households == 271 && seat->name == "村001", "村001 是邑治、271 户");
-    const SiteDock *main_dock = sites.dock_by_id(7);
-    check(main_dock && main_dock->main && main_dock->island == 0, "主码头 #7 在主岛");
+    check(seat && seat->seat && seat->households == 409 && seat->name == "村001", "村001 是邑治、409 户（农 327 + 邑里的市户 82）");
+    const SiteDock *main_dock = sites.dock_by_id(1);
+    check(main_dock && main_dock->main && main_dock->island == 0, "主码头 #1 在主岛");
     WorldSites bad;
     check(!parse_world_sites("dock\t1\tx\t0\t0\t0\n", bad, err), "坏行报错");
 
@@ -1776,9 +1776,9 @@ void test_world_sites() {
     for (const DockPlan &d : docks) {
         ok += d.ok;
     }
-    check(ok == 91, "91 个码头都找到岸缘（" + std::to_string(ok) + "）");
-    // 主码头 #7 与乙岛 #2：压平后泊位附近的地面等高
-    for (int id : { 7, 2 }) {
+    check(ok == 67, "67 个码头都找到岸缘（" + std::to_string(ok) + "）");
+    // 主码头 #1 与岛 #2 上的目的码头 #26：压平后泊位附近的地面等高（这两处没有河从坪上过；有河的坪让给河）
+    for (int id : { 1, 26 }) {
         size_t k = 0;
         while (sites.docks[k].id != id) {
             k++;
@@ -1805,9 +1805,9 @@ void test_world_sites() {
         check(!raw.land, tag + "：泊位在岸外");
         check(d.y > 100.0 && d.y < 400.0, tag + "：坪高在岸缘一带（" + std::to_string(d.y) + " m）");
     }
-    // 主码头旁的村152 与邑治：不压码头的坪、不在陡坡上
+    // 目的码头 #26 旁的村126 与邑治（主码头旁）：不压码头的坪、不在陡坡上
     const WorldVillageRules rules;
-    for (int id : { 152, 1 }) {
+    for (int id : { 126, 1 }) {
         const SiteSettlement *v = sites.village_by_id(id);
         const VillagePlan plan = plan_world_village(t, *v, 2051, rules);
         const std::string tag = v->name;
@@ -1966,12 +1966,12 @@ void test_map_grounds() {
     WorldTerrain t(g, sites.terrain_islands(), 2051);
     const WorldWorks works = lay_world_works(t, sites);
     size_t main_k = 0;
-    while (main_k < sites.docks.size() && sites.docks[main_k].id != 7) {
+    while (main_k < sites.docks.size() && !sites.docks[main_k].main) {
         main_k++;
     }
     const DockPlan &dock = works.docks[main_k];
     const YardPlan &yard = works.yards[main_k];
-    check(yard.present, "岛群：主码头 #7 旁凿得出船坞坪");
+    check(yard.present, "岛群：主码头 #" + std::to_string(sites.docks[main_k].id) + " 旁凿得出船坞坪");
     int yard_flat = 0, yard_samples = 0;
     for (double u = -0.5 * yard.length; u <= 0.5 * yard.length; u += 5.0) {
         for (double v = -0.5 * yard.width; v <= 0.5 * yard.width; v += 4.0) {
@@ -2188,8 +2188,22 @@ void test_world_rivers() {
         double lx = -(trunk->v[i + 1].z - v.z), lz = trunk->v[i + 1].x - v.x;
         const double ll = std::hypot(lx, lz);
         lx /= ll, lz /= ll;
-        const double inside = 0.8 * mean_water.half_width, outside = mean_water.half_width + 1.0;
-        dry_bank += !(t.sample_raw(v.x + lx * inside, v.z + lz * inside).top < mean_water.level && t.sample_raw(v.x + lx * outside, v.z + lz * outside).top > mean_water.level);
+        // 按取样点自己最近的中线点定水（山里比降大，侧向一点最近的中线点可能在上游几米、水位高一截）
+        auto wet_ok = [&](double p_offset, bool p_inside) {
+            const double x = v.x + lx * p_offset, z = v.z + lz * p_offset;
+            RiverHit h;
+            if (!rivers.nearest(x, z, rivers.max_reach(), h) || h.stem != int(trunk - &rivers.get_stems()[0])) {
+                return true; // 最近的是别的河（汇流口一带），不算
+            }
+            const RiverStage local = river_stage(h.at, 1.0, rules);
+            const double top = t.sample_raw(x, z).top;
+            const bool ok = p_inside ? (h.distance >= local.half_width || top < local.level) : (h.distance <= local.half_width || top > local.level);
+            if (!ok) {
+                std::printf("  水面半宽不对：(%.0f, %.0f) 离中线 %.1f m，水位 %.2f、半宽 %.1f m，地面 %.2f\n", x, z, h.distance, local.level, local.half_width, top);
+            }
+            return ok;
+        };
+        dry_bank += !(wet_ok(0.8 * mean_water.half_width, true) && wet_ok(mean_water.half_width + 1.0, false));
     }
     check(samples > 10, "干流上取样够（" + std::to_string(samples) + "）");
     check(bed_off == 0, "中线上的地面就是河床（" + std::to_string(bed_off) + " 处不是）");
@@ -2373,10 +2387,10 @@ void test_goldens() {
     parse_world_sites(tsv, world_sites, err);
     WorldTerrain t(g, world_sites.terrain_islands(), 2051);
     lay_world_works(t, world_sites);
-    // 离主码头 #7 远的几处：邑治、乙岛码头边的散户175、两个普通村
+    // 离主码头（#1，邑治旁）远的几处：目的码头 #26 边的村126、两个普通村、一户散户
     Fnv villages;
     for (const SiteSettlement &s : world_sites.settlements) {
-        if ((!s.hamlet && (s.id == 1 || s.id == 40 || s.id == 120)) || (s.hamlet && s.id == 175)) {
+        if ((!s.hamlet && (s.id == 126 || s.id == 40 || s.id == 120)) || (s.hamlet && s.id == 175)) {
             const VillagePlan plan = plan_world_village(t, s, 2051, WorldVillageRules());
             for (const std::string &id : settlement_ids(plan.layout)) {
                 villages.mix_s(id);
@@ -2385,8 +2399,9 @@ void test_goldens() {
         }
     }
     // 拓展「岛群的河」起地形凿了河道、河滩不许盖房，村落清单有意变了，此处重记（河按游戏尺度放宽后又记了一次；拓展「船台」村里多盖一座船台，又记了一次；
-    // 拓展「按新版生成器优化地形」换了下切过河道的栅格、按地形区加减起伏，又记了一次）
-    report_golden("岛群远离主码头的村", villages.h, 0xaffc1edc65ab0bfcull);
+    // 拓展「按新版生成器优化地形」换了下切过河道的栅格、按地形区加减起伏，又记了一次；
+    // 重构「按生成器的真实起伏重做 2051」换了地形与全部点位，换了一组村重记）
+    report_golden("岛群远离主码头的村", villages.h, 0x0d3234581c104a04ull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）
@@ -2869,7 +2884,7 @@ void test_freight() {
     }
     check(land_berth::ship_problem(longer).find("太长") != std::string::npos, "七节长的船停不下");
 
-    // 2051：村152（主码头 #7）的委托开到码头 #8 旁的村103
+    // 2051：主码头 #1 附近的村031 的委托开到岛 #8 上的窑村37（专业聚落也是村，有船台）
     const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
@@ -2888,30 +2903,30 @@ void test_freight() {
     const std::vector<FreightPort> world_ports = plan_freight_ports(sites);
     int from = -1;
     for (size_t k = 0; k < world_ports.size(); k++) {
-        from = world_ports[k].site_id == 152 ? int(k) : from;
+        from = world_ports[k].site_id == 31 ? int(k) : from;
     }
-    check(from >= 0 && world_ports.size() == 180, "180 个村都能托运（散户不算）");
-    const SiteSettlement *v152 = sites.village_by_id(152);
+    check(from >= 0 && world_ports.size() == 215, "215 个村都能托运（含专业聚落，散户不算）");
+    const SiteSettlement *v31 = sites.village_by_id(31);
     const WorldGround land_ground(t, 0.0, 0.0);
     const FarmModel land(&land_ground, land_ground.plot_lattice(), FarmRules());
     WorldLedgerSpec spec;
-    spec.site = *v152;
+    spec.site = *v31;
     spec.lattice = land.get_lattice();
     spec.farm_rules = land.get_rules();
     const WorldLedger ledger = open_world_ledger(t, spec, SimRules());
-    const std::string item = freight::specialty_of(2051, 152, false);
-    check(ledger.state->store.count(item) == 28 && ledger.state->store.count("millet") == 8, "村152 开账：仓里 " + catalog::item_name(item) + " 28 份（14 户 × 2），粟照旧 8");
-    check(freight_post_building(ledger.layout) >= 0, "村152 有船台（村仓）");
+    const std::string item = freight::specialty_of(2051, 31, false);
+    check(ledger.state->store.count(item) == 132 && ledger.state->store.count("millet") == 8, "村031 开账：仓里 " + catalog::item_name(item) + " 132 份（66 户 × 2），粟照旧 8");
+    check(freight_post_building(ledger.layout) >= 0, "村031 有船台（村仓）");
     FreightOrder o;
-    check(offer_freight(world_ports, from, ledger.state->store, item, rules, o, why), "村152 开得出委托：" + why);
+    check(offer_freight(world_ports, from, ledger.state->store, item, rules, o, why), "村031 开得出委托：" + why);
     if (o.valid()) {
         const FreightPort &to = world_ports[size_t(o.to)];
-        std::printf("  村152 → %s（岛 #%d，%.1f km）%d 箱，运费 %d\n", to.name.c_str(), to.island, o.km, o.crates, o.fee);
-        check(to.site_id == 127 && to.island == 4, "开到别的岛上最近的村127");
-        check(o.crates == 2 && o.km > 6.0 && o.km < 7.0, "两箱，六公里多");
-        const SiteSettlement *v127 = sites.village_by_id(127);
-        const VillagePlan p127 = plan_world_village(t, *v127, 2051, WorldVillageRules());
-        check(freight_post_building(p127.layout) >= 0, "村127 也有船台");
+        std::printf("  村031 → %s（岛 #%d，%.1f km）%d 箱，运费 %d\n", to.name.c_str(), to.island, o.km, o.crates, o.fee);
+        check(to.site_id == 197 && to.island == 8, "开到别的岛上最近的窑村37");
+        check(o.crates == 2 && o.km > 7.0 && o.km < 8.5, "两箱，七公里多");
+        const SiteSettlement *v197 = sites.village_by_id(197);
+        const VillagePlan p197 = plan_world_village(t, *v197, 2051, WorldVillageRules());
+        check(freight_post_building(p197.layout) >= 0, "窑村37 也有船台");
     }
 }
 
@@ -3005,16 +3020,19 @@ void test_gather() {
     RiverRules river_rules;
     river_rules.precip_mm = regime.precip_mm();
     river_rules.year_days = regime.year_days();
-    check(parse_resource_deposits(res, dep, err) && dep.size() == 944, "2051 有 944 处资源（" + std::to_string(dep.size()) + "）");
+    const bool parsed = parse_resource_deposits(res, dep, err);
+    check(parsed && dep.size() == 1237, "2051 有 1237 处资源（" + std::to_string(dep.size()) + "）");
     WorldTerrain t(grid, sites.terrain_islands(), 2051, river_rules);
     lay_world_works(t, sites);
     const auto started = std::chrono::steady_clock::now();
     const ResourcePlan plan = plan_resource_sites(t, sites, dep);
     const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
-    std::printf("  资源点 %zu 处落地；采不了 %d、并掉 %d、在村里 %d、落不了 %zu（%.0f ms）\n", plan.sites.size(), plan.landmarks, plan.merged, plan.in_village, plan.failed.size(), ms);
-    check(plan.landmarks == 130, "泉眼 39 + 洞穴 90 + 温泉 1 采不了");
-    check(int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size()) + plan.landmarks == 944, "每一处都有下落");
-    check(plan.sites.size() >= 700 && plan.failed.size() <= 10, "绝大多数能采的都落了地");
+    std::printf("  资源点 %zu 处落地（%zu 处够不着船）；采不了 %d、并掉 %d、在村里 %d、落不了 %zu（%.0f ms）\n", plan.sites.size(), plan.unreachable.size(), plan.landmarks, plan.merged,
+            plan.in_village, plan.failed.size(), ms);
+    check(plan.landmarks == 155, "泉眼 40 + 洞穴 113 + 温泉 2 采不了");
+    const int can_gather = int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size());
+    check(can_gather + plan.landmarks == 1237, "每一处都有下落");
+    check(plan.sites.size() >= 1000 && plan.failed.size() * 50 <= size_t(can_gather), "绝大多数能采的都落了地（落不了的不过 2%）");
     bool spots_ok = true, piles_ok = true, fields_ok = true;
     for (const ResourceSite &s : plan.sites) {
         spots_ok = spots_ok && resource_spot_ok(t, sites, s.face_x, s.face_z, ResourceSiteRules()) && resource_spot_ok(t, sites, s.pile_x, s.pile_z, ResourceSiteRules());
@@ -3023,7 +3041,7 @@ void test_gather() {
         fields_ok = fields_ok && s.kind && !s.item.empty() && catalog::item(s.item) && s.cap > 0 && !s.name.empty() && s.id == dep[size_t(s.deposit)].id;
     }
     check(spots_ok, "每处的采掘面与堆场都站得住（有地、不是水、不在坪上村里、坡缓、离崖边远）");
-    check(piles_ok, "堆场离采掘面 7 m，采掘面离矿点不过 90 m");
+    check(piles_ok, "堆场离采掘面 7 m，采掘面离矿点不过 150 m");
     check(fields_ok, "每处都有产物、存量、名字");
     const ResourcePlan again = plan_resource_sites(t, sites, dep);
     bool same = again.sites.size() == plan.sites.size();
@@ -3031,12 +3049,29 @@ void test_gather() {
         same = again.sites[k].id == plan.sites[k].id && again.sites[k].face_x == plan.sites[k].face_x && again.sites[k].pile_z == plan.sites[k].pile_z;
     }
     check(same, "同一份资产铺两遍一样");
-    // 主码头 #7 附近：1.4 km 处的黏土坑（矿点 98）
-    const ResourceSite *clay = nullptr;
+    // 够得着船：采掘面 60 m 内有开局的船野泊得下的地方（规划时量好的，与体检同一份）
+    size_t reached = 0;
+    bool reach_consistent = true;
     for (const ResourceSite &s : plan.sites) {
-        clay = s.id == 98 ? &s : clay;
+        reached += s.reach_m >= 0.0 ? 1 : 0;
+        const bool listed = std::find(plan.unreachable.begin(), plan.unreachable.end(), s.id) != plan.unreachable.end();
+        reach_consistent = reach_consistent && listed == (s.reach_m < 0.0) && s.reach_m <= ResourceSiteRules().reach_m;
     }
-    check(clay && clay->item == "clay" && clay->island == 0, "主码头 #7 旁有一处黏土坑（矿点 98）");
+    check(reach_consistent, "够不着船的都记在 unreachable 里，够得着的在 60 m 内");
+    check(reached * 100 >= plan.sites.size() * 96, "96% 以上的采掘面够得着船（" + std::to_string(reached) + " / " + std::to_string(plan.sites.size()) + "）");
+    for (size_t k = 0; k < plan.sites.size() && k < 400; k += 40) {
+        const ResourceSite &s = plan.sites[k];
+        check(resource_reach(t, sites, s.face_x, s.face_z) == s.reach_m, "资源点 #" + std::to_string(s.id) + "：单独量够不够得着船，与规划记的一样");
+    }
+    // 主码头 #1（邑治旁）两公里半内有黏土坑，也有浮石崖
+    const SiteDock *main_dock = sites.dock_by_id(1);
+    bool clay_near = false, pumice_near = false;
+    for (const ResourceSite &s : plan.sites) {
+        const bool near = main_dock && std::hypot(s.face_x - main_dock->x, s.face_z - main_dock->z) < 2500.0;
+        clay_near = clay_near || (near && s.item == "clay");
+        pumice_near = pumice_near || (near && s.item == "floatstone");
+    }
+    check(clay_near && pumice_near, "主码头 #1 附近有黏土坑、有浮石崖");
 }
 
 // 野泊：平地、斜坡、崖边、水边、太高
