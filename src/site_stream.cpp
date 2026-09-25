@@ -21,7 +21,9 @@ void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_hamlet", "hamlet_id"), &SiteStream::get_hamlet);
     ClassDB::bind_method(D_METHOD("get_dock", "dock_id"), &SiteStream::get_dock);
     ClassDB::bind_method(D_METHOD("get_built_resources"), &SiteStream::get_built_resources);
-    ClassDB::bind_method(D_METHOD("get_resource", "deposit_id"), &SiteStream::get_resource);
+    ClassDB::bind_method(D_METHOD("get_resource", "working_id"), &SiteStream::get_resource);
+    ClassDB::bind_method(D_METHOD("get_built_landmarks"), &SiteStream::get_built_landmarks);
+    ClassDB::bind_method(D_METHOD("get_village_version"), &SiteStream::get_village_version);
     ClassDB::bind_method(D_METHOD("set_resource_radius", "value"), &SiteStream::set_resource_radius);
     ClassDB::bind_method(D_METHOD("get_resource_radius"), &SiteStream::get_resource_radius);
     ClassDB::bind_method(D_METHOD("get_focus"), &SiteStream::get_focus);
@@ -105,6 +107,7 @@ WorldVillage *SiteStream::build_village(int p_index) {
     village->setup(world, site, uint64_t(seed), layout_dir.is_empty() ? String() : layout_dir.path_join(file), hinterland, p_index);
     add_child(village);
     villages[p_index] = village;
+    village_version++;
     return village;
 }
 
@@ -138,6 +141,7 @@ void SiteStream::refresh(int p_build_budget) {
             if (d > village_radius * hysteresis && !found->second->is_edited()) {
                 found->second->queue_free();
                 villages.erase(found);
+                village_version++;
             } else {
                 // 村民：近了招、远了散
                 if (d <= folk_radius) {
@@ -158,11 +162,11 @@ void SiteStream::refresh(int p_build_budget) {
         }
     }
 
-    // 资源点：先拆远的，再由近及远摆
-    const std::vector<ResourceSite> &sites = world->get_resource_plan().sites;
-    std::vector<std::pair<double, int>> wanted_resources;
-    for (int k = 0; k < int(sites.size()); k++) {
-        const double d = std::hypot(sites[size_t(k)].face_x - focus.x, sites[size_t(k)].face_z - focus.z);
+    // 采场与地标：先拆远的，再由近及远摆（两样合用一份预算）
+    const ResourcePlan &plan = world->get_resource_plan();
+    std::vector<std::pair<double, int>> wanted_resources; // 下标 ≥ 0 是采场，< 0 是地标（−1 − 下标）
+    for (int k = 0; k < int(plan.sites.size()); k++) {
+        const double d = std::hypot(plan.sites[size_t(k)].face_x - focus.x, plan.sites[size_t(k)].face_z - focus.z);
         const auto found = resources.find(k);
         if (found != resources.end()) {
             if (d > resource_radius * hysteresis) {
@@ -173,14 +177,49 @@ void SiteStream::refresh(int p_build_budget) {
             wanted_resources.emplace_back(d, k);
         }
     }
+    for (int k = 0; k < int(plan.landmarks.size()); k++) {
+        const double d = std::hypot(plan.landmarks[size_t(k)].x - focus.x, plan.landmarks[size_t(k)].z - focus.z);
+        const auto found = landmarks.find(k);
+        if (found != landmarks.end()) {
+            if (d > resource_radius * hysteresis) {
+                found->second->queue_free();
+                landmarks.erase(found);
+            }
+        } else if (d <= resource_radius) {
+            wanted_resources.emplace_back(d, -1 - k);
+        }
+    }
     std::sort(wanted_resources.begin(), wanted_resources.end());
     const int budget = p_build_budget > 1 ? p_build_budget : resource_budget;
     for (size_t k = 0; k < wanted_resources.size() && int(k) < budget; k++) {
+        const int index = wanted_resources[k].second;
         WorldResource *node = memnew(WorldResource);
-        node->setup(sites[size_t(wanted_resources[k].second)], wanted_resources[k].second);
+        if (index >= 0) {
+            node->setup(plan.sites[size_t(index)], index);
+            resources[index] = node;
+        } else {
+            node->setup_landmark(plan.landmarks[size_t(-1 - index)], -1 - index);
+            landmarks[-1 - index] = node;
+        }
         add_child(node);
-        resources[wanted_resources[k].second] = node;
     }
+}
+
+PackedInt32Array SiteStream::get_built_landmarks() const {
+    PackedInt32Array ids;
+    for (const auto &entry : landmarks) {
+        ids.push_back(entry.second->get_deposit_id());
+    }
+    return ids;
+}
+
+std::vector<WorldVillage *> SiteStream::built_villages() const {
+    std::vector<WorldVillage *> out;
+    out.reserve(villages.size());
+    for (const auto &entry : villages) {
+        out.push_back(entry.second);
+    }
+    return out;
 }
 
 PackedInt32Array SiteStream::get_built_resources() const {
@@ -191,9 +230,9 @@ PackedInt32Array SiteStream::get_built_resources() const {
     return ids;
 }
 
-WorldResource *SiteStream::get_resource(int p_deposit_id) const {
+WorldResource *SiteStream::get_resource(int p_working_id) const {
     for (const auto &entry : resources) {
-        if (entry.second->get_deposit_id() == p_deposit_id) {
+        if (entry.second->get_deposit_id() == p_working_id) {
             return entry.second;
         }
     }

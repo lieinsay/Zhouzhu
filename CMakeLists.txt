@@ -173,6 +173,10 @@ target_sources(
         src/refit_panel.h
         src/register_types.cpp
         src/register_types.h
+        src/scatter_meshes.cpp
+        src/scatter_meshes.h
+        src/scatter_stream.cpp
+        src/scatter_stream.h
         src/settlement.cpp
         src/settlement.h
         src/ship.cpp

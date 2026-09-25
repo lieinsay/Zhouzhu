@@ -19,6 +19,7 @@
 #include "refit_overlay.h"
 #include "refit_panel.h"
 #include "settlement.h"
+#include "scatter_stream.h"
 #include "site_stream.h"
 #include "ship.h"
 #include "shipyard.h"
@@ -64,6 +65,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(WorldDock);
     GDREGISTER_CLASS(WorldResource);
     GDREGISTER_CLASS(SiteStream);
+    GDREGISTER_CLASS(ScatterStream);
     GDREGISTER_CLASS(Hinterland);
     GDREGISTER_CLASS(Expedition);
     GDREGISTER_CLASS(DevTools);

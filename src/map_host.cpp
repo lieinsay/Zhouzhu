@@ -39,3 +39,11 @@ String MapHost::map_goal_text(int p_index, bool p_arrived, const Vector3 &p_glob
 String MapHost::map_course_name(int p_index, bool p_arrived) const {
     return (p_arrived ? String(U"回程 ") : String(U"目的 ")) + map_dock_label(p_index);
 }
+
+ResourceSpot MapHost::map_gather_near(const godot::Vector3 &p_global, double p_face_range, double /* p_facing_yaw */) {
+    ResourceSpot spot = map_resource_near(p_global, p_face_range);
+    if (spot.site >= 0 && godot::Vector2(p_global.x - spot.face.x, p_global.z - spot.face.z).length() > p_face_range) {
+        return ResourceSpot(); // 够得着的是堆场，不是采掘面
+    }
+    return spot;
+}

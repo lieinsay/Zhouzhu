@@ -25,14 +25,16 @@ struct FreightPost {
     godot::String name; // 村名
 };
 
-// 一处资源点（采集在采掘面前按住 E，打包在堆场）
+// 一处能采的：采场（采集在采掘面前按住 E，打包在堆场），或地上的一株散布物（树、灌丛、石块……，没有堆场）
 struct ResourceSpot {
-    int site = -1; // 地图自己的资源点下标；−1 = 附近没有
-    godot::Vector3 face; // 采掘面（全局）
-    godot::Vector3 pile; // 堆场（全局）
+    int site = -1; // 地图自己的采场下标（散布物：块内序号）；−1 = 附近没有
+    bool scatter = false; // 是地上的一株散布物
+    uint64_t scatter_key = 0; // 散布物的键（resource_scatter.h）
+    godot::Vector3 face; // 采掘面 / 那一株的根（全局）
+    godot::Vector3 pile; // 堆场（全局；散布物同 face）
     std::string item; // 采出来的物品
-    godot::String name; // 「采石场（安山岩 / 凝灰岩）」
-    godot::String verb; // 「凿石」
+    godot::String name; // 「采石场（安山岩 / 凝灰岩）」「阔叶树」
+    godot::String verb; // 「凿石」「伐木」
     int grade = 1; // 0 下 1 中 2 上
     double gather_s = 0.0; // 按住 E 几秒一份
     int cap = 0; // 存量上限
@@ -95,8 +97,13 @@ public:
     virtual FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) { return FreightPost(); }
     virtual bool map_freight_target(int p_port, godot::Transform3D &r_target) const { return false; }
 
-    // 采集（可选，默认没有）：离 p_global 水平 p_range 以内、已经摆出来的资源点（采掘面或堆场够得着的最近那一处）
+    // 采集（可选，默认没有）：离 p_global 水平 p_range 以内、已经摆出来的采场（采掘面或堆场够得着的最近那一处）
     virtual ResourceSpot map_resource_near(const godot::Vector3 &p_global, double p_range) { return ResourceSpot(); }
+    // 站在 p_global、面朝 p_facing_yaw（Player 的 look_yaw 约定）能采的那一处：采掘面 p_face_range 以内的采场，
+    // 或够得着（离它边 reach 以内）、立着的一株散布物，取近的（面前的优先）；默认只认采掘面
+    virtual ResourceSpot map_gather_near(const godot::Vector3 &p_global, double p_face_range, double p_facing_yaw);
+    // 采走了一份（账已经记了）：散布物采空了要倒下、重摆
+    virtual void map_resource_taken(const ResourceSpot &p_spot) {}
     // 野泊问的地面（全局 xz）：多高（默认按 map_surface）、是不是水（默认不是）
     virtual bool map_landing_height(double p_x, double p_z, double &r_y) const;
     virtual bool map_water_at(double p_x, double p_z) const { return false; }

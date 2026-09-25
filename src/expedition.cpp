@@ -19,6 +19,7 @@
 #include "land_berth.h"
 #include "placeables.h"
 #include "recipes.h"
+#include "scatter_stream.h"
 #include "settlement.h"
 #include "shipyard.h"
 #include "wild_landing.h"
@@ -788,7 +789,7 @@ bool Expedition::plan_wild(const Vector3 &p_at, double p_yaw, Berth &r_berth, St
         for (Node *node = Object::cast_to<Node>(hit); node && !house; node = node->get_parent()) {
             house = Object::cast_to<Settlement>(node) != nullptr;
         }
-        r_why = house ? String(U"船底下、舷梯边有房子") : String(U"船底下、舷梯边有东西挡着");
+        r_why = house ? String(U"船底下、舷梯边有房子") : ScatterStream::is_trunk(hit) ? String(U"船底下、舷梯边有树") : String(U"船底下、舷梯边有东西挡着");
         return false;
     }
     r_berth = Berth();

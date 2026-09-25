@@ -11,6 +11,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 
+#include "deposit_kinds.h"
 #include "map_image.h"
 
 using namespace godot;
@@ -29,6 +30,7 @@ const Color DESTINATION(1.0f, 0.82f, 0.25f);
 const Color BUILT_RING(1.0f, 1.0f, 1.0f);
 const Color PLAYER(1.0f, 1.0f, 1.0f);
 const Color PLAYER_EDGE(0.85f, 0.15f, 0.1f);
+const Color LAYER_ON(1.0f, 0.86f, 0.4f);
 
 constexpr double ZOOM_MIN = 0.3; // 屏幕像素 / 底图像素（一底图像素 = 100 m）
 constexpr double ZOOM_MAX = 60.0;
@@ -66,6 +68,10 @@ void WorldMap::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_dock_marked_berthable", "id"), &WorldMap::is_dock_marked_berthable);
     ClassDB::bind_method(D_METHOD("is_resource_marked", "id"), &WorldMap::is_resource_marked);
     ClassDB::bind_method(D_METHOD("set_built_sites", "docks", "villages"), &WorldMap::set_built_sites);
+    ClassDB::bind_method(D_METHOD("set_resource_layer", "on"), &WorldMap::set_resource_layer);
+    ClassDB::bind_method(D_METHOD("is_resource_layer"), &WorldMap::is_resource_layer);
+    ClassDB::bind_method(D_METHOD("has_resource_layer"), &WorldMap::has_resource_layer);
+    ClassDB::bind_method(D_METHOD("get_layer_toggle_rect"), &WorldMap::get_layer_toggle_rect);
     ADD_SIGNAL(MethodInfo("teleport_requested", PropertyInfo(Variant::VECTOR3, "position")));
 }
 
@@ -213,6 +219,8 @@ void WorldMap::_gui_input(const Ref<InputEvent> &p_event) {
             zoom_at(button->get_position(), 0.8);
         } else if (which == MOUSE_BUTTON_RIGHT || which == MOUSE_BUTTON_MIDDLE) {
             dragging = button->is_pressed();
+        } else if (which == MOUSE_BUTTON_LEFT && button->is_pressed() && resource_texture.is_valid() && layer_rect.has_point(button->get_position())) {
+            set_resource_layer(!resource_layer);
         } else if (which == MOUSE_BUTTON_LEFT && button->is_pressed() && teleport_enabled) {
             const Vector2 w = screen_to_world(button->get_position());
             emit_signal("teleport_requested", Vector3(w.x, 0, w.y));
@@ -256,7 +264,8 @@ void WorldMap::_notification(int p_what) {
     };
 
     const Vector2 corner = map_to_screen(Vector2());
-    draw_texture_rect(texture, Rect2(corner, Vector2(texture->get_width(), texture->get_height()) * real_t(zoom)), false);
+    const Ref<ImageTexture> backdrop = resource_layer && resource_texture.is_valid() ? resource_texture : texture;
+    draw_texture_rect(backdrop, Rect2(corner, Vector2(backdrop->get_width(), backdrop->get_height()) * real_t(zoom)), false);
 
     // 标记：岛号总写；村名放大了才写；码头放大了才画（主码头总画）
     for (const Marker &m : markers) {
@@ -366,6 +375,26 @@ void WorldMap::_notification(int p_what) {
         hint = String(U"左键瞬移（开发者）· ") + hint;
     }
     text(Vector2(28, 66), hint, 16, TEXT_DIM);
+    // 底图：地表 / 资源（点这一行换）；资源层带图例
+    if (resource_texture.is_valid()) {
+        layer_rect = Rect2(Vector2(22, 76), Vector2(260, 28));
+        text(Vector2(28, 96), String(U"底图："), 17, TEXT_DIM);
+        text(Vector2(78, 96), String(U"地表"), 17, resource_layer ? TEXT_DIM : LAYER_ON);
+        text(Vector2(118, 96), String(U"· 资源"), 17, resource_layer ? LAYER_ON : TEXT_DIM);
+        text(Vector2(172, 96), String(U"（点这里换）"), 14, TEXT_DIM);
+        if (resource_layer) {
+            real_t y = 126;
+            for (int k = 0; k < deposits::KIND_COUNT; k++) {
+                const DepositKind &dk = deposits::KINDS[k];
+                if (deposits::is_landmark(dk)) {
+                    continue;
+                }
+                draw_rect(Rect2(Vector2(28, y - 12), Vector2(14, 14)), Color(dk.r, dk.g, dk.b));
+                text(Vector2(50, y), to_godot(dk.name) + (deposits::has_working(dk) ? String(U"（散）") : String(U"（片）")), 15, TEXT);
+                y += 20;
+            }
+        }
+    }
 
     // 悬停读数
     if (hover.x >= 0 && hover.y >= 0) {
@@ -376,6 +405,20 @@ void WorldMap::_notification(int p_what) {
             const int cls = grid->landcover[cell];
             const String cover = cls >= 0 && cls < int(landcover_names.size()) ? to_godot(landcover_names[size_t(cls)]) : String();
             line += vformat(String(U" · 岛 #%d · 高 %d m · %s"), int(grid->island[cell]), int(std::lround(grid->height_at(w.x, w.y))), cover);
+            if (resource_layer) {
+                // 资源层：这一格的各类赋存品位与所在的片
+                for (int f = 0; f < WorldGrid::FIELD_COUNT; f++) {
+                    const double v = grid->field_cell(f, cell);
+                    const DepositKind *dk = deposits::kind(WorldGrid::field_key(f));
+                    if (v >= 0.05 && dk) {
+                        line += String(U" · ") + to_godot(dk->name) + String(" ") + String::num(v, 2);
+                    }
+                }
+                const int patch = grid->patch_cell(cell);
+                if (patch >= 0 && size_t(patch) < patch_kinds.size() && patch_kinds[size_t(patch)] >= 0) {
+                    line += String(U" · ") + to_godot(deposits::KINDS[patch_kinds[size_t(patch)]].name) + String(U"（片）");
+                }
+            }
         } else {
             line += String(U" · 云海");
         }
@@ -424,6 +467,24 @@ void WorldMap::set_built_sites(const PackedInt32Array &p_docks, const PackedInt3
             m.built = p_villages.has(m.id);
         }
     }
+    queue_redraw();
+}
+
+void WorldMap::set_resource_patches(const std::vector<int> &p_patch_kinds) {
+    patch_kinds = p_patch_kinds;
+    if (!grid || !grid->has_resources()) {
+        return;
+    }
+    const MapImage img = build_resource_image(*grid, patch_kinds);
+    PackedByteArray bytes;
+    bytes.resize(int64_t(img.rgba.size()));
+    std::copy(img.rgba.begin(), img.rgba.end(), bytes.ptrw());
+    resource_texture = ImageTexture::create_from_image(Image::create_from_data(img.width, img.height, false, Image::FORMAT_RGBA8, bytes));
+    queue_redraw();
+}
+
+void WorldMap::set_resource_layer(bool p_on) {
+    resource_layer = p_on && resource_texture.is_valid();
     queue_redraw();
 }
 

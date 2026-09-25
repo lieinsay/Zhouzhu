@@ -45,9 +45,17 @@ void GatherHand::stand_down() {
 
 bool GatherHand::step(MapHost *p_map, Player *p_player, PackHand &p_pack, bool p_hands_full, bool p_interact, double p_delta, const Say &p_say) {
     const Vector3 at = p_player->get_global_position();
-    spot = p_map->map_resource_near(at, face_range);
-    if (spot.site >= 0 && Vector2(at.x - spot.face.x, at.z - spot.face.z).length() > face_range) {
-        spot = ResourceSpot(); // 够得着的是堆场，不是采掘面
+    if (!working) {
+        spot = p_map->map_gather_near(at, face_range, p_player->get_look_yaw());
+    } else {
+        // 干着活不换对象（一株采空了、倒了才停）
+        const ResourceSpot again = p_map->map_gather_near(at, face_range, p_player->get_look_yaw());
+        if (again.site < 0 || again.scatter != spot.scatter || again.scatter_key != spot.scatter_key || (!again.scatter && again.site != spot.site)) {
+            stand_down();
+            spot = again;
+        } else {
+            spot = again;
+        }
     }
     if (spot.site < 0 || !spot.stock) {
         stand_down();
@@ -97,11 +105,12 @@ bool GatherHand::step(MapHost *p_map, Player *p_player, PackHand &p_pack, bool p
     }
     p_pack.items().put(spot.item, 1);
     p_pack.refresh_panel();
+    p_map->map_resource_taken(spot);
     gathered++;
     const int have = p_pack.items().count(spot.item);
     if (stock_now() + 1e-9 < 1.0) {
         stand_down();
-        p_say(vformat(String(U"采了一份%s（背包 %d）· 这里采空了"), item_name(spot.item), have));
+        p_say(vformat(String(U"采了一份%s（背包 %d）· %s"), item_name(spot.item), have, spot.scatter ? String(U"采空了") : String(U"这里采空了")));
     } else {
         p_say(vformat(String(U"采了一份%s（背包 %d）"), item_name(spot.item), have));
     }

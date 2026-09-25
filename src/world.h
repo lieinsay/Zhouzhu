@@ -16,12 +16,14 @@
 
 #include "ground_host.h"
 #include "map_host.h"
+#include "resource_scatter.h"
 #include "river_mesh.h"
 #include "terrain_tile.h"
 #include "world_grid.h"
 #include "world_sites.h"
 #include "world_terrain.h"
 
+class ScatterStream;
 class SiteStream;
 
 // 一个真实比例的岛群（skyisle-gen 第三层产物，经 tools/export_skyisle.py 转成 data_dir 下的 terrain.bin + world.json）。
@@ -35,13 +37,16 @@ class SiteStream;
 // 河（world_river.h）：栅格有水文就在建地形时建好河网、凿好河道；weather.tsv 给一年的水情。水面按 river_mesh 切成块，
 // 焦点 river_radius 内的块挂上、远了拆；共用一份水面材质（game/shaders/river.gdshader），每帧按全局钟算出今天的径流指数设进去，
 // 所以水涨水落不用重建网格。第 0 天对上 weather.tsv 的第 calendar_offset 天；runoff_override ≥ 0 时不看钟（测试、调试用）。
-// 资源点（resource_sites.h）：加载时按 resources.tsv 把全部资源点规划好（只有位置），存量账也在这里（按全局钟回满）；实物由 SiteStream 走近了才摆。
+// 资源（resource_sites.h、resource_scatter.h）：加载时按 resources.tsv 把全部采场与地标规划好（只有位置），采场的存量账也在这里（按全局钟回满）；
+// 实物由 SiteStream 走近了才摆。地上一株株的散布物由 ResourceScatter 按块生成——生成在这里的后台线程（scatter_request / scatter_collect），
+// 摆放、碰撞在 ScatterStream 节点；散布物采空、长回的账（ScatterLedger）也在这里。
 // 加载完发 rebuilt（只一次）。节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
 class World : public godot::Node3D, public GroundHost, public MapHost {
     GDCLASS(World, godot::Node3D)
 
     godot::String data_dir = "res://worlds/2051";
     godot::NodePath sites_path = "../SiteStream"; // 可以不接：那就没有码头与村落的实物，也靠不了岸
+    godot::NodePath scatter_path = "../ScatterStream"; // 可以不接：那就没有地上的树、灌丛、石块
     int64_t terrain_seed = 2051;
     double split = 1.25; // 焦点到块的距离 < 块边长 × split 就细分
     int build_threads = 3;
@@ -54,11 +59,14 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     WorldSites sites; // sites.tsv
     WorldWorks works; // 码头与船坞坪，与 sites.docks 一一对应
     std::vector<FreightPort> freight_ports; // 港口村（跑货）
-    std::vector<ResourceDeposit> deposits; // resources.tsv（没有这份文件就是空的）
-    ResourcePlan resource_plan; // 落了地的资源点
+    ResourceData resource_data; // resources.tsv（没有这份文件就是空的）
+    ResourcePlan resource_plan; // 落了地的采场与地标
     std::vector<ResourceStock> resource_stocks; // 与 resource_plan.sites 一一对应
+    ResourceScatter scatter; // 地上的散布物（栅格没有资源层就不生成）
+    ScatterLedger scatter_ledger;
     bool loaded = false;
     SiteStream *site_stream = nullptr;
+    ScatterStream *scatter_stream = nullptr;
 
     struct Tile {
         TileKey key;
@@ -93,11 +101,18 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     std::vector<std::unique_ptr<TileMesh>> results;
     std::map<uint64_t, bool> in_flight; // 排了或正在建的
     bool stopping = false;
+    // 后台生成散布的块（另一条队列：地面块不用等它）
+    std::vector<std::thread> scatter_workers;
+    std::deque<ScatterChunkKey> scatter_jobs;
+    std::map<uint64_t, bool> scatter_in_flight;
+    std::vector<std::pair<ScatterChunkKey, std::vector<ScatterItem>>> scatter_done;
+    int scatter_threads = 2;
 
     bool load();
     void start_workers();
     void stop_workers();
     void worker_loop();
+    void scatter_loop();
     void retarget();
     void adopt(std::unique_ptr<TileMesh> p_mesh);
     void prune();
@@ -156,17 +171,31 @@ public:
     godot::Vector3 get_freight_post(int p_village_id) const;
     godot::PackedInt32Array get_freight_port_ids() const; // 能托运的村的村号
     SiteStream *get_site_stream() const { return site_stream; }
+    ScatterStream *get_scatter_stream() const { return scatter_stream; }
 
-    // 资源点（下标与 get_resource_plan().sites 一致）
-    const std::vector<ResourceDeposit> &get_deposits() const { return deposits; }
+    // 资源：采场（下标与 get_resource_plan().sites 一致）、地标、散布
+    const ResourceData &get_resource_data() const { return resource_data; }
     const ResourcePlan &get_resource_plan() const { return resource_plan; }
     ResourceStock *resource_stock(int p_index);
+    const ResourceScatter &get_scatter() const { return scatter; }
+    ScatterLedger &get_scatter_ledger() { return scatter_ledger; }
+    const ScatterLedger &get_scatter_ledger() const { return scatter_ledger; }
+    // 散布的块交给后台生成：p_keys 按先后排好，替掉还没开工的旧活；生成好的由 scatter_collect 取走（追加进 r_done）
+    void scatter_request(const std::vector<ScatterChunkKey> &p_keys);
+    void scatter_collect(std::vector<std::pair<ScatterChunkKey, std::vector<ScatterItem>>> &r_done);
     static double clock_hours(); // 全局钟：从第 0 天子夜起的游戏钟头
-    // 测试与调试：按矿点号查一处资源点 { index, face, pile, item, name, grade, cap, stock（此刻）, built }；没落地返回空字典
-    godot::Dictionary get_resource_site(int p_deposit_id) const;
-    godot::PackedInt32Array get_resource_ids() const; // 落了地的矿点号
-    // 离 (x, z) 最近的一处落了地的资源点的矿点号（p_kind 非空时只找这种）；p_radius 内没有返回 −1
+    // 测试与调试：按采场号查一处采场 { index, kind, face, pile, item, name, grade, cap, stock（此刻）, island, reach, landing, built }；没落地返回空字典
+    godot::Dictionary get_resource_site(int p_working_id) const;
+    godot::PackedInt32Array get_resource_ids() const; // 落了地的采场号
+    // 离 (x, z) 最近的一处落了地的采场的采场号（p_kind 非空时只找这种：stone / clay / gravel / placer / ore / sulfur）；p_radius 内没有返回 −1
     int find_resource_near(double p_x, double p_z, double p_radius, const godot::String &p_kind = godot::String()) const;
+    // 地标（泉眼、温泉、洞穴）：按点号查 { kind, name, position, built }；离 (x, z) 最近的一处的点号（p_kind 非空时只找这种）
+    godot::Dictionary get_landmark(int p_id) const;
+    int find_landmark_near(double p_x, double p_z, double p_radius, const godot::String &p_kind = godot::String()) const;
+    // 散布（测试与调试，按纯算法现生成、不管摆没摆出来）：离 (x, z) 最近的一株 p_kind（散布物的键，空 = 不挑）
+    // { key, kind, name, product, position, radius, solid }；p_radius 内没有返回空字典。另：该处能不能长（给测试挑空地）
+    godot::Dictionary find_scatter_near(double p_x, double p_z, double p_radius, const godot::String &p_kind = godot::String()) const;
+    int get_scatter_count_near(double p_x, double p_z, double p_radius, bool p_solid_only) const;
 
     // GroundHost（Farm、Shipyard 挂在它下面）
     godot::Node3D *host_node() override { return this; }
@@ -205,11 +234,15 @@ public:
     FreightPost map_freight_post_near(const godot::Vector3 &p_global, double p_range) override;
     bool map_freight_target(int p_port, godot::Transform3D &r_target) const override;
     ResourceSpot map_resource_near(const godot::Vector3 &p_global, double p_range) override;
+    ResourceSpot map_gather_near(const godot::Vector3 &p_global, double p_face_range, double p_facing_yaw) override;
+    void map_resource_taken(const ResourceSpot &p_spot) override;
     bool map_landing_height(double p_x, double p_z, double &r_y) const override { return terrain.surface(p_x, p_z, r_y); }
     bool map_water_at(double p_x, double p_z) const override;
 
     void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
     godot::NodePath get_sites_path() const { return sites_path; }
+    void set_scatter_path(const godot::NodePath &p_value) { scatter_path = p_value; }
+    godot::NodePath get_scatter_path() const { return scatter_path; }
 
     void set_data_dir(const godot::String &p_value) { data_dir = p_value; }
     godot::String get_data_dir() const { return data_dir; }

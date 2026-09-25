@@ -66,6 +66,8 @@ calendar_offset = 3.0
 [node name="SiteStream" type="SiteStream" parent="."]
 seed = 2051
 
+[node name="ScatterStream" type="ScatterStream" parent="."]
+
 [node name="Hinterland" type="Hinterland" parent="."]
 
 [node name="Ship" parent="." instance=ExtResource("2_ship")]

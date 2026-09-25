@@ -13,6 +13,7 @@
 #include "world_grid.h"
 
 // 岛群地图面板：铺满屏幕，底图是栅格的晕渲（一格一像素），上面标岛号、邑治、村、码头、玩家。
+// 底图有两层，左上点「地表 / 资源」换：地表层是地表色 × 山影；资源层是生成器的资源分布（每格最稀的那一类，散的越富越浓，见 map_image.h），带图例。
 // 滚轮以鼠标处为中心缩放，右键 / 中键拖动平移，悬停读出该处的坐标、岛、高程、地表。
 // 左键点一下只发 teleport_requested(世界坐标)——瞬不瞬移、许不许瞬移（开发者工具）是上层的事；
 // 上层用 set_teleport_enabled 告诉它要不要把「左键瞬移」写进提示、要不要发这个信号。
@@ -44,6 +45,10 @@ class WorldMap : public godot::Control {
     std::vector<std::string> landcover_names;
     std::vector<Marker> markers;
     godot::Ref<godot::ImageTexture> texture;
+    godot::Ref<godot::ImageTexture> resource_texture; // 资源层（set_resource_patches 之后才有）
+    std::vector<int> patch_kinds; // 片号 → deposits::KINDS 的下标
+    bool resource_layer = false;
+    godot::Rect2 layer_rect; // 左上「地表 / 资源」那一行（点它换底图）
     godot::String title;
 
     // 视图：屏幕中心对着底图的哪个像素、一个底图像素画多大
@@ -84,6 +89,12 @@ public:
     // 资源点（矿点号、世界 xz、种类的颜色、名字；p_landmark：采不了、只是标个地名）与哪些已摆出来
     void add_resource(int p_id, double p_x, double p_z, const godot::Color &p_color, const std::string &p_label, bool p_landmark);
     void set_built_resources(const godot::PackedInt32Array &p_ids);
+    // 资源层：片号（deposit id）→ 那一片在 deposits::KINDS 里的下标（不是片 −1）；给了才有资源层
+    void set_resource_patches(const std::vector<int> &p_patch_kinds);
+    void set_resource_layer(bool p_on);
+    bool is_resource_layer() const { return resource_layer; }
+    bool has_resource_layer() const { return resource_texture.is_valid(); }
+    godot::Rect2 get_layer_toggle_rect() const { return layer_rect; } // 给测试：点哪儿换底图
     bool is_resource_marked(int p_id) const; // 给测试：地图上标了这一处（能采的）
     // 给测试：某码头 / 村标在哪（世界 xz，y = 0）、是否标为已铺；没有这个号返回 false
     bool get_marker(const godot::String &p_kind, int p_id, godot::Vector3 &r_position, bool &r_built) const;
