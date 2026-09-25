@@ -534,20 +534,22 @@
     {
       "id": "skyisle-export",
       "label": "岛群导出脚本",
-      "detail": "tools/export_skyisle.py：skyisle-gen 岛群产物 → terrain.bin（v3：高程含下切河谷、流向按生成器汇流反推、河宽水深、地形区）、weather.tsv、world.json、sites.tsv；--terrain-only 只换地形、点位沿用旧的。",
+      "detail": "tools/export_skyisle.py：skyisle-gen 岛群产物 → terrain.bin（v4：高程 f32 米，含下切河谷；流向按生成器汇流反推、河宽水深、地形区）、weather.tsv、world.json、sites.tsv、resources.tsv。村 = 生成器的村（镇的市户并进来）+ 专业聚落（接着村号编）；码头从泊场推（子节点）。--terrain-only 只换地形、点位沿用旧的。",
       "tag": "工具",
       "evidence": "2051：1012×837 格、陆地格数与 skyisle-gen 一致（ctest）",
       "sources": [
         "tools/export_skyisle.py",
         "game/worlds/2051/terrain.bin",
-        "game/worlds/2051/world.json"
+        "game/worlds/2051/world.json",
+        "game/worlds/2051/sites.tsv",
+        "game/worlds/2051/resources.tsv"
       ],
       "since": "e11"
     },
     {
       "id": "world-grid",
       "label": "岛群栅格",
-      "detail": "解析 terrain.bin v1–v3，按连续坐标双三次取样；v3 多河宽 / 水深 / 地形区。",
+      "detail": "解析 terrain.bin v1–v4，按连续坐标双三次取样；v3 多河宽 / 水深 / 地形区；v4 的高程是 f32 米（v1–v3 是 u16 厘米、封顶 655 m）。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest world_grid / world 2051",
       "sources": [
@@ -621,7 +623,7 @@
     {
       "id": "world-2051-scene",
       "label": "岛群场景 world_2051",
-      "detail": "WorldScene + World（data_dir = res://worlds/2051）+ Player + 云海 + 日光；与 main.tscn 并存，旧功能尚未迁入。",
+      "detail": "Expedition + World（data_dir = res://worlds/2051）+ Player + 云海 + 日光；出发码头 #1（邑治旁的仓场）、目的码头 #26；相机远平面 60 km、雾 0.00003，从码头看得见远山。",
       "tag": "场景",
       "sources": [
         "game/world_2051.tscn"
@@ -727,7 +729,7 @@
     {
       "id": "site-survey-tool",
       "label": "岛群体检工具",
-      "detail": "zhouzhu_site_survey：离线把整个岛群的码头与村落铺一遍，报找不到岸缘的码头、摆不下的房子、耗时，可写逐条明细；超标退出码 1，ctest 跑 2051。",
+      "detail": "zhouzhu_site_survey：离线把整个岛群的码头、村落、资源点铺一遍，报找不到岸缘的码头、摆不下的房子、落不了的资源点与够不着船的（读规划的 reach_m）、耗时，--sim 另结远处的账；超标退出码 1，ctest 跑 2051。",
       "tag": "工具",
       "evidence": "2051：91/91 码头、9,571 座全摆下，Release 0.3 s",
       "sources": [
@@ -1305,7 +1307,7 @@
     {
       "id": "resource-sites",
       "label": "资源点落地与存量账",
-      "detail": "读 resources.tsv；矿点起一圈圈找采掘面（有地、离崖边 12 m、非水 / 河滩 / 坪、坡缓、不在村子估的半径里），旁边 7 m 放堆场；150 m 内的并掉。存量账 {存量, 钟点} 按全局钟线性回满。游戏与体检同一入口。",
+      "detail": "读 resources.tsv；矿点起一圈圈找采掘面（有地、离崖边 12 m、非水 / 河滩 / 坪、坡缓、不在村子估的半径里），旁边 7 m 放堆场，还要够得着船（子节点）；离矿点最远 150 m；150 m 内的并掉。各处并行找、按矿点号定并不并。存量账 {存量, 钟点} 按全局钟线性回满。游戏与体检同一入口。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "core_tests：2051 落 760 处、0 处落不了、处处站得住、确定性；存量满→采→回满",
       "sources": [
@@ -1348,6 +1350,33 @@
         "game/tests/gather_e2e.gd"
       ],
       "since": "e31"
+    },
+    {
+      "id": "skyisle-export-docks",
+      "label": "码头从泊场推",
+      "detail": "生成器只给每个聚落旁一块泊场：离岸 1 km 内的泊场在同岛最近的岸缘格设码头，同岛 2 km 内并成一个；主泊场（仓场）一定有码头 = 主码头。2051：215 块泊场 → 67 个码头，主码头 #1 在邑治旁。",
+      "tag": "工具",
+      "evidence": "site_survey：67 个码头全落地、主码头旁凿得出船坞坪；ctest 码头 #1 / #26 坪平",
+      "sources": [
+        "tools/export_skyisle.py"
+      ],
+      "since": "e32",
+      "parent": "skyisle-export"
+    },
+    {
+      "id": "resource-reach",
+      "label": "够得着船",
+      "detail": "resource_reach：采掘面周围 20–60 m、每 10 m 一圈 12 个方位、船头朝北或朝东，找开局的船（储存区 + 动力区 + 驾驶区）野泊得下的位姿；先查船底四角（landing_corners_ok）再细查。规划记下 reach_m，体检直接读。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "site_survey 2051：够得着船 97.3%（原 88.7%）；ctest 单独量与规划记的一样",
+      "sources": [
+        "src/resource_sites.h",
+        "src/resource_sites.cpp",
+        "src/wild_landing.h",
+        "src/wild_landing.cpp"
+      ],
+      "since": "e33",
+      "parent": "resource-sites"
     }
   ],
   "edges": [
@@ -3067,6 +3096,30 @@
       "chains": [
         "gather"
       ]
+    },
+    {
+      "from": "world-sites",
+      "to": "skyisle-export-docks",
+      "label": "sites.tsv 的码头",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "resource-reach",
+      "to": "wild-landing",
+      "label": "四角粗查 / 野泊细查",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "site-survey-tool",
+      "to": "resource-reach",
+      "label": "reach_m",
+      "chains": [
+        "gather"
+      ]
     }
   ],
   "chains": [
@@ -3740,7 +3793,7 @@
     {
       "id": "world-voyage",
       "title": "切片六：在岛群 #2051 里跑船，码头与村落照生成器的位置落地",
-      "story": "玩家站在岛群主码头的停机坪上，旁边的村子、远处的邑治都照生成器的位置盖好了房子、有人进出；走上停在泊位的空艇掌舵，换到高档越过主岛飞 30 km，在乙岛的码头靠泊下船，码头边的人家也有人出门；地图上的码头与村子和眼前的一一对应。",
+      "story": "玩家站在岛群主码头的停机坪上，旁边的村子、远处的邑治都照生成器的位置盖好了房子、有人进出；走上停在泊位的空艇掌舵，换到高档飞 23 km，在岛 #2 的码头靠泊下船，码头边的人家也有人出门；地图上的码头与村子和眼前的一一对应。",
       "date": "2026-09-23",
       "color": "#8d7bea",
       "steps": [
@@ -3751,7 +3804,7 @@
           ]
         },
         {
-          "text": "进入岛群场景：World 读点位，把 91 个码头都算出岸缘点、栈桥长度和坪高，再把停机坪压进连续地形里，然后才铺第一块地面",
+          "text": "进入岛群场景：World 读点位，把全部码头（现 67 个，导出时从生成器的泊场推出来）都算出岸缘点、栈桥长度和坪高，再把停机坪压进连续地形里，然后才铺第一块地面",
           "nodes": [
             "world-2051-scene",
             "world-node",
@@ -3805,7 +3858,7 @@
           ]
         },
         {
-          "text": "到了乙岛码头附近换回泊档、按 E 靠泊：船自己贴上泊位接触线，人下船站上乙岛的停机坪——抵达",
+          "text": "到了目的码头附近换回泊档、按 E 靠泊：船自己贴上泊位接触线，人下船站上目的岛的停机坪——抵达",
           "nodes": [
             "helm",
             "dock-builder",
@@ -3851,7 +3904,8 @@
         "villager-nav",
         "input-map",
         "island-node",
-        "island-field"
+        "island-field",
+        "skyisle-export-docks"
       ]
     },
     {
@@ -3863,7 +3917,7 @@
       "commits": "093f03a..84cb9cb",
       "steps": [
         {
-          "text": "进入岛群：编排只认地图宿主（World），主码头 #7 旁凿出船坞坪，World 下挂一片盖住全岛群的农田",
+          "text": "进入岛群：编排只认地图宿主（World），主码头（现 #1，邑治旁）旁凿出船坞坪，World 下挂一片盖住全岛群的农田",
           "nodes": [
             "world-2051-scene",
             "expedition",
@@ -3875,7 +3929,7 @@
           ]
         },
         {
-          "text": "M 开图点到村152 旁：熟地（地表是田）与近水 16 m 内的地可垦，按住 E 垦、Tab 选菽、播、收",
+          "text": "M 开图点到村031 旁：熟地（地表是田）与近水 16 m 内的地可垦，按住 E 垦、Tab 选菽、播、收",
           "nodes": [
             "expedition",
             "voyage-pack",
@@ -3952,7 +4006,7 @@
     {
       "id": "world-sim",
       "title": "切片七：全局世界时钟 + 远近分层的村落模拟",
-      "story": "玩家天亮时在村152 看着农夫、挑水的陆续出门，随后开船飞到 30 km 外的乙岛待到下午；这半天里看不见的村子照样按同一套规矩过日子——开荒、播种、收割、吃饭、挑水。飞回来时钟点一刻没断，村里的粮仓按收成与口粮涨了，人都在各自的地头与岗位上，垦过的田一块不少。",
+      "story": "玩家天亮时在村031 看着农夫、挑水的陆续出门，随后开船飞到 23 km 外的码头 #26 待到下午；这半天里看不见的村子照样按同一套规矩过日子——开荒、播种、收割、吃饭、挑水。飞回来时钟点一刻没断，村里的粮仓按收成与口粮涨了，人都在各自的地头与岗位上，垦过的田一块不少。",
       "date": "2026-09-23",
       "color": "#6c9a3b",
       "commits": "252fff6..b4c22ad",
@@ -3966,7 +4020,7 @@
           ]
         },
         {
-          "text": "进入岛群：远处账房给 371 个村落各开一本账（后台线程、近的先开），按户招人、勘好门口一圈能垦的地",
+          "text": "进入岛群：远处账房给全部村落与散户（现 1,206 处）各开一本账（后台线程、近的先开），按户招人、勘好门口一圈能垦的地",
           "nodes": [
             "hinterland",
             "world-ledger",
@@ -3977,7 +4031,7 @@
           ]
         },
         {
-          "text": "走近村152：SiteStream 铺好房子，村民节点从账房借来这本账，按钟点、日程与账把每个人摆到他此刻该在的地方",
+          "text": "走近村031：SiteStream 铺好房子，村民节点从账房借来这本账，按钟点、日程与账把每个人摆到他此刻该在的地方",
           "nodes": [
             "site-stream",
             "world-village",
@@ -4018,7 +4072,7 @@
           ]
         },
         {
-          "text": "飞回村152：账从离开那刻结到当下再摆开——钟连续、粮仓按收播吃对得上、村民在岗、认领的田都回到农田里",
+          "text": "飞回村031：账从离开那刻结到当下再摆开——钟连续、粮仓按收播吃对得上、村民在岗、认领的田都回到农田里",
           "nodes": [
             "hinterland",
             "villagers-node",
@@ -4056,7 +4110,7 @@
     {
       "id": "freight",
       "title": "切片八：跑货——在一个村子打包货物，飞到另一个村子交货",
-      "story": "玩家把空艇落上村152 的船台，走下跳板在村仓接下一单托运，把麻布打成两箱一箱箱抱上船放到货位上，飞 6.6 km 落上另一座岛上村127 的船台，抱下来交进那村的仓，拿到运费。",
+      "story": "玩家把空艇落上村031 的船台，走下跳板在村仓接下一单托运，把麻布打成两箱一箱箱抱上船放到货位上，飞 7.7 km 落上另一座岛上窑村37（专业聚落也是村）的船台，抱下来交进那村的仓，拿到运费。",
       "date": "2026-09-24",
       "color": "#4f8ff7",
       "commits": "1c821d2..",
@@ -4075,7 +4129,7 @@
           ]
         },
         {
-          "text": "掌舵飞到村152 的船台上空按 E：船把舷门贴到跳板顶、坐在坞墩上；船太宽太长就不让落并说明",
+          "text": "掌舵飞到村031 的船台上空按 E：船把舷门贴到跳板顶、坐在坞墩上；船太宽太长就不让落并说明",
           "nodes": [
             "helm",
             "expedition",
@@ -4162,13 +4216,13 @@
       "commits": "84cbdc3..a845e66",
       "steps": [
         {
-          "text": "离线导出：生成器给岛群的 944 处矿点（采石场、黏土、浮石、林木、泉眼、洞穴……）写成 resources.tsv，随仓库提交",
+          "text": "离线导出：生成器给岛群的矿点（现 1,237 处）（采石场、黏土、浮石、林木、泉眼、洞穴……）写成 resources.tsv，随仓库提交",
           "nodes": [
             "skyisle-export"
           ]
         },
         {
-          "text": "进入岛群：World 按矿点落 760 处采集点——采掘面避开水、码头的坪、村子与崖边，旁边留出堆场；每处按品位与面积开一笔存量账",
+          "text": "进入岛群：World 按矿点落采集点（现 1,022 处）——采掘面避开水、码头的坪、村子与崖边，旁边留出堆场，60 m 内还得有船落得下的地方（够不着就在矿体里往外挪）；每处按品位与面积开一笔存量账",
           "nodes": [
             "world-2051-scene",
             "world-node",
@@ -4263,7 +4317,8 @@
         "world-clock",
         "crops",
         "ship-layout",
-        "site-survey-tool"
+        "site-survey-tool",
+        "resource-reach"
       ]
     }
   ],
@@ -5348,6 +5403,46 @@
           "freight-hand",
           "freight"
         ]
+      }
+    },
+    {
+      "id": "e32",
+      "type": "extend",
+      "date": "2026-09-25",
+      "title": "拓展：按生成器的台面口径重导岛群 2051（重构）",
+      "summary": "生成器有了真山（主岛峰 382 → 2,027 m）、常年河，聚落层取消码头改成泊场。terrain.bin 升到 v4（高程 f32，u16 厘米封顶 655 m 装不下）；聚落层整个换成生成器的：专业聚落当村、镇的市户并进镇所在的村；码头从泊场推。",
+      "commits": "f4c5cc8..01cd381",
+      "nodes": [
+        "skyisle-export",
+        "skyisle-export-docks"
+      ],
+      "info": {
+        "node": "skyisle-export",
+        "children": [
+          "skyisle-export-docks"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e33",
+      "type": "extend",
+      "date": "2026-09-25",
+      "title": "拓展：资源点要够得着船",
+      "summary": "山里的采石场、峡谷的浮石多在陡坡上，野泊覆盖掉到 88.7%。现在是规划的规矩：采掘面 60 m 内得有开局的船野泊得下的地方，最近那处够不着就在矿体里（150 m 内）往外挪；各处并行找。",
+      "commits": "5881f05",
+      "nodes": [
+        "resource-sites",
+        "resource-reach"
+      ],
+      "info": {
+        "node": "resource-sites",
+        "children": [
+          "resource-reach"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
