@@ -4,9 +4,10 @@
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --report out.tsv # 另写逐条明细（每个码头 / 村一行）
 //   build/Release/zhouzhu_site_survey.exe game/worlds/2051 --sim 24      # 另把全部村落开账、在远处结 24 个游戏小时，报花费
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --rivers 河.tsv  # 另把河网逐点写出（河号、x、z、平岸水面、宽、深、汇流）
-//   有 resources.tsv 时另把资源点落一遍（采掘面、堆场；采掘面要在 60 m 内够得着开局的船野泊，规划时就量好了，只看地面、不看房子）
+//   有 resources.tsv 时另把采场与地标落一遍（采掘面、堆场；采掘面要在 60 m 内够得着开局的船野泊，规划时就量好了，只看地面、不看房子），
+//   再抽样生成散布（每隔 --scatter-stride 块取一块，默认 6），报每公顷长了多少、每块花多少时间、泊地上有没有树
 //   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
-//         --sim H（远处结算几个游戏小时；0 = 不结）
+//         --sim H（远处结算几个游戏小时；0 = 不结）、--scatter-stride N（散布抽样的间隔块数；0 = 不抽）
 //
 // 游戏里走近了才铺的东西，这里一次全铺：同一套纯算法（world_sites.h），所以这里铺得好，游戏里就铺得好。
 // 退出码：0 = 全部达标；1 = 有码头找不到岸缘，或摆不下的房子超过上限，或资源点落不了地 / 野泊不下的超过上限；2 = 读不了资产。
@@ -25,6 +26,7 @@
 #include <map>
 
 #include "freight.h"
+#include "resource_scatter.h"
 #include "resource_sites.h"
 #include "wild_landing.h"
 #include "world_ground.h"
@@ -63,6 +65,7 @@ int main(int argc, char **argv) {
     double max_missing = 0.02;
     double sim_hours = 0.0;
     std::string rivers_path;
+    int scatter_stride = 6;
     for (int k = 2; k + 1 < argc; k += 2) {
         const std::string opt = argv[k];
         if (opt == "--seed") {
@@ -75,6 +78,8 @@ int main(int argc, char **argv) {
             rivers_path = argv[k + 1];
         } else if (opt == "--sim") {
             sim_hours = std::atof(argv[k + 1]);
+        } else if (opt == "--scatter-stride") {
+            scatter_stride = std::atoi(argv[k + 1]);
         }
     }
 
@@ -239,33 +244,45 @@ int main(int argc, char **argv) {
     std::printf("村落 %zu 处：要盖 %d 座，摆下 %d 座，摆不下 %d 座（%.2f%%，%d 处不全）；共 %.0f ms，最慢 %s %.0f ms\n",
             sites.settlements.size(), wanted, wanted - missing, missing, 100.0 * missing_ratio, short_sites, total_ms, worst_name.c_str(), worst_ms);
 
-    // 资源点：与 World 同一份规划（含每处采掘面够不够得着船）
+    // 资源：与 World 同一份规划（采场含每处采掘面够不够得着船、地标）与同一份散布
     bool resources_ok = true;
     std::string res_text;
     if (read_file(dir + "/resources.tsv", res_text)) {
-        std::vector<ResourceDeposit> deposits;
-        if (!parse_resource_deposits(res_text, deposits, error)) {
+        ResourceData data;
+        if (!parse_resources(res_text, data, error)) {
             std::fprintf(stderr, "resources.tsv 坏了：%s\n", error.c_str());
             return 2;
         }
         started = std::chrono::steady_clock::now();
-        const ResourcePlan plan = plan_resource_sites(terrain, sites, deposits);
+        const ResourcePlan plan = plan_resource_sites(terrain, sites, data);
         const double plan_ms = since_ms(started);
-        std::map<std::string, int> by_kind;
+        std::map<std::string, int> by_kind, marks_by_kind;
         for (const ResourceSite &s : plan.sites) {
-            by_kind[s.kind->name]++;
+            by_kind[s.kind->site]++;
         }
-        const int gatherable = int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size());
-        std::printf("资源点 %zu 处：采不了 %d（泉眼、温泉、洞穴，只标在地图上）；能采 %d：落地 %zu、并掉 %d、在村里 %d、落不了 %zu（%.0f ms）\n  ", deposits.size(), plan.landmarks,
-                gatherable, plan.sites.size(), plan.merged, plan.in_village, plan.failed.size(), plan_ms);
+        for (const ResourceLandmark &m : plan.landmarks) {
+            marks_by_kind[m.kind->site]++;
+        }
+        int patches = 0;
+        for (const ResourceDeposit &d : data.deposits) {
+            patches += d.form == DepositForm::PATCH ? 1 : 0;
+        }
+        const int workings = int(data.workings.size());
+        std::printf("资源：片 %d、赋存区 %zu、点 %zu（摆了样子 %zu、岛底的洞 %d、落不了 %zu）；采场 %d：落地 %zu、并掉 %d、在村里 %d、落不了 %zu（%.0f ms）\n  ", patches,
+                data.occurrences.size(), data.deposits.size() - size_t(patches), plan.landmarks.size(), plan.underside, plan.landmarks_failed.size(), workings,
+                plan.sites.size(), plan.merged, plan.in_village, plan.failed.size(), plan_ms);
         for (const auto &entry : by_kind) {
+            std::printf("%s %d  ", entry.first.c_str(), entry.second);
+        }
+        std::printf("｜地标 ");
+        for (const auto &entry : marks_by_kind) {
             std::printf("%s %d  ", entry.first.c_str(), entry.second);
         }
         std::printf("\n");
         for (size_t k = 0; k < plan.failed.size() && k < 10; k++) {
-            std::printf("  矿点 %d：附近找不到站得住的地\n", plan.failed[k]);
+            std::printf("  采场 %d：附近找不到站得住的地\n", plan.failed[k]);
         }
-        // 野泊覆盖：规划时每处采掘面都量过 reach_m 内有没有开局的船落得下的地方（resource_reach，只看地面）
+        // 野泊覆盖：规划时每处采掘面都量过 reach_m 内有没有开局的船落得下的地方（resource_reach，只看地面）；泊地上散布不长树
         int landable = 0;
         double reach_sum = 0.0;
         std::vector<const ResourceSite *> stranded;
@@ -278,21 +295,76 @@ int main(int argc, char **argv) {
                 stranded.push_back(&s);
             }
             if (res_report) {
-                std::fprintf(res_report, "resource\t%d\t%d\t%d\t1\t1\t0\t%.0f\t0\t%s\n", s.id, s.island, s.cap, s.reach_m, s.name.c_str());
+                std::fprintf(res_report, "working\t%d\t%d\t%d\t1\t1\t0\t%.0f\t0\t%s\n", s.id, s.island, s.cap, s.reach_m, s.name.c_str());
             }
         }
         if (res_report) {
             std::fclose(res_report);
         }
         const double landable_ratio = plan.sites.empty() ? 1.0 : double(landable) / double(plan.sites.size());
-        std::printf("野泊：%zu 处资源点里 %d 处（%.1f%%）在采掘面 %.0f m 内有落得下的地方，平均 %.0f m 远", plan.sites.size(), landable, 100.0 * landable_ratio,
+        std::printf("野泊：%zu 处采场里 %d 处（%.1f%%）在采掘面 %.0f m 内有落得下的地方，平均 %.0f m 远", plan.sites.size(), landable, 100.0 * landable_ratio,
                 ResourceSiteRules().reach_m, landable ? reach_sum / landable : 0.0);
         for (size_t k = 0; k < stranded.size() && k < 8; k++) {
-            std::printf("%s矿点 %d %s（岛 %d）", k == 0 ? "；落不下的：" : "、", stranded[k]->id, stranded[k]->name.c_str(), stranded[k]->island);
+            std::printf("%s采场 %d %s（岛 %d）", k == 0 ? "；落不下的：" : "、", stranded[k]->id, stranded[k]->name.c_str(), stranded[k]->island);
         }
         std::printf("\n");
-        const double failed_ratio = gatherable ? double(plan.failed.size()) / double(gatherable) : 0.0;
+        const double failed_ratio = workings ? double(plan.failed.size()) / double(workings) : 0.0;
         resources_ok = failed_ratio <= max_missing && landable_ratio >= 1.0 - 2.0 * max_missing;
+
+        // 散布：每隔 scatter_stride 块抽一块生成，按抽到的陆地块推全岛群
+        const ResourceScatter scatter(terrain, sites, data, plan, seed);
+        if (scatter_stride > 0 && scatter.valid()) {
+            const ScatterRules &sr = scatter.get_rules();
+            const ScatterChunkKey lo = scatter.chunk_at(grid.min_x(), grid.min_z()), hi = scatter.chunk_at(grid.max_x(), grid.max_z());
+            std::vector<ScatterChunkKey> keys;
+            for (int iz = lo.iz; iz <= hi.iz; iz += scatter_stride) {
+                for (int ix = lo.ix; ix <= hi.ix; ix += scatter_stride) {
+                    double cx = 0.0, cz = 0.0;
+                    scatter.chunk_corner(ScatterChunkKey{ ix, iz }, cx, cz);
+                    if (terrain.is_land(cx + 0.5 * sr.chunk_m, cz + 0.5 * sr.chunk_m)) {
+                        keys.push_back(ScatterChunkKey{ ix, iz });
+                    }
+                }
+            }
+            std::vector<long long> count(size_t(deposits::SCATTER_COUNT), 0);
+            double worst_ms = 0.0, gen_ms = 0.0;
+            size_t most = 0;
+            started = std::chrono::steady_clock::now();
+            for (const ScatterChunkKey &key : keys) {
+                const auto s0 = std::chrono::steady_clock::now();
+                const std::vector<ScatterItem> items = scatter.chunk(key);
+                const double ms = since_ms(s0);
+                worst_ms = std::max(worst_ms, ms);
+                most = std::max(most, items.size());
+                for (const ScatterItem &item : items) {
+                    count[item.look]++;
+                }
+            }
+            gen_ms = since_ms(started);
+            const double ha = double(keys.size()) * sr.chunk_m * sr.chunk_m / 10000.0;
+            const double land_ha = double(grid.land_count()) * grid.res * grid.res / 10000.0;
+            long long total = 0;
+            for (long long c : count) {
+                total += c;
+            }
+            std::printf("散布：抽 %zu 块（块心在陆地上，%.0f 公顷），共 %lld 株 / 块，每公顷 %.0f；每块平均 %.2f ms、最慢 %.2f ms、最多 %zu 株；全岛群约 %.1f 万株\n  ",
+                    keys.size(), ha, total, ha > 0 ? total / ha : 0.0, keys.empty() ? 0.0 : gen_ms / keys.size(), worst_ms, most, ha > 0 ? total / ha * land_ha / 10000.0 : 0.0);
+            for (int k = 0; k < deposits::SCATTER_COUNT; k++) {
+                std::printf("%s %.1f/ha  ", deposits::SCATTER[k].name, ha > 0 ? count[size_t(k)] / ha : 0.0);
+            }
+            std::printf("\n");
+            // 泊地上不长树（规划说够得着船，游戏里就落得下）
+            int blocked_landings = 0;
+            for (const ResourceSite &s : plan.sites) {
+                std::vector<ScatterItem> solids;
+                if (s.reach_m >= 0.0) {
+                    scatter.solids_near(s.land_x, s.land_z, 14.0, solids);
+                }
+                blocked_landings += solids.empty() ? 0 : 1;
+            }
+            std::printf("  泊地 14 m 内有树的采场：%d 处\n", blocked_landings);
+            resources_ok = resources_ok && blocked_landings == 0 && total > 0;
+        }
     }
 
     // 远处结算：与游戏里的远处账房（Hinterland）同一份开账与结算（world_ledger），全部村落从卯时前开账，每处半个钟头一结

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <functional>
 #include <iterator>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -43,6 +44,7 @@
 #include "village_sim.h"
 #include "village_state.h"
 #include "villager_model.h"
+#include "resource_scatter.h"
 #include "resource_sites.h"
 #include "river_mesh.h"
 #include "world_grid.h"
@@ -1764,9 +1766,9 @@ void test_world_sites() {
     std::string err;
     check(parse_world_grid(bin.data(), bin.size(), g, err), "terrain.bin 能解析");
     check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
-    check(sites.islands.size() == 32 && sites.docks.size() == 67 && sites.settlements.size() == 1206, "32 岛、67 码头、215 村（含专业聚落 55）+ 991 散户");
+    check(sites.islands.size() == 32 && sites.docks.size() == 60 && sites.settlements.size() == 1202, "32 岛、60 码头、211 村（含专业聚落 51）+ 991 散户");
     const SiteSettlement *seat = sites.village_by_id(1);
-    check(seat && seat->seat && seat->households == 409 && seat->name == "村001", "村001 是邑治、409 户（农 327 + 邑里的市户 82）");
+    check(seat && seat->seat && seat->households == 407 && seat->name == "村001", "村001 是邑治、407 户（农 327 + 邑里的市户 80）");
     const SiteDock *main_dock = sites.dock_by_id(1);
     check(main_dock && main_dock->main && main_dock->island == 0, "主码头 #1 在主岛");
     WorldSites bad;
@@ -1779,7 +1781,7 @@ void test_world_sites() {
     for (const DockPlan &d : docks) {
         ok += d.ok;
     }
-    check(ok == 67, "67 个码头都找到岸缘（" + std::to_string(ok) + "）");
+    check(ok == 60, "60 个码头都找到岸缘（" + std::to_string(ok) + "）");
     // 主码头 #1 与岛 #2 上的目的码头 #26：压平后泊位附近的地面等高（这两处没有河从坪上过；有河的坪让给河）
     for (int id : { 1, 26 }) {
         size_t k = 0;
@@ -2403,8 +2405,9 @@ void test_goldens() {
     }
     // 拓展「岛群的河」起地形凿了河道、河滩不许盖房，村落清单有意变了，此处重记（河按游戏尺度放宽后又记了一次；拓展「船台」村里多盖一座船台，又记了一次；
     // 拓展「按新版生成器优化地形」换了下切过河道的栅格、按地形区加减起伏，又记了一次；
-    // 重构「按生成器的真实起伏重做 2051」换了地形与全部点位，换了一组村重记）
-    report_golden("岛群远离主码头的村", villages.h, 0x0d3234581c104a04ull);
+    // 重构「按生成器的真实起伏重做 2051」换了地形与全部点位，换了一组村重记；
+    // 拓展「按点 / 片 / 散生成资源」换了生成器新版的地表（村周开垦、采场格改裸岩；细节起伏按地表调幅）与码头，又记了一次）
+    report_golden("岛群远离主码头的村", villages.h, 0x2617f4ca68eeea4cull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）
@@ -2887,7 +2890,7 @@ void test_freight() {
     }
     check(land_berth::ship_problem(longer).find("太长") != std::string::npos, "七节长的船停不下");
 
-    // 2051：主码头 #1 附近的村031 的委托开到岛 #8 上的窑村37（专业聚落也是村，有船台）
+    // 2051：主码头 #1 附近的村031 的委托开到岛 #9 上的烧炭营43（专业聚落也是村，有船台）
     const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
@@ -2908,7 +2911,7 @@ void test_freight() {
     for (size_t k = 0; k < world_ports.size(); k++) {
         from = world_ports[k].site_id == 31 ? int(k) : from;
     }
-    check(from >= 0 && world_ports.size() == 215, "215 个村都能托运（含专业聚落，散户不算）");
+    check(from >= 0 && world_ports.size() == 211, "211 个村都能托运（含专业聚落，散户不算）");
     const SiteSettlement *v31 = sites.village_by_id(31);
     const WorldGround land_ground(t, 0.0, 0.0);
     const FarmModel land(&land_ground, land_ground.plot_lattice(), FarmRules());
@@ -2925,55 +2928,96 @@ void test_freight() {
     if (o.valid()) {
         const FreightPort &to = world_ports[size_t(o.to)];
         std::printf("  村031 → %s（岛 #%d，%.1f km）%d 箱，运费 %d\n", to.name.c_str(), to.island, o.km, o.crates, o.fee);
-        check(to.site_id == 197 && to.island == 8, "开到别的岛上最近的窑村37");
-        check(o.crates == 2 && o.km > 7.0 && o.km < 8.5, "两箱，七公里多");
-        const SiteSettlement *v197 = sites.village_by_id(197);
-        const VillagePlan p197 = plan_world_village(t, *v197, 2051, WorldVillageRules());
-        check(freight_post_building(p197.layout) >= 0, "窑村37 也有船台");
+        check(to.site_id == 203 && to.island == 9, "开到别的岛上最近的烧炭营43");
+        check(o.crates == 2 && o.km > 8.0 && o.km < 9.0, "两箱，八公里多");
+        const SiteSettlement *v203 = sites.village_by_id(203);
+        const VillagePlan p203 = plan_world_village(t, *v203, 2051, WorldVillageRules());
+        check(freight_post_building(p203.layout) >= 0, "烧炭营43 也有船台");
     }
 }
 
-// 资源点：种类表、存量账、自家的货箱、2051 的资源点规划
+// 资源：种类表、存量账、自家的货箱、2051 的采场与地标规划
 void test_gather() {
     std::printf("gather\n");
-    // 种类表：能采的都有产物且在物品表里、有颜色；采不了的没有
-    int gatherable = 0;
-    bool products_ok = true, landmarks_ok = true;
+    // 种类表：散的有采场（产物在物品表里、有颜色、有工时与存量），点是地标，片没有采场
+    int workings = 0, landmarks = 0, patches = 0;
+    bool products_ok = true, others_ok = true;
     for (int k = 0; k < deposits::KIND_COUNT; k++) {
         const DepositKind &kind = deposits::KINDS[k];
         const std::string item = deposits::product_of(kind, "");
         float r = 0, g = 0, b = 0;
-        if (deposits::gatherable(kind)) {
-            gatherable++;
+        if (deposits::has_working(kind)) {
+            workings++;
             products_ok = products_ok && !item.empty() && catalog::item(item) && !catalog::crop_of_seed(item) && deposits::product_color(item, r, g, b) &&
-                    kind.gather_s > 0.0 && kind.base_stock > 0 && kind.refill_hours > 0.0;
+                    kind.gather_s > 0.0 && kind.base_stock > 0 && kind.refill_hours > 0.0 && kind.look != DepositLook::NONE && std::string(kind.site).size() > 0;
         } else {
-            landmarks_ok = landmarks_ok && item.empty();
+            landmarks += deposits::is_landmark(kind) ? 1 : 0;
+            patches += kind.form == DepositForm::PATCH ? 1 : 0;
+            others_ok = others_ok && item.empty();
         }
     }
-    check(gatherable == 10 && products_ok, "十种能采：产物在物品表里、不是种子、有货箱色、有工时与存量");
-    check(landmarks_ok && deposits::kind("cave") && !deposits::gatherable(*deposits::kind("cave")), "泉眼、温泉、洞穴采不了");
-    const DepositKind &ore = *deposits::kind("ore"), &peat = *deposits::kind("peat"), &quarry = *deposits::kind("quarry");
-    check(deposits::product_of(ore, "铜") == "copper_ore" && deposits::product_of(ore, "锡钨") == "tin_ore" && catalog::item_name("copper_ore") == "铜矿石", "露天矿按矿种出矿石");
-    check(deposits::product_of(peat, "芦苇荡") == "reed" && deposits::product_of(peat, "泥炭") == "peat" && deposits::verb_of(peat, "芦苇荡") == "割苇", "泥炭沼 / 芦苇荡按子类");
-    check(deposits::site_name(quarry, "安山岩 / 凝灰岩") == "采石场（安山岩 / 凝灰岩）" && deposits::site_name(ore, "铜") == "铜矿坑" && deposits::site_name(peat, "芦苇荡") == "芦苇荡", "采集点的名字");
-    check(deposits::stock_cap(quarry, deposits::GRADE_LOW, 0.03) < deposits::stock_cap(quarry, deposits::GRADE_MID, 0.03) &&
-                    deposits::stock_cap(quarry, deposits::GRADE_MID, 0.03) < deposits::stock_cap(quarry, deposits::GRADE_HIGH, 0.03) &&
-                    deposits::stock_cap(quarry, deposits::GRADE_MID, 0.03) == 40,
-            "存量：上品 > 中品 > 下品，中品合常面积 40 份");
-    check(deposits::stock_cap(quarry, deposits::GRADE_MID, 300.0) == 80 && deposits::stock_cap(quarry, deposits::GRADE_MID, 0.0) == 24, "面积只按 0.6–2 倍算");
-    check(deposits::grade_of("上") == 2 && deposits::grade_of("下") == 0 && deposits::grade_of("?") == 1 && std::string(deposits::grade_name(0)) == "下", "品位的字");
-    float r = 0, g = 0, b = 0;
-    freight::crate_color("stone", r, g, b);
-    check(std::abs(r - 0.62f) < 1e-6 && std::abs(b - 0.66f) < 1e-6, "石料的货箱是石灰色");
+    check(workings == 6 && products_ok, "六种散的有采场（石料、黏土、砂砾、砂金、金属矿、硫磺）：产物在物品表里、不是种子、有货箱色、有工时与存量");
+    check(landmarks == 3 && patches == 4 && others_ok, "点（泉眼、温泉、洞穴）与片（林木、泥炭芦苇、浮石、鸟粪）没有采场");
+    check(!deposits::kind("quarry") && deposits::kind("stone") && deposits::kind("stone")->form == DepositForm::FIELD, "石料的键是 stone（生成器改名：石料是赋存，采石场是采场）");
+    const DepositKind &ore = *deposits::kind("ore"), &stone = *deposits::kind("stone"), &clay = *deposits::kind("clay");
+    check(deposits::product_of(ore, "铜") == "copper_ore" && deposits::product_of(ore, "锡钨") == "tin_ore" && catalog::item_name("copper_ore") == "铜矿石", "矿坑按矿种出矿石");
+    check(deposits::site_name(stone, "安山岩 / 凝灰岩") == "采石场（安山岩 / 凝灰岩）" && deposits::site_name(ore, "铜") == "铜矿坑" &&
+                    deposits::site_name(clay, "溪边黏土") == "土坑（溪边黏土）" && deposits::site_name(*deposits::kind("cave"), "崖洞") == "洞穴（崖洞）",
+            "采场与地标的名字");
+    check(deposits::working_cap(stone, 0.0) < deposits::working_cap(stone, 0.5) && deposits::working_cap(stone, 0.5) < deposits::working_cap(stone, 1.0) &&
+                    deposits::working_cap(stone, 0.5) == 40 && deposits::working_cap(stone, 1.0) == 60 && deposits::working_cap(stone, 5.0) == 60,
+            "采场存量随那一格的品位：品位 0.5 时 40 份，满品位 60 份");
 
-    // resources.tsv
-    std::vector<ResourceDeposit> dep;
+    // 散布物：每种都采得出东西，树挡人
+    bool scatter_ok = true;
+    for (int k = 0; k < deposits::SCATTER_COUNT; k++) {
+        const ScatterKind &sk = deposits::SCATTER[k];
+        const std::string item = deposits::scatter_product(ScatterLook(k), 0);
+        float r = 0, g = 0, b = 0;
+        scatter_ok = scatter_ok && int(sk.look) == k && catalog::item(item) && deposits::product_color(item, r, g, b) && sk.gather_s > 0.0 && sk.yield > 0 &&
+                sk.refill_hours > 0.0 && sk.radius > 0.0;
+    }
+    check(scatter_ok, "十一种散布物：下标即样子，产物在物品表里、有颜色，有工时、份数、长回的钟头");
+    check(deposits::scatter(ScatterLook::BROADLEAF).solid && deposits::scatter(ScatterLook::CONIFER).solid && !deposits::scatter(ScatterLook::SHRUB).solid &&
+                    !deposits::scatter(ScatterLook::BOULDER).solid,
+            "树干挡人挡船，灌丛、石块不挡");
+    check(deposits::scatter_product(ScatterLook::SHRUB, 0) == "firewood" && catalog::item_name("firewood") == "柴", "灌丛砍出柴");
+    check(deposits::scatter_product(ScatterLook::REEDS, deposits::SUB_REED) == "reed" && deposits::scatter_product(ScatterLook::REEDS, deposits::SUB_PEAT) == "peat" &&
+                    deposits::scatter_name(ScatterLook::REEDS, deposits::SUB_PEAT) == "泥炭" && deposits::scatter_verb(ScatterLook::REEDS, deposits::SUB_PEAT) == "挖泥炭",
+            "苇丛按子类：芦苇 / 泥炭");
+    check(deposits::scatter_product(ScatterLook::ORE_ROCK, uint8_t(deposits::ore_index("铁"))) == "iron_ore" &&
+                    deposits::scatter_name(ScatterLook::ORE_ROCK, uint8_t(deposits::ore_index("铜"))) == "铜矿石",
+            "矿石按矿种");
+    check(deposits::scatter_product(ScatterLook::CRUST, deposits::SUB_GUANO) == "guano" && deposits::scatter_product(ScatterLook::CRUST, deposits::SUB_SULFUR) == "sulfur",
+            "结壳：硫磺 / 鸟粪");
+    check(deposits::scatter_yield(ScatterLook::BROADLEAF, 1.0) == 4 && deposits::scatter_yield(ScatterLook::BROADLEAF, 1.3) == 7 &&
+                    deposits::scatter_yield(ScatterLook::PLACER, 0.5) == 1,
+            "一株几份按大小²（至少 1 份）");
+    check(catalog::tool_speed("stone_axe", "firewood") == 2.0 && catalog::tool_speed("stone_axe", "timber") == 2.0, "石斧伐木、砍柴都快一倍");
+    const RecipeDef *torch = recipes::find("torch_firewood");
+    check(torch && std::string(torch->product) == "torch" && std::string(torch->in[0].item) == "firewood", "柴也能扎火把");
+
+    // resources.tsv：三种行
+    ResourceData data;
     std::string err;
-    check(parse_resource_deposits("# x\ndeposit\t7\tquarry\t0\t10.5\t-20\t0.03\t上\t石灰岩\ndeposit\t8\tspring\t1\t0\t0\t0.01\t中\t\nfuture\t1\n", dep, err) && dep.size() == 2,
+    const std::string sample = "# x\n"
+                               "deposit\t0\ttimber\t0\t-450\t550\t818.36\t上\t阔叶林\tpatch\n"
+                               "deposit\t6\tspring\t0\t13950\t-350\t0.01\t上\t\tpoint\n"
+                               "occurrence\t47\tstone\t0\t9050\t-11250\t1.2\t中\t安山岩 / 凝灰岩\t2.3\t41.0\n"
+                               "working\t3\tstone\t0\t9050\t-11250\t47\t0.404\t安山岩 / 凝灰岩\t9,46,56\n"
+                               "working\t4\tclay\t1\t0\t0\t12\t0.7\t溪边黏土\t-\n"
+                               "future\t1\n";
+    check(parse_resources(sample, data, err) && data.deposits.size() == 2 && data.occurrences.size() == 1 && data.workings.size() == 2,
             "resources.tsv 能读，不认得的行跳过：" + err);
-    check(dep[0].id == 7 && dep[0].kind == "quarry" && dep[0].x == 10.5 && dep[0].z == -20.0 && dep[0].grade == 2 && dep[0].subtype == "石灰岩" && dep[1].subtype.empty(), "字段都对");
-    check(!parse_resource_deposits("deposit\t1\tquarry\tx\t0\t0\t0\t中\t\n", dep, err) && err.find("第 1 行") != std::string::npos, "坏行报错");
+    check(data.deposits[0].form == DepositForm::PATCH && data.deposits[1].form == DepositForm::POINT && data.deposits[0].subtype == "阔叶林" && data.deposits[1].subtype.empty(),
+            "点与片分得清");
+    check(data.occurrences[0].id == 47 && data.occurrences[0].grade == deposits::GRADE_MID && data.occurrences[0].length_km == 2.3 && data.occurrence_by_id(47),
+            "赋存区的字段都对");
+    check(data.workings[0].occurrence == 47 && data.workings[0].grade == 0.404 && data.workings[0].villages == std::vector<int>({ 9, 46, 56 }) &&
+                    data.workings[1].villages.empty(),
+            "采场挂赋存区、用它的村（- 是没有）");
+    check(!parse_resources("deposit\t1\tstone\t0\t0\t0\t0\t中\t\tblob\n", data, err) && err.find("第 1 行") != std::string::npos, "形态不认得报错");
+    check(!parse_resources("working\t1\tstone\t0\t0\t0\tx\t0.5\t\t-\n", data, err) && err.find("第 1 行") != std::string::npos, "坏行报错");
 
     // 存量账：满 → 采 → 按钟回满
     ResourceStock stock;
@@ -3002,7 +3046,7 @@ void test_gather() {
     check(book.unpack_goods(pack).empty() && !book.is_holding() && pack.count("stone") == 7, "拆箱：7 份回到背包");
     check(book.unpack_goods(pack) == "手上没有货", "空手拆不了");
 
-    // 2051：按 resources.tsv 落资源点
+    // 2051：按 resources.tsv 落采场与地标
     const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary), res_in(dir + "/resources.tsv", std::ios::binary),
             wx_in(dir + "/weather.tsv", std::ios::binary);
@@ -3023,58 +3067,270 @@ void test_gather() {
     RiverRules river_rules;
     river_rules.precip_mm = regime.precip_mm();
     river_rules.year_days = regime.year_days();
-    const bool parsed = parse_resource_deposits(res, dep, err);
-    check(parsed && dep.size() == 1237, "2051 有 1237 处资源（" + std::to_string(dep.size()) + "）");
+    const bool parsed = parse_resources(res, data, err);
+    check(parsed && data.deposits.size() == 709 && data.occurrences.size() == 499 && data.workings.size() == 257,
+            "2051：点与片 709、赋存区 499、采场 257（" + std::to_string(data.workings.size()) + "）");
+    // 栅格的片号与清单对得上：片的代表格在自己的片里（点可以落在片里：林子里的泉眼、洞）
+    bool patches_ok = grid.has_resources();
+    int patch_count = 0, points_in_patch = 0;
+    for (const ResourceDeposit &d : data.deposits) {
+        const int at = grid.patch_at(d.x, d.z);
+        if (d.form == DepositForm::PATCH) {
+            patch_count++;
+            patches_ok = patches_ok && at == d.id;
+        } else {
+            points_in_patch += at >= 0 ? 1 : 0;
+        }
+    }
+    check(patches_ok && patch_count == 556, "2051 的片号：556 片的代表格都在自己的片里（另有 " + std::to_string(points_in_patch) + " 个点在林子这类片里）");
+    // 赋存区的峰值格品位够门槛；采场那一格的品位与清单一致（u8 量化）
+    bool fields_ok = true;
+    for (const ResourceOccurrence &o : data.occurrences) {
+        fields_ok = fields_ok && grid.field_cell(WorldGrid::field_of(o.kind.c_str()), grid.nearest_cell(o.x, o.z)) >= 0.15 - 1e-9;
+    }
+    for (const ResourceWorking &w : data.workings) {
+        fields_ok = fields_ok && std::abs(grid.field_cell(WorldGrid::field_of(w.kind.c_str()), grid.nearest_cell(w.x, w.z)) - w.grade) < 0.01;
+    }
+    check(fields_ok, "赋存区的峰值格、采场那一格的品位与赋存场一致");
     WorldTerrain t(grid, sites.terrain_islands(), 2051, river_rules);
     lay_world_works(t, sites);
     const auto started = std::chrono::steady_clock::now();
-    const ResourcePlan plan = plan_resource_sites(t, sites, dep);
+    const ResourcePlan plan = plan_resource_sites(t, sites, data);
     const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
-    std::printf("  资源点 %zu 处落地（%zu 处够不着船）；采不了 %d、并掉 %d、在村里 %d、落不了 %zu（%.0f ms）\n", plan.sites.size(), plan.unreachable.size(), plan.landmarks, plan.merged,
-            plan.in_village, plan.failed.size(), ms);
-    check(plan.landmarks == 155, "泉眼 40 + 洞穴 113 + 温泉 2 采不了");
-    const int can_gather = int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size());
-    check(can_gather + plan.landmarks == 1237, "每一处都有下落");
-    check(plan.sites.size() >= 1000 && plan.failed.size() * 50 <= size_t(can_gather), "绝大多数能采的都落了地（落不了的不过 2%）");
-    bool spots_ok = true, piles_ok = true, fields_ok = true;
+    std::printf("  采场 %zu 处落地（%zu 处够不着船）；并掉 %d、在村里 %d、落不了 %zu；地标 %zu 处（落不了 %zu）（%.0f ms）\n", plan.sites.size(), plan.unreachable.size(),
+            plan.merged, plan.in_village, plan.failed.size(), plan.landmarks.size(), plan.landmarks_failed.size(), ms);
+    check(int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size()) == 257, "每一处采场都有下落");
+    check(plan.sites.size() >= 220 && plan.failed.size() * 50 <= 257, "绝大多数采场落了地（落不了的不过 2%）");
+    check(plan.underside == 14 && plan.landmarks.size() + plan.landmarks_failed.size() + 14 == 153 && plan.landmarks_failed.size() * 20 <= plan.landmarks.size(),
+            "泉眼 40、洞穴 105、温泉 8：岛底的洞 14 处不摆，其余绝大多数摆得出样子");
+    bool spots_ok = true, piles_ok = true, site_fields_ok = true;
     for (const ResourceSite &s : plan.sites) {
+        const ResourceWorking &w = data.workings[size_t(s.working)];
         spots_ok = spots_ok && resource_spot_ok(t, sites, s.face_x, s.face_z, ResourceSiteRules()) && resource_spot_ok(t, sites, s.pile_x, s.pile_z, ResourceSiteRules());
         piles_ok = piles_ok && std::abs(std::hypot(s.pile_x - s.face_x, s.pile_z - s.face_z) - ResourceSiteRules().pile_m) < 1e-6 &&
-                std::hypot(s.face_x - dep[size_t(s.deposit)].x, s.face_z - dep[size_t(s.deposit)].z) <= ResourceSiteRules().search_m + 1e-6;
-        fields_ok = fields_ok && s.kind && !s.item.empty() && catalog::item(s.item) && s.cap > 0 && !s.name.empty() && s.id == dep[size_t(s.deposit)].id;
+                std::hypot(s.face_x - w.x, s.face_z - w.z) <= ResourceSiteRules().search_m + 1e-6;
+        site_fields_ok = site_fields_ok && s.kind && !s.item.empty() && catalog::item(s.item) && s.cap > 0 && !s.name.empty() && s.id == w.id && s.villages == w.villages;
     }
     check(spots_ok, "每处的采掘面与堆场都站得住（有地、不是水、不在坪上村里、坡缓、离崖边远）");
-    check(piles_ok, "堆场离采掘面 7 m，采掘面离矿点不过 150 m");
-    check(fields_ok, "每处都有产物、存量、名字");
-    const ResourcePlan again = plan_resource_sites(t, sites, dep);
-    bool same = again.sites.size() == plan.sites.size();
+    check(piles_ok, "堆场离采掘面 7 m，采掘面离采场格心不过 150 m");
+    check(site_fields_ok, "每处都有产物、存量、名字，记着用它的村");
+    const ResourcePlan again = plan_resource_sites(t, sites, data);
+    bool same = again.sites.size() == plan.sites.size() && again.landmarks.size() == plan.landmarks.size();
     for (size_t k = 0; same && k < plan.sites.size(); k++) {
-        same = again.sites[k].id == plan.sites[k].id && again.sites[k].face_x == plan.sites[k].face_x && again.sites[k].pile_z == plan.sites[k].pile_z;
+        same = again.sites[k].id == plan.sites[k].id && again.sites[k].face_x == plan.sites[k].face_x && again.sites[k].pile_z == plan.sites[k].pile_z &&
+                again.sites[k].land_x == plan.sites[k].land_x;
     }
     check(same, "同一份资产铺两遍一样");
-    // 够得着船：采掘面 60 m 内有开局的船野泊得下的地方（规划时量好的，与体检同一份）
+    // 够得着船：采掘面 60 m 内有开局的船野泊得下的地方（规划时量好、记下泊地，与体检同一份）
     size_t reached = 0;
     bool reach_consistent = true;
     for (const ResourceSite &s : plan.sites) {
         reached += s.reach_m >= 0.0 ? 1 : 0;
         const bool listed = std::find(plan.unreachable.begin(), plan.unreachable.end(), s.id) != plan.unreachable.end();
-        reach_consistent = reach_consistent && listed == (s.reach_m < 0.0) && s.reach_m <= ResourceSiteRules().reach_m;
+        reach_consistent = reach_consistent && listed == (s.reach_m < 0.0) && s.reach_m <= ResourceSiteRules().reach_m &&
+                (s.reach_m < 0.0 || std::abs(std::hypot(s.land_x - s.face_x, s.land_z - s.face_z) - s.reach_m) < 1e-6);
     }
-    check(reach_consistent, "够不着船的都记在 unreachable 里，够得着的在 60 m 内");
+    check(reach_consistent, "够不着船的都记在 unreachable 里，够得着的泊地在 60 m 内那一圈上");
     check(reached * 100 >= plan.sites.size() * 96, "96% 以上的采掘面够得着船（" + std::to_string(reached) + " / " + std::to_string(plan.sites.size()) + "）");
-    for (size_t k = 0; k < plan.sites.size() && k < 400; k += 40) {
+    for (size_t k = 0; k < plan.sites.size() && k < 200; k += 20) {
         const ResourceSite &s = plan.sites[k];
-        check(resource_reach(t, sites, s.face_x, s.face_z) == s.reach_m, "资源点 #" + std::to_string(s.id) + "：单独量够不够得着船，与规划记的一样");
+        double x = 0.0, z = 0.0, yaw = 0.0;
+        check(resource_reach(t, sites, s.face_x, s.face_z, ResourceSiteRules(), x, z, yaw) == s.reach_m && x == s.land_x && z == s.land_z,
+                "采场 #" + std::to_string(s.id) + "：单独量够不够得着船、泊地在哪，与规划记的一样");
     }
-    // 主码头 #1（邑治旁）两公里半内有黏土坑，也有浮石崖
+    // 主码头 #1（邑治旁）一公里内有土坑（邑治用的），六公里内有采石场（生成器按村挑石头 5 km 内就近取，林茂的低地少露头）
     const SiteDock *main_dock = sites.dock_by_id(1);
-    bool clay_near = false, pumice_near = false;
+    bool clay_near = false, stone_near = false;
     for (const ResourceSite &s : plan.sites) {
-        const bool near = main_dock && std::hypot(s.face_x - main_dock->x, s.face_z - main_dock->z) < 2500.0;
-        clay_near = clay_near || (near && s.item == "clay");
-        pumice_near = pumice_near || (near && s.item == "floatstone");
+        const double d = main_dock ? std::hypot(s.face_x - main_dock->x, s.face_z - main_dock->z) : 1e9;
+        clay_near = clay_near || (d < 1000.0 && s.item == "clay");
+        stone_near = stone_near || (d < 6000.0 && s.item == "stone");
     }
-    check(clay_near && pumice_near, "主码头 #1 附近有黏土坑、有浮石崖");
+    check(clay_near && stone_near, "主码头 #1 一公里内有土坑、六公里内有采石场");
+}
+
+// 散布：按块生成、让开、确定；存量账（采空倒下、长回来）；2051 的密度与泊地
+void test_scatter() {
+    std::printf("scatter\n");
+    // 键：块 + 块内序号，负的块号也拆得回来
+    const ScatterChunkKey neg{ -3, 17 };
+    const uint64_t key = scatter_key(neg, 513);
+    check(scatter_key_chunk(key) == neg && scatter_key_index(key) == 513 && ScatterChunkKey::unpack(neg.packed()) == neg, "键拆得回块号（含负数）与序号");
+
+    // 合成的圆岛：内圈可耕地、外圈林地；东边一片石料赋存
+    WorldGrid g = synthetic_grid();
+    const size_t n = g.height.size();
+    g.field.assign(n * WorldGrid::FIELD_COUNT, 0);
+    g.patch.assign(n, 0);
+    for (int r = 0; r < g.rows; r++) {
+        for (int c = 0; c < g.cols; c++) {
+            const double x = g.x0 + c * g.res, z = g.z0 + r * g.res;
+            if (x > 700.0 && x < 1300.0 && std::abs(z) < 400.0) {
+                g.field[size_t(WorldGrid::FIELD_STONE) * n + g.index(r, c)] = 230; // 石料品位 0.9
+            }
+        }
+    }
+    check(g.has_resources() && std::abs(g.field_at(WorldGrid::FIELD_STONE, 1000.0, 0.0) - 230.0 / 255.0) < 1e-9 && g.field_at(WorldGrid::FIELD_STONE, 0.0, 0.0) == 0.0,
+            "赋存场：格心上是格值，别处 0");
+    check(std::abs(g.field_at(WorldGrid::FIELD_STONE, 750.0, 0.0) - 0.5 * 230.0 / 255.0) < 1e-9, "格心之间双线性渐变"); // 700 那一格不在里面，800 起在
+    check(WorldGrid::field_of("stone") == WorldGrid::FIELD_STONE && WorldGrid::field_of("timber") == -1 && std::string(WorldGrid::field_key(WorldGrid::FIELD_CLAY)) == "clay",
+            "层与生成器的键对得上");
+    WorldTerrain t(g, { synthetic_island() }, 7);
+    WorldSites sites;
+    SiteSettlement village;
+    village.id = 1;
+    village.x = -900.0;
+    village.z = 300.0;
+    village.households = 25; // 估的半径 55 m
+    sites.settlements.push_back(village);
+    const ResourceData data;
+    const ResourcePlan plan;
+    const ResourceScatter scatter(t, sites, data, plan, 2051);
+    check(scatter.valid(), "有资源栅格就能生成");
+    std::map<int, int> counts;
+    int in_forest = 0, trees = 0, on_field = 0, in_village = 0, off_island = 0;
+    bool same = true, indexed = true;
+    size_t total = 0;
+    for (int iz = -3; iz <= 2; iz++) { // 横穿岛心的一条：可耕地、林地、村子、石料都在里面
+        for (int ix = -13; ix <= 12; ix++) {
+            const ScatterChunkKey k{ ix, iz };
+            const std::vector<ScatterItem> items = scatter.chunk(k);
+            const std::vector<ScatterItem> again = scatter.chunk(k);
+            same = same && items.size() == again.size();
+            for (size_t m = 0; m < items.size(); m++) {
+                const ScatterItem &it = items[m];
+                same = same && it.x == again[m].x && it.z == again[m].z && it.look == again[m].look && it.scale == again[m].scale;
+                indexed = indexed && it.index == m && scatter.chunk_at(it.x, it.z) == k;
+                counts[it.look]++;
+                const int lc = g.landcover[g.nearest_cell(it.x, it.z)];
+                if (deposits::scatter(it.kind()).solid) {
+                    trees++;
+                    in_forest += lc == 4 ? 1 : 0;
+                }
+                on_field += std::hypot(it.x, it.z) < 600.0 ? 1 : 0; // 内圈 750 m 是可耕地：离边远一点（林缘扭过）的不该有东西
+                in_village += std::hypot(it.x - village.x, it.z - village.z) < settlement_guess_radius(village) + 12.0 ? 1 : 0;
+                double y = 0.0;
+                off_island += t.surface(it.x, it.z, y) ? 0 : 1;
+            }
+            total += items.size();
+        }
+    }
+    std::printf("  合成岛：%zu 株（树 %d，%d 棵在林地格）；阔叶 %d、针叶 %d、灌丛 %d、石块 %d\n", total, trees, in_forest, counts[int(ScatterLook::BROADLEAF)],
+            counts[int(ScatterLook::CONIFER)], counts[int(ScatterLook::SHRUB)], counts[int(ScatterLook::BOULDER)]);
+    check(same, "同一块生成两遍一模一样");
+    check(indexed, "序号即生成的次序，每一株都在自己的块里（块边上的格点归左上角所在的块）");
+    check(trees > 3000 && in_forest * 100 >= trees * 90, "树长在林地里（林缘扭过，九成以上落在林地格）");
+    check(on_field == 0, "可耕地上不长树、灌丛、石块");
+    check(in_village == 0, "村子（估的半径外加 12 m）里什么都不长");
+    check(off_island == 0, "都长在陆地上");
+    check(counts[int(ScatterLook::BOULDER)] > 50, "石料赋存的那片长出石块");
+    // 地图的资源底图：每格画最稀的那一类，品位不够门槛不算
+    {
+        WorldGrid m = g;
+        const size_t a = m.nearest_cell(1000.0, 0.0), b = m.nearest_cell(-1000.0, 0.0), c = m.nearest_cell(0.0, 0.0);
+        m.field[size_t(WorldGrid::FIELD_ORE) * n + a] = 100; // 石料 0.9 那一格再叠一点矿（0.39）
+        m.patch[b] = 1; // 林地里的一格划进片 0（林木）
+        m.field[size_t(WorldGrid::FIELD_CLAY) * n + c] = 60; // 黏土 0.24：不够 0.3 的门槛
+        const int timber = int(deposits::kind("timber") - deposits::KINDS), ore = int(deposits::kind("ore") - deposits::KINDS);
+        const std::vector<int> patch_kinds = { timber };
+        double grade = 0.0;
+        check(dominant_resource(m, a, patch_kinds, grade) == ore && std::abs(grade - 100.0 / 255.0) < 1e-9, "矿与石料叠在一格：画稀的矿");
+        check(dominant_resource(m, b, patch_kinds, grade) == timber && grade == 1.0, "片按片号：林木");
+        check(dominant_resource(m, c, patch_kinds, grade) == -1, "品位不够门槛的不画");
+        const MapImage img = build_resource_image(m, patch_kinds);
+        const MapImage plain = build_map_image(m);
+        check(img.width == plain.width && img.rgba.size() == plain.rgba.size() && img.rgba[a * 4 + 3] == 255 && img.rgba[a * 4] > img.rgba[a * 4 + 2],
+                "资源底图与地表底图一样大、陆地不透明，矿那一格偏红");
+    }
+    // 让开采场与泊地：规划里放一处采场，泊地周围不长树
+    ResourcePlan with_site;
+    ResourceSite site;
+    site.face_x = 1100.0, site.face_z = -600.0, site.pile_x = 1107.0, site.pile_z = -600.0;
+    site.reach_m = 30.0, site.land_x = 1100.0, site.land_z = -570.0;
+    with_site.sites.push_back(site);
+    const ResourceScatter cleared(t, sites, data, with_site, 2051);
+    std::vector<ScatterItem> solids;
+    scatter.solids_near(1100.0, -570.0, 16.0, solids);
+    const size_t before = solids.size();
+    solids.clear();
+    cleared.solids_near(1100.0, -570.0, 16.0, solids);
+    check(before > 0 && solids.empty(), "泊地 17 m 内的树让开了（原来有 " + std::to_string(before) + " 棵）");
+
+    // 存量账：一棵树 4 份，采空了倒，48 个钟头回满才立回来
+    ScatterLedger ledger;
+    const uint64_t tree = scatter_key(ScatterChunkKey{ 2, 3 }, 7);
+    check(ledger.standing(tree, 4, 48.0, 10.0) && !ledger.find(tree) && !ledger.any_felled_in(ScatterChunkKey{ 2, 3 }), "没动过的立着、没记账");
+    check(ledger.take(tree, 4, 48.0, 10.0, 1) && ledger.standing(tree, 4, 48.0, 10.0) && std::abs(stock_amount(*ledger.find(tree), 4, 48.0, 10.0) - 3.0) < 1e-9,
+            "采一份：还立着，剩 3 份");
+    check(ledger.take(tree, 4, 48.0, 10.0, 3) && !ledger.standing(tree, 4, 48.0, 10.0) && ledger.any_felled_in(ScatterChunkKey{ 2, 3 }) &&
+                    !ledger.any_felled_in(ScatterChunkKey{ 3, 2 }),
+            "采空了就倒（这一块里有倒着的）");
+    check(!ledger.take(tree, 4, 48.0, 30.0, 1) && !ledger.standing(tree, 4, 48.0, 30.0), "倒着的没长满不给采（20 个钟头后长了一半多也不行）");
+    check(ledger.standing(tree, 4, 48.0, 58.0) && ledger.take(tree, 4, 48.0, 58.0, 1), "48 个钟头后立回来、又能采");
+    // 采场那样按份采到空的走法：stock_take + settle
+    const uint64_t rock = scatter_key(ScatterChunkKey{ 0, 0 }, 1);
+    ResourceStock *s = ledger.stock(rock);
+    check(stock_take(*s, 2, 72.0, 1.0, 1) && !ledger.settle(rock, 2, 72.0, 1.0) && stock_take(*s, 2, 72.0, 1.0, 1) && ledger.settle(rock, 2, 72.0, 1.0) &&
+                    !ledger.standing(rock, 2, 72.0, 1.0),
+            "一份份采（GatherHand 的走法）：采到空才倒");
+
+    // 2051：主码头附近的密度、采场的泊地没有树、生成一块的耗时
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary), res_in(dir + "/resources.tsv", std::ios::binary),
+            wx_in(dir + "/weather.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in || !res_in || !wx_in) {
+        std::printf("  （跳过 2051：没有资产）\n");
+        return;
+    }
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    const std::string res((std::istreambuf_iterator<char>(res_in)), std::istreambuf_iterator<char>());
+    const std::string weather((std::istreambuf_iterator<char>(wx_in)), std::istreambuf_iterator<char>());
+    WorldGrid grid;
+    WorldSites sites51;
+    ResourceData data51;
+    RiverRegime regime;
+    std::string err;
+    parse_world_grid(bin.data(), bin.size(), grid, err);
+    parse_world_sites(tsv, sites51, err);
+    parse_resources(res, data51, err);
+    RiverRegime::parse(weather, regime, err);
+    RiverRules river_rules; // 同 World：年降水与一年几天取 weather.tsv
+    river_rules.precip_mm = regime.precip_mm();
+    river_rules.year_days = regime.year_days();
+    WorldTerrain t51(grid, sites51.terrain_islands(), 2051, river_rules);
+    lay_world_works(t51, sites51);
+    const ResourcePlan plan51 = plan_resource_sites(t51, sites51, data51);
+    const ResourceScatter s51(t51, sites51, data51, plan51, 2051);
+    const SiteDock *dock = sites51.dock_by_id(1);
+    std::map<int, int> near;
+    size_t items = 0;
+    const auto started = std::chrono::steady_clock::now();
+    const ScatterChunkKey center = s51.chunk_at(dock->x, dock->z);
+    int chunks = 0;
+    for (int iz = center.iz - 4; iz <= center.iz + 4; iz++) {
+        for (int ix = center.ix - 4; ix <= center.ix + 4; ix++) {
+            for (const ScatterItem &it : s51.chunk(ScatterChunkKey{ ix, iz })) {
+                near[it.look]++;
+                items++;
+            }
+            chunks++;
+        }
+    }
+    const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+    std::printf("  2051 主码头周围 %d 块：%zu 株（树 %d、灌丛 %d、苇 %d、浮石 %d），每块 %.2f ms\n", chunks, items,
+            near[int(ScatterLook::BROADLEAF)] + near[int(ScatterLook::CONIFER)], near[int(ScatterLook::SHRUB)], near[int(ScatterLook::REEDS)],
+            near[int(ScatterLook::FLOATSTONE)], ms / chunks);
+    check(near[int(ScatterLook::BROADLEAF)] + near[int(ScatterLook::CONIFER)] > 500 && near[int(ScatterLook::SHRUB)] > 500, "主码头周围一公里有树林、有灌丛");
+    int blocked = 0;
+    for (const ResourceSite &site51 : plan51.sites) {
+        std::vector<ScatterItem> trunks;
+        if (site51.reach_m >= 0.0) {
+            s51.solids_near(site51.land_x, site51.land_z, 14.0, trunks);
+        }
+        blocked += trunks.empty() ? 0 : 1;
+    }
+    check(blocked == 0, "每处采场的泊地 14 m 内都没有树（规划说落得下船，游戏里就落得下）");
 }
 
 // 野泊：平地、斜坡、崖边、水边、太高
@@ -3463,6 +3719,7 @@ int main() {
     test_house_templates();
     test_freight();
     test_gather();
+    test_scatter();
     test_wild_landing();
     test_item_slots();
     test_recipes();
