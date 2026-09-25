@@ -23,6 +23,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/crops.h
     src/day_clock.cpp
     src/day_clock.h
+    src/deposit_kinds.cpp
+    src/deposit_kinds.h
     src/dock_site.cpp
     src/dock_site.h
     src/farm_model.cpp
@@ -54,6 +56,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/map_ground.h
     src/map_image.cpp
     src/map_image.h
+    src/resource_sites.cpp
+    src/resource_sites.h
     src/rng.h
     src/river_mesh.cpp
     src/river_mesh.h

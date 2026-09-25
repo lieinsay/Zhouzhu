@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "crops.h"
+#include "deposit_kinds.h"
 
 namespace {
 
@@ -36,6 +37,8 @@ void crate_color(const std::string &p_item, float &r_r, float &r_g, float &r_b) 
         r_r = 0.7f, r_g = 0.38f, r_b = 0.22f;
     } else if (p_item == "lacquer") { // 漆：朱黑
         r_r = 0.5f, r_g = 0.08f, r_b = 0.07f;
+    } else if (deposits::product_color(p_item, r_r, r_g, r_b)) {
+        // 资源点采来的原料：石料灰、黏土赭、浮石灰白带紫……
     } else {
         r_r = 0.45f, r_g = 0.5f, r_b = 0.35f;
     }
@@ -133,6 +136,14 @@ int CargoBook::aboard() const {
     return n;
 }
 
+int CargoBook::aboard_consigned() const {
+    int n = 0;
+    for (const Crate &c : slots) {
+        n += !c.empty() && c.consigned ? 1 : 0;
+    }
+    return n;
+}
+
 int CargoBook::free_slots() const {
     return int(slots.size()) - aboard();
 }
@@ -150,7 +161,7 @@ bool CargoBook::set_slot_count(int p_count) {
 
 std::string CargoBook::pack(int p_port, const FreightOrder &p_offer, Inventory &r_store) {
     if (is_holding()) {
-        if (active && p_port == order.from) {
+        if (hand.consigned && active && p_port == order.from) {
             r_store.add(hand.item, hand.count);
             hand = Crate();
             packed--;
@@ -182,6 +193,7 @@ std::string CargoBook::pack(int p_port, const FreightOrder &p_offer, Inventory &
     }
     hand.item = order.item;
     hand.count = order.per_crate;
+    hand.consigned = true;
     packed++;
     return std::string();
 }
@@ -191,7 +203,7 @@ std::string CargoBook::deliver(int p_port, Inventory &r_store, Inventory &r_purs
     if (!is_holding()) {
         return "手上没有货";
     }
-    if (!active || p_port != order.to) {
+    if (!hand.consigned || !active || p_port != order.to) {
         return "这箱不是送这儿的";
     }
     r_store.add(hand.item, hand.count);
@@ -229,5 +241,32 @@ std::string CargoBook::lift(int p_slot) {
     }
     hand = slots[size_t(p_slot)];
     slots[size_t(p_slot)] = Crate();
+    return std::string();
+}
+
+std::string CargoBook::pack_goods(const std::string &p_item, int p_per_crate, Inventory &r_pack) {
+    if (is_holding()) {
+        return "手上已经抱着一箱了";
+    }
+    const int per_crate = std::max(1, p_per_crate);
+    if (!r_pack.has(p_item, per_crate)) {
+        return "背包里的" + name_of(p_item) + "不够一箱（" + std::to_string(r_pack.count(p_item)) + " / " + std::to_string(per_crate) + " 份）";
+    }
+    r_pack.remove(p_item, per_crate);
+    hand.item = p_item;
+    hand.count = per_crate;
+    hand.consigned = false;
+    return std::string();
+}
+
+std::string CargoBook::unpack_goods(Inventory &r_pack) {
+    if (!is_holding()) {
+        return "手上没有货";
+    }
+    if (hand.consigned) {
+        return "这是托运的货，拆不得";
+    }
+    r_pack.add(hand.item, hand.count);
+    hand = Crate();
     return std::string();
 }

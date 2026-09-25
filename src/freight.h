@@ -15,6 +15,7 @@
 // 土产：每村一样（麻布 / 陶罐 / 漆器，按种子挑），开账时按户数记进仓账；托运的就是它，不动村里的粮。
 // 委托：从一个村运到另一座岛上最近的村，几箱、每箱几份、运费多少。
 // 货箱账：玩家接下的那一单、手上抱着的一箱、船上每个货位上的箱子；打包从起运村的仓里扣、交货进目的村的仓、交齐了付运费。
+// 箱子分两种：托运的（这单的货，只能交到目的村）和自家的（资源点采来、从背包打的箱，在堆场或村仓拆回背包）；货位上两种都能放。
 // 动作都返回空串表示做了，否则是不做的原因（给玩家看的话）。
 
 struct FreightRules {
@@ -24,6 +25,7 @@ struct FreightRules {
     int fee_base = 8; // 运费：每箱 fee_base + fee_per_km × 航程
     double fee_per_km = 1.0;
     int specialty_per_house = 2; // 开账时土产每户几份
+    int goods_per_crate = 5; // 自家的货一箱几份
 };
 
 // 能托运的一处（一个村）
@@ -70,6 +72,7 @@ bool offer_freight(const std::vector<FreightPort> &p_ports, int p_from, const In
 struct Crate {
     std::string item;
     int count = 0;
+    bool consigned = false; // 托运的（这单的货）；否则是自家的
     bool empty() const { return count <= 0; }
 };
 
@@ -89,8 +92,10 @@ public:
     bool is_holding() const { return !hand.empty(); }
     const Crate &get_hand() const { return hand; }
     const std::vector<Crate> &get_slots() const { return slots; }
-    int aboard() const; // 船上几箱
+    int aboard() const; // 船上几箱（两种都算）
+    int aboard_consigned() const; // 船上几箱是这单托运的
     int free_slots() const;
+    bool is_holding_goods() const { return is_holding() && !hand.consigned; } // 手上抱着自家的货
 
     // 船改了：货位数跟着变。少了的货位上有箱子就不改、返回 false
     bool set_slot_count(int p_count);
@@ -104,4 +109,9 @@ public:
     // 船上货位：手上的箱子放到第 p_slot 个货位 / 从那儿抱起来
     std::string stow(int p_slot);
     std::string lift(int p_slot);
+
+    // 自家的货：从背包 r_pack 里拿 p_per_crate 份 p_item 打成一箱抱在手上
+    std::string pack_goods(const std::string &p_item, int p_per_crate, Inventory &r_pack);
+    // 手上那箱自家的货拆开，放回背包
+    std::string unpack_goods(Inventory &r_pack);
 };

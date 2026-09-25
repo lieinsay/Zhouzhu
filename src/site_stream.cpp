@@ -11,12 +11,6 @@
 
 using namespace godot;
 
-namespace {
-
-constexpr double GUESS_M_PER_SQRT_HOUSE = 11.0; // 没铺之前估村子半径：≈ 格距 × √户数 × 0.65
-
-} // namespace
-
 void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_focus", "focus"), &SiteStream::set_focus);
     ClassDB::bind_method(D_METHOD("ensure_near", "point"), &SiteStream::ensure_near);
@@ -95,7 +89,7 @@ void SiteStream::ensure_near(const Vector3 &p_point) {
 double SiteStream::edge_distance(int p_index) const {
     const SiteSettlement &s = world->get_sites().settlements[size_t(p_index)];
     const auto built = villages.find(p_index);
-    const double radius = built != villages.end() ? built->second->get_radius() : GUESS_M_PER_SQRT_HOUSE * std::sqrt(double(std::max(1, s.households)));
+    const double radius = built != villages.end() ? built->second->get_radius() : settlement_guess_radius(s);
     return std::max(0.0, std::hypot(s.x - focus.x, s.z - focus.z) - radius);
 }
 

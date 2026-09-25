@@ -9,11 +9,13 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <iterator>
 #include <string>
 #include <vector>
 
 #include "crops.h"
+#include "deposit_kinds.h"
 #include "day_clock.h"
 #include "field_book.h"
 #include "dock_site.h"
@@ -38,6 +40,7 @@
 #include "village_sim.h"
 #include "village_state.h"
 #include "villager_model.h"
+#include "resource_sites.h"
 #include "river_mesh.h"
 #include "world_grid.h"
 #include "world_ground.h"
@@ -2911,6 +2914,130 @@ void test_freight() {
     }
 }
 
+// 资源点：种类表、存量账、自家的货箱、2051 的资源点规划
+void test_gather() {
+    std::printf("gather\n");
+    // 种类表：能采的都有产物且在物品表里、有颜色；采不了的没有
+    int gatherable = 0;
+    bool products_ok = true, landmarks_ok = true;
+    for (int k = 0; k < deposits::KIND_COUNT; k++) {
+        const DepositKind &kind = deposits::KINDS[k];
+        const std::string item = deposits::product_of(kind, "");
+        float r = 0, g = 0, b = 0;
+        if (deposits::gatherable(kind)) {
+            gatherable++;
+            products_ok = products_ok && !item.empty() && catalog::item(item) && !catalog::crop_of_seed(item) && deposits::product_color(item, r, g, b) &&
+                    kind.gather_s > 0.0 && kind.base_stock > 0 && kind.refill_hours > 0.0;
+        } else {
+            landmarks_ok = landmarks_ok && item.empty();
+        }
+    }
+    check(gatherable == 10 && products_ok, "十种能采：产物在物品表里、不是种子、有货箱色、有工时与存量");
+    check(landmarks_ok && deposits::kind("cave") && !deposits::gatherable(*deposits::kind("cave")), "泉眼、温泉、洞穴采不了");
+    const DepositKind &ore = *deposits::kind("ore"), &peat = *deposits::kind("peat"), &quarry = *deposits::kind("quarry");
+    check(deposits::product_of(ore, "铜") == "copper_ore" && deposits::product_of(ore, "锡钨") == "tin_ore" && catalog::item_name("copper_ore") == "铜矿石", "露天矿按矿种出矿石");
+    check(deposits::product_of(peat, "芦苇荡") == "reed" && deposits::product_of(peat, "泥炭") == "peat" && deposits::verb_of(peat, "芦苇荡") == "割苇", "泥炭沼 / 芦苇荡按子类");
+    check(deposits::site_name(quarry, "安山岩 / 凝灰岩") == "采石场（安山岩 / 凝灰岩）" && deposits::site_name(ore, "铜") == "铜矿坑" && deposits::site_name(peat, "芦苇荡") == "芦苇荡", "采集点的名字");
+    check(deposits::stock_cap(quarry, deposits::GRADE_LOW, 0.03) < deposits::stock_cap(quarry, deposits::GRADE_MID, 0.03) &&
+                    deposits::stock_cap(quarry, deposits::GRADE_MID, 0.03) < deposits::stock_cap(quarry, deposits::GRADE_HIGH, 0.03) &&
+                    deposits::stock_cap(quarry, deposits::GRADE_MID, 0.03) == 40,
+            "存量：上品 > 中品 > 下品，中品合常面积 40 份");
+    check(deposits::stock_cap(quarry, deposits::GRADE_MID, 300.0) == 80 && deposits::stock_cap(quarry, deposits::GRADE_MID, 0.0) == 24, "面积只按 0.6–2 倍算");
+    check(deposits::grade_of("上") == 2 && deposits::grade_of("下") == 0 && deposits::grade_of("?") == 1 && std::string(deposits::grade_name(0)) == "下", "品位的字");
+    float r = 0, g = 0, b = 0;
+    freight::crate_color("stone", r, g, b);
+    check(std::abs(r - 0.62f) < 1e-6 && std::abs(b - 0.66f) < 1e-6, "石料的货箱是石灰色");
+
+    // resources.tsv
+    std::vector<ResourceDeposit> dep;
+    std::string err;
+    check(parse_resource_deposits("# x\ndeposit\t7\tquarry\t0\t10.5\t-20\t0.03\t上\t石灰岩\ndeposit\t8\tspring\t1\t0\t0\t0.01\t中\t\nfuture\t1\n", dep, err) && dep.size() == 2,
+            "resources.tsv 能读，不认得的行跳过：" + err);
+    check(dep[0].id == 7 && dep[0].kind == "quarry" && dep[0].x == 10.5 && dep[0].z == -20.0 && dep[0].grade == 2 && dep[0].subtype == "石灰岩" && dep[1].subtype.empty(), "字段都对");
+    check(!parse_resource_deposits("deposit\t1\tquarry\tx\t0\t0\t0\t中\t\n", dep, err) && err.find("第 1 行") != std::string::npos, "坏行报错");
+
+    // 存量账：满 → 采 → 按钟回满
+    ResourceStock stock;
+    check(stock_amount(stock, 40, 24.0, 100.0) == 40.0, "没动过的是满的");
+    check(stock_take(stock, 40, 24.0, 100.0, 5) && std::abs(stock_amount(stock, 40, 24.0, 100.0) - 35.0) < 1e-9, "采 5 份剩 35");
+    check(std::abs(stock_amount(stock, 40, 24.0, 102.4) - 39.0) < 1e-9, "一个钟头回 40 / 24 份");
+    check(std::abs(stock_amount(stock, 40, 24.0, 106.0) - 40.0) < 1e-9, "6 个钟头早回满了，不超上限");
+    ResourceStock empty;
+    check(stock_take(empty, 6, 72.0, 0.0, 6) && !stock_take(empty, 6, 72.0, 0.0, 1) && stock_amount(empty, 6, 72.0, 0.0) == 0.0, "采空了就不给");
+    check(std::abs(stock_hours_until(empty, 6, 72.0, 0.0, 1.0) - 12.0) < 1e-9 && stock_hours_until(empty, 6, 72.0, 12.0, 1.0) == 0.0, "砂金 72 个钟头回满：回一份要 12 个钟头");
+    check(stock_amount(empty, 6, 72.0, -5.0) == 0.0, "钟不倒流");
+
+    // 自家的货箱：背包 → 箱 → 货位 → 拆回背包；交货只认托运的箱子
+    Inventory pack;
+    pack.add("stone", 7);
+    CargoBook book;
+    book.set_slot_count(4);
+    check(book.pack_goods("stone", 5, pack).empty() && book.is_holding_goods() && pack.count("stone") == 2, "背包 7 份石料打一箱：剩 2");
+    check(book.pack_goods("stone", 5, pack) == "手上已经抱着一箱了", "抱着箱子打不了第二箱");
+    check(book.stow(0).empty() && book.aboard() == 1 && book.aboard_consigned() == 0, "放上货位：船上一箱，不是托运的");
+    check(book.pack_goods("stone", 5, pack).find("不够一箱（2 / 5 份）") != std::string::npos, "背包不够一箱说差多少");
+    check(book.lift(0).empty() && book.is_holding_goods(), "从货位抱起来还是自家的");
+    Inventory store, purse;
+    bool done = false;
+    check(book.deliver(0, store, purse, done) == "这箱不是送这儿的" && store.empty(), "自家的货不算交货");
+    check(book.unpack_goods(pack).empty() && !book.is_holding() && pack.count("stone") == 7, "拆箱：7 份回到背包");
+    check(book.unpack_goods(pack) == "手上没有货", "空手拆不了");
+
+    // 2051：按 resources.tsv 落资源点
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary), res_in(dir + "/resources.tsv", std::ios::binary),
+            wx_in(dir + "/weather.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in || !res_in || !wx_in) {
+        std::printf("  （跳过 2051：没有资产）\n");
+        return;
+    }
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    const std::string res((std::istreambuf_iterator<char>(res_in)), std::istreambuf_iterator<char>());
+    const std::string weather((std::istreambuf_iterator<char>(wx_in)), std::istreambuf_iterator<char>());
+    WorldGrid grid;
+    WorldSites sites;
+    RiverRegime regime;
+    parse_world_grid(bin.data(), bin.size(), grid, err);
+    parse_world_sites(tsv, sites, err);
+    RiverRegime::parse(weather, regime, err);
+    RiverRules river_rules;
+    river_rules.precip_mm = regime.precip_mm();
+    river_rules.year_days = regime.year_days();
+    check(parse_resource_deposits(res, dep, err) && dep.size() == 944, "2051 有 944 处资源（" + std::to_string(dep.size()) + "）");
+    WorldTerrain t(grid, sites.terrain_islands(), 2051, river_rules);
+    lay_world_works(t, sites);
+    const auto started = std::chrono::steady_clock::now();
+    const ResourcePlan plan = plan_resource_sites(t, sites, dep);
+    const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+    std::printf("  资源点 %zu 处落地；采不了 %d、并掉 %d、在村里 %d、落不了 %zu（%.0f ms）\n", plan.sites.size(), plan.landmarks, plan.merged, plan.in_village, plan.failed.size(), ms);
+    check(plan.landmarks == 130, "泉眼 39 + 洞穴 90 + 温泉 1 采不了");
+    check(int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size()) + plan.landmarks == 944, "每一处都有下落");
+    check(plan.sites.size() >= 700 && plan.failed.size() <= 10, "绝大多数能采的都落了地");
+    bool spots_ok = true, piles_ok = true, fields_ok = true;
+    for (const ResourceSite &s : plan.sites) {
+        spots_ok = spots_ok && resource_spot_ok(t, sites, s.face_x, s.face_z, ResourceSiteRules()) && resource_spot_ok(t, sites, s.pile_x, s.pile_z, ResourceSiteRules());
+        piles_ok = piles_ok && std::abs(std::hypot(s.pile_x - s.face_x, s.pile_z - s.face_z) - ResourceSiteRules().pile_m) < 1e-6 &&
+                std::hypot(s.face_x - dep[size_t(s.deposit)].x, s.face_z - dep[size_t(s.deposit)].z) <= ResourceSiteRules().search_m + 1e-6;
+        fields_ok = fields_ok && s.kind && !s.item.empty() && catalog::item(s.item) && s.cap > 0 && !s.name.empty() && s.id == dep[size_t(s.deposit)].id;
+    }
+    check(spots_ok, "每处的采掘面与堆场都站得住（有地、不是水、不在坪上村里、坡缓、离崖边远）");
+    check(piles_ok, "堆场离采掘面 7 m，采掘面离矿点不过 90 m");
+    check(fields_ok, "每处都有产物、存量、名字");
+    const ResourcePlan again = plan_resource_sites(t, sites, dep);
+    bool same = again.sites.size() == plan.sites.size();
+    for (size_t k = 0; same && k < plan.sites.size(); k++) {
+        same = again.sites[k].id == plan.sites[k].id && again.sites[k].face_x == plan.sites[k].face_x && again.sites[k].pile_z == plan.sites[k].pile_z;
+    }
+    check(same, "同一份资产铺两遍一样");
+    // 主码头 #7 附近：1.4 km 处的黏土坑（矿点 98）
+    const ResourceSite *clay = nullptr;
+    for (const ResourceSite &s : plan.sites) {
+        clay = s.id == 98 ? &s : clay;
+    }
+    check(clay && clay->item == "clay" && clay->island == 0, "主码头 #7 旁有一处黏土坑（矿点 98）");
+}
+
 int main() {
     test_rng();
     test_noise();
@@ -2948,6 +3075,7 @@ int main() {
     test_layout_edits();
     test_house_templates();
     test_freight();
+    test_gather();
     test_goldens();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;

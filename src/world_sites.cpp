@@ -1,5 +1,7 @@
 #include "world_sites.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <sstream>
 
@@ -35,6 +37,10 @@ bool to_int(const std::string &p_text, int &r_value) {
 }
 
 } // namespace
+
+double settlement_guess_radius(const SiteSettlement &p_site) {
+    return 11.0 * std::sqrt(double(std::max(1, p_site.households)));
+}
 
 const SiteDock *WorldSites::dock_by_id(int p_id) const {
     for (const SiteDock &d : docks) {

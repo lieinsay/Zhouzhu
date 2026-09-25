@@ -37,6 +37,9 @@ struct SiteSettlement {
     std::string name; // UTF-8
 };
 
+// 村子还没铺时估它多大（外接圆半径，米）：≈ 格距 × √户数 × 0.65。流式加载按它提前铺，资源点按它让开村子
+double settlement_guess_radius(const SiteSettlement &p_site);
+
 struct WorldSites {
     std::vector<SiteIsland> islands;
     std::vector<SiteDock> docks;

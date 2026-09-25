@@ -12,6 +12,23 @@ const ItemDef ITEMS[] = {
     { "pottery", "陶罐" },
     { "lacquer", "漆器" },
     { "coin", "铜钱" }, // 运费
+    // 原料：资源点采来的（见 deposit_kinds.h）；不是种子也不是粮
+    { "stone", "石料" },
+    { "clay", "黏土" },
+    { "floatstone", "浮石" },
+    { "timber", "木料" },
+    { "gravel", "砂石" },
+    { "gold_dust", "砂金" },
+    { "copper_ore", "铜矿石" },
+    { "iron_ore", "铁矿石" },
+    { "lead_zinc_ore", "铅锌矿石" },
+    { "gold_ore", "金矿石" },
+    { "manganese_ore", "锰矿石" },
+    { "tin_ore", "锡钨矿石" },
+    { "peat", "泥炭" },
+    { "reed", "芦苇" },
+    { "sulfur", "硫磺" },
+    { "guano", "鸟粪" },
 };
 const int ITEM_COUNT = int(sizeof(ITEMS) / sizeof(ITEMS[0]));
 
