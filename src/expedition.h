@@ -11,6 +11,7 @@
 #include "build_mode.h"
 #include "farm_hand.h"
 #include "freight_hand.h"
+#include "gather_hand.h"
 #include "helm.h"
 #include "interior_edit.h"
 #include "map_host.h"
@@ -25,11 +26,13 @@
 // 玩法是几个与场景无关的部件，这里持有、按优先级调度：
 //   掌舵（Helm）：上舵、飞（R/F 换档）、叫靠泊 / 入坞、离舵；
 //   背包与手持（PackHand，Tab）、农事（FarmHand，按住 E）、改装（RefitBench，画样台按 E）、布置模式（BuildMode，B，开发者）、
-//   跑货（FreightHand：港口村的村仓前接托运、打包、交货，船上货位前装卸；抱着货箱不能掌舵、不能改船，船上有货也不能改船）、
+//   跑货（FreightHand：港口村的村仓前接托运、打包、交货，船上货位前装卸；资源点的堆场把背包里的原料打成箱、抱着自家的箱子在堆场 / 村仓拆回背包；
+//   抱着货箱不能掌舵、不能改船，船上有货也不能改船）、采集（GatherHand：资源点的采掘面前按住 E，一份份采进背包）、
 //   室内编辑（InteriorEdit，T，开发者：布置模式里光标下那座，或人站在里面的那座）。
 // 另外：开局把船停在出发码头的泊位上、人放在它的停机坪上；HUD（位置、目标、背包、钟点、提示）；M 开合岛群地图、开发者点图瞬移；
 // 站稳记落脚点、掉进云海回位并召回漂远的船；到了目的码头那座岛就算到了（arrived），之后目标改指回程；接了托运时目标改指目的村的船台。
-// 泊位候选：地图的码头、船坞，加上各处聚落里盖好的船台（Settlement 组里找，船停不下的带着原因）。
+// 泊位候选：地图的码头、船坞，加上各处聚落里盖好的船台（Settlement 组里找，船停不下的带着原因）；都够不着时，
+// 船下是块落得下的平地就多一个「野泊」（wild_landing 按地图的地面算、船身压不压着房子问 Ship），落下后放舷梯、上舵时收起。
 // 「现在是谁在受控」「哪个面板开着」「到没到过对岸」「上一处站稳的地方」这些状态只在这里（和它肚子里的部件）；
 // Player、Ship、Farm、Shipyard、Settlement、各面板互不相识，各自只回答自己的事。
 class Expedition : public godot::Node3D {
@@ -69,6 +72,7 @@ private:
     PackHand pack;
     FarmHand farm_hand;
     FreightHand freight;
+    GatherHand gather;
     RefitBench refit;
     BuildMode build;
     InteriorEdit interior;
@@ -82,6 +86,11 @@ private:
     godot::String notice;
     bool map_open = false;
     bool map_viewed = false;
+
+    // 野泊：这一个物理帧算好的候选（berths() 一帧里会被问好几回）
+    uint64_t wild_frame = ~uint64_t(0);
+    bool wild_ok = false;
+    Berth wild;
 
     godot::Label *status_label = nullptr;
     godot::Label *prompt_label = nullptr;
@@ -102,7 +111,10 @@ private:
     void set_map_open(bool p_open);
     void on_foot(double p_delta, bool p_interact);
     void toggle_interior(const godot::Vector3 &p_at);
-    std::vector<Berth> berths() const;
+    std::vector<Berth> berths();
+    // 野泊：船原点在 p_at、偏航 p_yaw 时落不落得下（地面 + 船身与舷梯压不压着实物）；落得下给出泊位，否则 r_why 说为什么
+    bool plan_wild(const godot::Vector3 &p_at, double p_yaw, Berth &r_berth, godot::String &r_why) const;
+    void refresh_wild();
     godot::Vector3 focus_point() const;
     void track_footing();
     int course_target() const; // 航行目标（码头下标）：没到过对岸是目的码头，到过了是回程（接了托运另说，见 freight_target）
@@ -144,6 +156,15 @@ public:
     WorldMap *get_map() const { return map_panel; }
     godot::Node3D *get_map_node() const { return map ? map->map_node() : nullptr; }
     bool is_working() const { return farm_hand.is_working(); }
+    // 采集与野泊（给测试查）
+    bool is_gathering() const { return gather.is_working(); }
+    int get_gather_site() const { return gather.get_site(); } // 够得着的采掘面是地图的第几处资源点；没有 −1
+    bool is_holding_goods() const { return freight.is_holding_goods(); }
+    godot::PackedStringArray get_cargo_items() const; // 船上每个货位放着什么（空串 = 空位）
+    godot::String get_wild_note() const { return helm.wild_note; }
+    bool has_wild_berth() const { return wild_ok; }
+    // 测试挑落点用：船在 p_at、偏航 p_yaw 时野泊得下吗 { ok, why, side, run, rise, door, out }（与掌舵时同一套判定）
+    godot::Dictionary probe_wild(const godot::Vector3 &p_at, double p_yaw) const;
     // 跑货（给测试查）
     bool is_carrying() const { return freight.is_holding(); }
     int get_cargo_aboard() const { return freight.cargo_aboard(); }

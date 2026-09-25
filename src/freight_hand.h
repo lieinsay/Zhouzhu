@@ -12,7 +12,8 @@
 // 跑货：村仓（船台的跳板脚前）接委托、打包一箱抱起来，走上跳板放到货位上；飞到目的村的船台，从货位上抱起来，走下跳板交货，交齐了拿运费。
 // 与场景无关的玩法部件（不是节点），编排持有、步行时每帧推一下。账在货箱账（CargoBook，纯数据）里；
 // 村仓在哪、仓账是哪本由地图宿主答（map_freight_post_near），货位在哪、画不画箱子问船，抱着箱子走得慢由 Player 管。
-// 按 E 的先后：够得着村仓或货位、这一下又有事可做，就归它；否则编排再问画样台、舵、农事。
+// 自家的货（资源点采来的原料）：在资源点的堆场按 E 从背包打一箱抱起来，抱着自家的箱子在堆场或村仓按 E 拆回背包；货位上装卸与托运的一样。
+// 按 E 的先后：货位 > 村仓 > 堆场，够得着、这一下又有事可做，就归它；否则编排再问画样台、舵、采集、农事。
 class FreightHand {
     CargoBook book;
     FreightRules rules;
@@ -20,17 +21,22 @@ class FreightHand {
     FreightOrder offer; // 这处村仓眼下开得出的一单（没有时 why 说为什么）
     std::string offer_why;
     int slot = -1; // 这一帧够得着的货位
+    ResourceSpot pile; // 这一帧够得着堆场的资源点（site = −1：没有）
     double post_range = 2.5; // 离村仓门前多近算够得着
+    double pile_range = 2.5; // 离堆场多近
     double slot_range = 1.6; // 离货位中心多近
 
     void look_around(MapHost *p_map, Ship *p_ship, Player *p_player);
     void sync_player(Player *p_player) const;
+    bool unpack_here(Player *p_player, PackHand &p_pack, const Say &p_say);
 
 public:
     // 每个物理帧（步行、没开面板时）。按了 E 且被它用了返回 true（编排就别再拿这一下 E 干别的）
     bool step(MapHost *p_map, Ship *p_ship, Player *p_player, PackHand &p_pack, bool p_interact, const Say &p_say);
 
     bool is_holding() const { return book.is_holding(); }
+    bool is_holding_goods() const { return book.is_holding_goods(); }
+    godot::String held_item() const { return godot::String::utf8(book.get_hand().item.c_str()); }
     int cargo_aboard() const { return book.aboard(); }
     bool is_active() const { return book.is_active(); }
     const CargoBook &get_book() const { return book; }
@@ -38,8 +44,8 @@ public:
     int destination_port() const { return book.is_active() ? book.get_order().to : -1; }
     godot::String port_name(const MapHost *p_map, int p_port) const;
 
-    // 底部提示：够得着村仓 / 货位时能干什么；无事可说返回空
-    godot::String prompt(const MapHost *p_map) const;
+    // 底部提示：够得着村仓 / 货位 / 堆场时能干什么；无事可说返回空
+    godot::String prompt(const MapHost *p_map, const PackHand &p_pack) const;
     // HUD：「托运 麻布 2 箱 → 村127（岛 #4）· 手上 1 · 船上 1 · 已交 0 · 运费 30 文」；没接单时空
     godot::String status_text(const MapHost *p_map) const;
 };

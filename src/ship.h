@@ -19,7 +19,8 @@
 //   · 被上面盖住的节是封闭舱体（储存区 = 货舱，墙上有舱门；动力区 = 机舱，墙上透着浮石的光）；
 //   · 第 0 层每节下面吊船体，动力区再吊浮石；最前一排前面一只船头楔；
 //   · 货位（hold_slots）：空着是一块垫木，放了货是一只带碰撞的货箱，箱顶按货物着色；哪个货位上是什么由上层（跑货的货箱账）set_cargo 告诉它，它只画；
-//   · 相邻两列高度不同处生成梯子：踏板 + 带 "ladder" 元数据的 Area3D（+Z 离墙）+ 舷栏缺口，Player 靠它上下。
+//   · 相邻两列高度不同处生成梯子：踏板 + 带 "ladder" 元数据的 Area3D（+Z 离墙）+ 舷栏缺口，Player 靠它上下；
+//   · 野泊时从一舷的舷门放下的舷梯（set_gangway，带碰撞，跟着船走）：上层照 wild_landing 算好的长短落差放、上舵时收起。
 // 舷门在舷门那一排（z = 0、第 0 层）两头的船边，z ∈ ±0.9 不设栏。
 // 泊位 / 坞位是「接触线」：X 指向码头的位姿，船按面向码头那一侧的船边算原点该在哪，所以船怎么改都不用挪码头。
 // 受控时：输入 → flight_model → move_and_slide（与岛碰撞）。不受控：输入为零，自己停稳悬着。
@@ -52,6 +53,8 @@ class Ship : public godot::CharacterBody3D {
     godot::PackedVector3Array ladder_tops_local;
     std::vector<HoldSlot> slots;
     std::vector<godot::String> cargo; // 与 slots 一一对应：物品 id，空 = 空位
+    int gangway_side = 0; // 放着舷梯的一舷（+1 右舷、−1 左舷）；0 = 收着
+    double gangway_run = 0.0, gangway_rise = 0.0;
 
     godot::Node3D *visual = nullptr;
     godot::Node3D *camera_rig = nullptr;
@@ -65,6 +68,7 @@ class Ship : public godot::CharacterBody3D {
     void build_module(const Module &p_module);
     void build_ladder(const Ladder &p_ladder);
     void build_cargo();
+    void build_gangway();
     void step_flight(double p_delta);
     void step_mooring(double p_delta);
     // 把面向接触线那一侧的船边贴到接触线上，原点该在哪；r_flipped：船头是否与接触线的 Z 反向
@@ -126,6 +130,19 @@ public:
     void set_cargo(int p_slot, const godot::String &p_item);
     godot::String get_cargo(int p_slot) const;
     int get_cargo_count() const; // 放着几箱
+
+    // 野泊的舷梯：从 p_side 舷（+1 右舷、−1 左舷）的舷门甲板边斜下去，水平 p_run、落差 p_rise（wild_landing 算的），梯脚稍稍埋进地里
+    void set_gangway(int p_side, double p_run, double p_rise);
+    void clear_gangway();
+    bool has_gangway() const { return gangway_side != 0; }
+    int get_gangway_side() const { return gangway_side; }
+    godot::Vector3 get_gangway_foot() const; // 梯脚（全局）；收着时是船原点
+    godot::Vector3 get_gangway_top() const; // 梯顶（舷门甲板边，全局）
+    // 船落在 p_pose（船原点的位姿）时，船身（第 0 层每节的整格、往上到最高层）在 p_floor_y + 0.5 m 以上压着的实物
+    // （房子、栈桥、船台、采掘面的石头……；碰撞层 1）。p_exclude 里的不算（船自己、人）。没有返回 nullptr
+    // p_gangway_side ≠ 0 时另查舷梯上方那一条（梯板上 0.3–2.3 m，梯脚那 1.2 m 不查）
+    godot::Object *landing_obstacle(const godot::Transform3D &p_pose, double p_floor_y, const godot::TypedArray<godot::RID> &p_exclude, int p_gangway_side = 0,
+            double p_gangway_run = 0.0, double p_gangway_rise = 0.0) const;
 
     void set_min_altitude(double p_value) { min_altitude = p_value; }
     double get_min_altitude() const { return min_altitude; }

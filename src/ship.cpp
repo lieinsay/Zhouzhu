@@ -14,6 +14,9 @@
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/physics_direct_space_state3d.hpp>
+#include <godot_cpp/classes/physics_shape_query_parameters3d.hpp>
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/classes/prism_mesh.hpp>
 #include <godot_cpp/classes/torus_mesh.hpp>
 #include <godot_cpp/core/class_db.hpp>
@@ -37,6 +40,7 @@ constexpr double CAMERA_PITCH_MAX = 0.5;
 
 const char *GENERATED_META = "ship_generated";
 const char *CARGO_META = "ship_cargo"; // 货箱：换货时只重画它们
+const char *GANGWAY_META = "ship_gangway"; // 野泊的舷梯：收放时只动它
 constexpr uint32_t LADDER_LAYER = 8; // Player 的 Sensor 只看这一层
 
 // 几何（米）
@@ -54,6 +58,8 @@ constexpr real_t LADDER_W = 0.9f;
 constexpr real_t CRATE_SIZE = 1.4f, CRATE_H = 1.1f; // 货位上的货箱（人抱着时画小一号，见 Player）
 constexpr real_t LADDER_ZONE_DEPTH = 1.0f; // 爬梯区域离墙多深
 constexpr real_t LADDER_ZONE_OVER = 1.2f; // 爬梯区域超出梯顶甲板多高：人到这儿才松开，正好落在甲板上
+constexpr real_t GANGWAY_W = 1.8f, GANGWAY_T = 0.25f; // 野泊的舷梯（舷门缺口 2 m 宽）
+constexpr real_t GANGWAY_BURY = 0.4f; // 梯脚往地里多埋一截：地面起伏也不悬着
 
 const int N4[4][2] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }; // (dx, dz)
 
@@ -173,6 +179,12 @@ void Ship::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_cargo", "slot", "item"), &Ship::set_cargo);
     ClassDB::bind_method(D_METHOD("get_cargo", "slot"), &Ship::get_cargo);
     ClassDB::bind_method(D_METHOD("get_cargo_count"), &Ship::get_cargo_count);
+    ClassDB::bind_method(D_METHOD("set_gangway", "side", "run", "rise"), &Ship::set_gangway);
+    ClassDB::bind_method(D_METHOD("clear_gangway"), &Ship::clear_gangway);
+    ClassDB::bind_method(D_METHOD("has_gangway"), &Ship::has_gangway);
+    ClassDB::bind_method(D_METHOD("get_gangway_side"), &Ship::get_gangway_side);
+    ClassDB::bind_method(D_METHOD("get_gangway_foot"), &Ship::get_gangway_foot);
+    ClassDB::bind_method(D_METHOD("get_gangway_top"), &Ship::get_gangway_top);
     ClassDB::bind_method(D_METHOD("get_max_speed"), &Ship::get_max_speed);
 
     ClassDB::bind_method(D_METHOD("set_layout", "ids"), &Ship::set_layout);
@@ -433,6 +445,7 @@ void Ship::rebuild() {
     slots = hold_slots(layout);
     cargo.resize(slots.size());
     build_cargo();
+    build_gangway();
 
     // 船头楔：最前一排第 0 层的每一节前面各一只
     const Basis lay_flat(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, -1, 0)); // 三棱柱躺倒：高 → z
@@ -497,6 +510,145 @@ void Ship::build_cargo() {
             }
         }
     }
+}
+
+// 野泊的舷梯：一块斜板（带碰撞）+ 两侧扶栏（只画）；收着时什么也不挂
+void Ship::build_gangway() {
+    if (!visual) {
+        return;
+    }
+    for (Node *parent : { static_cast<Node *>(this), static_cast<Node *>(visual) }) {
+        const TypedArray<Node> children = parent->get_children();
+        for (int64_t k = 0; k < children.size(); k++) {
+            Node *child = Object::cast_to<Node>(children[k]);
+            if (child && child->has_meta(GANGWAY_META)) {
+                parent->remove_child(child);
+                child->queue_free();
+            }
+        }
+    }
+    if (gangway_side == 0) {
+        return;
+    }
+    ensure_materials();
+    const real_t edge = real_t(gangway_side > 0 ? starboard_edge_x(layout) : port_edge_x(layout));
+    const real_t run = real_t(gangway_run), rise = real_t(gangway_rise), len = std::sqrt(run * run + rise * rise);
+    const Vector3 along = Vector3(real_t(gangway_side) * run, -rise, 0) / len; // 顺着梯子往下
+    Vector3 up(-along.y, along.x, 0);
+    if (up.y < 0) {
+        up = -up;
+    }
+    const Basis frame(along, up, along.cross(up));
+    const Vector3 top(edge, 0, 0), foot = top + along * len;
+    const real_t full = len + GANGWAY_BURY; // 梯顶齐着甲板边（再往里伸就顺着坡翘出一道坎）
+    const Vector3 mid = top + along * (0.5f * full) - up * (0.5f * GANGWAY_T);
+    const String name("Gangway");
+    add_box(visual, this, name, Vector3(full, GANGWAY_T, GANGWAY_W), Transform3D(frame, mid), mat_wood, true);
+    for (int side = -1; side <= 1; side += 2) {
+        add_box(visual, this, name + vformat("Rail%d", side), Vector3(len, 0.08f, 0.08f), Transform3D(frame, 0.5f * (top + foot) + up * 0.9f + Vector3(0, 0, side * 0.5f * GANGWAY_W)), mat_rail, false);
+    }
+    for (const String &part : { name, name + String("Shape"), name + String("Rail-1"), name + String("Rail1") }) {
+        Node *node = visual->get_node_or_null(NodePath(part));
+        node = node ? node : get_node_or_null(NodePath(part));
+        if (node) {
+            node->set_meta(GANGWAY_META, true);
+        }
+    }
+}
+
+void Ship::set_gangway(int p_side, double p_run, double p_rise) {
+    gangway_side = p_side > 0 ? 1 : (p_side < 0 ? -1 : 0);
+    gangway_run = std::max(0.5, p_run);
+    gangway_rise = std::max(0.0, p_rise);
+    build_gangway();
+}
+
+void Ship::clear_gangway() {
+    if (gangway_side == 0) {
+        return;
+    }
+    gangway_side = 0;
+    build_gangway();
+}
+
+Vector3 Ship::get_gangway_top() const {
+    if (gangway_side == 0) {
+        return get_global_position();
+    }
+    return to_global(Vector3(real_t(gangway_side > 0 ? starboard_edge_x(layout) : port_edge_x(layout)), 0, 0));
+}
+
+Vector3 Ship::get_gangway_foot() const {
+    if (gangway_side == 0) {
+        return get_global_position();
+    }
+    const real_t edge = real_t(gangway_side > 0 ? starboard_edge_x(layout) : port_edge_x(layout));
+    return to_global(Vector3(edge + real_t(gangway_side * gangway_run), real_t(-gangway_rise), 0));
+}
+
+Object *Ship::landing_obstacle(const Transform3D &p_pose, double p_floor_y, const TypedArray<RID> &p_exclude, int p_gangway_side, double p_gangway_run,
+        double p_gangway_rise) const {
+    if (!is_inside_tree()) {
+        return nullptr;
+    }
+    PhysicsDirectSpaceState3D *space = get_world_3d()->get_direct_space_state();
+    if (!space) {
+        return nullptr;
+    }
+    const real_t bottom = real_t(p_floor_y + 0.5) - p_pose.origin.y; // 船的局部 y
+    const real_t top = real_t(cell_deck_y(std::max(1, layout.levels())));
+    if (top <= bottom) {
+        return nullptr;
+    }
+    Ref<BoxShape3D> box;
+    box.instantiate();
+    box->set_size(Vector3(CELL_W, top - bottom, CELL_L));
+    Ref<PhysicsShapeQueryParameters3D> query;
+    query.instantiate();
+    query->set_shape(box);
+    query->set_collision_mask(1);
+    query->set_exclude(p_exclude);
+    const int front = layout.min_z();
+    for (const Module &m : layout.get_modules()) {
+        if (m.at.y != 0) {
+            continue;
+        }
+        const real_t cx = real_t(cell_center_x(m.at.x)), cz = real_t(cell_center_z(m.at.z));
+        // 船头楔那一截并进最前一排：盒子往前加长
+        const real_t extra = m.at.z == front ? BOW_WEDGE : 0.0f;
+        box->set_size(Vector3(CELL_W, top - bottom, CELL_L + extra));
+        query->set_transform(p_pose * at(cx, 0.5f * (top + bottom), cz - 0.5f * extra));
+        const TypedArray<Dictionary> hits = space->intersect_shape(query, 1);
+        if (!hits.is_empty()) {
+            const Dictionary hit = hits[0];
+            Object *collider = hit.get("collider", Variant());
+            return collider;
+        }
+    }
+    if (p_gangway_side == 0) {
+        return nullptr;
+    }
+    // 舷梯上方：人走下去要过的那一条
+    const real_t edge = real_t(p_gangway_side > 0 ? starboard_edge_x(layout) : port_edge_x(layout));
+    const real_t run = real_t(p_gangway_run), rise = real_t(p_gangway_rise), len = std::sqrt(run * run + rise * rise);
+    if (len < 1.5f) {
+        return nullptr;
+    }
+    const Vector3 along = Vector3(real_t(p_gangway_side) * run, -rise, 0) / len;
+    Vector3 up(-along.y, along.x, 0);
+    if (up.y < 0) {
+        up = -up;
+    }
+    const real_t checked = len - 1.2f;
+    box->set_size(Vector3(checked, 2.0f, GANGWAY_W));
+    query->set_transform(p_pose * Transform3D(Basis(along, up, along.cross(up)), Vector3(edge, 0, 0) + along * (0.5f * checked) + up * 1.3f));
+    const TypedArray<Dictionary> hits = space->intersect_shape(query, 1);
+    if (!hits.is_empty()) {
+        const Dictionary hit = hits[0];
+        Object *collider = hit.get("collider", Variant());
+        return collider;
+    }
+    return nullptr;
 }
 
 Vector3 Ship::get_hold_slot_position(int p_slot) const {
@@ -713,6 +865,7 @@ String Ship::get_gear_name() const {
 }
 
 void Ship::place_at(const Transform3D &p_contact, bool p_keep_heading) {
+    clear_gangway();
     mooring = false;
     gear = 0;
     const double contact_yaw = p_contact.basis.get_euler().y;
@@ -725,6 +878,7 @@ void Ship::place_at(const Transform3D &p_contact, bool p_keep_heading) {
 }
 
 void Ship::moor_at(const Transform3D &p_contact) {
+    clear_gangway();
     // 两舷都有舷门，船头朝哪边都能靠：取转得少的那个
     const double yaw = p_contact.basis.get_euler().y;
     berth_yaw = std::abs(angle_difference(state.yaw, yaw)) <= Math_PI / 2 ? yaw : yaw + Math_PI;

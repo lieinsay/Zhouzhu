@@ -45,6 +45,24 @@ void FreightHand::look_around(MapHost *p_map, Ship *p_ship, Player *p_player) {
         }
         slot = p_ship->find_hold_slot(at, slot_range);
     }
+    pile = p_map->map_resource_near(at, pile_range);
+    if (pile.site >= 0 && Vector2(at.x - pile.pile.x, at.z - pile.pile.z).length() > pile_range) {
+        pile = ResourceSpot(); // 够得着的是采掘面，不是堆场
+    }
+}
+
+// 抱着自家的箱子：拆开放回背包（堆场、村仓都行）
+bool FreightHand::unpack_here(Player *p_player, PackHand &p_pack, const Say &p_say) {
+    const Crate crate = book.get_hand();
+    const std::string problem = book.unpack_goods(p_pack.items());
+    if (!problem.empty()) {
+        p_say(utf8(problem));
+        return true;
+    }
+    sync_player(p_player);
+    p_pack.refresh_panel();
+    p_say(vformat(String(U"拆箱：%d 份%s回到背包"), crate.count, item_name(crate.item)));
+    return true;
 }
 
 void FreightHand::sync_player(Player *p_player) const {
@@ -75,7 +93,29 @@ bool FreightHand::step(MapHost *p_map, Ship *p_ship, Player *p_player, PackHand 
         }
     }
     if (post.port < 0) {
-        return false;
+        if (pile.site < 0) {
+            return false;
+        }
+        // 堆场：抱着自家的箱子就拆回背包，空手就从背包打一箱
+        if (book.is_holding()) {
+            if (!book.is_holding_goods()) {
+                p_say(String(U"这是托运的货，送到目的村的村仓去"));
+                return true;
+            }
+            return unpack_here(p_player, p_pack, p_say);
+        }
+        const std::string problem = book.pack_goods(pile.item, rules.goods_per_crate, p_pack.items());
+        if (!problem.empty()) {
+            p_say(utf8(problem) + String(U"：先去采掘面采"));
+            return true;
+        }
+        sync_player(p_player);
+        p_pack.refresh_panel();
+        p_say(vformat(String(U"打包了一箱%s（%d 份），背包还剩 %d"), item_name(pile.item), rules.goods_per_crate, p_pack.items().count(pile.item)));
+        return true;
+    }
+    if (book.is_holding_goods()) {
+        return unpack_here(p_player, p_pack, p_say); // 村仓前也能把自家的货拆回背包
     }
     // 村仓：交货、打包、放回
     if (!post.store) {
@@ -114,7 +154,7 @@ bool FreightHand::step(MapHost *p_map, Ship *p_ship, Player *p_player, PackHand 
     return true;
 }
 
-String FreightHand::prompt(const MapHost *p_map) const {
+String FreightHand::prompt(const MapHost *p_map, const PackHand &p_pack) const {
     if (slot >= 0) {
         const bool filled = !book.get_slots()[size_t(slot)].empty();
         if (book.is_holding()) {
@@ -124,10 +164,24 @@ String FreightHand::prompt(const MapHost *p_map) const {
             return String(U"按 E 抱起这箱");
         }
     }
+    if (post.port < 0 && pile.site >= 0) {
+        const String here = String(U"堆场 · ") + pile.name + String(U" · ");
+        if (book.is_holding()) {
+            return here + (book.is_holding_goods() ? String(U"按 E 把这箱拆回背包") : String(U"托运的货别放这儿"));
+        }
+        const int have = p_pack.items().count(pile.item), per = rules.goods_per_crate;
+        if (have < per) {
+            return here + vformat(String(U"背包里的%s不够一箱（%d / %d）：先去采掘面采"), item_name(pile.item), have, per);
+        }
+        return here + vformat(String(U"按 E 把 %d 份%s打成一箱（背包 %d）"), per, item_name(pile.item), have);
+    }
     if (post.port < 0) {
         return book.is_holding() ? String(U"抱着货箱 · 慢走，不能跑跳") : String();
     }
     const String here = String(U"村仓 · ") + post.name + String(U" · ");
+    if (book.is_holding_goods()) {
+        return here + vformat(String(U"按 E 把这箱%s拆回背包"), item_name(book.get_hand().item));
+    }
     if (book.is_active()) {
         const FreightOrder &order = book.get_order();
         if (post.port == order.to) {
@@ -155,10 +209,20 @@ String FreightHand::prompt(const MapHost *p_map) const {
 }
 
 String FreightHand::status_text(const MapHost *p_map) const {
+    // 自家的货：手上、船上各几箱
+    const int own_aboard = book.aboard() - book.aboard_consigned();
+    String goods;
+    if (book.is_holding_goods()) {
+        goods = vformat(String(U"抱着一箱%s"), item_name(book.get_hand().item));
+    }
+    if (own_aboard > 0) {
+        goods += (goods.is_empty() ? String() : String(U" · ")) + vformat(String(U"船上自家的货 %d 箱"), own_aboard);
+    }
     if (!book.is_active()) {
-        return book.is_holding() ? String(U"抱着一箱") : String();
+        return !goods.is_empty() ? goods : (book.is_holding() ? String(U"抱着一箱") : String());
     }
     const FreightOrder &order = book.get_order();
-    return vformat(String(U"托运 %s %d 箱 → %s · 手上 %d · 船上 %d · 已交 %d · 运费 %d 文"), item_name(order.item), order.crates, port_name(p_map, order.to),
-            book.is_holding() ? 1 : 0, book.aboard(), book.get_delivered(), order.fee);
+    const String line = vformat(String(U"托运 %s %d 箱 → %s · 手上 %d · 船上 %d · 已交 %d · 运费 %d 文"), item_name(order.item), order.crates, port_name(p_map, order.to),
+            book.is_holding() && !book.is_holding_goods() ? 1 : 0, book.aboard_consigned(), book.get_delivered(), order.fee);
+    return goods.is_empty() ? line : line + String(U"\n") + goods;
 }

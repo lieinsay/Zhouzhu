@@ -1,6 +1,7 @@
 #include "expedition.h"
 
 #include <cmath>
+#include <limits>
 
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/canvas_layer.hpp>
@@ -18,6 +19,7 @@
 #include "land_berth.h"
 #include "settlement.h"
 #include "shipyard.h"
+#include "wild_landing.h"
 #include "world_clock.h"
 
 using namespace godot;
@@ -39,6 +41,21 @@ Label *make_label(int p_font_size) {
 double yaw_of(const Transform3D &p_transform) {
     return p_transform.basis.get_euler().y;
 }
+
+// 野泊问的地面：地图宿主的地面高与水
+class MapLandingGround : public LandingGround {
+    const MapHost *map;
+
+public:
+    explicit MapLandingGround(const MapHost *p_map) :
+            map(p_map) {}
+    bool height(double p_x, double p_z, double &r_y) const override { return map->map_landing_height(p_x, p_z, r_y); }
+    bool water(double p_x, double p_z) const override { return map->map_water_at(p_x, p_z); }
+};
+
+constexpr double WILD_QUIET_ABOVE_M = 20.0; // 比能野泊的高度再高这么多，就不提野泊的事
+constexpr double WILD_MAX_SPEED = 8.0; // 船慢到这么慢才提野泊（巡航时贴地飞过不算）
+constexpr double WILD_PREFER_M = 200.0; // 这么近有资源点：舷梯朝着它放
 
 template <typename T>
 T *top_right_panel(CanvasLayer *p_layer, const char *p_name) {
@@ -88,6 +105,13 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_map"), &Expedition::get_map);
     ClassDB::bind_method(D_METHOD("get_map_node"), &Expedition::get_map_node);
     ClassDB::bind_method(D_METHOD("is_working"), &Expedition::is_working);
+    ClassDB::bind_method(D_METHOD("is_gathering"), &Expedition::is_gathering);
+    ClassDB::bind_method(D_METHOD("get_gather_site"), &Expedition::get_gather_site);
+    ClassDB::bind_method(D_METHOD("is_holding_goods"), &Expedition::is_holding_goods);
+    ClassDB::bind_method(D_METHOD("get_cargo_items"), &Expedition::get_cargo_items);
+    ClassDB::bind_method(D_METHOD("get_wild_note"), &Expedition::get_wild_note);
+    ClassDB::bind_method(D_METHOD("has_wild_berth"), &Expedition::has_wild_berth);
+    ClassDB::bind_method(D_METHOD("probe_wild", "at", "yaw"), &Expedition::probe_wild);
     ClassDB::bind_method(D_METHOD("is_carrying"), &Expedition::is_carrying);
     ClassDB::bind_method(D_METHOD("get_cargo_aboard"), &Expedition::get_cargo_aboard);
     ClassDB::bind_method(D_METHOD("has_freight_order"), &Expedition::has_freight_order);
@@ -307,6 +331,14 @@ PackedStringArray Expedition::get_pack_items() const {
     return items;
 }
 
+PackedStringArray Expedition::get_cargo_items() const {
+    PackedStringArray items;
+    for (const Crate &crate : freight.get_book().get_slots()) {
+        items.push_back(String::utf8(crate.item.c_str()));
+    }
+    return items;
+}
+
 Dictionary Expedition::get_freight_order() const {
     Dictionary d;
     if (!map || !freight.is_active()) {
@@ -349,6 +381,7 @@ Transform3D Expedition::get_destination_berth() const {
 // ---------------------------------------------------------------- 面板
 
 void Expedition::close_panels() {
+    gather.stand_down();
     pack.set_open(false);
     refit.close(player);
     build.close(player);
@@ -359,6 +392,7 @@ void Expedition::close_panels() {
 void Expedition::set_pack_open(bool p_open) {
     if (p_open) {
         farm_hand.stand_down();
+        gather.stand_down();
     }
     pack.set_open(p_open);
     player->set_input_blocked(p_open || map_open);
@@ -450,6 +484,14 @@ void Expedition::_physics_process(double p_delta) {
                 case Helm::REFUSED:
                     say(helm.get_refusal());
                     break;
+                case Helm::DISEMBARKED:
+                    // 野泊落定：从舷门放下舷梯
+                    if (ship && helm.get_moor_berth().wild) {
+                        const Berth &landed = helm.get_moor_berth();
+                        ship->set_gangway(landed.gangway_side, landed.gangway_run, landed.gangway_rise);
+                        say(vformat(String(U"野泊：舷梯放在%s"), landed.gangway_side > 0 ? String(U"右舷") : String(U"左舷")));
+                    }
+                    break;
                 default:
                     break;
             }
@@ -491,7 +533,8 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         } else if (pack.is_open()) {
             pack.browse(p_interact, say_fn()); // 开着背包：E 是拿东西，不是上舵、不是干活
         } else if (freight.step(map, ship, player, pack, p_interact, say_fn())) {
-            farm_hand.stand_down(); // 这一下 E 是村仓前 / 货位前的事
+            farm_hand.stand_down(); // 这一下 E 是村仓前 / 货位前 / 堆场的事
+            gather.stand_down();
         } else if (p_interact && bench) {
             if (freight.is_holding()) {
                 say(String(U"抱着货箱改不了船，先放下"));
@@ -511,6 +554,8 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
                 board();
                 return;
             }
+        } else if (gather.step(map, player, pack, freight.is_holding(), p_interact, p_delta, say_fn())) {
+            farm_hand.stand_down(); // 这一下 E 是采掘面前的事
         } else if (freight.is_holding()) {
             farm_hand.stand_down(); // 抱着货箱腾不出手干农活
         } else {
@@ -549,10 +594,86 @@ void Expedition::toggle_interior(const Vector3 &p_at) {
 void Expedition::board() {
     close_panels();
     farm_hand.stand_down();
+    if (ship) {
+        ship->clear_gangway(); // 野泊放下的舷梯收起来
+    }
     helm.board();
 }
 
-std::vector<Berth> Expedition::berths() const {
+// 野泊：船下这块地落不落得下（这一帧算过就不再算）
+bool Expedition::plan_wild(const Vector3 &p_at, double p_yaw, Berth &r_berth, String &r_why) const {
+    const LandingRules rules;
+    const Vector3 at = p_at;
+    double prefer_x = std::numeric_limits<double>::quiet_NaN(), prefer_z = prefer_x;
+    const ResourceSpot near = map->map_resource_near(at, WILD_PREFER_M);
+    if (near.site >= 0) {
+        prefer_x = near.face.x;
+        prefer_z = near.face.z;
+    }
+    const double yaw = p_yaw;
+    const WildLanding w = plan_wild_landing(MapLandingGround(map), ship->get_layout_model(), at.x, at.y, at.z, yaw, rules, prefer_x, prefer_z);
+    if (!w.ok) {
+        r_why = String::utf8(w.why.c_str());
+        return false;
+    }
+    TypedArray<RID> exclude;
+    exclude.push_back(ship->get_rid());
+    exclude.push_back(player->get_rid());
+    const Transform3D pose(Basis(Vector3(0, 1, 0), real_t(yaw)), Vector3(at.x, real_t(w.deck_y), at.z));
+    if (Object *hit = ship->landing_obstacle(pose, w.ground_hi, exclude, w.side, w.run, w.rise)) {
+        bool house = false;
+        for (Node *node = Object::cast_to<Node>(hit); node && !house; node = node->get_parent()) {
+            house = Object::cast_to<Settlement>(node) != nullptr;
+        }
+        r_why = house ? String(U"船底下、舷梯边有房子") : String(U"船底下、舷梯边有东西挡着");
+        return false;
+    }
+    r_berth = Berth();
+    r_berth.contact = Transform3D(Basis(Vector3(0, 1, 0), real_t(yaw + (w.side > 0 ? 0.0 : Math_PI))), Vector3(real_t(w.door_x), real_t(w.deck_y), real_t(w.door_z)));
+    r_berth.wild = true;
+    r_berth.gangway_side = w.side;
+    r_berth.gangway_run = w.run;
+    r_berth.gangway_rise = w.rise;
+    return true;
+}
+
+void Expedition::refresh_wild() {
+    const uint64_t frame = Engine::get_singleton()->get_physics_frames();
+    if (frame == wild_frame) {
+        return;
+    }
+    wild_frame = frame;
+    wild_ok = false;
+    helm.wild_note = String();
+    if (!ship || helm.get_state() != Helm::PILOTING) {
+        return;
+    }
+    const Vector3 at = ship->get_global_position();
+    double ground = 0.0;
+    if (ship->get_speed() > WILD_MAX_SPEED || !map->map_landing_height(at.x, at.z, ground) ||
+            at.y - (ground + LandingRules().deck_lift_m) > LandingRules().max_descent_m + WILD_QUIET_ABOVE_M) {
+        return; // 还在赶路、船下是云海，或者还高着：不提野泊
+    }
+    wild_ok = plan_wild(at, ship->get_rotation().y, wild, helm.wild_note);
+}
+
+Dictionary Expedition::probe_wild(const Vector3 &p_at, double p_yaw) const {
+    Dictionary d;
+    Berth berth;
+    String why;
+    d["ok"] = ship && plan_wild(p_at, p_yaw, berth, why);
+    d["why"] = why;
+    if (bool(d["ok"])) {
+        d["side"] = berth.gangway_side;
+        d["run"] = berth.gangway_run;
+        d["rise"] = berth.gangway_rise;
+        d["door"] = berth.contact.origin; // 舷门的甲板边（y = 落定后的甲板高）
+        d["out"] = berth.contact.basis.get_column(0);
+    }
+    return d;
+}
+
+std::vector<Berth> Expedition::berths() {
     std::vector<Berth> out;
     for (int k = 0; k < map->map_dock_count(); k++) {
         if (map->map_dock_open(k)) {
@@ -582,6 +703,10 @@ std::vector<Berth> Expedition::berths() const {
             berth.refusal = problem;
             out.push_back(berth);
         }
+    }
+    refresh_wild();
+    if (wild_ok) {
+        out.push_back(wild);
     }
     return out;
 }
@@ -805,12 +930,17 @@ void Expedition::update_hud() {
                 prompt = String(U"W/S 选 · E 拿在手上 · Tab 合上");
                 break;
             }
-            const String cargo = freight.prompt(map);
+            const String cargo = freight.prompt(map, pack);
             if (!cargo.is_empty()) {
                 prompt = cargo; // 村仓 / 货位前、抱着货箱：先说这个
                 break;
             }
             if (near_helm || bench) {
+                break;
+            }
+            const String gathering = gather.prompt(pack);
+            if (!gathering.is_empty()) {
+                prompt = gathering; // 采掘面前：采集的事
                 break;
             }
             const String work = farm_hand.prompt(pack);
@@ -830,7 +960,10 @@ void Expedition::update_hud() {
             break;
         case Helm::MOORING:
             lines.clear();
-            lines.push_back(helm.is_mooring_to_yard() ? String(U"入坞中") : (helm.get_moor_berth().land ? String(U"落上船台") : String(U"靠泊中")));
+            lines.push_back(helm.is_mooring_to_yard() ? String(U"入坞中")
+                            : helm.get_moor_berth().wild     ? String(U"野泊中")
+                            : helm.get_moor_berth().land     ? String(U"落上船台")
+                                                             : String(U"靠泊中"));
             prompt = String(U"……");
             break;
     }

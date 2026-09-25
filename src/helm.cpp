@@ -29,6 +29,7 @@ bool Helm::near_helm() const {
 }
 
 void Helm::board() {
+    moor_berth = Berth(); // 上一回靠在哪不算数了（半空离舵时不会误当成野泊）
     player->set_controlled(false);
     ship->set_controlled(true);
     ship->get_camera()->make_current();
@@ -96,6 +97,9 @@ bool Helm::moor_target(const std::vector<Berth> &p_berths, Berth &r_berth) const
     bool found = false;
     double best_distance = dock_range;
     for (const Berth &berth : p_berths) {
+        if (berth.wild) {
+            continue;
+        }
         const double distance = ship->get_global_position().distance_to(berth.contact.origin);
         if (distance <= best_distance) {
             found = true;
@@ -103,7 +107,17 @@ bool Helm::moor_target(const std::vector<Berth> &p_berths, Berth &r_berth) const
             r_berth = berth;
         }
     }
-    return found;
+    if (found) {
+        return true;
+    }
+    // 近处没有码头、船坞、船台：就地野泊（编排只在落得下时才递进来）
+    for (const Berth &berth : p_berths) {
+        if (berth.wild) {
+            r_berth = berth;
+            return true;
+        }
+    }
+    return false;
 }
 
 String Helm::course_text(const Transform3D &p_target, const String &p_target_name) const {
@@ -134,8 +148,14 @@ String Helm::piloting_prompt(const std::vector<Berth> &p_berths) const {
         if (!target.refusal.is_empty()) {
             return target.refusal;
         }
+        if (target.wild) {
+            return vformat(String(U"按 E 野泊（舷梯放%s）"), target.gangway_side > 0 ? String(U"右舷") : String(U"左舷"));
+        }
         return target.yard ? String(U"按 E 入坞") : (target.land ? String(U"按 E 落上船台") : String(U"按 E 靠泊"));
     }
-    const String keys = String(U"W/S 进退 · A/D 转舵 · 空格 升 · Shift 降 · R/F 换档");
-    return ship->get_speed() <= leave_helm_speed ? keys + String(U" · E 离舵") : keys;
+    String keys = String(U"W/S 进退 · A/D 转舵 · 空格 升 · Shift 降 · R/F 换档");
+    if (ship->get_speed() <= leave_helm_speed) {
+        keys += String(U" · E 离舵");
+    }
+    return wild_note.is_empty() ? keys : keys + String(U"\n野泊不了：") + wild_note;
 }
