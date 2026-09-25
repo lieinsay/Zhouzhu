@@ -12,11 +12,12 @@ const ItemDef ITEMS[] = {
     { "pottery", "陶罐", 16, 0.7f, 0.38f, 0.22f }, // 赭
     { "lacquer", "漆器", 16, 0.5f, 0.08f, 0.07f }, // 朱黑
     { "coin", "铜钱", 999, 0.72f, 0.56f, 0.3f }, // 运费
-    // 原料：资源点采来的（见 deposit_kinds.h）；不是种子也不是粮
+    // 原料：地上一株株、一块块采来的，或采场里采的（见 deposit_kinds.h）；不是种子也不是粮
     { "stone", "石料", 64, 0.62f, 0.62f, 0.66f },
     { "clay", "黏土", 64, 0.66f, 0.38f, 0.24f },
     { "floatstone", "浮石", 64, 0.82f, 0.76f, 0.93f },
     { "timber", "木料", 64, 0.7f, 0.53f, 0.33f },
+    { "firewood", "柴", 64, 0.55f, 0.45f, 0.27f }, // 灌丛砍的枝条
     { "gravel", "砂石", 64, 0.8f, 0.76f, 0.66f },
     { "gold_dust", "砂金", 64, 0.93f, 0.78f, 0.28f },
     { "copper_ore", "铜矿石", 64, 0.3f, 0.56f, 0.46f }, // 孔雀石绿
@@ -50,7 +51,7 @@ const CropDef CROPS[] = {
 const int CROP_COUNT = int(sizeof(CROPS) / sizeof(CROPS[0]));
 
 const ToolDef TOOLS[] = {
-    { "stone_axe", "timber", 2.0 }, // 伐木
+    { "stone_axe", "timber,firewood", 2.0 }, // 伐木、砍柴
     { "stone_pick", "stone,floatstone,copper_ore,iron_ore,lead_zinc_ore,gold_ore,manganese_ore,tin_ore,sulfur", 2.0 }, // 凿石、采矿
     { "wood_shovel", "clay,gravel,gold_dust,peat,guano", 2.0 }, // 挖土、淘砂
 };

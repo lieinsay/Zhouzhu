@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
+
+#include "deposit_kinds.h"
 
 namespace {
 
@@ -43,6 +46,81 @@ MapImage build_map_image(const WorldGrid &g) {
             px[2] = uint8_t(std::clamp(col.b * shade, 0.0f, 1.0f) * 255.0f + 0.5f);
             px[3] = 255;
         }
+    }
+    return img;
+}
+
+int dominant_resource(const WorldGrid &g, size_t p_cell, const std::vector<int> &p_patch_kinds, double &r_grade) {
+    // 稀的盖常的：先散的三样稀的，再片（浮石、鸟粪、泥炭），再散的三样常的，林木垫底
+    struct Field {
+        int field;
+        const char *key;
+        double min;
+    };
+    static const Field RARE[] = { { WorldGrid::FIELD_ORE, "ore", 0.15 }, { WorldGrid::FIELD_SULFUR, "sulfur", 0.15 }, { WorldGrid::FIELD_PLACER, "placer", 0.15 } };
+    static const Field COMMON[] = { { WorldGrid::FIELD_CLAY, "clay", 0.3 }, { WorldGrid::FIELD_GRAVEL, "gravel", 0.3 }, { WorldGrid::FIELD_STONE, "stone", 0.4 } };
+    static const char *const PATCHES[] = { "floatstone", "guano", "peat" };
+    auto index_of = [](const char *p_key) {
+        const DepositKind *kind = deposits::kind(p_key);
+        return kind ? int(kind - deposits::KINDS) : -1;
+    };
+    r_grade = 0.0;
+    if (!g.has_resources()) {
+        return -1;
+    }
+    for (const Field &f : RARE) {
+        const double v = g.field_cell(f.field, p_cell);
+        if (v >= f.min) {
+            r_grade = v;
+            return index_of(f.key);
+        }
+    }
+    const int patch = g.patch_cell(p_cell);
+    const int patch_kind = patch >= 0 && size_t(patch) < p_patch_kinds.size() ? p_patch_kinds[size_t(patch)] : -1;
+    for (const char *key : PATCHES) {
+        if (patch_kind >= 0 && patch_kind == index_of(key)) {
+            r_grade = 1.0;
+            return patch_kind;
+        }
+    }
+    for (const Field &f : COMMON) {
+        const double v = g.field_cell(f.field, p_cell);
+        if (v >= f.min) {
+            r_grade = v;
+            return index_of(f.key);
+        }
+    }
+    if (patch_kind >= 0 && patch_kind == index_of("timber")) {
+        r_grade = 1.0;
+        return patch_kind;
+    }
+    return -1;
+}
+
+MapImage build_resource_image(const WorldGrid &g, const std::vector<int> &p_patch_kinds) {
+    MapImage img = build_map_image(g);
+    for (size_t k = 0; k < g.height.size(); k++) {
+        uint8_t *px = &img.rgba[k * 4];
+        if (px[3] == 0) {
+            continue;
+        }
+        // 暗灰的山影：资源色压在上面才显眼
+        const float lum = (0.3f * px[0] + 0.59f * px[1] + 0.11f * px[2]) / 255.0f;
+        float r = 0.2f + 0.45f * lum, gr = r, b = r * 1.05f;
+        double grade = 0.0;
+        const int kind = dominant_resource(g, k, p_patch_kinds, grade);
+        if (kind >= 0) {
+            const DepositKind &dk = deposits::KINDS[kind];
+            const bool timber = std::string(dk.key) == "timber";
+            const float a = timber ? 0.45f : float(std::clamp(0.45 + 0.55 * grade, 0.0, 1.0));
+            const float shade = 0.6f + 0.6f * lum;
+            r = r + (dk.r * shade - r) * a;
+            gr = gr + (dk.g * shade - gr) * a;
+            b = b + (dk.b * shade - b) * a;
+        }
+        px[0] = uint8_t(std::clamp(r, 0.0f, 1.0f) * 255.0f + 0.5f);
+        px[1] = uint8_t(std::clamp(gr, 0.0f, 1.0f) * 255.0f + 0.5f);
+        px[2] = uint8_t(std::clamp(b, 0.0f, 1.0f) * 255.0f + 0.5f);
     }
     return img;
 }

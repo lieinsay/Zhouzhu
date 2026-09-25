@@ -6,7 +6,8 @@
 
 namespace {
 
-constexpr uint32_t VERSION = 4; // 最新版；1（没有水文）、2（没有河道与地形区）、3（高程是 u16 厘米，封顶 655 m）也读
+constexpr uint32_t VERSION = 5; // 最新版；1（没有水文）、2（没有河道与地形区）、3（高程是 u16 厘米，封顶 655 m）、4（没有资源栅格）也读
+constexpr const char *FIELD_KEYS[WorldGrid::FIELD_COUNT] = { "ore", "sulfur", "placer", "clay", "gravel", "stone" };
 constexpr double HEIGHT_SCALE = 100.0; // v1–v3 的高程：u16 = 米 × 100
 
 struct Reader {
@@ -89,6 +90,37 @@ int WorldGrid::land_count() const {
     return int(std::count_if(shore.begin(), shore.end(), [](float s) { return s > 0.0f; }));
 }
 
+const char *WorldGrid::field_key(int p_field) {
+    return p_field >= 0 && p_field < FIELD_COUNT ? FIELD_KEYS[p_field] : "";
+}
+
+int WorldGrid::field_of(const char *p_key) {
+    for (int k = 0; k < FIELD_COUNT; k++) {
+        if (std::strcmp(p_key, FIELD_KEYS[k]) == 0) {
+            return k;
+        }
+    }
+    return -1;
+}
+
+double WorldGrid::field_at(int p_field, double p_x, double p_z) const {
+    if (field.empty() || p_field < 0 || p_field >= FIELD_COUNT) {
+        return 0.0;
+    }
+    const double fc = col_of(p_x), fr = row_of(p_z);
+    const int c0 = int(std::floor(fc)), r0 = int(std::floor(fr));
+    const double tc = fc - c0, tr = fr - r0;
+    const uint8_t *layer = field.data() + size_t(p_field) * height.size();
+    auto at = [&](int r, int c) { return r < 0 || c < 0 || r >= rows || c >= cols ? 0.0 : double(layer[index(r, c)]); };
+    const double top = at(r0, c0) + (at(r0, c0 + 1) - at(r0, c0)) * tc;
+    const double bottom = at(r0 + 1, c0) + (at(r0 + 1, c0 + 1) - at(r0 + 1, c0)) * tc;
+    return (top + (bottom - top) * tr) / 255.0;
+}
+
+int WorldGrid::patch_at(double p_x, double p_z) const {
+    return patch.empty() ? -1 : patch_cell(nearest_cell(p_x, p_z));
+}
+
 bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, std::string &r_error) {
     Reader in{ p_data, p_size };
     char magic[4];
@@ -109,7 +141,7 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
     g.rows = int(rows);
     g.cols = int(cols);
     const size_t n = size_t(rows) * size_t(cols);
-    const size_t payload = n * (version >= 4 ? 19 : version >= 3 ? 17 : version >= 2 ? 12 : 7);
+    const size_t payload = n * (version >= 5 ? 19 + WorldGrid::FIELD_COUNT + 2 : version >= 4 ? 19 : version >= 3 ? 17 : version >= 2 ? 12 : 7);
     if (in.size - in.at != payload) {
         r_error = "terrain.bin 长度不对：应有 " + std::to_string(payload) + " 字节数据，实有 " + std::to_string(in.size - in.at);
         return false;
@@ -149,6 +181,12 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
             g.river_width[k] = float(width[k] / 10.0);
             g.river_depth[k] = float(depth[k] / 100.0);
         }
+    }
+    if (version >= 5) {
+        g.field.resize(n * WorldGrid::FIELD_COUNT);
+        g.patch.resize(n);
+        in.take(g.field.data(), n * WorldGrid::FIELD_COUNT);
+        in.take(g.patch.data(), n * 2);
     }
     g.height.resize(n);
     g.shore.resize(n);

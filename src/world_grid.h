@@ -27,12 +27,29 @@ struct WorldGrid {
     std::vector<float> river_width;
     std::vector<float> river_depth;
     std::vector<uint8_t> zone; // 0 虚空 1 高山 2 山地 3 丘陵 4 台地平原 5 河谷 6 崖缘 7 水域（skyisle-gen resources.py 的 ZONE_NAMES）
+    // 资源（v5 才有；旧版为空）：散的赋存场（每类一层、品位 × 255，可叠）与片号（deposit id + 1，0 = 不在片里）
+    std::vector<uint8_t> field; // FIELD_COUNT 层，层内行主序
+    std::vector<uint16_t> patch;
+
+    // 赋存场的层（同 export_skyisle.py 的 FIELD_KINDS、生成器的 res_field）
+    enum Field : int {
+        FIELD_ORE = 0,
+        FIELD_SULFUR,
+        FIELD_PLACER,
+        FIELD_CLAY,
+        FIELD_GRAVEL,
+        FIELD_STONE,
+        FIELD_COUNT,
+    };
+    static const char *field_key(int p_field); // 生成器的键：ore / sulfur / placer / clay / gravel / stone
+    static int field_of(const char *p_key); // 键 → 层；不是散的返回 −1
 
     static constexpr uint8_t FLOW_TO_VOID = 0x10;
     static constexpr int FLOW_OFFSETS[8][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 }, { -1, -1 }, { -1, 1 }, { 1, -1 }, { 1, 1 } }; // (dr, dc)
 
     bool has_hydro() const { return !flow.empty(); }
     bool has_channels() const { return !river_width.empty(); }
+    bool has_resources() const { return !field.empty(); }
     size_t index(int p_r, int p_c) const { return size_t(p_r) * size_t(cols) + size_t(p_c); }
     bool empty() const { return rows == 0 || cols == 0; }
     double min_x() const { return x0 - 0.5 * res; }
@@ -50,6 +67,12 @@ struct WorldGrid {
     // 最近的格（出界夹到边上）
     size_t nearest_cell(double p_x, double p_z) const;
     int land_count() const;
+    // 赋存场：某一格的品位（0–1）；连续坐标上双线性插值（格心之间渐变，出界与没有资源栅格为 0）
+    double field_cell(int p_field, size_t p_index) const { return field.empty() ? 0.0 : field[size_t(p_field) * height.size() + p_index] / 255.0; }
+    double field_at(int p_field, double p_x, double p_z) const;
+    // 片号：该点最近的格属于哪一片（deposit id）；不在片里、没有资源栅格返回 −1
+    int patch_at(double p_x, double p_z) const;
+    int patch_cell(size_t p_index) const { return patch.empty() ? -1 : int(patch[p_index]) - 1; }
 };
 
 // 地表类的颜色（sRGB 0..1，地图底图与地面网格共用一套）

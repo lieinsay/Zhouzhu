@@ -62,6 +62,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/placeables.h
     src/recipes.cpp
     src/recipes.h
+    src/resource_scatter.cpp
+    src/resource_scatter.h
     src/resource_sites.cpp
     src/resource_sites.h
     src/rng.h

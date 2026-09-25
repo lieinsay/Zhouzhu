@@ -6,11 +6,12 @@
 
 namespace recipes {
 
-// 随身能做的只有几样：木料劈成板、板钉成工作台、松明；其余的要工作台，陶与砖要进窑烧（木料当柴）
+// 随身能做的只有几样：木料劈成板、板钉成工作台、松明（板或柴扎的）；其余的要工作台，陶与砖要进窑烧（木料当柴）
 const RecipeDef RECIPES[] = {
     { "plank", "plank", 4, Station::HAND, { { "timber", 1 } } },
     { "workbench", "workbench", 1, Station::HAND, { { "plank", 4 } } },
     { "torch", "torch", 2, Station::HAND, { { "plank", 1 } } },
+    { "torch_firewood", "torch", 2, Station::HAND, { { "firewood", 2 } } }, // 一把柴扎成火把
     { "chest", "chest", 1, Station::WORKBENCH, { { "plank", 8 } } },
     { "fence", "fence", 3, Station::WORKBENCH, { { "plank", 2 }, { "timber", 1 } } },
     { "stone_axe", "stone_axe", 1, Station::WORKBENCH, { { "stone", 2 }, { "plank", 1 } } },
