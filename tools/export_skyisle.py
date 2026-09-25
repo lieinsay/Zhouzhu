@@ -5,8 +5,10 @@
     python tools/export_skyisle.py --sites game/worlds/2051      # 只按已有的 world.json 重写 sites.tsv
     python tools/export_skyisle.py --terrain-only <岛群目录> game/worlds/2051
                                    # 只换地形（terrain.bin / weather.tsv / world.json 的岛表与栅格）：村、码头等点位沿用已有的 world.json
+    python tools/export_skyisle.py --resources <岛群目录> game/worlds/2051
+                                   # 只写 resources.tsv（资源点），别的文件不动
 
-读 terrain.npz / island.json / settlements.json / weather_y0.csv，写四份文件：
+读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json，写五份文件：
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
@@ -42,6 +44,13 @@ sites.tsv —— 同一份岛表与点位的平铺版，给不读 JSON 的纯 C+
     dock     id  island  x  z  main(0/1)
     village  id  island  x  z  households  seat(0/1)  name
     hamlet   id  island  x  z  households  0           name
+
+resources.tsv —— 资源点（skyisle-gen resources.py 的 deposits；src/resource_sites.*：游戏里铺采集点、体检工具）。
+    UTF-8，制表符分隔，# 开头是注释，一行一条：
+    deposit  id  kind  island  x  z  area_km2  grade  subtype
+    kind 是生成器的键（quarry / clay / floatstone / timber / gravel / placer / ore / peat / sulfur / guano / spring / hotspring / cave），
+    x z 是矿点的格心（米，游戏坐标；露天矿取带内第一个矿坑），grade 是 上 / 中 / 下，subtype 没有就空着。
+    斑块的其余格不导出：游戏只在矿点附近落一处采集点。
 
 只依赖 numpy + scipy。游戏运行时不需要它，也不读 skyisle-gen 的 out/。
 """
@@ -310,6 +319,8 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
             world[key] = old.get(key)
     (dst / "world.json").write_text(json.dumps(world, ensure_ascii=False, indent=1), encoding="utf-8")
     write_sites(world, dst)
+    if (src / "resources.json").exists():
+        write_resources(src, dst)
     print(f"{dst}: {rows}×{cols} @ {res:g} m, {len(islands)} 岛, {len(world['villages'])} 村, {len(world['docks'])} 码头")
 
 
@@ -337,8 +348,30 @@ def write_sites(world: dict, dst: Path) -> None:
     (dst / "sites.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
+def write_resources(src: Path, dst: Path) -> None:
+    info = json.loads((src / "island.json").read_text(encoding="utf-8"))
+    deposits = json.loads((src / "resources.json").read_text(encoding="utf-8"))["deposits"]
+    ox_km, oy_km = info["raster"]["origin_km"]
+    res_km = float(info["raster"]["res_m"]) / 1000.0
+
+    def cell_km(cell):
+        i, j = cell
+        return [ox_km + (j + 0.5) * res_km, oy_km - (i + 0.5) * res_km]
+
+    lines = ["# 由 tools/export_skyisle.py 从 resources.json 导出，别手改。格式见那个脚本开头。"]
+    for d in deposits:
+        km = cell_km(d["pits"][0]) if d.get("pits") else d["km"]
+        x, z = to_game(km)
+        row = ("deposit", d["id"], d["kind"], d["island"], x, z, d["area_km2"], d["grade"], d.get("subtype") or "")
+        lines.append("\t".join(str(v) for v in row))
+    (dst / "resources.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    print(f"{dst / 'resources.tsv'}: {len(deposits)} 处资源")
+
+
 if __name__ == "__main__":
-    if len(sys.argv) == 3 and sys.argv[1] == "--sites":
+    if len(sys.argv) == 4 and sys.argv[1] == "--resources":
+        write_resources(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--sites":
         out = Path(sys.argv[2])
         write_sites(json.loads((out / "world.json").read_text(encoding="utf-8")), out)
         print(f"{out / 'sites.tsv'}")
