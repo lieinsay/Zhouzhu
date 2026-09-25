@@ -3,10 +3,9 @@ extends Node
 ##
 ##   Godot --path game --fixed-fps 60 res://tools/terrain_shots.tscn -- --shots=<目录>
 ##
-## 机位全按主码头（#7）与岛心推：人开 god 模式悬在机位附近（地面块按人的位置细分），另放一台相机拍。
+## 机位全按出发码头（主码头）与岛心推：人开 god 模式悬在机位附近（地面块按人的位置细分），另放一台相机拍。
 
 const SCENE := preload("res://world_2051.tscn")
-const MAIN_DOCK := 7
 
 var main: Expedition
 var world: World
@@ -34,13 +33,13 @@ func _ready() -> void:
 	world = main.get_node("World")
 	player = main.get_node("Player")
 	camera = Camera3D.new()
-	camera.far = 20000.0
+	camera.far = 60000.0
 	camera.fov = 60.0
 	add_child(camera)
 
 
 func _plan() -> void:
-	var dock := world.get_dock_position(world.find_dock(MAIN_DOCK))
+	var dock := world.get_dock_position(world.find_dock(main.origin_dock))
 	# 离岸方向：从岛心（原点附近）指向码头
 	var out := Vector3(dock.x, 0, dock.z).normalized()
 	var side := Vector3(-out.z, 0, out.x)
@@ -67,6 +66,9 @@ func _plan() -> void:
 			if h > best.y:
 				best = Vector3(x, h, z)
 	views.append(["5_mountain", best, best + Vector3(-900, 250, -900), best + Vector3(200, -60, 200)])
+	# 7 从出发码头望山：人眼的高度，朝着上面找到的最高处（远山靠远平面与淡雾才看得见）
+	var eye := world.get_dock_spawn(world.find_dock(main.origin_dock)).origin + Vector3(0, 1.7, 0)
+	views.append(["7_dock_view", eye, eye, Vector3(best.x, eye.y + (best.y - eye.y) * 0.6, best.z)])
 	# 6 小岛：12 号岛（14.7 km²，岛心 (-21920, 16486)），离岛心 4 km 平视，整座岛悬在云海上
 	var islet := Vector3(-21920.0, 0.0, 16486.0)
 	views.append(["6_islet", islet + Vector3(0, 400, -2600), islet + Vector3(-2800, 120, -2800), islet + Vector3(0, -80, 0)])

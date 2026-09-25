@@ -20,7 +20,7 @@ ambient_light_energy = 0.55
 tonemap_mode = 2
 fog_enabled = true
 fog_light_color = Color(0.8, 0.86, 0.93, 1)
-fog_density = 0.00012
+fog_density = 0.00003
 fog_sky_affect = 0.2
 
 [sub_resource type="StandardMaterial3D" id="cloud_material"]
@@ -33,8 +33,8 @@ size = Vector2(240000, 240000)
 
 [node name="World2051" type="Expedition"]
 map = NodePath("World")
-origin_dock = 7
-destination_dock = 2
+origin_dock = 1
+destination_dock = 26
 kill_altitude = -40.0
 recall_distance = 200.0
 notice_seconds = 4.0
