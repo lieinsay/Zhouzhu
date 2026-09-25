@@ -1,7 +1,7 @@
 extends Node
-## 合成与摆放（world_2051.tscn）：背包、配方、摆放、船舱，只通过输入（动作、鼠标事件、转视角）操作；去林场那一下用开发者瞬移。
+## 合成与摆放（world_2051.tscn）：背包、配方、摆放、船舱，只通过输入（动作、鼠标事件、转视角）操作；去林子那一下用开发者瞬移。
 ## 行李里带着石料 12、黏土 8（开局的粟、菽照旧）：
-## 主码头出生：背包 36 格、快捷栏空着，开局的东西在主区 → 瞬移到最近的林场，走到采掘面按住 E 采 6 份木料（空手 4 秒一份）
+## 主码头出生：背包 36 格、快捷栏空着，开局的东西在主区 → 瞬移到最近的一片林子边上，走到树跟前按住 E 伐 6 份木料（空手 4 秒一份；一棵伐倒了换下一棵）
 ## → Tab 开背包（不在船上：没有船舱）：鼠标点配方「木板」5 回（木料 1 → 木板 4）、再点「工作台」；「木箱」暗着（要工作台）
 ##   → 鼠标左键拿起工作台、点快捷栏第 1 格放下；右键把木板拿一半、放进空格；Shift+左键把一叠木板搬上快捷栏 → Tab 合上
 ## → 按 1 拿起工作台：身前出虚影，找一处摆得下的朝向按 E 摆下（实物带碰撞）；身边 3 m 有工作台
@@ -9,7 +9,7 @@ extends Node
 ##   → 鼠标悬停在木箱上按 3：木箱上了快捷栏第 3 格 → 合上，按 3 摆木箱
 ## → 看着木箱按 E：木箱的 18 格列在背包上面；Shift+左键把粟搬进木箱；键盘 W 挪到木箱那格、E 拿起、S 挪回、E 放下（粟回背包）；
 ##   再搬进去、合上 → X 收木箱被拒（里面有东西）→ 打开、搬空、合上 → X 收回背包
-## → 石斧放上快捷栏选中：到采掘面按住 E，一份只要 2 秒（快一倍）
+## → 石斧放上快捷栏选中：再伐一棵，一份只要 2 秒（快一倍）
 ## → 摆窑、看着窑按 E：合陶罐（黏土 3 + 木料 1）；随身合火把、摆一支（带一盏光）
 ## → 瞬移回主码头、走上船：Tab 背包上面是「船舱（12 格）」，Shift+左键把陶罐搬进船舱 → 合上；下船再开背包：没有船舱。
 ##
@@ -28,6 +28,7 @@ var main: Expedition
 var world: World
 var player: Player
 var ship: Ship
+var scatter: ScatterStream
 
 var elapsed := 0.0
 var stage := "开局"
@@ -36,9 +37,9 @@ var pending_shot := ""
 var shot_wait := 0
 var done := false
 
-var site := {}
-var face := Vector3.ZERO
-var pile := Vector3.ZERO
+var face := Vector3.ZERO  # 正在伐的那棵树
+var pile := Vector3.ZERO  # 林边落脚的那块空地
+var felled := 0
 
 
 func _ready() -> void:
@@ -53,6 +54,7 @@ func _ready() -> void:
 	world = main.get_node("World")
 	player = main.get_node("Player")
 	ship = main.get_node("Ship")
+	scatter = main.get_node("ScatterStream")
 	_run()
 
 
@@ -283,23 +285,63 @@ func _close_pack() -> bool:
 	return true
 
 
-## 按住 E 采，直到背包里 item 有 want 份；返回每份平均几秒
-func _gather_until(item: String, want: int) -> float:
-	if not await _walk_to(face, 1.4, 20.0):
-		_finish(false, "走不到采掘面")
-		return -1.0
-	_look_at_point(face)
-	await _frames(3)
+## 离人最近、一路走得过去（直线上没有别的树干挡着）的一棵立着的树；没有返回空字典
+func _next_tree() -> Dictionary:
+	var at := player.global_position
+	var best := {}
+	for kind in ["broadleaf", "conifer"]:
+		for r in [20.0, 40.0, 80.0]:
+			var tree: Dictionary = scatter.find_item_near(at, r, kind)
+			if tree.is_empty():
+				continue
+			var p: Vector3 = tree["position"]
+			var stop := p + (at - p).normalized() * (float(tree["reach"]) - 0.5)
+			if not scatter.path_clear(at, stop, 0.6):
+				continue
+			if best.is_empty() or at.distance_to(p) < at.distance_to(best["position"]):
+				best = tree
+			break
+	return best
+
+
+## 伐近处的树，直到背包里 item 有 want 份（一棵伐倒了——变树桩、没了树干的碰撞——就换下一棵）；返回按住 E 时平均几秒一份
+func _chop_until(item: String, want: int) -> float:
 	var start := _count(item)
-	var t0 := elapsed
-	Input.action_press("interact")
-	var ok := await _until(func() -> bool: return _count(item) >= want, 90.0)
-	Input.action_release("interact")
-	await _frames(5)
-	if not ok:
-		_finish(false, "采不到 %d 份 %s（背包 %d，提示「%s」通知「%s」）" % [want, item, _count(item), main.get_prompt(), main.get_notice()])
-		return -1.0
-	return (elapsed - t0) / float(maxi(1, _count(item) - start))
+	var held := 0.0
+	var tries := 0
+	while _count(item) < want:
+		tries += 1
+		if tries > 6:
+			_finish(false, "伐了 6 棵还不够 %d 份 %s（背包 %d）" % [want, item, _count(item)])
+			return -1.0
+		var tree := _next_tree()
+		if tree.is_empty():
+			_finish(false, "近处找不到走得过去的立着的树")
+			return -1.0
+		face = tree["position"]
+		var key := int(tree["key"])
+		if not await _walk_to(face, float(tree["reach"]) - 0.5, 20.0):
+			_finish(false, "走不到树跟前（%s，人在 %s）" % [face, player.global_position])
+			return -1.0
+		_look_at_point(face)
+		await _frames(3)
+		if not main.get_prompt().contains("伐木"):
+			_finish(false, "树跟前该提示伐木，实为「%s」" % main.get_prompt())
+			return -1.0
+		var solids := scatter.get_solid_count()
+		var t0 := elapsed
+		Input.action_press("interact")
+		await _until(func() -> bool: return _count(item) >= want or not scatter.is_standing(key), 60.0)
+		Input.action_release("interact")
+		held += elapsed - t0
+		await _frames(5)
+		if not scatter.is_standing(key):
+			felled += 1
+			if scatter.get_solid_count() != solids - 1:
+				_finish(false, "树伐倒了树干的碰撞该拆掉（树干 %d → %d）" % [solids, scatter.get_solid_count()])
+				return -1.0
+			_log("伐倒一棵%s（%s）：背包%s %d；%s" % [tree["name"], face, item, _count(item), main.get_notice()])
+	return held / float(maxi(1, _count(item) - start))
 
 
 # ---------------------------------------------------------------- 流程
@@ -319,32 +361,31 @@ func _run() -> void:
 		return
 	var spawn: Vector3 = main.get_spawn_point()
 
-	# 瞬移到最近的林场
-	stage = "去林场"
-	var sid: int = world.find_resource_near(spawn.x, spawn.z, 60000.0, "timber")
-	if sid < 0:
-		_finish(false, "岛群里该有林场")
+	# 瞬移到最近的一片林子边上：离出生最近的一棵阔叶树往出生那边退 6 m
+	stage = "去林子"
+	var first: Dictionary = world.find_scatter_near(spawn.x, spawn.z, 3000.0, "broadleaf")
+	if first.is_empty():
+		_finish(false, "主码头 3 km 内该有树")
 		return
-	site = world.get_resource_site(sid)
-	face = site["face"]
-	pile = site["pile"]
-	_log("林场 #%d %s：采掘面 %s、堆场 %s，离出生 %.1f km" % [sid, site["name"], face, pile, Vector2(face.x - spawn.x, face.z - spawn.z).length() / 1000.0])
+	var root: Vector3 = first["position"]
+	pile = root + Vector3(spawn.x - root.x, 0, spawn.z - root.z).normalized() * 6.0
+	_log("最近的%s %s，离出生 %.0f m；落脚 %s" % [first["name"], root, Vector2(root.x - spawn.x, root.z - spawn.z).length(), pile])
 	if not main.teleport_to(pile):
-		_finish(false, "瞬移不到林场")
+		_finish(false, "瞬移不到林子边上")
 		return
-	if not await _until(func() -> bool: return _standing() and main.get_gather_site() < 0, 30.0):
-		_finish(false, "林场旁站不稳")
+	if not await _until(_standing, 30.0):
+		_finish(false, "林子边上站不稳")
 		return
 
-	# 空手采 6 份木料：4 秒一份
-	stage = "采木料"
-	var per := await _gather_until("timber", 6)
+	# 空手伐 6 份木料：4 秒一份
+	stage = "伐木"
+	var per := await _chop_until("timber", 6)
 	if per < 0.0:
 		return
 	if per < 3.5:
 		_finish(false, "空手伐木该 4 秒一份，实为 %.1f 秒" % per)
 		return
-	_log("空手采了 6 份木料，%.1f 秒一份" % per)
+	_log("空手伐了 6 份木料（倒了 %d 棵），%.1f 秒一份" % [felled, per])
 	await _shot("1_gather")
 
 	# 背包：合木板、工作台，鼠标搬东西
@@ -519,7 +560,7 @@ func _run() -> void:
 	if main.get_held_item() != "stone_axe":
 		_finish(false, "按 4 手上该是石斧（%s）" % main.get_held_item())
 		return
-	var fast := await _gather_until("timber", _count("timber") + 2)
+	var fast := await _chop_until("timber", _count("timber") + 2)
 	if fast < 0.0:
 		return
 	if fast > 2.6:

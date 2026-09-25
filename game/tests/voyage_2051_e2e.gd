@@ -1,6 +1,6 @@
 extends Node
 ## 真实比例岛群里跑一趟船（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
-## 主码头 #1 的停机坪上出生 → 旁边的邑治（409 户）已经铺出来、房子站在地上、地图上的码头与村子和 3D 里一一对应
+## 主码头 #1 的停机坪上出生 → 旁边的邑治（407 户）已经铺出来、房子站在地上、地图上的码头与村子和 3D 里一一对应
 ## → M 开地图点 8.5 km 外的村004 瞬移过去：253 户的房子站在地上、村民陆续出门 → 再开地图点回主码头
 ## → 走过栈桥上船 → 掌舵、升空、R 换到疾档 → 飞 23 km 到岛 #2 的码头 #26（途中贴着地形保持高度）→ 近了换回泊档
 ## → 按 E 靠泊 → 下船走上岛 #2 的停机坪 → 码头边的村子房子站在地上、有人出门。
@@ -301,8 +301,8 @@ func _physics_process(delta: float) -> void:
 				_finish(false, why)
 				return
 			var count: int = near.get_settlement().get_count()
-			if count != 412:
-				_finish(false, "邑治 409 户该有 409 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
+			if count != 410:
+				_finish(false, "邑治 407 户该有 407 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
 				return
 			if sites.get_village(FAR_VILLAGE_ID) != null:
 				_finish(false, "8.5 km 外的村%03d 不该铺出来" % FAR_VILLAGE_ID)
