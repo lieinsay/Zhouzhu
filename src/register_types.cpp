@@ -3,7 +3,6 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/godot.hpp>
 
-#include "backpack_panel.h"
 #include "build_overlay.h"
 #include "build_panel.h"
 #include "dev_tools.h"
@@ -50,7 +49,6 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Ship);
     GDREGISTER_CLASS(IslandMap);
     GDREGISTER_CLASS(FlatMap);
-    GDREGISTER_CLASS(BackpackPanel);
     GDREGISTER_CLASS(InventoryPanel);
     GDREGISTER_CLASS(HotbarBar);
     GDREGISTER_CLASS(PlacedProps);

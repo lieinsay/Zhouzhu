@@ -7,7 +7,8 @@
 #include "play_notice.h"
 #include "player.h"
 
-// 采集：站到资源点的采掘面前（face_range 以内）按下 E 起工，按住才算工时，满一份（种类表的 gather_s 秒）就进背包、存量少一份；
+// 采集：站到资源点的采掘面前（face_range 以内）按下 E 起工，按住才算工时，满一份（种类表的 gather_s 秒；手上拿着对口的工具减半）就进背包、存量少一份；
+// 背包放不下就不采；
 // 一直按着就接着采下一份，采空了停下、说还要几个钟头才回来一份。存量账在地图宿主手里（按全局钟回满）。
 // 与场景无关的玩法部件（不是节点），编排持有、步行时每帧推一下；打包装箱是跑货部件（FreightHand）在堆场做的事。
 class GatherHand {
@@ -18,6 +19,7 @@ class GatherHand {
     double face_range = 2.6; // 离采掘面多近够得着
 
     double stock_now() const;
+    double work_seconds(const PackHand &p_pack) const; // 一份要按住几秒（看手上的工具）
 
 public:
     // 每个物理帧（步行、没开面板时）。p_hands_full：抱着货箱（腾不出手）；p_interact：这一帧刚按下 E。

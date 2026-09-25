@@ -40,7 +40,8 @@ public:
     // 在 p_yard 的画样台开改装：船不在坞里就拒绝（p_say 说为什么），返回是否开了
     bool open_at(Shipyard *p_yard, Ship *p_ship, const Say &p_say);
     void close(Player *p_player);
-    void browse(Ship *p_ship, bool p_interact, const Say &p_say);
+    // p_bay_in_use：船舱里放着东西的格数（并叠后）——改完的船舱比它小就不改
+    void browse(Ship *p_ship, bool p_interact, const Say &p_say, int p_bay_in_use = 0);
     void refresh(const Ship *p_ship);
     void orbit(double p_dx, double p_dy);
 

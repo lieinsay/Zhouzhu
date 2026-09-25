@@ -14,8 +14,10 @@
 #include "gather_hand.h"
 #include "helm.h"
 #include "interior_edit.h"
+#include "item_slots.h"
 #include "map_host.h"
 #include "pack_hand.h"
+#include "place_hand.h"
 #include "player.h"
 #include "refit_bench.h"
 #include "ship.h"
@@ -28,7 +30,10 @@
 //   背包与手持（PackHand，Tab）、农事（FarmHand，按住 E）、改装（RefitBench，画样台按 E）、布置模式（BuildMode，B，开发者）、
 //   跑货（FreightHand：港口村的村仓前接托运、打包、交货，船上货位前装卸；资源点的堆场把背包里的原料打成箱、抱着自家的箱子在堆场 / 村仓拆回背包；
 //   抱着货箱不能掌舵、不能改船，船上有货也不能改船）、采集（GatherHand：资源点的采掘面前按住 E，一份份采进背包）、
-//   室内编辑（InteriorEdit，T，开发者：布置模式里光标下那座，或人站在里面的那座）。
+//   室内编辑（InteriorEdit，T，开发者：布置模式里光标下那座，或人站在里面的那座）、
+//   摆放（PlaceHand：手上拿着能摆的东西时身前出虚影、E 摆、X 收起；E 打开木箱 / 工作台 / 窑）。
+// 背包（Tab）照 MC：36 格、前 9 格是快捷栏（1–9 / 滚轮选，拿在手上的就是选中那格）；人在船上时船舱（每节储存区 12 格，账在这里）列在背包上面，
+// 开着木箱时是木箱；右边是配方，身边 3 m 有工作台 / 窑就多几条能合。开着背包时鼠标放出来，点法照 MC，键盘也能全做。
 // 另外：开局把船停在出发码头的泊位上、人放在它的停机坪上；HUD（位置、目标、背包、钟点、提示）；M 开合岛群地图、开发者点图瞬移；
 // 站稳记落脚点、掉进云海回位并召回漂远的船；到了目的码头那座岛就算到了（arrived），之后目标改指回程；接了托运时目标改指目的村的船台。
 // 泊位候选：地图的码头、船坞，加上各处聚落里盖好的船台（Settlement 组里找，船停不下的带着原因）；都够不着时，
@@ -70,6 +75,8 @@ private:
     Player *player = nullptr;
     Helm helm;
     PackHand pack;
+    ItemSlots hold; // 船舱：格数跟着船的储存区走
+    PlaceHand place;
     FarmHand farm_hand;
     FreightHand freight;
     GatherHand gather;
@@ -86,6 +93,14 @@ private:
     godot::String notice;
     bool map_open = false;
     bool map_viewed = false;
+    // 背包开着时另一边是什么：船舱、摆出来的某件（木箱 / 工作台 / 窑），或什么都没有
+    enum PackSide {
+        SIDE_NONE,
+        SIDE_HOLD,
+        SIDE_PROP,
+    };
+    PackSide pack_side = SIDE_NONE;
+    int pack_prop = -1;
 
     // 野泊：这一个物理帧算好的候选（berths() 一帧里会被问好几回）
     uint64_t wild_frame = ~uint64_t(0);
@@ -107,7 +122,11 @@ private:
     void board();
     // 开合各个面板：同一时刻只开一个；开着的时候人站住、手上的活作废
     void close_panels();
-    void set_pack_open(bool p_open);
+    void set_pack_open(bool p_open, PackSide p_side = SIDE_NONE, int p_prop = -1);
+    void sync_pack_side(); // 开着背包时每帧：另一边的容器、身边的设施
+    void sync_hold(); // 船舱格数跟上船
+    int bay_in_use() const; // 船舱里的东西并叠后占几格
+    void place_act(bool p_interact, bool p_remove); // 这一下 E / X 归摆放：收回、打开（开背包）、摆下
     void set_map_open(bool p_open);
     void on_foot(double p_delta, bool p_interact);
     void toggle_interior(const godot::Vector3 &p_at);
@@ -173,10 +192,27 @@ public:
     godot::String get_freight_status() const { return map ? freight.status_text(map) : godot::String(); }
     godot::Dictionary get_freight_order() const; // 接下的那一单：from / to（村号）、island（目的村的岛）、item、crates、per_crate、fee；没接单为空
     bool is_pack_open() const { return pack.is_open(); }
-    int get_pack_cursor() const { return pack.get_cursor(); }
+    int get_pack_cursor() const { return pack.get_focus_index(); }
     godot::String get_held_seed() const { return godot::String::utf8(pack.held_seed().c_str()); }
     int get_item_count(const godot::String &p_item) const { return pack.items().count(play::to_std(p_item)); }
     godot::PackedStringArray get_pack_items() const;
+    // 格子背包、快捷栏、船舱、合成、摆放（给测试查）
+    int get_hotbar_selected() const { return pack.get_selected(); }
+    godot::String get_held_item() const { return godot::String::utf8(pack.held_item().c_str()); }
+    godot::Dictionary get_pack_slot(int p_slot) const; // { item, count }
+    godot::Dictionary get_pack_cursor_stack() const; // 鼠标上拖着的 { item, count }
+    godot::Vector2i get_pack_focus() const { return godot::Vector2i(pack.get_focus_section(), pack.get_focus_index()); }
+    godot::Vector2 get_pack_slot_center(int p_section, int p_index) const { return pack.slot_center(p_section, p_index); } // 屏幕坐标；section 0 背包 1 另一边 2 配方
+    godot::String get_pack_other_title() const { return pack.is_open() && pack.get_other() ? pack.get_other_title() : godot::String(); }
+    int get_other_count(const godot::String &p_item) const { return pack.get_other() ? pack.get_other()->count(play::to_std(p_item)) : 0; }
+    int get_hold_size() const { return hold.size(); }
+    int get_hold_count(const godot::String &p_item) const { return hold.count(play::to_std(p_item)); }
+    int get_recipe_index(const godot::String &p_id) const;
+    int get_stations() const { return int(pack.get_stations()); }
+    godot::Array get_placed_props() const; // [{ id, item, x, y, z, quarter, used }]
+    godot::Dictionary get_ghost() const; // { on, ok, why, x, y, z, quarter }
+    int get_facing_prop() const { return place.get_facing(); }
+    bool is_aboard() const { return ship && player && ship->is_aboard(player->get_global_position()); }
     bool is_refit_open() const { return refit.is_open(); }
     godot::Vector3i get_refit_cursor() const;
     godot::String get_refit_kind() const { return godot::String(modules::def(refit.get_kind()).id); }

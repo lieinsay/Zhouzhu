@@ -60,4 +60,11 @@ void input_actions::register_all() {
     bind(SAVE_AS, { KEY_N });
     bind(GEAR_UP, { KEY_R, KEY_PAGEUP });
     bind(GEAR_DOWN, { KEY_F, KEY_PAGEDOWN });
+    const Key digits[9] = { KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9 };
+    const Key pads[9] = { KEY_KP_1, KEY_KP_2, KEY_KP_3, KEY_KP_4, KEY_KP_5, KEY_KP_6, KEY_KP_7, KEY_KP_8, KEY_KP_9 };
+    for (int k = 0; k < 9; k++) {
+        bind(HOTBAR[k], { digits[k], pads[k] });
+    }
+    bind(SPLIT, { KEY_Q });
+    bind(QUICK_MOVE, { KEY_F });
 }

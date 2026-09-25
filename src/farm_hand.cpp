@@ -83,6 +83,14 @@ FarmHand::Worked FarmHand::step(Farm *p_farm, Player *p_player, PackHand &p_pack
         farm->set_highlight(Farm::NO_CELL, Color());
     }
 
+    if (p_interact && target_action == Farm::ACTION_HARVEST) {
+        // 收成放不下就不收（一格地至多收 yield 份）
+        const CropDef *crop = catalog::crop(play::to_std(farm->get_crop(target_cell)));
+        if (crop && p_pack.items().room_for(crop->product) < crop->yield) {
+            p_say(String(U"背包满了，收了也没地方放：先腾出一格"));
+            return worked;
+        }
+    }
     if (p_interact) {
         if (target_action != Farm::ACTION_NONE) {
             work_cell = target_cell;
@@ -125,7 +133,7 @@ void FarmHand::finish(PackHand &p_pack, const Say &p_say) {
             break;
         case Farm::ACTION_SOW: {
             const CropDef *crop = catalog::crop_of_seed(p_pack.held_seed());
-            if (crop && p_pack.items().remove(p_pack.held_seed(), 1)) {
+            if (crop && p_pack.items().take(p_pack.held_seed(), 1)) {
                 farm->perform(work_cell, Farm::ACTION_SOW, String(crop->id));
             }
         } break;
@@ -133,7 +141,7 @@ void FarmHand::finish(PackHand &p_pack, const Say &p_say) {
             const CropDef *crop = catalog::crop(play::to_std(farm->get_crop(work_cell)));
             const int gained = farm->perform(work_cell, Farm::ACTION_HARVEST, String());
             if (crop && gained > 0) {
-                p_pack.items().add(crop->product, gained);
+                p_pack.items().put(crop->product, gained); // 起工前查过放得下
                 p_say(vformat(String(U"收了 %d 份%s，放进了背包"), gained, PackHand::name_of(crop->product)));
             }
         } break;
@@ -147,7 +155,7 @@ String FarmHand::refusal(const PackHand &p_pack) const {
     const std::string &held = p_pack.held_seed();
     switch (farm->get_plot(target_cell)) {
         case Farm::PLOT_TILLED:
-            return held.empty() ? String(U"手上没有种子：按 Tab 打开背包选一样") : PackHand::name_of(held) + String(U"种用完了，去背包换一样");
+            return held.empty() ? String(U"手上没拿种子：Tab 打开背包把种子放上快捷栏，按数字键选中") : PackHand::name_of(held) + String(U"种用完了，去背包换一样");
         case Farm::PLOT_GROWING:
             return vformat(String(U"%s还没熟（长了 %d%%）"), PackHand::name_of(play::to_std(farm->get_crop(target_cell))), int(std::lround(farm->get_growth(target_cell) * 100.0)));
         case Farm::PLOT_RIPE:
@@ -190,7 +198,7 @@ String FarmHand::prompt(const PackHand &p_pack) const {
         return String(U"按住 E ") + work_name(target_action);
     }
     if (target_cell != Farm::NO_CELL && farm->get_plot(target_cell) == Farm::PLOT_TILLED) {
-        return held.empty() ? String(U"按 Tab 打开背包，选一样种子") : PackHand::name_of(held) + String(U"种用完了");
+        return held.empty() ? String(U"手上没拿种子：把种子放上快捷栏、按数字键选中") : PackHand::name_of(held) + String(U"种用完了");
     }
     if (target_cell != Farm::NO_CELL && farm->get_plot(target_cell) == Farm::PLOT_GROWING) {
         return vformat(String(U"%s苗 · 长了 %d%%"), PackHand::name_of(play::to_std(farm->get_crop(target_cell))), int(std::lround(farm->get_growth(target_cell) * 100.0)));

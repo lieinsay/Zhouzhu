@@ -4,6 +4,7 @@
 
 #include <godot_cpp/classes/input.hpp>
 
+#include "crops.h"
 #include "input_actions.h"
 #include "world_clock.h"
 
@@ -27,6 +28,10 @@ double clock_hours() {
 }
 
 } // namespace
+
+double GatherHand::work_seconds(const PackHand &p_pack) const {
+    return spot.gather_s / catalog::tool_speed(p_pack.held_item(), spot.item); // 手上拿着对口的工具快一倍
+}
 
 double GatherHand::stock_now() const {
     return spot.stock ? stock_amount(*spot.stock, spot.cap, spot.refill_hours, clock_hours()) : 0.0;
@@ -58,6 +63,10 @@ bool GatherHand::step(MapHost *p_map, Player *p_player, PackHand &p_pack, bool p
             p_say(vformat(String(U"采空了：约 %s后回来一份"), hours_text(wait)));
             return true;
         }
+        if (p_pack.items().room_for(spot.item) < 1) {
+            p_say(String(U"背包满了：先腾出一格（或搬到船舱里）"));
+            return true;
+        }
         working = true;
         work_time = 0.0;
         gathered = 0;
@@ -72,16 +81,21 @@ bool GatherHand::step(MapHost *p_map, Player *p_player, PackHand &p_pack, bool p
     // 人面朝采掘面干活
     p_player->set_facing_yaw(std::atan2(double(at.x - spot.face.x), double(at.z - spot.face.z)));
     work_time += p_delta;
-    if (work_time < spot.gather_s) {
+    if (work_time < work_seconds(p_pack)) {
         return true;
     }
     work_time = 0.0;
+    if (p_pack.items().room_for(spot.item) < 1) {
+        stand_down();
+        p_say(String(U"背包满了"));
+        return true;
+    }
     if (!stock_take(*spot.stock, spot.cap, spot.refill_hours, clock_hours(), 1)) {
         stand_down();
         p_say(String(U"采空了"));
         return true;
     }
-    p_pack.items().add(spot.item, 1);
+    p_pack.items().put(spot.item, 1);
     p_pack.refresh_panel();
     gathered++;
     const int have = p_pack.items().count(spot.item);
@@ -100,8 +114,9 @@ String GatherHand::prompt(const PackHand &p_pack) const {
     }
     const int stock = int(std::floor(stock_now() + 1e-9));
     const String head = spot.name + vformat(String(U" · 存 %d / %d · "), stock, spot.cap);
+    const double seconds = work_seconds(p_pack);
     if (working) {
-        const int filled = int(std::floor(PROGRESS_CELLS * std::min(1.0, work_time / spot.gather_s)));
+        const int filled = int(std::floor(PROGRESS_CELLS * std::min(1.0, work_time / seconds)));
         String bar;
         for (int k = 0; k < PROGRESS_CELLS; k++) {
             bar += k < filled ? String(U"■") : String(U"□");
@@ -112,5 +127,6 @@ String GatherHand::prompt(const PackHand &p_pack) const {
         const double wait = stock_hours_until(*spot.stock, spot.cap, spot.refill_hours, clock_hours(), 1.0);
         return head + vformat(String(U"采空了，约 %s后回来一份"), hours_text(wait));
     }
-    return head + vformat(String(U"按住 E %s（%s 秒一份%s）"), spot.verb, String::num(spot.gather_s, 1), item_name(spot.item));
+    const String tool = seconds < spot.gather_s ? String(U"，手上的") + item_name(p_pack.held_item()) + String(U"快一倍") : String();
+    return head + vformat(String(U"按住 E %s（%s 秒一份%s%s）"), spot.verb, String::num(seconds, 1), item_name(spot.item), tool);
 }

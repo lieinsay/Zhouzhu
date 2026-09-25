@@ -93,7 +93,7 @@ void RefitBench::refresh(const Ship *p_ship) {
     overlay->refresh(p_ship->get_layout_model(), p_ship->get_global_transform(), cursor, state, layout_candidates(p_ship->get_layout_model()));
 }
 
-void RefitBench::browse(Ship *p_ship, bool p_interact, const Say &p_say) {
+void RefitBench::browse(Ship *p_ship, bool p_interact, const Say &p_say, int p_bay_in_use) {
     Input *input = Input::get_singleton();
     auto pressed = [input](const char *p_action) { return input->is_action_just_pressed(p_action); };
     Cell next = cursor;
@@ -141,6 +141,11 @@ void RefitBench::browse(Ship *p_ship, bool p_interact, const Say &p_say) {
                 done = String(U"放了一节") + kind_name;
             }
         }
+    }
+    // 船舱变小了装不下里面的东西：不改（先把东西搬出来）
+    if (reason.empty() && !done.is_empty() && layout_stats(draft).bay < p_bay_in_use) {
+        reason = "船舱里放着 " + std::to_string(p_bay_in_use) + " 格东西，改完只剩 " + std::to_string(layout_stats(draft).bay) + " 格：先搬出来";
+        done = String();
     }
     if (!reason.empty()) {
         p_say(String::utf8(reason.c_str()));

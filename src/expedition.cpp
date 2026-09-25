@@ -17,6 +17,8 @@
 #include "farm.h"
 #include "input_actions.h"
 #include "land_berth.h"
+#include "placeables.h"
+#include "recipes.h"
 #include "settlement.h"
 #include "shipyard.h"
 #include "wild_landing.h"
@@ -41,17 +43,6 @@ Label *make_label(int p_font_size) {
 double yaw_of(const Transform3D &p_transform) {
     return p_transform.basis.get_euler().y;
 }
-
-// 野泊问的地面：地图宿主的地面高与水
-class MapLandingGround : public LandingGround {
-    const MapHost *map;
-
-public:
-    explicit MapLandingGround(const MapHost *p_map) :
-            map(p_map) {}
-    bool height(double p_x, double p_z, double &r_y) const override { return map->map_landing_height(p_x, p_z, r_y); }
-    bool water(double p_x, double p_z) const override { return map->map_water_at(p_x, p_z); }
-};
 
 constexpr double WILD_QUIET_ABOVE_M = 20.0; // 比能野泊的高度再高这么多，就不提野泊的事
 constexpr double WILD_MAX_SPEED = 8.0; // 船慢到这么慢才提野泊（巡航时贴地飞过不算）
@@ -123,6 +114,22 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_held_seed"), &Expedition::get_held_seed);
     ClassDB::bind_method(D_METHOD("get_item_count", "item"), &Expedition::get_item_count);
     ClassDB::bind_method(D_METHOD("get_pack_items"), &Expedition::get_pack_items);
+    ClassDB::bind_method(D_METHOD("get_hotbar_selected"), &Expedition::get_hotbar_selected);
+    ClassDB::bind_method(D_METHOD("get_held_item"), &Expedition::get_held_item);
+    ClassDB::bind_method(D_METHOD("get_pack_slot", "slot"), &Expedition::get_pack_slot);
+    ClassDB::bind_method(D_METHOD("get_pack_cursor_stack"), &Expedition::get_pack_cursor_stack);
+    ClassDB::bind_method(D_METHOD("get_pack_focus"), &Expedition::get_pack_focus);
+    ClassDB::bind_method(D_METHOD("get_pack_slot_center", "section", "index"), &Expedition::get_pack_slot_center);
+    ClassDB::bind_method(D_METHOD("get_pack_other_title"), &Expedition::get_pack_other_title);
+    ClassDB::bind_method(D_METHOD("get_other_count", "item"), &Expedition::get_other_count);
+    ClassDB::bind_method(D_METHOD("get_hold_size"), &Expedition::get_hold_size);
+    ClassDB::bind_method(D_METHOD("get_hold_count", "item"), &Expedition::get_hold_count);
+    ClassDB::bind_method(D_METHOD("get_recipe_index", "id"), &Expedition::get_recipe_index);
+    ClassDB::bind_method(D_METHOD("get_stations"), &Expedition::get_stations);
+    ClassDB::bind_method(D_METHOD("get_placed_props"), &Expedition::get_placed_props);
+    ClassDB::bind_method(D_METHOD("get_ghost"), &Expedition::get_ghost);
+    ClassDB::bind_method(D_METHOD("get_facing_prop"), &Expedition::get_facing_prop);
+    ClassDB::bind_method(D_METHOD("is_aboard"), &Expedition::is_aboard);
     ClassDB::bind_method(D_METHOD("is_refit_open"), &Expedition::is_refit_open);
     ClassDB::bind_method(D_METHOD("get_refit_cursor"), &Expedition::get_refit_cursor);
     ClassDB::bind_method(D_METHOD("get_refit_kind"), &Expedition::get_refit_kind);
@@ -267,10 +274,24 @@ void Expedition::build_hud() {
     status_label = make_label(20);
     status_label->set_position(Vector2(24, 18));
     layer->add_child(status_label);
-    prompt_label = bottom_label(layer, 22, -100);
-    notice_label = bottom_label(layer, 26, -56);
+    prompt_label = bottom_label(layer, 22, -122); // 快捷栏在最底下
+    notice_label = bottom_label(layer, 26, -84);
 
-    pack.setup(starting_pack, top_right_panel<BackpackPanel>(layer, "Backpack"));
+    HotbarBar *hotbar = memnew(HotbarBar);
+    hotbar->set_name("Hotbar");
+    hotbar->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
+    layer->add_child(hotbar);
+    InventoryPanel *inventory = memnew(InventoryPanel);
+    inventory->set_name("Backpack");
+    inventory->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
+    inventory->set_visible(false);
+    layer->add_child(inventory);
+    pack.setup(starting_pack, inventory, hotbar);
+    PlacedProps *placed = memnew(PlacedProps);
+    placed->set_name("Placed");
+    placed->set_as_top_level(true); // 摆出来的东西用全局坐标
+    add_child(placed);
+    place.setup(placed);
     RefitPanel *refit_panel = top_right_panel<RefitPanel>(layer, "Refit");
     RefitOverlay *refit_overlay = memnew(RefitOverlay);
     refit_overlay->set_name("RefitOverlay");
@@ -325,10 +346,63 @@ void Expedition::say(const String &p_text) {
 
 PackedStringArray Expedition::get_pack_items() const {
     PackedStringArray items;
-    for (const ItemStack &stack : pack.items().get_stacks()) {
-        items.push_back(String::utf8(stack.item.c_str()));
+    for (const ItemStack &stack : pack.items().get_slots()) {
+        const String item = String::utf8(stack.item.c_str());
+        if (!stack.empty() && !items.has(item)) {
+            items.push_back(item);
+        }
     }
     return items;
+}
+
+Dictionary Expedition::get_pack_slot(int p_slot) const {
+    Dictionary d;
+    if (p_slot >= 0 && p_slot < pack.items().size()) {
+        d["item"] = String::utf8(pack.items().at(p_slot).item.c_str());
+        d["count"] = pack.items().at(p_slot).count;
+    }
+    return d;
+}
+
+Dictionary Expedition::get_pack_cursor_stack() const {
+    Dictionary d;
+    d["item"] = String::utf8(pack.get_cursor().item.c_str());
+    d["count"] = pack.get_cursor().count;
+    return d;
+}
+
+int Expedition::get_recipe_index(const String &p_id) const {
+    const RecipeDef *r = recipes::find(play::to_std(p_id));
+    return r ? int(r - recipes::RECIPES) : -1;
+}
+
+Array Expedition::get_placed_props() const {
+    Array out;
+    for (const PlacedProp &p : place.get_placed().get_props()) {
+        Dictionary d;
+        d["id"] = p.id;
+        d["item"] = String::utf8(p.item.c_str());
+        d["x"] = p.x;
+        d["y"] = p.y;
+        d["z"] = p.z;
+        d["quarter"] = p.quarter;
+        d["used"] = p.contents.used();
+        out.push_back(d);
+    }
+    return out;
+}
+
+Dictionary Expedition::get_ghost() const {
+    Dictionary d;
+    const PlaceCheck &g = place.get_ghost();
+    d["on"] = place.is_ghost_on();
+    d["ok"] = g.ok;
+    d["why"] = String::utf8(g.why.c_str());
+    d["x"] = g.x;
+    d["y"] = g.y;
+    d["z"] = g.z;
+    d["quarter"] = g.quarter;
+    return d;
 }
 
 PackedStringArray Expedition::get_cargo_items() const {
@@ -382,20 +456,71 @@ Transform3D Expedition::get_destination_berth() const {
 
 void Expedition::close_panels() {
     gather.stand_down();
-    pack.set_open(false);
+    place.stand_down();
+    if (pack.is_open()) {
+        set_pack_open(false);
+    }
     refit.close(player);
     build.close(player);
     interior.close(player);
     player->set_input_blocked(map_open);
 }
 
-void Expedition::set_pack_open(bool p_open) {
+void Expedition::set_pack_open(bool p_open, PackSide p_side, int p_prop) {
     if (p_open) {
         farm_hand.stand_down();
         gather.stand_down();
+        place.stand_down();
+        pack_side = p_side;
+        pack_prop = p_prop;
+        pack.open_with(nullptr, String());
+        sync_pack_side();
+        pack.refresh_panel();
+    } else {
+        pack.close();
+        pack_side = SIDE_NONE;
+        pack_prop = -1;
     }
-    pack.set_open(p_open);
     player->set_input_blocked(p_open || map_open);
+    status_label->set_visible(!p_open && !map_open); // 面板自己有标题与说明，底下的提示行别透上来
+    prompt_label->set_visible(!p_open && !map_open);
+    if (!map_open) {
+        Input::get_singleton()->set_mouse_mode(p_open ? Input::MOUSE_MODE_VISIBLE : Input::MOUSE_MODE_CAPTURED); // 开着背包要用鼠标点
+    }
+}
+
+void Expedition::sync_pack_side() {
+    pack.set_stations(place.stations_near(player->get_global_position()));
+    if (!pack.is_open()) {
+        return;
+    }
+    if (pack_side == SIDE_HOLD && hold.size() > 0) {
+        pack.set_other(&hold, vformat(String(U"船舱（%d 格）"), hold.size()));
+    } else if (pack_side == SIDE_PROP) {
+        pack.set_other(place.container(pack_prop), place.title_of(pack_prop));
+    } else {
+        pack.set_other(nullptr, String());
+    }
+}
+
+void Expedition::sync_hold() {
+    const int bay = ship ? ship->get_bay_slots() : 0;
+    if (hold.size() != bay) {
+        hold.resize(bay); // 改船时已查过放得下（bay_in_use）
+    }
+}
+
+int Expedition::bay_in_use() const {
+    ItemSlots packed = hold;
+    packed.compact();
+    return packed.used();
+}
+
+void Expedition::place_act(bool p_interact, bool p_remove) {
+    const PlaceHand::Step step = place.act(pack, p_interact, p_remove, say_fn());
+    if (step.open >= 0) {
+        set_pack_open(true, place.container(step.open) ? SIDE_PROP : SIDE_NONE, step.open);
+    }
 }
 
 void Expedition::set_map_open(bool p_open) {
@@ -404,13 +529,13 @@ void Expedition::set_map_open(bool p_open) {
     }
     map_open = p_open;
     map_panel->set_visible(map_open);
-    status_label->set_visible(!map_open); // 地图自己有标题，底下那行别透上来
-    prompt_label->set_visible(!map_open);
+    status_label->set_visible(!map_open && !pack.is_open()); // 地图自己有标题，底下那行别透上来
+    prompt_label->set_visible(!map_open && !pack.is_open());
     player->set_input_blocked(map_open || pack.is_open() || refit.is_open() || build.is_open() || interior.is_open());
     if (ship) {
         ship->set_controlled(!map_open && helm.get_state() == Helm::PILOTING);
     }
-    Input::get_singleton()->set_mouse_mode(map_open ? Input::MOUSE_MODE_VISIBLE : Input::MOUSE_MODE_CAPTURED);
+    Input::get_singleton()->set_mouse_mode(map_open || pack.is_open() ? Input::MOUSE_MODE_VISIBLE : Input::MOUSE_MODE_CAPTURED);
     if (map_open) {
         const Vector3 at = player->get_global_position();
         map->map_refresh_panel(map_panel);
@@ -431,13 +556,20 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
     if (p_event->is_action_pressed("ui_cancel")) {
         if (map_open) {
             set_map_open(false);
+        } else if (pack.is_open()) {
+            set_pack_open(false);
         } else {
             input->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
         }
         return;
     }
-    const bool captured = input->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED;
     const Ref<InputEventMouseMotion> motion = p_event;
+    const Ref<InputEventMouseButton> button = p_event;
+    if (!map_open && pack.is_open() && (motion.is_valid() || button.is_valid())) {
+        pack.on_mouse(p_event, say_fn()); // 背包面板上的点法
+        return;
+    }
+    const bool captured = input->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED;
     if (captured && motion.is_valid() && (refit.is_open() || build.is_open() || interior.is_open())) {
         const Vector2 rel = motion->get_relative();
         if (refit.is_open()) {
@@ -449,7 +581,6 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
         }
         return;
     }
-    const Ref<InputEventMouseButton> button = p_event;
     if (captured && (build.is_open() || interior.is_open()) && button.is_valid() && button->is_pressed() &&
             (button->get_button_index() == MOUSE_BUTTON_WHEEL_UP || button->get_button_index() == MOUSE_BUTTON_WHEEL_DOWN)) {
         const bool in = button->get_button_index() == MOUSE_BUTTON_WHEEL_UP;
@@ -458,6 +589,12 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
         } else {
             interior.zoom(in);
         }
+        return;
+    }
+    // 步行时滚轮换快捷栏那一格
+    if (captured && button.is_valid() && button->is_pressed() && helm.get_state() == Helm::ON_FOOT && !refit.is_open() &&
+            (button->get_button_index() == MOUSE_BUTTON_WHEEL_UP || button->get_button_index() == MOUSE_BUTTON_WHEEL_DOWN)) {
+        pack.scroll(button->get_button_index() == MOUSE_BUTTON_WHEEL_UP ? -1 : 1);
         return;
     }
     if (!map_open && button.is_valid() && button->is_pressed() && !captured) {
@@ -471,6 +608,7 @@ void Expedition::_physics_process(double p_delta) {
     if (notice_time <= 0.0 && notice_label) {
         notice_label->set_text(String());
     }
+    sync_hold();
     switch (helm.get_state()) {
         case Helm::ON_FOOT:
             on_foot(p_delta, interact);
@@ -504,13 +642,24 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
     Input *input = Input::get_singleton();
     const Vector3 at = player->get_global_position();
     if (!map_open) {
+        const bool aboard = ship && ship->is_aboard(at);
         if (input->is_action_just_pressed(input_actions::INVENTORY)) {
             if (refit.is_open() || build.is_open() || interior.is_open()) {
                 close_panels(); // Tab 先合上开着的那个
+            } else if (pack.is_open()) {
+                set_pack_open(false);
             } else {
-                set_pack_open(!pack.is_open());
+                set_pack_open(true, aboard && hold.size() > 0 ? SIDE_HOLD : SIDE_NONE); // 在船上：船舱列在背包上面
             }
         }
+        if (!pack.is_open() && !refit.is_open() && !build.is_open() && !interior.is_open()) {
+            for (int k = 0; k < PackHand::HOTBAR; k++) {
+                if (input->is_action_just_pressed(input_actions::HOTBAR[k])) {
+                    pack.select(k); // 1–9：拿起快捷栏那一格
+                }
+            }
+        }
+        sync_pack_side();
         if (dev_tools && input->is_action_just_pressed(input_actions::BUILD_MODE)) {
             if (build.is_open()) {
                 close_panels();
@@ -524,14 +673,28 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
             toggle_interior(at);
         }
         Shipyard *bench = RefitBench::bench_near(map->map_shipyards(), at, helm_range);
+        // 摆放先看一眼（看着哪件、手上能摆的出虚影）；看着木箱 / 工作台 / 窑按 E、手上拿着能摆的按 E、看着摆出来的按 X，
+        // 都先归摆放，堆场、村仓往后排（船上不让摆：货位、舵照旧）
+        const bool panel_open = refit.is_open() || interior.is_open() || build.is_open() || pack.is_open();
+        if (panel_open || freight.is_holding()) {
+            place.stand_down(); // 抱着货箱腾不出手
+        } else {
+            place.look(map, player, pack, aboard);
+        }
+        const bool remove = input->is_action_just_pressed(input_actions::REMOVE);
+        const bool placing_first = !aboard && !panel_open && !freight.is_holding() && place.claims(pack, p_interact, remove);
         if (refit.is_open()) {
-            refit.browse(ship, p_interact, say_fn()); // 开着改装：E 是加一节
+            refit.browse(ship, p_interact, say_fn(), bay_in_use()); // 开着改装：E 是加一节
         } else if (interior.is_open()) {
             interior.browse(p_delta, p_interact, say_fn()); // 开着室内编辑：E 是放家具、开门窗……
         } else if (build.is_open()) {
             build.browse(p_delta, p_interact, say_fn()); // 开着布置模式：E 是放一座
         } else if (pack.is_open()) {
-            pack.browse(p_interact, say_fn()); // 开着背包：E 是拿东西，不是上舵、不是干活
+            pack.browse(p_interact, say_fn()); // 开着背包：E 是拿放东西、合成，不是上舵、不是干活
+        } else if (placing_first) {
+            place_act(p_interact, remove); // 这一下 E / X 是摆放的事（摆、收、打开木箱 / 工作台 / 窑）
+            farm_hand.stand_down();
+            gather.stand_down();
         } else if (freight.step(map, ship, player, pack, p_interact, say_fn())) {
             farm_hand.stand_down(); // 这一下 E 是村仓前 / 货位前 / 堆场的事
             gather.stand_down();
@@ -927,7 +1090,12 @@ void Expedition::update_hud() {
             lines.push_back(pack_line);
             if (pack.is_open()) {
                 pack.refresh_panel();
-                prompt = String(U"W/S 选 · E 拿在手上 · Tab 合上");
+                prompt = String(U"左键拿 / 放 · 右键拿一半 · Shift+左键搬过去 · 点配方合成 · Tab 合上");
+                break;
+            }
+            const bool aboard = ship && ship->is_aboard(at);
+            if (!aboard && !freight.is_holding() && place.engaged()) {
+                prompt = place.prompt(pack); // 看着木箱 / 工作台、手上拿着能摆的：先说这个
                 break;
             }
             const String cargo = freight.prompt(map, pack);
@@ -936,6 +1104,11 @@ void Expedition::update_hud() {
                 break;
             }
             if (near_helm || bench) {
+                break;
+            }
+            const String placing = freight.is_holding() ? String() : place.prompt(pack);
+            if (!placing.is_empty()) {
+                prompt = placing; // 看着摆出来的东西、手上拿着能摆的：摆放的事
                 break;
             }
             const String gathering = gather.prompt(pack);
@@ -976,4 +1149,5 @@ void Expedition::update_hud() {
     }
     status_label->set_text(status);
     prompt_label->set_text(prompt);
+    pack.refresh_bar(); // 采集、收获、摆放都会动快捷栏
 }

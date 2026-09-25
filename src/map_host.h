@@ -9,6 +9,7 @@
 
 #include "freight.h"
 #include "resource_sites.h"
+#include "wild_landing.h"
 
 class Farm;
 class GroundHost;
@@ -101,4 +102,15 @@ public:
     virtual bool map_water_at(double p_x, double p_z) const { return false; }
 
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
+};
+
+// 野泊、摆放问的地面：地图宿主的地面高与水（全局 xz）
+class MapLandingGround : public LandingGround {
+    const MapHost *map;
+
+public:
+    explicit MapLandingGround(const MapHost *p_map) :
+            map(p_map) {}
+    bool height(double p_x, double p_z, double &r_y) const override { return map->map_landing_height(p_x, p_z, r_y); }
+    bool water(double p_x, double p_z) const override { return map->map_water_at(p_x, p_z); }
 };

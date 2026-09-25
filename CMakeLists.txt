@@ -107,8 +107,6 @@ target_sources(
     zhouzhu
     PRIVATE
         ${ZHOUZHU_CORE_SOURCES}
-        src/backpack_panel.cpp
-        src/backpack_panel.h
         src/build_mode.cpp
         src/build_mode.h
         src/build_overlay.cpp
@@ -158,6 +156,8 @@ target_sources(
         src/map_host.h
         src/pack_hand.cpp
         src/pack_hand.h
+        src/place_hand.cpp
+        src/place_hand.h
         src/placed_props.cpp
         src/placed_props.h
         src/play_notice.h
