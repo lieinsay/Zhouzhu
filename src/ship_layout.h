@@ -30,7 +30,8 @@ struct ModuleDef {
     const char *name; // 显示名
     double mass;
     double thrust; // 动力区才有
-    int hold; // 货舱格数
+    int hold; // 货位数（摆货箱的位置）
+    int bay; // 船舱格数（开背包时列在下面的容器格子）
 };
 
 namespace modules {
@@ -110,6 +111,7 @@ struct ShipStats {
     double mass = 0.0;
     double thrust = 0.0;
     int hold = 0;
+    int bay = 0; // 船舱格数：每节储存区 12 格
     double max_speed = 0.0; // m/s
     double max_climb = 0.0;
     double max_yaw_rate = 0.0; // rad/s
@@ -117,6 +119,9 @@ struct ShipStats {
 };
 
 ShipStats layout_stats(const ShipLayout &p_layout);
+
+// 船的局部坐标 (p_x, p_y, p_z) 在不在船上：落在布局某一列的格子里（水平），高度在船底之上、那一列顶层甲板之上 p_head_m 以内
+bool layout_contains(const ShipLayout &p_layout, double p_x, double p_y, double p_z, double p_head_m = 2.5);
 
 // 货位：每节储存区 4 个（两舷各前后两个，中间留走道），货箱就放在这些位置上；总数 = 船况的 hold。
 // 按布局里节的顺序排、每节内 左前 / 左后 / 右前 / 右后，所以改船不动的节，货位编号不变。

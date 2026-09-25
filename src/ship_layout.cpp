@@ -33,9 +33,9 @@ bool sort_key_less(const Module &a, const Module &b) {
 namespace modules {
 
 const ModuleDef DEFS[] = {
-    { ModuleKind::BRIDGE, "bridge", "驾驶区", 1.0, 0.0, 0 },
-    { ModuleKind::STORAGE, "storage", "储存区", 1.2, 0.0, 4 },
-    { ModuleKind::POWER, "power", "动力区", 1.1, 1.0, 0 },
+    { ModuleKind::BRIDGE, "bridge", "驾驶区", 1.0, 0.0, 0, 0 },
+    { ModuleKind::STORAGE, "storage", "储存区", 1.2, 0.0, 4, 12 },
+    { ModuleKind::POWER, "power", "动力区", 1.1, 1.0, 0, 0 },
 };
 
 const ModuleDef &def(ModuleKind p_kind) {
@@ -226,6 +226,7 @@ ShipStats layout_stats(const ShipLayout &p_layout) {
         s.mass += d.mass;
         s.thrust += d.thrust;
         s.hold += d.hold;
+        s.bay += d.bay;
     }
     if (s.sections == 0 || s.thrust <= 0.0) {
         return s;
@@ -235,6 +236,12 @@ ShipStats layout_stats(const ShipLayout &p_layout) {
     s.max_climb = std::min(CLIMB_CAP, CLIMB_PER_RATIO * ratio);
     s.max_yaw_rate = YAW_RATE_TWO_SECTIONS * std::sqrt(2.0 / s.sections);
     return s;
+}
+
+bool layout_contains(const ShipLayout &p_layout, double p_x, double p_y, double p_z, double p_head_m) {
+    const int x = int(std::lround(p_x / CELL_WIDTH_M)), z = int(std::lround(p_z / CELL_LENGTH_M));
+    const int h = p_layout.column_height(x, z);
+    return h > 0 && p_y >= -1.0 && p_y <= cell_deck_y(h - 1) + p_head_m; // 顶层开放甲板在第 h − 1 层的格底
 }
 
 std::vector<Ladder> layout_ladders(const ShipLayout &p_layout) {

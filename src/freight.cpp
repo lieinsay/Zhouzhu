@@ -31,17 +31,7 @@ int specialty_stock(int p_households, const FreightRules &p_rules) {
 }
 
 void crate_color(const std::string &p_item, float &r_r, float &r_g, float &r_b) {
-    if (p_item == "cloth") { // 麻布：本色
-        r_r = 0.86f, r_g = 0.82f, r_b = 0.7f;
-    } else if (p_item == "pottery") { // 陶：赭
-        r_r = 0.7f, r_g = 0.38f, r_b = 0.22f;
-    } else if (p_item == "lacquer") { // 漆：朱黑
-        r_r = 0.5f, r_g = 0.08f, r_b = 0.07f;
-    } else if (deposits::product_color(p_item, r_r, r_g, r_b)) {
-        // 资源点采来的原料：石料灰、黏土赭、浮石灰白带紫……
-    } else {
-        r_r = 0.45f, r_g = 0.5f, r_b = 0.35f;
-    }
+    catalog::item_color(p_item, r_r, r_g, r_b); // 土产、原料、合成的东西：颜色都在物品表里
 }
 
 } // namespace freight
@@ -198,7 +188,7 @@ std::string CargoBook::pack(int p_port, const FreightOrder &p_offer, Inventory &
     return std::string();
 }
 
-std::string CargoBook::deliver(int p_port, Inventory &r_store, Inventory &r_purse, bool &r_done) {
+std::string CargoBook::deliver(int p_port, Inventory &r_store, ItemBag &r_purse, bool &r_done) {
     r_done = false;
     if (!is_holding()) {
         return "手上没有货";
@@ -206,11 +196,14 @@ std::string CargoBook::deliver(int p_port, Inventory &r_store, Inventory &r_purs
     if (!hand.consigned || !active || p_port != order.to) {
         return "这箱不是送这儿的";
     }
+    if (delivered + 1 >= order.crates && r_purse.room_for("coin") < order.fee) {
+        return "背包满了，放不下运费：先腾出一格";
+    }
     r_store.add(hand.item, hand.count);
     hand = Crate();
     delivered++;
     if (delivered >= order.crates) {
-        r_purse.add("coin", order.fee);
+        r_purse.put("coin", order.fee);
         active = false;
         r_done = true;
     }
@@ -244,7 +237,7 @@ std::string CargoBook::lift(int p_slot) {
     return std::string();
 }
 
-std::string CargoBook::pack_goods(const std::string &p_item, int p_per_crate, Inventory &r_pack) {
+std::string CargoBook::pack_goods(const std::string &p_item, int p_per_crate, ItemBag &r_pack) {
     if (is_holding()) {
         return "手上已经抱着一箱了";
     }
@@ -252,21 +245,24 @@ std::string CargoBook::pack_goods(const std::string &p_item, int p_per_crate, In
     if (!r_pack.has(p_item, per_crate)) {
         return "背包里的" + name_of(p_item) + "不够一箱（" + std::to_string(r_pack.count(p_item)) + " / " + std::to_string(per_crate) + " 份）";
     }
-    r_pack.remove(p_item, per_crate);
+    r_pack.take(p_item, per_crate);
     hand.item = p_item;
     hand.count = per_crate;
     hand.consigned = false;
     return std::string();
 }
 
-std::string CargoBook::unpack_goods(Inventory &r_pack) {
+std::string CargoBook::unpack_goods(ItemBag &r_pack) {
     if (!is_holding()) {
         return "手上没有货";
     }
     if (hand.consigned) {
         return "这是托运的货，拆不得";
     }
-    r_pack.add(hand.item, hand.count);
+    if (r_pack.room_for(hand.item) < hand.count) {
+        return "背包放不下这箱" + name_of(hand.item) + "：先腾出地方";
+    }
+    r_pack.put(hand.item, hand.count);
     hand = Crate();
     return std::string();
 }

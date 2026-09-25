@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "crops.h"
+
 namespace deposits {
 
 // 顺序同 skyisle-gen 的 RES_KINDS。数字按人手一把镐、一只筐来定：石料、浮石重，一份几秒；砂金一份要淘半天
@@ -39,27 +41,10 @@ const OreKind ORES[] = {
     { "锡钨", "tin_ore" },
 };
 
-struct RawColor {
-    const char *item;
-    float r, g, b;
-};
-const RawColor RAW_COLORS[] = {
-    { "stone", 0.62f, 0.62f, 0.66f },
-    { "clay", 0.66f, 0.38f, 0.24f },
-    { "floatstone", 0.82f, 0.76f, 0.93f },
-    { "timber", 0.7f, 0.53f, 0.33f },
-    { "gravel", 0.8f, 0.76f, 0.66f },
-    { "gold_dust", 0.93f, 0.78f, 0.28f },
-    { "copper_ore", 0.3f, 0.56f, 0.46f }, // 孔雀石绿
-    { "iron_ore", 0.5f, 0.27f, 0.18f },
-    { "lead_zinc_ore", 0.45f, 0.47f, 0.5f },
-    { "gold_ore", 0.78f, 0.68f, 0.36f },
-    { "manganese_ore", 0.24f, 0.21f, 0.24f },
-    { "tin_ore", 0.4f, 0.4f, 0.43f },
-    { "peat", 0.3f, 0.22f, 0.15f },
-    { "reed", 0.8f, 0.74f, 0.48f },
-    { "sulfur", 0.9f, 0.84f, 0.26f },
-    { "guano", 0.92f, 0.92f, 0.84f },
+// 资源点采得到的原料（颜色在物品表里）
+const char *const RAW_ITEMS[] = {
+    "stone", "clay", "floatstone", "timber", "gravel", "gold_dust", "copper_ore", "iron_ore", "lead_zinc_ore", "gold_ore",
+    "manganese_ore", "tin_ore", "peat", "reed", "sulfur", "guano",
 };
 
 bool is_reed(const DepositKind &p_kind, const std::string &p_subtype) {
@@ -140,9 +125,9 @@ std::string verb_of(const DepositKind &p_kind, const std::string &p_subtype) {
 }
 
 bool product_color(const std::string &p_item, float &r_r, float &r_g, float &r_b) {
-    for (const RawColor &c : RAW_COLORS) {
-        if (p_item == c.item) {
-            r_r = c.r, r_g = c.g, r_b = c.b;
+    for (const char *raw : RAW_ITEMS) {
+        if (p_item == raw) {
+            catalog::item_color(p_item, r_r, r_g, r_b);
             return true;
         }
     }

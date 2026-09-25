@@ -105,13 +105,14 @@ public:
     //   没接单 → 接下 p_offer 并打包一箱；接了这单、在起运村、还有没打包的 → 再打包一箱。打包从 r_store 扣货。
     std::string pack(int p_port, const FreightOrder &p_offer, Inventory &r_store);
     // 在目的村的村仓前交手上那一箱：进 r_store；交齐了把运费放进 r_purse、这单结了（r_done = true）
-    std::string deliver(int p_port, Inventory &r_store, Inventory &r_purse, bool &r_done);
+    // 交齐这一箱要付运费时背包放不下铜钱，就不交
+    std::string deliver(int p_port, Inventory &r_store, ItemBag &r_purse, bool &r_done);
     // 船上货位：手上的箱子放到第 p_slot 个货位 / 从那儿抱起来
     std::string stow(int p_slot);
     std::string lift(int p_slot);
 
     // 自家的货：从背包 r_pack 里拿 p_per_crate 份 p_item 打成一箱抱在手上
-    std::string pack_goods(const std::string &p_item, int p_per_crate, Inventory &r_pack);
-    // 手上那箱自家的货拆开，放回背包
-    std::string unpack_goods(Inventory &r_pack);
+    std::string pack_goods(const std::string &p_item, int p_per_crate, ItemBag &r_pack);
+    // 手上那箱自家的货拆开，放回背包（放不下就不拆）
+    std::string unpack_goods(ItemBag &r_pack);
 };

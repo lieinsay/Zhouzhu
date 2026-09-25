@@ -40,3 +40,7 @@ bool Inventory::remove(const std::string &p_item, int p_count) {
     }
     return true;
 }
+
+int Inventory::room_for(const std::string &p_item) const {
+    return p_item.empty() ? 0 : (1 << 30); // 账不限量
+}

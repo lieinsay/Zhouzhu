@@ -27,11 +27,14 @@
 #include "house_template.h"
 #include "interior_rules.h"
 #include "inventory.h"
+#include "item_slots.h"
 #include "island_field.h"
 #include "island_ground.h"
 #include "land_berth.h"
 #include "map_ground.h"
 #include "map_image.h"
+#include "placeables.h"
+#include "recipes.h"
 #include "settlement_model.h"
 #include "ship_layout.h"
 #include "terrain_tile.h"
@@ -3160,6 +3163,268 @@ void test_wild_landing() {
     check(w.ok && w.side == -1, "只有右舷外有埂：放左舷");
 }
 
+void test_item_slots() {
+    std::printf("item slots\n");
+    // 物品表：叠数、颜色、工具
+    check(catalog::stack_of("stone") == 64 && catalog::stack_of("stone_axe") == 1 && catalog::stack_of("coin") == 999 && catalog::stack_of("nothing") == 64, "一格叠几份");
+    bool items_ok = true;
+    for (int k = 0; k < catalog::ITEM_COUNT; k++) {
+        const ItemDef &d = catalog::ITEMS[k];
+        items_ok = items_ok && d.stack >= 1 && d.r >= 0.0f && d.r <= 1.0f && d.g >= 0.0f && d.g <= 1.0f && d.b >= 0.0f && d.b <= 1.0f;
+        for (int j = 0; j < k; j++) {
+            items_ok = items_ok && std::strcmp(catalog::ITEMS[j].id, d.id) != 0;
+        }
+    }
+    check(items_ok, "物品表：叠数至少 1、颜色在 0–1、id 不重");
+    float r = 0, g = 0, b = 0, r2 = 0, g2 = 0, b2 = 0;
+    catalog::item_color("clay", r, g, b);
+    check(deposits::product_color("clay", r2, g2, b2) && r == r2 && g == g2 && b == b2 && !deposits::product_color("plank", r2, g2, b2), "原料的颜色就是物品表里的；木板不是原料");
+    check(catalog::tool_speed("stone_axe", "timber") == 2.0 && catalog::tool_speed("stone_axe", "stone") == 1.0 && catalog::tool_speed("stone_pick", "floatstone") == 2.0 &&
+                    catalog::tool_speed("stone_pick", "tin_ore") == 2.0 && catalog::tool_speed("wood_shovel", "clay") == 2.0 && catalog::tool_speed("plank", "timber") == 1.0 &&
+                    catalog::tool_speed("stone_pick", "stone_") == 1.0,
+            "工具只对口的原料快（整词比）");
+
+    // 放：先并旧叠，再占主区空格，最后才占快捷栏
+    ItemSlots pack(36, 9);
+    check(pack.size() == 36 && pack.empty() && pack.room_for("stone") == 36 * 64 && pack.room_for("stone_axe") == 36, "空背包 36 格");
+    check(pack.put("millet", 5) == 0 && pack.at(9).item == "millet" && pack.at(0).empty(), "新东西进主区第一格，快捷栏空着");
+    pack.set(0, "stone", 60);
+    check(pack.put("stone", 10) == 0 && pack.at(0).count == 64 && pack.at(10).item == "stone" && pack.at(10).count == 6, "先把快捷栏上那叠添满，余下的占主区空格");
+    check(pack.count("stone") == 70 && pack.used() == 3, "数得清");
+    check(pack.put("stone_axe", 2) == 0 && pack.at(11).item == "stone_axe" && pack.at(12).item == "stone_axe" && pack.at(11).count == 1, "工具一格一把");
+    check(pack.put("", 3) == 0 && pack.put("stone", 0) == 0 && pack.used() == 5, "空名字、0 份不做事");
+    // 拿：全够才拿，从后往前
+    check(!pack.take("stone", 71) && pack.count("stone") == 70, "不够就不动");
+    check(pack.take("stone", 10) && pack.at(10).empty() && pack.at(0).count == 60, "从后往前拿：主区那叠先拿光、快捷栏的后动");
+    check(pack.take_at(0, 100) == 60 && pack.at(0).empty() && pack.at(0).item.empty(), "按格拿，拿光了格子空出来");
+    // 塞满：放不下的份数退回来
+    ItemSlots small(2);
+    check(small.put("clay", 100) == 0 && small.put("clay", 40) == 12 && small.count("clay") == 128 && small.room_for("clay") == 0, "两格黏土满了 128，多的 12 份退回");
+    check(small.put("stone", 1) == 1, "满了别的也放不进");
+
+    // MC 的点法
+    ItemSlots bag(4);
+    bag.set(0, "stone", 10);
+    bag.set(1, "clay", 5);
+    bag.set(2, "stone", 60);
+    ItemStack cursor;
+    slots::left_click(bag, 0, cursor);
+    check(cursor.item == "stone" && cursor.count == 10 && bag.at(0).empty(), "左键空手：拿起整叠");
+    slots::left_click(bag, 2, cursor);
+    check(bag.at(2).count == 64 && cursor.count == 6, "左键同样物品：并到满为止，余下的还拖着");
+    slots::left_click(bag, 1, cursor);
+    check(bag.at(1).item == "stone" && bag.at(1).count == 6 && cursor.item == "clay" && cursor.count == 5, "左键不同物品：对调");
+    slots::left_click(bag, 3, cursor);
+    check(bag.at(3).item == "clay" && cursor.empty() && cursor.item.empty(), "左键空格：放下");
+    slots::right_click(bag, 2, cursor);
+    check(cursor.count == 32 && bag.at(2).count == 32, "右键空手：拿一半（多的那一半）");
+    ItemStack odd;
+    bag.set(0, "clay", 5);
+    slots::right_click(bag, 0, odd);
+    check(odd.count == 3 && bag.at(0).count == 2, "5 份拿一半是 3 份");
+    slots::right_click(bag, 0, odd);
+    check(odd.count == 2 && bag.at(0).count == 3, "右键拖着同样物品：放一份");
+    slots::right_click(bag, 2, cursor);
+    check(cursor.count == 31 && bag.at(2).count == 33, "右键往自己那叠放一份");
+    bag.clear(1);
+    slots::right_click(bag, 1, cursor);
+    check(bag.at(1).item == "stone" && bag.at(1).count == 1 && cursor.count == 30, "右键空格：放一份");
+    slots::right_click(bag, 0, cursor);
+    check(bag.at(0).item == "stone" && bag.at(0).count == 30 && cursor.item == "clay" && cursor.count == 3, "右键不同物品：对调");
+    ItemSlots full(1);
+    full.set(0, "clay", 64);
+    ItemStack one{ "clay", 1 };
+    slots::right_click(full, 0, one);
+    check(full.at(0).count == 64 && one.count == 1, "那叠满了：右键放不进");
+
+    // Shift 点：整叠搬到另一边（先并、再空格）；同一个容器里在两段之间搬
+    ItemSlots hold(3);
+    hold.set(1, "stone", 50);
+    ItemSlots from(2);
+    from.set(0, "stone", 30);
+    check(slots::move_stack(from, 0, hold) == 30 && hold.at(1).count == 64 && hold.at(0).item == "stone" && hold.at(0).count == 16 && from.at(0).empty(),
+            "搬 30 份：先把 50 那叠添满，余下 16 份占第一个空格");
+    ItemSlots tight(1);
+    tight.set(0, "stone", 60);
+    from.set(1, "stone", 10);
+    check(slots::move_stack(from, 1, tight) == 4 && from.at(1).count == 6, "那边只放得下 4 份：余下 6 份留在原格");
+    ItemSlots p2(36, 9);
+    p2.set(3, "timber", 12);
+    check(slots::move_stack(p2, 3, p2, 9, 36) == 12 && p2.at(9).item == "timber" && p2.at(3).empty(), "快捷栏 → 主区");
+    check(slots::move_stack(p2, 9, p2, 0, 9) == 12 && p2.at(0).item == "timber" && p2.at(9).empty(), "主区 → 快捷栏");
+    p2.set(9, "timber", 5);
+    check(slots::move_stack(p2, 9, p2, 9, 36) == 5 && p2.at(9).empty() && p2.at(10).count == 5, "同一段里搬：搬到别的空格，不搬回自己那格");
+    // 数字键对调、拖着的放回去
+    ItemSlots other(2);
+    other.set(0, "clay", 7);
+    slots::swap(other, 0, p2, 1);
+    check(other.at(0).empty() && p2.at(1).item == "clay" && p2.at(1).count == 7, "两个容器之间对调");
+    ItemStack back{ "plank", 70 };
+    ItemSlots one_slot(1);
+    ItemSlots spill(2);
+    check(slots::return_cursor(back, one_slot, &spill) == 0 && one_slot.count("plank") == 64 && spill.count("plank") == 6 && back.empty(), "拖着的放回去：先背包、再另一边");
+
+    // 改格数：变少时先并叠往前挪，挪不下就不改
+    ItemSlots bay(24);
+    bay.set(0, "stone", 10);
+    bay.set(20, "stone", 5);
+    bay.set(23, "clay", 3);
+    check(bay.resize(12) && bay.size() == 12 && bay.count("stone") == 15 && bay.count("clay") == 3 && bay.used() == 2, "24 → 12 格：尾巴上的并到前面");
+    ItemSlots crowded(3);
+    crowded.set(0, "stone", 1);
+    crowded.set(1, "clay", 1);
+    crowded.set(2, "timber", 1);
+    check(!crowded.resize(2) && crowded.size() == 3, "三样东西挤不进两格：不改");
+    check(crowded.resize(5) && crowded.size() == 5 && crowded.at(2).item == "timber", "变多：原样");
+
+    // 跑货认格子背包：拆箱放不下就不拆，运费放不下就不交
+    ItemSlots tiny(1);
+    tiny.set(0, "stone", 62);
+    CargoBook book;
+    book.set_slot_count(4);
+    check(book.pack_goods("stone", 5, tiny).empty() && tiny.count("stone") == 57, "格子背包打一箱");
+    tiny.set(0, "clay", 64);
+    check(book.unpack_goods(tiny).find("放不下") != std::string::npos && book.is_holding_goods(), "背包满了：箱子拆不开，还抱着");
+    tiny.clear(0);
+    check(book.unpack_goods(tiny).empty() && tiny.count("stone") == 5, "腾出地方就拆了");
+}
+
+void test_recipes() {
+    std::printf("recipes\n");
+    bool table_ok = true;
+    for (int k = 0; k < recipes::RECIPE_COUNT; k++) {
+        const RecipeDef &r = recipes::RECIPES[k];
+        table_ok = table_ok && catalog::item(r.product) && r.yield >= 1 && recipes::ingredient_count(r) >= 1 && recipes::find(r.id) == &r;
+        for (int i = 0; i < recipes::ingredient_count(r); i++) {
+            table_ok = table_ok && catalog::item(r.in[i].item) && r.in[i].count >= 1;
+        }
+    }
+    check(table_ok, "配方表：产物与料都在物品表里、份数至少 1、id 找得到");
+    const RecipeDef *plank = recipes::find("plank");
+    const RecipeDef *bench = recipes::find("workbench");
+    const RecipeDef *chest = recipes::find("chest");
+    const RecipeDef *pottery = recipes::find("pottery");
+    check(plank && bench && chest && pottery && !recipes::find("nothing"), "找配方");
+    check(std::string(recipes::station_name(Station::KILN)) == "窑", "设施名");
+
+    ItemSlots pack(36, 9);
+    pack.put("timber", 3);
+    check(recipes::times(*plank, pack) == 3 && recipes::times(*bench, pack) == 0, "料够合几回");
+    check(recipes::craft(*plank, 0, pack).empty() && pack.count("timber") == 2 && pack.count("plank") == 4, "随身：1 份木料劈 4 块板");
+    check(recipes::craft(*bench, 0, pack).empty() && pack.count("plank") == 0 && pack.count("workbench") == 1, "4 块板钉一张工作台");
+    check(recipes::craft(*bench, 0, pack) == "木板不够（0 / 4）", "料不够说差多少：" + recipes::craft(*bench, 0, pack));
+    pack.put("plank", 8);
+    check(recipes::problem(*chest, 0, pack) == "要在工作台旁边做" && pack.count("plank") == 8, "木箱要工作台：身边没有就不做");
+    check(recipes::craft(*chest, station_bit(Station::WORKBENCH), pack).empty() && pack.count("chest") == 1 && pack.count("plank") == 0, "工作台旁：8 块板一只木箱");
+    check(recipes::station_ok(*pottery, station_bit(Station::KILN)) && !recipes::station_ok(*pottery, station_bit(Station::WORKBENCH)), "陶罐只认窑");
+
+    // 放不下就不合：一格背包里 64 块板，木料劈了还有地方？
+    ItemSlots one(1);
+    one.set(0, "timber", 1);
+    check(recipes::craft(*plank, 0, one).empty() && one.count("plank") == 4 && one.count("timber") == 0, "料用光了腾出的格子放产物");
+    ItemSlots two(2);
+    two.set(0, "timber", 2);
+    two.set(1, "plank", 62);
+    check(recipes::craft(*plank, 0, two) == "背包放不下木板" && two.count("timber") == 2, "产物放不下：不做，料不扣");
+    // 拖着的那叠要有地方放回去
+    ItemSlots three(2);
+    three.set(0, "timber", 2); // 合完还剩 1 份木料占着这格
+    const ItemStack dragged{ "clay", 10 }; // 从第 2 格拿起来的
+    check(recipes::problem(*plank, 0, three, dragged).find("拖着的") != std::string::npos, "合完没地方放回拖着的黏土：不合");
+    ItemSlots side(1);
+    check(recipes::problem(*plank, 0, three, dragged, &side).empty(), "另一边（船舱）放得下就行");
+}
+
+void test_placeables() {
+    std::printf("placeables\n");
+    bool table_ok = true;
+    for (int k = 0; k < props::PROP_COUNT; k++) {
+        const PropDef &d = props::PROPS[k];
+        table_ok = table_ok && catalog::item(d.item) && d.width > 0.0 && d.depth > 0.0 && d.height > 0.0;
+        bool craftable = false;
+        for (int i = 0; i < recipes::RECIPE_COUNT; i++) {
+            craftable = craftable || std::string(recipes::RECIPES[i].product) == d.item;
+        }
+        table_ok = table_ok && craftable;
+    }
+    check(table_ok, "摆放物都在物品表里、有尺寸、合得出来");
+    check(props::placeable("chest") && props::find("chest")->slots == 18 && props::find("workbench")->station == int(Station::WORKBENCH) && !props::placeable("plank"), "木箱 18 格、工作台是设施、木板不能摆");
+    // 朝向：人朝北（yaw 0）看，物件正面朝人（朝南）= quarter 0；转一下 90°
+    check(facing_quarter(0.0, 0) == 0 && facing_quarter(1.6, 0) == 1 && facing_quarter(-1.6, 0) == 3 && facing_quarter(3.1, 0) == 2 && facing_quarter(0.0, 1) == 1 &&
+                    facing_quarter(0.0, -1) == 3,
+            "朝向取整到 90°、转几下");
+    double hx = 0, hz = 0;
+    prop_half_extent(*props::find("fence"), 1, hx, hz);
+    check(std::abs(hx - 0.15) < 1e-9 && std::abs(hz - 1.0) < 1e-9, "篱笆转 90° 占地换过来");
+
+    struct FnGround : LandingGround {
+        std::function<bool(double, double, double &)> h;
+        std::function<bool(double, double)> w;
+        bool height(double p_x, double p_z, double &r_y) const override { return h(p_x, p_z, r_y); }
+        bool water(double p_x, double p_z) const override { return w ? w(p_x, p_z) : false; }
+    };
+    FnGround flat;
+    flat.h = [](double, double, double &r_y) {
+        r_y = 100.0;
+        return true;
+    };
+    const PlaceRules rules;
+    Placements placed;
+    const PropDef &bench = *props::find("workbench");
+    // 人在 (0.1, 0.2) 朝北（−z）看：工作台深 0.8，中心在北边 1 + 0.4 m 处（z = −1.2），按 0.5 m 对齐 → z = −1.0
+    PlaceCheck c = plan_placement(flat, bench, 0.1, 0.2, 0.0, 0, placed, rules);
+    check(c.ok && std::abs(c.x - 0.0) < 1e-9 && std::abs(c.z + 1.0) < 1e-9 && c.y == 100.0 && c.quarter == 0, "平地：摆在身前、对齐到 0.5 m");
+    const int bench_id = placed.add("workbench", c);
+    check(placed.size() == 1 && placed.find(bench_id) && placed.get_revision() == 1, "记下一件");
+    PlaceCheck again = plan_placement(flat, bench, 0.1, 0.2, 0.0, 0, placed, rules);
+    check(!again.ok && again.why == "和工作台挤在一起了", "同一处再摆：挤在一起（" + again.why + "）");
+    // 往东挪 1.5 m（工作台宽 1.4）：贴着摆可以
+    check(plan_placement(flat, bench, 1.5, 0.2, 0.0, 0, placed, rules).ok, "挨着摆，中间留 0.1 m：行");
+    // 看着它：身前扇面、够得着
+    check(placed.facing(0.0, 100.0, 0.0, 0.0, rules) == bench_id, "朝北看得见身前的工作台");
+    check(placed.facing(0.0, 100.0, 0.0, 3.14159, rules) == -1, "背对着看不见");
+    check(placed.facing(0.0, 100.0, 3.0, 0.0, rules) == -1, "离得远够不着（离边 3.6 m）");
+    check(placed.stations_near(0.0, 100.0, 0.0, rules.station_range_m) == station_bit(Station::WORKBENCH) && placed.stations_near(0.0, 100.0, 9.0, 3.0) == 0,
+            "身边 3 m 内有工作台；远了没有");
+    // 地面：崖外、水、不平
+    FnGround cliff;
+    cliff.h = [](double, double p_z, double &r_y) {
+        r_y = 100.0;
+        return p_z > -1.6;
+    };
+    PlaceCheck edge = plan_placement(cliff, bench, 0.0, 0.0, 0.0, 0, Placements(), rules);
+    check(!edge.ok && edge.why == "这儿没有地", "占地一角出了崖边：不行");
+    FnGround wet = flat;
+    wet.w = [](double, double p_z) { return p_z < -1.2; };
+    check(plan_placement(wet, bench, 0.0, 0.0, 0.0, 0, Placements(), rules).why == "水里摆不了", "水里不行");
+    FnGround slope;
+    slope.h = [](double p_x, double, double &r_y) {
+        r_y = 100.0 + 0.5 * p_x; // 东高西低：工作台宽 1.4 → 高低差 0.7
+        return true;
+    };
+    PlaceCheck steep = plan_placement(slope, bench, 0.0, 0.0, 0.0, 0, Placements(), rules);
+    check(!steep.ok && steep.why == "地不平（高低差 0.7 m）", "坡上：高低差 0.7 m 不行（" + steep.why + "）");
+    PlaceCheck turned = plan_placement(slope, bench, 0.0, 0.0, 0.0, 1, Placements(), rules);
+    check(turned.ok && turned.quarter == 1 && std::abs(turned.y - turned.low - 0.4) < 1e-9, "转 90° 顺着坡摆：高低差 0.4 m 行，底座垫到低处");
+    // 拆：木箱里有东西不让拆
+    const PropDef &chest = *props::find("chest");
+    PlaceCheck spot = plan_placement(flat, chest, 5.0, 5.0, 0.0, 0, placed, rules);
+    const int chest_id = placed.add("chest", spot);
+    check(placed.find(chest_id)->contents.size() == 18 && pickup_problem(*placed.find(chest_id)).empty(), "空木箱 18 格，能拆");
+    placed.find(chest_id)->contents.put("stone", 3);
+    check(pickup_problem(*placed.find(chest_id)) == "木箱里还有东西，先搬空", "木箱里有东西：不让拆");
+    check(placed.remove(bench_id) && !placed.find(bench_id) && placed.size() == 1 && placed.get_revision() == 3 && !placed.remove(bench_id), "拆掉工作台");
+}
+
+void test_ship_bay() {
+    std::printf("ship bay\n");
+    check(layout_stats(default_layout()).bay == 0, "开局小艇没有储存区：没有船舱");
+    ShipLayout l = default_layout();
+    check(layout_place(l, Cell{ 0, 0, 1 }, ModuleKind::STORAGE).empty() && layout_stats(l).bay == 12 && layout_stats(l).hold == 4, "加一节储存区：船舱 12 格、货位 4 个");
+    check(layout_contains(l, 0.0, 0.2, 0.0) && layout_contains(l, 3.0, 1.0, 7.0) && !layout_contains(l, 4.0, 0.0, 0.0) && !layout_contains(l, 0.0, 0.0, 11.0), "人在不在船上：按列的格子");
+    check(!layout_contains(l, 0.0, 3.0, 0.0) && !layout_contains(l, 0.0, -2.0, 0.0), "高过甲板 2.5 m、低过船底：不算");
+}
+
 int main() {
     test_rng();
     test_noise();
@@ -3199,6 +3464,10 @@ int main() {
     test_freight();
     test_gather();
     test_wild_landing();
+    test_item_slots();
+    test_recipes();
+    test_placeables();
+    test_ship_bay();
     test_goldens();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;

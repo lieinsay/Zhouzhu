@@ -44,6 +44,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/interior_rules.h
     src/inventory.cpp
     src/inventory.h
+    src/item_slots.cpp
+    src/item_slots.h
     src/island_field.cpp
     src/island_field.h
     src/island_ground.cpp
@@ -56,6 +58,10 @@ set(ZHOUZHU_CORE_SOURCES
     src/map_ground.h
     src/map_image.cpp
     src/map_image.h
+    src/placeables.cpp
+    src/placeables.h
+    src/recipes.cpp
+    src/recipes.h
     src/resource_sites.cpp
     src/resource_sites.h
     src/rng.h
