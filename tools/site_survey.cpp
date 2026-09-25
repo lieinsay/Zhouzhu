@@ -4,7 +4,7 @@
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --report out.tsv # 另写逐条明细（每个码头 / 村一行）
 //   build/Release/zhouzhu_site_survey.exe game/worlds/2051 --sim 24      # 另把全部村落开账、在远处结 24 个游戏小时，报花费
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --rivers 河.tsv  # 另把河网逐点写出（河号、x、z、平岸水面、宽、深、汇流）
-//   有 resources.tsv 时另把资源点落一遍（采掘面、堆场），并在每处采掘面 60 m 内给开局的船找野泊得下的位姿（只看地面，不看房子）
+//   有 resources.tsv 时另把资源点落一遍（采掘面、堆场；采掘面要在 60 m 内够得着开局的船野泊，规划时就量好了，只看地面、不看房子）
 //   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
 //         --sim H（远处结算几个游戏小时；0 = 不结）
 //
@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
     std::printf("村落 %zu 处：要盖 %d 座，摆下 %d 座，摆不下 %d 座（%.2f%%，%d 处不全）；共 %.0f ms，最慢 %s %.0f ms\n",
             sites.settlements.size(), wanted, wanted - missing, missing, 100.0 * missing_ratio, short_sites, total_ms, worst_name.c_str(), worst_ms);
 
-    // 资源点：与 World 同一份规划；每处采掘面 60 m 内给开局的船（储存区 + 动力区 + 驾驶区）找一个野泊得下的位姿
+    // 资源点：与 World 同一份规划（含每处采掘面够不够得着船）
     bool resources_ok = true;
     std::string res_text;
     if (read_file(dir + "/resources.tsv", res_text)) {
@@ -265,58 +265,34 @@ int main(int argc, char **argv) {
         for (size_t k = 0; k < plan.failed.size() && k < 10; k++) {
             std::printf("  矿点 %d：附近找不到站得住的地\n", plan.failed[k]);
         }
-        bool layout_ok = false;
-        const ShipLayout ship = layout_from_ids({ "0,0,-2:storage", "0,0,-1:power", "0,0,0:bridge" }, &layout_ok);
-        const WorldLandingGround land(terrain);
-        const LandingRules landing_rules;
-        started = std::chrono::steady_clock::now();
+        // 野泊覆盖：规划时每处采掘面都量过 reach_m 内有没有开局的船落得下的地方（resource_reach，只看地面）
         int landable = 0;
         double reach_sum = 0.0;
         std::vector<const ResourceSite *> stranded;
         std::FILE *res_report = report_path.empty() ? nullptr : std::fopen(report_path.c_str(), "ab");
         for (const ResourceSite &s : plan.sites) {
-            double found = -1.0;
-            for (double r = 20.0; r <= 60.0 + 1e-9 && found < 0.0; r += 10.0) {
-                for (int a = 0; a < 12 && found < 0.0; a++) {
-                    const double x = s.face_x + r * std::cos(a * SURVEY_PI / 6.0), z = s.face_z + r * std::sin(a * SURVEY_PI / 6.0);
-                    bool village = false;
-                    for (const SiteSettlement &v : sites.settlements) {
-                        village = village || std::hypot(v.x - x, v.z - z) < settlement_guess_radius(v) + 10.0;
-                    }
-                    double y = 0.0;
-                    if (village || !land.height(x, z, y)) {
-                        continue;
-                    }
-                    for (double yaw : { 0.0, 0.5 * SURVEY_PI }) {
-                        if (plan_wild_landing(land, ship, x, y + 20.0, z, yaw, landing_rules, s.face_x, s.face_z).ok) {
-                            found = r;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (found >= 0.0) {
+            if (s.reach_m >= 0.0) {
                 landable++;
-                reach_sum += found;
+                reach_sum += s.reach_m;
             } else {
                 stranded.push_back(&s);
             }
             if (res_report) {
-                std::fprintf(res_report, "resource\t%d\t%d\t%d\t1\t1\t0\t%.0f\t0\t%s\n", s.id, s.island, s.cap, found, s.name.c_str());
+                std::fprintf(res_report, "resource\t%d\t%d\t%d\t1\t1\t0\t%.0f\t0\t%s\n", s.id, s.island, s.cap, s.reach_m, s.name.c_str());
             }
         }
         if (res_report) {
             std::fclose(res_report);
         }
         const double landable_ratio = plan.sites.empty() ? 1.0 : double(landable) / double(plan.sites.size());
-        std::printf("野泊：%zu 处资源点里 %d 处（%.1f%%）在采掘面 60 m 内有落得下的地方，平均 %.0f m 远（%.0f ms）", plan.sites.size(), landable, 100.0 * landable_ratio,
-                landable ? reach_sum / landable : 0.0, since_ms(started));
+        std::printf("野泊：%zu 处资源点里 %d 处（%.1f%%）在采掘面 %.0f m 内有落得下的地方，平均 %.0f m 远", plan.sites.size(), landable, 100.0 * landable_ratio,
+                ResourceSiteRules().reach_m, landable ? reach_sum / landable : 0.0);
         for (size_t k = 0; k < stranded.size() && k < 8; k++) {
             std::printf("%s矿点 %d %s（岛 %d）", k == 0 ? "；落不下的：" : "、", stranded[k]->id, stranded[k]->name.c_str(), stranded[k]->island);
         }
         std::printf("\n");
         const double failed_ratio = gatherable ? double(plan.failed.size()) / double(gatherable) : 0.0;
-        resources_ok = layout_ok && failed_ratio <= max_missing && landable_ratio >= 1.0 - 2.0 * max_missing;
+        resources_ok = failed_ratio <= max_missing && landable_ratio >= 1.0 - 2.0 * max_missing;
     }
 
     // 远处结算：与游戏里的远处账房（Hinterland）同一份开账与结算（world_ledger），全部村落从卯时前开账，每处半个钟头一结

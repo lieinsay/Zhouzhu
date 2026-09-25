@@ -19,6 +19,22 @@ struct Frame {
     }
 };
 
+// 船底下要查的一块块矩形（船的局部坐标）：第 0 层每节的船体，加船头楔
+template <typename F>
+void for_each_hull_rect(const ShipLayout &p_layout, F p_fn) {
+    const int front = p_layout.min_z();
+    for (const Module &m : p_layout.get_modules()) {
+        if (m.at.y != 0) {
+            continue;
+        }
+        const double cx = cell_center_x(m.at.x), cz = cell_center_z(m.at.z);
+        p_fn(cx - HULL_HALF_W, cx + HULL_HALF_W, cz - 0.5 * CELL_LENGTH_M, cz + 0.5 * CELL_LENGTH_M);
+        if (m.at.z == front) {
+            p_fn(cx - HULL_HALF_W, cx + HULL_HALF_W, cz - 0.5 * CELL_LENGTH_M - BOW_REACH_M, cz - 0.5 * CELL_LENGTH_M);
+        }
+    }
+}
+
 std::string fmt(const char *p_format, double p_value) {
     char buffer[160];
     std::snprintf(buffer, sizeof(buffer), p_format, p_value);
@@ -117,17 +133,7 @@ WildLanding plan_wild_landing(const LandingGround &p_ground, const ShipLayout &p
             }
         }
     };
-    const int front = p_layout.min_z();
-    for (const Module &m : p_layout.get_modules()) {
-        if (m.at.y != 0) {
-            continue;
-        }
-        const double cx = cell_center_x(m.at.x), cz = cell_center_z(m.at.z);
-        sample_rect(cx - HULL_HALF_W, cx + HULL_HALF_W, cz - 0.5 * CELL_LENGTH_M, cz + 0.5 * CELL_LENGTH_M);
-        if (m.at.z == front) {
-            sample_rect(cx - HULL_HALF_W, cx + HULL_HALF_W, cz - 0.5 * CELL_LENGTH_M - BOW_REACH_M, cz - 0.5 * CELL_LENGTH_M);
-        }
-    }
+    for_each_hull_rect(p_layout, sample_rect);
     if (void_below) {
         out.why = "船底下有一块悬空：离崖边远一点";
         return out;
@@ -185,4 +191,28 @@ WildLanding plan_wild_landing(const LandingGround &p_ground, const ShipLayout &p
     out.out_x = best_out_x, out.out_z = best_out_z;
     out.foot_x = best.foot_x, out.foot_z = best.foot_z, out.foot_y = best.foot_y;
     return out;
+}
+
+bool landing_corners_ok(const LandingGround &p_ground, const ShipLayout &p_layout, double p_x, double p_z, double p_yaw, const LandingRules &p_rules) {
+    if (p_layout.empty()) {
+        return false;
+    }
+    const Frame frame{ p_x, p_z, std::cos(p_yaw), std::sin(p_yaw) };
+    double hi = -1e18, lo = 1e18;
+    bool ok = true;
+    // 每块矩形的四角都是 plan_wild_landing 取样的点：这里不过，那边一定不过
+    for_each_hull_rect(p_layout, [&](double p_x0, double p_x1, double p_z0, double p_z1) {
+        for (int c = 0; c < 4 && ok; c++) {
+            double wx = 0.0, wz = 0.0, y = 0.0;
+            frame.to_world(c & 1 ? p_x1 : p_x0, c & 2 ? p_z1 : p_z0, wx, wz);
+            if (!p_ground.height(wx, wz, y)) {
+                ok = false;
+                break;
+            }
+            hi = std::max(hi, y);
+            lo = std::min(lo, y);
+            ok = hi - lo <= p_rules.max_relief_m;
+        }
+    });
+    return ok;
 }

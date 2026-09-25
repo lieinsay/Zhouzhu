@@ -54,3 +54,7 @@ struct WildLanding {
 // p_x / p_y / p_z：船原点此刻的位置；p_yaw：船的偏航（Godot 的 rotation.y）；p_prefer_*：想让舷梯朝着哪儿（NAN = 不挑）
 WildLanding plan_wild_landing(const LandingGround &p_ground, const ShipLayout &p_layout, double p_x, double p_y, double p_z, double p_yaw,
         const LandingRules &p_rules = LandingRules(), double p_prefer_x = std::numeric_limits<double>::quiet_NaN(), double p_prefer_z = std::numeric_limits<double>::quiet_NaN());
+
+// 粗查：只取船底下每块矩形的四角，都有地、高低差不过 max_relief_m。是 plan_wild_landing 的必要条件（不充分）——
+// 在一大片地上找野泊处时先用它筛掉明摆着落不下的位姿（陡坡、崖边），过了再细查
+bool landing_corners_ok(const LandingGround &p_ground, const ShipLayout &p_layout, double p_x, double p_z, double p_yaw, const LandingRules &p_rules = LandingRules());
