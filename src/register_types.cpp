@@ -11,8 +11,11 @@
 #include "farm.h"
 #include "flat_map.h"
 #include "hinterland.h"
+#include "hotbar_bar.h"
+#include "inventory_panel.h"
 #include "island.h"
 #include "island_map.h"
+#include "placed_props.h"
 #include "player.h"
 #include "refit_overlay.h"
 #include "refit_panel.h"
@@ -48,6 +51,9 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(IslandMap);
     GDREGISTER_CLASS(FlatMap);
     GDREGISTER_CLASS(BackpackPanel);
+    GDREGISTER_CLASS(InventoryPanel);
+    GDREGISTER_CLASS(HotbarBar);
+    GDREGISTER_CLASS(PlacedProps);
     GDREGISTER_CLASS(RefitPanel);
     GDREGISTER_CLASS(RefitOverlay);
     GDREGISTER_CLASS(BuildPanel);

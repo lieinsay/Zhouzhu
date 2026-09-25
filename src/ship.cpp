@@ -165,6 +165,7 @@ void Ship::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_ladder_feet"), &Ship::get_ladder_feet);
     ClassDB::bind_method(D_METHOD("get_ladder_tops"), &Ship::get_ladder_tops);
     ClassDB::bind_method(D_METHOD("get_stats"), &Ship::get_stats);
+    ClassDB::bind_method(D_METHOD("is_aboard", "global"), &Ship::is_aboard);
     ClassDB::bind_method(D_METHOD("can_fly"), &Ship::can_fly);
     ClassDB::bind_method(D_METHOD("get_section_count"), &Ship::get_section_count);
     ClassDB::bind_method(D_METHOD("get_bow_z"), &Ship::get_bow_z);
@@ -688,6 +689,11 @@ String Ship::get_cargo(int p_slot) const {
     return p_slot >= 0 && p_slot < int(cargo.size()) ? cargo[size_t(p_slot)] : String();
 }
 
+bool Ship::is_aboard(const Vector3 &p_global) const {
+    const Vector3 local = get_global_transform().affine_inverse().xform(p_global);
+    return layout_contains(layout, local.x, local.y, local.z);
+}
+
 int Ship::get_cargo_count() const {
     int n = 0;
     for (const String &item : cargo) {
@@ -742,6 +748,7 @@ Dictionary Ship::get_stats() const {
     d["mass"] = stats.mass;
     d["thrust"] = stats.thrust;
     d["hold"] = stats.hold;
+    d["bay"] = stats.bay;
     d["max_speed"] = stats.max_speed;
     d["max_climb"] = stats.max_climb;
     d["max_yaw_rate"] = stats.max_yaw_rate;

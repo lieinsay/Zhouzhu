@@ -120,6 +120,11 @@ public:
     double get_starboard_edge_x() const { return starboard_edge_x(layout); }
     int get_levels() const { return layout.levels(); }
 
+    // 船舱：每节储存区 12 格（开背包时列在背包下面；里面装什么是上层的账）
+    int get_bay_slots() const { return stats.bay; }
+    // 全局的一点在不在船上（落在某一列的格子里、船底之上、顶层甲板之上 2.5 m 以内）
+    bool is_aboard(const godot::Vector3 &p_global) const;
+
     // 货位（编号见 hold_slots）：全局位置是那一格的甲板面；open = 人够得着
     int get_hold_slot_count() const { return int(slots.size()); }
     godot::Vector3 get_hold_slot_position(int p_slot) const;

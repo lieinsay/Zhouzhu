@@ -136,6 +136,8 @@ target_sources(
         src/helm.h
         src/hinterland.cpp
         src/hinterland.h
+        src/hotbar_bar.cpp
+        src/hotbar_bar.h
         src/input_actions.cpp
         src/input_actions.h
         src/interior_edit.cpp
@@ -144,6 +146,8 @@ target_sources(
         src/interior_overlay.h
         src/interior_panel.cpp
         src/interior_panel.h
+        src/inventory_panel.cpp
+        src/inventory_panel.h
         src/island.cpp
         src/island.h
         src/island_map.cpp
@@ -154,6 +158,8 @@ target_sources(
         src/map_host.h
         src/pack_hand.cpp
         src/pack_hand.h
+        src/placed_props.cpp
+        src/placed_props.h
         src/play_notice.h
         src/player.cpp
         src/player.h
