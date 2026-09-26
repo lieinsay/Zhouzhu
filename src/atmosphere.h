@@ -26,6 +26,9 @@ class MapHost;
 //   雨雪：跟着相机的两套粒子，按局地降水强度与雨雪份额、随风斜着下；头顶有顶（屋里、舱房里）就停；风暴时打闪；
 //   全局着色器参数（weather.gdshaderinc）：海拔表（积雪、冰、物候、作物）、地湿、风、极向与夜色——地皮、散布、河读它换季、盖雪、结冰、摆动。
 // 画面按 smoothing（真实秒）跟上天气，瞬移、拨钟、换覆盖都不会一下子跳。
+// 有行星数据的地图（场景里有 PlanetView，行星计划 P1）：日月按相机的经纬度算——纬度就是相机那一点的纬度，钟点是参考经度（2051，152.15°E）的地方时（D10），
+// 相机处的地方时 = 钟点 + 经度差 / 15°；方向落在相机的局部系（画面的世界轴就是它，远处岛群的受光按真球面对得上）。
+// 雾：高过 2.5 km 起按空气变稀减淡（高空往下看不再是一片白），近地面的雾一点不变。
 // 开发者覆盖（set_weather_override）改在天气模型上，按 override_fade 渐入渐出；村子、庄稼读同一个模型，所以也跟着变。
 class Atmosphere : public godot::Node3D {
     GDCLASS(Atmosphere, godot::Node3D)
@@ -58,6 +61,10 @@ class Atmosphere : public godot::Node3D {
     double override_temp = 0.0;
 
     WeatherSample now;
+    double sun_day = 0.0; // 算日月用的「相机处的当地历日」（钟的历日 + 经度差 / 360）
+    double sun_latitude = 30.0, sun_longitude = 0.0, local_offset_h = 0.0;
+    bool on_planet = false;
+    double fog_thin = 1.0; // 高处的雾按空气变稀的倍数
     SunState sun_state;
     MoonState moon_state;
     bool have_look = false;

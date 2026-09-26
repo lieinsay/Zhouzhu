@@ -174,6 +174,8 @@ bool parse_climate(const std::string &p_text, Climate &r_climate, std::string &r
                     c.calendar.solstice_n = v;
                 } else if (key == "lat") {
                     c.calendar.latitude_deg = v;
+                } else if (key == "lon") {
+                    c.calendar.longitude_deg = v;
                 } else if (key == "tilt") {
                     c.calendar.tilt_deg = v;
                 } else if (key == "ref_m") {

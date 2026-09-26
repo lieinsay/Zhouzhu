@@ -23,6 +23,7 @@
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
 #include "map_host.h"
+#include "planet_view.h"
 #include "weather_noise.h"
 #include "weather_view.h"
 #include "world_clock.h"
@@ -35,6 +36,8 @@ constexpr const char *SKY_SHADER = "res://shaders/sky.gdshader";
 constexpr double JUMP_M = 400.0; // 相机一帧挪这么远（瞬移、换地图）：画面不平滑，直接跟上
 constexpr double INDOOR_REACH_M = 30.0; // 头顶这么高以内有东西就算在屋里 / 舱里（不下雨雪）
 constexpr double INDOOR_CHECK_S = 0.25;
+constexpr double FOG_THIN_FROM_M = 2500.0; // 有行星数据时：相机高过这里，雾按 exp(−(高 − 2500) / 7000) 减淡（空气变稀）
+constexpr double FOG_THIN_SCALE_M = 7000.0;
 
 double smooth01(double p_e0, double p_e1, double p_x) {
     const double t = std::clamp((p_x - p_e0) / (p_e1 - p_e0), 0.0, 1.0);
@@ -275,8 +278,21 @@ void Atmosphere::_process(double p_delta) {
     }
     update_override(p_delta);
     now = wx->sample(day, eye.x, eye.z, eye.y);
-    sun_state = sun_at(day, wx->calendar());
-    moon_state = moon_at(day, wx->calendar());
+    // 日月：有行星数据时按相机的经纬度（钟点是参考经度的地方时，D10），否则按这张图的纬度、钟点就是当地时
+    CalendarRules rules = wx->calendar();
+    const PlanetView *pv = PlanetView::active_view();
+    on_planet = pv != nullptr;
+    local_offset_h = pv ? pv->get_local_hour_offset() : 0.0;
+    if (pv) {
+        rules.latitude_deg = pv->get_camera_lat();
+        rules.longitude_deg = pv->get_camera_lon();
+    }
+    sun_latitude = rules.latitude_deg;
+    sun_longitude = rules.longitude_deg;
+    sun_day = day + local_offset_h / 24.0;
+    sun_state = sun_at(sun_day, rules);
+    moon_state = moon_at(sun_day, rules);
+    fog_thin = pv ? std::exp(-std::max(0.0, double(eye.y) - FOG_THIN_FROM_M) / FOG_THIN_SCALE_M) : 1.0;
     update_look(eye, p_delta);
     update_lightning(p_delta);
     update_lights();
@@ -416,7 +432,7 @@ void Atmosphere::update_environment() {
         fog = mix_color(fog, Color(0.9f, 0.62f, 0.45f), dusk * 0.4);
         fog = mix_color(fog, Color(0.56f, 0.6f, 0.65f) * float(0.2 + 0.8 * day), look.overcast * 0.7);
         env->set_fog_light_color(fog);
-        env->set_fog_density(real_t(base_fog + 0.0011 * look.haze + 0.012 * look.fog));
+        env->set_fog_density(real_t((base_fog + 0.0011 * look.haze + 0.012 * look.fog) * fog_thin));
         if (look.fog_height > 0.02 && now.fog_top > -1e8) {
             env->set_fog_height(real_t(now.fog_top));
             env->set_fog_height_density(real_t(0.02 * look.fog_height));
@@ -512,8 +528,14 @@ Dictionary Atmosphere::get_weather() const {
     const CalendarDate date = calendar_date(day, wx->calendar());
     d["sun_altitude"] = sun_state.altitude_deg;
     d["sun_azimuth"] = sun_state.azimuth_deg;
-    d["sunrise"] = sun_state.sunrise_hour;
-    d["sunset"] = sun_state.sunset_hour;
+    // 日出日落按钟点报（相机处的地方时减经度差）
+    d["sunrise"] = sun_state.sunrise_hour - local_offset_h;
+    d["sunset"] = sun_state.sunset_hour - local_offset_h;
+    d["planet"] = on_planet;
+    d["sun_latitude"] = sun_latitude; // 算日月用的纬度、经度（有行星数据时是相机那一点）
+    d["sun_longitude"] = sun_longitude;
+    d["local_offset_h"] = local_offset_h; // 相机处的地方时比钟点早几个钟头
+    d["local_hour"] = std::fmod(std::fmod(sun_day, 1.0) + 1.0, 1.0) * 24.0;
     d["day_length"] = sun_state.day_length_h;
     d["moon_phase"] = moon_state.phase;
     d["moon_lit"] = moon_state.illuminated;

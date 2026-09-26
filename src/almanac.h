@@ -18,6 +18,8 @@ struct CalendarRules {
     double solstice_n = 126.0; // 北半球夏至（太阳直射最北）是一年里的第几天
     double tilt_deg = 34.0; // 黄赤交角
     double latitude_deg = 30.0; // 这一处的纬度（南负）
+    double longitude_deg = 0.0; // 这一处的经度（东正；weather.tsv 头里的 lon）。本文件的钟点都是当地的真太阳时，经度只是记着：
+                                // 全局钟是参考经度的地方时（D10），别处的地方时 = 钟点 + (经度 − 参考经度) / 15（天与光按相机的经纬度算日月）
     double synodic_days = 28.0; // 朔望月
     double new_moon_day = 0.0; // 哪天是朔（一年里的第几天；与月初对齐）
 

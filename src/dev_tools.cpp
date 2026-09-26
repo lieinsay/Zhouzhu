@@ -337,6 +337,13 @@ void DevTools::refresh_weather_panel() {
         lines.push_back(vformat(String(U"%s · 纬度 %s° · 日出 %s 日落 %s（昼 %s h）· 太阳高 %d° · 月亮亮 %d%%"), w["season_name"],
                 String::num(double(w["latitude"]), 1), hour_text(w["sunrise"]), hour_text(w["sunset"]), String::num(double(w["day_length"]), 1),
                 int(std::lround(double(w["sun_altitude"]))), int(std::lround(double(w["moon_lit"]) * 100.0))));
+        if (bool(w.get("planet", false))) {
+            // 行星计划 P1：日月按相机的经纬度，钟点是 2051（152.15°E）的地方时（D10）
+            const double lat = w["sun_latitude"], lon = w["sun_longitude"], off = w["local_offset_h"];
+            lines.push_back(vformat(String(U"相机：%s %s° %s %s° · 地方时 %s（比钟点%s %d 分）"), lat < 0.0 ? String(U"南纬") : String(U"北纬"),
+                    String::num(std::abs(lat), 2), lon < 0.0 ? String(U"西经") : String(U"东经"), String::num(std::abs(lon), 2), hour_text(w["local_hour"]),
+                    off < 0.0 ? String(U"晚") : String(U"早"), int(std::lround(std::abs(off) * 60.0))));
+        }
         lines.push_back(vformat(String(U"此地：%s %s°C · %s %s m/s · 云 %d%% · 降水 %s mm/h（雪 %d%%）· 雾 %d%%"), w["kind_name"],
                 String::num(double(w["temp_c"]), 1), w["wind_name"], String::num(double(w["wind_ms"]), 1), int(std::lround(double(w["cloud"]) * 100.0)),
                 String::num(double(w["precip_mm_h"]), 1), int(std::lround(double(w["snow_frac"]) * 100.0)), int(std::lround(double(w["fog"]) * 100.0))));
