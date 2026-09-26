@@ -172,6 +172,7 @@ void Hinterland::_physics_process(double /*p_delta*/) {
     if (!ready_to_work()) {
         return;
     }
+    StreamTimer timer(world, StreamChannel::HINTERLAND);
     const WorldClock *clock = WorldClock::get_singleton();
     const double now = clock->get_seconds();
     const uint64_t t0 = ticks_us();

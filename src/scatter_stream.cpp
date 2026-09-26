@@ -116,8 +116,14 @@ void ScatterStream::_process(double p_delta) {
         refresh(false);
     }
     // 生成好的块：近的先挂，时间用完了下帧再挂
-    world->scatter_collect(waiting);
+    std::vector<JobPool::Done> done;
+    world->get_pool().collect(JobKind::SCATTER, done);
+    for (JobPool::Done &d : done) {
+        ScatterChunkJob *job = static_cast<ScatterChunkJob *>(d.result.get());
+        waiting.emplace_back(job->key, std::move(job->items));
+    }
     if (!waiting.empty()) {
+        StreamTimer timer(world, StreamChannel::SCATTER);
         std::sort(waiting.begin(), waiting.end(), [&](const auto &a, const auto &b) { return chunk_distance(a.first, focus) < chunk_distance(b.first, focus); });
         const uint64_t started = Time::get_singleton()->get_ticks_usec();
         size_t k = 0;
@@ -130,6 +136,7 @@ void ScatterStream::_process(double p_delta) {
     }
     // 倒着的长回来没有
     if (since_regrow >= regrow_interval) {
+        StreamTimer timer(world, StreamChannel::SCATTER_REGROW);
         since_regrow = 0.0;
         const ScatterLedger &ledger = world->get_scatter_ledger();
         for (auto &[packed, chunk] : chunks) {
@@ -152,6 +159,8 @@ void ScatterStream::refresh(bool p_all) {
     const ResourceScatter &scatter = world->get_scatter();
     const double size = scatter.get_rules().chunk_m;
     // 远了拆；碰撞近了加、远了拆
+    {
+    StreamTimer body_timer(world, StreamChannel::SCATTER_BODY);
     for (auto it = chunks.begin(); it != chunks.end();) {
         Chunk &chunk = it->second;
         const double d = chunk_distance(chunk.key, focus);
@@ -168,10 +177,12 @@ void ScatterStream::refresh(bool p_all) {
         }
         ++it;
     }
+    }
     // 村子铺了新的：重查压着房子的
     SiteStream *sites = world->get_site_stream();
     const int64_t version = sites ? sites->get_village_version() : 0;
     if (version != village_version) {
+        StreamTimer timer(world, StreamChannel::SCATTER_FILTER);
         village_version = version;
         for (auto &[packed, chunk] : chunks) {
             const std::vector<char> before = chunk.hidden;
@@ -204,26 +215,24 @@ void ScatterStream::refresh(bool p_all) {
         }
     }
     std::sort(wanted.begin(), wanted.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
-    if (p_all) {
-        // 瞬移：碰撞半径内的同步生成
-        std::vector<ScatterChunkKey> later;
-        for (const auto &[d, key] : wanted) {
-            if (d <= collision_radius) {
-                adopt(key, scatter.chunk(key));
-            } else {
-                later.push_back(key);
-            }
+    // 还没开工的旧活全撤，按新的远近重排（正在生成的做完照样交回来，挂不挂由距离定）；瞬移时碰撞半径内的同步生成
+    JobPool &pool = world->get_pool();
+    pool.cancel_kind(JobKind::SCATTER);
+    const ResourceScatter *source = &scatter;
+    for (const auto &[d, key] : wanted) {
+        if (p_all && d <= collision_radius) {
+            std::unique_ptr<JobResult> ready = pool.run_now(JobPool::key(JobKind::SCATTER, key.packed()));
+            adopt(key, ready ? std::move(static_cast<ScatterChunkJob *>(ready.get())->items) : scatter.chunk(key));
+            continue;
         }
-        world->scatter_request(later);
-        return;
-    }
-    std::vector<ScatterChunkKey> keys;
-    keys.reserve(wanted.size());
-    for (const auto &w : wanted) {
-        keys.push_back(w.second);
+        pool.submit(JobPool::key(JobKind::SCATTER, key.packed()), d, [source, key]() -> std::unique_ptr<JobResult> {
+            std::unique_ptr<ScatterChunkJob> out = std::make_unique<ScatterChunkJob>();
+            out->key = key;
+            out->items = source->chunk(key);
+            return out;
+        });
     }
     (void)size;
-    world->scatter_request(keys);
 }
 
 void ScatterStream::ensure_near(const Vector3 &p_point) {

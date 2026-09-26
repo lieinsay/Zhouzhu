@@ -1,23 +1,27 @@
 #pragma once
 
-#include <condition_variable>
-#include <deque>
 #include <map>
 #include <memory>
-#include <mutex>
-#include <thread>
 #include <vector>
 
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/static_body3d.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/packed_color_array.hpp>
+#include <godot_cpp/variant/packed_float32_array.hpp>
+#include <godot_cpp/variant/packed_int32_array.hpp>
+#include <godot_cpp/variant/packed_vector2_array.hpp>
+#include <godot_cpp/variant/packed_vector3_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 
 #include "ground_host.h"
+#include "job_pool.h"
 #include "map_host.h"
 #include "resource_scatter.h"
 #include "river_mesh.h"
+#include "stream_meter.h"
 #include "terrain_tile.h"
 #include "world_grid.h"
 #include "world_sites.h"
@@ -25,6 +29,32 @@
 
 class ScatterStream;
 class SiteStream;
+
+// 后台备好的一块地面：网格与碰撞面都已转成引擎的数组（主线程只建节点、挂上）
+struct TileArrays : JobResult {
+    TileKey key;
+    double origin_x = 0.0, origin_z = 0.0;
+    godot::PackedVector3Array vertices, normals;
+    godot::PackedColorArray colors;
+    godot::PackedInt32Array indices;
+    // 碰撞三角面（只有叶块有），切成几段：一段一个凹多边形，主线程一段段挂（整块一次挂要十几毫秒）
+    std::vector<godot::PackedVector3Array> face_parts;
+
+    bool empty() const { return indices.is_empty(); }
+};
+
+// 后台备好的一块水面
+struct RiverArrays : JobResult {
+    RiverChunkKey key;
+    double origin_x = 0.0, origin_z = 0.0;
+    double min_y = 0.0, max_y = 0.0;
+    godot::PackedVector3Array vertices, normals;
+    godot::PackedVector2Array uvs;
+    godot::PackedFloat32Array custom0, custom1;
+    godot::PackedInt32Array indices;
+
+    bool empty() const { return indices.is_empty(); }
+};
 
 // 一个真实比例的岛群（skyisle-gen 第三层产物，经 tools/export_skyisle.py 转成 data_dir 下的 terrain.bin + world.json）。
 // 地面是流式的：焦点（上层每帧 set_focus，通常是玩家）一动，就按 TileLayout 重新选块，缺的块丢给后台线程建网格，
@@ -38,8 +68,10 @@ class SiteStream;
 // 焦点 river_radius 内的块挂上、远了拆；共用一份水面材质（game/shaders/river.gdshader），每帧按全局钟算出今天的径流指数设进去，
 // 所以水涨水落不用重建网格。第 0 天对上 weather.tsv 的第 calendar_offset 天；runoff_override ≥ 0 时不看钟（测试、调试用）。
 // 资源（resource_sites.h、resource_scatter.h）：加载时按 resources.tsv 把全部采场与地标规划好（只有位置），采场的存量账也在这里（按全局钟回满）；
-// 实物由 SiteStream 走近了才摆。地上一株株的散布物由 ResourceScatter 按块生成——生成在这里的后台线程（scatter_request / scatter_collect），
+// 实物由 SiteStream 走近了才摆。地上一株株的散布物由 ResourceScatter 按块生成（ScatterStream 交给这里的任务池），
 // 摆放、碰撞在 ScatterStream 节点；散布物采空、长回的账（ScatterLedger）也在这里。
+// 后台任务池（job_pool.h）：地面块、水面块、散布块、村子与村民的备料都交给这一个池，按离焦点的远近先后做；
+// 做好的在主线程按每帧的时间预算由近及远挂上（挂一块只建节点：引擎的数组在后台就备好了）。
 // 加载完发 rebuilt（只一次）。节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
 class World : public godot::Node3D, public GroundHost, public MapHost {
     GDCLASS(World, godot::Node3D)
@@ -49,7 +81,7 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     godot::NodePath scatter_path = "../ScatterStream"; // 可以不接：那就没有地上的树、灌丛、石块
     int64_t terrain_seed = 2051;
     double split = 1.25; // 焦点到块的距离 < 块边长 × split 就细分
-    int build_threads = 3;
+    int build_threads = 4; // 后台任务池几条线程
     double retarget_distance = 12.0; // 焦点挪了这么远才重新选块
 
     WorldGrid grid;
@@ -67,12 +99,20 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     bool loaded = false;
     SiteStream *site_stream = nullptr;
     ScatterStream *scatter_stream = nullptr;
+    StreamMeter meter; // 流式加载的主线程分项计时（World 与挂在它周围的 SiteStream、ScatterStream、账房都往这里报）
 
     struct Tile {
         TileKey key;
         godot::Node3D *node = nullptr;
+        godot::StaticBody3D *body = nullptr; // 叶块的碰撞体（碰撞一段段往上挂）
+        int parts_left = 0; // 还有几段碰撞没挂
     };
     std::map<uint64_t, Tile> tiles; // 已挂进场景的
+    struct CollisionPart {
+        TileKey key;
+        godot::PackedVector3Array faces;
+    };
+    std::vector<CollisionPart> collision_ready; // 挂上了网格、碰撞还没挂完的段
     std::vector<TileKey> target; // 这一刻该有的
     godot::Vector3 focus;
     godot::Vector3 targeted_focus;
@@ -91,35 +131,26 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     double runoff = 1.0; // 这一帧的径流指数
     godot::Vector3 river_focus;
     bool river_targeted = false;
-    bool river_more = false; // 上一回预算用完、还有近处的块没建
 
-    // 后台建网格：主线程排 jobs、取 results；线程只读 terrain / layout（建好后不再变）
-    std::vector<std::thread> workers;
-    std::mutex queue_mutex;
-    std::condition_variable queue_cv;
-    std::deque<TileKey> jobs;
-    std::vector<std::unique_ptr<TileMesh>> results;
-    std::map<uint64_t, bool> in_flight; // 排了或正在建的
-    bool stopping = false;
-    // 后台生成散布的块（另一条队列：地面块不用等它）
-    std::vector<std::thread> scatter_workers;
-    std::deque<ScatterChunkKey> scatter_jobs;
-    std::map<uint64_t, bool> scatter_in_flight;
-    std::vector<std::pair<ScatterChunkKey, std::vector<ScatterItem>>> scatter_done;
-    int scatter_threads = 2;
+    // 后台任务池；线程只读 terrain / layout / scatter（建好后不再变）。做好的地面块、水面块在这里排着等挂
+    JobPool pool;
+    std::vector<std::unique_ptr<TileArrays>> tile_ready;
+    std::vector<std::unique_ptr<RiverArrays>> river_ready;
 
     bool load();
-    void start_workers();
-    void stop_workers();
-    void worker_loop();
-    void scatter_loop();
+    JobPool::Work tile_job(const TileKey &p_key) const;
+    JobPool::Work river_job(const RiverChunkKey &p_key) const;
     void retarget();
-    void adopt(std::unique_ptr<TileMesh> p_mesh);
+    void adopt(std::unique_ptr<TileArrays> p_tile);
+    void adopt_ready_tiles();
+    void mount_collision(const CollisionPart &p_part);
     void prune();
     bool target_has(const TileKey &p_key) const;
     void update_runoff();
     void stream_rivers(bool p_all);
-    godot::Node3D *make_river_node(const RiverMesh &p_mesh);
+    void adopt_ready_rivers();
+    double river_distance(const RiverChunkKey &p_key) const;
+    void adopt_river(std::unique_ptr<RiverArrays> p_river);
 
 protected:
     static void _bind_methods();
@@ -133,7 +164,7 @@ public:
     godot::Vector3 get_focus() const { return focus; }
     // 焦点挪到该处，并同步建好它周围 p_radius 以内的叶块（瞬移用）
     void prepare_at(const godot::Vector3 &p_point, double p_radius = 160.0);
-    // 该处（世界 xz）脚下的叶块已经挂上（有碰撞）了
+    // 该处（世界 xz）脚下的叶块已经挂上、碰撞也挂齐了
     bool is_ready_at(const godot::Vector3 &p_point) const;
     // 地面高度；没有地返回 NAN
     double get_surface_height(double p_x, double p_z) const;
@@ -176,6 +207,12 @@ public:
     SiteStream *get_site_stream() const { return site_stream; }
     ScatterStream *get_scatter_stream() const { return scatter_stream; }
 
+    // 流式加载的主线程分项计时（stream_meter.h）：C++ 里用 StreamTimer 计一段；脚本按帧号查一帧的分项（毫秒），或各项累计
+    StreamMeter &get_meter() { return meter; }
+    godot::Dictionary get_stream_frame(int64_t p_frame) const; // { 频道名: 毫秒 }；那一帧没记返回空字典
+    godot::Dictionary get_stream_totals() const; // { 频道名: { total_ms, max_ms, frames } }
+    void reset_stream_meter() { meter.reset(); }
+
     // 资源：采场（下标与 get_resource_plan().sites 一致）、地标、散布
     const ResourceData &get_resource_data() const { return resource_data; }
     const ResourcePlan &get_resource_plan() const { return resource_plan; }
@@ -183,9 +220,8 @@ public:
     const ResourceScatter &get_scatter() const { return scatter; }
     ScatterLedger &get_scatter_ledger() { return scatter_ledger; }
     const ScatterLedger &get_scatter_ledger() const { return scatter_ledger; }
-    // 散布的块交给后台生成：p_keys 按先后排好，替掉还没开工的旧活；生成好的由 scatter_collect 取走（追加进 r_done）
-    void scatter_request(const std::vector<ScatterChunkKey> &p_keys);
-    void scatter_collect(std::vector<std::pair<ScatterChunkKey, std::vector<ScatterItem>>> &r_done);
+    // 后台任务池（散布、村子、村民的备料也交给它；优先级填离焦点多远，米）
+    JobPool &get_pool() { return pool; }
     static double clock_hours(); // 全局钟：从第 0 天子夜起的游戏钟头
     // 测试与调试：按采场号查一处采场 { index, kind, face, pile, item, name, grade, cap, stock（此刻）, island, reach, landing, built }；没落地返回空字典
     godot::Dictionary get_resource_site(int p_working_id) const;
@@ -261,4 +297,17 @@ public:
     double get_calendar_offset() const { return calendar_offset; }
     void set_runoff_override(double p_value);
     double get_runoff_override() const { return runoff_override; }
+};
+
+// 主线程计一段：构造时记下时刻，析构时把这段耗时记到 World 的分项计时上（p_world 为 nullptr 就不记）
+class StreamTimer {
+    StreamMeter *meter;
+    StreamChannel channel;
+    uint64_t started;
+
+public:
+    StreamTimer(World *p_world, StreamChannel p_channel);
+    ~StreamTimer();
+    StreamTimer(const StreamTimer &) = delete;
+    StreamTimer &operator=(const StreamTimer &) = delete;
 };

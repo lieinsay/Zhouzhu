@@ -32,9 +32,11 @@ using namespace godot;
 
 namespace {
 
-constexpr uint64_t ADOPT_BUDGET_USEC = 6000; // 每帧最多花这么久往场景里挂块
-constexpr uint64_t RIVER_BUDGET_USEC = 3000; // 每帧最多花这么久建水面块
+constexpr uint64_t ADOPT_BUDGET_USEC = 4000; // 每帧最多花这么久往场景里挂地面块（连碰撞）
+constexpr int64_t COLLISION_PART_FACES = 2048; // 叶块的碰撞按这么多个三角面一段（一段挂上 1～3 ms）
+constexpr uint64_t RIVER_BUDGET_USEC = 2000; // 每帧最多花这么久挂水面块
 constexpr double RIVER_RETARGET_M = 64.0; // 焦点挪了这么远才重新挑水面块
+constexpr double RIVER_SYNC_M = 1000.0; // 瞬移时这么近的水面块当场建好，远的照常排队
 constexpr const char *RIVER_SHADER = "res://shaders/river.gdshader";
 
 double tile_distance(const TileLayout &p_layout, const TileKey &p_key, double p_x, double p_z) {
@@ -44,6 +46,41 @@ double tile_distance(const TileLayout &p_layout, const TileKey &p_key, double p_
     const double dx = std::max({ x - p_x, 0.0, p_x - (x + s) });
     const double dz = std::max({ z - p_z, 0.0, p_z - (z + s) });
     return std::hypot(dx, dz);
+}
+
+// 任务池的号：地面块用 TileKey::packed（层号在 48 位以上，放得下）；水面块的格号各取 28 位
+uint64_t river_id(const RiverChunkKey &p_key) {
+    return (uint64_t(uint32_t(p_key.ix) & 0xFFFFFFFu) << 28) | uint64_t(uint32_t(p_key.iz) & 0xFFFFFFFu);
+}
+
+RiverChunkKey river_key_of(uint64_t p_id) {
+    const auto signed28 = [](uint64_t v) { return int(int32_t(uint32_t(v << 4)) >> 4); };
+    return RiverChunkKey{ signed28((p_id >> 28) & 0xFFFFFFFu), signed28(p_id & 0xFFFFFFFu) };
+}
+
+// 平铺的 float（每点 N 个）→ 引擎的数组：直接写内存，不逐个 set（Debug 下逐个 set 一块地面要好几毫秒）
+PackedVector3Array vec3s(const std::vector<float> &p_flat) {
+    PackedVector3Array out;
+    out.resize(int64_t(p_flat.size() / 3));
+    Vector3 *w = out.ptrw();
+    for (int64_t k = 0; k < out.size(); k++) {
+        w[k] = Vector3(p_flat[size_t(k) * 3], p_flat[size_t(k) * 3 + 1], p_flat[size_t(k) * 3 + 2]);
+    }
+    return out;
+}
+
+PackedInt32Array int32s(const std::vector<int32_t> &p_values) {
+    PackedInt32Array out;
+    out.resize(int64_t(p_values.size()));
+    std::copy(p_values.begin(), p_values.end(), out.ptrw());
+    return out;
+}
+
+PackedFloat32Array float32s(const std::vector<float> &p_values) {
+    PackedFloat32Array out;
+    out.resize(int64_t(p_values.size()));
+    std::copy(p_values.begin(), p_values.end(), out.ptrw());
+    return out;
 }
 
 } // namespace
@@ -86,6 +123,9 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_calendar_offset"), &World::get_calendar_offset);
     ClassDB::bind_method(D_METHOD("set_runoff_override", "value"), &World::set_runoff_override);
     ClassDB::bind_method(D_METHOD("get_runoff_override"), &World::get_runoff_override);
+    ClassDB::bind_method(D_METHOD("get_stream_frame", "frame"), &World::get_stream_frame);
+    ClassDB::bind_method(D_METHOD("get_stream_totals"), &World::get_stream_totals);
+    ClassDB::bind_method(D_METHOD("reset_stream_meter"), &World::reset_stream_meter);
 
     ClassDB::bind_method(D_METHOD("set_data_dir", "value"), &World::set_data_dir);
     ClassDB::bind_method(D_METHOD("get_data_dir"), &World::get_data_dir);
@@ -113,7 +153,7 @@ void World::_bind_methods() {
 }
 
 World::~World() {
-    stop_workers();
+    pool.stop(); // 线程读着 terrain / layout / scatter：先收线程，成员再析构
 }
 
 void World::_ready() {
@@ -128,7 +168,7 @@ void World::_ready() {
         set_process(false);
         return;
     }
-    start_workers();
+    pool.start(build_threads);
     set_process(true);
     emit_signal("rebuilt"); // 挂在下面的 Farm、Shipyard 先于这里 _ready，此刻才等到地面
 }
@@ -250,37 +290,59 @@ void World::update_runoff() {
     }
 }
 
-Node3D *World::make_river_node(const RiverMesh &m) {
+JobPool::Work World::river_job(const RiverChunkKey &p_key) const {
+    const WorldTerrain *t = &terrain;
+    const RiverMeshRules rules = river_mesh_rules;
+    return [t, rules, p_key]() -> std::unique_ptr<JobResult> {
+        const RiverMesh m = build_river_mesh(*t, p_key, rules);
+        std::unique_ptr<RiverArrays> out = std::make_unique<RiverArrays>();
+        out->key = p_key;
+        out->origin_x = m.origin_x;
+        out->origin_z = m.origin_z;
+        out->min_y = m.min_y;
+        out->max_y = m.max_y;
+        if (m.empty()) {
+            return out;
+        }
+        out->vertices = vec3s(m.positions);
+        out->normals = vec3s(m.normals);
+        out->uvs.resize(int64_t(m.uvs.size() / 2));
+        Vector2 *uv = out->uvs.ptrw();
+        for (int64_t k = 0; k < out->uvs.size(); k++) {
+            uv[k] = Vector2(m.uvs[size_t(k) * 2], m.uvs[size_t(k) * 2 + 1]);
+        }
+        out->custom0 = float32s(m.custom0);
+        out->custom1 = float32s(m.custom1);
+        out->indices = int32s(m.indices);
+        return out;
+    };
+}
+
+double World::river_distance(const RiverChunkKey &p_key) const {
+    const double chunk = river_mesh_rules.chunk_m;
+    const double x0 = p_key.ix * chunk, z0 = p_key.iz * chunk;
+    const double dx = std::max({ x0 - focus.x, 0.0, double(focus.x) - (x0 + chunk) });
+    const double dz = std::max({ z0 - focus.z, 0.0, double(focus.z) - (z0 + chunk) });
+    return std::hypot(dx, dz);
+}
+
+void World::adopt_river(std::unique_ptr<RiverArrays> p_river) {
+    const RiverArrays &m = *p_river;
+    if (river_nodes.count(m.key.packed()) || river_distance(m.key) > river_radius * 1.25) {
+        return; // 已经有了，或者焦点走远了
+    }
     if (m.empty() || river_material.is_null()) {
-        return nullptr;
+        river_nodes[m.key.packed()] = nullptr;
+        return;
     }
-    const int64_t n = int64_t(m.positions.size() / 3);
-    PackedVector3Array vertices, normals;
-    PackedVector2Array uvs;
-    PackedFloat32Array custom0, custom1;
-    PackedInt32Array indices;
-    vertices.resize(n);
-    normals.resize(n);
-    uvs.resize(n);
-    for (int64_t k = 0; k < n; k++) {
-        vertices.set(k, Vector3(m.positions[k * 3], m.positions[k * 3 + 1], m.positions[k * 3 + 2]));
-        normals.set(k, Vector3(m.normals[k * 3], m.normals[k * 3 + 1], m.normals[k * 3 + 2]));
-        uvs.set(k, Vector2(m.uvs[k * 2], m.uvs[k * 2 + 1]));
-    }
-    custom0.resize(int64_t(m.custom0.size()));
-    std::copy(m.custom0.begin(), m.custom0.end(), custom0.ptrw());
-    custom1.resize(int64_t(m.custom1.size()));
-    std::copy(m.custom1.begin(), m.custom1.end(), custom1.ptrw());
-    indices.resize(int64_t(m.indices.size()));
-    std::copy(m.indices.begin(), m.indices.end(), indices.ptrw());
     Array arrays;
     arrays.resize(Mesh::ARRAY_MAX);
-    arrays[Mesh::ARRAY_VERTEX] = vertices;
-    arrays[Mesh::ARRAY_NORMAL] = normals;
-    arrays[Mesh::ARRAY_TEX_UV] = uvs;
-    arrays[Mesh::ARRAY_CUSTOM0] = custom0;
-    arrays[Mesh::ARRAY_CUSTOM1] = custom1;
-    arrays[Mesh::ARRAY_INDEX] = indices;
+    arrays[Mesh::ARRAY_VERTEX] = m.vertices;
+    arrays[Mesh::ARRAY_NORMAL] = m.normals;
+    arrays[Mesh::ARRAY_TEX_UV] = m.uvs;
+    arrays[Mesh::ARRAY_CUSTOM0] = m.custom0;
+    arrays[Mesh::ARRAY_CUSTOM1] = m.custom1;
+    arrays[Mesh::ARRAY_INDEX] = m.indices;
     const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) |
             (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT);
     Ref<ArrayMesh> mesh;
@@ -297,24 +359,17 @@ Node3D *World::make_river_node(const RiverMesh &m) {
     view->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
     view->set_position(Vector3(real_t(m.origin_x), 0, real_t(m.origin_z)));
     add_child(view);
-    return view;
+    river_nodes[m.key.packed()] = view;
 }
 
 void World::stream_rivers(bool p_all) {
     if (river_chunk_keys.empty()) {
         return;
     }
-    const double chunk = river_mesh_rules.chunk_m;
-    auto distance = [&](const RiverChunkKey &k) {
-        const double x0 = k.ix * chunk, z0 = k.iz * chunk;
-        const double dx = std::max({ x0 - focus.x, 0.0, double(focus.x) - (x0 + chunk) });
-        const double dz = std::max({ z0 - focus.z, 0.0, double(focus.z) - (z0 + chunk) });
-        return std::hypot(dx, dz);
-    };
-    // 远了拆
+    // 远了拆；排着的远了撤掉
     for (auto it = river_nodes.begin(); it != river_nodes.end();) {
         const RiverChunkKey key{ int(it->first >> 32), int(int32_t(uint32_t(it->first))) };
-        if (distance(key) > river_radius * 1.25) {
+        if (river_distance(key) > river_radius * 1.25) {
             if (it->second) {
                 it->second->queue_free();
             }
@@ -323,24 +378,45 @@ void World::stream_rivers(bool p_all) {
             ++it;
         }
     }
-    // 近的先建，每帧有预算（瞬移时 p_all 一次建完）
-    std::vector<std::pair<double, RiverChunkKey>> wanted;
+    pool.reprioritize(JobKind::RIVER, [this](uint64_t p_key) {
+        const double d = river_distance(river_key_of(JobPool::id_of(p_key)));
+        return d > river_radius * 1.25 ? -1.0 : d;
+    });
+    // 缺的交给后台（近的先）；瞬移时 RIVER_SYNC_M 以内的当场做完挂上
     for (const RiverChunkKey &key : river_chunk_keys) {
-        const double d = distance(key);
-        if (d <= river_radius && river_nodes.find(key.packed()) == river_nodes.end()) {
-            wanted.push_back({ d, key });
+        const double d = river_distance(key);
+        if (d > river_radius || river_nodes.count(key.packed())) {
+            continue;
         }
+        const uint64_t job = JobPool::key(JobKind::RIVER, river_id(key));
+        if (!p_all || d > RIVER_SYNC_M) {
+            pool.submit(job, d, river_job(key));
+            continue;
+        }
+        std::unique_ptr<JobResult> done = pool.run_now(job);
+        if (!done) {
+            done = river_job(key)();
+        }
+        adopt_river(std::unique_ptr<RiverArrays>(static_cast<RiverArrays *>(done.release())));
     }
-    std::sort(wanted.begin(), wanted.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
+}
+
+void World::adopt_ready_rivers() {
+    std::vector<JobPool::Done> done;
+    pool.collect(JobKind::RIVER, done);
+    for (JobPool::Done &d : done) {
+        river_ready.emplace_back(static_cast<RiverArrays *>(d.result.release()));
+    }
+    if (river_ready.empty()) {
+        return;
+    }
+    std::sort(river_ready.begin(), river_ready.end(), [this](const auto &a, const auto &b) { return river_distance(a->key) < river_distance(b->key); });
     const uint64_t started = Time::get_singleton()->get_ticks_usec();
-    river_more = false;
-    for (const auto &[d, key] : wanted) {
-        if (!p_all && Time::get_singleton()->get_ticks_usec() - started > RIVER_BUDGET_USEC) {
-            river_more = true;
-            break;
-        }
-        river_nodes[key.packed()] = make_river_node(build_river_mesh(terrain, key, river_mesh_rules));
+    size_t k = 0;
+    for (; k < river_ready.size() && Time::get_singleton()->get_ticks_usec() - started < RIVER_BUDGET_USEC; k++) {
+        adopt_river(std::move(river_ready[k]));
     }
+    river_ready.erase(river_ready.begin(), river_ready.begin() + int64_t(k));
 }
 
 int World::get_river_chunk_count() const {
@@ -405,108 +481,41 @@ Dictionary World::find_river_near(double p_x, double p_z, double p_radius, doubl
     return out;
 }
 
-void World::start_workers() {
-    stopping = false;
-    for (int k = 0; k < std::max(1, build_threads); k++) {
-        workers.emplace_back([this]() { worker_loop(); });
-    }
-    if (scatter.valid()) {
-        for (int k = 0; k < std::max(1, scatter_threads); k++) {
-            scatter_workers.emplace_back([this]() { scatter_loop(); });
+JobPool::Work World::tile_job(const TileKey &p_key) const {
+    const WorldTerrain *t = &terrain;
+    const TileLayout *l = &layout;
+    return [t, l, p_key]() -> std::unique_ptr<JobResult> {
+        const TileMesh m = build_tile_mesh(*t, *l, p_key);
+        std::unique_ptr<TileArrays> out = std::make_unique<TileArrays>();
+        out->key = p_key;
+        out->origin_x = m.origin_x;
+        out->origin_z = m.origin_z;
+        if (m.empty()) {
+            return out;
         }
-    }
-}
-
-void World::stop_workers() {
-    {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        stopping = true;
-        jobs.clear();
-        scatter_jobs.clear();
-    }
-    queue_cv.notify_all();
-    for (std::thread &t : workers) {
-        if (t.joinable()) {
-            t.join();
+        out->vertices = vec3s(m.positions);
+        out->normals = vec3s(m.normals);
+        out->colors.resize(int64_t(m.colors.size() / 4));
+        Color *c = out->colors.ptrw();
+        for (int64_t k = 0; k < out->colors.size(); k++) {
+            c[k] = Color(m.colors[size_t(k) * 4], m.colors[size_t(k) * 4 + 1], m.colors[size_t(k) * 4 + 2], m.colors[size_t(k) * 4 + 3]);
         }
-    }
-    workers.clear();
-    for (std::thread &t : scatter_workers) {
-        if (t.joinable()) {
-            t.join();
-        }
-    }
-    scatter_workers.clear();
-}
-
-void World::scatter_loop() {
-    for (;;) {
-        ScatterChunkKey key;
-        {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            queue_cv.wait(lock, [this]() { return stopping || !scatter_jobs.empty(); });
-            if (stopping) {
-                return;
+        out->indices = int32s(m.indices);
+        // 碰撞按生成的先后切段（一行行生成的，相邻的三角面挨着：每段是一条带子）
+        const int64_t faces = int64_t(m.collision.size() / 9);
+        for (int64_t f0 = 0; f0 < faces; f0 += COLLISION_PART_FACES) {
+            const int64_t n = std::min(COLLISION_PART_FACES, faces - f0);
+            PackedVector3Array part;
+            part.resize(n * 3);
+            Vector3 *w = part.ptrw();
+            const float *src = m.collision.data() + f0 * 9;
+            for (int64_t k = 0; k < n * 3; k++) {
+                w[k] = Vector3(src[k * 3], src[k * 3 + 1], src[k * 3 + 2]);
             }
-            key = scatter_jobs.front();
-            scatter_jobs.pop_front();
-            scatter_in_flight[key.packed()] = true;
+            out->face_parts.push_back(std::move(part));
         }
-        std::vector<ScatterItem> items = scatter.chunk(key);
-        {
-            std::lock_guard<std::mutex> lock(queue_mutex);
-            scatter_in_flight.erase(key.packed());
-            scatter_done.emplace_back(key, std::move(items));
-        }
-    }
-}
-
-void World::scatter_request(const std::vector<ScatterChunkKey> &p_keys) {
-    {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        // 还没开工的旧活全作废（正在生成的做完照样交回来，用不用由上层定）
-        for (const ScatterChunkKey &key : scatter_jobs) {
-            scatter_in_flight.erase(key.packed());
-        }
-        scatter_jobs.clear();
-        for (const ScatterChunkKey &key : p_keys) {
-            if (scatter_in_flight.find(key.packed()) == scatter_in_flight.end()) {
-                scatter_jobs.push_back(key);
-                scatter_in_flight[key.packed()] = false;
-            }
-        }
-    }
-    queue_cv.notify_all();
-}
-
-void World::scatter_collect(std::vector<std::pair<ScatterChunkKey, std::vector<ScatterItem>>> &r_done) {
-    std::lock_guard<std::mutex> lock(queue_mutex);
-    for (auto &done : scatter_done) {
-        r_done.push_back(std::move(done));
-    }
-    scatter_done.clear();
-}
-
-void World::worker_loop() {
-    for (;;) {
-        TileKey key;
-        {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            queue_cv.wait(lock, [this]() { return stopping || !jobs.empty(); });
-            if (stopping) {
-                return;
-            }
-            key = jobs.front();
-            jobs.pop_front();
-            in_flight[key.packed()] = true;
-        }
-        std::unique_ptr<TileMesh> mesh = std::make_unique<TileMesh>(build_tile_mesh(terrain, layout, key));
-        {
-            std::lock_guard<std::mutex> lock(queue_mutex);
-            in_flight.erase(key.packed());
-            results.push_back(std::move(mesh));
-        }
-    }
+        return out;
+    };
 }
 
 bool World::target_has(const TileKey &p_key) const {
@@ -518,65 +527,31 @@ void World::retarget() {
     has_target = true;
     target = layout.select(focus.x, focus.z, split);
     std::sort(target.begin(), target.end());
-
-    std::vector<TileKey> wanted;
+    // 还没开建的旧活全撤（正在建的建完再说：挂的时候不在目标里就丢），缺的按离焦点的远近重排；一样近时细的先建
+    pool.cancel_kind(JobKind::TILE);
+    const double fx = focus.x, fz = focus.z;
     for (const TileKey &key : target) {
         if (tiles.find(key.packed()) == tiles.end()) {
-            wanted.push_back(key);
+            pool.submit(JobPool::key(JobKind::TILE, key.packed()), tile_distance(layout, key, fx, fz) - 1e-3 * key.level, tile_job(key));
         }
     }
-    // 近的先建；一样近时细的先建
-    const double fx = focus.x, fz = focus.z;
-    std::sort(wanted.begin(), wanted.end(), [&](const TileKey &a, const TileKey &b) {
-        const double da = tile_distance(layout, a, fx, fz), db = tile_distance(layout, b, fx, fz);
-        return da != db ? da < db : a.level > b.level;
-    });
-    {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        // 还没开建的旧活全作废（正在建的建完再说：adopt 时不在目标里就丢）
-        for (const TileKey &key : jobs) {
-            in_flight.erase(key.packed());
-        }
-        jobs.clear();
-        for (const TileKey &key : wanted) {
-            if (in_flight.find(key.packed()) == in_flight.end()) {
-                jobs.push_back(key);
-                in_flight[key.packed()] = false;
-            }
-        }
-    }
-    queue_cv.notify_all();
 }
 
-void World::adopt(std::unique_ptr<TileMesh> p_mesh) {
-    const TileKey key = p_mesh->key;
+void World::adopt(std::unique_ptr<TileArrays> p_tile) {
+    const TileArrays &m = *p_tile;
+    const TileKey key = m.key;
     if (!target_has(key) || tiles.find(key.packed()) != tiles.end()) {
         return;
     }
     Tile tile;
     tile.key = key;
-    if (!p_mesh->empty()) {
-        const TileMesh &m = *p_mesh;
-        const int64_t n = int64_t(m.positions.size() / 3);
-        PackedVector3Array vertices, normals;
-        PackedColorArray colors;
-        PackedInt32Array indices;
-        vertices.resize(n);
-        normals.resize(n);
-        colors.resize(n);
-        for (int64_t k = 0; k < n; k++) {
-            vertices.set(k, Vector3(m.positions[k * 3], m.positions[k * 3 + 1], m.positions[k * 3 + 2]));
-            normals.set(k, Vector3(m.normals[k * 3], m.normals[k * 3 + 1], m.normals[k * 3 + 2]));
-            colors.set(k, Color(m.colors[k * 4], m.colors[k * 4 + 1], m.colors[k * 4 + 2], m.colors[k * 4 + 3]));
-        }
-        indices.resize(int64_t(m.indices.size()));
-        std::copy(m.indices.begin(), m.indices.end(), indices.ptrw());
+    if (!m.empty()) {
         Array arrays;
         arrays.resize(Mesh::ARRAY_MAX);
-        arrays[Mesh::ARRAY_VERTEX] = vertices;
-        arrays[Mesh::ARRAY_NORMAL] = normals;
-        arrays[Mesh::ARRAY_COLOR] = colors;
-        arrays[Mesh::ARRAY_INDEX] = indices;
+        arrays[Mesh::ARRAY_VERTEX] = m.vertices;
+        arrays[Mesh::ARRAY_NORMAL] = m.normals;
+        arrays[Mesh::ARRAY_COLOR] = m.colors;
+        arrays[Mesh::ARRAY_INDEX] = m.indices;
         Ref<ArrayMesh> mesh;
         mesh.instantiate();
         mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
@@ -588,25 +563,67 @@ void World::adopt(std::unique_ptr<TileMesh> p_mesh) {
         MeshInstance3D *view = memnew(MeshInstance3D);
         view->set_mesh(mesh);
         root->add_child(view);
-        if (!m.collision.empty()) {
-            PackedVector3Array faces;
-            faces.resize(int64_t(m.collision.size() / 3));
-            for (int64_t k = 0; k < faces.size(); k++) {
-                faces.set(k, Vector3(m.collision[k * 3], m.collision[k * 3 + 1], m.collision[k * 3 + 2]));
+        if (!m.face_parts.empty()) {
+            tile.body = memnew(StaticBody3D);
+            root->add_child(tile.body);
+            tile.parts_left = int(m.face_parts.size());
+            for (const PackedVector3Array &faces : m.face_parts) {
+                collision_ready.push_back({ key, faces });
             }
-            Ref<ConcavePolygonShape3D> shape;
-            shape.instantiate();
-            shape->set_faces(faces);
-            StaticBody3D *body = memnew(StaticBody3D);
-            CollisionShape3D *collider = memnew(CollisionShape3D);
-            collider->set_shape(shape);
-            body->add_child(collider);
-            root->add_child(body);
         }
         add_child(root);
         tile.node = root;
     }
     tiles[key.packed()] = tile;
+}
+
+void World::mount_collision(const CollisionPart &p_part) {
+    const auto found = tiles.find(p_part.key.packed());
+    if (found == tiles.end() || !found->second.body) {
+        return; // 块已经拆了
+    }
+    Ref<ConcavePolygonShape3D> shape;
+    shape.instantiate();
+    shape->set_faces(p_part.faces);
+    CollisionShape3D *collider = memnew(CollisionShape3D);
+    collider->set_shape(shape);
+    found->second.body->add_child(collider);
+    found->second.parts_left--;
+}
+
+void World::adopt_ready_tiles() {
+    std::vector<JobPool::Done> done;
+    pool.collect(JobKind::TILE, done);
+    for (JobPool::Done &d : done) {
+        tile_ready.emplace_back(static_cast<TileArrays *>(d.result.release()));
+    }
+    if (tile_ready.empty() && collision_ready.empty()) {
+        return;
+    }
+    // 近的先挂；时间用完了剩下的下帧再挂
+    const double fx = focus.x, fz = focus.z;
+    std::sort(tile_ready.begin(), tile_ready.end(), [&](const std::unique_ptr<TileArrays> &a, const std::unique_ptr<TileArrays> &b) {
+        return tile_distance(layout, a->key, fx, fz) < tile_distance(layout, b->key, fx, fz);
+    });
+    const uint64_t started = Time::get_singleton()->get_ticks_usec();
+    const auto in_budget = [&]() { return Time::get_singleton()->get_ticks_usec() - started < ADOPT_BUDGET_USEC; };
+    size_t k = 0;
+    for (; k < tile_ready.size() && in_budget(); k++) {
+        adopt(std::move(tile_ready[k]));
+    }
+    tile_ready.erase(tile_ready.begin(), tile_ready.begin() + int64_t(k));
+    // 碰撞一段段挂：近的先
+    if (collision_ready.empty() || !in_budget()) {
+        return;
+    }
+    std::stable_sort(collision_ready.begin(), collision_ready.end(), [&](const CollisionPart &a, const CollisionPart &b) {
+        return tile_distance(layout, a.key, fx, fz) < tile_distance(layout, b.key, fx, fz);
+    });
+    size_t c = 0;
+    for (; c < collision_ready.size() && in_budget(); c++) {
+        mount_collision(collision_ready[c]);
+    }
+    collision_ready.erase(collision_ready.begin(), collision_ready.begin() + int64_t(c));
 }
 
 void World::prune() {
@@ -636,37 +653,21 @@ void World::prune() {
 }
 
 void World::_process(double /* p_delta */) {
+    update_runoff();
+    {
+        StreamTimer timer(this, StreamChannel::RIVERS);
+        if (!river_targeted || Vector2(focus.x - river_focus.x, focus.z - river_focus.z).length() > RIVER_RETARGET_M) {
+            river_focus = focus;
+            river_targeted = true;
+            stream_rivers(false);
+        }
+        adopt_ready_rivers();
+    }
+    StreamTimer timer(this, StreamChannel::TILES);
     if (!has_target || Vector2(focus.x - targeted_focus.x, focus.z - targeted_focus.z).length() > retarget_distance) {
         retarget();
     }
-    update_runoff();
-    if (!river_targeted || Vector2(focus.x - river_focus.x, focus.z - river_focus.z).length() > RIVER_RETARGET_M ||
-            river_more) {
-        river_focus = focus;
-        river_targeted = true;
-        stream_rivers(false);
-    }
-    std::vector<std::unique_ptr<TileMesh>> ready;
-    {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        ready.swap(results);
-    }
-    // 近的先挂；时间用完了剩下的放回去下帧再挂
-    const double fx = focus.x, fz = focus.z;
-    std::sort(ready.begin(), ready.end(), [&](const std::unique_ptr<TileMesh> &a, const std::unique_ptr<TileMesh> &b) {
-        return tile_distance(layout, a->key, fx, fz) < tile_distance(layout, b->key, fx, fz);
-    });
-    const uint64_t started = Time::get_singleton()->get_ticks_usec();
-    size_t k = 0;
-    for (; k < ready.size() && Time::get_singleton()->get_ticks_usec() - started < ADOPT_BUDGET_USEC; k++) {
-        adopt(std::move(ready[k]));
-    }
-    if (k < ready.size()) {
-        std::lock_guard<std::mutex> lock(queue_mutex);
-        for (; k < ready.size(); k++) {
-            results.push_back(std::move(ready[k]));
-        }
-    }
+    adopt_ready_tiles();
     prune();
 }
 
@@ -679,16 +680,45 @@ void World::prepare_at(const Vector3 &p_point, double p_radius) {
     river_focus = focus;
     river_targeted = true;
     stream_rivers(true);
+    // 落点周围的叶块：做好了没挂的先挂，排着的当场做
+    std::vector<JobPool::Done> done;
+    pool.collect(JobKind::TILE, done);
+    for (JobPool::Done &d : done) {
+        tile_ready.emplace_back(static_cast<TileArrays *>(d.result.release()));
+    }
     for (const TileKey &key : target) {
-        if (key.level == layout.get_max_level() && tiles.find(key.packed()) == tiles.end() &&
-                tile_distance(layout, key, p_point.x, p_point.z) <= p_radius) {
-            adopt(std::make_unique<TileMesh>(build_tile_mesh(terrain, layout, key)));
+        if (key.level != layout.get_max_level() || tiles.find(key.packed()) != tiles.end() || tile_distance(layout, key, p_point.x, p_point.z) > p_radius) {
+            continue;
+        }
+        auto ready = std::find_if(tile_ready.begin(), tile_ready.end(), [&](const std::unique_ptr<TileArrays> &t) { return t->key == key; });
+        if (ready != tile_ready.end()) {
+            std::unique_ptr<TileArrays> tile = std::move(*ready);
+            tile_ready.erase(ready);
+            adopt(std::move(tile));
+            continue;
+        }
+        std::unique_ptr<JobResult> result = pool.run_now(JobPool::key(JobKind::TILE, key.packed()));
+        if (!result) {
+            result = tile_job(key)();
+        }
+        adopt(std::unique_ptr<TileArrays>(static_cast<TileArrays *>(result.release())));
+    }
+    for (auto it = collision_ready.begin(); it != collision_ready.end();) {
+        if (tile_distance(layout, it->key, p_point.x, p_point.z) <= p_radius) {
+            mount_collision(*it);
+            it = collision_ready.erase(it);
+        } else {
+            ++it;
         }
     }
 }
 
 bool World::is_ready_at(const Vector3 &p_point) const {
-    return loaded && tiles.find(layout.leaf_at(p_point.x, p_point.z).packed()) != tiles.end();
+    if (!loaded) {
+        return false;
+    }
+    const auto found = tiles.find(layout.leaf_at(p_point.x, p_point.z).packed());
+    return found != tiles.end() && found->second.parts_left == 0;
 }
 
 double World::get_surface_height(double p_x, double p_z) const {
@@ -722,10 +752,47 @@ Dictionary World::get_cover_at(double p_x, double p_z) const {
     return out;
 }
 
+Dictionary World::get_stream_frame(int64_t p_frame) const {
+    Dictionary out;
+    const StreamMeter::Frame *f = meter.frame(uint64_t(p_frame));
+    if (!f) {
+        return out;
+    }
+    for (int c = 0; c < STREAM_CHANNELS; c++) {
+        if (f->usec[size_t(c)] > 0) {
+            out[stream_channel_key(StreamChannel(c))] = f->usec[size_t(c)] / 1000.0;
+        }
+    }
+    return out;
+}
+
+Dictionary World::get_stream_totals() const {
+    Dictionary out;
+    for (int c = 0; c < STREAM_CHANNELS; c++) {
+        const StreamMeter::Totals &t = meter.get_totals(StreamChannel(c));
+        Dictionary row;
+        row["total_ms"] = double(t.usec) / 1000.0;
+        row["max_ms"] = t.max_frame_usec / 1000.0;
+        row["frames"] = int64_t(t.frames);
+        out[stream_channel_key(StreamChannel(c))] = row;
+    }
+    return out;
+}
+
+StreamTimer::StreamTimer(World *p_world, StreamChannel p_channel) :
+        meter(p_world ? &p_world->get_meter() : nullptr), channel(p_channel), started(Time::get_singleton()->get_ticks_usec()) {}
+
+StreamTimer::~StreamTimer() {
+    if (meter) {
+        meter->add(Engine::get_singleton()->get_process_frames(), channel, Time::get_singleton()->get_ticks_usec() - started);
+    }
+}
+
 int World::get_pending_count() const {
     int missing = 0;
     for (const TileKey &key : target) {
-        missing += tiles.find(key.packed()) == tiles.end() ? 1 : 0;
+        const auto found = tiles.find(key.packed());
+        missing += found == tiles.end() || found->second.parts_left > 0 ? 1 : 0; // 没挂上的，或碰撞还没挂齐的
     }
     return missing;
 }

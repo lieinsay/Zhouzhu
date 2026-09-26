@@ -10,14 +10,21 @@
 
 #include <godot_cpp/classes/cylinder_shape3d.hpp>
 
+#include "job_pool.h"
 #include "resource_scatter.h"
 #include "scatter_meshes.h"
 
 class World;
 
+// 后台生成好的一块散布
+struct ScatterChunkJob : JobResult {
+    ScatterChunkKey key;
+    std::vector<ScatterItem> items;
+};
+
 // 岛群里地上一株株、一块块的散布物（resource_scatter.h）：走近了才摆、走远了就拆。节点放在场景原点。
 // 上层（World 的 map_focus）每帧 set_focus；每隔 check_interval 秒按焦点重算一次：
-//   radius 以内的块交给 World 的后台线程生成清单，生成好了在主线程挂上——每种样子一个 MultiMesh（立着的；采空了的树桩另一个）；
+//   radius 以内的块交给 World 的任务池生成清单，生成好了在主线程挂上——每种样子一个 MultiMesh（立着的；采空了的树桩另一个）；
 //   collision_radius 以内的块给树干加碰撞（一个静态体、每棵一个圆柱），挡人、挡船野泊；
 //   已经铺出来的村子按房子、船台的实际占地把压着的藏掉（散布只按估的半径让村子，铺出来的常比估的大）。
 // 采空了（World 的账记了倒）调 refresh_chunk 重摆那一块；每隔 regrow_interval 秒看倒着的长回来没有。

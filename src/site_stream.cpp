@@ -113,6 +113,8 @@ WorldVillage *SiteStream::build_village(int p_index) {
 
 void SiteStream::refresh(int p_build_budget) {
     // 码头
+    {
+    StreamTimer dock_timer(world, StreamChannel::DOCKS);
     const std::vector<DockPlan> &plans = world->get_docks();
     for (int k = 0; k < int(plans.size()); k++) {
         if (!plans[size_t(k)].ok) {
@@ -130,6 +132,7 @@ void SiteStream::refresh(int p_build_budget) {
             docks.erase(found);
         }
     }
+    }
 
     // 村与散户：先拆远的，再由近及远建
     const int count = int(world->get_sites().settlements.size());
@@ -139,11 +142,13 @@ void SiteStream::refresh(int p_build_budget) {
         const auto found = villages.find(k);
         if (found != villages.end()) {
             if (d > village_radius * hysteresis && !found->second->is_edited()) {
+                StreamTimer timer(world, StreamChannel::VILLAGES);
                 found->second->queue_free();
                 villages.erase(found);
                 village_version++;
             } else {
                 // 村民：近了招、远了散
+                StreamTimer timer(world, StreamChannel::FOLK);
                 if (d <= folk_radius) {
                     found->second->set_folk(true, per_house, max_folk);
                 } else if (d > folk_radius * hysteresis) {
@@ -156,13 +161,19 @@ void SiteStream::refresh(int p_build_budget) {
     }
     std::sort(wanted.begin(), wanted.end());
     for (size_t k = 0; k < wanted.size() && int(k) < p_build_budget; k++) {
-        WorldVillage *village = build_village(wanted[k].second);
+        WorldVillage *village = nullptr;
+        {
+            StreamTimer timer(world, StreamChannel::VILLAGES);
+            village = build_village(wanted[k].second);
+        }
         if (edge_distance(wanted[k].second) <= folk_radius) {
+            StreamTimer timer(world, StreamChannel::FOLK);
             village->set_folk(true, per_house, max_folk);
         }
     }
 
     // 采场与地标：先拆远的，再由近及远摆（两样合用一份预算）
+    StreamTimer site_timer(world, StreamChannel::SITES);
     const ResourcePlan &plan = world->get_resource_plan();
     std::vector<std::pair<double, int>> wanted_resources; // 下标 ≥ 0 是采场，< 0 是地标（−1 − 下标）
     for (int k = 0; k < int(plan.sites.size()); k++) {
