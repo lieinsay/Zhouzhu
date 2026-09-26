@@ -17,7 +17,9 @@
 //   浮石块：浮石露头的片里（崖缘、峡谷壁）；石块：石料品位够的地方（裸岩、陡坡），越富越密越大；矿石：金属矿化带里；
 //   黏土坡、砂砾堆、淘金沙、硫磺 / 鸟粪结壳：各自品位够的地方（不上田、不上林）。
 // 按 chunk_m 见方的块生成：每一层按自己的步长铺一张全岛群共用的抖动网格（格点抖动后落进哪块归哪块），每个格点掷一次（概率看那一点的地表 / 片号 / 品位），
-// 中了才去量高、查让不让。查地表时把点扭一扭（edge_warp_m）再取最近的格，林缘就不是 100 m 的方格。
+// 中了才去量高、查让不让。
+// 过渡：机会按这一点的地表份额（WorldTerrain::cover，与地皮同一份）加权，片（泥炭、浮石、鸟粪）也按片的份额，交界处几十米里渐变、边上犬牙交错；
+// 林缘（林地份额一半处）多一圈灌丛带、树矮一截；针叶的比例随片与高度平滑着变；赋存的品位在门槛上下渐入；陡坡从上限的六成起渐渐长不住。
 // 一切由坐标哈希决定：同一块无论什么时候、哪条线程来生成都一样，所以实例键（块 + 块内序号）稳定，存量账可以按键记。
 // 让开：没有地、离崖边不到 min_shore_m、水里、村子里（估的半径外加 village_margin_m）、码头的坪、船坞坪、采场的采掘面与堆场、
 // 采场的泊地（规划时量好的野泊处，树长在那儿就落不下船了）、地标；树与石块不上河漫滩，太陡的坡不长树。
@@ -52,15 +54,13 @@ struct ScatterRules {
     double reed_step_m = 3.0;
     double rock_step_m = 7.0;
     double bank_step_m = 9.0;
-    double edge_warp_m = 35.0; // 查地表前把点扭多远（林缘、灌丛边不成方格）
-    double edge_feature_m = 70.0;
     double min_shore_m = 3.0;
     double village_margin_m = 12.0;
     double pad_margin_m = 6.0;
     double site_clear_m = 12.0; // 采掘面、堆场周围这么远不长
     double landing_clear_m = 17.0; // 采场的泊地周围这么远不长（开局的船 7 × 22 m、舷梯 9.5 m）
     double landmark_clear_m = 8.0;
-    double max_tree_grade = 1.0; // 坡（高差 / 水平）陡过这个不长树（45°）
+    double max_tree_grade = 1.0; // 坡（高差 / 水平）陡过这个不长树（45°；六成起渐稀）
     double max_bank_grade = 0.4; // 土坡、砂堆、结壳只在缓坡
     double reach_m = 1.6; // 离一株的边这么近够得着（采集）
 };
@@ -101,6 +101,8 @@ class ResourceScatter {
     std::vector<Ore> ores;
 
     uint8_t ore_sub(int p_island, double p_x, double p_z) const;
+    uint8_t patch_kind(size_t p_cell) const;
+    const Patch *patch_near(const CoverStencil &p_stencil, uint8_t p_kind) const; // 4×4 格里这种片份额最大的那格的片
     bool blocked(double p_x, double p_z) const;
 
 public:

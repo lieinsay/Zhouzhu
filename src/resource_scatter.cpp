@@ -48,7 +48,16 @@ enum Layer : int {
 
 // 各类赋存的门槛（同生成器的 occ_thr：品位够才算赋存区）
 constexpr double ORE_MIN = 0.15, SULFUR_MIN = 0.15, PLACER_MIN = 0.15, CLAY_MIN = 0.3, GRAVEL_MIN = 0.3, STONE_MIN = 0.4;
-constexpr double HIGH_CONIFER_M = 1100.0; // 高过这么多（云带顶以上）针叶树多起来
+constexpr double FIELD_SOFT = 0.05; // 赋存的品位在门槛上下这么宽里渐入（不在门槛线上一下子冒出一片）
+constexpr double HIGH_CONIFER_M = 1100.0; // 高过这么多（云带顶以上，上下 100 m 渐变）针叶树多起来
+constexpr double DEFAULT_CONIFER = 0.15; // 片外的树里针叶占几成
+// 过渡带：林缘（林地份额一半处最显）一圈灌丛带、树矮一截；陡坡从上限的六成起渐渐长不住
+constexpr double EDGE_SHRUB = 0.3;
+constexpr double EDGE_TREE_SHRINK = 0.3;
+constexpr double GRADE_THIN = 0.6;
+// 各样东西在各自的地方长的机会
+constexpr double PEAT_REEDS = 0.55, WETLAND_REEDS = 0.35, FLOATSTONE_ROCKS = 0.3, BARE_ROCK_STONES = 0.1, GUANO_CRUST = 0.35;
+constexpr uint64_t STREAM_PATCH = 2; // 片的种类混份额用的碎噪声（地表类用 CoverBlend::STREAM_COVER）
 
 uint64_t mix(uint64_t p_a, uint64_t p_b) {
     uint64_t z = p_a ^ (p_b + 0x9E3779B97F4A7C15ull + (p_a << 6) + (p_a >> 2));
@@ -113,14 +122,9 @@ double shrub_chance(int p_lc) {
     }
 }
 
-// 露头不上林（林下看不见）；河道格里没水的滩地可以（水里的另按河槽让开）
-bool wooded_or_wet(int p_lc) {
-    return p_lc == LC_FOREST || p_lc == LC_LAKE || p_lc == LC_VOID;
-}
-
-// 田里：砂砾、砂金是河边滩上冲下来的（生成器的砂砾赋存七成压在河边的田下），照样露；黏土坡、结壳不上田
-bool farmed(int p_lc) {
-    return p_lc == LC_FIELD || p_lc == LC_TERRACE;
+// 石料赋存长石块的机会：品位过门槛（渐入）起 0.08，越富越密
+double stone_chance(double p_stone) {
+    return cover_ramp(p_stone, STONE_MIN - FIELD_SOFT, STONE_MIN + FIELD_SOFT) * (0.08 + 0.5 * std::max(0.0, p_stone - STONE_MIN));
 }
 
 } // namespace
@@ -245,33 +249,80 @@ void ResourceScatter::chunk_corner(const ScatterChunkKey &p_key, double &r_x, do
     r_z = p_key.iz * rules.chunk_m;
 }
 
+uint8_t ResourceScatter::patch_kind(size_t p_cell) const {
+    const int id = terrain->get_grid().patch_cell(p_cell);
+    return id >= 0 && size_t(id) < patches.size() ? patches[size_t(id)].kind : uint8_t(PATCH_NONE);
+}
+
+const ResourceScatter::Patch *ResourceScatter::patch_near(const CoverStencil &p_stencil, uint8_t p_kind) const {
+    const WorldGrid &grid = terrain->get_grid();
+    const Patch *best = nullptr;
+    float weight = 0.0f;
+    for (int k = 0; k < 16; k++) {
+        const int id = grid.patch_cell(p_stencil.cell[k]);
+        if (id >= 0 && size_t(id) < patches.size() && patches[size_t(id)].kind == p_kind && p_stencil.weight[k] > weight) {
+            best = &patches[size_t(id)];
+            weight = p_stencil.weight[k];
+        }
+    }
+    return best;
+}
+
 std::vector<ScatterItem> ResourceScatter::chunk(const ScatterChunkKey &p_key) const {
     std::vector<ScatterItem> out;
     if (!valid()) {
         return out;
     }
     const WorldGrid &grid = terrain->get_grid();
+    const CoverBlend &cover = terrain->get_cover();
     double x0 = 0.0, z0 = 0.0;
     chunk_corner(p_key, x0, z0);
     const double x1 = x0 + rules.chunk_m, z1 = z0 + rules.chunk_m;
-    // 块（外扩扭曲的幅度）里一格陆地都没有就不用看了
+    // 块周围（外扩扭曲的幅度与平滑的两格）都有什么：每一层的机会不会超过的上限，掷出来比上限还大的不用算份额（省时）；一格陆地都没有就不用看了
+    double cap[LAYER_COUNT] = {};
     {
-        const double pad = rules.edge_warp_m + grid.res;
+        const double pad = cover.get_rules().bend_m + cover.get_rules().warp_m + 2.0 * grid.res;
         const int c0 = std::max(0, int(std::floor(grid.col_of(x0 - pad)))), c1 = std::min(grid.cols - 1, int(std::ceil(grid.col_of(x1 + pad))));
         const int r0 = std::max(0, int(std::floor(grid.row_of(z0 - pad)))), r1 = std::min(grid.rows - 1, int(std::ceil(grid.row_of(z1 + pad))));
+        bool classes[COVER_CLASSES] = {}, kinds[5] = {};
+        double top[WorldGrid::FIELD_COUNT] = {};
         bool land = false;
-        for (int r = r0; r <= r1 && !land; r++) {
-            for (int c = c0; c <= c1 && !land; c++) {
-                land = grid.landcover[grid.index(r, c)] != LC_VOID;
+        for (int r = r0; r <= r1; r++) {
+            for (int c = c0; c <= c1; c++) {
+                const size_t k = grid.index(r, c);
+                const int lc = grid.landcover[k];
+                classes[lc < COVER_CLASSES ? lc : 0] = true;
+                land = land || lc != LC_VOID;
+                kinds[patch_kind(k)] = true;
+                for (int f = 0; f < WorldGrid::FIELD_COUNT; f++) {
+                    top[f] = std::max(top[f], grid.field_cell(f, k));
+                }
             }
         }
         if (!land) {
             return out;
         }
+        int present = 0;
+        for (int lc = 0; lc < COVER_CLASSES; lc++) {
+            if (classes[lc]) {
+                present++;
+                cap[LAYER_TREES] = std::max(cap[LAYER_TREES], tree_chance(lc));
+                cap[LAYER_SHRUBS] = std::max(cap[LAYER_SHRUBS], shrub_chance(lc));
+            }
+        }
+        cap[LAYER_SHRUBS] += classes[LC_FOREST] && present > 1 ? EDGE_SHRUB : 0.0;
+        cap[LAYER_REEDS] = kinds[PATCH_PEAT] ? PEAT_REEDS : classes[LC_WETLAND] ? WETLAND_REEDS : 0.0;
+        cap[LAYER_ROCKS] = 0.5 * top[WorldGrid::FIELD_ORE] + (kinds[PATCH_FLOATSTONE] ? FLOATSTONE_ROCKS : 0.0) +
+                std::max(stone_chance(top[WorldGrid::FIELD_STONE]), classes[LC_ROCK] ? BARE_ROCK_STONES : 0.0);
+        cap[LAYER_BANKS] = 0.35 * top[WorldGrid::FIELD_PLACER] + 0.4 * top[WorldGrid::FIELD_SULFUR] + (kinds[PATCH_GUANO] ? GUANO_CRUST : 0.0) +
+                0.22 * top[WorldGrid::FIELD_GRAVEL] + 0.12 * top[WorldGrid::FIELD_CLAY];
     }
     const WorldGround ground(*terrain, 0.0, 0.0);
 
     for (int layer = 0; layer < LAYER_COUNT; layer++) {
+        if (cap[layer] <= 0.0) {
+            continue;
+        }
         const double step = step_of(rules, layer);
         // 格点抖动后落在哪块就归哪块（块边上的格点要看两边）：每一株都在自己的块里，按人周围几米找块不会漏
         const int gi0 = int(std::floor(x0 / step)), gi1 = int(std::ceil(x1 / step));
@@ -284,64 +335,77 @@ std::vector<ScatterItem> ResourceScatter::chunk(const ScatterChunkKey &p_key) co
                     continue;
                 }
                 const double roll = rng.uniform(), size_u = rng.uniform(), yaw = TAU * rng.uniform(), kind_u = rng.uniform();
-                // 地表与片号：把点扭一扭再取最近的格
-                const double wx = x + rules.edge_warp_m * hash_fbm(seed ^ 0xA1ull, x, z, rules.edge_feature_m, 2);
-                const double wz = z + rules.edge_warp_m * hash_fbm(seed ^ 0xB2ull, x, z, rules.edge_feature_m, 2);
-                const size_t cell = grid.nearest_cell(wx, wz);
-                const int lc = grid.landcover[cell];
-                if (lc == LC_VOID) {
+                if (roll >= cap[layer]) {
                     continue;
                 }
-                const int patch_id = grid.patch_cell(cell);
-                const Patch patch = patch_id >= 0 && size_t(patch_id) < patches.size() ? patches[size_t(patch_id)] : Patch();
+                // 这一点的地表份额（与地皮同一份）：交界处机会按份额渐变，林缘不再一刀切
+                const CoverStencil st = cover.stencil(x, z);
+                const CoverMix m = cover.mix(st, x, z);
+                if (m.w[LC_VOID] >= 0.999f) {
+                    continue;
+                }
+                float kinds[5];
+                cover.blend(st, x, z, 0.0, STREAM_PATCH, 5, [this](size_t k) { return patch_kind(k); }, kinds);
+                const double farm = m.w[LC_FIELD] + m.w[LC_TERRACE];
 
                 ScatterItem item;
                 item.yaw = float(yaw);
                 double sink = 0.1;
                 bool tree_like = false, bank_like = false;
                 if (layer == LAYER_TREES) {
+                    double chance = 0.0;
                     const double density = std::clamp(0.75 + 0.35 * hash_fbm(seed ^ 0xC3ull, x, z, 45.0, 2), 0.3, 1.0);
-                    if (roll >= tree_chance(lc) * (lc == LC_FOREST ? density : 1.0)) {
+                    for (int lc = 0; lc < COVER_CLASSES; lc++) {
+                        chance += m.w[lc] * tree_chance(lc) * (lc == LC_FOREST ? density : 1.0);
+                    }
+                    if (roll >= chance) {
                         continue;
                     }
-                    double conifer = patch.kind == PATCH_TIMBER ? patch.conifer : 0.15;
-                    if (grid.height[cell] > HIGH_CONIFER_M || lc == LC_MEADOW) {
-                        conifer = std::max(conifer, 0.7);
-                    }
+                    // 树种：片里按片的针阔比例、片外一成半针叶，平滑着变；高处与高山草甸针叶多起来（也是渐变）
+                    double conifer = cover.smooth(st, [this](size_t k) {
+                        const int id = terrain->get_grid().patch_cell(k);
+                        return id >= 0 && size_t(id) < patches.size() && patches[size_t(id)].kind == PATCH_TIMBER ? double(patches[size_t(id)].conifer) : DEFAULT_CONIFER;
+                    });
+                    const double high = std::max(cover_ramp(grid.height_at(x, z), HIGH_CONIFER_M - 100.0, HIGH_CONIFER_M + 100.0), double(m.w[LC_MEADOW]));
+                    conifer += (std::max(conifer, 0.7) - conifer) * high;
                     item.look = uint8_t(kind_u < conifer ? ScatterLook::CONIFER : ScatterLook::BROADLEAF);
-                    item.scale = float(0.75 + 0.55 * size_u);
+                    // 林缘的树矮一截（年轻的、往外长的）
+                    item.scale = float((0.75 + 0.55 * size_u) * (1.0 - EDGE_TREE_SHRINK * m.edge(LC_FOREST)));
                     sink = 0.2;
                     tree_like = true;
                 } else if (layer == LAYER_SHRUBS) {
-                    if (roll >= shrub_chance(lc)) {
+                    double chance = 0.0;
+                    for (int lc = 0; lc < COVER_CLASSES; lc++) {
+                        chance += m.w[lc] * shrub_chance(lc);
+                    }
+                    chance += EDGE_SHRUB * m.edge(LC_FOREST); // 林缘一圈灌丛带
+                    if (roll >= chance) {
                         continue;
                     }
                     item.look = uint8_t(ScatterLook::SHRUB);
                     item.scale = float(0.7 + 0.6 * size_u);
                     tree_like = true;
                 } else if (layer == LAYER_REEDS) {
-                    const bool peat = patch.kind == PATCH_PEAT;
-                    if (roll >= (peat ? 0.55 : lc == LC_WETLAND ? 0.35 : 0.0)) {
+                    const double p_peat = kinds[PATCH_PEAT] * PEAT_REEDS;
+                    const double chance = p_peat + (1.0 - kinds[PATCH_PEAT]) * m.w[LC_WETLAND] * WETLAND_REEDS;
+                    if (roll >= chance) {
                         continue;
                     }
+                    const Patch *peat = roll < p_peat ? patch_near(st, PATCH_PEAT) : nullptr;
                     item.look = uint8_t(ScatterLook::REEDS);
-                    item.sub = peat ? patch.sub : deposits::SUB_REED;
+                    item.sub = peat ? peat->sub : deposits::SUB_REED;
                     item.scale = float(0.8 + 0.4 * size_u);
                     bank_like = true;
                 } else if (layer == LAYER_ROCKS) {
-                    if (lc == LC_FIELD || lc == LC_TERRACE) {
-                        continue; // 田里的石头早捡干净了（生成器的岩类赋存也不上田）
-                    }
+                    // 田里的石头早捡干净了（生成器的岩类赋存也不上田）；林下石块少一半。赋存按品位渐入，不在门槛上一下子冒出来
+                    const double keep = 1.0 - farm;
                     const double ore = grid.field_at(WorldGrid::FIELD_ORE, x, z), stone = grid.field_at(WorldGrid::FIELD_STONE, x, z);
-                    const double p_ore = ore >= ORE_MIN ? 0.5 * ore : 0.0;
-                    const double p_float = patch.kind == PATCH_FLOATSTONE ? 0.3 : 0.0;
-                    double p_stone = stone >= STONE_MIN ? 0.08 + 0.5 * (stone - STONE_MIN) : (lc == LC_ROCK ? 0.1 : 0.0);
-                    if (lc == LC_FOREST) {
-                        p_stone *= 0.5;
-                    }
+                    const double p_ore = keep * 0.5 * ore * cover_ramp(ore, ORE_MIN - FIELD_SOFT, ORE_MIN + FIELD_SOFT);
+                    const double p_float = keep * kinds[PATCH_FLOATSTONE] * FLOATSTONE_ROCKS;
+                    const double p_stone = keep * (1.0 - 0.5 * m.w[LC_FOREST]) * std::max(stone_chance(stone), m.w[LC_ROCK] * BARE_ROCK_STONES);
                     if (roll < p_ore) {
                         item.look = uint8_t(ScatterLook::ORE_ROCK);
-                        item.sub = ore_sub(grid.island[cell], x, z);
+                        item.sub = ore_sub(grid.island[m.cell], x, z);
                         item.scale = float(0.7 + 0.5 * size_u);
                     } else if (roll < p_ore + p_float) {
                         item.look = uint8_t(ScatterLook::FLOATSTONE);
@@ -354,18 +418,16 @@ std::vector<ScatterItem> ResourceScatter::chunk(const ScatterChunkKey &p_key) co
                     }
                     sink = 0.25 * item.scale;
                 } else {
-                    if (wooded_or_wet(lc)) {
-                        continue;
-                    }
-                    const bool field = farmed(lc);
+                    // 露头不上林、不下湖；田里：砂砾、砂金是河边滩上冲下来的（生成器的砂砾赋存七成压在河边的田下），照样露；黏土坡、结壳不上田
+                    const double open = std::max(0.0, 1.0 - m.w[LC_FOREST] - m.w[LC_LAKE] - m.w[LC_VOID]);
                     const double placer = grid.field_at(WorldGrid::FIELD_PLACER, x, z), sulfur = grid.field_at(WorldGrid::FIELD_SULFUR, x, z);
                     const double gravel = grid.field_at(WorldGrid::FIELD_GRAVEL, x, z), clay = grid.field_at(WorldGrid::FIELD_CLAY, x, z);
                     const double p[5] = {
-                        placer >= PLACER_MIN ? 0.35 * placer : 0.0,
-                        sulfur >= SULFUR_MIN && !field ? 0.4 * sulfur : 0.0,
-                        patch.kind == PATCH_GUANO && !field ? 0.35 : 0.0,
-                        gravel >= GRAVEL_MIN ? 0.22 * gravel : 0.0,
-                        clay >= CLAY_MIN && !field ? 0.12 * clay : 0.0,
+                        open * 0.35 * placer * cover_ramp(placer, PLACER_MIN - FIELD_SOFT, PLACER_MIN + FIELD_SOFT),
+                        open * (1.0 - farm) * 0.4 * sulfur * cover_ramp(sulfur, SULFUR_MIN - FIELD_SOFT, SULFUR_MIN + FIELD_SOFT),
+                        open * (1.0 - farm) * kinds[PATCH_GUANO] * GUANO_CRUST,
+                        open * 0.22 * gravel * cover_ramp(gravel, GRAVEL_MIN - FIELD_SOFT, GRAVEL_MIN + FIELD_SOFT),
+                        open * (1.0 - farm) * 0.12 * clay * cover_ramp(clay, CLAY_MIN - FIELD_SOFT, CLAY_MIN + FIELD_SOFT),
                     };
                     double acc = 0.0;
                     int pick = -1;
@@ -403,8 +465,10 @@ std::vector<ScatterItem> ResourceScatter::chunk(const ScatterChunkKey &p_key) co
                     if (!terrain->surface(x + SLOPE_ARM_M, z, east) || !terrain->surface(x, z + SLOPE_ARM_M, south)) {
                         continue;
                     }
+                    // 坡陡起来渐渐长不住：上限的六成起变稀，到上限一株没有
                     const double grade = std::hypot(east - s.top, south - s.top) / SLOPE_ARM_M;
-                    if (grade > (tree_like ? rules.max_tree_grade : rules.max_bank_grade)) {
+                    const double limit = tree_like ? rules.max_tree_grade : rules.max_bank_grade;
+                    if (rng.uniform() < cover_ramp(grade, GRADE_THIN * limit, limit)) {
                         continue;
                     }
                 }

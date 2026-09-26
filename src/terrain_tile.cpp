@@ -21,8 +21,10 @@ constexpr double WALL_FADE_M = 160.0; // 崖顶往下这么深从崖顶色渐成
 constexpr double STRATA_M = 9.0; // 岩层大约这么厚
 constexpr uint64_t STRATA_SEED = 0x57A7Aull;
 
-constexpr double COLOR_JITTER_M = 45.0; // 取地表色的位置抖这么多：地表类的边界不再是 100 m 的方格
 constexpr uint64_t COLOR_SEED = 0x51EDC0105ull;
+constexpr int COVER_RIVER = 10; // 地表类：河道
+constexpr double ROCK_BREAKUP = 0.35; // 陡坡露岩的门槛按细噪声进退：岩成一块块斑，不是顺着坡度抹开的一片灰
+constexpr double ROCK_BREAKUP_FEATURE_M = 14.0;
 constexpr int UNDERSIDE_STRIDE = 4; // 须整除 TileLayout::CELLS（岛底垂上千米、带着几十米的岩棱，隔 8 格插值太粗，块与块之间裂缝）
 
 GroundColor lerp(const GroundColor &a, const GroundColor &b, double t) {
@@ -39,28 +41,32 @@ GroundColor rock_color(double p_y, double p_t) {
     return { banded.r * shade, banded.g * shade, banded.b * shade };
 }
 
-// p_sample：这一点的地形取样（河床、河漫滩的权重）；没有河网时按栅格的溪涧格染湿
-GroundColor ground_color(const WorldGrid &g, const TerrainSample &p_sample, bool p_rivers, double p_x, double p_z, double p_normal_y) {
-    const double jx = p_x + COLOR_JITTER_M * hash_fbm(COLOR_SEED, p_x, p_z, 70.0, 3);
-    const double jz = p_z + COLOR_JITTER_M * hash_fbm(COLOR_SEED + 1, p_x, p_z, 70.0, 3);
-    const double fc = g.col_of(jx), fr = g.row_of(jz);
-    const int c = int(std::floor(fc)), r = int(std::floor(fr));
-    const double tc = fc - c, tr = fr - r;
-    auto cell = [&](int rr, int cc) {
-        return g.index(std::clamp(rr, 0, g.rows - 1), std::clamp(cc, 0, g.cols - 1));
-    };
-    auto color = [&](int rr, int cc) { return landcover_color(g.landcover[cell(rr, cc)]); };
-    auto wet = [&](int rr, int cc) { return g.stream[cell(rr, cc)] ? 1.0 : 0.0; };
-    GroundColor out = lerp(lerp(color(r, c), color(r, c + 1), tc), lerp(color(r + 1, c), color(r + 1, c + 1), tc), tr);
-    const double w0 = wet(r, c) + (wet(r, c + 1) - wet(r, c)) * tc;
-    const double w1 = wet(r + 1, c) + (wet(r + 1, c + 1) - wet(r + 1, c)) * tc;
-    if (p_rivers) {
+// 地皮色按这一点的地表份额混（WorldTerrain::cover，与散布同一份：地皮变色的地方就是树变稀的地方），再按坡度露岩、按河染滩与河床。
+// p_sample：这一点的地形取样（河床、河漫滩的权重）；没有河网时按栅格的溪涧格染湿。
+// p_footprint：顶点间距——远处的粗块过渡带放宽、细噪声退掉，免得几十米一个顶点时颜色闪成噪点
+GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_sample, double p_x, double p_z, double p_normal_y, double p_footprint) {
+    const CoverBlend &blend = p_terrain.get_cover();
+    const CoverStencil st = blend.stencil(p_x, p_z);
+    const CoverMix mix = blend.mix(st, p_x, p_z, p_footprint);
+    GroundColor out{ 0.0f, 0.0f, 0.0f };
+    for (int k = 0; k < COVER_CLASSES; k++) {
+        if (mix.w[k] > 0.0f) {
+            // 有河网时水面由河的网格画：「河道」格（一格 100 m，河槽只占其中几米到几十米）的地皮是滩上的湿草，不是水色
+            const GroundColor c = k == COVER_RIVER && p_terrain.has_rivers() ? MEADOW : landcover_color(k);
+            out = { out.r + mix.w[k] * c.r, out.g + mix.w[k] * c.g, out.b + mix.w[k] * c.b };
+        }
+    }
+    // 约 30° 起露岩、45° 全岩；门槛按细噪声进退（远处退掉）
+    const double breakup = ROCK_BREAKUP * (1.0 - cover_ramp(p_footprint, 0.0, 0.75 * ROCK_BREAKUP_FEATURE_M));
+    const double rock = (0.86 - p_normal_y) / 0.16 + breakup * hash_fbm(COLOR_SEED + 3, p_x, p_z, ROCK_BREAKUP_FEATURE_M, 2);
+    if (p_terrain.has_rivers()) {
         out = lerp(out, MEADOW, 0.45 * p_sample.bank);
-        out = lerp(out, ROCK, (0.86 - p_normal_y) / 0.16); // 约 30° 起露岩，45° 全岩
+        out = lerp(out, ROCK, rock);
         out = lerp(out, GRAVEL, p_sample.bed); // 河床不论坡度都是卵石
     } else {
-        out = lerp(out, WET, 0.55 * (w0 + (w1 - w0) * tr));
-        out = lerp(out, ROCK, (0.86 - p_normal_y) / 0.16);
+        const WorldGrid &g = p_terrain.get_grid();
+        out = lerp(out, WET, 0.55 * blend.smooth(st, [&g](size_t k) { return g.stream[k] ? 1.0 : 0.0; }));
+        out = lerp(out, ROCK, rock);
     }
     const float shade = float(1.0 + 0.07 * hash_fbm(COLOR_SEED + 2, p_x, p_z, 30.0, 3));
     return { out.r * shade, out.g * shade, out.b * shade };
@@ -224,7 +230,6 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
     p_layout.corner(p_key, mesh.origin_x, mesh.origin_z);
     const double step = p_layout.step(p_key.level);
     const bool leaf = p_key.level == p_layout.get_max_level();
-    const WorldGrid &grid = p_terrain.get_grid();
 
     std::vector<TerrainSample> s(size_t(W) * W);
     auto at = [&](int i, int j) -> TerrainSample & { return s[size_t(i + 1) * W + size_t(j + 1)]; };
@@ -257,7 +262,7 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             float nz = float(-(at(i + 1, j).top - at(i - 1, j).top) / (2.0 * step));
             float len = std::sqrt(nx * nx + 1.0f + nz * nz);
             const float ux = nx / len, uy = 1.0f / len, uz = nz / len;
-            top_color[k] = ground_color(grid, c, p_terrain.has_rivers(), mesh.origin_x + x, mesh.origin_z + z, uy);
+            top_color[k] = ground_color(p_terrain, c, mesh.origin_x + x, mesh.origin_z + z, uy, step);
             top_id[k] = b.vertex(x, float(c.top), z, ux, uy, uz, top_color[k]);
             top_pos[k * 3] = x, top_pos[k * 3 + 1] = float(c.top), top_pos[k * 3 + 2] = z;
             top_normal[k * 3] = ux, top_normal[k * 3 + 1] = uy, top_normal[k * 3 + 2] = uz;
