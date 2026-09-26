@@ -28,6 +28,7 @@
 // 清单改了（布置模式）就按新清单重招人，仓和水缸留着。
 //
 // 导航格与挑水的线可以由上层在后台备好了交过来（set_prepared_nav，照哪张清单备的对得上才用），省得招人那一帧现算（邑治要三百多毫秒）。
+// progressive（流式加载招人时设）：展开那一帧走着的先接着估着走、只搭几个小人，之后每个物理帧给 REPATH_PER_TICK 个人找路、搭 BODIES_PER_TICK 个小人。
 // 几何是占位的小人：身子、头、斗笠、手里的家伙（锄 / 扁担水桶 / 长矛），头顶一行字「名字 · 在干什么」；材质与网格问宿主要共用的一份（host_looks）。
 // 村民没有碰撞，进门就藏起来。
 class Villagers : public godot::Node3D {
@@ -77,6 +78,8 @@ private:
     godot::Ref<godot::StandardMaterial3D> mat_job[4];
     std::shared_ptr<VillageNav> prepared_nav; // 后台备好的导航格与挑水线
     uint64_t prepared_nav_sig = 0; // 照哪张清单备的（layout_signature）
+    bool progressive = false;
+    bool catching_up = false; // progressive 展开后还有估着走的、没搭的小人
 
     void on_host_rebuilt();
     void on_layout_changed();
@@ -111,6 +114,10 @@ public:
         prepared_nav = p_nav;
         prepared_nav_sig = p_layout_sig;
     }
+    // 展开分几帧做（进树之前调）
+    void set_progressive(bool p_value) { progressive = p_value; }
+    static constexpr int REPATH_PER_TICK = 2;
+    static constexpr int BODIES_PER_TICK = 6;
     const VillageState *get_state() const { return state.get(); }
 
     // 给测试与 HUD 查

@@ -350,16 +350,17 @@ void Villagers::bring_up(bool p_refound) {
         for (const HeldPlot &h : s.held) {
             cells.push_back(Vector2i(h.i, h.j));
         }
-        deploy_village(s, world(true), farm ? &farm->edit_model() : nullptr);
+        deploy_village(s, world(true), farm ? &farm->edit_model() : nullptr, !progressive);
         if (farm) {
             farm->refresh_cells(cells);
         }
     }
     bodies.resize(s.people.size());
-    for (int k = 0; k < int(s.people.size()); k++) {
+    for (int k = 0; k < int(s.people.size()) && (!progressive || k < BODIES_PER_TICK); k++) {
         build_body(bodies[size_t(k)], s.people[size_t(k)], k);
         place_body(bodies[size_t(k)], s.people[size_t(k)], 0.0);
     }
+    catching_up = progressive;
 }
 
 void Villagers::collapse() {
@@ -538,6 +539,31 @@ void Villagers::_physics_process(double p_delta) {
         deploy_village(*state, world(true), farm ? &farm->edit_model() : nullptr);
     } else {
         advance_village(*state, world(true), t);
+    }
+    if (catching_up) {
+        // 展开分几帧做：给几个估着走的找路、搭几个小人
+        int repathed = 0, built = 0;
+        bool left = false;
+        const VillageWorld w = world(true);
+        for (int k = 0; k < int(state->people.size()); k++) {
+            const PersonState &p = state->people[size_t(k)];
+            if (p.phase == FolkPhase::WALKING && p.estimated) {
+                if (repathed < REPATH_PER_TICK) {
+                    repathed += repath_walker(*state, w, k) ? 1 : 0;
+                } else {
+                    left = true;
+                }
+            }
+            if (size_t(k) < bodies.size() && !bodies[size_t(k)].root) {
+                if (built < BODIES_PER_TICK) {
+                    build_body(bodies[size_t(k)], state->people[size_t(k)], k);
+                    built++;
+                } else {
+                    left = true;
+                }
+            }
+        }
+        catching_up = left;
     }
     for (size_t k = 0; k < bodies.size() && k < state->people.size(); k++) {
         place_body(bodies[k], state->people[k], p_delta);

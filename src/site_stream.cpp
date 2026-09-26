@@ -401,7 +401,7 @@ void SiteStream::step(uint64_t p_deadline_usec) {
         best_d = d;
     }
     if (best >= 0) {
-        villages[best]->set_folk(true, per_house, max_folk, navs[best].nav);
+        villages[best]->set_folk(true, per_house, max_folk, navs[best].nav, true);
         navs.erase(best);
     }
 }

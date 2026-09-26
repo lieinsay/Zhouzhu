@@ -357,7 +357,7 @@ bool WorldVillage::get_freight_post(Vector3 &r_global) const {
     return true;
 }
 
-void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk, std::shared_ptr<VillageNav> p_nav) {
+void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk, std::shared_ptr<VillageNav> p_nav, bool p_progressive) {
     if (p_on == has_folk() || !settlement) {
         return;
     }
@@ -375,6 +375,7 @@ void WorldVillage::set_folk(bool p_on, int p_per_house, int p_max_folk, std::sha
     villagers->set_per_house(p_per_house);
     villagers->set_max_folk(p_max_folk);
     villagers->set_seed(int64_t(host_seed() & 0x7FFFFFFF));
+    villagers->set_progressive(p_progressive);
     if (p_nav) {
         villagers->set_prepared_nav(p_nav, layout_signature(settlement->get_model()));
     }

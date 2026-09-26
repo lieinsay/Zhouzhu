@@ -106,8 +106,8 @@ public:
             std::shared_ptr<VillagePrepared> p_prepared = nullptr);
     void _ready() override;
 
-    // 招 / 散村民（p_max_folk 封顶）；p_nav 是后台备好的导航格（照当下的清单；nullptr 就现算）
-    void set_folk(bool p_on, int p_per_house, int p_max_folk, std::shared_ptr<VillageNav> p_nav = nullptr);
+    // 招 / 散村民（p_max_folk 封顶）；p_nav 是后台备好的导航格（照当下的清单；nullptr 就现算）；p_progressive：展开分几帧做（流式加载）
+    void set_folk(bool p_on, int p_per_house, int p_max_folk, std::shared_ptr<VillageNav> p_nav = nullptr, bool p_progressive = false);
     bool has_folk() const { return villagers != nullptr; }
 
     // 细模（SiteStream 推）：格子的状态、离焦点（全局）多远；后台备好的一格交过来；按时限挂 / 拆（p_deadline 是 Time 的微秒）
