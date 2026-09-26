@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 
 ClockReading read_clock(double p_seconds, const DayRules &p_rules) {
     ClockReading c;
@@ -34,18 +35,34 @@ std::string clock_text(double p_seconds, const DayRules &p_rules) {
     return buf;
 }
 
-double next_day_mark(double p_seconds, const DayRules &p_rules, DayMark *r_mark) {
-    const struct {
-        double hour;
-        DayMark mark;
-    } MARKS[] = {
-        { p_rules.work_start, DayMark::WORK_START },
-        { p_rules.lunch_start, DayMark::LUNCH_START },
-        { p_rules.lunch_end, DayMark::LUNCH_END },
-        { p_rules.work_end, DayMark::WORK_END },
-    };
+double SeasonView::next_shelter_change(double p_from, double p_until) const {
+    return std::numeric_limits<double>::infinity();
+}
+
+DayMarks day_marks(int p_day, const DayRules &p_rules, const SeasonView *p_season) {
+    DayMarks m{ p_rules.work_start, p_rules.lunch_start, p_rules.lunch_end, p_rules.work_end };
+    if (p_season) {
+        p_season->work_hours(p_day, m.work_start, m.work_end);
+        // 出工在歇晌之前、收工在歇晌之后（极端的时令也不让分界点倒过来）
+        m.work_start = std::min(m.work_start, p_rules.lunch_start - 0.25);
+        m.work_end = std::max(m.work_end, p_rules.lunch_end + 0.25);
+    }
+    return m;
+}
+
+double next_day_mark(double p_seconds, const DayRules &p_rules, DayMark *r_mark, const SeasonView *p_season) {
     const int day = int(std::floor(std::max(0.0, p_seconds) / p_rules.day_seconds));
-    for (int d = day; d <= day + 1; d++) {
+    for (int d = day; d <= day + 2; d++) {
+        const DayMarks dm = day_marks(d, p_rules, p_season);
+        const struct {
+            double hour;
+            DayMark mark;
+        } MARKS[] = {
+            { dm.work_start, DayMark::WORK_START },
+            { dm.lunch_start, DayMark::LUNCH_START },
+            { dm.lunch_end, DayMark::LUNCH_END },
+            { dm.work_end, DayMark::WORK_END },
+        };
         for (const auto &m : MARKS) {
             const double at = clock_at(d, m.hour, p_rules);
             if (at > p_seconds) {
@@ -59,5 +76,15 @@ double next_day_mark(double p_seconds, const DayRules &p_rules, DayMark *r_mark)
     if (r_mark) {
         *r_mark = DayMark::WORK_START;
     }
-    return clock_at(day + 2, p_rules.work_start, p_rules);
+    return clock_at(day + 3, day_marks(day + 3, p_rules, p_season).work_start, p_rules);
+}
+
+bool is_home_time(double p_seconds, const DayRules &p_rules, const SeasonView *p_season) {
+    if (!p_season) {
+        return is_home_hour(read_clock(p_seconds, p_rules).hour, p_rules);
+    }
+    const ClockReading c = read_clock(p_seconds, p_rules);
+    const DayMarks m = day_marks(c.day, p_rules, p_season);
+    const bool rest = c.hour < m.work_start || c.hour >= m.work_end || (c.hour >= m.lunch_start && c.hour < m.lunch_end);
+    return rest || p_season->sheltering(p_seconds);
 }

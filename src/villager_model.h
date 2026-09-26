@@ -183,6 +183,10 @@ struct VillageView {
     const NavRules *nav_rules = nullptr; // 远处判断「挨着房子」用它的 building_margin_m；nullptr 用默认
     double hour = 8.0;
     double now = 0.0; // 钟的秒（只用来记「多久以后再找荒地」）
+    // 时令（有气候的地图，由村落推进按 SeasonView 判好）：home −1 = 按 hour 与 day 判；0 / 1 = 此刻不该 / 该在家（作息随日出日落、坏天气歇工）。
+    // sowing 为假：冷得庄稼不长，这时节不播不开荒（熟了的照收）
+    int home = -1;
+    bool sowing = true;
 };
 
 // 这一点站得住吗（干地、不在房子占地里）：有导航格问导航格，没有就问地面与清单

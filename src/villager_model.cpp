@@ -641,7 +641,7 @@ bool pick_water_spot(const VillageView &p_view, double p_x, double p_z, NavPoint
 Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
     const WorkRules &w = *p_view.work;
     const Resident &who = r_mind.who;
-    if (is_home_hour(p_view.hour, *p_view.day)) {
+    if (p_view.home > 0 || (p_view.home < 0 && is_home_hour(p_view.hour, *p_view.day))) {
         return at_building(TaskKind::GO_HOME, p_view, who.home, 0.0);
     }
     const NavPoint home_door = door_of(p_view, who.home);
@@ -690,7 +690,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 const Claim &c = (*p_view.claims)[size_t(ripe)];
                 return at_plot(TaskKind::HARVEST, r_mind, p_view, c.i, c.j, w.harvest_s);
             }
-            const std::string seed = p_view.store ? pick_seed(*p_view.store) : std::string();
+            const std::string seed = p_view.store && p_view.sowing ? pick_seed(*p_view.store) : std::string();
             if (tilled >= 0 && !seed.empty()) {
                 const Claim &c = (*p_view.claims)[size_t(tilled)];
                 Task t = at_plot(TaskKind::SOW, r_mind, p_view, c.i, c.j, w.sow_s);
@@ -698,7 +698,7 @@ Task decide_task(VillagerMind &r_mind, const VillageView &p_view, Rng &p_rng) {
                 return t;
             }
             int i = 0, j = 0;
-            if (owned < w.plots_per_farmer && p_view.now >= r_mind.wild_retry_at) {
+            if (owned < w.plots_per_farmer && p_view.sowing && p_view.now >= r_mind.wild_retry_at) {
                 if (pick_wild_plot(p_view, home_door.x, home_door.z, i, j)) {
                     return at_plot(TaskKind::TILL, r_mind, p_view, i, j, w.till_s);
                 }

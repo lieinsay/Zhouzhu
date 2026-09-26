@@ -51,13 +51,22 @@ struct FarmRules {
     double fertile_moisture = 0.6; // 熟地（岛群的可耕地、梯田）不靠水也有这么好的墒情
 };
 
-// 一格地每个游戏小时长多少（0 → 1 是从播种到成熟）：墒情越好越快，作物的生长期倍率越大越慢。
+// 一格地每个游戏小时长多少（0 → 1 是从播种到成熟）：墒情越好越快，作物的生长期倍率越大越慢；
+// p_season 是时令的倍数（气温，见 local_season.h：冷得不长为 0，暖和时 1）。
 // 近处农田（FarmModel::advance）与远处村子账本里拿着的地块同用这一个式子
-double growth_rate(double p_moisture, const CropDef *p_crop, const FarmRules &p_rules);
+double growth_rate(double p_moisture, const CropDef *p_crop, const FarmRules &p_rules, double p_season = 1.0);
+
+// 时令对庄稼的影响：此刻（上层定好的那一刻）海拔 p_height 的地长得多快（倍数）。农田推进时逐格问；不给就是 1
+class GrowthClimate {
+public:
+    virtual ~GrowthClimate() = default;
+    virtual double growth_factor(double p_height) const = 0;
+};
 
 struct PlotSurvey {
     Arability land = Arability::NO_GROUND;
     float moisture = 0.0f; // 墒情：水边 1 → 引水极限 0（熟地至少 fertile_moisture）
+    float height = 0.0f; // 四角地面的平均高（海拔，时令按它取气温）
 };
 
 // 勘察一格：四角都得有地面；任一角在水里 → 水；格心在停机坪 / 船坞坪上；任一角在路上；
@@ -109,8 +118,8 @@ public:
     bool till(int p_i, int p_j);
     bool sow(int p_i, int p_j, const CropDef *p_crop);
     Harvest harvest(int p_i, int p_j);
-    // 推进生长 p_hours 个游戏小时；返回这一步里外观阶段变了的格子（(i, j) 成对）
-    std::vector<int> advance(double p_hours);
+    // 推进生长 p_hours 个游戏小时（p_climate 给了就按每格的海拔乘时令的倍数）；返回这一步里外观阶段变了的格子（(i, j) 成对）
+    std::vector<int> advance(double p_hours, const GrowthClimate *p_climate = nullptr);
     // 把一格地整个拿走（村子走远了，地块连同长势记回村子的账本里）；表里没有返回荒地
     Plot take(int p_i, int p_j);
     // 放回一格地（村子又走近了）。那一格已经有人垦了（玩家、别的村）就放不下，返回 false

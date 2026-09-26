@@ -15,6 +15,8 @@ add_subdirectory(extern/godot-cpp)
 
 # 不含 Godot 头的纯算法文件：扩展与单元测试各编一份。
 set(ZHOUZHU_CORE_SOURCES
+    src/almanac.cpp
+    src/almanac.h
     src/building_mesh.cpp
     src/building_mesh.h
     src/building_parts.cpp
@@ -60,6 +62,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/job_pool.h
     src/land_berth.cpp
     src/land_berth.h
+    src/local_season.cpp
+    src/local_season.h
     src/map_ground.cpp
     src/map_ground.h
     src/map_image.cpp
@@ -97,6 +101,10 @@ set(ZHOUZHU_CORE_SOURCES
     src/village_state.h
     src/villager_model.cpp
     src/villager_model.h
+    src/weather.cpp
+    src/weather.h
+    src/weather_noise.cpp
+    src/weather_noise.h
     src/wild_landing.cpp
     src/wild_landing.h
     src/world_grid.cpp

@@ -42,7 +42,33 @@ enum class DayMark {
     WORK_END,
 };
 
-// p_seconds 之后（严格之后）的下一个分界点：在第几秒、是哪一个
-double next_day_mark(double p_seconds, const DayRules &p_rules, DayMark *r_mark = nullptr);
+// 一处的时令：按日子变的作息（日出日落定出工收工）、坏天气歇工、这时节庄稼长不长。
+// 不给（nullptr）就照 DayRules 的固定钟点、不歇工、庄稼照常——甲乙两岛、平板岛（没有气候数据）就是这样。
+// 实现在 local_season.h（按天气模型与这一处的位置）；近处远处的村子各造一份同样的，所以远近照旧同一套规矩。
+class SeasonView {
+public:
+    virtual ~SeasonView() = default;
+    // 钟的第 p_day 天几点出工、几点收工（午歇照 DayRules）
+    virtual void work_hours(int p_day, double &r_start, double &r_end) const = 0;
+    // 此刻（钟的秒）天气坏得该歇工回家
+    virtual bool sheltering(double p_seconds) const { return false; }
+    // p_from 之后（严格之后）sheltering 头一回变的那一刻，不晚于 p_until；这段里不变返回 +∞
+    virtual double next_shelter_change(double p_from, double p_until) const;
+    // 此刻庄稼长得多快（倍数：0 不长，1 照常）
+    virtual double growth_factor(double p_seconds) const { return 1.0; }
+    // 这时节播不播种（冷得庄稼不长就不播）
+    virtual bool sowing(double p_seconds) const { return true; }
+};
+
+struct DayMarks {
+    double work_start, lunch_start, lunch_end, work_end; // 钟点
+};
+// 钟的第 p_day 天的作息分界
+DayMarks day_marks(int p_day, const DayRules &p_rules, const SeasonView *p_season);
+
+// p_seconds 之后（严格之后）的下一个分界点：在第几秒、是哪一个（p_season 给了就按它那天的出工收工）
+double next_day_mark(double p_seconds, const DayRules &p_rules, DayMark *r_mark = nullptr, const SeasonView *p_season = nullptr);
+// 此刻该不该在家：夜里、歇晌（按时令的作息），或者坏天气歇工
+bool is_home_time(double p_seconds, const DayRules &p_rules, const SeasonView *p_season);
 // 这个分界点开饭吗（午饭、晚饭）
 inline bool is_meal(DayMark p_mark) { return p_mark == DayMark::LUNCH_START || p_mark == DayMark::WORK_END; }

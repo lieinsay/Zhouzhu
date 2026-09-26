@@ -16,6 +16,11 @@ double hour_at(double p_seconds, const DayRules &p_day) {
     return read_clock(p_seconds + 1e-6, p_day).hour;
 }
 
+// 此刻该不该在家（作息 + 时令的歇工），同上往后挪一点
+bool home_at(double p_seconds, const VillageWorld &p_world) {
+    return is_home_time(p_seconds + 1e-6, *p_world.day, p_world.season);
+}
+
 double path_left(const PersonState &p_person) {
     double len = 0.0, x = p_person.mind.x, z = p_person.mind.z;
     for (size_t k = p_person.next; k < p_person.path.size(); k++) {
@@ -110,6 +115,10 @@ VillageView make_view(const VillageState &p_state, const VillageWorld &p_world, 
     v.nav_rules = &p_world.rules->nav;
     v.hour = hour_at(p_seconds, *p_world.day);
     v.now = p_seconds;
+    if (p_world.season) {
+        v.home = home_at(p_seconds, p_world) ? 1 : 0;
+        v.sowing = p_world.season->sowing(p_seconds);
+    }
     return v;
 }
 
@@ -430,13 +439,16 @@ void advance_village(VillageState &r_state, const VillageWorld &p_world, double 
         return;
     }
     const DayRules &day = *p_world.day;
+    const SeasonView *season = p_world.season;
     double t = r_state.clock;
     int stalled = 0; // 连着几步没往前走（有人一直「到点」却落不了地）：兜底往前挪一点，免得死循环
     while (t < p_until) {
         DayMark mark = DayMark::WORK_START;
-        const double mark_at = next_day_mark(t, day, &mark);
-        const bool home = is_home_hour(hour_at(t, day), day);
-        double step_to = std::min(p_until, mark_at);
+        const double mark_at = next_day_mark(t, day, &mark, season);
+        // 坏天气歇工 / 雨停出门也是一个分界（时令按一格格判，变的那一刻就在格边上）
+        const double shelter_at = season ? season->next_shelter_change(t, std::min(p_until, mark_at)) : INF;
+        const bool home = home_at(t, p_world);
+        double step_to = std::min({ p_until, mark_at, shelter_at });
         for (const PersonState &p : r_state.people) {
             step_to = std::min(step_to, t + time_to_event(p, home));
         }
@@ -448,7 +460,7 @@ void advance_village(VillageState &r_state, const VillageWorld &p_world, double 
         const double dt = std::max(0.0, step_to - t);
         if (dt > 0.0) {
             if (p_world.fields) {
-                p_world.fields->grow(game_hours(dt, day));
+                p_world.fields->grow(game_hours(dt, day), season ? season->growth_factor(t + 0.5 * dt) : 1.0);
             }
             for (PersonState &p : r_state.people) {
                 step_person(p, dt, home);
@@ -456,12 +468,12 @@ void advance_village(VillageState &r_state, const VillageWorld &p_world, double 
         }
         t = step_to;
         r_state.clock = t;
-        if (t >= mark_at) {
-            // 分界点：开饭；到了在家的钟点，半路的掉头、干着的放下，都回家
-            if (is_meal(mark)) {
+        if (t >= mark_at || t >= shelter_at) {
+            // 分界点：开饭；到了在家的钟点（或下起了大雨），半路的掉头、干着的放下，都回家
+            if (t >= mark_at && is_meal(mark)) {
                 eat(r_state, *p_world.rules);
             }
-            if (is_home_hour(hour_at(t, day), day)) {
+            if (home_at(t, p_world)) {
                 for (int k = 0; k < int(r_state.people.size()); k++) {
                     const PersonState &p = r_state.people[size_t(k)];
                     if (p.phase != FolkPhase::INDOORS && p.task.kind != TaskKind::GO_HOME) {
@@ -470,7 +482,7 @@ void advance_village(VillageState &r_state, const VillageWorld &p_world, double 
                 }
             }
         }
-        const bool home_now = is_home_hour(hour_at(t, day), day);
+        const bool home_now = home_at(t, p_world);
         for (int k = 0; k < int(r_state.people.size()); k++) {
             handle_due(r_state, p_world, k, t, home_now);
         }

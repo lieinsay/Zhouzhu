@@ -22,8 +22,9 @@ public:
     virtual bool till(int p_i, int p_j) = 0;
     virtual bool sow(int p_i, int p_j, const CropDef *p_crop) = 0;
     virtual Harvest harvest(int p_i, int p_j) = 0;
-    // 让地长 p_hours 个游戏小时。地图的农田自己按钟长（Farm 节点每帧推进），这里什么都不做
-    virtual void grow(double p_hours) {}
+    // 让地长 p_hours 个游戏小时，时令的倍数是 p_season（村子那一处的气温，见 SeasonView::growth_factor）。
+    // 地图的农田自己按钟长（Farm 节点每帧推进、逐格按海拔问时令），这里什么都不做
+    virtual void grow(double p_hours, double p_season = 1.0) {}
 };
 
 // 全岛群（一张地图）已被村子认领的格子：远处村子开荒时别挑别的村认领了的（那块地此刻可能正记在别的村的账本里，不在农田里）
@@ -98,5 +99,5 @@ public:
     bool till(int p_i, int p_j) override;
     bool sow(int p_i, int p_j, const CropDef *p_crop) override;
     Harvest harvest(int p_i, int p_j) override;
-    void grow(double p_hours) override;
+    void grow(double p_hours, double p_season = 1.0) override;
 };

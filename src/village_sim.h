@@ -40,6 +40,8 @@ struct VillageWorld {
     ClaimRegistry *taken = nullptr; // 全图认领表；可以为 nullptr
     const DayRules *day = nullptr;
     const SimRules *rules = nullptr;
+    // 这一处的时令（作息随日出日落、坏天气歇工、冷天不播、庄稼按气温长）；nullptr = 照 DayRules 的固定钟点、不歇工
+    const SeasonView *season = nullptr;
 };
 
 // 开账时村里的仓（粟 8、菽 4）

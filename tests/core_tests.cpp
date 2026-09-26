@@ -40,6 +40,7 @@
 #include "island_ground.h"
 #include "job_pool.h"
 #include "land_berth.h"
+#include "local_season.h"
 #include "map_ground.h"
 #include "map_image.h"
 #include "placeables.h"
@@ -63,8 +64,11 @@
 #include "world_river.h"
 #include "world_sites.h"
 #include "world_ledger.h"
+#include "weather.h"
+#include "weather_noise.h"
 #include "wild_landing.h"
 #include "world_terrain.h"
+#include "almanac.h"
 
 namespace {
 
@@ -2596,6 +2600,10 @@ struct SimBed {
     DayRules day;
     ClaimRegistry taken;
     ModelFields near_fields;
+    // 时令（有气候的地图）：给了就按它的作息、歇工、冷天不播；近处农田按 wx 逐格问气温（历日 = 钟的日 + wx_offset）
+    const SeasonView *season = nullptr;
+    const WeatherModel *wx = nullptr;
+    double wx_offset = 0.0;
 
     SimBed() :
             island(lay_flat_island(FlatIslandSpec())), ground(island), farm(&ground, ground.plot_lattice(), FarmRules()), near_fields(farm) {
@@ -2623,6 +2631,7 @@ struct SimBed {
         w.taken = &taken;
         w.day = &day;
         w.rules = &rules;
+        w.season = season;
         return w;
     }
     void found(VillageState &r_state, bool p_near, double p_now) {
@@ -2638,7 +2647,12 @@ struct SimBed {
         VillageWorld w = world(true, &near_fields);
         while (r_state.clock < p_until - 1e-9) {
             const double to = std::min(p_until, r_state.clock + p_dt);
-            farm.advance(game_hours(to - r_state.clock, day));
+            if (wx) {
+                const FieldClimate climate(wx, 0.5 * (r_state.clock + to) / day.day_seconds + wx_offset);
+                farm.advance(game_hours(to - r_state.clock, day), &climate);
+            } else {
+                farm.advance(game_hours(to - r_state.clock, day));
+            }
             advance_village(r_state, w, to);
         }
     }
@@ -4245,8 +4259,467 @@ void test_stream_meter() {
     check(m.frame(11) == nullptr && m.get_totals(StreamChannel::TILES).usec == 0, "清零");
 }
 
+// ---------------------------------------------------------------- 时令与天气
+
+bool load_2051_climate(Climate &r_climate) {
+    std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/weather.tsv", std::ios::binary);
+    if (!in) {
+        return false;
+    }
+    const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    std::string err;
+    return parse_climate(text, r_climate, err);
+}
+
+void test_almanac() {
+    std::printf("almanac\n");
+    const CalendarRules cal; // 336 天、4 季、每季 3 个月、每月 28 天，北半球夏至第 126 天，交角 34°，北纬 30°
+    CalendarDate d = calendar_date(0.0, cal);
+    check(d.year == 0 && d.day_of_year == 0 && d.season == 0 && d.month == 0 && d.day_of_month == 0 && d.hour == 0.0, "第 0 天子夜：零年、头一季、一月初一");
+    check(month_day_text(d) == "一月初一", "一月初一：" + month_day_text(d));
+    d = calendar_date(336.0 + 84.0 + 28.0 + 13.5, cal);
+    check(d.year == 1 && d.day_of_year == 125 && d.season == 1 && d.month == 4 && d.day_of_month == 13 && std::abs(d.hour - 12.0) < 1e-9, "第二年、第二季、五月十四、正午");
+    check(month_day_text(d) == "五月十四", "五月十四：" + month_day_text(d));
+    d = calendar_date(-1.25, cal);
+    check(d.year == -1 && d.day_of_year == 334 && std::abs(d.hour - 18.0) < 1e-9, "往前一天多（−1.25）：上一年的倒数第二天 18 点");
+    CalendarDate t;
+    t.month = 11;
+    t.day_of_month = 19;
+    const std::string a = month_day_text(t);
+    t.day_of_month = 20;
+    const std::string b = month_day_text(t);
+    t.month = 9;
+    t.day_of_month = 9;
+    const std::string c = month_day_text(t);
+    t.day_of_month = 10;
+    check(a == "十二月二十" && b == "十二月廿一" && c == "十月初十" && month_day_text(t) == "十月十一", "日子的叫法：" + a + " " + b + " " + c + " " + month_day_text(t));
+
+    check_near(sun_declination_deg(126.0, cal), 34.0, 1e-9, "北半球夏至：直射北纬 34°");
+    check_near(sun_declination_deg(126.0 + 168.0, cal), -34.0, 1e-9, "半年后：直射南纬 34°");
+    check_near(sun_declination_deg(42.0, cal), 0.0, 1e-9, "两者之间的分日：直射赤道");
+    CalendarRules eq = cal;
+    eq.latitude_deg = 0.0;
+    SunState s = sun_at(42.5, eq);
+    check_near(s.altitude_deg, 90.0 - std::abs(sun_declination_deg(42.5, cal)), 1e-6, "赤道分日正午：太阳在天顶（差赤纬那一点）");
+    check_near(s.sunrise_hour, 6.0, 0.1, "赤道分日：六点上下日出");
+    check_near(s.sunset_hour, 18.0, 0.1, "……十八点上下日落");
+    s = sun_at(42.0 + 8.0 / 24.0, eq);
+    check(s.dir_x > 0.5 && s.dir_y > 0.0, "上午八点太阳在东边");
+    s = sun_at(42.0 + 16.0 / 24.0, eq);
+    check(s.dir_x < -0.5 && s.dir_y > 0.0, "下午四点在西边");
+    check_near(std::sqrt(s.dir_x * s.dir_x + s.dir_y * s.dir_y + s.dir_z * s.dir_z), 1.0, 1e-9, "方向是单位向量");
+    CalendarRules south = cal;
+    south.latitude_deg = -31.65;
+    const SunState winter = sun_at(126.5, south), summer = sun_at(294.5, south);
+    check(winter.day_length_h < 10.0 && summer.day_length_h > 14.0,
+            "南纬 31.65°：北半球夏至那天是冬天，昼 " + std::to_string(winter.day_length_h) + " h；半年后昼 " + std::to_string(summer.day_length_h) + " h");
+    check(winter.dir_z < 0.0 && winter.altitude_deg > 20.0 && winter.altitude_deg < 30.0, "南半球冬天正午：太阳在北边、只有二十几度高");
+    CalendarRules polar = cal;
+    polar.latitude_deg = 80.0;
+    check(sun_at(126.5, polar).day_length_h == 24.0 && sun_at(294.5, polar).day_length_h == 0.0, "北纬 80°：夏至极昼、冬至极夜");
+    check(moon_at(0.0, cal).illuminated < 1e-9 && std::abs(moon_at(14.0, cal).illuminated - 1.0) < 1e-9, "初一朔、十五望");
+    check(moon_at(14.0, eq).altitude_deg > 50.0, "望月午夜高挂");
+    double start = 0.0, end = 0.0;
+    daylight_work_hours(126.0, south, DaylightWork(), start, end);
+    check(start > 7.5 && start <= 8.0 && end < 16.5, "冬天：日出后快八点才出工、四点多收工（" + std::to_string(start) + " – " + std::to_string(end) + "）");
+    daylight_work_hours(294.0, south, DaylightWork(), start, end);
+    check(start == 5.0 && end > 19.0, "夏天：五点出工（夹住）、七点多收工（" + std::to_string(start) + " – " + std::to_string(end) + "）");
+}
+
+void test_weather_noise() {
+    std::printf("weather noise\n");
+    // 与 game/shaders/weather.gdshaderinc 同一个式子：拿 numpy 按同一式子算的值对照
+    check_near(wx_fbm(0.3, 0.7), 0.27625539464700555, 1e-9, "云团噪声 (0.3, 0.7)");
+    check_near(wx_fbm(123.45, -67.8), 0.5225782686046223, 1e-9, "云团噪声 (123.45, −67.8)");
+    check_near(wx_fbm(-500.25, 999.5), 0.6180736762068376, 1e-9, "云团噪声 (−500.25, 999.5)");
+    check_near(wx_fbm(1023.9, 1024.1), 0.21326473863396878, 1e-9, "云团噪声 (1023.9, 1024.1)");
+    bool periodic = true, in_range = true;
+    for (int k = 0; k < 200; k++) {
+        const double x = -800.0 + k * 7.31, y = 300.0 - k * 3.17;
+        const double v = wx_fbm(x, y);
+        in_range = in_range && v >= 0.0 && v <= 1.0;
+        periodic = periodic && std::abs(v - wx_fbm(x + WX_PERIOD, y - 2.0 * WX_PERIOD)) < 1e-9;
+    }
+    check(in_range, "fbm 在 [0, 1]");
+    check(periodic, "按 1024 格循环（着色器里漂移取模不失精度）");
+    for (double cov : { 0.1, 0.25, 0.5, 0.75, 0.9 }) {
+        const double thr = wx_threshold(cov);
+        int above = 0, n = 0;
+        for (int i = 0; i < 300; i++) {
+            for (int j = 0; j < 300; j++) {
+                above += wx_fbm(i * 3.31 + 0.13, j * 3.29 + 0.29) >= thr ? 1 : 0;
+                n++;
+            }
+        }
+        check_near(double(above) / n, cov, 0.03, "覆盖率 " + std::to_string(cov) + " 的门槛：重新取样落在里面的份额");
+    }
+    check(wx_threshold(0.0) > 1.0 && wx_threshold(1.0) < 0.0, "覆盖率 0：谁都不在里面；1：处处都在");
+}
+
+void test_climate() {
+    std::printf("climate\n");
+    Climate old;
+    std::string err;
+    check(parse_climate("# year_days 3  precip_mm 12\n0\t0.4\t22.6\t小雨\n1\t0.0\t25.2\t晴\n2\t11.6\t20.0\t大雨\n", old, err), "旧版四列能读：" + err);
+    check(old.days.size() == 3 && old.days[0].kind == WeatherKind::RAIN && old.days[2].kind == WeatherKind::HEAVY_RAIN && old.days[1].wind_ms == 2.0 &&
+                    old.calendar.year_days == 3 && old.precip_mm == 12.0,
+            "旧版：类型对、风取默认、一年按行数");
+    Climate bad;
+    check(!parse_climate("0\t1\t2\t冰雹\n", bad, err), "不认识的天气报错");
+    check(!parse_climate("# year_days 5\n0\t0\t20\t晴\n", bad, err), "天数对不上报错");
+    Climate c;
+    if (!load_2051_climate(c)) {
+        std::printf("  （跳过 2051：没有资产）\n");
+        return;
+    }
+    check(c.days.size() == 336 && std::abs(c.calendar.latitude_deg + 31.6523) < 1e-3 && c.calendar.tilt_deg == 34.0 && c.ref_m == 382.0 &&
+                    std::abs(c.rim_m - 236.1) < 1e-9 && c.season_names.size() == 4 && c.season_names[0] == "暖季一" && c.calendar.days_per_month == 28,
+            "2051：336 天、南纬 31.65°、交角 34°、台面 382 m、岸缘 236 m、四季名");
+    check(c.days[0].kind == WeatherKind::RAIN && c.days[0].wind_from_deg == 107.0 && std::abs(c.days[0].wind_ms - 1.4) < 1e-9 && c.days[0].sailable,
+            "第 0 天：小雨、风从 107° 来 1.4 m/s、能出航");
+    int no_sail = 0;
+    for (const ClimateDay &day : c.days) {
+        no_sail += day.sailable ? 0 : 1;
+    }
+    check(no_sail == 35, "禁航 35 天（生成器的数）");
+    check(wind_name(1.0, 0.0) == "西风" && wind_name(0.0, 1.0) == "北风" && wind_name(-1.0, -1.0) == "东南风" && wind_name(0.1, 0.1) == "无风", "风向的叫法：风从哪来");
+}
+
+void test_weather_model() {
+    Climate c;
+    if (!load_2051_climate(c)) {
+        std::printf("weather model（跳过：没有 2051 资产）\n");
+        return;
+    }
+    std::printf("weather model（2051）\n");
+    const WeatherModel wx(c, 0.0, 2050.0);
+    const double ref = c.ref_m;
+    // 晴天（第 3 天）正午哪儿都不下；大雨天（第 2 天）白天雨区七成上下，整片平均对得上那天的雨量
+    double clear_max = 0.0, rain_sum = 0.0;
+    int wet = 0, n = 0;
+    for (int i = 0; i < 20; i++) {
+        for (int j = 0; j < 20; j++) {
+            const double x = -40000.0 + i * 4000.0 + 700.0, z = -40000.0 + j * 4000.0 + 300.0;
+            clear_max = std::max(clear_max, wx.sample(3.5, x, z, ref).precip_mm_h);
+            for (double hour : { 8.0, 11.0, 14.0, 17.0 }) {
+                const WeatherSample s = wx.sample(2.0 + hour / 24.0, x, z, ref);
+                rain_sum += s.precip_mm_h;
+                wet += s.precip_mm_h > 0.05 ? 1 : 0;
+                n++;
+            }
+        }
+    }
+    check(clear_max == 0.0, "晴天（第 3 天）正午：哪儿都不下");
+    const double day_mm = rain_sum / n * 24.0;
+    std::printf("  大雨天：雨区 %.0f%%，整片平均折成一天 %.1f mm（数据 %.1f mm）\n", 100.0 * wet / n, day_mm, c.days[2].precip_mm);
+    check_near(double(wet) / n, 0.72, 0.15, "大雨天：雨区约七成");
+    check_near(day_mm / c.days[2].precip_mm, 1.0, 0.4, "大雨天：整片平均对得上那天的雨量");
+
+    // 时间上连续：跨过子夜的锋面，一分钟一分钟地看
+    const double px = 12000.0, pz = -8000.0;
+    WeatherSample prev = wx.sample(1.75, px, pz, ref);
+    double dt_max = 0.0, dc_max = 0.0, dp_max = 0.0, front_max = 0.0;
+    for (int m = 1; m <= 12 * 60; m++) {
+        const WeatherSample s = wx.sample(1.75 + m / 1440.0, px, pz, ref);
+        dt_max = std::max(dt_max, std::abs(s.temp_c - prev.temp_c));
+        dc_max = std::max(dc_max, std::abs(s.cloud - prev.cloud));
+        dp_max = std::max(dp_max, std::abs(s.precip - prev.precip));
+        front_max = std::max(front_max, s.front);
+        prev = s;
+    }
+    check(dt_max < 0.2 && dc_max < 0.08 && dp_max < 0.1 && front_max > 0.9,
+            "换天没有一刀切：每游戏分钟 气温 ≤ " + std::to_string(dt_max) + " °C、云 ≤ " + std::to_string(dc_max) + "、雨 ≤ " + std::to_string(dp_max) + "，中途经过锋面");
+    // 空间上连续：同一刻相距 30 m
+    double ds_max = 0.0;
+    for (int k = 0; k < 400; k++) {
+        const double x = -30000.0 + k * 150.0, z = 5000.0 - k * 70.0;
+        const WeatherSample a = wx.sample(2.4, x, z, ref), b = wx.sample(2.4, x + 30.0, z, ref);
+        ds_max = std::max({ ds_max, std::abs(a.precip - b.precip), std::abs(a.cloud - b.cloud) });
+    }
+    check(ds_max < 0.1, "相距 30 m 的两点：雨与云差不出 0.1（雨区边是软的）");
+    // 锋面顺风扫过：第 2 天的大雨从上风先到
+    double tx = 0.0, tz = 0.0;
+    {
+        const double to = (c.days[2].wind_from_deg + 180.0) * 3.14159265358979 / 180.0;
+        tx = std::sin(to);
+        tz = -std::cos(to);
+    }
+    auto arrival = [&](double p_x, double p_z) {
+        for (int m = 0; m < 24 * 60; m++) {
+            const double t = 1.5 + m / 1440.0;
+            if (wx.sample(t, p_x, p_z, ref).cloud_cover > 0.5 * (0.12 + 0.95)) {
+                return t;
+            }
+        }
+        return 99.0;
+    };
+    const double up = arrival(-20000.0 * tx, -20000.0 * tz), down = arrival(20000.0 * tx, 20000.0 * tz);
+    check_near((down - up) * 24.0, 40.0 / wx.get_rules().front_kmh, 0.15, "锋面顺风扫过：下风 40 km 晚到（钟头）");
+
+    // 海拔与季节：积雪、冰、物候
+    double min_line = 1e9, min_day = 0.0, summer_line = 1e9;
+    for (int dd = 0; dd < 336; dd += 2) {
+        const double line = wx.snow_line(dd + 0.5);
+        if (line < min_line) {
+            min_line = line;
+            min_day = dd + 0.5;
+        }
+        if (dd < 60 || dd >= 280) {
+            summer_line = std::min(summer_line, line);
+        }
+    }
+    std::printf("  雪线最低 %.0f m（第 %.0f 天）；暖季最低 %.0f；冰线（河）第 %.0f 天 %.0f m\n", min_line, min_day, summer_line, min_day, wx.ice_line(min_day, 20.0));
+    check(min_line < 1800.0 && min_line > ref, "冷季山上积雪：雪线在台面之上、峰顶之下");
+    check(min_day >= 84.0 && min_day < 252.0, "雪线最低落在冷季");
+    check(summer_line > 1e8, "暖季（前 60 天与最后 56 天）：哪儿都没雪");
+    double deep_day = 0.0, deep_snow = 0.0, mid_day = 0.0;
+    for (int dd = 0; dd < 336; dd++) {
+        const double sn = wx.elevation(dd + 0.5, 2000.0).snow_mm;
+        if (sn > deep_snow) {
+            deep_snow = sn;
+            deep_day = dd + 0.5;
+        }
+        const double line = wx.snow_line(dd + 0.5);
+        if (mid_day == 0.0 && line > 1300.0 && line < 1700.0 && dd >= 190) {
+            mid_day = dd + 0.5;
+        }
+    }
+    check(deep_snow > 100.0 && wx.elevation(deep_day, ref).snow_mm < 1.0 && deep_day >= 150.0 && deep_day < 260.0,
+            "冷季末两千米积雪最厚（" + std::to_string(deep_snow) + " mm，第 " + std::to_string(deep_day) + " 天）、台面没有");
+    check(wx.ice_line(min_day, 20.0) < 2050.0 && wx.ice_line(20.5, 8.0) > 1e8, "冷季高处的河冻、暖季哪儿都不冻");
+    const ElevationState lush = wx.elevation(20.5, ref), bare = wx.elevation(min_day, 1800.0);
+    check(lush.green > 0.6 && lush.leaf > 0.95 && bare.leaf < 0.3 && bare.green < lush.green, "暖季台面满绿、冷季高处落叶");
+    double autumn_max = 0.0, spring_max = 0.0;
+    for (int dd = 0; dd < 336; dd++) {
+        autumn_max = std::max(autumn_max, wx.elevation(dd + 0.5, 800.0).autumn * (dd >= 60 && dd < 200 ? 1.0 : 0.0));
+        spring_max = std::max(spring_max, wx.elevation(dd + 0.5, 800.0).spring * (dd >= 200 ? 1.0 : 0.0));
+    }
+    check(autumn_max > 0.4 && spring_max > 0.3, "八百米处：入冷季有秋色、回暖有春芽");
+    check(wx.mean_temperature(20.5, ref + 1000.0) < wx.mean_temperature(20.5, ref) - 5.9, "直减率：高一千米冷六度");
+
+    // 开发者覆盖
+    WeatherModel storm = wx;
+    storm.edit_override() = { true, WeatherKind::STORM, 0.0, 1.0, 0.0 };
+    WeatherSample s = storm.sample(3.5, 0.0, 0.0, ref);
+    check(s.storm == 1.0 && s.wind_ms >= 13.99 && !s.sailable && s.day_kind == WeatherKind::STORM && s.kind == WeatherKind::STORM, "覆盖成风暴：风暴、大风、禁航（雨区外也叫风暴）");
+    storm.edit_override().blend = 0.5;
+    s = storm.sample(3.5, 0.0, 0.0, ref);
+    check_near(s.storm, 0.5, 1e-9, "渐入一半：风暴一半");
+    WeatherModel cold = wx;
+    cold.edit_override() = { true, WeatherKind::COUNT, -8.0, 1.0, 0.0 };
+    check(mid_day > 0.0 && cold.snow_line(mid_day) < wx.snow_line(mid_day) - 800.0, "气温偏移冷 8 °C：雪线低了八百米以上（第 " + std::to_string(mid_day) + " 天）");
+    check_near(cold.mean_temperature(3.5, ref), wx.mean_temperature(3.5, ref) - 8.0, 1e-9, "气温偏移：日均温照偏");
+    WeatherModel snowy = wx;
+    snowy.edit_override() = { true, WeatherKind::HEAVY_SNOW, 0.0, 1.0, 30.0 };
+    s = snowy.sample(20.0 + 4.0 / 24.0, 0.0, 0.0, ref);
+    check(s.snow_frac > 0.9 && s.temp_c < 0.0 && s.snow_mm >= 29.0, "覆盖成大雪（暖季也行）：台面零下、下的是雪、新雪留得住");
+}
+
+void test_local_season() {
+    Climate c;
+    if (!load_2051_climate(c)) {
+        std::printf("local season（跳过：没有 2051 资产）\n");
+        return;
+    }
+    std::printf("local season（2051）\n");
+    const WeatherModel wx(c, 0.0, 2050.0);
+    const DayRules day;
+    // 冬（北半球夏至那天，南半球的冬至）与夏：出工收工随日出日落
+    const LocalSeason winter(&wx, day, 126.0, 0.0, 0.0, c.ref_m), summer(&wx, day, 294.0, 0.0, 0.0, c.ref_m);
+    const DayMarks w = day_marks(0, day, &winter), s = day_marks(0, day, &summer);
+    check(w.work_start > 7.5 && w.work_end < 16.5 && s.work_start == 5.0 && s.work_end > 19.0, "作息：冬天快八点出工、四点多收工，夏天五点到七点多");
+    DayMark mark = DayMark::LUNCH_END;
+    check_near(next_day_mark(clock_at(0, 5.0, day), day, &mark, &winter), clock_at(0, w.work_start, day), 1e-6, "冬天五点之后的分界点是出工（日出后）");
+    check(mark == DayMark::WORK_START, "……是出工");
+    check(is_home_time(clock_at(0, 7.0, day), day, &winter) && !is_home_time(clock_at(0, 7.0, day), day, &summer), "早上七点：冬天还在家、夏天已经出工");
+    check(!is_home_time(clock_at(0, 7.0, day), day, nullptr) && is_home_time(clock_at(0, 5.5, day), day, nullptr), "没有时令：照固定钟点");
+    // 庄稼
+    const LocalSeason deep(&wx, day, 196.0, 0.0, 0.0, c.ref_m), high(&wx, day, 294.0, 0.0, 0.0, 1900.0);
+    const double noon = clock_at(0, 12.0, day);
+    check(summer.growth_factor(noon) > 0.9 && summer.sowing(noon), "夏天台面：庄稼照常长、照常播");
+    check(deep.growth_factor(noon) < 0.35 && !deep.sowing(noon), "深冬（第 196 天）台面：庄稼几乎不长、不播（" + std::to_string(deep.growth_factor(noon)) + "）");
+    check(high.growth_factor(noon) < summer.growth_factor(noon), "同一天，一千九百米比台面长得慢");
+    check(crop_season_factor(20.0, 10.0, SeasonRules()) == 0.0 && crop_season_factor(20.0, 0.0, SeasonRules()) == 1.0 && crop_season_factor(4.0, 0.0, SeasonRules()) == 0.0,
+            "积雪盖着不长；暖和照常；5 °C 以下不长");
+    // 歇工：第 10 天改成风暴，前后两天晴
+    Climate c2 = c;
+    c2.days[9].kind = WeatherKind::CLEAR;
+    c2.days[10].kind = WeatherKind::STORM;
+    c2.days[11].kind = WeatherKind::CLEAR;
+    const WeatherModel wx2(c2, 0.0, 2050.0);
+    const LocalSeason here(&wx2, day, 0.0, 0.0, 0.0, c.ref_m);
+    check(!here.sheltering(clock_at(9, 12.0, day)) && here.sheltering(clock_at(10, 12.0, day)) && !here.sheltering(clock_at(11, 12.0, day)), "风暴那天正午歇工，前后一天不歇");
+    const double change = here.next_shelter_change(clock_at(9, 12.0, day), clock_at(11, 12.0, day));
+    const double step = game_seconds(0.25, day);
+    check(change > clock_at(9, 18.0, day) && change < clock_at(10, 6.0, day), "风暴在子夜前后来");
+    check(std::abs(change / step - std::round(change / step)) < 1e-6, "变在一格（15 分钟）的格边上");
+    check(here.sheltering(change + 1e-3) && !here.sheltering(change - 1e-3), "变的那一刻前后");
+    const double back = here.next_shelter_change(change, clock_at(12, 12.0, day));
+    check(back > clock_at(10, 18.0, day) && back < clock_at(11, 6.0, day) && !here.sheltering(back + 1e-3), "第二天子夜前后风停");
+    check(std::isinf(here.next_shelter_change(clock_at(9, 1.0, day), clock_at(9, 12.0, day))), "这段里不变：+∞");
+}
+
+int count_outdoors(const VillageState &p_state) {
+    int n = 0;
+    for (const PersonState &p : p_state.people) {
+        n += p.phase != FolkPhase::INDOORS ? 1 : 0;
+    }
+    return n;
+}
+
+void test_village_seasons() {
+    Climate c;
+    if (!load_2051_climate(c)) {
+        std::printf("village seasons（跳过：没有 2051 资产）\n");
+        return;
+    }
+    std::printf("village seasons（2051 的气候、平板岛的村）\n");
+    for (ClimateDay &d : c.days) {
+        d.kind = WeatherKind::CLEAR; // 天气由覆盖给，免得真实的雨搅进来
+    }
+    WeatherModel wx(c, -100.0, 2050.0);
+    const DayRules day;
+    const double h = c.ref_m;
+    // 作息：冬天日出晚，七点半还没人出门
+    {
+        SimBed bed;
+        const LocalSeason season(&wx, day, 126.0, 0.0, -70.0, h);
+        bed.season = &season;
+        bed.wx = &wx;
+        bed.wx_offset = 126.0;
+        VillageState s;
+        bed.found(s, true, clock_at(0, 5.5, day));
+        bed.run_near(s, clock_at(0, 7.5, day));
+        const int early = count_outdoors(s);
+        bed.run_near(s, clock_at(0, 9.0, day));
+        check(early == 0 && count_outdoors(s) > 0, "冬天：七点半还没人出门、九点有人在外面（" + std::to_string(count_outdoors(s)) + " 人）");
+    }
+    // 风暴歇工：近处逐帧、远处半小时一结都一样——下起来一个钟头里全村进门，停了又出门
+    for (bool near : { true, false }) {
+        SimBed bed;
+        VillageState s;
+        {
+            const LocalSeason season(&wx, day, 20.0, 0.0, -70.0, h);
+            bed.season = &season;
+            bed.found(s, near, clock_at(0, 5.5, day));
+            if (near) {
+                bed.run_near(s, clock_at(0, 9.0, day));
+            } else {
+                bed.run_far(s, clock_at(0, 9.0, day));
+            }
+        }
+        const int before = count_outdoors(s);
+        wx.edit_override() = { true, WeatherKind::STORM, 0.0, 1.0, 0.0 };
+        {
+            const LocalSeason season(&wx, day, 20.0, 0.0, -70.0, h); // 时令记着最近问过的格：天气换了就换一份（游戏里每帧、每次结算都现造）
+            bed.season = &season;
+            if (near) {
+                bed.run_near(s, clock_at(0, 10.0, day));
+            } else {
+                bed.run_far(s, clock_at(0, 10.0, day));
+            }
+        }
+        const int storm = count_outdoors(s);
+        wx.edit_override() = WeatherOverride();
+        {
+            const LocalSeason season(&wx, day, 20.0, 0.0, -70.0, h);
+            bed.season = &season;
+            if (near) {
+                bed.run_near(s, clock_at(0, 11.0, day));
+            } else {
+                bed.run_far(s, clock_at(0, 11.0, day));
+            }
+        }
+        check(before > 0 && storm == 0 && count_outdoors(s) > 0, std::string(near ? "近处" : "远处") + "：风暴里一个钟头全村进门（" + std::to_string(before) + " → " +
+                        std::to_string(storm) + "），停了又出门（" + std::to_string(count_outdoors(s)) + "）");
+    }
+    // 冷天不播不开荒、地里的不长
+    {
+        SimBed warm_bed;
+        const LocalSeason warm(&wx, day, 20.0, 0.0, -70.0, h);
+        warm_bed.season = &warm;
+        warm_bed.wx = &wx;
+        warm_bed.wx_offset = 20.0;
+        VillageState ws;
+        warm_bed.found(ws, true, clock_at(0, 5.5, day));
+        warm_bed.run_near(ws, clock_at(0, 11.0, day));
+        std::vector<std::pair<uint64_t, double>> growing;
+        const std::vector<int> cells = warm_bed.farm.plot_cells();
+        for (size_t k = 0; k + 1 < cells.size(); k += 2) {
+            const Plot p = warm_bed.farm.plot_at(cells[k], cells[k + 1]);
+            if (p.state == PlotState::GROWING) {
+                growing.push_back({ (uint64_t(uint32_t(cells[k])) << 32) | uint32_t(cells[k + 1]), p.growth });
+            }
+        }
+        wx.edit_override() = { true, WeatherKind::COUNT, -25.0, 1.0, 0.0 };
+        const LocalSeason cold(&wx, day, 20.0, 0.0, -70.0, h);
+        warm_bed.season = &cold;
+        warm_bed.run_near(ws, clock_at(0, 13.0, day)); // 冷下来之前领了的活照样干完
+        growing.clear();
+        const std::vector<int> cells_cold = warm_bed.farm.plot_cells();
+        for (size_t k = 0; k + 1 < cells_cold.size(); k += 2) {
+            const Plot p = warm_bed.farm.plot_at(cells_cold[k], cells_cold[k + 1]);
+            if (p.state == PlotState::GROWING) {
+                growing.push_back({ (uint64_t(uint32_t(cells_cold[k])) << 32) | uint32_t(cells_cold[k + 1]), p.growth });
+            }
+        }
+        const int sown = ws.tally.sown;
+        warm_bed.run_near(ws, clock_at(0, 15.0, day));
+        bool frozen = true;
+        for (const auto &g : growing) {
+            const Plot p = warm_bed.farm.plot_at(int(int32_t(uint32_t(g.first >> 32))), int(int32_t(uint32_t(g.first & 0xFFFFFFFFu))));
+            frozen = frozen && p.growth == g.second;
+        }
+        check(sown > 0 && !growing.empty() && ws.tally.sown == sown && frozen,
+                "暖天播了 " + std::to_string(sown) + " 格；冷下来（−25 °C）两个钟头不再播、地里 " + std::to_string(growing.size()) + " 格一点不长");
+        SimBed cold_bed;
+        cold_bed.season = &cold;
+        cold_bed.wx = &wx;
+        cold_bed.wx_offset = 20.0;
+        VillageState cs;
+        cold_bed.found(cs, true, clock_at(0, 5.5, day));
+        cold_bed.run_near(cs, clock_at(0, 11.0, day));
+        check(cs.tally.sown == 0 && cold_bed.farm.plot_cells().empty() && count_outdoors(cs) > 0, "一开始就冷：农夫不开荒不播种，照样出门（挑水、串门）");
+        wx.edit_override() = WeatherOverride();
+    }
+    // 远近同源（有时令）：一年里挑六天各跑一整天，加起来比（单独一天随机差得多一点，与没有时令时一样）
+    {
+        VillageTally a, b;
+        for (double off : { 10.0, 20.0, 30.0, 40.0, 250.0, 300.0 }) {
+            const LocalSeason season(&wx, day, off, 0.0, -70.0, h);
+            SimBed near_bed, far_bed;
+            near_bed.season = far_bed.season = &season;
+            near_bed.wx = &wx;
+            near_bed.wx_offset = off;
+            VillageState ns, fs;
+            near_bed.found(ns, true, clock_at(0, 4.5, day));
+            far_bed.found(fs, false, clock_at(0, 4.5, day));
+            near_bed.run_near(ns, clock_at(1, 4.5, day));
+            far_bed.run_far(fs, clock_at(1, 4.5, day));
+            a.harvested += ns.tally.harvested;
+            a.sown += ns.tally.sown;
+            a.eaten += ns.tally.eaten;
+            a.water_in += ns.tally.water_in;
+            b.harvested += fs.tally.harvested;
+            b.sown += fs.tally.sown;
+            b.eaten += fs.tally.eaten;
+            b.water_in += fs.tally.water_in;
+        }
+        std::printf("  有时令的六天：近处 收 %d 播 %d 吃 %d 挑水 %.1f；远处 收 %d 播 %d 吃 %d 挑水 %.1f\n", a.harvested, a.sown, a.eaten, a.water_in, b.harvested, b.sown, b.eaten,
+                b.water_in);
+        auto within = [](double p_a, double p_b, double p_rel, double p_abs) { return std::abs(p_a - p_b) <= std::max(p_abs, p_rel * std::max(std::abs(p_a), std::abs(p_b))); };
+        check(a.harvested > 0 && within(a.harvested, b.harvested, 0.2, 4) && within(a.sown, b.sown, 0.2, 3) && within(a.water_in, b.water_in, 0.2, 3) && a.eaten == b.eaten,
+                "有时令：远处结算与逐帧差不出两成、吃饭一样");
+    }
+}
+
 int main() {
     test_rng();
+    test_almanac();
+    test_weather_noise();
+    test_climate();
+    test_weather_model();
+    test_local_season();
     test_job_pool();
     test_stream_meter();
     test_building_mesh();
@@ -4271,6 +4744,7 @@ int main() {
     test_settlement();
     test_villagers();
     test_village_sim();
+    test_village_seasons();
     test_world_grid();
     test_world_terrain();
     test_cover_blend();

@@ -42,13 +42,14 @@ PlotSurvey survey_plot(const MapGround &p_ground, const PlotLattice &p_lattice, 
     }
     const double from_water = near_water ? std::clamp(1.0 - dist / p_rules.max_river_m, 0.0, 1.0) : 0.0;
     s.moisture = float(std::max(from_water, fertile ? p_rules.fertile_moisture : 0.0));
+    s.height = float(0.5 * (lo + hi));
     return s;
 }
 
-double growth_rate(double p_moisture, const CropDef *p_crop, const FarmRules &p_rules) {
+double growth_rate(double p_moisture, const CropDef *p_crop, const FarmRules &p_rules, double p_season) {
     const double rate = p_rules.dry_growth + (1.0 - p_rules.dry_growth) * p_moisture;
     const double factor = p_crop ? p_crop->grow_factor : 1.0;
-    return rate / std::max(1e-6, p_rules.grow_hours * factor);
+    return std::max(0.0, p_season) * rate / std::max(1e-6, p_rules.grow_hours * factor);
 }
 
 void FarmModel::set_rules(const FarmRules &p_rules) {
@@ -140,7 +141,7 @@ Harvest FarmModel::harvest(int p_i, int p_j) {
     return got;
 }
 
-std::vector<int> FarmModel::advance(double p_hours) {
+std::vector<int> FarmModel::advance(double p_hours, const GrowthClimate *p_climate) {
     std::vector<int> changed;
     for (auto &[cell, plot] : plots) {
         if (plot.state != PlotState::GROWING) {
@@ -148,7 +149,8 @@ std::vector<int> FarmModel::advance(double p_hours) {
         }
         const int i = key_i(cell), j = key_j(cell);
         const int before = stage_of(plot);
-        plot.growth += p_hours * growth_rate(survey(i, j).moisture, plot.crop, rules);
+        const PlotSurvey s = survey(i, j);
+        plot.growth += p_hours * growth_rate(s.moisture, plot.crop, rules, p_climate ? p_climate->growth_factor(s.height) : 1.0);
         if (plot.growth >= 1.0) {
             plot.growth = 1.0;
             plot.state = PlotState::RIPE;

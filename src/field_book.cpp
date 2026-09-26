@@ -103,12 +103,12 @@ Harvest HeldFields::harvest(int p_i, int p_j) {
     return got;
 }
 
-void HeldFields::grow(double p_hours) {
+void HeldFields::grow(double p_hours, double p_season) {
     for (HeldPlot &h : held) {
         if (h.plot.state != PlotState::GROWING) {
             continue;
         }
-        h.plot.growth += p_hours * growth_rate(h.moisture, h.plot.crop, rules);
+        h.plot.growth += p_hours * growth_rate(h.moisture, h.plot.crop, rules, p_season);
         if (h.plot.growth >= 1.0) {
             h.plot.growth = 1.0;
             h.plot.state = PlotState::RIPE;
