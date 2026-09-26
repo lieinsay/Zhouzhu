@@ -26,6 +26,7 @@
 #include "day_clock.h"
 #include "field_book.h"
 #include "dock_site.h"
+#include "far_group_mesh.h"
 #include "farm_model.h"
 #include "flat_ground.h"
 #include "flight_model.h"
@@ -4813,6 +4814,35 @@ void test_planet_frame() {
         const CurveView at0 = CurveView::at(a, PlanetVec(0.0, 100.0, 0.0));
         check_near(at0.visual(a, PlanetVec(100000.0, 100.0, 0.0)).y - 100.0, -784.1, 1.5, "相机在群心：100 km 外的地面在画面上低 784 m");
     }
+    // 法线：平行移动的倾斜（着色器 planet_tilt）对得上该点的局部系；相机近处的法线不变；单精度版同式；画面 → 平面的逆
+    {
+        double tilt_err = 0.0, near_n = 0.0, f_err = 0.0, inv_err = 0.0, far_up = 0.0;
+        for (int k = 0; k < 40; k++) {
+            const double ang = k * 0.77, dist = 3000.0 * k;
+            const PlanetVec p(dist * std::cos(ang), 100.0 + 40.0 * k, dist * std::sin(ang));
+            const PlanetVec d = PlanetVec(std::sin(k * 1.3), 1.0 + 0.5 * std::cos(k * 0.4), std::cos(k * 2.1)).normalized();
+            tilt_err = std::max(tilt_err, (planet_tilt(p, d, R) - a.local_basis(p).apply(d)).length());
+            const CurveView view = CurveView::at(a, p);
+            const PlanetVec q = p + PlanetVec(40.0 * std::cos(ang), -3.0, 40.0 * std::sin(ang));
+            near_n = std::max(near_n, (view.visual_dir(q, d) - d).length());
+            const CurveViewF vf = CurveViewF::from(view);
+            const PlanetVec far = p + PlanetVec(150000.0 * std::cos(k * 0.3), 0.0, 150000.0 * std::sin(k * 0.3));
+            const float pf[3] = { float(far.x), float(far.y), float(far.z) }, df[3] = { float(d.x), float(d.y), float(d.z) };
+            float nf[3];
+            vf.visual_normal(pf, df, nf);
+            f_err = std::max(f_err, (PlanetVec(nf[0], nf[1], nf[2]) - view.visual_dir(far, d)).length());
+            inv_err = std::max(inv_err, (view.flat_of(a, view.visual(a, far)) - far).length());
+            // 150 km 外的地面朝上，在画面上往外倒 150/R 弧度（真球面）
+            const PlanetVec up_far = view.visual_dir(far, PlanetVec(0.0, 1.0, 0.0));
+            far_up = std::max(far_up, std::abs(std::acos(std::clamp(up_far.y, -1.0, 1.0)) - (far - p).length() / R));
+        }
+        std::printf("  法线的倾斜与局部系差 %.2e；相机 40 m 内法线变 %.2e；单精度同式 %.2e；画面 → 平面的逆 %.3f mm；150 km 外的朝上倒角差 %.2e rad\n", tilt_err, near_n, f_err, inv_err * 1000.0, far_up);
+        check(tilt_err < 2e-4, "planet_tilt 与该点的局部系（AEQD 方位向形变）差 < 2e-4");
+        check(near_n < 2e-4, "相机近处法线在画面上几乎不变（< 2e-4）");
+        check(f_err < 1e-5, "单精度的法线弯曲与双精度差 < 1e-5");
+        check(inv_err < 5e-3, "画面坐标 → 平面坐标（逆）150 km 外差 < 5 mm");
+        check(far_up < 1e-3, "远处地面的朝上在画面上倒向外（按真球面）");
+    }
     // 换锚：同一个真球面点换锚前后，相对相机的画面位置只差平面轴的转动 Q
     {
         const PlanetVec cam_a = a.latlon_flat(-32.1, 151.9) + PlanetVec(0.0, 2400.0, 0.0); // 两群之间的云海上空
@@ -4914,6 +4944,63 @@ void test_planet_data() {
     check(pd.column("s03.plate") && pd.grid("s03.plates.plate_id"), "第三层要的板块也在包里（P6 用）");
 }
 
+// 远处岛群的低模（far_group_mesh）：2049 群的 500 m / 2 km 粗版建出顶面、崖壁、岛底；朝向对、按真球面弯过、岛体同游戏里的式子
+void test_far_group_mesh() {
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
+    std::printf("[far_group_mesh]\n");
+    PlanetData pd;
+    std::string err;
+    if (!pd.load_files(dir, err)) {
+        check(false, "行星包读得出：" + err);
+        return;
+    }
+    const double R = PlanetShape().radius();
+    for (double res : { 600.0, 1e9 }) {
+        const PlanetLod lod = pd.lod(2049, res);
+        const auto t0 = std::chrono::steady_clock::now();
+        const FarGroupMesh m = build_far_group_mesh(lod, R);
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        int land = 0;
+        for (uint8_t v : lod.land) {
+            land += v >= 128 ? 1 : 0;
+        }
+        std::printf("  2049 %.0f m：%d 实地格、%zu 顶点、%zu 三角面，%.1f ms；包围盒 y %.0f…%.0f，最高 %.0f m\n", lod.res_m, m.solid_cells, m.vertex_count(), m.indices.size() / 3, ms,
+                m.aabb_min[1], m.aabb_max[1], m.peak_y);
+        check(!m.empty() && m.solid_cells == land, "每个实地格都进了网格（" + std::to_string(m.solid_cells) + " / " + std::to_string(land) + "）");
+        check(m.positions.size() == m.normals.size() && m.uvs.size() / 2 == m.vertex_count() && m.season.size() / 4 == m.vertex_count() && m.colors.size() / 4 == m.vertex_count(),
+                "顶点的各样数组一样长");
+        check(std::abs(m.peak_y - pd.node(2049).peak_m) < 0.25 * pd.node(2049).peak_m, "最高的角接近主峰（" + std::to_string(m.peak_y) + " m）");
+        // 朝向：三角面的面法线（Godot：(a − c) × (a − b)）与顶点法线同向
+        int agree = 0, tris = int(m.indices.size() / 3), down = 0, up = 0;
+        for (int t = 0; t < tris; t++) {
+            const int ia = m.indices[size_t(t) * 3], ib = m.indices[size_t(t) * 3 + 1], ic = m.indices[size_t(t) * 3 + 2];
+            auto P = [&](int i) { return PlanetVec(m.positions[size_t(i) * 3], m.positions[size_t(i) * 3 + 1], m.positions[size_t(i) * 3 + 2]); };
+            const PlanetVec fn = (P(ia) - P(ic)).cross(P(ia) - P(ib));
+            const PlanetVec vn(m.normals[size_t(ia) * 3], m.normals[size_t(ia) * 3 + 1], m.normals[size_t(ia) * 3 + 2]);
+            agree += fn.dot(vn) > 0.0 ? 1 : 0;
+            up += vn.y > 0.5 ? 1 : 0;
+            down += vn.y < -0.5 ? 1 : 0;
+        }
+        check(agree >= tris * 0.99, "三角面朝外（面法线与顶点法线同向 " + std::to_string(agree) + " / " + std::to_string(tris) + "）");
+        check(up > 0 && down > 0 && std::abs(up - down) < tris / 5, "顶面朝上、岛底朝下，片数相当");
+        // 岛体：岛底最深在云带顶上下（2049 主岛 4978 km²、最深岸距二三十公里：龙骨 25·√R ≈ 3.5–4.5 km）
+        double deep = 0.0;
+        for (size_t v = 0; v < m.vertex_count(); v++) {
+            deep = std::min(deep, double(m.uvs[v * 2]));
+        }
+        check(deep < -2500.0 && deep > -5000.0, "岛底倒锥最深 " + std::to_string(deep) + " m（云带顶 −3800 上下）");
+        // 按真球面弯过：离群心最远的顶点比它的海拔低 s²/2R
+        double worst = 0.0;
+        for (size_t v = 0; v < m.vertex_count(); v++) {
+            const double y = m.uvs[v * 2];
+            const double tx = m.positions[v * 3], ty = m.positions[v * 3 + 1], tz = m.positions[v * 3 + 2];
+            const double s = std::sqrt(tx * tx + tz * tz);
+            worst = std::max(worst, std::abs((ty - y) + s * s / (2.0 * R)) - 0.02 * s * s / (2.0 * R));
+        }
+        check(worst < 5.0, "顶点按真球面下弯（离群心 s 处低 s²/2R，差 " + std::to_string(worst) + " m）");
+    }
+}
+
 int main() {
     test_rng();
     test_almanac();
@@ -4973,6 +5060,7 @@ int main() {
     test_goldens();
     test_planet_data();
     test_planet_frame();
+    test_far_group_mesh();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

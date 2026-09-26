@@ -33,6 +33,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/deposit_kinds.h
     src/dock_site.cpp
     src/dock_site.h
+    src/far_group_mesh.cpp
+    src/far_group_mesh.h
     src/farm_model.cpp
     src/farm_model.h
     src/field_book.cpp

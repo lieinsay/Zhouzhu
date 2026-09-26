@@ -122,6 +122,33 @@ PlanetBasis GroupFrame::local_basis(const PlanetVec &p_flat) const {
     return { { east_c, up_c, south_c } };
 }
 
+PlanetVec planet_tilt(const PlanetVec &p_flat, const PlanetVec &p_dir, double p_radius) {
+    const double s = std::sqrt(p_flat.x * p_flat.x + p_flat.z * p_flat.z);
+    if (s < 1e-6) {
+        return p_dir;
+    }
+    const double th = s / p_radius, c = std::cos(th), sn = std::sin(th);
+    const PlanetVec a(p_flat.z / s, 0.0, -p_flat.x / s); // 上 × 离群心的方向：绕它转，上转向离群心的方向
+    return p_dir * c + a.cross(p_dir) * sn + a * (a.dot(p_dir) * (1.0 - c));
+}
+
+PlanetVec CurveView::visual_dir(const PlanetVec &p_flat, const PlanetVec &p_dir) const {
+    return local.apply_t(planet_tilt(p_flat, p_dir, radius));
+}
+
+PlanetVec CurveView::flat_of(const GroupFrame &p_frame, const PlanetVec &p_visual) const {
+    // visual(p) = p + 小量（近处）；远处按 v − visual(p) 的差一步步修（差随距离平方长，几步就收到毫米）
+    PlanetVec p = p_visual;
+    for (int k = 0; k < 12; k++) {
+        const PlanetVec e = p_visual - visual(p_frame, p);
+        p = p + e;
+        if (e.length() < 1e-4) {
+            break;
+        }
+    }
+    return p;
+}
+
 CurveView CurveView::at(const GroupFrame &p_frame, const PlanetVec &p_cam) {
     CurveView v;
     v.cam = p_cam;
@@ -159,6 +186,33 @@ void planet_delta_f(const float p_flat[3], float p_radius, float r_out[3]) {
     r_out[0] = p_flat[0] * fh;
     r_out[1] = dv;
     r_out[2] = p_flat[2] * fh;
+}
+
+void planet_tilt_f(const float p_flat[3], const float p_dir[3], float p_radius, float r_out[3]) {
+    // 逐式同 planet_curve.gdshaderinc 的 planet_tilt
+    const float s = std::sqrt(p_flat[0] * p_flat[0] + p_flat[2] * p_flat[2]);
+    if (s < 1.0f) {
+        r_out[0] = p_dir[0], r_out[1] = p_dir[1], r_out[2] = p_dir[2];
+        return;
+    }
+    const float hx = p_flat[0] / s, hz = p_flat[2] / s;
+    const float th = s / p_radius;
+    const float c = std::cos(th), sn = std::sin(th);
+    const float a[3] = { hz, 0.0f, -hx };
+    const float axd[3] = { a[1] * p_dir[2] - a[2] * p_dir[1], a[2] * p_dir[0] - a[0] * p_dir[2], a[0] * p_dir[1] - a[1] * p_dir[0] };
+    const float ad = a[0] * p_dir[0] + a[1] * p_dir[1] + a[2] * p_dir[2];
+    for (int k = 0; k < 3; k++) {
+        r_out[k] = p_dir[k] * c + axd[k] * sn + a[k] * ad * (1.0f - c);
+    }
+}
+
+void CurveViewF::visual_normal(const float p_flat[3], const float p_dir[3], float r_out[3]) const {
+    // 逐式同 planet_visual_normal：R_cᵀ · planet_tilt(p, d)
+    float t[3];
+    planet_tilt_f(p_flat, p_dir, radius, t);
+    for (int k = 0; k < 3; k++) {
+        r_out[k] = local[3 * k + 0] * t[0] + local[3 * k + 1] * t[1] + local[3 * k + 2] * t[2];
+    }
 }
 
 void CurveViewF::visual(const float p_flat[3], float r_out[3]) const {

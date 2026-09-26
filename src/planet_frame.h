@@ -93,6 +93,10 @@ struct GroupFrame {
     PlanetBasis local_basis(const PlanetVec &p_flat) const;
 };
 
+// 方向（法线、切线）从平面轴转到该点的局部系：沿群心到该点的大圆平行移动，即绕水平轴（上 × 离群心的方向）转 θ = 离群心 / R。
+// 与 local_basis(p).apply(d) 只差 AEQD 在方位向的形变（θ² 量级），着色器 planet_tilt 同式（单精度版 planet_tilt_f）
+PlanetVec planet_tilt(const PlanetVec &p_flat, const PlanetVec &p_dir, double p_radius);
+
 // 相机局部的画面弯曲（锚 = p_frame，相机平面坐标 p_cam）
 struct CurveView {
     PlanetVec cam; // c
@@ -103,6 +107,10 @@ struct CurveView {
     static CurveView at(const GroupFrame &p_frame, const PlanetVec &p_cam);
     // 双精度：用精确的 δ
     PlanetVec visual(const GroupFrame &p_frame, const PlanetVec &p_flat) const;
+    // 该点处的方向（法线）在画面上：R_cᵀ · R_p · d（近处 ≈ d）
+    PlanetVec visual_dir(const PlanetVec &p_flat, const PlanetVec &p_dir) const;
+    // 画面坐标 → 平面坐标（visual 的逆，迭代到毫米；拾取用）
+    PlanetVec flat_of(const GroupFrame &p_frame, const PlanetVec &p_visual) const;
 };
 
 // 与着色器逐式相同的单精度版
@@ -114,9 +122,13 @@ struct CurveViewF {
 
     static CurveViewF from(const CurveView &p_view);
     void visual(const float p_flat[3], float r_out[3]) const;
+    // 逐式同着色器的 planet_visual_normal：R_cᵀ · planet_tilt(p, d)
+    void visual_normal(const float p_flat[3], const float p_dir[3], float r_out[3]) const;
 };
 // δ 的展开式（单精度，逐式同着色器的 planet_delta）
 void planet_delta_f(const float p_flat[3], float p_radius, float r_out[3]);
+// 逐式同着色器的 planet_tilt
+void planet_tilt_f(const float p_flat[3], const float p_dir[3], float p_radius, float r_out[3]);
 
 // 换锚：把群 a 平面系里的一点换到群 b 平面系（经真球面，精确）
 PlanetVec rebase_point(const GroupFrame &p_a, const GroupFrame &p_b, const PlanetVec &p_flat_a);
