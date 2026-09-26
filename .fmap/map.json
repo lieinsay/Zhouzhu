@@ -2019,6 +2019,90 @@
         "game/tools/weather_shots.gd"
       ],
       "since": "e61"
+    },
+    {
+      "id": "site-survey-planet",
+      "label": "行星体检",
+      "detail": "zhouzhu_site_survey --planet game/planet/seed42 [--home 2051] [--overlap]：摘要（群数、陆地、人口、包体积、势力范围重摆与越界的群数）、邻群表（距离、方位、陆地、主峰、有哪几种粗版）、坐标自检（往返、换锚画面连续）、8000 群粗版全解开对陆地；--overlap 把陆地格放上球面按 4 km 桶查不同群的格子相距多近。",
+      "tag": "工具",
+      "evidence": "ctest site_survey_planet 1.4 s 达标；--overlap（Release）617 万陆地格 3.7 s：格心 < 2 km 的 14 对",
+      "sources": [
+        "tools/site_survey.cpp",
+        "CMakeLists.txt"
+      ],
+      "since": "e62",
+      "parent": "site-survey-tool"
+    },
+    {
+      "id": "skyisle-territory",
+      "label": "势力范围（生成器）",
+      "detail": "skyisle-gen island/territory.py 与 _fit_territory：与每个邻群按等效半径 √(陆地/π) 分界、各退 gap/2（3 km）；照旧摆、越界才重摆；IS-terr（硬）/ IS-terr-gap（软）。没碰到约束的群产物逐字节不变。",
+      "tag": "外部：skyisle-gen",
+      "evidence": "skyisle-gen 7e5a919：全行星重摆 67%，34 群仍越线；重摆的 IS-area 全达标；2051 产物逐字节不变",
+      "sources": [
+        "docs/PLAN-PLANET.md"
+      ],
+      "since": "e63"
+    },
+    {
+      "id": "skyisle-lod",
+      "label": "岛群粗版（生成器）",
+      "detail": "skyisle island lod：原生分辨率跑布局 + 地形 + 水系，按块降采样（陆地占比、平均高、最高点、岛号与地表众数、水面占比）；不在粗分辨率上生成——布局随分辨率变（2051 1 km 版岛心差中位 24 km）。",
+      "tag": "外部：skyisle-gen",
+      "evidence": "skyisle-gen 4e4baf7：8000 群 2 km / 1 km 两份，28 进程约两小时；pytest 粗版与原生陆地一样、岛心原样",
+      "sources": [
+        "docs/PLAN-PLANET.md"
+      ],
+      "since": "e63"
+    },
+    {
+      "id": "export-planet",
+      "label": "行星包导出",
+      "detail": "tools/export_planet.py <run> <输出>：planet.bin（行星参数头文本、③④⑨ 的逐节点列、粗版量的主峰 / 岸缘 / 势力范围、30 张 1° 场——第三层要读的都在）、lods.bin（索引 + 各岛表 + 空格行程编码的格子：最高点、陆地占比、地表、岛号）。只依赖 numpy，游戏运行时不需要它。",
+      "tag": "工具",
+      "evidence": "planet.bin 7.9 MB（40 列、30 张场）、lods.bin 45.6 MB（8020 份）",
+      "sources": [
+        "tools/export_planet.py",
+        "game/planet/seed42/planet.bin",
+        "game/planet/seed42/lods.bin"
+      ],
+      "since": "e63"
+    },
+    {
+      "id": "planet-data",
+      "label": "行星包读取与查询",
+      "detail": "PlanetData：parse_planet / parse_lods（或 load_files）；node(k)、column(名字)、grid(名字).sample(纬, 经)；nearest_node、nodes_within（2° 经纬格分桶）、node_distance_m；lod(节点, 最大格距) 按需解一份（字节留在内存）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core：8000 群与历法、2051 邻群（2050 114 km）、每群有粗版、2051 粗版的实地格 99% 以上在细版里也是陆地",
+      "sources": [
+        "src/planet_data.h",
+        "src/planet_data.cpp"
+      ],
+      "since": "e63"
+    },
+    {
+      "id": "planet-frame",
+      "label": "行星与岛群的坐标",
+      "detail": "planet_unit / planet_latlon（同 sphere.py）；GroupFrame：to_planet / to_flat（AEQD）、tangent、delta 与 delta_series、local_basis；CurveView：visual(p) = c + R_cᵀ((p − c) + (δ(p) − δ(c)))，CurveViewF 是着色器同式的单精度版；rebase_point / rebase_rotation 换锚；VerticalDatum（云带 −3800…−5000、海面 −5600）、R = 6,376,600 m。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core：AEQD 往返 2e-6 mm、δ 展开式 600 km 差 0.29 mm、单精度弯曲 ±100 km 1.24 cm / 600 km 9 cm、换锚画面不变",
+      "sources": [
+        "src/planet_frame.h",
+        "src/planet_frame.cpp"
+      ],
+      "since": "e63"
+    },
+    {
+      "id": "planet-curve-shader",
+      "label": "画面弯曲（着色器）",
+      "detail": "game/shaders/planet_curve.gdshaderinc：planet_delta / planet_visual / planet_visual_dir，与 CurveViewF 逐式相同；全局参数 planet_curve_on / cam / basis / dcam / radius 已在 project.godot 声明、默认不弯（P1 接上）。",
+      "tag": "着色器",
+      "evidence": "单测拿 C++ 同式单精度版对照双精度；flat_map_e2e 等照旧过（全局参数能读）",
+      "sources": [
+        "game/shaders/planet_curve.gdshaderinc",
+        "game/project.godot"
+      ],
+      "since": "e63"
     }
   ],
   "edges": [
@@ -4469,6 +4553,53 @@
       "chains": [
         "seasons-weather"
       ]
+    },
+    {
+      "from": "skyisle-lod",
+      "to": "skyisle-territory",
+      "label": "同一份布局",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "export-planet",
+      "to": "skyisle-lod",
+      "label": "islands_lod/*.npz",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-data",
+      "to": "export-planet",
+      "label": "planet.bin / lods.bin",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-curve-shader",
+      "to": "planet-frame",
+      "label": "同一个式子",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "site-survey-planet",
+      "to": "planet-data",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "site-survey-planet",
+      "to": "planet-frame",
+      "label": "坐标自检",
+      "chains": [
+        "planet"
+      ]
     }
   ],
   "chains": [
@@ -5936,6 +6067,67 @@
         "world-terrain-cover",
         "site-survey-weather",
         "main-scene"
+      ]
+    },
+    {
+      "id": "planet",
+      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基）",
+      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的 1° 场、每个岛群远处看的粗版都在一个包里，游戏能问「离这儿最近的是哪个群」「这个群的粗版长什么样」；一套坐标把每个岛群的平面放上真球面——近处与物理一致、远处按球面下弯，换到另一个岛群的平面时画面不跳。生成器那边，邻群的陆地不再叠在一起。（P0 还不画东西；P1 起接上画面。）",
+      "date": "2026-09-27",
+      "color": "#e5536b",
+      "commits": "a769ef7..1ecee7a",
+      "steps": [
+        {
+          "text": "生成器第三层：邻群按等效半径分界、各退半道缝，越界的群才重摆（主岛挪进来、转向拉长，其余带约束重摆）",
+          "nodes": [
+            "skyisle-territory"
+          ]
+        },
+        {
+          "text": "生成器批跑全行星粗版：照原生分辨率生成布局 + 地形 + 水系，按块降采样（远处看的与走近了的是同一个群）",
+          "nodes": [
+            "skyisle-lod",
+            "skyisle-territory"
+          ]
+        },
+        {
+          "text": "导出行星包：planet.bin（参数、逐节点列、1° 场）与 lods.bin（2 km 全行星 + 2051 周围 500 m，空格行程编码）",
+          "nodes": [
+            "export-planet",
+            "skyisle-lod"
+          ]
+        },
+        {
+          "text": "游戏读包：找最近的群、半径内的群、按格距解一群粗版、1° 场双线性",
+          "nodes": [
+            "planet-data",
+            "export-planet"
+          ]
+        },
+        {
+          "text": "坐标：行星系、岛群平面系与方位等距投影、垂直结构、相机局部的画面弯曲（双精度与着色器同式的单精度）、换锚",
+          "nodes": [
+            "planet-frame",
+            "planet-curve-shader"
+          ]
+        },
+        {
+          "text": "体检：摘要、邻群表、坐标自检、每群粗版对陆地、邻群叠没叠",
+          "nodes": [
+            "site-survey-planet",
+            "planet-data",
+            "planet-frame"
+          ]
+        }
+      ],
+      "nodes": [
+        "skyisle-territory",
+        "skyisle-lod",
+        "export-planet",
+        "planet-data",
+        "planet-frame",
+        "planet-curve-shader",
+        "site-survey-planet"
       ]
     }
   ],
@@ -7765,6 +7957,58 @@
           "world-terrain-cover",
           "site-survey-weather",
           "main-scene"
+        ],
+        "updated": []
+      }
+    },
+    {
+      "id": "e62",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P0：体检长出行星包的体检",
+      "summary": "--planet：行星摘要、2051 周围 600 km 的邻群表、坐标自检、每群粗版解开对陆地；--overlap 另查全行星邻群的陆地叠没叠。ctest 多一条 site_survey_planet。",
+      "commits": "a769ef7..1ecee7a",
+      "nodes": [
+        "site-survey-tool",
+        "site-survey-planet"
+      ],
+      "info": {
+        "node": "site-survey-tool",
+        "children": [
+          "site-survey-planet"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e63",
+      "type": "slice",
+      "date": "2026-09-27",
+      "title": "切片：行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基）",
+      "summary": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的 1° 场、每个岛群远处看的粗版都在一个包里，游戏能问「离这儿最近的是哪个群」「这个群的粗版长什么样」；一套坐标把每个岛群的平面放上真球面——近处与物理一致、远处按球面下弯，换到另一个岛群的平面时画面不跳。生成器那边，邻群的陆地不再叠在一起。（P0 还不画东西；P1 起接上画面。）",
+      "commits": "a769ef7..1ecee7a",
+      "chain": "planet",
+      "nodes": [
+        "skyisle-territory",
+        "skyisle-lod",
+        "export-planet",
+        "planet-data",
+        "planet-frame",
+        "planet-curve-shader",
+        "site-survey-planet"
+      ],
+      "info": {
+        "created": [
+          "skyisle-territory",
+          "skyisle-lod",
+          "export-planet",
+          "planet-data",
+          "planet-frame",
+          "planet-curve-shader"
+        ],
+        "reused": [
+          "site-survey-planet"
         ],
         "updated": []
       }
