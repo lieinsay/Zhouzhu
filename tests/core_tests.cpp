@@ -30,6 +30,7 @@
 #include "flat_ground.h"
 #include "flight_model.h"
 #include "freight.h"
+#include "building_mesh.h"
 #include "building_parts.h"
 #include "house_template.h"
 #include "interior_rules.h"
@@ -46,9 +47,11 @@
 #include "settlement_model.h"
 #include "ship_layout.h"
 #include "stream_meter.h"
+#include "template_set.h"
 #include "terrain_tile.h"
 #include "value_noise.h"
 #include "village_plan.h"
+#include "village_prep.h"
 #include "village_sim.h"
 #include "village_state.h"
 #include "villager_model.h"
@@ -3995,6 +3998,177 @@ void test_job_pool() {
     }
 }
 
+// 每个三角面的几何法线（Godot：正面顺时针，n = (v0 − v2) × (v0 − v1)）与记下的顶点法线同向
+bool winding_ok(const MeshPart &p_part) {
+    for (size_t t = 0; t + 2 < p_part.indices.size(); t += 3) {
+        const auto P = [&](int i, int c) { return double(p_part.positions[size_t(p_part.indices[t + size_t(i)]) * 3 + size_t(c)]); };
+        const double ax = P(0, 0) - P(2, 0), ay = P(0, 1) - P(2, 1), az = P(0, 2) - P(2, 2);
+        const double bx = P(0, 0) - P(1, 0), by = P(0, 1) - P(1, 1), bz = P(0, 2) - P(1, 2);
+        const double nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx;
+        const size_t v = size_t(p_part.indices[t]) * 3;
+        if (nx * p_part.normals[v] + ny * p_part.normals[v + 1] + nz * p_part.normals[v + 2] <= 0.0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void test_building_mesh() {
+    std::printf("building mesh\n");
+    const FlatIsland flat = lay_flat_island(FlatIslandSpec());
+    const FlatGround plate(flat);
+    const SiteRules rules;
+    const MapSiteGround site(plate, rules);
+    const BuildingDef &house = *buildings::by_id("house");
+    Building b;
+    b.kind = "house";
+    b.x = 20.0;
+    b.z = -100.0;
+    b.yaw = 0.6;
+    const BuildingFrame frame = building_frame(site, house, b, rules);
+    check(frame.grounded && std::abs(frame.floor_y - house.plinth_m) < 1e-9 && std::abs(frame.bottom + rules.bury_m) < 1e-9, "平地上的民居：地坪 = 台基高、台基埋 bury_m");
+    Building off = b;
+    off.x = 400.0;
+    check(!building_frame(site, house, off, rules).grounded, "岛外的：没有地面");
+
+    const HouseTemplate tmpl = bare_template(house);
+    const BuildingMesh m = build_building_mesh(plate, frame, b, tmpl, 3);
+    const BuildingParts parts = building_parts(house, tmpl, frame.floor_y - frame.bottom, [&house](double, double) { return house.plinth_m; });
+    int visual = 0, solid = 0;
+    for (const BoxPart &part : parts.boxes) {
+        visual += part.visual;
+        solid += part.solid;
+    }
+    check(m.index == 3 && m.group_count == parts.group_count && int(m.groups.size()) == parts.group_count, "组数与 building_parts 同");
+    check(m.triangle_count() == 12 * visual + 12 + 8, "三角面：每个画的盒子 12 个 + 屋脊 12 + 悬山 8（" + std::to_string(m.triangle_count()) + "）");
+    check(m.collision.size() == size_t(solid) * 12 * 9, "碰撞：每个挡人的盒子 12 个三角面");
+    check(m.lamps.size() == size_t(house.levels) && m.lamps[0].group == 1, "每层一盏灯，在那层的组里");
+    check(!m.groups[size_t(m.roof_group())][size_t(PartMaterial::ROOF)].empty(), "瓦面在顶那一组");
+    check(m.template_id == tmpl.id && m.doors.size() == parts.doors.size() && m.ladders.size() == parts.ladders.size(), "模板 id、门、梯子照 building_parts");
+    bool wound = true;
+    for (const auto &group : m.groups) {
+        for (const MeshPart &part : group) {
+            wound = wound && winding_ok(part) && part.normals.size() == part.positions.size();
+        }
+    }
+    check(wound, "每个三角面都朝外（正面顺时针，与法线同向）");
+    const BuildingDef &berth = *buildings::by_id("berth");
+    Building bb = b;
+    bb.kind = "berth";
+    const BuildingMesh bm = build_building_mesh(plate, building_frame(site, berth, bb, rules), bb, tmpl, 0);
+    check(bm.template_id == "berth" && bm.lamps.empty() && bm.groups[size_t(bm.roof_group())][size_t(PartMaterial::ROOF)].empty(), "船台：不挑模板、没有灯、没有顶");
+
+    // 简模：台基 + 墙 + 悬山，顶点色，朝外，都在占地（算上出檐）里
+    MeshPart proxy;
+    append_building_proxy(proxy, house, b, frame, 10.0, -90.0);
+    bool inside = true;
+    double top = -1e9;
+    for (size_t k = 0; k < proxy.positions.size(); k += 3) {
+        inside = inside && footprint_contains(house, b, proxy.positions[k] + 10.0, proxy.positions[k + 2] - 90.0, house_dims::ROOF_OVERHANG + 0.01);
+        top = std::max(top, double(proxy.positions[k + 1]));
+    }
+    check(!proxy.empty() && proxy.colors.size() == proxy.positions.size() / 3 * 4 && winding_ok(proxy), "简模：有顶点色、每面朝外");
+    check(inside && top < frame.floor_y + house.wall_m + house.roof_m, "简模在占地（算上出檐）里、不高过屋脊");
+    check(proxy.indices.size() / 3 < 40, "简模一座不到 40 个三角面（" + std::to_string(proxy.indices.size() / 3) + "）");
+
+    // 格子：每座只进一格，格的外接框盖住它
+    SettlementLayout layout;
+    for (int k = 0; k < 12; k++) {
+        Building h = b;
+        h.x = -100.0 + 19.0 * k;
+        h.z = -40.0 + 7.0 * (k % 3);
+        layout.add(h);
+    }
+    const std::vector<BuildingFrame> frames = layout_frames(plate, layout, rules);
+    const std::vector<VillageCell> cells = village_cells(layout, frames, 64.0);
+    std::vector<int> seen(12, 0);
+    bool covered = true;
+    for (const VillageCell &c : cells) {
+        for (int k : c.buildings) {
+            seen[size_t(k)]++;
+            covered = covered && cell_distance(c, layout.at(k).x, layout.at(k).z) == 0.0 && std::floor(layout.at(k).x / 64.0) == c.ix;
+        }
+    }
+    check(cells.size() >= 3 && std::all_of(seen.begin(), seen.end(), [](int n) { return n == 1; }) && covered, "按 64 m 分格：每座只进一格、格的外接框盖住它");
+    check_near(cell_distance(cells[0], cells[0].max_x + 30.0, cells[0].min_z - 40.0), 50.0, 1e-9, "离格的距离按外接框量");
+
+    // 模板快照：挑法与库同一套（写了款式用它，否则按位置哈希、同输入同结果）
+    TemplateSet set;
+    HouseTemplate a = tmpl, c = tmpl;
+    a.id = "house/aaa";
+    c.id = "house/ccc";
+    set.templates[a.id] = a;
+    set.templates[c.id] = c;
+    Building styled = b;
+    styled.style = "ccc";
+    check(set.resolve_id(styled) == "house/ccc", "写了款式：用那一套");
+    const std::string picked = set.resolve_id(b);
+    check((picked == "house/aaa" || picked == "house/ccc") && set.resolve_id(b) == picked, "没写款式：在能自动挑的里按位置挑，同一座每次一样");
+    Building tower = b;
+    tower.kind = "tower";
+    check(set.resolve_id(tower).empty() && set.resolve(tower).id == bare_template(*buildings::by_id("tower")).id, "库里没有这种外壳：空屋");
+}
+
+void test_village_prep_2051() {
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
+    if (!bin_in || !tsv_in) {
+        std::printf("village prep 2051（跳过：没有资产）\n");
+        return;
+    }
+    std::printf("village prep 2051\n");
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    WorldSites sites;
+    std::string err;
+    check(parse_world_grid(bin.data(), bin.size(), g, err) && parse_world_sites(tsv, sites, err), "读得了 2051：" + err);
+    WorldTerrain terrain(g, sites.terrain_islands(), 2051);
+    lay_world_works(terrain, sites);
+    const SiteSettlement *seat = sites.village_by_id(1);
+    check(seat != nullptr, "有村001");
+    if (!seat) {
+        return;
+    }
+    const auto t0 = std::chrono::steady_clock::now();
+    const VillagePrep prep = prepare_world_village(terrain, *seat, 2051, {});
+    const auto t1 = std::chrono::steady_clock::now();
+    check(prep.layout == plan_world_village(terrain, *seat, 2051, WorldVillageRules()).layout && prep.layout == prep.plan.layout, "没有改动：清单就是铺村算法铺的");
+    check(prep.frames.size() == size_t(prep.layout.size()), "每座一个地坪");
+    size_t in_cells = 0;
+    int grounded = 0;
+    for (const VillageCell &c : prep.cells) {
+        in_cells += c.buildings.size();
+    }
+    for (const BuildingFrame &f : prep.frames) {
+        grounded += f.grounded;
+    }
+    check(in_cells == size_t(prep.layout.size()) && grounded == prep.layout.size(), "每座都进了格子、都站在地上（" + std::to_string(prep.layout.size()) + " 座、" + std::to_string(prep.cells.size()) + " 格）");
+    const std::string removed = "-" + building_id(prep.layout.at(5));
+    const VillagePrep edited = prepare_world_village(terrain, *seat, 2051, { "# 注释", removed });
+    check(edited.layout.size() == prep.layout.size() - 1 && edited.unmatched == 0 && edited.frames.size() == size_t(edited.layout.size()), "叠上改动：拆一座");
+    // 一格细模的花费（后台线程上的活）
+    const WorldGround ground(terrain, seat->x, seat->z);
+    const VillageCell &cell = prep.cells[prep.cells.size() / 2];
+    const auto t2 = std::chrono::steady_clock::now();
+    int tris = 0;
+    for (int k : cell.buildings) {
+        const Building &bld = prep.layout.at(k);
+        const BuildingDef *def = buildings::by_id(bld.kind);
+        tris += build_building_mesh(ground, prep.frames[size_t(k)], bld, def && def->house ? bare_template(*def) : HouseTemplate(), k).triangle_count();
+    }
+    const auto t3 = std::chrono::steady_clock::now();
+    const double prep_ms = std::chrono::duration<double, std::milli>(t1 - t0).count(), cell_ms = std::chrono::duration<double, std::milli>(t3 - t2).count();
+    std::printf("  邑治备料 %.1f ms（%d 座、%zu 格）；一格 %zu 座的细模 %.1f ms、%d 个三角面\n", prep_ms, prep.layout.size(), prep.cells.size(), cell.buildings.size(), cell_ms, tris);
+    // 导航格：窗口在房子外扩一圈，挑水线与 village_water 同
+    double x0 = 0.0, z0 = 0.0;
+    int cols = 0, rows = 0;
+    const SimRules sim;
+    village_nav_window(prep.layout, sim.nav, 30.0, x0, z0, cols, rows);
+    const VillageNav nav = prepare_village_nav(ground, prep.layout, sim, x0, z0, cols, rows);
+    check(nav.nav.cols >= cols && nav.nav.rows >= rows && nav.water.size() == village_water(ground, prep.layout, sim.work).size(), "导航格盖住村子（" + std::to_string(nav.nav.cols) + " × " + std::to_string(nav.nav.rows) + "），挑水线同 village_water");
+}
+
 void test_stream_meter() {
     std::printf("stream meter\n");
     StreamMeter m;
@@ -4018,6 +4192,7 @@ int main() {
     test_rng();
     test_job_pool();
     test_stream_meter();
+    test_building_mesh();
     test_noise();
     test_island("新岛 · 火山锥", 0.1, IslandAge::YOUNG);
     test_island("中年 · 山脊", 0.5, IslandAge::MID);
@@ -4045,6 +4220,7 @@ int main() {
     test_terrain_tiles();
     test_map_image();
     test_world_2051();
+    test_village_prep_2051();
     test_terrain_v3_2051();
     test_dock_site();
     test_village_plan();

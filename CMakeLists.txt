@@ -15,6 +15,8 @@ add_subdirectory(extern/godot-cpp)
 
 # 不含 Godot 头的纯算法文件：扩展与单元测试各编一份。
 set(ZHOUZHU_CORE_SOURCES
+    src/building_mesh.cpp
+    src/building_mesh.h
     src/building_parts.cpp
     src/building_parts.h
     src/buildings.cpp
@@ -79,12 +81,16 @@ set(ZHOUZHU_CORE_SOURCES
     src/ship_layout.h
     src/stream_meter.cpp
     src/stream_meter.h
+    src/template_set.cpp
+    src/template_set.h
     src/terrain_tile.cpp
     src/terrain_tile.h
     src/value_noise.cpp
     src/value_noise.h
     src/village_plan.cpp
     src/village_plan.h
+    src/village_prep.cpp
+    src/village_prep.h
     src/village_sim.cpp
     src/village_sim.h
     src/village_state.cpp
@@ -187,6 +193,8 @@ target_sources(
         src/settlement.h
         src/ship.cpp
         src/ship.h
+        src/shared_looks.cpp
+        src/shared_looks.h
         src/shipyard.cpp
         src/shipyard.h
         src/site_stream.cpp
