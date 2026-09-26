@@ -25,14 +25,6 @@ const char *GENERATED_META = "villagers_generated";
 // 钟一下跳过这么多秒（拨钟、卡了一大下）：不逐段找路了，先估着走过去再展开
 constexpr double CATCH_UP_S = 10.0;
 
-Ref<StandardMaterial3D> make_material(const Color &p_albedo) {
-    Ref<StandardMaterial3D> material;
-    material.instantiate();
-    material->set_albedo(p_albedo);
-    material->set_roughness(1.0);
-    return material;
-}
-
 MeshInstance3D *add_mesh(Node3D *p_parent, const String &p_name, const Ref<Mesh> &p_mesh, const Vector3 &p_position) {
     MeshInstance3D *instance = memnew(MeshInstance3D);
     instance->set_name(p_name);
@@ -42,24 +34,59 @@ MeshInstance3D *add_mesh(Node3D *p_parent, const String &p_name, const Ref<Mesh>
     return instance;
 }
 
-Ref<BoxMesh> box(const Vector3 &p_size, const Ref<StandardMaterial3D> &p_material) {
-    Ref<BoxMesh> mesh;
-    mesh.instantiate();
-    mesh->set_size(p_size);
-    mesh->set_material(p_material);
-    return mesh;
+// 小人的几件：同形同材质的共用一份网格（键里带材质的实例号：材质本身也是共用的）
+std::string mesh_key(const char *p_kind, std::initializer_list<real_t> p_dims, const Ref<StandardMaterial3D> &p_material) {
+    std::string key = std::string("villager_") + p_kind;
+    for (real_t d : p_dims) {
+        key += "_" + std::to_string(int(std::lround(d * 1000.0f)));
+    }
+    return key + "_" + std::to_string(uint64_t(p_material->get_instance_id()));
 }
 
-Ref<CylinderMesh> cylinder(real_t p_top, real_t p_bottom, real_t p_height, const Ref<StandardMaterial3D> &p_material) {
-    Ref<CylinderMesh> mesh;
-    mesh.instantiate();
-    mesh->set_top_radius(p_top);
-    mesh->set_bottom_radius(p_bottom);
-    mesh->set_height(p_height);
-    mesh->set_radial_segments(12);
-    mesh->set_rings(1);
-    mesh->set_material(p_material);
-    return mesh;
+Ref<Mesh> box(SharedLooks &p_looks, const Vector3 &p_size, const Ref<StandardMaterial3D> &p_material) {
+    return p_looks.mesh(mesh_key("box", { p_size.x, p_size.y, p_size.z }, p_material), [&]() {
+        Ref<BoxMesh> mesh;
+        mesh.instantiate();
+        mesh->set_size(p_size);
+        mesh->set_material(p_material);
+        return Ref<Mesh>(mesh);
+    });
+}
+
+Ref<Mesh> cylinder(SharedLooks &p_looks, real_t p_top, real_t p_bottom, real_t p_height, const Ref<StandardMaterial3D> &p_material) {
+    return p_looks.mesh(mesh_key("cylinder", { p_top, p_bottom, p_height }, p_material), [&]() {
+        Ref<CylinderMesh> mesh;
+        mesh.instantiate();
+        mesh->set_top_radius(p_top);
+        mesh->set_bottom_radius(p_bottom);
+        mesh->set_height(p_height);
+        mesh->set_radial_segments(12);
+        mesh->set_rings(1);
+        mesh->set_material(p_material);
+        return Ref<Mesh>(mesh);
+    });
+}
+
+Ref<Mesh> capsule(SharedLooks &p_looks, real_t p_radius, real_t p_height, const Ref<StandardMaterial3D> &p_material) {
+    return p_looks.mesh(mesh_key("capsule", { p_radius, p_height }, p_material), [&]() {
+        Ref<CapsuleMesh> mesh;
+        mesh.instantiate();
+        mesh->set_radius(p_radius);
+        mesh->set_height(p_height);
+        mesh->set_material(p_material);
+        return Ref<Mesh>(mesh);
+    });
+}
+
+Ref<Mesh> sphere(SharedLooks &p_looks, real_t p_radius, real_t p_height, const Ref<StandardMaterial3D> &p_material) {
+    return p_looks.mesh(mesh_key("sphere", { p_radius, p_height }, p_material), [&]() {
+        Ref<SphereMesh> mesh;
+        mesh.instantiate();
+        mesh->set_radius(p_radius);
+        mesh->set_height(p_height);
+        mesh->set_material(p_material);
+        return Ref<Mesh>(mesh);
+    });
 }
 
 std::string to_std(const String &p_string) {
@@ -178,15 +205,20 @@ void Villagers::_ready() {
     settlement = Object::cast_to<Settlement>(get_node_or_null(settlement_path));
     ERR_FAIL_NULL_MSG(settlement, "Villagers 找不到 Settlement（settlement_path）");
 
-    mat_skin = make_material(Color(0.86f, 0.68f, 0.52f));
-    mat_hat = make_material(Color(0.78f, 0.68f, 0.42f)); // 斗笠
-    mat_wood = make_material(Color(0.42f, 0.30f, 0.18f));
-    mat_water = make_material(Color(0.35f, 0.55f, 0.75f));
-    mat_sack = make_material(Color(0.82f, 0.74f, 0.55f));
-    mat_job[int(Job::FARMER)] = make_material(Color(0.52f, 0.40f, 0.26f)); // 褐短褐
-    mat_job[int(Job::CARRIER)] = make_material(Color(0.33f, 0.40f, 0.52f)); // 靛青
-    mat_job[int(Job::WATCHMAN)] = make_material(Color(0.55f, 0.20f, 0.17f)); // 赭红
-    mat_job[int(Job::IDLER)] = make_material(Color(0.36f, 0.50f, 0.44f)); // 青绿
+    looks = host->host_looks();
+    if (!looks) {
+        own_looks = std::make_unique<SharedLooks>();
+        looks = own_looks.get();
+    }
+    mat_skin = looks->plain_material(Color(0.86f, 0.68f, 0.52f));
+    mat_hat = looks->plain_material(Color(0.78f, 0.68f, 0.42f)); // 斗笠
+    mat_wood = looks->plain_material(Color(0.42f, 0.30f, 0.18f));
+    mat_water = looks->plain_material(Color(0.35f, 0.55f, 0.75f));
+    mat_sack = looks->plain_material(Color(0.82f, 0.74f, 0.55f));
+    mat_job[int(Job::FARMER)] = looks->plain_material(Color(0.52f, 0.40f, 0.26f)); // 褐短褐
+    mat_job[int(Job::CARRIER)] = looks->plain_material(Color(0.33f, 0.40f, 0.52f)); // 靛青
+    mat_job[int(Job::WATCHMAN)] = looks->plain_material(Color(0.55f, 0.20f, 0.17f)); // 赭红
+    mat_job[int(Job::IDLER)] = looks->plain_material(Color(0.36f, 0.50f, 0.44f)); // 青绿
     rules.walk_speed = walk_speed;
 
     // 聚落与农田都在宿主 rebuilt 时重建，它们排在前面、先连的信号，所以这里收到时它们已经好了
@@ -239,9 +271,6 @@ void Villagers::on_layout_changed() {
 
 void Villagers::prepare() {
     const SettlementLayout &layout = settlement->get_model();
-    double x0 = 0.0, z0 = 0.0;
-    int cols = 0, rows = 0;
-    host->host_nav_window(layout, rules.nav, x0, z0, cols, rows);
 
     // 农田：宿主指给的那一片，地块格换到本宿主的坐标
     farm = host->host_farm();
@@ -256,33 +285,20 @@ void Villagers::prepare() {
         farm = nullptr;
     }
 
-    // 水：村子 water_reach_m 以内的水中线；导航格够不着最近的那处水，就往那边扩
-    water = village_water(*ground, layout, rules.work);
-    double cx = 0.0, cz = 0.0, reach = 0.0;
-    village_extent(layout, cx, cz, reach);
-    double near_d = 1e18, near_x = 0.0, near_z = 0.0;
-    for (const WaterLine &line : water) {
-        for (const WaterPoint &p : line) {
-            const double d = std::hypot(p.x - cx, p.z - cz);
-            if (d < near_d) {
-                near_d = d;
-                near_x = p.x;
-                near_z = p.z;
-            }
-        }
+    // 水与导航格：上层在后台照这张清单备好了就用，否则现算（窗口宿主给；附近的水够不着就往那边扩）
+    if (prepared_nav && prepared_nav_sig == layout_signature(layout)) {
+        nav = std::move(prepared_nav->nav);
+        water = std::move(prepared_nav->water);
+        prepared_nav.reset();
+        return;
     }
-    const double cell = rules.nav.cell_m;
-    const bool water_inside = near_x >= x0 && near_z >= z0 && near_x <= x0 + cols * cell && near_z <= z0 + rows * cell;
-    if (!water.empty() && cols > 0 && !water_inside) {
-        const double margin = 10.0;
-        const double lo_x = std::min(x0, near_x - margin), lo_z = std::min(z0, near_z - margin);
-        const double hi_x = std::max(x0 + cols * cell, near_x + margin), hi_z = std::max(z0 + rows * cell, near_z + margin);
-        cols = int(std::ceil((hi_x - lo_x) / cell));
-        rows = int(std::ceil((hi_z - lo_z) / cell));
-        x0 = lo_x;
-        z0 = lo_z;
-    }
-    nav = build_nav_grid(*ground, x0, z0, cols, rows, layout, rules.nav);
+    prepared_nav.reset();
+    double x0 = 0.0, z0 = 0.0;
+    int cols = 0, rows = 0;
+    host->host_nav_window(layout, rules.nav, x0, z0, cols, rows);
+    VillageNav fresh = prepare_village_nav(*ground, layout, rules, x0, z0, cols, rows);
+    nav = std::move(fresh.nav);
+    water = std::move(fresh.water);
 }
 
 VillageWorld Villagers::world(bool p_near) {
@@ -384,22 +400,13 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
     add_child(root);
     r_body.root = root;
 
-    Ref<CapsuleMesh> body;
-    body.instantiate();
-    body->set_radius(0.28f);
-    body->set_height(1.3f);
-    body->set_material(mat_job[int(job)]);
-    add_mesh(root, "Body", body, Vector3(0, 0.72f, 0));
-    Ref<SphereMesh> head;
-    head.instantiate();
-    head->set_radius(0.17f);
-    head->set_height(0.34f);
-    head->set_material(mat_skin);
-    add_mesh(root, "Head", head, Vector3(0, 1.55f, 0.02f));
+    SharedLooks &l = *looks;
+    add_mesh(root, "Body", capsule(l, 0.28f, 1.3f, mat_job[int(job)]), Vector3(0, 0.72f, 0));
+    add_mesh(root, "Head", sphere(l, 0.17f, 0.34f, mat_skin), Vector3(0, 1.55f, 0.02f));
     if (job == Job::WATCHMAN) {
-        add_mesh(root, "Cap", cylinder(0.15f, 0.19f, 0.14f, mat_job[int(job)]), Vector3(0, 1.72f, 0));
+        add_mesh(root, "Cap", cylinder(l, 0.15f, 0.19f, 0.14f, mat_job[int(job)]), Vector3(0, 1.72f, 0));
     } else if (job != Job::IDLER) {
-        add_mesh(root, "Hat", cylinder(0.03f, 0.36f, 0.16f, mat_hat), Vector3(0, 1.74f, 0));
+        add_mesh(root, "Hat", cylinder(l, 0.03f, 0.36f, 0.16f, mat_hat), Vector3(0, 1.74f, 0));
     }
 
     // 手里的家伙挂在右肩的支点上（+z 是脸朝的方向，右手在 −x）
@@ -414,23 +421,23 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
     r_body.load = load;
     switch (job) {
         case Job::FARMER:
-            add_mesh(tool, "Handle", box(Vector3(0.05f, 1.3f, 0.05f), mat_wood), Vector3(0, -0.35f, 0.2f));
-            add_mesh(tool, "Blade", box(Vector3(0.22f, 0.05f, 0.3f), mat_skin), Vector3(0, -1.0f, 0.33f));
-            add_mesh(load, "Sack", box(Vector3(0.45f, 0.5f, 0.3f), mat_sack), Vector3(0, 1.05f, -0.38f));
+            add_mesh(tool, "Handle", box(l, Vector3(0.05f, 1.3f, 0.05f), mat_wood), Vector3(0, -0.35f, 0.2f));
+            add_mesh(tool, "Blade", box(l, Vector3(0.22f, 0.05f, 0.3f), mat_skin), Vector3(0, -1.0f, 0.33f));
+            add_mesh(load, "Sack", box(l, Vector3(0.45f, 0.5f, 0.3f), mat_sack), Vector3(0, 1.05f, -0.38f));
             break;
         case Job::CARRIER:
             // 扁担横在两肩上、两头挂桶；挑着水时桶里露出水面
             tool->set_position(Vector3(0, 1.32f, 0));
-            add_mesh(tool, "Pole", box(Vector3(1.7f, 0.05f, 0.06f), mat_wood), Vector3());
+            add_mesh(tool, "Pole", box(l, Vector3(1.7f, 0.05f, 0.06f), mat_wood), Vector3());
             for (real_t side : { -0.8f, 0.8f }) {
-                add_mesh(tool, side < 0 ? "RopeL" : "RopeR", box(Vector3(0.02f, 0.55f, 0.02f), mat_wood), Vector3(side, -0.28f, 0));
-                add_mesh(tool, side < 0 ? "BucketL" : "BucketR", cylinder(0.17f, 0.14f, 0.34f, mat_wood), Vector3(side, -0.7f, 0));
-                add_mesh(load, side < 0 ? "WaterL" : "WaterR", cylinder(0.155f, 0.155f, 0.03f, mat_water), Vector3(side, 1.32f - 0.54f, 0));
+                add_mesh(tool, side < 0 ? "RopeL" : "RopeR", box(l, Vector3(0.02f, 0.55f, 0.02f), mat_wood), Vector3(side, -0.28f, 0));
+                add_mesh(tool, side < 0 ? "BucketL" : "BucketR", cylinder(l, 0.17f, 0.14f, 0.34f, mat_wood), Vector3(side, -0.7f, 0));
+                add_mesh(load, side < 0 ? "WaterL" : "WaterR", cylinder(l, 0.155f, 0.155f, 0.03f, mat_water), Vector3(side, 1.32f - 0.54f, 0));
             }
             break;
         case Job::WATCHMAN:
-            add_mesh(tool, "Spear", box(Vector3(0.05f, 2.3f, 0.05f), mat_wood), Vector3(0, 0.0f, 0.12f));
-            add_mesh(tool, "Tip", box(Vector3(0.08f, 0.25f, 0.02f), mat_skin), Vector3(0, 1.25f, 0.12f));
+            add_mesh(tool, "Spear", box(l, Vector3(0.05f, 2.3f, 0.05f), mat_wood), Vector3(0, 0.0f, 0.12f));
+            add_mesh(tool, "Tip", box(l, Vector3(0.08f, 0.25f, 0.02f), mat_skin), Vector3(0, 1.25f, 0.12f));
             break;
         case Job::IDLER:
             break;

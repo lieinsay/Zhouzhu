@@ -13,6 +13,8 @@
 #include "farm.h"
 #include "ground_host.h"
 #include "settlement.h"
+#include "shared_looks.h"
+#include "village_prep.h"
 #include "village_sim.h"
 
 // 一处聚落的村民（近处）：地面宿主（Island / WorldVillage / FlatMap）的子节点，变换留在原点（宿主的局部坐标就是它的局部坐标），要排在 Settlement 后面
@@ -25,7 +27,9 @@
 // 借来的账本如果还在远处（没展开），先在远处把它结到此刻，再展开：地块放回农田，人摆到各自此刻该在的地方。
 // 清单改了（布置模式）就按新清单重招人，仓和水缸留着。
 //
-// 几何是占位的小人：身子、头、斗笠、手里的家伙（锄 / 扁担水桶 / 长矛），头顶一行字「名字 · 在干什么」。村民没有碰撞，进门就藏起来。
+// 导航格与挑水的线可以由上层在后台备好了交过来（set_prepared_nav，照哪张清单备的对得上才用），省得招人那一帧现算（邑治要三百多毫秒）。
+// 几何是占位的小人：身子、头、斗笠、手里的家伙（锄 / 扁担水桶 / 长矛），头顶一行字「名字 · 在干什么」；材质与网格问宿主要共用的一份（host_looks）。
+// 村民没有碰撞，进门就藏起来。
 class Villagers : public godot::Node3D {
     GDCLASS(Villagers, godot::Node3D)
 
@@ -67,8 +71,12 @@ private:
     std::shared_ptr<ClaimRegistry> taken; // 全图认领表（远处账房的）；自己开账时为空
     bool borrowed = false; // 账本是借来的：离树时收回
     std::vector<Body> bodies;
+    SharedLooks *looks = nullptr; // 宿主给的，或者 own_looks
+    std::unique_ptr<SharedLooks> own_looks;
     godot::Ref<godot::StandardMaterial3D> mat_skin, mat_hat, mat_wood, mat_water, mat_sack;
     godot::Ref<godot::StandardMaterial3D> mat_job[4];
+    std::shared_ptr<VillageNav> prepared_nav; // 后台备好的导航格与挑水线
+    uint64_t prepared_nav_sig = 0; // 照哪张清单备的（layout_signature）
 
     void on_host_rebuilt();
     void on_layout_changed();
@@ -98,6 +106,11 @@ public:
 
     // 借远处账房的账本（进树之前调）：接过来时它在远处就先结到此刻再展开；离树时收回
     void set_ledger(const std::shared_ptr<VillageState> &p_state, const std::shared_ptr<ClaimRegistry> &p_taken);
+    // 后台备好的导航格与挑水线（进树之前调）；p_layout_sig 是照哪张清单备的，招人时清单对得上才用
+    void set_prepared_nav(const std::shared_ptr<VillageNav> &p_nav, uint64_t p_layout_sig) {
+        prepared_nav = p_nav;
+        prepared_nav_sig = p_layout_sig;
+    }
     const VillageState *get_state() const { return state.get(); }
 
     // 给测试与 HUD 查

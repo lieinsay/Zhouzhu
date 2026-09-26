@@ -16,7 +16,7 @@ class SiteStream;
 // 远处账房：岛群里每一处村落与散户（2051 是 371 处）一本账，节点拆了账还在，在这里按粗粒度接着记。
 // 场景里挂在 World、SiteStream 旁边；SiteStream 招村民时从这里借账本给 Villagers（checkout），村民散了账本收回来接着在远处记。
 //
-// 开账（world_ledger：铺村清单 + 布置模式的改动、分派住户、看附近有没有田和水）放在后台线程里做，由近及远；
+// 开账（world_ledger：铺村清单 + 布置模式的改动、分派住户、看附近有没有田和水）放在后台线程里做，由近及远，近处要招村民的（request）插到最前面；
 // 账从账房开张那一刻记起，开得晚的村子在远处先补上前面那段。
 // 远处推进是 village_sim 的远处模式（不寻路、不建导航格，走路按直线估时间），与近处逐帧同一套规矩：
 // 一处落后满 settle_hours（半个游戏小时）就轮到它，一片一片（slice_hours）往前结到此刻；每帧花的时间有上限（budget_ms），
@@ -41,6 +41,7 @@ class Hinterland : public godot::Node {
     double started_at = -1.0; // 账房开张时的钟（所有村子的账都从这一秒记起）
     size_t ring = 0; // 轮到第几处
     int current = -1; // 正在结的那一处（一处要结好几片时跨帧接着结）
+    std::vector<int> urgent; // 近处要招村民、等着开账的（先开这几处）
 
     // 实测
     double frame_us = 0.0, frame_max_us = 0.0, frame_avg_us = 0.0;
@@ -63,7 +64,10 @@ public:
     void _ready() override;
     void _physics_process(double p_delta) override;
 
-    // 借出第 p_index 处（sites.settlements 下标）的账本给近处的 Villagers：还没开账就当场开；
+    // 开没开账（能不能马上借出去）；没开就排到最前面开（后台，下一帧起）
+    bool is_open(int p_index) const { return p_index >= 0 && p_index < int(ledgers.size()) && ledgers[size_t(p_index)] != nullptr; }
+    void request(int p_index);
+    // 借出第 p_index 处（sites.settlements 下标）的账本给近处的 Villagers：还没开账就当场开（流式加载先 request、等 is_open 再借，不在主线程上开）；
     // p_layout 是近处盖出来的清单（布置模式改过就和账上的不一样：记下新清单，Villagers 会按它重招人）
     std::shared_ptr<VillageState> checkout(int p_index, const SettlementLayout &p_layout);
     // 近处的清单变了（村民散了之前）：记下来，远处照新清单记账

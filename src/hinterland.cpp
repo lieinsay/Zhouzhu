@@ -130,14 +130,30 @@ void Hinterland::collect_openings(bool p_install) {
     }
 }
 
+void Hinterland::request(int p_index) {
+    if (p_index < 0 || is_open(p_index) || std::find(urgent.begin(), urgent.end(), p_index) != urgent.end() ||
+            std::find(in_flight_index.begin(), in_flight_index.end(), p_index) != in_flight_index.end()) {
+        return;
+    }
+    urgent.push_back(p_index);
+}
+
 void Hinterland::launch_openings() {
-    // 由近及远：离焦点（人或船）最近的还没开账的先开
+    // 近处要招村民的先开；再由近及远：离焦点（人或船）最近的还没开账的先开
     const std::vector<SiteSettlement> &sites = world->get_sites().settlements;
     const Vector3 focus = stream->get_focus();
     while (int(in_flight.size()) < max_openings) {
         int best = -1;
         double best_d = 1e300;
-        for (int k = 0; k < int(sites.size()); k++) {
+        while (!urgent.empty() && best < 0) {
+            const int k = urgent.front();
+            urgent.erase(urgent.begin());
+            if (k >= 0 && k < int(sites.size()) && !ledgers[size_t(k)] && std::find(in_flight_index.begin(), in_flight_index.end(), k) == in_flight_index.end()) {
+                best = k;
+            }
+        }
+        const bool urgent_found = best >= 0;
+        for (int k = 0; !urgent_found && k < int(sites.size()); k++) {
             if (ledgers[size_t(k)] || std::find(in_flight_index.begin(), in_flight_index.end(), k) != in_flight_index.end()) {
                 continue;
             }
