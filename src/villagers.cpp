@@ -272,6 +272,12 @@ void Villagers::on_layout_changed() {
 void Villagers::prepare() {
     const SettlementLayout &layout = settlement->get_model();
 
+    // 时令按村心（宿主原点）：远处账房也按这一点
+    host->host_origin(season_x, season_z);
+    if (!ground || !ground->site_height(0.0, 0.0, season_h) || std::isnan(season_h)) {
+        season_h = 0.0;
+    }
+
     // 农田：宿主指给的那一片，地块格换到本宿主的坐标
     farm = host->host_farm();
     fields.reset();
@@ -312,6 +318,13 @@ VillageWorld Villagers::world(bool p_near) {
     w.taken = taken.get();
     w.day = &day();
     w.rules = &rules;
+    // 有天气的地图（岛群）：按时令过日子。与远处账房同一处（村心、村心的地面高），远近照旧同一套
+    const WeatherModel *wx = host ? host->host_weather() : nullptr;
+    if (wx) {
+        const WorldClock *clock = WorldClock::get_singleton();
+        season = LocalSeason(wx, day(), clock ? double(clock->get_calendar_offset()) : 0.0, season_x, season_z, season_h);
+        w.season = &season;
+    }
     return w;
 }
 

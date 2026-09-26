@@ -12,6 +12,7 @@
 
 #include "farm.h"
 #include "ground_host.h"
+#include "local_season.h"
 #include "settlement.h"
 #include "shared_looks.h"
 #include "village_prep.h"
@@ -68,6 +69,8 @@ private:
     std::vector<WaterLine> water; // 挑水去的水中线（本宿主坐标）
     NavGrid nav;
     SimRules rules;
+    LocalSeason season; // 这处的时令（宿主有天气时每次推进前现造）；x / z / h：宿主原点（村心）与那里的地面高
+    double season_x = 0.0, season_z = 0.0, season_h = 0.0;
     std::shared_ptr<VillageState> state; // 账本
     std::shared_ptr<ClaimRegistry> taken; // 全图认领表（远处账房的）；自己开账时为空
     bool borrowed = false; // 账本是借来的：离树时收回

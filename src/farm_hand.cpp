@@ -150,6 +150,21 @@ void FarmHand::finish(PackHand &p_pack, const Say &p_say) {
     }
 }
 
+namespace {
+
+// 天冷时补一句（时令倍数：冷了、雪盖着不长）
+String season_note(double p_factor) {
+    if (p_factor < 0.05) {
+        return String(U" · 天冷，不长");
+    }
+    if (p_factor < 0.5) {
+        return String(U" · 天冷，长得慢");
+    }
+    return String();
+}
+
+} // namespace
+
 // 按了 E 却无事可做：说清楚为什么
 String FarmHand::refusal(const PackHand &p_pack) const {
     const std::string &held = p_pack.held_seed();
@@ -157,7 +172,8 @@ String FarmHand::refusal(const PackHand &p_pack) const {
         case Farm::PLOT_TILLED:
             return held.empty() ? String(U"手上没拿种子：Tab 打开背包把种子放上快捷栏，按数字键选中") : PackHand::name_of(held) + String(U"种用完了，去背包换一样");
         case Farm::PLOT_GROWING:
-            return vformat(String(U"%s还没熟（长了 %d%%）"), PackHand::name_of(play::to_std(farm->get_crop(target_cell))), int(std::lround(farm->get_growth(target_cell) * 100.0)));
+            return vformat(String(U"%s还没熟（长了 %d%%%s）"), PackHand::name_of(play::to_std(farm->get_crop(target_cell))), int(std::lround(farm->get_growth(target_cell) * 100.0)),
+                    season_note(farm->get_season_factor(target_cell)));
         case Farm::PLOT_RIPE:
         case Farm::PLOT_WILD:
             break;
@@ -201,7 +217,8 @@ String FarmHand::prompt(const PackHand &p_pack) const {
         return held.empty() ? String(U"手上没拿种子：把种子放上快捷栏、按数字键选中") : PackHand::name_of(held) + String(U"种用完了");
     }
     if (target_cell != Farm::NO_CELL && farm->get_plot(target_cell) == Farm::PLOT_GROWING) {
-        return vformat(String(U"%s苗 · 长了 %d%%"), PackHand::name_of(play::to_std(farm->get_crop(target_cell))), int(std::lround(farm->get_growth(target_cell) * 100.0)));
+        return vformat(String(U"%s苗 · 长了 %d%%%s"), PackHand::name_of(play::to_std(farm->get_crop(target_cell))), int(std::lround(farm->get_growth(target_cell) * 100.0)),
+                season_note(farm->get_season_factor(target_cell)));
     }
     return String();
 }

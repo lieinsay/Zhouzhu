@@ -86,6 +86,8 @@ public:
     Land get_land(const godot::Vector2i &p_cell) const;
     State get_plot(const godot::Vector2i &p_cell) const;
     double get_growth(const godot::Vector2i &p_cell) const;
+    // 此刻这一格的时令倍数（有气候的地图按那一格的海拔与日子：冷了、雪盖着不长；没有气候是 1）
+    double get_season_factor(const godot::Vector2i &p_cell) const;
     double get_moisture(const godot::Vector2i &p_cell) const;
     int get_plot_count(State p_state) const;
 

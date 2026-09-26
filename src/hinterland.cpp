@@ -10,6 +10,7 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include "farm.h"
+#include "local_season.h"
 #include "site_stream.h"
 #include "world.h"
 #include "world_clock.h"
@@ -176,7 +177,11 @@ void Hinterland::launch_openings() {
 void Hinterland::settle_slice(WorldLedger &r_ledger, double p_until) {
     const double from = r_ledger.state->clock;
     const uint64_t t0 = ticks_us();
-    settle_world_ledger(r_ledger, world->host_farm()->get_model(), taken.get(), WorldClock::get_singleton()->get_rules(), rules, p_until);
+    // 这处的时令（作息随日出日落、坏天气歇工、冷天不播）：与近处的 Villagers 同一个村心、同一个海拔；每片现造（开发者改了天气也跟得上）
+    const WorldClock *clock = WorldClock::get_singleton();
+    const WeatherModel *wx = world->host_weather();
+    const LocalSeason season(wx, clock->get_rules(), double(clock->get_calendar_offset()), r_ledger.x, r_ledger.z, world_ledger_height(r_ledger));
+    settle_world_ledger(r_ledger, world->host_farm()->get_model(), taken.get(), clock->get_rules(), rules, p_until, wx ? &season : nullptr);
     const double us = double(ticks_us() - t0);
     slice_us_total += us;
     slice_max_us = std::max(slice_max_us, us);

@@ -1,5 +1,7 @@
 #include "world_ledger.h"
 
+#include <cmath>
+
 #include "freight.h"
 
 uint64_t world_village_seed(uint64_t p_stream_seed, const SiteSettlement &p_site) {
@@ -13,6 +15,8 @@ WorldLedger open_world_ledger(const WorldTerrain &p_terrain, const WorldLedgerSp
     const VillagePlan plan = plan_world_village(p_terrain, site, p_spec.seed, WorldVillageRules());
     out.layout = apply_layout_edits(plan.layout, parse_layout_edits(p_spec.edits));
     out.ground = std::make_unique<WorldGround>(p_terrain, site.x, site.z);
+    out.x = site.x;
+    out.z = site.z;
     out.plots = p_spec.lattice.shifted(site.x, site.z);
     out.water = village_water(*out.ground, out.layout, p_rules.work);
     // 农田的勘察另开一份（它有缓存，不能和别的线程共用）
@@ -42,7 +46,16 @@ WorldLedger open_world_ledger(const WorldTerrain &p_terrain, const WorldLedgerSp
     return out;
 }
 
-void settle_world_ledger(WorldLedger &r_ledger, const FarmModel &p_land, ClaimRegistry *p_taken, const DayRules &p_day, const SimRules &p_rules, double p_until) {
+double world_ledger_height(const WorldLedger &p_ledger) {
+    double h = 0.0;
+    if (!p_ledger.ground || !p_ledger.ground->site_height(0.0, 0.0, h) || std::isnan(h)) {
+        h = 0.0;
+    }
+    return h;
+}
+
+void settle_world_ledger(WorldLedger &r_ledger, const FarmModel &p_land, ClaimRegistry *p_taken, const DayRules &p_day, const SimRules &p_rules, double p_until,
+        const SeasonView *p_season) {
     VillageState &s = *r_ledger.state;
     HeldFields held(s.held, &p_land, &s.arable);
     VillageWorld w;
@@ -54,5 +67,6 @@ void settle_world_ledger(WorldLedger &r_ledger, const FarmModel &p_land, ClaimRe
     w.taken = p_taken;
     w.day = &p_day;
     w.rules = &p_rules;
+    w.season = p_season;
     advance_village(s, w, p_until);
 }

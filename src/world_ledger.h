@@ -27,6 +27,7 @@ struct WorldLedgerSpec {
 
 struct WorldLedger {
     std::shared_ptr<VillageState> state;
+    double x = 0.0, z = 0.0; // 村心（岛群坐标）
     SettlementLayout layout;
     std::vector<WaterLine> water;
     std::unique_ptr<WorldGround> ground; // 村心为原点
@@ -40,5 +41,9 @@ uint64_t world_village_seed(uint64_t p_stream_seed, const SiteSettlement &p_site
 // 开账（只读地形，可以在后台线程里做）
 WorldLedger open_world_ledger(const WorldTerrain &p_terrain, const WorldLedgerSpec &p_spec, const SimRules &p_rules);
 
-// 远处结算到 p_until。p_land 是岛群的农田（勘察、谁已经垦了），p_taken 是全图认领表（可以为 nullptr）
-void settle_world_ledger(WorldLedger &r_ledger, const FarmModel &p_land, ClaimRegistry *p_taken, const DayRules &p_day, const SimRules &p_rules, double p_until);
+// 远处结算到 p_until。p_land 是岛群的农田（勘察、谁已经垦了），p_taken 是全图认领表（可以为 nullptr）；
+// p_season 是这处的时令（local_season.h：按村心 site.x / site.z 与 world_ledger_height 造，与近处的 Villagers 同一处），可以为 nullptr
+void settle_world_ledger(WorldLedger &r_ledger, const FarmModel &p_land, ClaimRegistry *p_taken, const DayRules &p_day, const SimRules &p_rules, double p_until,
+        const SeasonView *p_season = nullptr);
+// 村心的地面高（时令按它取气温）
+double world_ledger_height(const WorldLedger &p_ledger);

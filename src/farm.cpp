@@ -12,6 +12,7 @@
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
+#include "local_season.h"
 #include "world_clock.h"
 
 using namespace godot;
@@ -229,6 +230,7 @@ void Farm::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_land", "cell"), &Farm::get_land);
     ClassDB::bind_method(D_METHOD("get_plot", "cell"), &Farm::get_plot);
     ClassDB::bind_method(D_METHOD("get_growth", "cell"), &Farm::get_growth);
+    ClassDB::bind_method(D_METHOD("get_season_factor", "cell"), &Farm::get_season_factor);
     ClassDB::bind_method(D_METHOD("get_moisture", "cell"), &Farm::get_moisture);
     ClassDB::bind_method(D_METHOD("get_plot_count", "state"), &Farm::get_plot_count);
     ClassDB::bind_method(D_METHOD("get_crop", "cell"), &Farm::get_crop);
@@ -314,12 +316,17 @@ void Farm::_physics_process(double p_delta) {
     // 按世界钟走过的游戏小时长（快进时一起快）；没有钟（不该发生）就按帧时与默认的一天长度
     const WorldClock *clock = WorldClock::get_singleton();
     double hours = game_hours(p_delta, DayRules());
+    double day = 0.0;
     if (clock) {
         const double now = clock->get_seconds();
         hours = clock_seen < 0.0 ? 0.0 : game_hours(std::max(0.0, now - clock_seen), clock->get_rules());
+        day = clock->calendar_day_at(clock_seen < 0.0 ? now : 0.5 * (now + clock_seen));
         clock_seen = now;
     }
-    const std::vector<int> changed = model.advance(hours);
+    // 有气候的地图：逐格按海拔问时令（冷了不长、雪盖着不长）；没有就照常
+    const WeatherModel *wx = host ? host->host_weather() : nullptr;
+    const FieldClimate climate(wx, day);
+    const std::vector<int> changed = model.advance(hours, wx ? &climate : nullptr);
     for (size_t k = 0; k + 1 < changed.size(); k += 2) {
         refresh_plot(Vector2i(changed[k], changed[k + 1]));
     }
@@ -394,6 +401,15 @@ Farm::Land Farm::get_land(const Vector2i &p_cell) const {
 
 Farm::State Farm::get_plot(const Vector2i &p_cell) const {
     return State(model.plot_at(p_cell.x, p_cell.y).state);
+}
+
+double Farm::get_season_factor(const Vector2i &p_cell) const {
+    const WeatherModel *wx = host ? host->host_weather() : nullptr;
+    const WorldClock *clock = WorldClock::get_singleton();
+    if (!wx || !clock || !ground) {
+        return 1.0;
+    }
+    return FieldClimate(wx, clock->get_calendar_day()).growth_factor(model.survey(p_cell.x, p_cell.y).height);
 }
 
 double Farm::get_growth(const Vector2i &p_cell) const {
