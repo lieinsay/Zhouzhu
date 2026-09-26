@@ -374,7 +374,7 @@
     {
       "id": "settlement-node",
       "label": "Settlement 聚落",
-      "detail": "按清单盖房：每座 = 外壳（建筑表）+ 房屋模板（模板库给）经 building_parts 拼出的盒子，合成分组网格（地面、各层、顶）和一个凹多边形碰撞，望楼挂爬梯区域、每层一盏暖光；模板改了就地重画，室内编辑时按组剖开。",
+      "detail": "清单 = 底清单 + 改动；每座先量地坪（位姿、船台接触线、门与梯子都照它算），细模是另挂的节点（mount / unmount，细模可在后台备成引擎数组）。deferred（岛群里的村）只备数据、节点由上层按格子挂；布置模式改了清单，挂着的照新清单当场重挂。材质问宿主要共用的一份。",
       "tag": "场景角色",
       "evidence": "build_e2e PASS：放 / 拒 / 拆 / 存 / 读回一致，望楼挡住人，仓库村落 8 座 survey_building 全过",
       "sources": [
@@ -599,7 +599,7 @@
     {
       "id": "world-node",
       "label": "World 流式地面",
-      "detail": "读 data_dir 下的资产、持有连续地形；焦点挪 12 m 就重选块，缺的块丢给后台线程，建好的按时间预算挂进场景，旧块等盖住它的新块都到齐才拆；prepare_at 同步建好落点周围的叶块。给脚本问一点的地表份额（get_cover_at）。",
+      "detail": "岛群的流式地面：焦点一动按四叉树重选块，缺的块交给后台任务池（离焦点近的先），引擎数组在后台备好，主线程按每帧 4 ms 预算挂；叶块碰撞切成两千个三角面一段、一段段挂，脚下的挂齐了才算站得住。水面块也在池里建。World 持有任务池（给 SiteStream、ScatterStream 用）、主线程分项计时与共用的材质网格。",
       "tag": "场景角色",
       "evidence": "world_e2e：出生 0.2 s 站稳，瞬移后 1 s 内脚下有碰撞",
       "sources": [
@@ -773,7 +773,7 @@
     {
       "id": "world-village",
       "label": "WorldVillage 村落",
-      "detail": "岛群里的一个村 / 散户：原点在村心，按 plan_world_village 铺清单交给 Settlement，走近了才挂 Villagers（封顶），导航格只铺村子周围一圈。",
+      "detail": "村心为原点的一个村 / 散户：进树时照后台备好的料挂聚落（只有数据）与各格简模；细模按格子由 SiteStream 推（备、一座座挂、藏简模 / 亮简模、一座座拆）；村民走近了才招，导航格可以后台备好了交过来。材质用 World 那一份共用的。",
       "tag": "场景角色",
       "sources": [
         "src/world_village.h",
@@ -795,7 +795,7 @@
     {
       "id": "site-stream",
       "label": "SiteStream 按需生成",
-      "detail": "跟着焦点：3 km 内建栈桥、2.5 km 内铺村（每帧一处）、900 m 内招村民，走远 ×1.25 就拆；瞬移时同步铺好落点周围。",
+      "detail": "码头、村与散户、采场与地标走近了建、走远了拆；村子分三层：6 km 内后台备料挂简模，格子 300 m 内后台备细模一座座挂，900 m 内账本与导航格都齐了才招村民；挂村子、挂 / 拆细模、招村民每帧 3 ms 预算；瞬移只当场挂落点 150 m 内的村。",
       "tag": "场景角色",
       "sources": [
         "src/site_stream.h",
@@ -999,7 +999,7 @@
     {
       "id": "hinterland",
       "label": "Hinterland 远处账房",
-      "detail": "持有岛群每个村落的账；后台线程开账，逐帧轮流结算、每帧 0.5 ms 预算、按 5 分钟切片；借给近处村民节点、收回时记下布局。",
+      "detail": "远处账房：每处村落一本账，后台开账（近的先，近处要招村民的 request 插队），远处按同一套规矩分片结算、每帧有预算；招村民时借出账本、散了收回。",
       "tag": "场景角色",
       "evidence": "Release 每次结算平均 0.098 ms；游戏内每帧平均约 0.1 ms",
       "sources": [
@@ -1519,13 +1519,12 @@
     {
       "id": "scatter-stream",
       "label": "ScatterStream 散布摆放",
-      "detail": "900 m 内的块交给 World 的后台线程生成，主线程每种样子挂一个 MultiMesh（低模、顶点色 + 实例色）；110 m 内树干带碰撞；按铺出来的房子藏掉压着的；采空重摆、每 4 秒看长回来没有。回答够得着的那一株（看着什么采什么）。",
+      "detail": "radius 以内的块交给任务池生成（连每株的 MultiMesh 数据），主线程每块一次 set_buffer；110 m 内树干带碰撞；已铺的村子按实际占地藏掉压着的（只重查挨着变了的村的块）；远近分级与远处的林子见子节点。",
       "tag": "场景角色",
       "evidence": "scatter_shots 目视；scatter_perf 主码头帧时 P99 10.7 ms；gather_e2e 伐倒树干碰撞 92 → 91",
       "sources": [
         "src/scatter_stream.h",
         "src/scatter_stream.cpp",
-        "src/scatter_meshes.h",
         "src/scatter_meshes.cpp"
       ],
       "since": "e36"
@@ -1608,6 +1607,172 @@
       ],
       "since": "e42",
       "parent": "resource-scatter"
+    },
+    {
+      "id": "world-tile-mount",
+      "label": "地面块分帧挂载",
+      "detail": "后台备好的地面块（TileArrays）按离焦点远近、每帧 4 ms 挂上；叶块的凹多边形碰撞分段挂（整块一次挂要 6～20 ms）；瞬移只当场建落点 80 m 内的叶块。",
+      "tag": "场景角色",
+      "evidence": "地面块单帧最多 18.4 → 5.1 ms；17 条 e2e",
+      "sources": [
+        "src/world.cpp"
+      ],
+      "since": "e43",
+      "parent": "world-node"
+    },
+    {
+      "id": "job-pool",
+      "label": "后台任务池",
+      "detail": "几条工作线程按优先级（离焦点多远，米）取活；同键再交换成新的、正在做的不排第二份；按种类撤、重排；急用时排着的当场做、正在做的等它做完。地面、水面、散布、村子备料、细模、导航格、远处的林子都进这一个池。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests job pool 14 项",
+      "sources": [
+        "src/job_pool.h",
+        "src/job_pool.cpp"
+      ],
+      "since": "e43"
+    },
+    {
+      "id": "stream-meter",
+      "label": "主线程分项计时",
+      "detail": "各流式子系统每帧在主线程花了多少（地面块、水面、码头、村子、村民、采场、散布、账房），按帧号查最近 512 帧的分项；World.get_stream_frame / get_stream_totals 给脚本读。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests stream meter 6 项",
+      "sources": [
+        "src/stream_meter.h",
+        "src/stream_meter.cpp"
+      ],
+      "since": "e43"
+    },
+    {
+      "id": "stream-perf",
+      "label": "流式加载实测工具",
+      "detail": "开局站定、god 150 m/s 与 30 m/s 顺着一串大村飞，报帧时（平均、P99、最慢、超 50 / 100 ms）和最慢那几帧的分项。",
+      "tag": "工具",
+      "sources": [
+        "game/tools/stream_perf.gd"
+      ],
+      "since": "e43"
+    },
+    {
+      "id": "building-mesh",
+      "label": "一座建筑的细模与简模",
+      "detail": "勘察地坪 + building_parts → 按组按材质合并的网格、整座碰撞面、灯位、梯子与门，悬山顶拼进瓦面；另出远处看的简模（台基、墙、悬山顶，顶点色、往里缩一点）。能在后台线程上算。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests building mesh（绕向、三角面数、简模在占地里）",
+      "sources": [
+        "src/building_mesh.h",
+        "src/building_mesh.cpp"
+      ],
+      "since": "e44",
+      "parent": "settlement-node"
+    },
+    {
+      "id": "template-set",
+      "label": "模板快照与挑法",
+      "detail": "写了款式用它，否则按位置哈希在能自动挑的里挑，没有这种外壳给空屋；TemplateLibrary::snapshot() 出只读的 TemplateSet。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests 模板快照 3 项",
+      "sources": [
+        "src/template_set.h",
+        "src/template_set.cpp"
+      ],
+      "since": "e45",
+      "parent": "template-library"
+    },
+    {
+      "id": "world-village-cells",
+      "label": "简模 / 细模按格子换",
+      "detail": "96 m 一格：简模一格一个网格（顶点色、共用材质）；细模备好了按时限一座座挂（近的先），挂齐了藏那一格的简模；走远了亮简模、按时限一座座拆。",
+      "tag": "场景角色",
+      "evidence": "village_shots：近景与改前一致，3.5 km 高空看得见邑治",
+      "sources": [
+        "src/world_village.cpp"
+      ],
+      "since": "e46",
+      "parent": "world-village"
+    },
+    {
+      "id": "village-prep",
+      "label": "村子的备料",
+      "detail": "后台一处一件：铺底清单、叠上布置模式的改动、每座地坪、按格子分好的简模；另有村民的导航格与挑水线。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests 2051 邑治备料 49 ms / 410 座 22 格",
+      "sources": [
+        "src/village_prep.h",
+        "src/village_prep.cpp"
+      ],
+      "since": "e46"
+    },
+    {
+      "id": "shared-looks",
+      "label": "共用的材质与网格",
+      "detail": "聚落各材质、简模的顶点色材质、按颜色的素色材质、按名字的网格（村民小人、村仓货箱）；World 持有，挂在下面的村子问宿主要（host_looks），甲乙两岛各自建一份。",
+      "tag": "引擎构件",
+      "sources": [
+        "src/shared_looks.h",
+        "src/shared_looks.cpp"
+      ],
+      "since": "e46"
+    },
+    {
+      "id": "village-shots",
+      "label": "村子远近截图工具",
+      "detail": "邑治与村004 各从村里、350 m、1.8 km、高空拍一张，目视检查细模、简模、远处的村子。",
+      "tag": "工具",
+      "sources": [
+        "game/tools/village_shots.gd"
+      ],
+      "since": "e46"
+    },
+    {
+      "id": "villagers-progressive",
+      "label": "展开分几帧",
+      "detail": "progressive：deploy 不找路（走着的接着估着走），之后每个物理帧 repath_walker 两个人、搭六个小人；导航格用上层后台备好的（set_prepared_nav）。",
+      "tag": "场景角色",
+      "evidence": "招村民单帧最多 329 → 8.6～15 ms；core_tests 展开先不找路 2 项",
+      "sources": [
+        "src/villagers.cpp",
+        "src/village_sim.cpp"
+      ],
+      "since": "e47",
+      "parent": "villagers-node"
+    },
+    {
+      "id": "resource-scatter-far",
+      "label": "远处的林子（粗格树冠）",
+      "detail": "512 m 远块、19.5 m 粗格掷树，机会与近处树层同一套；一格该有 N 棵：林子里一团放大到盖住 N 棵的树冠，稀树的地方按 N 的机会长一棵正常大小的。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：树冠盖住的地面远 / 近 = 1.01",
+      "sources": [
+        "src/resource_scatter.cpp"
+      ],
+      "since": "e48",
+      "parent": "resource-scatter"
+    },
+    {
+      "id": "scatter-stream-lod",
+      "label": "远近分级（按实例淡入淡出）",
+      "detail": "scatter.gdshader：顶点色 × 实例色，实例参数 fade 给出淡入淡出的距离，互补的 4×4 抖动交接、完全淡出的缩成一点；树细模 → 低模 → 远处的林子，灌丛、石块、苇各到各的距离淡掉。",
+      "tag": "引擎构件",
+      "evidence": "窗口 150 m/s 最慢 26 ms；village_shots 目视交接正常",
+      "sources": [
+        "game/shaders/scatter.gdshader",
+        "src/scatter_meshes.cpp"
+      ],
+      "since": "e49",
+      "parent": "scatter-stream"
+    },
+    {
+      "id": "scatter-stream-far",
+      "label": "远处的林子（摆放）",
+      "detail": "far_radius 4 km 内按 512 m 远块交给任务池生成，一块阔叶、针叶两个 MultiMesh（低模放大），不投影，3.5–4 km 淡掉。",
+      "tag": "场景角色",
+      "sources": [
+        "src/scatter_stream.cpp"
+      ],
+      "since": "e49",
+      "parent": "scatter-stream"
     }
   ],
   "edges": [
@@ -3669,6 +3834,139 @@
       "chains": [
         "gather"
       ]
+    },
+    {
+      "from": "world-node",
+      "to": "job-pool",
+      "label": "后台建地面块、水面块",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "stream-meter",
+      "label": "主线程开销"
+    },
+    {
+      "from": "world-tile-mount",
+      "to": "terrain-tile",
+      "label": "块网格"
+    },
+    {
+      "from": "stream-perf",
+      "to": "stream-meter",
+      "label": "慢帧的分项"
+    },
+    {
+      "from": "stream-perf",
+      "to": "world-2051-scene"
+    },
+    {
+      "from": "building-mesh",
+      "to": "building-parts",
+      "label": "盒子清单"
+    },
+    {
+      "from": "building-mesh",
+      "to": "house-template"
+    },
+    {
+      "from": "template-set",
+      "to": "house-template"
+    },
+    {
+      "from": "world-village-cells",
+      "to": "building-mesh",
+      "label": "细模"
+    },
+    {
+      "from": "world-village-cells",
+      "to": "village-prep",
+      "label": "简模"
+    },
+    {
+      "from": "world-village",
+      "to": "shared-looks",
+      "label": "材质、货箱"
+    },
+    {
+      "from": "settlement-node",
+      "to": "shared-looks",
+      "label": "材质"
+    },
+    {
+      "from": "villagers-node",
+      "to": "shared-looks",
+      "label": "小人的材质与网格"
+    },
+    {
+      "from": "village-prep",
+      "to": "village-plan",
+      "label": "铺底清单"
+    },
+    {
+      "from": "village-prep",
+      "to": "building-mesh",
+      "label": "地坪、简模"
+    },
+    {
+      "from": "village-prep",
+      "to": "villager-nav",
+      "label": "导航格"
+    },
+    {
+      "from": "site-stream",
+      "to": "village-prep",
+      "label": "后台备料",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "site-stream",
+      "to": "job-pool",
+      "label": "村子、细模、导航格",
+      "chains": [
+        "world-voyage"
+      ]
+    },
+    {
+      "from": "village-shots",
+      "to": "world-2051-scene"
+    },
+    {
+      "from": "villagers-progressive",
+      "to": "village-sim",
+      "label": "deploy 不找路、repath_walker"
+    },
+    {
+      "from": "villagers-progressive",
+      "to": "village-prep",
+      "label": "备好的导航格"
+    },
+    {
+      "from": "resource-scatter-far",
+      "to": "world-terrain-cover",
+      "label": "地表份额"
+    },
+    {
+      "from": "scatter-stream",
+      "to": "job-pool",
+      "label": "散布块、远处的林子",
+      "chains": [
+        "gather"
+      ]
+    },
+    {
+      "from": "scatter-stream-far",
+      "to": "resource-scatter-far",
+      "label": "一团团树冠"
+    },
+    {
+      "from": "scatter-stream-far",
+      "to": "scatter-stream-lod",
+      "label": "淡入淡出"
     }
   ],
   "chains": [
@@ -4282,7 +4580,8 @@
         "player",
         "input-map",
         "terrain-tile-ground",
-        "world-terrain-cover"
+        "world-terrain-cover",
+        "job-pool"
       ]
     },
     {
@@ -4456,7 +4755,9 @@
         "input-map",
         "island-node",
         "island-field",
-        "skyisle-export-docks"
+        "skyisle-export-docks",
+        "village-prep",
+        "job-pool"
       ]
     },
     {
@@ -4888,7 +5189,8 @@
         "deposit-kinds-scatter",
         "world-map-resources",
         "resource-scatter-ecotone",
-        "world-terrain-cover"
+        "world-terrain-cover",
+        "job-pool"
       ]
     },
     {
@@ -6367,6 +6669,162 @@
         "node": "resource-scatter",
         "children": [
           "resource-scatter-ecotone"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e43",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：流式加载不卡——后台任务池、主线程分项计时、地面块分帧挂",
+      "summary": "走近村子卡一秒多：先量（分项计时 + stream_perf），再把地面块、水面块、散布块、村子与村民的备料都交给一个按距离排优先级的后台任务池，主线程按每帧预算挂节点。",
+      "commits": "5bc7bbc..0844e84",
+      "nodes": [
+        "world-node",
+        "world-tile-mount",
+        "job-pool",
+        "stream-meter",
+        "stream-perf"
+      ],
+      "info": {
+        "node": "world-node",
+        "children": [
+          "world-tile-mount"
+        ],
+        "adopted": [],
+        "peers": [
+          "job-pool",
+          "stream-meter",
+          "stream-perf"
+        ]
+      }
+    },
+    {
+      "id": "e44",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：聚落的每座房子先有数据、再挂节点",
+      "summary": "一座建筑的几何抽成纯数据（能在后台线程上拼），聚落按座挂 / 拆细模；岛群里的村由上层按格子挂，甲乙两岛照旧一次盖完。",
+      "commits": "049241b..e6d4471",
+      "nodes": [
+        "settlement-node",
+        "building-mesh"
+      ],
+      "info": {
+        "node": "settlement-node",
+        "children": [
+          "building-mesh"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e45",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：模板库给后台线程一份只读快照",
+      "summary": "挑模板的规矩抽成纯函数，库改一次另出一份快照，后台拼细模不和主线程的编辑抢同一张表。",
+      "commits": "049241b",
+      "nodes": [
+        "template-library",
+        "template-set"
+      ],
+      "info": {
+        "node": "template-library",
+        "children": [
+          "template-set"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e46",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：村子远处画简模、近处按格子换细模",
+      "summary": "6 km 内就挂一村简模（从天上看岛不再是空的），格子离焦点 300 m 内才在后台备细模、一座座挂上，挂齐了藏简模；走远了先亮简模再一座座拆。",
+      "commits": "2095193..07932ce",
+      "nodes": [
+        "world-village",
+        "world-village-cells",
+        "village-prep",
+        "shared-looks",
+        "village-shots"
+      ],
+      "info": {
+        "node": "world-village",
+        "children": [
+          "world-village-cells"
+        ],
+        "adopted": [],
+        "peers": [
+          "village-prep",
+          "shared-looks",
+          "village-shots"
+        ]
+      }
+    },
+    {
+      "id": "e47",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：村民等账本与导航格备好再招，展开分几帧",
+      "summary": "招人不再在主线程上当场开账（邑治 569 ms）、算导航格（337 ms）；展开那一帧走着的先估着走、只搭几个小人，之后每帧给两个人找路、搭六个小人。",
+      "commits": "b2618f7..418b55f",
+      "nodes": [
+        "villagers-node",
+        "villagers-progressive"
+      ],
+      "info": {
+        "node": "villagers-node",
+        "children": [
+          "villagers-progressive"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e48",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：远处的林子",
+      "summary": "900 m 外不再一棵树都没有：按同一份地表份额在粗格上长一团团树冠（稀的地方一棵正常大小的），盖住的地面与近处一样。",
+      "commits": "3dbccfe",
+      "nodes": [
+        "resource-scatter",
+        "resource-scatter-far"
+      ],
+      "info": {
+        "node": "resource-scatter",
+        "children": [
+          "resource-scatter-far"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e49",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：散布远近分级，不再按块整片跳",
+      "summary": "共用一份着色器按实例离相机多远淡入淡出；树 200 m 内细模、往外低模、800 m 起交给远处的林子（4 km）；实例数据后台备好一块一次 set_buffer；村子变了只重查挨着的块。",
+      "commits": "f3678d4",
+      "nodes": [
+        "scatter-stream",
+        "scatter-stream-lod",
+        "scatter-stream-far"
+      ],
+      "info": {
+        "node": "scatter-stream",
+        "children": [
+          "scatter-stream-lod",
+          "scatter-stream-far"
         ],
         "adopted": [],
         "peers": []
