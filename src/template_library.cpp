@@ -23,15 +23,6 @@ String to_godot(const std::string &p_string) {
     return String::utf8(p_string.c_str());
 }
 
-uint64_t fnv1a(const std::string &p_text) {
-    uint64_t h = 1469598103934665603ull;
-    for (unsigned char c : p_text) {
-        h ^= c;
-        h *= 1099511628211ull;
-    }
-    return h;
-}
-
 } // namespace
 
 TemplateLibrary::TemplateLibrary() {
@@ -106,6 +97,7 @@ void TemplateLibrary::load_dir(const String &p_dir) {
 void TemplateLibrary::reload() {
     templates.clear();
     dirty.clear();
+    snapshot_set.reset();
     load_dir(dir);
     if (!write_dir.is_empty() && write_dir != dir) {
         load_dir(write_dir);
@@ -121,52 +113,39 @@ const HouseTemplate *TemplateLibrary::find(const std::string &p_id) const {
 
 std::vector<std::string> TemplateLibrary::ids_of(const std::string &p_shell) const {
     ensure_loaded();
-    std::vector<std::string> ids;
-    for (const auto &entry : templates) {
-        if (entry.second.shell() == p_shell) {
-            ids.push_back(entry.first); // map 本就按 id 排好
-        }
-    }
-    return ids;
+    return template_ids_of(templates, p_shell);
 }
 
 std::vector<std::string> TemplateLibrary::auto_ids_of(const std::string &p_shell) const {
-    std::vector<std::string> ids;
-    for (const std::string &id : ids_of(p_shell)) {
-        if (templates.at(id).auto_pick) {
-            ids.push_back(id);
-        }
-    }
-    return ids;
+    ensure_loaded();
+    return template_auto_ids_of(templates, p_shell);
 }
 
 std::string TemplateLibrary::resolve_id(const Building &p_building) const {
-    if (!p_building.style.empty() && find(p_building.kind + "/" + p_building.style)) {
-        return p_building.kind + "/" + p_building.style;
-    }
-    const std::vector<std::string> ids = auto_ids_of(p_building.kind);
-    if (ids.empty()) {
-        return std::string();
-    }
-    Building plain = p_building;
-    plain.style.clear();
-    return ids[size_t(fnv1a(building_id(plain)) % ids.size())];
+    ensure_loaded();
+    return resolve_template_id(templates, p_building);
 }
 
 HouseTemplate TemplateLibrary::resolve(const Building &p_building) const {
-    const std::string id = resolve_id(p_building);
-    const HouseTemplate *t = id.empty() ? nullptr : find(id);
-    if (t) {
-        return *t;
+    ensure_loaded();
+    return resolve_template(templates, p_building);
+}
+
+std::shared_ptr<const TemplateSet> TemplateLibrary::snapshot() const {
+    ensure_loaded();
+    if (!snapshot_set) {
+        std::shared_ptr<TemplateSet> set = std::make_shared<TemplateSet>();
+        set->templates = templates;
+        snapshot_set = set;
     }
-    const BuildingDef *def = buildings::by_id(p_building.kind);
-    return def ? bare_template(*def) : HouseTemplate();
+    return snapshot_set;
 }
 
 void TemplateLibrary::put(const HouseTemplate &p_template) {
     ensure_loaded();
     templates[p_template.id] = p_template;
     dirty[p_template.id] = true;
+    snapshot_set.reset();
     emit_signal("changed", to_godot(p_template.id));
 }
 
