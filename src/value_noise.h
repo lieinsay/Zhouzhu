@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "rng.h"
@@ -34,3 +35,7 @@ public:
 
     double sample(double p_x, double p_y) const;
 };
+
+// 无存储的值噪声：整点上的随机值由坐标哈希得出，任意远都能取样
+double hash_noise(uint64_t p_seed, double p_x, double p_z); // 单层，约 [-1, 1]
+double hash_fbm(uint64_t p_seed, double p_x, double p_z, double p_feature, int p_octaves, double p_persistence = 0.5);

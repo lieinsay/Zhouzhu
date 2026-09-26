@@ -54,21 +54,6 @@ constexpr uint64_t STREAM_UNDERSIDE = 3;
 constexpr uint64_t STREAM_RIDGE = 4;
 constexpr uint64_t STREAM_RIB = 5;
 
-uint64_t mix(uint64_t z) {
-    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
-    z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
-    return z ^ (z >> 31);
-}
-
-double lattice(uint64_t p_seed, int64_t p_i, int64_t p_j) {
-    const uint64_t h = mix(p_seed ^ mix(uint64_t(p_i) * 0x9E3779B97F4A7C15ull ^ mix(uint64_t(p_j) + 0x632BE59BD9B4E019ull)));
-    return double(h >> 11) * (2.0 / 9007199254740992.0) - 1.0; // [-1, 1)
-}
-
-double fade(double t) {
-    return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
-}
-
 // [0, 1] 夹住的 smoothstep
 double smooth01(double t) {
     t = std::clamp(t, 0.0, 1.0);
@@ -76,30 +61,6 @@ double smooth01(double t) {
 }
 
 } // namespace
-
-double hash_noise(uint64_t p_seed, double p_x, double p_z) {
-    const double fx = std::floor(p_x), fz = std::floor(p_z);
-    const int64_t i = int64_t(fx), j = int64_t(fz);
-    const double tx = fade(p_x - fx), tz = fade(p_z - fz);
-    const double a = lattice(p_seed, i, j), b = lattice(p_seed, i + 1, j);
-    const double c = lattice(p_seed, i, j + 1), d = lattice(p_seed, i + 1, j + 1);
-    return (a + (b - a) * tx) + ((c + (d - c) * tx) - (a + (b - a) * tx)) * tz;
-}
-
-double hash_fbm(uint64_t p_seed, double p_x, double p_z, double p_feature, int p_octaves, double p_persistence) {
-    double sum = 0.0, norm = 0.0, amp = 1.0, freq = 1.0 / p_feature;
-    for (int k = 0; k < p_octaves; k++) {
-        // 每层错开一点再转个角度，免得各层格点对齐成网纹
-        const double c = 0.8, s = 0.6;
-        const double x = p_x * freq, z = p_z * freq;
-        const double rx = k % 2 ? c * x - s * z : x, rz = k % 2 ? s * x + c * z : z;
-        sum += amp * hash_noise(mix(p_seed + uint64_t(k)), rx + 17.3 * k, rz - 9.1 * k);
-        norm += amp;
-        amp *= p_persistence;
-        freq *= 2.0;
-    }
-    return sum / norm;
-}
 
 IslandBody island_body(const WorldIsland &p_island) {
     IslandBody b;
@@ -109,7 +70,7 @@ IslandBody island_body(const WorldIsland &p_island) {
 }
 
 WorldTerrain::WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIsland> &p_islands, uint64_t p_seed, const RiverRules &p_river_rules) :
-        grid(&p_grid), seed(p_seed) {
+        grid(&p_grid), seed(p_seed), cover_blend(p_grid, p_seed) {
     int top = 0;
     for (const WorldIsland &isl : p_islands) {
         top = std::max(top, isl.id);

@@ -5,7 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "cover_blend.h"
 #include "dock_site.h"
+#include "value_noise.h"
 #include "world_grid.h"
 #include "world_river.h"
 #include "yard_site.h"
@@ -17,6 +19,7 @@
 //   岛底 = 岸缘 − 崖壁 − 龙骨 × √向内程度 + 岩棱起伏（倒锥的浮山，见 island_body）
 //   河（栅格有水文时，见 world_river.h）：构造时建好河网；河道 + 河漫滩内顶面全按横断面（挖河床、填 / 削滩），
 //     再外 blend_m 渐回原地形；河边的细节噪声同样渐隐（河谷是平顺的）。几条河的影响重叠时取最低的那个
+//   地表（cover）：各地表类在这一点的份额，交界处几十米的过渡带（见 cover_blend.h）；地皮与散布都从这儿取，只管画，不动高度
 //   停机坪（set_pads）：顶面按 dock_pad_weight 拉向坪高——码头后面那一片是平的；河从坪上过时坪让给河（按河的影响权重）
 //   船坞坪（set_yards）：坪内全平、坪外按坡度挖 / 填方接回（yard_carve），在停机坪之后
 // 同一点无论哪一级网格来取，结果都一样，所以不同精度的地块拼得上。
@@ -59,6 +62,7 @@ class WorldTerrain {
     std::vector<IslandBody> bodies; // 同上
     uint64_t seed = 0;
     std::shared_ptr<const WorldRivers> rivers; // 建好就不再变，可以在拷贝之间共用
+    CoverBlend cover_blend;
     std::vector<DockPlan> pads;
     std::unordered_map<int64_t, std::vector<int>> pad_buckets; // 桶 → 压着这个桶（含坪外 PAD_REACH_M）的坪
     std::vector<YardPlan> yards;
@@ -84,6 +88,9 @@ public:
     double lowest_bottom() const;
     const WorldRivers &get_rivers() const { return *rivers; }
     bool has_rivers() const { return rivers && !rivers->empty(); }
+    const CoverBlend &get_cover() const { return cover_blend; }
+    // 这一点各地表类的份额；p_footprint = 取样间距（远处的粗网格传格距，过渡带跟着放宽）
+    CoverMix cover(double p_x, double p_z, double p_footprint = 0.0) const { return cover_blend.mix(p_x, p_z, p_footprint); }
 
     double coast_noise(double p_x, double p_z) const; // 约 [-1, 1]
     double detail(double p_x, double p_z) const; // 米
@@ -104,7 +111,3 @@ public:
     // 只要顶面（没有地返回 false）
     bool surface(double p_x, double p_z, double &r_y) const;
 };
-
-// 无存储的值噪声：整点上的随机值由坐标哈希得出，任意远都能取样
-double hash_noise(uint64_t p_seed, double p_x, double p_z); // 单层，约 [-1, 1]
-double hash_fbm(uint64_t p_seed, double p_x, double p_z, double p_feature, int p_octaves, double p_persistence = 0.5);

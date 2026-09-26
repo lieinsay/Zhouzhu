@@ -19,6 +19,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/building_parts.h
     src/buildings.cpp
     src/buildings.h
+    src/cover_blend.cpp
+    src/cover_blend.h
     src/crops.cpp
     src/crops.h
     src/day_clock.cpp
