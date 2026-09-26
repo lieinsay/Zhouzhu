@@ -3,10 +3,13 @@
 //   场值高过「按云量取的门槛」的地方有云——与地上判「哪儿在下雨」是同一张场，抬头看见的乌云底下正在下雨；
 //   云量按相机那一带的值、再按梯度（cover_grad，每千米变多少）往远处外推，所以锋面过来时远处的天先阴下来。
 // 反射与环境光的立方图（AT_CUBEMAP_PASS）里不画云与星，只按阴沉压暗——便宜，环境光也跟着天色走。
+// 有行星数据的地图（planet_curve_on，行星计划 P1）：云层是 cloud_height 高的一层球壳（半径 R + cloud_height，球心在相机正下方 R + 相机高处），
+// 视线与球壳求交（数值稳的写法）；远处的云随地平线一起弯下去，飞到云层以上往下看，云壳到它自己的地平线为止。
 shader_type sky;
 render_mode use_debanding;
 
 #include "res://shaders/weather.gdshaderinc"
+#include "res://shaders/planet_curve.gdshaderinc"
 
 uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 uniform vec3 moon_dir = vec3(0.0, -1.0, 0.0);
@@ -74,8 +77,25 @@ void sky() {
 
 		// 云层
 		bool below = POSITION.y < cloud_height;
-		if ((below && dir.y > 0.01) || (!below && dir.y < -0.01)) {
-			float t = (cloud_height - POSITION.y) / dir.y;
+		float t = -1.0;
+		if (planet_curve_on > 0.5) {
+			// 球壳：t² + 2bt − q = 0，b = r0·dir.y，q = (R + h)² − r0²（r0 = R + 相机高）
+			float r0 = planet_curve_radius + POSITION.y;
+			float b = r0 * dir.y;
+			float q = (cloud_height - POSITION.y) * (2.0 * planet_curve_radius + POSITION.y + cloud_height);
+			float disc = b * b + q;
+			if (disc >= 0.0) {
+				float sq = sqrt(disc);
+				if (below) {
+					t = b >= 0.0 ? q / (b + sq) : sq - b;
+				} else if (b < 0.0) {
+					t = -q / (sq - b); // 近的那个交点
+				}
+			}
+		} else if ((below && dir.y > 0.01) || (!below && dir.y < -0.01)) {
+			t = (cloud_height - POSITION.y) / dir.y;
+		}
+		if (t > 0.0) {
 			if (t < 90000.0) {
 				vec2 p = POSITION.xz + dir.xz * t;
 				vec2 q = p / cell_m - drift;

@@ -143,6 +143,8 @@ target_sources(
         src/build_overlay.h
         src/build_panel.cpp
         src/build_panel.h
+        src/curved_material.cpp
+        src/curved_material.h
         src/dev_tools.cpp
         src/dev_tools.h
         src/dock_builder.cpp

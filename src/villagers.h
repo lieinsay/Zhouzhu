@@ -77,8 +77,8 @@ private:
     std::vector<Body> bodies;
     SharedLooks *looks = nullptr; // 宿主给的，或者 own_looks
     std::unique_ptr<SharedLooks> own_looks;
-    godot::Ref<godot::StandardMaterial3D> mat_skin, mat_hat, mat_wood, mat_water, mat_sack;
-    godot::Ref<godot::StandardMaterial3D> mat_job[4];
+    godot::Ref<godot::Material> mat_skin, mat_hat, mat_wood, mat_water, mat_sack;
+    godot::Ref<godot::Material> mat_job[4];
     std::shared_ptr<VillageNav> prepared_nav; // 后台备好的导航格与挑水线
     uint64_t prepared_nav_sig = 0; // 照哪张清单备的（layout_signature）
     bool progressive = false;

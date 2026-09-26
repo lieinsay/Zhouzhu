@@ -24,6 +24,7 @@
 #include <godot_cpp/core/math.hpp>
 
 #include "atmosphere.h"
+#include "curved_material.h"
 #include "flight_model.h"
 #include "freight.h"
 #include "input_actions.h"
@@ -72,12 +73,8 @@ double angle_difference(double p_from, double p_to) {
     return std::fmod(2.0 * diff, Math_TAU) - diff;
 }
 
-Ref<StandardMaterial3D> make_material(const Color &p_albedo, float p_roughness) {
-    Ref<StandardMaterial3D> material;
-    material.instantiate();
-    material->set_albedo(p_albedo);
-    material->set_roughness(p_roughness);
-    return material;
+Ref<Material> make_material(const Color &p_albedo, float p_roughness) {
+    return curved_material::solid(p_albedo, p_roughness);
 }
 
 void adopt(Node *p_parent, Node *p_node, const String &p_name) {
@@ -87,7 +84,7 @@ void adopt(Node *p_parent, Node *p_node, const String &p_name) {
 }
 
 // 一只盒子：样子挂在 Visual 下，碰撞（可选）挂在船根下
-void add_box(Node3D *p_visual, Node *p_body, const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<StandardMaterial3D> &p_material, bool p_collide) {
+void add_box(Node3D *p_visual, Node *p_body, const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide) {
     Ref<BoxMesh> mesh;
     mesh.instantiate();
     mesh->set_size(p_size);
@@ -224,18 +221,11 @@ void Ship::ensure_materials() {
     mat_wood = make_material(Color(0.52f, 0.37f, 0.23f), 0.95f);
     mat_hull = make_material(Color(0.33f, 0.22f, 0.15f), 0.9f);
     mat_rail = make_material(Color(0.4f, 0.28f, 0.18f), 0.9f);
-    mat_sail = make_material(Color(0.9f, 0.86f, 0.74f), 1.0f);
-    mat_sail->set_cull_mode(BaseMaterial3D::CULL_DISABLED);
-    mat_stone = make_material(Color(0.25f, 0.62f, 0.6f), 0.6f);
-    mat_stone->set_feature(BaseMaterial3D::FEATURE_EMISSION, true);
-    mat_stone->set_emission(Color(0.2f, 0.75f, 0.7f));
-    mat_stone->set_emission_energy_multiplier(1.4f);
+    mat_sail = curved_material::solid(Color(0.9f, 0.86f, 0.74f), 1.0f, true);
+    mat_stone = curved_material::glowing(Color(0.25f, 0.62f, 0.6f), 0.6f, Color(0.2f, 0.75f, 0.7f), 1.4f);
     mat_crate = make_material(Color(0.58f, 0.44f, 0.26f), 0.95f);
     mat_roof = make_material(Color(0.27f, 0.19f, 0.13f), 0.9f);
-    mat_glow = make_material(Color(0.55f, 0.9f, 0.85f), 0.4f);
-    mat_glow->set_feature(BaseMaterial3D::FEATURE_EMISSION, true);
-    mat_glow->set_emission(Color(0.3f, 0.9f, 0.8f));
-    mat_glow->set_emission_energy_multiplier(2.0f);
+    mat_glow = curved_material::glowing(Color(0.55f, 0.9f, 0.85f), 0.4f, Color(0.3f, 0.9f, 0.8f), 2.0f);
 }
 
 void Ship::clear_generated() {
@@ -504,7 +494,7 @@ void Ship::build_cargo() {
         const real_t x = real_t(s.x), y = real_t(s.y), z = real_t(s.z);
         const String name = vformat("Cargo%d", int(k));
         add_box(visual, this, name, Vector3(CRATE_SIZE, CRATE_H, CRATE_SIZE), at(x, y + 0.06f + 0.5f * CRATE_H, z), mat_crate, true);
-        Ref<StandardMaterial3D> lid = make_material(cargo_color(cargo[k]), 0.9f);
+        Ref<Material> lid = make_material(cargo_color(cargo[k]), 0.9f);
         add_box(visual, this, name + String("Lid"), Vector3(CRATE_SIZE - 0.2f, 0.05f, CRATE_SIZE - 0.2f), at(x, y + 0.06f + CRATE_H + 0.025f, z), lid, false);
         for (const String &part : { name, name + String("Shape"), name + String("Lid") }) {
             Node *node = visual->get_node_or_null(NodePath(part));

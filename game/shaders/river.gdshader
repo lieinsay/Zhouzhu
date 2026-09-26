@@ -7,10 +7,12 @@
 // 远处的水面抬高一点（far_lift），免得被粗地面块盖住；近处不抬。
 // 时令（weather.gdshaderinc 的海拔表，按河床的海拔取负积温）：溪涧（平岸深不到 ice_small_depth）过 8、河过 20 就封冻——
 // 冰面不起波纹、不透；涨水（径流指数过 turbid_from）时水色发浑。
+// 画面按真球面弯（planet_curve.gdshaderinc，行星计划 P1）：水位算好之后再弯（块只平移，模型轴就是世界轴）。
 shader_type spatial;
 render_mode blend_mix, cull_disabled, depth_draw_always, specular_schlick_ggx;
 
 #include "res://shaders/weather.gdshaderinc"
+#include "res://shaders/planet_curve.gdshaderinc"
 
 uniform float runoff = 1.0;
 uniform float bankfull_ratio = 3.0;
@@ -63,6 +65,11 @@ void vertex() {
 	float freeze = bank_depth < ice_small_depth ? 8.0 : 20.0;
 	v_ice = smoothstep(freeze - 2.0, freeze + 2.0, ice_index) * (1.0 - CUSTOM1.y);
 	v_speed = CUSTOM1.z * (0.5 + flow) * (1.0 - v_ice);
+	vec3 flat_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	VERTEX += planet_visual(flat_pos) - flat_pos;
+	NORMAL = planet_visual_normal(flat_pos, NORMAL);
+	TANGENT = planet_visual_normal(flat_pos, TANGENT);
+	BINORMAL = planet_visual_normal(flat_pos, BINORMAL);
 }
 
 void fragment() {

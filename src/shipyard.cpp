@@ -1,4 +1,5 @@
 #include "shipyard.h"
+#include "curved_material.h"
 
 #include <algorithm>
 #include <cmath>
@@ -27,12 +28,8 @@ constexpr real_t GANGWAY_W = 1.8f; // 舷门宽 2.0
 constexpr real_t GANGWAY_T = 0.25f;
 constexpr real_t CELL_HALF_W = 3.5f;
 
-Ref<StandardMaterial3D> make_material(const Color &p_albedo, float p_roughness) {
-    Ref<StandardMaterial3D> material;
-    material.instantiate();
-    material->set_albedo(p_albedo);
-    material->set_roughness(p_roughness);
-    return material;
+Ref<Material> make_material(const Color &p_albedo, float p_roughness) {
+    return curved_material::solid(p_albedo, p_roughness);
 }
 
 } // namespace
@@ -95,7 +92,7 @@ void Shipyard::build() {
     // 盒子的朝向：x 沿长轴 u；z 取 u × y，与短轴 v 同向或反向都行（盒子对称），但不能是左手系，否则面会翻
     const Basis frame(u_axis, up, u_axis.cross(up));
 
-    auto add_box = [&](const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<StandardMaterial3D> &p_material, bool p_collide) {
+    auto add_box = [&](const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide) {
         Ref<BoxMesh> mesh;
         mesh.instantiate();
         mesh->set_size(p_size);

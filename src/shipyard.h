@@ -15,7 +15,7 @@ class Shipyard : public godot::StaticBody3D {
 
     GroundHost *host = nullptr;
     YardPlan yard; // 宿主坐标
-    godot::Ref<godot::StandardMaterial3D> mat_timber, mat_beam, mat_paper;
+    godot::Ref<godot::Material> mat_timber, mat_beam, mat_paper; // 弯曲标准材质（curved_material）
 
     void on_host_rebuilt();
     void clear_generated();

@@ -20,7 +20,7 @@ class WorldResource : public godot::Node3D {
     bool landmark = false;
     ResourceLandmark mark;
 
-    godot::Ref<godot::StandardMaterial3D> material(const godot::Color &p_color, float p_roughness = 0.95f);
+    godot::Ref<godot::Material> material(const godot::Color &p_color, float p_roughness = 0.95f); // 弯曲标准材质（curved_material）
     // 一只盒子（p_solid：带碰撞）；位置是节点的局部坐标，p_yaw 绕竖轴转
     void block(const godot::String &p_name, const godot::Vector3 &p_size, const godot::Vector3 &p_at, const godot::Color &p_color, bool p_solid, double p_yaw = 0.0);
     void cylinder(const godot::String &p_name, double p_radius, double p_height, const godot::Transform3D &p_xf, const godot::Color &p_color, bool p_solid);

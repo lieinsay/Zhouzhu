@@ -12,6 +12,7 @@
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
+#include "curved_material.h"
 #include "local_season.h"
 #include "world_clock.h"
 
@@ -281,10 +282,7 @@ void Farm::_ready() {
     host = GroundHost::of(get_parent());
     ERR_FAIL_NULL_MSG(host, "Farm 要挂在地面宿主（Island / World / FlatMap）下面");
 
-    plot_material.instantiate();
-    plot_material->set_roughness(1.0);
-    plot_material->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-    plot_material->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
+    plot_material = curved_material::vertex_colored(1.0f);
 
     highlight_material.instantiate();
     highlight_material->set_shading_mode(BaseMaterial3D::SHADING_MODE_UNSHADED);

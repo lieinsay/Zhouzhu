@@ -7,10 +7,12 @@
 //   顶点色的 alpha 标出叶子（0.5）与别的（1）；实例参数 season = (阔叶里落叶树的份额, 草本的枯黄, 挂雪, 随风摆)。
 //   落叶树：入冷季秋色，叶子按叶量抖动着掉光（剩枝干），回暖春芽嫩绿；哪几棵是落叶的按根的位置哈希定。针叶冬天暗一点。
 //   灌丛、苇：不绿时枯黄。朝上的面按积雪盖白。叶子与苇随风摆（顶点里按离根的高度挪），风暴时摆得大。
+// 画面按真球面弯（planet_curve.gdshaderinc，行星计划 P1）：淡入淡出按没弯过的距离算，顶点最后才弯。
 shader_type spatial;
 render_mode cull_back, specular_schlick_ggx;
 
 #include "res://shaders/weather.gdshaderinc"
+#include "res://shaders/planet_curve.gdshaderinc"
 
 uniform vec3 eye = vec3(0.0);
 uniform float roughness = 0.95;
@@ -73,6 +75,7 @@ void vertex() {
 		VERTEX += local_push;
 	}
 	v_tint = col;
+	planet_curve_model(MODEL_MATRIX, VERTEX, NORMAL);
 }
 
 void fragment() {

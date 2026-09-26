@@ -122,6 +122,32 @@ PlanetBasis GroupFrame::local_basis(const PlanetVec &p_flat) const {
     return { { east_c, up_c, south_c } };
 }
 
+double CurveSqueeze::distance(double p_distance) {
+    if (p_distance <= KEEP_M) {
+        return p_distance;
+    }
+    // 有理式 x / (1 + x)：一路单调、不会在单精度里压成同一个数（指数式在 480 km 外就全压到 48 km，远处的深度打架）
+    const double span = LIMIT_M - KEEP_M, x = (p_distance - KEEP_M) / span;
+    return KEEP_M + span * x / (1.0 + x);
+}
+
+void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float r_out[3]) {
+    // 逐式同 planet_curve.gdshaderinc 的 planet_squeeze
+    const float keep = float(CurveSqueeze::KEEP_M), limit = float(CurveSqueeze::LIMIT_M);
+    const float rel[3] = { p_visual[0] - p_cam[0], p_visual[1] - p_cam[1], p_visual[2] - p_cam[2] };
+    const float d = std::sqrt(rel[0] * rel[0] + rel[1] * rel[1] + rel[2] * rel[2]);
+    if (d <= keep) {
+        r_out[0] = p_visual[0], r_out[1] = p_visual[1], r_out[2] = p_visual[2];
+        return;
+    }
+    const float span = limit - keep;
+    const float x = (d - keep) / span;
+    const float d2 = keep + span * x / (1.0f + x);
+    for (int k = 0; k < 3; k++) {
+        r_out[k] = p_cam[k] + rel[k] * (d2 / d);
+    }
+}
+
 PlanetVec planet_tilt(const PlanetVec &p_flat, const PlanetVec &p_dir, double p_radius) {
     const double s = std::sqrt(p_flat.x * p_flat.x + p_flat.z * p_flat.z);
     if (s < 1e-6) {

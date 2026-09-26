@@ -2,12 +2,14 @@
 //   render_mode world_vertex_coords 的（地皮、弯曲标准材质）：vertex() 末尾
 //       vec3 flat = VERTEX; VERTEX = planet_visual(flat); NORMAL = planet_visual_normal(flat, NORMAL);
 //   模型空间的（散布、河）：vertex() 末尾
-//       planet_curve_model(MODEL_MATRIX, VERTEX, NORMAL, TANGENT, BINORMAL);
+//       planet_curve_model(MODEL_MATRIX, VERTEX, NORMAL);
 //
 // 与 src/planet_frame.cpp 的 planet_delta_f / planet_tilt_f / CurveViewF::visual / visual_normal 逐式相同，改一处要改两处（单测拿 C++ 单精度版对照双精度）。
 //   δ(p)：锚群平面坐标 p（x 东、y 上、z 南，米）在真球面上相对群心切平面的偏差（方位等距投影，展开到 θ⁴，θ = 离群心 / R）
 //   visual(p) = c + R_cᵀ · ((p − c) + (δ(p) − δ(c)))：相机局部的真球面位置——近处 ≈ p（与物理一致），100 km 外降约 784 m
 //   法线：R_cᵀ · R_p · n，R_p 是群心到 p 沿大圆的平行移动（绕水平轴转 θ）；近处 ≈ n
+//   远处往相机压（planet_squeeze，同 C++ 的 planet_squeeze_f）：离相机 10 km 以内不动，往外沿视线平滑地压到 26 km 以内——
+//   画面上的方向与深度的先后不变，相机的远平面（60 km）不用放大；引擎的雾按压过的距离算，远处的雾不再变浓（空气透视）。
 // 全局参数（project.godot 的 [shader_globals]，PlanetView 每帧用双精度算好）：
 //   planet_curve_on      0 = 不弯（没有行星数据的地图；visual(p) = p），1 = 弯
 //   planet_curve_cam     c：相机的平面坐标
@@ -30,13 +32,33 @@ vec3 planet_delta(vec3 p) {
 	return vec3(p.x * fh, dv, p.z * fh);
 }
 
-// 平面坐标 → 画面坐标（世界空间）
+// 平面坐标 → 相机局部的真球面位置（同 C++ 的 CurveViewF::visual）
+vec3 planet_curved(vec3 p) {
+	vec3 off = (p - planet_curve_cam) + (planet_delta(p) - planet_curve_dcam);
+	return planet_curve_cam + off * planet_curve_basis; // 行向量 × 矩阵 = R_cᵀ · off
+}
+
+// 远处沿视线往相机压
+const float PLANET_SQUEEZE_KEEP = 10000.0;
+const float PLANET_SQUEEZE_LIMIT = 26000.0;
+vec3 planet_squeeze(vec3 v) {
+	vec3 rel = v - planet_curve_cam;
+	float d = length(rel);
+	if (d <= PLANET_SQUEEZE_KEEP) {
+		return v;
+	}
+	float span = PLANET_SQUEEZE_LIMIT - PLANET_SQUEEZE_KEEP;
+	float x = (d - PLANET_SQUEEZE_KEEP) / span;
+	float d2 = PLANET_SQUEEZE_KEEP + span * x / (1.0 + x);
+	return planet_curve_cam + rel * (d2 / d);
+}
+
+// 平面坐标 → 画面坐标（世界空间）：弯过、再把远处压近
 vec3 planet_visual(vec3 p) {
 	if (planet_curve_on < 0.5) {
 		return p;
 	}
-	vec3 off = (p - planet_curve_cam) + (planet_delta(p) - planet_curve_dcam);
-	return planet_curve_cam + off * planet_curve_basis; // 行向量 × 矩阵 = R_cᵀ · off
+	return planet_squeeze(planet_curved(p));
 }
 
 // 方向从平面轴转到 p 处的局部系：沿群心到 p 的大圆平行移动（绕 上 × 离群心的方向 转 θ）
@@ -70,8 +92,8 @@ vec3 planet_visual_dir(vec3 d) {
 	return d * planet_curve_basis;
 }
 
-// 模型空间的顶点、法线、切线就地弯过（MODEL_MATRIX 只含转动、平移与均匀缩放）
-void planet_curve_model(mat4 model, inout vec3 v, inout vec3 n, inout vec3 t, inout vec3 b) {
+// 模型空间的顶点与法线就地弯过（MODEL_MATRIX 含转动、平移与缩放；法线的转动很小，按模型轴近似就够）
+void planet_curve_model(mat4 model, inout vec3 v, inout vec3 n) {
 	if (planet_curve_on < 0.5) {
 		return;
 	}
@@ -80,6 +102,4 @@ void planet_curve_model(mat4 model, inout vec3 v, inout vec3 n, inout vec3 t, in
 	vec3 w = (model * vec4(v, 1.0)).xyz;
 	v += inv * (planet_visual(w) - w);
 	n = normalize(inv * planet_visual_normal(w, m * n));
-	t = normalize(inv * planet_visual_normal(w, m * t));
-	b = normalize(inv * planet_visual_normal(w, m * b));
 }

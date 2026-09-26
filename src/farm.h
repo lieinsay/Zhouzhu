@@ -60,7 +60,7 @@ private:
     godot::HashMap<godot::Vector2i, godot::MeshInstance3D *> plot_nodes;
     godot::MeshInstance3D *highlight = nullptr;
     godot::Vector2i highlighted = godot::Vector2i(-1, -1);
-    godot::Ref<godot::StandardMaterial3D> plot_material;
+    godot::Ref<godot::Material> plot_material; // 弯曲标准材质（顶点色）
     godot::Ref<godot::StandardMaterial3D> highlight_material;
 
     void on_host_rebuilt();

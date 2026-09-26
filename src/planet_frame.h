@@ -15,6 +15,18 @@
 
 #include <cmath>
 
+// 画面的远处往相机压（行星计划 P1）：离相机 KEEP_M 以内不动，往外沿视线平滑地压到 LIMIT_M 以内（有理式 x / (1 + x)）——
+// 画面上的方向不变、深度的先后不变，相机的远平面不用放大（Godot 的投影矩阵是单精度：near 0.05 m、far 1,200 km 时远平面退化）；
+// 引擎的指数雾按压过的距离算，所以远处的雾到 1 − exp(−密度·LIMIT) 就不再变浓（空气透视：三四百公里外还看得见轮廓）。
+// 着色器 planet_curve.gdshaderinc 的 planet_squeeze 与 planet_squeeze_f 逐式相同。
+struct CurveSqueeze {
+    static constexpr double KEEP_M = 10000.0;
+    static constexpr double LIMIT_M = 26000.0;
+    // 压过之后离相机多远
+    static double distance(double p_distance);
+};
+void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float r_out[3]);
+
 // 垂直结构（D13）：游戏 y（云带顶以上的米，生成器的高度零点）
 struct VerticalDatum {
     static constexpr double CLOUD_TOP_Y = -3800.0; // 云带顶（看得见的云海面）

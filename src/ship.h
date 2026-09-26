@@ -60,7 +60,7 @@ class Ship : public godot::CharacterBody3D {
     godot::Node3D *camera_rig = nullptr;
     godot::Camera3D *camera = nullptr;
 
-    godot::Ref<godot::StandardMaterial3D> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow;
+    godot::Ref<godot::Material> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow; // 弯曲标准材质（curved_material）
 
     void ensure_materials();
     void clear_generated();

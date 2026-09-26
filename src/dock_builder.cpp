@@ -7,18 +7,16 @@
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 
+#include "curved_material.h"
+
 using namespace godot;
 
 namespace dock_builder {
 
 namespace {
 
-Ref<StandardMaterial3D> flat_material(const Color &p_albedo) {
-    Ref<StandardMaterial3D> material;
-    material.instantiate();
-    material->set_albedo(p_albedo);
-    material->set_roughness(1.0);
-    return material;
+Ref<Material> flat_material(const Color &p_albedo) {
+    return curved_material::solid(p_albedo, 1.0f);
 }
 
 } // namespace

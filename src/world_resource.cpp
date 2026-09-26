@@ -1,4 +1,5 @@
 #include "world_resource.h"
+#include "curved_material.h"
 
 #include <cmath>
 
@@ -70,12 +71,8 @@ Vector3 WorldResource::get_pile() const {
     return Vector3(real_t(site.pile_x), real_t(site.pile_y), real_t(site.pile_z));
 }
 
-Ref<StandardMaterial3D> WorldResource::material(const Color &p_color, float p_roughness) {
-    Ref<StandardMaterial3D> m;
-    m.instantiate();
-    m->set_albedo(p_color);
-    m->set_roughness(p_roughness);
-    return m;
+Ref<Material> WorldResource::material(const Color &p_color, float p_roughness) {
+    return curved_material::solid(p_color, p_roughness);
 }
 
 void WorldResource::block(const String &p_name, const Vector3 &p_size, const Vector3 &p_at, const Color &p_color, bool p_solid, double p_yaw) {
@@ -231,8 +228,8 @@ void WorldResource::build_pile() {
     pile->set_name("Pile");
     pile->set_position(Vector3(real_t(site.pile_x - site.face_x), real_t(site.pile_y - site.face_y), real_t(site.pile_z - site.face_z)));
     add_child(pile);
-    const Ref<StandardMaterial3D> wood = material(Color(0.58f, 0.44f, 0.26f)), lid = material(item_color(site.item)), pole = material(Color(0.33f, 0.22f, 0.15f));
-    auto add = [&](const String &p_name, const Vector3 &p_size, const Vector3 &p_at, const Ref<StandardMaterial3D> &p_material) {
+    const Ref<Material> wood = material(Color(0.58f, 0.44f, 0.26f)), lid = material(item_color(site.item)), pole = material(Color(0.33f, 0.22f, 0.15f));
+    auto add = [&](const String &p_name, const Vector3 &p_size, const Vector3 &p_at, const Ref<Material> &p_material) {
         Ref<BoxMesh> mesh;
         mesh.instantiate();
         mesh->set_size(p_size);
@@ -289,7 +286,11 @@ void WorldResource::build_landmark() {
             }
             if (hot) {
                 // 白汽：几团半透明的白块叠在池子上
-                Ref<StandardMaterial3D> steam = material(Color(0.95f, 0.95f, 0.95f, 0.35f));
+                // 半透明的白汽只在近处看得见：照旧用标准材质（不弯）
+                Ref<StandardMaterial3D> steam;
+                steam.instantiate();
+                steam->set_albedo(Color(0.95f, 0.95f, 0.95f, 0.35f));
+                steam->set_roughness(0.95f);
                 steam->set_transparency(BaseMaterial3D::TRANSPARENCY_ALPHA);
                 for (int k = 0; k < 4; k++) {
                     Ref<BoxMesh> puff;

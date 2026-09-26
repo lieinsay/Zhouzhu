@@ -35,7 +35,7 @@ MeshInstance3D *add_mesh(Node3D *p_parent, const String &p_name, const Ref<Mesh>
 }
 
 // 小人的几件：同形同材质的共用一份网格（键里带材质的实例号：材质本身也是共用的）
-std::string mesh_key(const char *p_kind, std::initializer_list<real_t> p_dims, const Ref<StandardMaterial3D> &p_material) {
+std::string mesh_key(const char *p_kind, std::initializer_list<real_t> p_dims, const Ref<Material> &p_material) {
     std::string key = std::string("villager_") + p_kind;
     for (real_t d : p_dims) {
         key += "_" + std::to_string(int(std::lround(d * 1000.0f)));
@@ -43,7 +43,7 @@ std::string mesh_key(const char *p_kind, std::initializer_list<real_t> p_dims, c
     return key + "_" + std::to_string(uint64_t(p_material->get_instance_id()));
 }
 
-Ref<Mesh> box(SharedLooks &p_looks, const Vector3 &p_size, const Ref<StandardMaterial3D> &p_material) {
+Ref<Mesh> box(SharedLooks &p_looks, const Vector3 &p_size, const Ref<Material> &p_material) {
     return p_looks.mesh(mesh_key("box", { p_size.x, p_size.y, p_size.z }, p_material), [&]() {
         Ref<BoxMesh> mesh;
         mesh.instantiate();
@@ -53,7 +53,7 @@ Ref<Mesh> box(SharedLooks &p_looks, const Vector3 &p_size, const Ref<StandardMat
     });
 }
 
-Ref<Mesh> cylinder(SharedLooks &p_looks, real_t p_top, real_t p_bottom, real_t p_height, const Ref<StandardMaterial3D> &p_material) {
+Ref<Mesh> cylinder(SharedLooks &p_looks, real_t p_top, real_t p_bottom, real_t p_height, const Ref<Material> &p_material) {
     return p_looks.mesh(mesh_key("cylinder", { p_top, p_bottom, p_height }, p_material), [&]() {
         Ref<CylinderMesh> mesh;
         mesh.instantiate();
@@ -67,7 +67,7 @@ Ref<Mesh> cylinder(SharedLooks &p_looks, real_t p_top, real_t p_bottom, real_t p
     });
 }
 
-Ref<Mesh> capsule(SharedLooks &p_looks, real_t p_radius, real_t p_height, const Ref<StandardMaterial3D> &p_material) {
+Ref<Mesh> capsule(SharedLooks &p_looks, real_t p_radius, real_t p_height, const Ref<Material> &p_material) {
     return p_looks.mesh(mesh_key("capsule", { p_radius, p_height }, p_material), [&]() {
         Ref<CapsuleMesh> mesh;
         mesh.instantiate();
@@ -78,7 +78,7 @@ Ref<Mesh> capsule(SharedLooks &p_looks, real_t p_radius, real_t p_height, const 
     });
 }
 
-Ref<Mesh> sphere(SharedLooks &p_looks, real_t p_radius, real_t p_height, const Ref<StandardMaterial3D> &p_material) {
+Ref<Mesh> sphere(SharedLooks &p_looks, real_t p_radius, real_t p_height, const Ref<Material> &p_material) {
     return p_looks.mesh(mesh_key("sphere", { p_radius, p_height }, p_material), [&]() {
         Ref<SphereMesh> mesh;
         mesh.instantiate();

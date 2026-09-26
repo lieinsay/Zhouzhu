@@ -5,10 +5,12 @@
 //   草：不绿时枯黄；灌丛：冬天发褐；田：休耕的土色 → 青苗 → 黄熟；林：高处多针叶（不换季），阔叶的秋色、光秃。
 //   雪：积雪水当量按碎斑进退（雪线不是一条等高线），陡坡挂不住、背阴坡（南半球朝南）多留一点。
 //   雨后：底色压暗、糙度降下来（湿地皮反光）。
+// 画面按真球面弯（planet_curve.gdshaderinc，行星计划 P1）：时令、积雪按没弯过的位置（海拔、坡度）取，只有画出来的位置与法线弯。
 shader_type spatial;
-render_mode cull_back, specular_schlick_ggx;
+render_mode cull_back, specular_schlick_ggx, world_vertex_coords;
 
 #include "res://shaders/weather.gdshaderinc"
+#include "res://shaders/planet_curve.gdshaderinc"
 
 uniform vec3 straw : source_color = vec3(0.62, 0.55, 0.34);
 uniform vec3 shrub_winter : source_color = vec3(0.42, 0.36, 0.26);
@@ -25,10 +27,13 @@ varying vec3 v_up; // 世界法线
 varying vec4 v_season;
 
 void vertex() {
-	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	v_up = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	// world_vertex_coords：VERTEX、NORMAL 已是世界（平面）坐标
+	v_world = VERTEX;
+	v_up = normalize(NORMAL);
 	v_season = CUSTOM0;
 	COLOR.rgb = wx_srgb_to_linear(COLOR.rgb);
+	VERTEX = planet_visual(v_world);
+	NORMAL = planet_visual_normal(v_world, NORMAL);
 }
 
 void fragment() {

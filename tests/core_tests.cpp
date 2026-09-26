@@ -4843,6 +4843,27 @@ void test_planet_frame() {
         check(inv_err < 5e-3, "画面坐标 → 平面坐标（逆）150 km 外差 < 5 mm");
         check(far_up < 1e-3, "远处地面的朝上在画面上倒向外（按真球面）");
     }
+    // 远处往相机压：10 km 内不动、往外单调、压到 26 km 以内、方向不变；单精度同式
+    {
+        bool mono = true;
+        double prev = 0.0, f_err = 0.0;
+        for (double d = 0.0; d < 2.0e6; d += 997.0) {
+            const double s = CurveSqueeze::distance(d);
+            mono = mono && s >= prev && s < CurveSqueeze::LIMIT_M;
+            prev = s;
+            const float cam[3] = { 1234.0f, 250.0f, -8000.0f };
+            const float v[3] = { cam[0] + float(d * 0.6), cam[1] - float(d * 0.0), cam[2] + float(d * 0.8) };
+            float o[3];
+            planet_squeeze_f(v, cam, o);
+            const double got = std::sqrt(double(o[0] - cam[0]) * (o[0] - cam[0]) + double(o[1] - cam[1]) * (o[1] - cam[1]) + double(o[2] - cam[2]) * (o[2] - cam[2]));
+            f_err = std::max(f_err, std::abs(got - s) / std::max(1.0, s));
+        }
+        check(CurveSqueeze::distance(8000.0) == 8000.0 && CurveSqueeze::distance(CurveSqueeze::KEEP_M) == CurveSqueeze::KEEP_M, "离相机 10 km 以内不压");
+        check(mono, "往外压得单调、不过 26 km（深度的先后不变）");
+        check(std::abs(CurveSqueeze::distance(205000.0) - 24790.0) < 200.0, "205 km 外压到 25 km 上下");
+        check(CurveSqueeze::distance(600000.0) - CurveSqueeze::distance(590000.0) > 0.1, "600 km 处相隔 10 km 压过之后还差十几厘米以上（单精度分得开）");
+        check(f_err < 1e-5, "单精度的压法与双精度同式（相对差 " + std::to_string(f_err) + "）");
+    }
     // 换锚：同一个真球面点换锚前后，相对相机的画面位置只差平面轴的转动 Q
     {
         const PlanetVec cam_a = a.latlon_flat(-32.1, 151.9) + PlanetVec(0.0, 2400.0, 0.0); // 两群之间的云海上空
