@@ -561,7 +561,7 @@
     {
       "id": "world-terrain",
       "label": "连续地形",
-      "detail": "任意 (x, z) 上的有没有地、顶面、岛底、地表。大形听栅格（v3 起高程已含生成器下切的河谷），细节噪声按地表 × 地形区调幅；岛底是崖壁 + 倒锥（见 island-body）；河按河网的横断面凿。",
+      "detail": "任意 (x, z) 上的有没有地、顶面、岛底、地表。大形听栅格（v3 起高程已含生成器下切的河谷），细节噪声按地表 × 地形区调幅；岛底是崖壁 + 倒锥（见 island-body）；河按河网的横断面凿；地表给各类的份额（地表过渡场，地皮与散布共用）。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest world_terrain：确定、连续、岸线进退在噪声幅度内",
       "sources": [
@@ -575,7 +575,7 @@
     {
       "id": "terrain-tile",
       "label": "分块地面",
-      "detail": "TileLayout：盖住整个栅格的四叉树，叶 128 m、每块 64 格，按离焦点的距离细分，只选可能有地的块；build_tile_mesh：顶面、崖壁、岛底（整块是地时隔 8 格）、块边裙边，叶块带碰撞面。",
+      "detail": "TileLayout：盖住整个栅格的四叉树，叶 128 m、每块 64 格，按离焦点的距离细分，只选可能有地的块；build_tile_mesh：顶面（按地表份额着色）、崖壁、岛底（整块是地时隔 4 格）、块边裙边，叶块带碰撞面。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest terrain_tile：互不重叠、全覆盖、叶块碰撞；邑治处 274 块",
       "sources": [
@@ -599,7 +599,7 @@
     {
       "id": "world-node",
       "label": "World 流式地面",
-      "detail": "读 data_dir 下的资产、持有连续地形；焦点挪 12 m 就重选块，缺的块丢给后台线程，建好的按时间预算挂进场景，旧块等盖住它的新块都到齐才拆；prepare_at 同步建好落点周围的叶块。",
+      "detail": "读 data_dir 下的资产、持有连续地形；焦点挪 12 m 就重选块，缺的块丢给后台线程，建好的按时间预算挂进场景，旧块等盖住它的新块都到齐才拆；prepare_at 同步建好落点周围的叶块。给脚本问一点的地表份额（get_cover_at）。",
       "tag": "场景角色",
       "evidence": "world_e2e：出生 0.2 s 站稳，瞬移后 1 s 内脚下有碰撞",
       "sources": [
@@ -1481,7 +1481,7 @@
     {
       "id": "resource-scatter",
       "label": "散布生成",
-      "detail": "按 128 m 块确定性生成一株株、一块块：每层（树、灌丛、苇、石、土砂）一张全岛群共用的抖动网格，格点抖动后落进哪块归哪块；概率看地表（扭过 ±35 m 再取格，林缘不成方格）、片号、品位。让开村子、坪、船坞、采掘面与堆场、采场的泊地、地标；树不上河滩与陡坡。键 = 块 + 序号。",
+      "detail": "按 128 m 块确定性生成一株株、一块块：每层（树、灌丛、苇、石、土砂）一张全岛群共用的抖动网格，格点抖动后落进哪块归哪块；概率按地表过渡场的份额（与地皮同一份，林缘渐变，见过渡带里的散布）、片的份额、品位。让开村子、坪、船坞、采掘面与堆场、采场的泊地、地标；树不上河滩、陡坡渐稀。键 = 块 + 序号。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest test_scatter：两遍一样、树九成以上在林地格、村里不长、泊地 17 m 内让开；2051 全岛群约 3,670 万株、每块 Release 0.7 ms",
       "sources": [
@@ -1570,6 +1570,44 @@
       ],
       "since": "e39",
       "parent": "world-map"
+    },
+    {
+      "id": "world-terrain-cover",
+      "label": "地表过渡场",
+      "detail": "CoverBlend：任一点给各地表类的份额（和为 1）。350 m 大弯 ±50 m + 90 m 小扭 ±40 m → 4×4 格按 exp(−d²/τ) 的软最近格（一半处是最近格的边，一成到九成 40 m）→ 对数份额加细噪声（交界进退 ±20 m）；按取样间距远处换成 B 样条平滑。同一套也混片的种类、针叶比例、溪涧。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests test_cover_blend：和为 1、40 m 对称、远处一百多米、一格的小片约一格、连续、确定性",
+      "sources": [
+        "src/cover_blend.h",
+        "src/cover_blend.cpp",
+        "src/world_terrain.h"
+      ],
+      "since": "e40",
+      "parent": "world-terrain"
+    },
+    {
+      "id": "terrain-tile-ground",
+      "label": "地皮着色",
+      "detail": "每个顶点按 WorldTerrain::cover(x, z, 格距) 混各类颜色；陡坡露岩门槛按 14 m 细噪声进退成岩斑；有河网时河道类画成湿草（水面由河的网格画）；再按河漫滩、河床染色。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "叶块跨可耕地 | 林地相邻 2 m 顶点色差 ≤ 0.06（一刀切 0.3）；cover_shots、terrain_shots 目视",
+      "sources": [
+        "src/terrain_tile.cpp"
+      ],
+      "since": "e41",
+      "parent": "terrain-tile"
+    },
+    {
+      "id": "resource-scatter-ecotone",
+      "label": "过渡带里的散布",
+      "detail": "掷机会前按块周围有什么估上限，中了上限再取份额：机会 = Σ 份额 × 各类的机会，林缘（林地份额一半处）加灌丛带、树矮三成；片（泥炭、浮石、鸟粪）按片的份额；赋存 ±0.05 渐入；陡坡渐稀。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests scatter ecotone：树 4 → 151 株/公顷逐档升、林缘灌丛 173 vs 两侧 26–31、林缘树 0.72 vs 1.02；体检每公顷 141 → 151",
+      "sources": [
+        "src/resource_scatter.cpp"
+      ],
+      "since": "e42",
+      "parent": "resource-scatter"
     }
   ],
   "edges": [
@@ -3610,6 +3648,27 @@
       "from": "world-map-resources",
       "to": "world-grid",
       "label": "赋存场 / 片号"
+    },
+    {
+      "from": "world-terrain-cover",
+      "to": "world-grid",
+      "label": "地表类、片号"
+    },
+    {
+      "from": "terrain-tile-ground",
+      "to": "world-terrain-cover",
+      "label": "份额 / 格距",
+      "chains": [
+        "real-scale-world"
+      ]
+    },
+    {
+      "from": "resource-scatter-ecotone",
+      "to": "world-terrain-cover",
+      "label": "份额",
+      "chains": [
+        "gather"
+      ]
     }
   ],
   "chains": [
@@ -4221,7 +4280,9 @@
         "world-2051-scene",
         "world-e2e",
         "player",
-        "input-map"
+        "input-map",
+        "terrain-tile-ground",
+        "world-terrain-cover"
       ]
     },
     {
@@ -4825,7 +4886,9 @@
         "resource-landmarks",
         "skyisle-export-resources",
         "deposit-kinds-scatter",
-        "world-map-resources"
+        "world-map-resources",
+        "resource-scatter-ecotone",
+        "world-terrain-cover"
       ]
     },
     {
@@ -6244,6 +6307,66 @@
         "node": "world-map",
         "children": [
           "world-map-resources"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e40",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：地貌交界的过渡——地表过渡场",
+      "summary": "地表类从「最近那格是什么」变成「这一点有几成是什么」：两层扭、软最近格（一成到九成 40 m、面积守恒）、交界碎成犬牙；地皮与散布从 WorldTerrain::cover 取同一份，地皮变色处就是树变稀处。不动高度。",
+      "commits": "3db153e..ad9e6c3",
+      "nodes": [
+        "world-terrain",
+        "world-terrain-cover"
+      ],
+      "info": {
+        "node": "world-terrain",
+        "children": [
+          "world-terrain-cover"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e41",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：地皮按地表份额渐变",
+      "summary": "地皮不再按 100 m 格双线性糊开：按份额混各类色，林下深绿、田边的黄跟着交界的形状；陡坡岩斑；有河网时「河道」类画成滩草；远处粗块按格距放宽。",
+      "commits": "22165e8",
+      "nodes": [
+        "terrain-tile",
+        "terrain-tile-ground"
+      ],
+      "info": {
+        "node": "terrain-tile",
+        "children": [
+          "terrain-tile-ground"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e42",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展：林缘不再一刀切——散布按地表份额渐变",
+      "summary": "树、灌丛、苇、石、土砂的机会按份额加权：林缘渐稀、一圈灌丛带、树矮一截；片按片的份额；针叶比例按片与高度平滑；赋存品位门槛上下渐入；陡坡从上限六成起渐稀。",
+      "commits": "22165e8",
+      "nodes": [
+        "resource-scatter",
+        "resource-scatter-ecotone"
+      ],
+      "info": {
+        "node": "resource-scatter",
+        "children": [
+          "resource-scatter-ecotone"
         ],
         "adopted": [],
         "peers": []
