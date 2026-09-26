@@ -580,7 +580,9 @@ void DevTools::_process(double p_delta) {
     }
     PackedStringArray lines;
     if (god && player) {
-        lines.push_back(vformat(String(U"GOD · %d m/s（Shift ×%s）· F3 关"), int(player->get_god_speed()), String::num(player->get_god_boost(), 1)));
+        const double scale = player->get_god_scale();
+        lines.push_back(vformat(String(U"GOD · %d m/s（Shift ×%s%s）· F3 关"), int(player->get_god_speed() * scale), String::num(player->get_god_boost(), 1),
+                scale > 1.05 ? vformat(String(U"，离地高 ×%s"), String::num(scale, 1)) : String()));
     }
     if (is_time_lapse()) {
         lines.push_back(vformat(String(U"快进 ×%d · F4 关"), int(WorldClock::get_singleton()->get_fast_scale())));

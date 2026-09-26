@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <vector>
 
 #include <godot_cpp/classes/camera3d.hpp>
@@ -17,6 +18,8 @@
 // 屋里：头顶 6 m 内有东西（天花板、舱顶）就把相机的弹簧臂缓缓收到 indoor_arm，出来再放回场景里配的长度——还是第三人称，只是近些。
 // 抱着货箱（上层 set_carrying）：身前画一只箱子，只能慢走（carry_speed），不能疾跑、不能跳；箱子是谁的、装的什么它不知道。
 // god 模式（开发者工具开的，它不知道是谁）：不受重力，按相机的水平朝向飞，空格升、Ctrl 降、Shift 加速；碰撞照旧，降到地上就站住。
+// 速度随离地高度放大：× (1 + 离上一次站着的地面多高 / god_scale_height)——300 m 起一倍、50 km 时一百六十多倍，
+// 不按 Shift 升到 50 km 约 51 s、从 50 km 降回来也差不多（行星计划 P1）；贴着地面还是 god_speed。
 //
 // 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D、Sensor（Area3D）。
 class Player : public godot::CharacterBody3D {
@@ -31,6 +34,8 @@ class Player : public godot::CharacterBody3D {
     double mouse_sensitivity = 0.0025;
     double god_speed = 30.0;
     double god_boost = 5.0; // 按住 Shift 时速度乘这么多
+    double god_scale_height = 300.0; // 离地每高这么多，god 的速度多一倍
+    double ground_y = NAN; // 上一次站在地上时脚下的高（god 的高度倍数按它算）；还没站过是 NAN
     double indoor_arm = 2.6; // 屋里相机离人多远
     double outdoor_arm = 5.0; // 屋外：开局从场景里的 SpringArm3D 读
     bool indoors = false;
@@ -98,5 +103,8 @@ public:
     double get_god_speed() const { return god_speed; }
     void set_god_boost(double p_value) { god_boost = p_value; }
     double get_god_boost() const { return god_boost; }
+    void set_god_scale_height(double p_value) { god_scale_height = p_value; }
+    double get_god_scale_height() const { return god_scale_height; }
+    double get_god_scale() const; // 此刻 god 的速度倍数（离地越高越大）
     double get_mouse_sensitivity() const { return mouse_sensitivity; }
 };

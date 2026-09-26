@@ -53,6 +53,9 @@ void Player::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_god_speed"), &Player::get_god_speed);
     ClassDB::bind_method(D_METHOD("set_god_boost", "value"), &Player::set_god_boost);
     ClassDB::bind_method(D_METHOD("get_god_boost"), &Player::get_god_boost);
+    ClassDB::bind_method(D_METHOD("set_god_scale_height", "value"), &Player::set_god_scale_height);
+    ClassDB::bind_method(D_METHOD("get_god_scale_height"), &Player::get_god_scale_height);
+    ClassDB::bind_method(D_METHOD("get_god_scale"), &Player::get_god_scale);
     ClassDB::bind_method(D_METHOD("set_carrying", "carrying", "color"), &Player::set_carrying, DEFVAL(Color(0.86f, 0.82f, 0.7f)));
     ClassDB::bind_method(D_METHOD("is_carrying"), &Player::is_carrying);
     ClassDB::bind_method(D_METHOD("set_carry_speed", "value"), &Player::set_carry_speed);
@@ -78,6 +81,7 @@ void Player::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "gravity", PROPERTY_HINT_RANGE, "0,60,0.1,suffix:m/s²"), "set_gravity", "get_gravity");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "god_speed", PROPERTY_HINT_RANGE, "1,200,1,suffix:m/s"), "set_god_speed", "get_god_speed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "god_boost", PROPERTY_HINT_RANGE, "1,20,0.5"), "set_god_boost", "get_god_boost");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "god_scale_height", PROPERTY_HINT_RANGE, "10,10000,10,suffix:m"), "set_god_scale_height", "get_god_scale_height");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "indoor_arm", PROPERTY_HINT_RANGE, "0.5,10,0.1,suffix:m"), "set_indoor_arm", "get_indoor_arm");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mouse_sensitivity", PROPERTY_HINT_RANGE, "0.0005,0.01,0.0001"), "set_mouse_sensitivity", "get_mouse_sensitivity");
 }
@@ -161,15 +165,21 @@ void Player::_physics_process(double p_delta) {
     if (god_mode) {
         // 飞：三个方向都逼近目标速度，松手就悬停
         const double vertical = input_blocked ? 0.0 : input->get_axis(input_actions::FLY_DOWN, input_actions::ASCEND);
-        const double fly = god_speed * (input->is_action_pressed(input_actions::SPRINT) ? god_boost : 1.0);
+        const double fly = god_speed * (input->is_action_pressed(input_actions::SPRINT) ? god_boost : 1.0) * get_god_scale();
         const Vector3 target = Vector3(wish.x, real_t(vertical), wish.z) * real_t(fly);
         velocity += (target - velocity) * real_t(1.0 - std::exp(-GOD_ACCEL * p_delta));
         set_velocity(velocity);
         move_and_slide();
+        if (is_on_floor()) {
+            ground_y = get_global_position().y;
+        }
         turn_body(wish, p_delta);
         return;
     }
     const bool grounded = is_on_floor();
+    if (grounded) {
+        ground_y = get_global_position().y;
+    }
     // 沿梯子：面朝墙按前是上、背对墙按前是下；站在地上要往下时就当普通走路（走出梯顶的缺口自然会掉进梯子区域）
     double climb = 0.0;
     Vector3 outward;
@@ -255,8 +265,18 @@ void Player::set_carrying(bool p_carrying, const Color &p_color) {
     crate->set_visible(carrying);
 }
 
+double Player::get_god_scale() const {
+    if (std::isnan(ground_y) || !is_inside_tree()) {
+        return 1.0;
+    }
+    return 1.0 + std::max(0.0, double(get_global_position().y) - ground_y) / std::max(1.0, god_scale_height);
+}
+
 void Player::set_god_mode(bool p_enabled) {
     god_mode = p_enabled;
+    if (god_mode && is_inside_tree() && (std::isnan(ground_y) || is_on_floor())) {
+        ground_y = get_global_position().y; // 从这儿起飞
+    }
     set_velocity(Vector3()); // 关掉时从零开始落，开的时候原地悬停
 }
 

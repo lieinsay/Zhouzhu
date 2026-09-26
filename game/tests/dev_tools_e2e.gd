@@ -2,6 +2,7 @@ extends Node
 ## 开发者工具端到端测试（DevTools autoload），只通过输入操作：
 ## 甲乙两岛里按 M → 提示去 F2 换地图 → F3 开 god → 空格升起 → Ctrl 降回地面站住 → Shift 前飞超过 100 m/s
 ## → F3 关、重力回来往下掉 → F3 再开 → F2 开清单、按 2 换到岛群 #2051：新场景里的人还是 god、脚下有地
+## → 按住空格升到离地 50 km（god 的速度随离地高度放大，一分钟内；行星计划 P1），岛群的画面弯曲开着、相机的经纬度对
 ## → F2、按 1 换回甲乙两岛。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/dev_tools_e2e.tscn
@@ -11,9 +12,11 @@ extends Node
 ## 驱动器自己不是「当前场景」：它把 main.tscn 挂成当前场景，换地图时被换掉的是那个，驱动器留着。
 
 const MAIN := preload("res://main.tscn")
-const TIMEOUT := 120.0
+const TIMEOUT := 200.0
+const CLIMB_M := 50000.0
+const CLIMB_MAX_S := 60.0
 
-enum Phase { START, PRESS_M, GOD_ON, ASCEND, DESCEND, BOOST, GOD_OFF, FALLING, GOD_AGAIN, OPEN_MENU, PICK_2051, IN_2051, BACK, DONE }
+enum Phase { START, PRESS_M, GOD_ON, ASCEND, DESCEND, BOOST, GOD_OFF, FALLING, GOD_AGAIN, OPEN_MENU, PICK_2051, IN_2051, CLIMB, BACK, DONE }
 
 var dev: DevTools
 var player: Player
@@ -205,15 +208,33 @@ func _physics_process(delta: float) -> void:
 			var ground: float = world.get_surface_height(at.x, at.z)
 			if t > 1.0 and player.is_god_mode() and not is_nan(ground) and absf(at.y - ground) < 2.0 and world.is_ready_at(at):
 				print("dev_tools_e2e: 换到岛群 #2051，god 还开着，人在地上（%s）" % at)
-				_action("switch_map")
-				_goto(Phase.BACK)
+				mark = at
+				_goto(Phase.CLIMB)
 			elif t > 15.0:
 				_finish(false, "换到 2051 后：god %s，离地 %.1f，脚下块 %s" % [player.is_god_mode(), at.y - ground, world.is_ready_at(at)])
+		Phase.CLIMB:
+			Input.action_press("ascend")
+			var rise := player.global_position.y - mark.y
+			if rise >= CLIMB_M:
+				Input.action_release("ascend")
+				var planet = get_tree().current_scene.get_node_or_null("PlanetView")
+				if planet == null or not planet.is_active():
+					_finish(false, "岛群 #2051 里没有 PlanetView，或没锚定")
+					return
+				var ll: Vector2 = planet.get_camera_latlon()
+				if absf(ll.x + 31.45) > 0.3 or absf(ll.y - 152.26) > 0.3:
+					_finish(false, "高空相机的经纬度不对：%s" % ll)
+					return
+				print("dev_tools_e2e: 按住空格 %.1f s 升到离地 %.0f km（god ×%.0f），相机在南纬 %.2f° 东经 %.2f°" % [t, rise / 1000.0, player.get_god_scale(), -ll.x, ll.y])
+				_action("switch_map")
+				_goto(Phase.BACK)
+			elif t > CLIMB_MAX_S:
+				_finish(false, "按住空格 %d s 只升了 %.1f km" % [int(CLIMB_MAX_S), rise / 1000.0])
 		Phase.BACK:
 			if t > 0.3 and _once():
 				_key(KEY_1)
 			if _scene_path() == "res://main.tscn" and _find_player() != null:
-				_finish(true, "M 提示、god 升降与加速、关 god 恢复重力、F2 换到 2051 且 god 跟着、换回甲乙两岛")
+				_finish(true, "M 提示、god 升降与加速、关 god 恢复重力、F2 换到 2051 且 god 跟着、一分钟内升到 50 km、换回甲乙两岛")
 			elif t > 5.0:
 				_finish(false, "按 1 没换回甲乙两岛（当前 %s）" % _scene_path())
 
