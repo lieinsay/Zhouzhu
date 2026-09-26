@@ -119,6 +119,11 @@ public:
     std::vector<ScatterItem> chunk(const ScatterChunkKey &p_key) const;
     // 该点周围 p_radius 以内挡人挡船的（树干）：圆心与半径；给野泊的规划与测试
     void solids_near(double p_x, double p_z, double p_radius, std::vector<ScatterItem> &r_items) const;
+
+    // 远处的林子（远看的样子，不能采）：(p_ix, p_iz) 是 p_chunk_m 见方的远块；按 p_step_m 的抖动网格掷树，机会与近处的树层同一套
+    // （地表份额 × 各类的机会 × 林子疏密）：一个粗格该有 N 棵，林子里（N ≥ 1）长一团树冠、scale 横向放大到盖住 N 棵的地面，
+    // 稀树的地方（N < 1）按 N 的机会长一棵正常大小的；阔叶还是针叶按片的针阔比例 + 高处针叶多。只让开没有地与岸边，不查村子、采场、坡（远处看不出来）。线程安全
+    std::vector<ScatterItem> far_trees(int p_ix, int p_iz, double p_chunk_m, double p_step_m) const;
 };
 
 // 一株的大小：树干（挡）的半径；够得着的距离（离中心）

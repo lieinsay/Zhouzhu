@@ -3416,6 +3416,42 @@ void test_scatter() {
     check(in_village == 0, "村子（估的半径外加 12 m）里什么都不长");
     check(off_island == 0, "都长在陆地上");
     check(counts[int(ScatterLook::BOULDER)] > 50, "石料赋存的那片长出石块");
+    // 远处的林子：同一条上，一团团树冠盖住的地面与近处的树差不多；也长在林地里、不上田；确定性
+    {
+        const double lo_x = -13 * 128.0, hi_x = 13 * 128.0, lo_z = -3 * 128.0, hi_z = 3 * 128.0;
+        double near_canopy = 0.0, far_canopy = 0.0;
+        for (int iz = -3; iz <= 2; iz++) {
+            for (int ix = -13; ix <= 12; ix++) {
+                for (const ScatterItem &it : scatter.chunk(ScatterChunkKey{ ix, iz })) {
+                    if (it.kind() == ScatterLook::BROADLEAF || it.kind() == ScatterLook::CONIFER) {
+                        near_canopy += it.scale * it.scale;
+                    }
+                }
+            }
+        }
+        int clumps = 0, clumps_in_forest = 0, clumps_on_field = 0;
+        bool far_same = true;
+        for (int iz = -1; iz <= 0; iz++) {
+            for (int ix = -4; ix <= 3; ix++) {
+                const std::vector<ScatterItem> far = scatter.far_trees(ix, iz, 512.0, 19.5);
+                const std::vector<ScatterItem> again = scatter.far_trees(ix, iz, 512.0, 19.5);
+                far_same = far_same && far.size() == again.size() && (far.empty() || (far.back().x == again.back().x && far.back().scale == again.back().scale));
+                for (const ScatterItem &it : far) {
+                    if (it.x < lo_x || it.x >= hi_x || it.z < lo_z || it.z >= hi_z) {
+                        continue;
+                    }
+                    clumps++;
+                    far_canopy += it.scale * it.scale;
+                    clumps_in_forest += g.landcover[g.nearest_cell(it.x, it.z)] == 4 ? 1 : 0;
+                    clumps_on_field += std::hypot(it.x, it.z) < 600.0 ? 1 : 0;
+                }
+            }
+        }
+        std::printf("  远处的林子：%d 团（近处 %d 棵），树冠盖住的地面 远 / 近 = %.2f\n", clumps, trees, far_canopy / std::max(1.0, near_canopy));
+        check(far_same && clumps > 100 && clumps * 5 < trees, "远处的林子：确定性，团数比近处的树少得多");
+        check(far_canopy > 0.7 * near_canopy && far_canopy < 1.3 * near_canopy, "一团团树冠盖住的地面与近处的树差不出三成");
+        check(clumps_in_forest * 100 >= clumps * 85 && clumps_on_field == 0, "远处的林子也在林地里、不上田");
+    }
     // 地图的资源底图：每格画最稀的那一类，品位不够门槛不算
     {
         WorldGrid m = g;

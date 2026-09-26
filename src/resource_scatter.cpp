@@ -483,6 +483,79 @@ std::vector<ScatterItem> ResourceScatter::chunk(const ScatterChunkKey &p_key) co
     return out;
 }
 
+std::vector<ScatterItem> ResourceScatter::far_trees(int p_ix, int p_iz, double p_chunk_m, double p_step_m) const {
+    std::vector<ScatterItem> out;
+    if (!valid()) {
+        return out;
+    }
+    const WorldGrid &grid = terrain->get_grid();
+    const CoverBlend &cover = terrain->get_cover();
+    const double x0 = p_ix * p_chunk_m, z0 = p_iz * p_chunk_m, x1 = x0 + p_chunk_m, z1 = z0 + p_chunk_m;
+    // 一个粗格顶近处 spread² 个树层的格点：这一格该有 N = 机会 × spread² 棵。N ≥ 1 的（林子）必长一团、冠幅放大到盖住 N 棵的地面；
+    // N < 1 的（稀树草坡）按 N 的机会长一棵正常大小的——盖住的地面都与近处一样
+    const double spread = p_step_m / rules.tree_step_m, cells = spread * spread;
+    // 块周围一类能长树的都没有就不用看了（外扩扭曲的幅度与平滑的两格）
+    {
+        const double pad = cover.get_rules().bend_m + cover.get_rules().warp_m + 2.0 * grid.res;
+        const int c0 = std::max(0, int(std::floor(grid.col_of(x0 - pad)))), c1 = std::min(grid.cols - 1, int(std::ceil(grid.col_of(x1 + pad))));
+        const int r0 = std::max(0, int(std::floor(grid.row_of(z0 - pad)))), r1 = std::min(grid.rows - 1, int(std::ceil(grid.row_of(z1 + pad))));
+        bool any = false;
+        for (int r = r0; r <= r1 && !any; r++) {
+            for (int c = c0; c <= c1 && !any; c++) {
+                any = tree_chance(grid.landcover[grid.index(r, c)]) > 0.0;
+            }
+        }
+        if (!any) {
+            return out;
+        }
+    }
+    const int gi0 = int(std::floor(x0 / p_step_m)), gi1 = int(std::ceil(x1 / p_step_m));
+    const int gj0 = int(std::floor(z0 / p_step_m)), gj1 = int(std::ceil(z1 / p_step_m));
+    for (int gj = gj0; gj < gj1; gj++) {
+        for (int gi = gi0; gi < gi1; gi++) {
+            Rng rng(mix(mix(seed, 0xFA7ull), (uint64_t(uint32_t(gi)) << 32) | uint32_t(gj)));
+            const double x = (gi + 0.1 + 0.8 * rng.uniform()) * p_step_m, z = (gj + 0.1 + 0.8 * rng.uniform()) * p_step_m;
+            if (x < x0 || x >= x1 || z < z0 || z >= z1) {
+                continue;
+            }
+            const double roll = rng.uniform(), size_u = rng.uniform(), yaw = TAU * rng.uniform(), kind_u = rng.uniform();
+            const size_t cell = grid.nearest_cell(x, z);
+            if (grid.landcover[cell] == LC_VOID && grid.shore[cell] < -2.0 * grid.res) {
+                continue; // 离岸远的虚空
+            }
+            const CoverStencil st = cover.stencil(x, z);
+            const CoverMix m = cover.mix(st, x, z);
+            double chance = 0.0;
+            const double density = std::clamp(0.75 + 0.35 * hash_fbm(seed ^ 0xC3ull, x, z, 45.0, 2), 0.3, 1.0);
+            for (int lc = 0; lc < COVER_CLASSES; lc++) {
+                chance += m.w[lc] * tree_chance(lc) * (lc == LC_FOREST ? density : 1.0);
+            }
+            const double trees = chance * cells;
+            if (roll >= std::min(1.0, trees)) {
+                continue;
+            }
+            const TerrainSample s = terrain->sample(x, z);
+            if (!s.land || s.shore < rules.min_shore_m + p_step_m) {
+                continue;
+            }
+            const int id = grid.patch_cell(cell);
+            double conifer = id >= 0 && size_t(id) < patches.size() && patches[size_t(id)].kind == PATCH_TIMBER ? double(patches[size_t(id)].conifer) : DEFAULT_CONIFER;
+            const double high = std::max(cover_ramp(grid.height_at(x, z), HIGH_CONIFER_M - 100.0, HIGH_CONIFER_M + 100.0), double(m.w[LC_MEADOW]));
+            conifer += (std::max(conifer, 0.7) - conifer) * high;
+            ScatterItem item;
+            item.look = uint8_t(kind_u < conifer ? ScatterLook::CONIFER : ScatterLook::BROADLEAF);
+            item.yaw = float(yaw);
+            item.scale = float(std::sqrt(std::max(1.0, trees)) * (0.75 + 0.55 * size_u) * (1.0 - EDGE_TREE_SHRINK * m.edge(LC_FOREST)));
+            item.x = float(x);
+            item.z = float(z);
+            item.y = float(s.top - 0.5);
+            item.index = uint16_t(std::min<size_t>(out.size(), 0xFFFF));
+            out.push_back(item);
+        }
+    }
+    return out;
+}
+
 void ResourceScatter::solids_near(double p_x, double p_z, double p_radius, std::vector<ScatterItem> &r_items) const {
     const ScatterChunkKey lo = chunk_at(p_x - p_radius, p_z - p_radius), hi = chunk_at(p_x + p_radius, p_z + p_radius);
     for (int iz = lo.iz; iz <= hi.iz; iz++) {
