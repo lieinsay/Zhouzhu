@@ -2095,14 +2095,162 @@
     {
       "id": "planet-curve-shader",
       "label": "画面弯曲（着色器）",
-      "detail": "game/shaders/planet_curve.gdshaderinc：planet_delta / planet_visual / planet_visual_dir，与 CurveViewF 逐式相同；全局参数 planet_curve_on / cam / basis / dcam / radius 已在 project.godot 声明、默认不弯（P1 接上）。",
+      "detail": "game/shaders/planet_curve.gdshaderinc：planet_delta / planet_curved / planet_squeeze / planet_visual、planet_tilt / planet_visual_normal、模型空间的 planet_curve_model，与 C++ 单精度版逐式相同；全局参数 planet_curve_* 由 PlanetView 每帧设。接它的：地皮（world_vertex_coords）、散布与远处的林子、河的水面、天空的云层（球壳求交）、弯曲标准材质、云带顶、远处岛群（只压近）。",
       "tag": "着色器",
-      "evidence": "单测拿 C++ 同式单精度版对照双精度；flat_map_e2e 等照旧过（全局参数能读）",
+      "evidence": "单测对照双精度；planet_shots 目视（地平线的弧、远山下沉）；近景对照 2 km 内位移 ≤ 0.33 m、像素差只在地平线一线",
       "sources": [
         "game/shaders/planet_curve.gdshaderinc",
         "game/project.godot"
       ],
       "since": "e63"
+    },
+    {
+      "id": "planet-frame-tilt",
+      "label": "法线的倾斜与画面 → 平面",
+      "detail": "planet_tilt：方向沿群心到该点的大圆平行移动（绕 上 × 离群心的方向 转 s/R），画面上的法线 = R_cᵀ·R_p·n，近处不变、远处按真球面受光；CurveView::visual_dir / flat_of（画面坐标 → 平面坐标，迭代到毫米，拾取用）；单精度同式 planet_tilt_f / CurveViewF::visual_normal。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core：倾斜与局部系差 2e-5、相机 40 m 内法线变 2e-5、单精度同式 1.7e-7、逆 0.000 mm",
+      "sources": [
+        "src/planet_frame.h",
+        "src/planet_frame.cpp"
+      ],
+      "since": "e64",
+      "parent": "planet-frame"
+    },
+    {
+      "id": "planet-frame-squeeze",
+      "label": "远处沿视线压近",
+      "detail": "CurveSqueeze：离相机 10 km 内不动，往外按 x/(1+x) 平滑地压到 26 km 内——方向、深度先后不变，远平面照旧 60 km 就画得下 1,000 km（Godot 投影矩阵单精度，far 1,200 km 退化）；引擎的雾按压过的距离算，远处的雾停在五成上下（空气透视）。着色器 planet_squeeze 同式。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core：10 km 内不压、单调、205 km → 24.8 km、600 km 处相隔 10 km 仍分得开、单精度同式",
+      "sources": [
+        "src/planet_frame.h",
+        "src/planet_frame.cpp",
+        "game/shaders/planet_curve.gdshaderinc"
+      ],
+      "since": "e64",
+      "parent": "planet-frame"
+    },
+    {
+      "id": "curved-standard-material",
+      "label": "弯曲标准材质",
+      "detail": "curved_material + curved_standard(.gdshaderinc / 单面 / 双面)：代替 StandardMaterial3D 用到的那几样（反照率 source_color、顶点色 sRGB、糙度、自发光），顶点按真球面弯；读不了着色器退回原来的标准材质。村子简模细模（SharedLooks）、码头、资源点、船、船坞、农田地块都换成它。",
+      "tag": "着色器",
+      "evidence": "18 条 e2e 全过；近景截图与改前颜色一样",
+      "sources": [
+        "src/curved_material.h",
+        "src/curved_material.cpp",
+        "game/shaders/curved_standard.gdshaderinc",
+        "game/shaders/curved_standard.gdshader",
+        "game/shaders/curved_standard_two_sided.gdshader"
+      ],
+      "since": "e65",
+      "parent": "planet-curve-shader"
+    },
+    {
+      "id": "world-node-curve-cull",
+      "label": "弯曲后的剔除",
+      "detail": "有 PlanetView 时：相机挪 500 m 重算一回——离相机 9 km 内的地面块 extra_cull_margin = 最远角的下弯 d²/2R + 压近的那一段；更远的块引擎不剔（余量极大），每帧按视锥的四个侧面自己剔（侧面过相机，压近不改方向），也不投影。没有 PlanetView 一切照旧。",
+      "tag": "场景角色",
+      "evidence": "planet_shots 改自己剔前后逐像素一样；主码头站定帧时 0.8 ms",
+      "sources": [
+        "src/world.h",
+        "src/world.cpp"
+      ],
+      "since": "e66",
+      "parent": "world-node"
+    },
+    {
+      "id": "atmosphere-planet-sun",
+      "label": "日月按经纬、钟按参考经度",
+      "detail": "有 PlanetView 时：算日月用相机的纬度、历日加上 (经度 − 152.15°) / 360（D10：GameClock 的钟点是 2051 的地方时），方向落在相机的局部系；日出日落按钟点报；相机高过 2.5 km 雾按 exp(−(高 − 2.5 km)/7 km) 减淡。weather.tsv 的 lon 读进 CalendarRules::longitude_deg；F6 面板多一行相机经纬度与地方时。",
+      "tag": "场景角色",
+      "evidence": "planet_shots 晨昏拉近：清早朝东的崖亮、黄昏背光；weather_e2e 照过",
+      "sources": [
+        "src/atmosphere.h",
+        "src/atmosphere.cpp",
+        "src/almanac.h",
+        "src/weather.cpp",
+        "src/dev_tools.cpp"
+      ],
+      "since": "e67",
+      "parent": "atmosphere"
+    },
+    {
+      "id": "player-god-altitude",
+      "label": "离地越高越快",
+      "detail": "速度 × (1 + 离上一次站着的地面多高 / god_scale_height 300 m)；不按 Shift 从码头升到 50 km 约 52 s，贴着地面还是 30 m/s；GOD 标签报此刻的速度与倍数。",
+      "tag": "场景角色",
+      "evidence": "dev_tools_e2e：按住空格 52.2 s 升到离地 50 km（×168）",
+      "sources": [
+        "src/player.h",
+        "src/player.cpp",
+        "src/dev_tools.cpp"
+      ],
+      "since": "e68",
+      "parent": "player-god"
+    },
+    {
+      "id": "planet-view",
+      "label": "PlanetView 行星的画面",
+      "detail": "一个场景一个（world_2051）：读行星包、锚定地图的岛群，每帧按相机双精度算 c、R_c、δ(c) 设全局参数，算相机的经纬度、远处各群的刚体摆放（群心相对相机），设远近平面；离场景时关弯曲。给脚本的画面 ↔ 平面、经纬度、方位、某群主峰在画面上的位置。",
+      "tag": "场景角色",
+      "evidence": "dev_tools_e2e 在 50 km 高空锚定、经纬度对；planet_shots 全组",
+      "sources": [
+        "src/planet_view.h",
+        "src/planet_view.cpp",
+        "game/world_2051.tscn"
+      ],
+      "since": "e68"
+    },
+    {
+      "id": "cloud-deck",
+      "label": "弯曲的云带顶",
+      "detail": "PlanetView 建的同心环网格（y = −3800，D13），跟着相机走、半径 1,000 km，按真球面弯、压近；颜色同原来的平板云海，另加两层很淡的大斑。场景里的平板云海藏起来。P2 换成行星球的云带壳。",
+      "tag": "着色器",
+      "evidence": "planet_shots：20 / 50 km 高空的弧形地平线",
+      "sources": [
+        "game/shaders/cloud_deck.gdshader",
+        "src/planet_view.cpp"
+      ],
+      "since": "e68"
+    },
+    {
+      "id": "far-group-mesh",
+      "label": "远处岛群的低模",
+      "detail": "按一份粗版建顶面（角上的高 = 相邻实地格块内最高点的平均，岸上取岸缘）、崖壁、倒锥的岛底（与游戏里的岛体同一式）；顶点按真球面精确弯好、法线按局部系转，带海拔与季相份额。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core：2049 500 m 7.4 万顶点 12.4 万面、朝外、岛底最深在云带顶上下、按真球面下弯",
+      "sources": [
+        "src/far_group_mesh.h",
+        "src/far_group_mesh.cpp"
+      ],
+      "since": "e68"
+    },
+    {
+      "id": "far-groups",
+      "label": "FarGroups 远处的岛群",
+      "detail": "相机 600 km 内的群（锚除外）在后台（World 的任务池）按粗版建低模，280 km 内 500 m、以外 2 km；每帧按 PlanetView 的刚体变换摆上去、按视锥侧面自己剔；far_group.gdshader 按各群的简化版海拔表（纬度、海面年均温、温差、直减率）换季积雪；不投影、不碰撞。",
+      "tag": "场景角色",
+      "evidence": "planet_shots：19 群 34.7 万面；主峰上望见 205 km 外的 2049、深冬 2049 积雪；50 km 高空帧时 0.7 ms",
+      "sources": [
+        "src/far_groups.h",
+        "src/far_groups.cpp",
+        "game/shaders/far_group.gdshader"
+      ],
+      "since": "e68"
+    },
+    {
+      "id": "planet-shots",
+      "label": "planet_shots 截图工具",
+      "detail": "主码头与主峰望 2049、码头上空 400 m 望 2278、5 / 20 / 50 km 高空、晨昏朝西朝北（各一张拉近）、深冬；2 km 内五张近景报画面位移；钟停在开局那天、天气覆盖成晴。",
+      "tag": "工具",
+      "evidence": "带窗口拍全组、自己看过",
+      "sources": [
+        "game/tools/planet_shots.gd",
+        "game/tools/planet_shots.tscn"
+      ],
+      "since": "e68"
     }
   ],
   "edges": [
@@ -4600,6 +4748,134 @@
       "chains": [
         "planet"
       ]
+    },
+    {
+      "from": "planet-view",
+      "to": "planet-data",
+      "label": "行星包",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-view",
+      "to": "planet-frame",
+      "label": "相机的弯曲、经纬度",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-view",
+      "to": "planet-curve-shader",
+      "label": "全局参数 planet_curve_*",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-view",
+      "to": "cloud-deck",
+      "label": "跟着相机",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-view",
+      "to": "world-node",
+      "label": "锚群（world.json 的经纬度）",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "cloud-deck",
+      "to": "planet-curve-shader",
+      "label": "弯、压近",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "far-groups",
+      "to": "planet-view",
+      "label": "群心相对相机的刚体变换",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "far-groups",
+      "to": "far-group-mesh",
+      "label": "粗版 → 低模",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "far-groups",
+      "to": "job-pool",
+      "label": "后台建",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "far-group-mesh",
+      "to": "planet-data",
+      "label": "粗版",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "far-group-mesh",
+      "to": "planet-frame-tilt",
+      "label": "法线的倾斜",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "world-node-curve-cull",
+      "to": "planet-view",
+      "label": "相机与下弯",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "atmosphere-planet-sun",
+      "to": "planet-view",
+      "label": "相机的经纬度",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "shared-looks",
+      "to": "curved-standard-material",
+      "label": "村子的材质",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-shots",
+      "to": "planet-view",
+      "label": "瞄准、画面位移",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-shots",
+      "to": "far-groups",
+      "label": "等建好",
+      "chains": [
+        "planet"
+      ]
     }
   ],
   "chains": [
@@ -6071,27 +6347,27 @@
     },
     {
       "id": "planet",
-      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基）",
-      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的 1° 场、每个岛群远处看的粗版都在一个包里，游戏能问「离这儿最近的是哪个群」「这个群的粗版长什么样」；一套坐标把每个岛群的平面放上真球面——近处与物理一致、远处按球面下弯，换到另一个岛群的平面时画面不跳。生成器那边，邻群的陆地不再叠在一起。（P0 还不画东西；P1 起接上画面。）",
+      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外）",
+      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。",
       "date": "2026-09-27",
       "color": "#e5536b",
-      "commits": "a769ef7..1ecee7a",
+      "commits": "a769ef7..db3b0c8",
       "steps": [
         {
-          "text": "生成器第三层：邻群按等效半径分界、各退半道缝，越界的群才重摆（主岛挪进来、转向拉长，其余带约束重摆）",
+          "text": "生成器第三层：邻群按等效半径分界、各退半道缝，越界的群才重摆",
           "nodes": [
             "skyisle-territory"
           ]
         },
         {
-          "text": "生成器批跑全行星粗版：照原生分辨率生成布局 + 地形 + 水系，按块降采样（远处看的与走近了的是同一个群）",
+          "text": "生成器批跑全行星粗版，照原生分辨率生成再降采样",
           "nodes": [
             "skyisle-lod",
             "skyisle-territory"
           ]
         },
         {
-          "text": "导出行星包：planet.bin（参数、逐节点列、1° 场）与 lods.bin（2 km 全行星 + 2051 周围 500 m，空格行程编码）",
+          "text": "导出行星包：planet.bin 与 lods.bin",
           "nodes": [
             "export-planet",
             "skyisle-lod"
@@ -6105,10 +6381,55 @@
           ]
         },
         {
-          "text": "坐标：行星系、岛群平面系与方位等距投影、垂直结构、相机局部的画面弯曲（双精度与着色器同式的单精度）、换锚",
+          "text": "坐标：行星系、岛群平面系与方位等距投影、相机局部的画面弯曲、法线的倾斜、远处沿视线压近、换锚",
           "nodes": [
             "planet-frame",
+            "planet-frame-tilt",
+            "planet-frame-squeeze",
             "planet-curve-shader"
+          ]
+        },
+        {
+          "text": "进了岛群 2051：PlanetView 锚定本群，每帧按相机算弯曲参数与经纬度，远平面不变、远处压近",
+          "nodes": [
+            "planet-view",
+            "planet-frame",
+            "planet-data",
+            "world-node"
+          ]
+        },
+        {
+          "text": "地皮、树、河、天上的云、村子、码头、船都按真球面弯下去；远处的地面块按弯过的位置剔除",
+          "nodes": [
+            "planet-curve-shader",
+            "curved-standard-material",
+            "shared-looks",
+            "world-node-curve-cull",
+            "cloud-deck"
+          ]
+        },
+        {
+          "text": "600 km 内的邻群在后台按粗版建低模，摆在真球面上，按各自的纬度与气候换季积雪",
+          "nodes": [
+            "far-groups",
+            "far-group-mesh",
+            "job-pool",
+            "planet-view"
+          ]
+        },
+        {
+          "text": "太阳月亮按相机的经纬度升落，钟是 2051 的地方时，远处岛群的受光对得上",
+          "nodes": [
+            "atmosphere-planet-sun",
+            "atmosphere",
+            "planet-view"
+          ]
+        },
+        {
+          "text": "开发者开 god 一分钟升到 50 km 看一圈，planet_shots 拍远近与晨昏",
+          "nodes": [
+            "player-god-altitude",
+            "planet-shots"
           ]
         },
         {
@@ -6127,7 +6448,22 @@
         "planet-data",
         "planet-frame",
         "planet-curve-shader",
-        "site-survey-planet"
+        "site-survey-planet",
+        "planet-view",
+        "cloud-deck",
+        "world-node",
+        "far-groups",
+        "far-group-mesh",
+        "job-pool",
+        "planet-frame-tilt",
+        "world-node-curve-cull",
+        "atmosphere-planet-sun",
+        "shared-looks",
+        "curved-standard-material",
+        "planet-shots",
+        "planet-frame-squeeze",
+        "atmosphere",
+        "player-god-altitude"
       ]
     }
   ],
@@ -8011,6 +8347,119 @@
           "site-survey-planet"
         ],
         "updated": []
+      }
+    },
+    {
+      "id": "e64",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P1：坐标长出法线的倾斜与远处压近",
+      "summary": "画面弯曲要连法线一起转、远处的东西要画进 60 km 的远平面：坐标地基多两样纯算法，着色器各有同式的一份。",
+      "commits": "8ec25ea、039d0f3",
+      "nodes": [
+        "planet-frame",
+        "planet-frame-tilt",
+        "planet-frame-squeeze"
+      ],
+      "info": {
+        "node": "planet-frame",
+        "children": [
+          "planet-frame-tilt",
+          "planet-frame-squeeze"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e65",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P1：画面弯曲接到所有看得远的材质",
+      "summary": "地皮、散布、河、天空的云层、村子、码头、资源点、船、船坞、农田都按真球面弯；标准材质换成弯曲标准材质。",
+      "commits": "039d0f3",
+      "nodes": [
+        "planet-curve-shader",
+        "curved-standard-material"
+      ],
+      "info": {
+        "node": "planet-curve-shader",
+        "children": [
+          "curved-standard-material"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e66",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P1：地面块按弯过的位置剔除",
+      "summary": "9 km 内的块按最远角的下弯放大剔除余量；更远的块（着色器压近了）自己按视锥侧面剔、不投影。",
+      "commits": "d5a4e2c",
+      "nodes": [
+        "world-node",
+        "world-node-curve-cull"
+      ],
+      "info": {
+        "node": "world-node",
+        "children": [
+          "world-node-curve-cull"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e67",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P1：日月按相机的经纬度",
+      "summary": "纬度是相机那一点的，钟点是 2051 的地方时（D10），相机处的地方时按经度差换算；高处的雾变淡。",
+      "commits": "4c4e266",
+      "nodes": [
+        "atmosphere",
+        "atmosphere-planet-sun"
+      ],
+      "info": {
+        "node": "atmosphere",
+        "children": [
+          "atmosphere-planet-sun"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e68",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P1：god 升降随高度放大",
+      "summary": "离地越高飞得越快，一分钟内升到 50 km。",
+      "commits": "2aea92c",
+      "nodes": [
+        "player-god",
+        "player-god-altitude",
+        "planet-view",
+        "cloud-deck",
+        "far-group-mesh",
+        "far-groups",
+        "planet-shots"
+      ],
+      "info": {
+        "node": "player-god",
+        "children": [
+          "player-god-altitude"
+        ],
+        "adopted": [],
+        "peers": [
+          "planet-view",
+          "cloud-deck",
+          "far-group-mesh",
+          "far-groups",
+          "planet-shots"
+        ]
       }
     }
   ],
