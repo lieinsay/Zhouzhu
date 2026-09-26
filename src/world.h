@@ -21,6 +21,7 @@
 #include "map_host.h"
 #include "resource_scatter.h"
 #include "river_mesh.h"
+#include "shared_looks.h"
 #include "stream_meter.h"
 #include "terrain_tile.h"
 #include "world_grid.h"
@@ -100,6 +101,7 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     SiteStream *site_stream = nullptr;
     ScatterStream *scatter_stream = nullptr;
     StreamMeter meter; // 流式加载的主线程分项计时（World 与挂在它周围的 SiteStream、ScatterStream、账房都往这里报）
+    SharedLooks looks; // 岛群里各村共用的材质与网格
 
     struct Tile {
         TileKey key;
@@ -222,6 +224,7 @@ public:
     const ScatterLedger &get_scatter_ledger() const { return scatter_ledger; }
     // 后台任务池（散布、村子、村民的备料也交给它；优先级填离焦点多远，米）
     JobPool &get_pool() { return pool; }
+    SharedLooks &get_looks() { return looks; } // 岛群里各村共用的材质与网格
     static double clock_hours(); // 全局钟：从第 0 天子夜起的游戏钟头
     // 测试与调试：按采场号查一处采场 { index, kind, face, pile, item, name, grade, cap, stock（此刻）, island, reach, landing, built }；没落地返回空字典
     godot::Dictionary get_resource_site(int p_working_id) const;

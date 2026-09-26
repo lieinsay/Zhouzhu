@@ -5,11 +5,33 @@
 #include <vector>
 
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
 #include "hinterland.h"
+#include "template_library.h"
 
 using namespace godot;
+
+namespace {
+
+// 后台备好的一村导航格
+struct NavPrepared : JobResult {
+    int site_index = -1;
+    uint64_t layout_sig = 0;
+    std::shared_ptr<VillageNav> nav;
+};
+
+std::string to_std(const String &p_string) {
+    return std::string(p_string.utf8().get_data());
+}
+
+uint64_t now_usec() {
+    return Time::get_singleton()->get_ticks_usec();
+}
+
+} // namespace
 
 void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_focus", "focus"), &SiteStream::set_focus);
@@ -17,6 +39,8 @@ void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_built_docks"), &SiteStream::get_built_docks);
     ClassDB::bind_method(D_METHOD("get_built_villages"), &SiteStream::get_built_villages);
     ClassDB::bind_method(D_METHOD("get_built_hamlet_count"), &SiteStream::get_built_hamlet_count);
+    ClassDB::bind_method(D_METHOD("get_prepared_count"), &SiteStream::get_prepared_count);
+    ClassDB::bind_method(D_METHOD("get_detailed_cell_count"), &SiteStream::get_detailed_cell_count);
     ClassDB::bind_method(D_METHOD("get_village", "village_id"), &SiteStream::get_village);
     ClassDB::bind_method(D_METHOD("get_hamlet", "hamlet_id"), &SiteStream::get_hamlet);
     ClassDB::bind_method(D_METHOD("get_dock", "dock_id"), &SiteStream::get_dock);
@@ -37,6 +61,8 @@ void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_dock_radius"), &SiteStream::get_dock_radius);
     ClassDB::bind_method(D_METHOD("set_village_radius", "value"), &SiteStream::set_village_radius);
     ClassDB::bind_method(D_METHOD("get_village_radius"), &SiteStream::get_village_radius);
+    ClassDB::bind_method(D_METHOD("set_detail_radius", "value"), &SiteStream::set_detail_radius);
+    ClassDB::bind_method(D_METHOD("get_detail_radius"), &SiteStream::get_detail_radius);
     ClassDB::bind_method(D_METHOD("set_folk_radius", "value"), &SiteStream::set_folk_radius);
     ClassDB::bind_method(D_METHOD("get_folk_radius"), &SiteStream::get_folk_radius);
     ClassDB::bind_method(D_METHOD("set_per_house", "value"), &SiteStream::set_per_house);
@@ -45,6 +71,8 @@ void SiteStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_max_folk"), &SiteStream::get_max_folk);
     ClassDB::bind_method(D_METHOD("set_seed", "value"), &SiteStream::set_seed);
     ClassDB::bind_method(D_METHOD("get_seed"), &SiteStream::get_seed);
+    ClassDB::bind_method(D_METHOD("set_mount_budget_usec", "value"), &SiteStream::set_mount_budget_usec);
+    ClassDB::bind_method(D_METHOD("get_mount_budget_usec"), &SiteStream::get_mount_budget_usec);
 
     ClassDB::bind_method(D_METHOD("set_layout_dir", "value"), &SiteStream::set_layout_dir);
     ClassDB::bind_method(D_METHOD("get_layout_dir"), &SiteStream::get_layout_dir);
@@ -54,11 +82,13 @@ void SiteStream::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "layout_dir", PROPERTY_HINT_DIR), "set_layout_dir", "get_layout_dir");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dock_radius", PROPERTY_HINT_RANGE, "200,20000,10,suffix:m"), "set_dock_radius", "get_dock_radius");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "village_radius", PROPERTY_HINT_RANGE, "200,20000,10,suffix:m"), "set_village_radius", "get_village_radius");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "detail_radius", PROPERTY_HINT_RANGE, "50,2000,10,suffix:m"), "set_detail_radius", "get_detail_radius");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "folk_radius", PROPERTY_HINT_RANGE, "0,5000,10,suffix:m"), "set_folk_radius", "get_folk_radius");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "resource_radius", PROPERTY_HINT_RANGE, "100,10000,10,suffix:m"), "set_resource_radius", "get_resource_radius");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "per_house", PROPERTY_HINT_RANGE, "0,6,1"), "set_per_house", "get_per_house");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "max_folk", PROPERTY_HINT_RANGE, "0,500,1"), "set_max_folk", "get_max_folk");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
+    ADD_PROPERTY(PropertyInfo(Variant::INT, "mount_budget_usec", PROPERTY_HINT_RANGE, "500,20000,100,suffix:µs"), "set_mount_budget_usec", "get_mount_budget_usec");
 }
 
 void SiteStream::_ready() {
@@ -78,19 +108,15 @@ void SiteStream::set_focus(const Vector3 &p_focus) {
 
 void SiteStream::_process(double p_delta) {
     since_check += p_delta;
-    if (!world || !world->is_loaded() || !has_focus || since_check < check_interval) {
+    if (!world || !world->is_loaded() || !has_focus) {
         return;
     }
-    since_check = 0.0;
-    refresh(1);
-}
-
-void SiteStream::ensure_near(const Vector3 &p_point) {
-    focus = p_point;
-    has_focus = true;
-    if (world && world->is_loaded()) {
-        refresh(1 << 20);
+    if (since_check >= check_interval) {
+        since_check = 0.0;
+        refresh(1);
     }
+    collect_jobs();
+    step(now_usec() + uint64_t(mount_budget_usec));
 }
 
 double SiteStream::edge_distance(int p_index) const {
@@ -100,43 +126,198 @@ double SiteStream::edge_distance(int p_index) const {
     return std::max(0.0, std::hypot(s.x - focus.x, s.z - focus.z) - radius);
 }
 
-WorldVillage *SiteStream::build_village(int p_index) {
+String SiteStream::layout_path_of(const SiteSettlement &p_site) const {
+    const String file = vformat("%s_%d.txt", p_site.hamlet ? "hamlet" : "village", p_site.id);
+    return layout_dir.is_empty() ? String() : layout_dir.path_join(file);
+}
+
+std::vector<std::string> SiteStream::read_edits(const SiteSettlement &p_site) const {
+    // 布置模式存下的改动：与 WorldVillage 的 Settlement 读的是同一个文件（后台不碰文件系统，这里先读好）
+    std::vector<std::string> lines;
+    const String path = layout_path_of(p_site);
+    if (!path.is_empty() && FileAccess::file_exists(path)) {
+        const PackedStringArray text = FileAccess::get_file_as_string(path).split("\n");
+        for (int64_t k = 0; k < text.size(); k++) {
+            lines.push_back(to_std(text[k]));
+        }
+    }
+    return lines;
+}
+
+JobPool::Work SiteStream::village_job(int p_index) const {
+    const WorldTerrain *terrain = &world->get_terrain();
+    const SiteSettlement site = world->get_sites().settlements[size_t(p_index)];
+    const std::vector<std::string> edits = read_edits(site);
+    const uint64_t stream_seed = uint64_t(seed);
+    return [terrain, site, edits, stream_seed, p_index]() -> std::unique_ptr<JobResult> {
+        std::unique_ptr<VillagePrepared> out = std::make_unique<VillagePrepared>();
+        out->site_index = p_index;
+        VillagePrepRules rules;
+        rules.cell_m = WorldVillage::CELL_M;
+        out->prep = prepare_world_village(*terrain, site, stream_seed, edits, rules);
+        convert_proxies(*out);
+        return out;
+    };
+}
+
+std::shared_ptr<VillagePrepared> SiteStream::prepare_now(int p_index) {
+    const auto found = prepared.find(p_index);
+    if (found != prepared.end()) {
+        std::shared_ptr<VillagePrepared> out = found->second;
+        prepared.erase(found);
+        return out;
+    }
+    std::unique_ptr<JobResult> done = world->get_pool().run_now(JobPool::key(JobKind::VILLAGE, uint64_t(p_index)));
+    if (!done) {
+        done = village_job(p_index)();
+    }
+    return std::shared_ptr<VillagePrepared>(static_cast<VillagePrepared *>(done.release()));
+}
+
+JobPool::Work SiteStream::cell_job(WorldVillage *p_village, int p_cell) const {
+    const WorldTerrain *terrain = &world->get_terrain();
+    const SiteSettlement site = p_village->get_site();
+    const Settlement *settlement = p_village->get_settlement();
+    const VillageCell &cell = p_village->get_cell(p_cell);
+    struct Item {
+        int index;
+        Building building;
+        BuildingFrame frame;
+    };
+    std::vector<Item> items;
+    for (int k : cell.buildings) {
+        if (k < settlement->get_count() && size_t(k) < settlement->get_frames().size()) {
+            items.push_back({ k, settlement->get_model().at(k), settlement->get_frames()[size_t(k)] });
+        }
+    }
+    const TemplateLibrary *library = TemplateLibrary::get_singleton();
+    const std::shared_ptr<const TemplateSet> templates = library ? library->snapshot() : nullptr;
+    const int64_t version = p_village->get_cells_version();
+    const int site_index = p_village->get_site_index();
+    return [terrain, site, items, templates, version, site_index, p_cell]() -> std::unique_ptr<JobResult> {
+        std::unique_ptr<CellPrepared> out = std::make_unique<CellPrepared>();
+        out->site_index = site_index;
+        out->cell = p_cell;
+        out->layout_version = version;
+        const WorldGround ground(*terrain, site.x, site.z);
+        for (const Item &item : items) {
+            const BuildingDef *def = buildings::by_id(item.building.kind);
+            if (!def) {
+                continue;
+            }
+            const HouseTemplate tmpl = !def->house ? HouseTemplate() : (templates ? templates->resolve(item.building) : bare_template(*def));
+            out->buildings.push_back(to_building_arrays(build_building_mesh(ground, item.frame, item.building, tmpl, item.index)));
+        }
+        return out;
+    };
+}
+
+JobPool::Work SiteStream::nav_job(WorldVillage *p_village) const {
+    const WorldTerrain *terrain = &world->get_terrain();
+    const SiteSettlement site = p_village->get_site();
+    const SettlementLayout layout = p_village->get_settlement()->get_model();
+    const int site_index = p_village->get_site_index();
+    return [terrain, site, layout, site_index]() -> std::unique_ptr<JobResult> {
+        std::unique_ptr<NavPrepared> out = std::make_unique<NavPrepared>();
+        out->site_index = site_index;
+        out->layout_sig = layout_signature(layout);
+        const WorldGround ground(*terrain, site.x, site.z);
+        const SimRules rules;
+        double x0 = 0.0, z0 = 0.0;
+        int cols = 0, rows = 0;
+        village_nav_window(layout, rules.nav, WorldVillage::NAV_MARGIN_M, x0, z0, cols, rows);
+        out->nav = std::make_shared<VillageNav>(prepare_village_nav(ground, layout, rules, x0, z0, cols, rows));
+        return out;
+    };
+}
+
+WorldVillage *SiteStream::build_village(int p_index, std::shared_ptr<VillagePrepared> p_prepared) {
     WorldVillage *village = memnew(WorldVillage);
     const SiteSettlement &site = world->get_sites().settlements[size_t(p_index)];
-    const String file = vformat("%s_%d.txt", site.hamlet ? "hamlet" : "village", site.id);
-    village->setup(world, site, uint64_t(seed), layout_dir.is_empty() ? String() : layout_dir.path_join(file), hinterland, p_index);
+    village->setup(world, site, uint64_t(seed), layout_path_of(site), hinterland, p_index, std::move(p_prepared));
     add_child(village);
     villages[p_index] = village;
     village_version++;
     return village;
 }
 
-void SiteStream::refresh(int p_build_budget) {
-    // 码头
-    {
-    StreamTimer dock_timer(world, StreamChannel::DOCKS);
-    const std::vector<DockPlan> &plans = world->get_docks();
-    for (int k = 0; k < int(plans.size()); k++) {
-        if (!plans[size_t(k)].ok) {
-            continue;
-        }
-        const double d = std::hypot(plans[size_t(k)].x - focus.x, plans[size_t(k)].z - focus.z);
-        const auto found = docks.find(k);
-        if (found == docks.end() && d <= dock_radius) {
-            WorldDock *dock = memnew(WorldDock);
-            dock->setup(plans[size_t(k)], k, world->get_dock_id(k));
-            add_child(dock);
-            docks[k] = dock;
-        } else if (found != docks.end() && d > dock_radius * hysteresis) {
-            found->second->queue_free();
-            docks.erase(found);
+void SiteStream::collect_jobs() {
+    JobPool &pool = world->get_pool();
+    std::vector<JobPool::Done> done;
+    pool.collect(JobKind::VILLAGE, done);
+    for (JobPool::Done &d : done) {
+        VillagePrepared *p = static_cast<VillagePrepared *>(d.result.release());
+        if (!villages.count(p->site_index)) {
+            prepared[p->site_index] = std::shared_ptr<VillagePrepared>(p);
+        } else {
+            delete p;
         }
     }
+    done.clear();
+    pool.collect(JobKind::CELL, done);
+    for (JobPool::Done &d : done) {
+        CellPrepared *c = static_cast<CellPrepared *>(d.result.get());
+        const auto found = villages.find(c->site_index);
+        if (found != villages.end()) {
+            found->second->accept_cell(std::move(*c));
+        }
     }
+    done.clear();
+    pool.collect(JobKind::NAV, done);
+    for (JobPool::Done &d : done) {
+        NavPrepared *n = static_cast<NavPrepared *>(d.result.get());
+        if (villages.count(n->site_index)) {
+            navs[n->site_index] = NavReady{ n->nav, n->layout_sig };
+        }
+    }
+}
 
-    // 村与散户：先拆远的，再由近及远建
+void SiteStream::refresh_cells(WorldVillage *p_village) {
+    JobPool &pool = world->get_pool();
+    const int index = p_village->get_site_index();
+    for (int c = 0; c < p_village->get_cell_count(); c++) {
+        const double d = p_village->cell_distance_to(c, focus);
+        const WorldVillage::CellState state = p_village->get_cell_state(c);
+        const uint64_t key = JobPool::key(JobKind::CELL, cell_id(index, c));
+        if (state == WorldVillage::CELL_PROXY && d <= detail_radius) {
+            if (pool.submit(key, d, cell_job(p_village, c))) {
+                p_village->mark_preparing(c);
+            }
+        } else if (state == WorldVillage::CELL_PREPARING && d > detail_radius * hysteresis) {
+            pool.cancel(key);
+            p_village->cancel_preparing(c);
+        } else if ((state == WorldVillage::CELL_MOUNTING || state == WorldVillage::CELL_DETAILED) && d > detail_radius * hysteresis) {
+            p_village->release_cell(c);
+        }
+    }
+}
+
+void SiteStream::refresh_folk(int p_index, WorldVillage *p_village, double p_distance) {
+    if (p_village->has_folk()) {
+        if (p_distance > folk_radius * hysteresis) {
+            StreamTimer timer(world, StreamChannel::FOLK);
+            p_village->set_folk(false, per_house, max_folk);
+            navs.erase(p_index);
+        }
+        return;
+    }
+    if (p_distance > folk_radius) {
+        navs.erase(p_index);
+        return;
+    }
+    // 招村民前两样先备好：账本（远处账房在后台开）与导航格（任务池）
+    if (hinterland && !hinterland->is_open(p_index)) {
+        hinterland->request(p_index);
+    }
+    const auto nav = navs.find(p_index);
+    if (nav == navs.end() || nav->second.layout_sig != layout_signature(p_village->get_settlement()->get_model())) {
+        world->get_pool().submit(JobPool::key(JobKind::NAV, uint64_t(p_index)), p_distance, nav_job(p_village));
+    }
+}
+
+void SiteStream::refresh_villages() {
+    JobPool &pool = world->get_pool();
     const int count = int(world->get_sites().settlements.size());
-    std::vector<std::pair<double, int>> wanted;
     for (int k = 0; k < count; k++) {
         const double d = edge_distance(k);
         const auto found = villages.find(k);
@@ -145,32 +326,141 @@ void SiteStream::refresh(int p_build_budget) {
                 StreamTimer timer(world, StreamChannel::VILLAGES);
                 found->second->queue_free();
                 villages.erase(found);
+                navs.erase(k);
                 village_version++;
-            } else {
-                // 村民：近了招、远了散
-                StreamTimer timer(world, StreamChannel::FOLK);
-                if (d <= folk_radius) {
-                    found->second->set_folk(true, per_house, max_folk);
-                } else if (d > folk_radius * hysteresis) {
-                    found->second->set_folk(false, per_house, max_folk);
-                }
+                continue;
             }
+            refresh_cells(found->second);
+            refresh_folk(k, found->second, d);
         } else if (d <= village_radius) {
-            wanted.emplace_back(d, k);
+            if (!prepared.count(k)) {
+                pool.submit(JobPool::key(JobKind::VILLAGE, uint64_t(k)), d, village_job(k));
+            }
+        } else if (d > village_radius * hysteresis) {
+            prepared.erase(k);
         }
     }
-    std::sort(wanted.begin(), wanted.end());
-    for (size_t k = 0; k < wanted.size() && int(k) < p_build_budget; k++) {
-        WorldVillage *village = nullptr;
-        {
-            StreamTimer timer(world, StreamChannel::VILLAGES);
-            village = build_village(wanted[k].second);
+    // 排着的：走远了撤掉，近的往前排
+    pool.reprioritize(JobKind::VILLAGE, [this](uint64_t p_key) {
+        const double d = edge_distance(int(JobPool::id_of(p_key)));
+        return d > village_radius * hysteresis ? -1.0 : d;
+    });
+    pool.reprioritize(JobKind::CELL, [this](uint64_t p_key) {
+        const int index = int(JobPool::id_of(p_key) / 65536ull), cell = int(JobPool::id_of(p_key) % 65536ull);
+        const auto found = villages.find(index);
+        return found == villages.end() || cell >= found->second->get_cell_count() ? -1.0 : found->second->cell_distance_to(cell, focus);
+    });
+}
+
+void SiteStream::step(uint64_t p_deadline_usec) {
+    // 备好的村：近的先挂（一帧至少挂一处）
+    {
+        StreamTimer timer(world, StreamChannel::VILLAGES);
+        std::vector<std::pair<double, int>> order;
+        for (const auto &entry : prepared) {
+            const double d = edge_distance(entry.first);
+            if (d <= village_radius) {
+                order.emplace_back(d, entry.first);
+            }
         }
-        if (edge_distance(wanted[k].second) <= folk_radius) {
-            StreamTimer timer(world, StreamChannel::FOLK);
-            village->set_folk(true, per_house, max_folk);
+        std::sort(order.begin(), order.end());
+        for (size_t k = 0; k < order.size() && (k == 0 || now_usec() < p_deadline_usec); k++) {
+            const int index = order[k].second;
+            std::shared_ptr<VillagePrepared> p = prepared[index];
+            prepared.erase(index);
+            build_village(index, std::move(p));
+        }
+        // 细模：近的村先挂 / 拆
+        std::vector<std::pair<double, WorldVillage *>> near;
+        for (const auto &[index, village] : villages) {
+            near.emplace_back(edge_distance(index), village);
+        }
+        std::sort(near.begin(), near.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
+        for (const auto &[d, village] : near) {
+            if (now_usec() >= p_deadline_usec) {
+                break;
+            }
+            village->step_mount(p_deadline_usec, focus);
         }
     }
+    // 村民：账本与导航格都齐了的，近的先招（一帧只招一处：展开与摆小人是一整件）
+    if (now_usec() >= p_deadline_usec) {
+        return;
+    }
+    StreamTimer timer(world, StreamChannel::FOLK);
+    int best = -1;
+    double best_d = folk_radius;
+    for (const auto &[index, village] : villages) {
+        const double d = edge_distance(index);
+        const auto nav = navs.find(index);
+        if (village->has_folk() || d > best_d || nav == navs.end() || nav->second.layout_sig != layout_signature(village->get_settlement()->get_model()) ||
+                (hinterland && !hinterland->is_open(index))) {
+            continue;
+        }
+        best = index;
+        best_d = d;
+    }
+    if (best >= 0) {
+        villages[best]->set_folk(true, per_house, max_folk, navs[best].nav);
+        navs.erase(best);
+    }
+}
+
+void SiteStream::ensure_near(const Vector3 &p_point) {
+    focus = p_point;
+    has_focus = true;
+    if (!world || !world->is_loaded()) {
+        return;
+    }
+    refresh(1 << 20);
+    collect_jobs();
+    // 落点周围 folk_radius 以内的村：当场备好、挂上，近处的格子挂齐细模，招好村民
+    const int count = int(world->get_sites().settlements.size());
+    for (int k = 0; k < count; k++) {
+        if (edge_distance(k) > folk_radius) {
+            continue;
+        }
+        WorldVillage *village = villages.count(k) ? villages[k] : build_village(k, prepare_now(k));
+        for (int c = 0; c < village->get_cell_count(); c++) {
+            if (village->cell_distance_to(c, focus) <= detail_radius) {
+                world->get_pool().cancel(JobPool::key(JobKind::CELL, cell_id(k, c)));
+                village->mount_cell_now(c);
+            }
+        }
+        if (!village->has_folk()) {
+            const auto nav = navs.find(k);
+            const bool fresh = nav != navs.end() && nav->second.layout_sig == layout_signature(village->get_settlement()->get_model());
+            village->set_folk(true, per_house, max_folk, fresh ? nav->second.nav : nullptr); // 账本没开就当场开、导航格没备就现算
+            navs.erase(k);
+        }
+    }
+}
+
+void SiteStream::refresh(int p_build_budget) {
+    // 码头
+    {
+        StreamTimer dock_timer(world, StreamChannel::DOCKS);
+        const std::vector<DockPlan> &plans = world->get_docks();
+        for (int k = 0; k < int(plans.size()); k++) {
+            if (!plans[size_t(k)].ok) {
+                continue;
+            }
+            const double d = std::hypot(plans[size_t(k)].x - focus.x, plans[size_t(k)].z - focus.z);
+            const auto found = docks.find(k);
+            if (found == docks.end() && d <= dock_radius) {
+                WorldDock *dock = memnew(WorldDock);
+                dock->setup(plans[size_t(k)], k, world->get_dock_id(k));
+                add_child(dock);
+                docks[k] = dock;
+            } else if (found != docks.end() && d > dock_radius * hysteresis) {
+                found->second->queue_free();
+                docks.erase(found);
+            }
+        }
+    }
+
+    // 村与散户：该备的交给后台、远的拆，格子与村民按距离推（挂是 step 里分帧做的）
+    refresh_villages();
 
     // 采场与地标：先拆远的，再由近及远摆（两样合用一份预算）
     StreamTimer site_timer(world, StreamChannel::SITES);
@@ -214,6 +504,14 @@ void SiteStream::refresh(int p_build_budget) {
         }
         add_child(node);
     }
+}
+
+int SiteStream::get_detailed_cell_count() const {
+    int n = 0;
+    for (const auto &entry : villages) {
+        n += entry.second->get_detailed_cell_count();
+    }
+    return n;
 }
 
 PackedInt32Array SiteStream::get_built_landmarks() const {
