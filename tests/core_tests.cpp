@@ -69,6 +69,7 @@
 #include "wild_landing.h"
 #include "world_terrain.h"
 #include "almanac.h"
+#include "planet_frame.h"
 
 namespace {
 
@@ -4724,6 +4725,116 @@ void test_village_seasons() {
     }
 }
 
+// 行星与岛群的坐标（planet_frame）：AEQD 往返、大圆距离、下弯量、δ 的展开式、相机局部的弯曲（双精度 / 与着色器同式的单精度）、换锚
+void test_planet_frame() {
+    std::printf("[planet_frame]\n");
+    const PlanetShape shape;
+    const double R = shape.radius();
+    check_near(R, 6376600.0, 1e-6, "R = 海面 6371 km + 5.6 km（D13）");
+    // 经纬度 ↔ 单位向量（同 sphere.py：x 指 (0,0)、y 指 (0,90)、z 指北极）
+    {
+        const PlanetVec u = planet_unit(0.0, 90.0);
+        check(std::abs(u.y - 1.0) < 1e-12 && std::abs(planet_unit(90.0, 0.0).z - 1.0) < 1e-12, "planet_unit 的轴同生成器");
+        double la = 0.0, lo = 0.0;
+        planet_latlon(planet_unit(-31.65, 152.15), la, lo);
+        check_near(la, -31.65, 1e-9, "经纬度往返：纬度");
+        check_near(lo, 152.15, 1e-9, "经纬度往返：经度");
+    }
+    // 2051 → 2050：大圆 114 km（生成器 s03 算的数）
+    const double d51_50 = great_circle_m(-31.65, 152.15, -32.57, 151.61, 6371000.0);
+    check(std::abs(d51_50 - 114000.0) < 1500.0, "2051 与 2050 相距约 114 km（得到 " + std::to_string(d51_50) + "）");
+    const GroupFrame a(-31.65, 152.15, shape), b(-32.57, 151.61, shape);
+    // AEQD：往返、离群心的距离与方位不变
+    {
+        double worst = 0.0;
+        for (int k = 0; k < 64; k++) {
+            const double ang = k * 0.37, dist = 1000.0 + 2300.0 * k;
+            const PlanetVec p(dist * std::cos(ang), 350.0 + 20.0 * k, dist * std::sin(ang));
+            const PlanetVec q = a.to_flat(a.to_planet(p));
+            worst = std::max(worst, (q - p).length());
+        }
+        std::printf("  AEQD 往返最大误差 %.6f mm\n", worst * 1000.0);
+        check(worst < 1e-3, "AEQD 往返 150 km 内误差 ≤ 1 mm（得到 " + std::to_string(worst * 1000.0) + " mm）");
+        const PlanetVec p(60000.0, 0.0, -80000.0); // 东 60 km、北 80 km
+        double la = 0.0, lo = 0.0;
+        a.flat_latlon(p, la, lo);
+        check_near(great_circle_m(-31.65, 152.15, la, lo, R), 100000.0, 1e-3, "AEQD：离群心的大圆距离 = 平面距离");
+        check_near(bearing_deg(-31.65, 152.15, la, lo), std::atan2(60.0, 80.0) * 180.0 / 3.14159265358979323846, 1e-6, "AEQD：方位不变");
+        const PlanetVec back = a.latlon_flat(la, lo);
+        check((back - p).length() < 1e-3, "经纬度 → 平面：回到原点");
+    }
+    // 下弯：100 km 外降 R(1 − cos(s/R)) ≈ 784 m
+    {
+        const PlanetVec t = a.tangent(PlanetVec(100000.0, 0.0, 0.0));
+        check_near(t.y, -R * (1.0 - std::cos(100000.0 / R)), 1e-6, "切平面下弯 = R(1 − cos θ)");
+        check_near(t.y, -784.1, 1.0, "100 km 处下弯约 784 m");
+        double worst100 = 0.0, worst600 = 0.0;
+        for (int k = 0; k < 40; k++) {
+            const double ang = k * 0.61;
+            for (double dist : { 100000.0, 600000.0 }) {
+                const PlanetVec p(dist * std::cos(ang), 2500.0 - 150.0 * k, dist * std::sin(ang));
+                const double e = (a.delta(p) - a.delta_series(p)).length();
+                (dist < 2e5 ? worst100 : worst600) = std::max(dist < 2e5 ? worst100 : worst600, e);
+            }
+        }
+        std::printf("  δ 展开式与精确式：100 km 内 %.4f mm、600 km 内 %.3f mm\n", worst100 * 1000.0, worst600 * 1000.0);
+        check(worst100 < 1e-3 && worst600 < 1e-2, "δ 的展开式：100 km 内 ≤ 1 mm、600 km 内 ≤ 1 cm（得到 " + std::to_string(worst100 * 1000.0) + " / " + std::to_string(worst600 * 1000.0) + " mm）");
+    }
+    // 相机局部的弯曲：近处 visual(p) ≈ p；远处是真球面的相对位置；单精度版（着色器同式）够准
+    {
+        double near_worst = 0.0, f_near = 0.0, f_far = 0.0, dist_err = 0.0;
+        for (int k = 0; k < 48; k++) {
+            const double ang = k * 0.53;
+            const PlanetVec cam(90000.0 * std::cos(ang) * (k % 3) / 2.0, 40.0 + 180.0 * (k % 5), 90000.0 * std::sin(ang) * (k % 4) / 3.0);
+            const CurveView view = CurveView::at(a, cam);
+            const CurveViewF vf = CurveViewF::from(view);
+            for (int j = 0; j < 12; j++) {
+                const double t = j * 0.9 + k;
+                const double reach = j < 6 ? 8.0 : (j < 10 ? 60000.0 : 600000.0);
+                const PlanetVec p = cam + PlanetVec(reach * std::cos(t), (j % 3 - 1) * 30.0, reach * std::sin(t));
+                const PlanetVec v = view.visual(a, p);
+                if (reach < 10.0) {
+                    near_worst = std::max(near_worst, (v - p).length());
+                }
+                dist_err = std::max(dist_err, std::abs((v - cam).length() - (a.tangent(p) - a.tangent(cam)).length()));
+                const float pf[3] = { float(p.x), float(p.y), float(p.z) };
+                float vo[3];
+                vf.visual(pf, vo);
+                const double e = (PlanetVec(vo[0], vo[1], vo[2]) - v).length();
+                (reach < 1e5 ? f_near : f_far) = std::max(reach < 1e5 ? f_near : f_far, e);
+            }
+        }
+        std::printf("  相机 8 m 内 visual 与平面差 %.3f mm；单精度弯曲（着色器同式）±100 km 内 %.2f cm、600 km 处 %.3f m\n", near_worst * 1000.0, f_near * 100.0, f_far);
+        check(near_worst < 2e-3, "相机 8 m 内 visual(p) 与平面位置差 ≤ 2 mm（得到 " + std::to_string(near_worst * 1000.0) + " mm）");
+        check(dist_err < 1e-4, "visual 保持真球面上与相机的距离");
+        check(f_near < 0.02, "单精度弯曲（着色器同式）：锚群 ±100 km 内 ≤ 2 cm（得到 " + std::to_string(f_near * 100.0) + " cm）");
+        check(f_far < 1.0, "单精度弯曲：600 km 处 ≤ 1 m（得到 " + std::to_string(f_far) + " m）");
+        const CurveView at0 = CurveView::at(a, PlanetVec(0.0, 100.0, 0.0));
+        check_near(at0.visual(a, PlanetVec(100000.0, 100.0, 0.0)).y - 100.0, -784.1, 1.5, "相机在群心：100 km 外的地面在画面上低 784 m");
+    }
+    // 换锚：同一个真球面点换锚前后，相对相机的画面位置只差平面轴的转动 Q
+    {
+        const PlanetVec cam_a = a.latlon_flat(-32.1, 151.9) + PlanetVec(0.0, 2400.0, 0.0); // 两群之间的云海上空
+        const CurveView va = CurveView::at(a, cam_a);
+        const PlanetVec cam_b = rebase_point(a, b, cam_a);
+        const CurveView vb = CurveView::at(b, cam_b);
+        const PlanetBasis q = rebase_rotation(a, b, cam_a);
+        double worst = 0.0;
+        for (int k = 0; k < 24; k++) {
+            const double t = k * 0.7, reach = k < 12 ? 300.0 : 90000.0;
+            const PlanetVec pa = cam_a + PlanetVec(reach * std::cos(t), -800.0 + 60.0 * k, reach * std::sin(t));
+            const PlanetVec pb = rebase_point(a, b, pa);
+            const PlanetVec off_a = va.visual(a, pa) - cam_a, off_b = vb.visual(b, pb) - cam_b;
+            worst = std::max(worst, (off_b - q.apply(off_a)).length());
+        }
+        std::printf("  换锚前后画面（相对相机）差 %.3f mm\n", worst * 1000.0);
+        check(worst < 0.02, "换锚：画面（相对相机）只差平面轴的转动，≤ 2 cm（得到 " + std::to_string(worst * 1000.0) + " mm）");
+        const PlanetVec yaw = q.apply(PlanetVec(0.0, 1.0, 0.0));
+        check(std::abs(yaw.y - 1.0) < 1e-6, "换锚的转动只绕竖直轴（上还是上）");
+        check((rebase_point(b, a, cam_b) - cam_a).length() < 1e-3, "换锚往返回到原处");
+    }
+}
+
 int main() {
     test_rng();
     test_almanac();
@@ -4781,6 +4892,7 @@ int main() {
     test_placeables();
     test_ship_bay();
     test_goldens();
+    test_planet_frame();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

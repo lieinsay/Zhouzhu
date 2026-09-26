@@ -70,6 +70,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/map_image.h
     src/placeables.cpp
     src/placeables.h
+    src/planet_frame.cpp
+    src/planet_frame.h
     src/recipes.cpp
     src/recipes.h
     src/resource_scatter.cpp

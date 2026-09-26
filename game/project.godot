@@ -30,6 +30,26 @@ wx_wind={
 "type": "vec4",
 "value": Vector4(0, 0, 0, 0)
 }
+planet_curve_on={
+"type": "float",
+"value": 0.0
+}
+planet_curve_cam={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+planet_curve_basis={
+"type": "mat3",
+"value": Basis(1, 0, 0, 0, 1, 0, 0, 0, 1)
+}
+planet_curve_dcam={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+planet_curve_radius={
+"type": "float",
+"value": 6376600.0
+}
 wx_misc={
 "type": "vec4",
 "value": Vector4(1, 0, 0, 0)
