@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -14,7 +15,9 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "cover_blend.h"
@@ -34,6 +37,7 @@
 #include "item_slots.h"
 #include "island_field.h"
 #include "island_ground.h"
+#include "job_pool.h"
 #include "land_berth.h"
 #include "map_ground.h"
 #include "map_image.h"
@@ -41,6 +45,7 @@
 #include "recipes.h"
 #include "settlement_model.h"
 #include "ship_layout.h"
+#include "stream_meter.h"
 #include "terrain_tile.h"
 #include "value_noise.h"
 #include "village_plan.h"
@@ -3900,8 +3905,119 @@ void test_ship_bay() {
     check(!layout_contains(l, 0.0, 3.0, 0.0) && !layout_contains(l, 0.0, -2.0, 0.0), "高过甲板 2.5 m、低过船底：不算");
 }
 
+namespace {
+
+struct TestResult : JobResult {
+    int value = 0;
+    explicit TestResult(int p_value) :
+            value(p_value) {}
+};
+
+int result_value(const std::unique_ptr<JobResult> &p_result) {
+    const TestResult *r = dynamic_cast<const TestResult *>(p_result.get());
+    return r ? r->value : -1;
+}
+
+} // namespace
+
+void test_job_pool() {
+    std::printf("job pool\n");
+    const auto key = [](uint64_t id) { return JobPool::key(JobKind::TEST, id); };
+    {
+        // 一条线程、先交后开：按优先级做（一样的先来先做）；同键再交换成新的优先级与做法
+        JobPool pool;
+        std::mutex m;
+        std::vector<int> order;
+        const auto work = [&](int v) {
+            return [&, v]() {
+                std::lock_guard<std::mutex> lock(m);
+                order.push_back(v);
+                return std::unique_ptr<JobResult>(new TestResult(v));
+            };
+        };
+        check(pool.submit(key(1), 30.0, work(1)) && pool.submit(key(2), 10.0, work(2)) && pool.submit(key(3), 20.0, work(3)), "交活：排上了");
+        check(pool.submit(key(4), 20.0, work(4)), "一样的优先级：排在后面");
+        check(pool.submit(key(1), 5.0, work(11)), "同键再交：换成新的");
+        check(pool.queued_count(JobKind::TEST) == 4 && pool.state(key(1)) == JobPool::State::QUEUED, "排着 4 件（同键只一件）");
+        check(pool.cancel(key(3)) && !pool.cancel(key(3)) && pool.state(key(3)) == JobPool::State::NONE, "撤掉一件");
+        pool.start(1);
+        std::vector<JobPool::Done> done;
+        for (int spin = 0; spin < 2000 && done.size() < 3; spin++) {
+            pool.collect(JobKind::TEST, done);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        check(done.size() == 3, "做完了三件，都取回来了");
+        check(order == std::vector<int>({ 11, 2, 4 }), "按优先级做：5 → 10 → 20（被撤的没做、换掉的按新做法做）");
+        check(done.size() == 3 && done[0].key == key(1) && result_value(done[0].result) == 11, "结果按做完的先后、带着键");
+        check(pool.state(key(1)) == JobPool::State::NONE && pool.get_ran() == 3, "取走了就没有了");
+    }
+    {
+        // 没开线程：run_now 在本线程当场做；重排优先级、按种类撤
+        JobPool pool;
+        pool.submit(key(7), 1.0, []() { return std::unique_ptr<JobResult>(new TestResult(7)); });
+        pool.submit(key(8), 2.0, []() { return std::unique_ptr<JobResult>(new TestResult(8)); });
+        pool.submit(key(9), 3.0, []() { return std::unique_ptr<JobResult>(new TestResult(9)); });
+        check(result_value(pool.run_now(key(8))) == 8 && pool.state(key(8)) == JobPool::State::NONE, "急用：排着的当场做，不进「做完了」");
+        check(pool.run_now(key(99)) == nullptr, "急用一件没交过的：空");
+        pool.reprioritize(JobKind::TEST, [&](uint64_t k) { return k == key(7) ? -1.0 : 0.5; });
+        check(pool.state(key(7)) == JobPool::State::NONE && pool.state(key(9)) == JobPool::State::QUEUED, "重排：返回负的就撤掉");
+        pool.cancel_kind(JobKind::TEST);
+        check(pool.queued_count(JobKind::TEST) == 0, "按种类全撤");
+    }
+    {
+        // 几条线程一起做一百件，一件不少；正在做的 run_now 等它做完
+        JobPool pool;
+        pool.start(3);
+        std::atomic<int> sum{ 0 };
+        for (int k = 0; k < 100; k++) {
+            pool.submit(key(uint64_t(k)), double(k), [&sum, k]() {
+                sum += k;
+                return std::unique_ptr<JobResult>(new TestResult(k));
+            });
+        }
+        pool.submit(key(500), 1000.0, []() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+            return std::unique_ptr<JobResult>(new TestResult(500));
+        });
+        for (int spin = 0; spin < 2000 && pool.state(key(500)) == JobPool::State::QUEUED; spin++) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        check(result_value(pool.run_now(key(500))) == 500, "急用正在做的：等它做完、拿到结果");
+        std::vector<JobPool::Done> done;
+        for (int spin = 0; spin < 5000 && done.size() < 100; spin++) {
+            pool.collect(JobKind::TEST, done);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        check(done.size() == 100 && sum == 4950, "三条线程做完一百件，一件不少");
+        pool.submit(key(600), 1.0, []() { return std::unique_ptr<JobResult>(new TestResult(600)); });
+        pool.stop();
+        check(pool.thread_count() == 0 && pool.state(key(600)) == JobPool::State::NONE, "停：排着的撤掉、线程收了");
+    }
+}
+
+void test_stream_meter() {
+    std::printf("stream meter\n");
+    StreamMeter m;
+    m.add(10, StreamChannel::TILES, 1500);
+    m.add(10, StreamChannel::TILES, 500);
+    m.add(10, StreamChannel::VILLAGES, 3000);
+    m.add(11, StreamChannel::TILES, 700);
+    const StreamMeter::Frame *f = m.frame(10);
+    check(f && f->usec[size_t(StreamChannel::TILES)] == 2000 && f->usec[size_t(StreamChannel::VILLAGES)] == 3000 && f->total() == 5000, "一帧里同一项累加、各项分开");
+    check(m.get_totals(StreamChannel::TILES).usec == 2700 && m.get_totals(StreamChannel::TILES).max_frame_usec == 2000 && m.get_totals(StreamChannel::TILES).frames == 2,
+            "累计、单帧最多、有开销的帧数");
+    check(m.frame(12) == nullptr, "没记的帧：空");
+    m.add(10 + StreamMeter::RING, StreamChannel::SCATTER, 100);
+    check(m.frame(10) == nullptr && m.frame(10 + StreamMeter::RING) != nullptr, "只记最近 RING 帧：旧的被新的挤掉");
+    check(std::string(stream_channel_key(StreamChannel::FOLK)) == "folk", "频道名");
+    m.reset();
+    check(m.frame(11) == nullptr && m.get_totals(StreamChannel::TILES).usec == 0, "清零");
+}
+
 int main() {
     test_rng();
+    test_job_pool();
+    test_stream_meter();
     test_noise();
     test_island("新岛 · 火山锥", 0.1, IslandAge::YOUNG);
     test_island("中年 · 山脊", 0.5, IslandAge::MID);
