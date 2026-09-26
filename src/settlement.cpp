@@ -12,14 +12,13 @@
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/omni_light3d.hpp>
-#include <godot_cpp/classes/prism_mesh.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "building_parts.h"
 #include "land_berth.h"
 #include "template_library.h"
+#include "village_prep.h"
 
 using namespace godot;
 
@@ -29,66 +28,46 @@ const char *GENERATED_META = "settlement_generated";
 constexpr double SITE_STEP = 0.5; // find_site 的搜索格
 constexpr uint32_t LADDER_LAYER = 8; // Player 的 Sensor 只看这一层（与船上的梯子同）
 
-// 一组合并网格里、一种材质的那一面
-struct BoxBuffer {
-    PackedVector3Array vertices;
-    PackedVector3Array normals;
-    PackedInt32Array indices;
-};
-
-// 盒子的六个面：法线 n 与面上的两根轴 u、w（u × w = n）
-const Vector3 FACE_N[6] = { Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 1, 0), Vector3(0, -1, 0), Vector3(0, 0, 1), Vector3(0, 0, -1) };
-const Vector3 FACE_U[6] = { Vector3(0, 1, 0), Vector3(0, 0, 1), Vector3(0, 0, 1), Vector3(1, 0, 0), Vector3(1, 0, 0), Vector3(0, 1, 0) };
-const Vector3 FACE_W[6] = { Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(1, 0, 0) };
-
-Vector3 corner(const Vector3 &p_half, int p_face, real_t p_su, real_t p_sw) {
-    return (FACE_N[p_face] + FACE_U[p_face] * p_su + FACE_W[p_face] * p_sw) * p_half;
-}
-
-// Godot 的正面是顺时针：四角按 u、w 逆时针排，三角形反着连
-void append_box(BoxBuffer &r_buffer, const Transform3D &p_xf, const Vector3 &p_size, const void *) {
-    const Vector3 half = p_size * 0.5f;
-    for (int f = 0; f < 6; f++) {
-        const int base = int(r_buffer.vertices.size());
-        const Vector3 normal = p_xf.basis.xform(FACE_N[f]).normalized();
-        const real_t su[4] = { -1, 1, 1, -1 }, sw[4] = { -1, -1, 1, 1 };
-        for (int k = 0; k < 4; k++) {
-            r_buffer.vertices.push_back(p_xf.xform(corner(half, f, su[k], sw[k])));
-            r_buffer.normals.push_back(normal);
-        }
-        for (int i : { 0, 2, 1, 0, 3, 2 }) {
-            r_buffer.indices.push_back(base + i);
-        }
-    }
-}
-
-void append_box_faces(PackedVector3Array &r_faces, const Transform3D &p_xf, const Vector3 &p_size) {
-    const Vector3 half = p_size * 0.5f;
-    for (int f = 0; f < 6; f++) {
-        const real_t su[4] = { -1, 1, 1, -1 }, sw[4] = { -1, -1, 1, 1 };
-        Vector3 c[4];
-        for (int k = 0; k < 4; k++) {
-            c[k] = p_xf.xform(corner(half, f, su[k], sw[k]));
-        }
-        for (int i : { 0, 2, 1, 0, 3, 2 }) {
-            r_faces.push_back(c[i]);
-        }
-    }
-}
-
-Ref<StandardMaterial3D> make_material(const Color &p_albedo, float p_roughness) {
-    Ref<StandardMaterial3D> material;
-    material.instantiate();
-    material->set_albedo(p_albedo);
-    material->set_roughness(p_roughness);
-    return material;
-}
-
 std::string to_std(const String &p_string) {
     return std::string(p_string.utf8().get_data());
 }
 
+PackedVector3Array vec3s(const std::vector<float> &p_flat) {
+    PackedVector3Array out;
+    out.resize(int64_t(p_flat.size() / 3));
+    Vector3 *w = out.ptrw();
+    for (int64_t k = 0; k < out.size(); k++) {
+        w[k] = Vector3(p_flat[size_t(k) * 3], p_flat[size_t(k) * 3 + 1], p_flat[size_t(k) * 3 + 2]);
+    }
+    return out;
+}
+
 } // namespace
+
+BuildingArrays to_building_arrays(BuildingMesh &&p_mesh) {
+    BuildingArrays out;
+    for (int g = 0; g < int(p_mesh.groups.size()); g++) {
+        for (int m = 0; m < int(PartMaterial::COUNT); m++) {
+            MeshPart &part = p_mesh.groups[size_t(g)][size_t(m)];
+            if (part.empty()) {
+                continue;
+            }
+            BuildingArrays::Surface s;
+            s.group = g;
+            s.material = m;
+            s.vertices = vec3s(part.positions);
+            s.normals = vec3s(part.normals);
+            s.indices.resize(int64_t(part.indices.size()));
+            std::copy(part.indices.begin(), part.indices.end(), s.indices.ptrw());
+            out.surfaces.push_back(std::move(s));
+            part = MeshPart();
+        }
+    }
+    out.collision = vec3s(p_mesh.collision);
+    p_mesh.collision.clear();
+    out.mesh = std::move(p_mesh);
+    return out;
+}
 
 void Settlement::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_layout"), &Settlement::get_layout);
@@ -119,6 +98,9 @@ void Settlement::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_base_count"), &Settlement::get_base_count);
     ClassDB::bind_method(D_METHOD("get_ground_height", "global_position"), &Settlement::get_ground_height);
     ClassDB::bind_method(D_METHOD("on_host_rebuilt"), &Settlement::on_host_rebuilt);
+    ClassDB::bind_method(D_METHOD("is_mounted", "index"), &Settlement::is_mounted);
+    ClassDB::bind_method(D_METHOD("get_mounted_count"), &Settlement::get_mounted_count);
+    ClassDB::bind_method(D_METHOD("is_deferred"), &Settlement::is_deferred);
 
     ClassDB::bind_method(D_METHOD("set_layout_path", "path"), &Settlement::set_layout_path);
     ClassDB::bind_method(D_METHOD("get_layout_path"), &Settlement::get_layout_path);
@@ -135,20 +117,11 @@ void Settlement::_ready() {
     add_to_group(GROUP); // 编排据此找各处的船台（落地靠港）
     host = GroundHost::of(get_parent());
     ERR_FAIL_NULL_MSG(host, "Settlement 要挂在地面宿主（Island / WorldVillage / FlatMap）下面");
-    // 按 PartMaterial 的次序
-    materials = {
-        make_material(Color(0.52f, 0.50f, 0.46f), 1.0f), // 台基、台阶
-        make_material(Color(0.76f, 0.64f, 0.46f), 1.0f), // 夯土墙
-        make_material(Color(0.56f, 0.43f, 0.29f), 0.9f), // 木地板
-        make_material(Color(0.50f, 0.36f, 0.22f), 0.85f), // 家具
-        make_material(Color(0.30f, 0.20f, 0.12f), 0.95f), // 门框、窗棂、天花板
-        make_material(Color(0.30f, 0.30f, 0.34f), 0.9f), // 灰瓦
-        make_material(Color(0.60f, 0.40f, 0.28f), 1.0f), // 陶、泥
-        make_material(Color(0.66f, 0.60f, 0.50f), 1.0f), // 布
-        make_material(Color(0.80f, 0.68f, 0.40f), 1.0f), // 草、席
-        make_material(Color(0.88f, 0.74f, 0.34f), 1.0f), // 粮
-        make_material(Color(0.58f, 0.14f, 0.10f), 0.6f), // 朱漆
-    };
+    looks = host->host_looks();
+    if (!looks) {
+        own_looks = std::make_unique<SharedLooks>();
+        looks = own_looks.get();
+    }
     if (TemplateLibrary *library = TemplateLibrary::get_singleton()) {
         library->connect("changed", Callable(this, "on_templates_changed"));
     }
@@ -164,7 +137,9 @@ void Settlement::_ready() {
 
 void Settlement::on_host_rebuilt() {
     refresh_ground();
+    const std::set<std::string> keep = mounted_ids();
     clear_generated();
+    remount = keep;
     build_all();
 }
 
@@ -186,6 +161,16 @@ double Settlement::get_ground_height(const Vector3 &p_global) const {
     return host_transform().xform(Vector3(local.x, real_t(y), local.z)).y;
 }
 
+std::set<std::string> Settlement::mounted_ids() const {
+    std::set<std::string> ids;
+    for (int k = 0; k < int(built_list.size()) && k < layout.size(); k++) {
+        if (built_list[size_t(k)].root) {
+            ids.insert(building_id(layout.at(k)));
+        }
+    }
+    return ids;
+}
+
 void Settlement::clear_generated() {
     built_list.clear();
     const TypedArray<Node> children = get_children();
@@ -202,9 +187,22 @@ void Settlement::build_all() {
     if (!ready()) {
         return;
     }
-    for (int k = 0; k < layout.size(); k++) {
-        build_one(k);
+    // 地坪：进树前后台量好的对得上就用，否则逐座量
+    if (has_prepared && prepared_layout == layout && prepared_frames.size() == size_t(layout.size())) {
+        frames = prepared_frames;
+    } else {
+        frames = layout_frames(*map, layout, rules);
     }
+    has_prepared = false;
+    prepared_frames.clear();
+    built_list.assign(size_t(layout.size()), Built());
+    layout_version++;
+    for (int k = 0; k < layout.size(); k++) {
+        if (!deferred || remount.count(building_id(layout.at(k)))) {
+            build_one(k);
+        }
+    }
+    remount.clear();
 }
 
 Vector3 Settlement::to_island(const Vector3 &p_global) const {
@@ -217,172 +215,189 @@ Transform3D Settlement::building_transform_global(const BuildingDef &, const Vec
     return host_transform() * in_island;
 }
 
-// 一座建筑：外壳 + 房屋模板 → building_parts 的盒子 → 每组一个合并网格（按材质分面）、整座一个凹多边形碰撞、梯子区域。
-// 屋顶（悬山）照外壳尺寸画在顶那一组里；分组给室内编辑器剖开看（set_cutaway）。
-void Settlement::build_one(int p_index) {
+Transform3D Settlement::local_frame(int p_index) const {
     const Building &b = layout.at(p_index);
+    double floor_y = 0.0;
+    if (size_t(p_index) < frames.size()) {
+        floor_y = frames[size_t(p_index)].floor_y;
+    } else if (const BuildingDef *def = buildings::by_id(b.kind); def && ground) {
+        floor_y = building_frame(*ground, *def, b, rules).floor_y;
+    }
+    return Transform3D(Basis(Vector3(0, 1, 0), real_t(b.yaw)), Vector3(real_t(b.x), real_t(floor_y), real_t(b.z)));
+}
+
+void Settlement::set_prepared_frames(const SettlementLayout &p_layout, const std::vector<BuildingFrame> &p_frames) {
+    prepared_layout = p_layout;
+    prepared_frames = p_frames;
+    has_prepared = true;
+}
+
+BuildingMesh Settlement::make_mesh(int p_index) const {
+    ERR_FAIL_INDEX_V(p_index, layout.size(), BuildingMesh());
+    const Building &b = layout.at(p_index);
+    const BuildingDef *def = buildings::by_id(b.kind);
+    ERR_FAIL_NULL_V(def, BuildingMesh());
+    const TemplateLibrary *library = TemplateLibrary::get_singleton();
+    const HouseTemplate tmpl = !def->house ? HouseTemplate() : (library ? library->resolve(b) : bare_template(*def));
+    const BuildingFrame frame = size_t(p_index) < frames.size() ? frames[size_t(p_index)] : building_frame(*ground, *def, b, rules);
+    return build_building_mesh(*map, frame, b, tmpl, p_index);
+}
+
+void Settlement::build_one(int p_index) {
+    mount(to_building_arrays(make_mesh(p_index)));
+}
+
+// 一座建筑的节点：每组一个节点（组里一个合并网格，按材质分面）、每层一盏灯、梯子区域；整座一个凹多边形碰撞（聚落这个静态体的直接子节点）
+void Settlement::mount(const BuildingArrays &p_arrays) {
+    const BuildingMesh &m = p_arrays.mesh;
+    const int k = m.index;
+    if (k < 0 || k >= layout.size() || size_t(k) >= frames.size() || std::abs(frames[size_t(k)].floor_y - m.frame.floor_y) > 1e-6) {
+        return; // 清单换过：这份细模是照旧清单备的
+    }
+    const Building &b = layout.at(k);
     const BuildingDef *def = buildings::by_id(b.kind);
     if (!def) {
         return;
     }
-    SettlementLayout none;
-    const SiteReport report = survey_site(*ground, *def, b.x, b.z, b.yaw, none, rules);
-    double floor_y = report.floor_y, bottom = report.plinth_bottom;
-    if (report.reason.find("没有地面") != std::string::npos) {
-        // 地形换了、这座悬在岛外：照画在岸缘高度，开发者一眼能看见它该挪了
-        floor_y = def->plinth_m;
-        bottom = -rules.bury_m;
+    if (is_mounted(k)) {
+        unmount(k);
     }
-    const Transform3D frame(Basis(Vector3(0, 1, 0), real_t(b.yaw)), Vector3(real_t(b.x), real_t(floor_y), real_t(b.z)));
-    const TemplateLibrary *library = TemplateLibrary::get_singleton();
-    // 船台不是房屋：不挑模板（building_parts 照 land_berth 拼）
-    HouseTemplate tmpl = !def->house ? HouseTemplate() : (library ? library->resolve(b) : bare_template(*def));
-    if (!def->house) {
-        tmpl.id = def->id;
-    }
-    double ux = 0.0, uz = 0.0, vx = 0.0, vz = 0.0;
-    building_axes(b.yaw, ux, uz, vx, vz);
-    const MapGround *ground_map = map.get();
-    const GroundDrop drop = [&](double p_x, double p_z) {
-        double y = 0.0;
-        if (!ground_map->site_height(b.x + p_x * ux + p_z * vx, b.z + p_x * uz + p_z * vz, y)) {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-        return floor_y - y;
-    };
-    const BuildingParts parts = building_parts(*def, tmpl, floor_y - bottom, drop);
-
+    const Transform3D frame = local_frame(k);
     Node3D *root = memnew(Node3D);
-    root->set_name(vformat("B%d_%s", p_index, String(def->id)));
+    root->set_name(vformat("B%d_%s", k, String(def->id)));
     root->set_meta(GENERATED_META, true);
-    root->set_meta("template", String::utf8(tmpl.id.c_str()));
+    root->set_meta("template", String::utf8(m.template_id.c_str()));
     root->set_transform(frame);
-    add_child(root);
 
-    // 网格：每组一个节点，组里按材质分面
-    std::vector<std::vector<BoxBuffer>> buffers(size_t(parts.group_count), std::vector<BoxBuffer>(size_t(PartMaterial::COUNT)));
-    PackedVector3Array faces;
-    for (const BoxPart &part : parts.boxes) {
-        const Transform3D xf(Basis(Vector3(0, 1, 0), real_t(part.yaw)) * Basis(Vector3(1, 0, 0), real_t(part.pitch)), Vector3(real_t(part.x), real_t(part.y), real_t(part.z)));
-        const Vector3 size(real_t(part.sx), real_t(part.sy), real_t(part.sz));
-        if (part.visual) {
-            append_box(buffers[size_t(part.group)][size_t(part.mat)], xf, size, nullptr);
-        }
-        if (part.solid) {
-            append_box_faces(faces, xf, size);
-        }
-    }
-    // 屋顶：悬山，脊沿面阔；与天花板同在顶那一组（船台没有顶）
-    const int roof_group = parts.roof_group();
-    const real_t w = real_t(def->width_m), d = real_t(def->depth_m), wall = real_t(def->wall_m), roof = real_t(def->roof_m);
-    if (def->house) {
-        append_box(buffers[size_t(roof_group)][size_t(PartMaterial::ROOF)], Transform3D(Basis(), Vector3(0, wall + roof, 0)),
-                Vector3(w + 2 * real_t(house_dims::ROOF_OVERHANG) + 0.4f, 0.35f, 0.5f), nullptr);
-    }
+    const int roof_group = m.roof_group();
     std::vector<Node3D *> group_nodes;
-    for (int g = 0; g < parts.group_count; g++) {
+    std::vector<Ref<ArrayMesh>> meshes(size_t(m.group_count));
+    for (int g = 0; g < m.group_count; g++) {
         Node3D *group = memnew(Node3D);
         group->set_name(g == 0 ? String("Ground") : (g == roof_group ? String("Roof") : vformat("Level%d", g - 1)));
         root->add_child(group);
         group_nodes.push_back(group);
-        Ref<ArrayMesh> mesh;
-        mesh.instantiate();
-        for (int m = 0; m < int(PartMaterial::COUNT); m++) {
-            BoxBuffer &buffer = buffers[size_t(g)][size_t(m)];
-            if (buffer.vertices.is_empty()) {
-                continue;
-            }
-            Array arrays;
-            arrays.resize(Mesh::ARRAY_MAX);
-            arrays[Mesh::ARRAY_VERTEX] = buffer.vertices;
-            arrays[Mesh::ARRAY_NORMAL] = buffer.normals;
-            arrays[Mesh::ARRAY_INDEX] = buffer.indices;
-            mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
-            mesh->surface_set_material(mesh->get_surface_count() - 1, materials[size_t(m)]);
+    }
+    for (const BuildingArrays::Surface &s : p_arrays.surfaces) {
+        Ref<ArrayMesh> &mesh = meshes[size_t(s.group)];
+        if (mesh.is_null()) {
+            mesh.instantiate();
         }
-        if (mesh->get_surface_count() > 0) {
+        Array arrays;
+        arrays.resize(Mesh::ARRAY_MAX);
+        arrays[Mesh::ARRAY_VERTEX] = s.vertices;
+        arrays[Mesh::ARRAY_NORMAL] = s.normals;
+        arrays[Mesh::ARRAY_INDEX] = s.indices;
+        mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+        mesh->surface_set_material(mesh->get_surface_count() - 1, looks->part_material(PartMaterial(s.material)));
+    }
+    for (int g = 0; g < m.group_count; g++) {
+        if (meshes[size_t(g)].is_valid()) {
             MeshInstance3D *instance = memnew(MeshInstance3D);
             instance->set_name("Mesh");
-            instance->set_mesh(mesh);
-            group->add_child(instance);
+            instance->set_mesh(meshes[size_t(g)]);
+            group_nodes[size_t(g)]->add_child(instance);
         }
     }
     // 屋里：每层一盏不投影的暖光，只照屋里那一圈；远了就淡掉（村子里几十座，远处的不点）
-    const real_t level_h = real_t(level_height(*def));
-    for (int l = 0; l < (def->house ? def->levels : 0); l++) {
+    for (const BuildingLamp &lamp : m.lamps) {
         OmniLight3D *light = memnew(OmniLight3D);
         light->set_name("Lamp");
         light->set_color(Color(1.0f, 0.86f, 0.66f));
         light->set_param(Light3D::PARAM_ENERGY, 0.7f);
-        light->set_param(Light3D::PARAM_RANGE, 0.5f * std::sqrt(w * w + d * d));
+        light->set_param(Light3D::PARAM_RANGE, real_t(lamp.range));
         light->set_shadow(false);
         light->set_enable_distance_fade(true);
         light->set_distance_fade_begin(35.0f);
         light->set_distance_fade_length(10.0f);
-        light->set_position(Vector3(0, real_t(l) * level_h + std::min(level_h, wall) - 0.6f, 0));
-        group_nodes[size_t(1 + l)]->add_child(light);
+        light->set_position(Vector3(real_t(lamp.x), real_t(lamp.y), real_t(lamp.z)));
+        group_nodes[size_t(lamp.group)]->add_child(light);
     }
-    if (def->house) {
-        Ref<PrismMesh> prism;
-        prism.instantiate();
-        prism->set_left_to_right(0.5f);
-        prism->set_size(Vector3(d + 2 * real_t(house_dims::ROOF_OVERHANG), roof, w + 2 * real_t(house_dims::ROOF_OVERHANG)));
-        prism->set_material(materials[size_t(PartMaterial::ROOF)]);
-        MeshInstance3D *roof_instance = memnew(MeshInstance3D);
-        roof_instance->set_name("Gable");
-        roof_instance->set_mesh(prism);
-        roof_instance->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(Math_PI / 2)), Vector3(0, wall + 0.5f * roof, 0)));
-        group_nodes[size_t(roof_group)]->add_child(roof_instance);
-    }
-
-    // 碰撞：整座一个凹多边形（两面都挡：墙薄，人与相机从哪边碰都算）；碰撞形状得是 StaticBody3D 的直接子节点
-    Ref<ConcavePolygonShape3D> shape;
-    shape.instantiate();
-    shape->set_backface_collision_enabled(true);
-    shape->set_faces(faces);
-    CollisionShape3D *collider = memnew(CollisionShape3D);
-    collider->set_name(vformat("B%d_Shape", p_index));
-    collider->set_shape(shape);
-    collider->set_transform(frame);
-    collider->set_meta(GENERATED_META, true);
-    add_child(collider);
-
     // 梯子：与船上的同一套（Player 的 Sensor 看第 8 层、认 "ladder" 元数据；区域的 +Z 指向人站的那侧）
-    for (size_t k = 0; k < parts.ladders.size(); k++) {
-        const LadderZone &z = parts.ladders[k];
+    for (size_t z = 0; z < m.ladders.size(); z++) {
+        const LadderZone &l = m.ladders[z];
         Area3D *zone = memnew(Area3D);
-        zone->set_name(vformat("Ladder%d", int(k)));
+        zone->set_name(vformat("Ladder%d", int(z)));
         zone->set_collision_layer(LADDER_LAYER);
         zone->set_collision_mask(0);
         zone->set_monitoring(false);
         zone->set_meta("ladder", true);
         Ref<BoxShape3D> box;
         box.instantiate();
-        box->set_size(Vector3(real_t(z.sx), real_t(z.sy), real_t(z.sz)));
+        box->set_size(Vector3(real_t(l.sx), real_t(l.sy), real_t(l.sz)));
         CollisionShape3D *zone_shape = memnew(CollisionShape3D);
         zone_shape->set_shape(box);
         zone->add_child(zone_shape);
-        zone->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(z.yaw)), Vector3(real_t(z.x), real_t(z.y), real_t(z.z))));
-        group_nodes[size_t(z.group)]->add_child(zone);
+        zone->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(l.yaw)), Vector3(real_t(l.x), real_t(l.y), real_t(l.z))));
+        group_nodes[size_t(l.group)]->add_child(zone);
+    }
+    add_child(root);
+
+    // 碰撞：整座一个凹多边形（两面都挡：墙薄，人与相机从哪边碰都算）；碰撞形状得是 StaticBody3D 的直接子节点
+    CollisionShape3D *collider = nullptr;
+    if (!p_arrays.collision.is_empty()) {
+        Ref<ConcavePolygonShape3D> shape;
+        shape.instantiate();
+        shape->set_backface_collision_enabled(true);
+        shape->set_faces(p_arrays.collision);
+        collider = memnew(CollisionShape3D);
+        collider->set_name(vformat("B%d_Shape", k));
+        collider->set_shape(shape);
+        collider->set_transform(frame);
+        collider->set_meta(GENERATED_META, true);
+        add_child(collider);
     }
 
     Built built;
     built.root = root;
     built.collider = collider;
     built.groups = group_nodes;
-    built.template_id = tmpl.id;
-    built.levels = def->levels;
-    for (const DoorEntry &door : parts.doors) {
-        built.doors.push_back({ Vector3(real_t(door.out_x), real_t(door.out_y), real_t(door.out_z)), Vector3(real_t(door.in_x), real_t(door.in_y), real_t(door.in_z)), door.side == WallSide::FRONT });
+    built.template_id = m.template_id;
+    built.levels = m.levels;
+    built.doors = m.doors;
+    built.ladders = m.ladders;
+    if (size_t(k) >= built_list.size()) {
+        built_list.resize(size_t(k) + 1);
     }
-    for (const LadderZone &z : parts.ladders) {
-        built.ladders.push_back({ Vector3(real_t(z.foot_x), real_t(z.foot_y), real_t(z.foot_z)), Vector3(real_t(z.top_x), real_t(z.top_y), real_t(z.top_z)) });
+    built_list[size_t(k)] = built;
+    apply_cutaway(k);
+}
+
+void Settlement::unmount(int p_index) {
+    if (!is_mounted(p_index)) {
+        return;
     }
-    if (size_t(p_index) >= built_list.size()) {
-        built_list.resize(size_t(p_index) + 1);
+    Built &b = built_list[size_t(p_index)];
+    for (Node *node : { static_cast<Node *>(b.root), b.collider }) {
+        if (node) {
+            remove_child(node);
+            node->queue_free();
+        }
     }
-    built_list[size_t(p_index)] = built;
-    apply_cutaway(p_index);
+    b = Built();
+    if (cutaway_index == p_index) {
+        cutaway_index = -1;
+    }
+}
+
+int Settlement::get_mounted_count() const {
+    int n = 0;
+    for (const Built &b : built_list) {
+        n += b.root != nullptr;
+    }
+    return n;
+}
+
+const Settlement::Built &Settlement::parts_of(int p_index, Built &r_scratch) const {
+    if (is_mounted(p_index)) {
+        return built_list[size_t(p_index)];
+    }
+    const BuildingMesh m = make_mesh(p_index);
+    r_scratch.template_id = m.template_id;
+    r_scratch.levels = m.levels;
+    r_scratch.doors = m.doors;
+    r_scratch.ladders = m.ladders;
+    return r_scratch;
 }
 
 PackedStringArray Settlement::get_layout() const {
@@ -399,12 +414,14 @@ void Settlement::set_layout(const PackedStringArray &p_ids) {
         ids.push_back(to_std(p_ids[k]));
     }
     bool ok = true;
+    const std::set<std::string> keep = mounted_ids();
     layout = settlement_from_ids(ids, &ok);
     if (!ok) {
         WARN_PRINT("Settlement: 清单里有认不出的条目，跳过了");
     }
     dirty = true;
     clear_generated();
+    remount = keep;
     build_all();
     emit_signal("changed");
 }
@@ -425,12 +442,7 @@ double Settlement::get_building_yaw_deg(int p_index) const {
 
 Transform3D Settlement::get_building_transform(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, layout.size(), Transform3D());
-    const Building &b = layout.at(p_index);
-    const BuildingDef *def = buildings::by_id(b.kind);
-    SettlementLayout none;
-    const SiteReport report = def ? survey_site(*ground, *def, b.x, b.z, b.yaw, none, rules) : SiteReport();
-    const Transform3D in_island(Basis(Vector3(0, 1, 0), real_t(b.yaw)), Vector3(real_t(b.x), real_t(report.floor_y), real_t(b.z)));
-    return host_transform() * in_island;
+    return host_transform() * local_frame(p_index);
 }
 
 SiteReport Settlement::survey_site_global(const BuildingDef &p_def, const Vector3 &p_global, double p_yaw, Transform3D &r_transform, int p_ignore) const {
@@ -467,7 +479,12 @@ String Settlement::place(const String &p_kind, const Vector3 &p_global, double p
         return String::utf8(reason.c_str());
     }
     dirty = true;
-    build_one(layout.size() - 1);
+    const int k = layout.size() - 1;
+    const BuildingDef *def = buildings::by_id(layout.at(k).kind);
+    frames.push_back(def ? building_frame(*ground, *def, layout.at(k), rules) : BuildingFrame());
+    built_list.resize(size_t(layout.size()));
+    layout_version++;
+    build_one(k); // 放下的这座当场挂上（人就在它跟前）
     emit_signal("changed");
     return String();
 }
@@ -476,9 +493,13 @@ bool Settlement::remove(int p_index) {
     if (p_index < 0 || p_index >= layout.size()) {
         return false;
     }
+    // deferred：挂着的照挂（拆掉的那座除外）
+    std::set<std::string> keep = mounted_ids();
+    keep.erase(building_id(layout.at(p_index)));
     layout.erase(p_index);
     dirty = true;
     clear_generated(); // 节点按序号命名，整份重画最省事
+    remount = keep;
     build_all();
     emit_signal("changed");
     return true;
@@ -547,12 +568,14 @@ bool Settlement::load() {
         }
     }
     int unmatched = 0;
+    const std::set<std::string> keep = mounted_ids();
     layout = apply_layout_edits(base, edits, &unmatched);
     if (unmatched > 0) {
         WARN_PRINT(vformat(String(U"Settlement: %s 里要拆的 %d 座在底清单里找不到了（铺村的规矩改过？），跳过"), layout_path, unmatched));
     }
     if (ready()) {
         clear_generated();
+        remount = keep;
         build_all();
     }
     emit_signal("changed");
@@ -617,16 +640,19 @@ void Settlement::set_building_style(int p_index, const String &p_style) {
     if (layout.at(p_index).style == to_std(p_style)) {
         return;
     }
+    std::set<std::string> keep = mounted_ids();
     layout.set_style(p_index, to_std(p_style));
+    keep.insert(building_id(layout.at(p_index))); // 换了款式的这座当场挂（在它跟前改的）
     dirty = true;
     clear_generated(); // 节点按序号命名，整份重画最省事
+    remount = keep;
     build_all();
     emit_signal("changed");
 }
 
 String Settlement::get_building_template(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, layout.size(), String());
-    if (size_t(p_index) < built_list.size() && built_list[size_t(p_index)].root) {
+    if (is_mounted(p_index)) {
         return String::utf8(built_list[size_t(p_index)].template_id.c_str());
     }
     const TemplateLibrary *library = TemplateLibrary::get_singleton();
@@ -635,8 +661,8 @@ String Settlement::get_building_template(int p_index) const {
 
 std::vector<int> Settlement::find_berths() const {
     std::vector<int> out;
-    for (int k = 0; k < layout.size(); k++) {
-        if (layout.at(k).kind == "berth" && size_t(k) < built_list.size() && built_list[size_t(k)].root) {
+    for (int k = 0; k < layout.size() && size_t(k) < frames.size(); k++) {
+        if (layout.at(k).kind == "berth") {
             out.push_back(k);
         }
     }
@@ -644,29 +670,28 @@ std::vector<int> Settlement::find_berths() const {
 }
 
 Transform3D Settlement::get_berth_contact(int p_index) const {
-    ERR_FAIL_INDEX_V(p_index, int(built_list.size()), Transform3D());
-    ERR_FAIL_NULL_V(built_list[size_t(p_index)].root, Transform3D());
+    ERR_FAIL_INDEX_V(p_index, int(frames.size()), Transform3D());
     // 船台的局部：X 指向跳板（+z），原点在跳板顶那条甲板边缘线上
     const Basis toward_gangway(Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(-1, 0, 0));
-    return built_list[size_t(p_index)].root->get_global_transform() *
-            Transform3D(toward_gangway, Vector3(0, real_t(land_berth::LIFT_M), real_t(land_berth::CONTACT_Z)));
+    return host_transform() * local_frame(p_index) * Transform3D(toward_gangway, Vector3(0, real_t(land_berth::LIFT_M), real_t(land_berth::CONTACT_Z)));
 }
 
 Vector3 Settlement::get_berth_point(int p_index, double p_x, double p_z) const {
-    ERR_FAIL_INDEX_V(p_index, int(built_list.size()), Vector3());
-    ERR_FAIL_NULL_V(built_list[size_t(p_index)].root, Vector3());
-    return built_list[size_t(p_index)].root->get_global_transform().xform(Vector3(real_t(p_x), 0, real_t(p_z)));
+    ERR_FAIL_INDEX_V(p_index, int(frames.size()), Vector3());
+    return (host_transform() * local_frame(p_index)).xform(Vector3(real_t(p_x), 0, real_t(p_z)));
 }
 
 PackedVector3Array Settlement::get_building_entry(int p_index) const {
     PackedVector3Array out;
-    ERR_FAIL_INDEX_V(p_index, int(built_list.size()), out);
-    const Built &b = built_list[size_t(p_index)];
+    ERR_FAIL_INDEX_V(p_index, layout.size(), out);
+    Built scratch;
+    const Built &b = parts_of(p_index, scratch);
+    const Transform3D xf = host_transform() * local_frame(p_index);
     for (int pass = 0; pass < 2 && out.is_empty(); pass++) {
-        for (const Built::Door &door : b.doors) {
-            if (pass == 1 || door.front) {
-                out.push_back(b.root->to_global(door.out));
-                out.push_back(b.root->to_global(door.in));
+        for (const DoorEntry &door : b.doors) {
+            if (pass == 1 || door.side == WallSide::FRONT) {
+                out.push_back(xf.xform(Vector3(real_t(door.out_x), real_t(door.out_y), real_t(door.out_z))));
+                out.push_back(xf.xform(Vector3(real_t(door.in_x), real_t(door.in_y), real_t(door.in_z))));
                 break;
             }
         }
@@ -676,11 +701,13 @@ PackedVector3Array Settlement::get_building_entry(int p_index) const {
 
 PackedVector3Array Settlement::get_building_ladders(int p_index) const {
     PackedVector3Array out;
-    ERR_FAIL_INDEX_V(p_index, int(built_list.size()), out);
-    const Built &b = built_list[size_t(p_index)];
-    for (const Built::Ladder &ladder : b.ladders) {
-        out.push_back(b.root->to_global(ladder.foot));
-        out.push_back(b.root->to_global(ladder.top));
+    ERR_FAIL_INDEX_V(p_index, layout.size(), out);
+    Built scratch;
+    const Built &b = parts_of(p_index, scratch);
+    const Transform3D xf = host_transform() * local_frame(p_index);
+    for (const LadderZone &z : b.ladders) {
+        out.push_back(xf.xform(Vector3(real_t(z.foot_x), real_t(z.foot_y), real_t(z.foot_z))));
+        out.push_back(xf.xform(Vector3(real_t(z.top_x), real_t(z.top_y), real_t(z.top_z))));
     }
     return out;
 }
@@ -690,7 +717,7 @@ void Settlement::set_cutaway(int p_index, int p_level) {
     cutaway_index = p_index;
     cutaway_level = p_level;
     for (int k : { old, p_index }) {
-        if (k >= 0 && size_t(k) < built_list.size()) {
+        if (is_mounted(k)) {
             apply_cutaway(k);
         }
     }
@@ -707,7 +734,7 @@ void Settlement::apply_cutaway(int p_index) {
     }
 }
 
-// 模板库改了：用到这套的、或者自动挑的结果变了的，就地重画（一村几十座，改一下家具不必整村重来）
+// 模板库改了：用到这套的、或者自动挑的结果变了的，挂着的就地重画（一村几十座，改一下家具不必整村重来；没挂的等挂的时候照新模板拼）
 void Settlement::on_templates_changed(const String &p_id) {
     const TemplateLibrary *library = TemplateLibrary::get_singleton();
     if (!ready() || !library) {
@@ -715,6 +742,9 @@ void Settlement::on_templates_changed(const String &p_id) {
     }
     const std::string id = to_std(p_id);
     for (int k = 0; k < layout.size() && size_t(k) < built_list.size(); k++) {
+        if (!is_mounted(k)) {
+            continue;
+        }
         const std::string used = built_list[size_t(k)].template_id;
         if (used == id || library->resolve_id(layout.at(k)) != used) {
             rebuild_one(k);
@@ -723,14 +753,7 @@ void Settlement::on_templates_changed(const String &p_id) {
 }
 
 void Settlement::rebuild_one(int p_index) {
-    Built &b = built_list[size_t(p_index)];
-    for (Node *node : { static_cast<Node *>(b.root), b.collider }) {
-        if (node) {
-            remove_child(node);
-            node->queue_free();
-        }
-    }
-    b = Built();
+    unmount(p_index);
     build_one(p_index);
 }
 
