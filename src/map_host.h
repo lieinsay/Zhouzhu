@@ -14,6 +14,7 @@
 class Farm;
 class GroundHost;
 class Shipyard;
+class WeatherModel;
 class WorldMap;
 
 // 一处村仓（跑货在它门前接单、打包、交货）
@@ -107,6 +108,9 @@ public:
     // 野泊问的地面（全局 xz）：多高（默认按 map_surface）、是不是水（默认不是）
     virtual bool map_landing_height(double p_x, double p_z, double &r_y) const;
     virtual bool map_water_at(double p_x, double p_z) const { return false; }
+    // 天气（weather.h）：有气候数据的地图给它的天气模型（天与光、HUD、开发者面板读它，开发者覆盖也改在它上面）；
+    // 没有返回 nullptr——天与光用一份没有数据的（常年晴、纬度 30°）
+    virtual WeatherModel *map_weather() { return nullptr; }
 
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
 };

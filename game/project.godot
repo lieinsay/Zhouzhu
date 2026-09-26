@@ -12,6 +12,29 @@ GameClock="*res://world_clock.tscn"
 BuildingTemplates="*res://building_templates.tscn"
 DeveloperTools="*res://dev_tools.tscn"
 
+[shader_globals]
+
+wx_elev={
+"type": "sampler2D",
+"value": ""
+}
+wx_elev_range={
+"type": "vec2",
+"value": Vector2(0, 2100)
+}
+wx_wet={
+"type": "float",
+"value": 0.0
+}
+wx_wind={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_misc={
+"type": "vec4",
+"value": Vector4(1, 0, 0, 0)
+}
+
 [dotnet]
 
 project/assembly_name="zhouzhu"

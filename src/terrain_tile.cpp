@@ -32,6 +32,13 @@ GroundColor lerp(const GroundColor &a, const GroundColor &b, double t) {
     return { a.r + (b.r - a.r) * k, a.g + (b.g - a.g) * k, a.b + (b.b - a.b) * k };
 }
 
+// 一个顶点的季相份额（见 TileMesh::season）
+struct GroundSeason {
+    uint8_t v[4] = { 0, 0, 0, 0 };
+};
+
+constexpr int COVER_CLIFF_EDGE = 1, COVER_ALPINE = 3, COVER_FOREST = 4, COVER_SHRUB = 5, COVER_GRASS = 6, COVER_ARABLE = 7, COVER_TERRACE = 8, COVER_WETLAND = 9;
+
 // 崖壁与岛底的岩色：上浅下深（p_t：0 崖顶 → 1 崖脚），按绝对高度一层层夹着浮石的灰白层（同一高度在各处是同一层，相邻的崖面对得上）
 GroundColor rock_color(double p_y, double p_t) {
     const GroundColor base = lerp(CLIFF_TOP, CLIFF_LOW, p_t);
@@ -44,10 +51,16 @@ GroundColor rock_color(double p_y, double p_t) {
 // 地皮色按这一点的地表份额混（WorldTerrain::cover，与散布同一份：地皮变色的地方就是树变稀的地方），再按坡度露岩、按河染滩与河床。
 // p_sample：这一点的地形取样（河床、河漫滩的权重）；没有河网时按栅格的溪涧格染湿。
 // p_footprint：顶点间距——远处的粗块过渡带放宽、细噪声退掉，免得几十米一个顶点时颜色闪成噪点
-GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_sample, double p_x, double p_z, double p_normal_y, double p_footprint) {
+GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_sample, double p_x, double p_z, double p_normal_y, double p_footprint, GroundSeason &r_season) {
     const CoverBlend &blend = p_terrain.get_cover();
     const CoverStencil st = blend.stencil(p_x, p_z);
     const CoverMix mix = blend.mix(st, p_x, p_z, p_footprint);
+    // 季相份额：草坡、高山草甸、湿地、崖缘的草、虚空外推的地（当草坡）、有河网时的「河道」滩草都是草；可耕地、梯田是田
+    double herb = mix.w[0] + 0.5 * mix.w[COVER_CLIFF_EDGE] + mix.w[COVER_ALPINE] + mix.w[COVER_GRASS] + 0.7 * mix.w[COVER_WETLAND] +
+            (p_terrain.has_rivers() ? mix.w[COVER_RIVER] : 0.0);
+    double field = mix.w[COVER_ARABLE] + mix.w[COVER_TERRACE];
+    double shrub = mix.w[COVER_SHRUB];
+    double forest = mix.w[COVER_FOREST];
     GroundColor out{ 0.0f, 0.0f, 0.0f };
     for (int k = 0; k < COVER_CLASSES; k++) {
         if (mix.w[k] > 0.0f) {
@@ -59,14 +72,22 @@ GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_s
     // 约 30° 起露岩、45° 全岩；门槛按细噪声进退（远处退掉）
     const double breakup = ROCK_BREAKUP * (1.0 - cover_ramp(p_footprint, 0.0, 0.75 * ROCK_BREAKUP_FEATURE_M));
     const double rock = (0.86 - p_normal_y) / 0.16 + breakup * hash_fbm(COLOR_SEED + 3, p_x, p_z, ROCK_BREAKUP_FEATURE_M, 2);
+    double bare = std::clamp(rock, 0.0, 1.0); // 露岩、河床不换季
     if (p_terrain.has_rivers()) {
         out = lerp(out, MEADOW, 0.45 * p_sample.bank);
         out = lerp(out, ROCK, rock);
         out = lerp(out, GRAVEL, p_sample.bed); // 河床不论坡度都是卵石
+        herb += 0.45 * p_sample.bank * (1.0 - herb);
+        bare = 1.0 - (1.0 - bare) * (1.0 - std::clamp(double(p_sample.bed), 0.0, 1.0));
     } else {
         const WorldGrid &g = p_terrain.get_grid();
         out = lerp(out, WET, 0.55 * blend.smooth(st, [&g](size_t k) { return g.stream[k] ? 1.0 : 0.0; }));
         out = lerp(out, ROCK, rock);
+    }
+    const double keep = 1.0 - bare;
+    const double shares[4] = { herb, field, shrub, forest };
+    for (int k = 0; k < 4; k++) {
+        r_season.v[k] = uint8_t(std::lround(std::clamp(shares[k] * keep, 0.0, 1.0) * 255.0));
     }
     const float shade = float(1.0 + 0.07 * hash_fbm(COLOR_SEED + 2, p_x, p_z, 30.0, 3));
     return { out.r * shade, out.g * shade, out.b * shade };
@@ -77,10 +98,11 @@ struct Builder {
     bool collide;
     double wall_row = WALL_ROW_M; // 崖壁分段高：粗块（远处）按格距分，不必那么细
 
-    int vertex(float x, float y, float z, float nx, float ny, float nz, const GroundColor &c) {
+    int vertex(float x, float y, float z, float nx, float ny, float nz, const GroundColor &c, const GroundSeason &s = GroundSeason()) {
         mesh.positions.insert(mesh.positions.end(), { x, y, z });
         mesh.normals.insert(mesh.normals.end(), { nx, ny, nz });
         mesh.colors.insert(mesh.colors.end(), { c.r, c.g, c.b, 1.0f });
+        mesh.season.insert(mesh.season.end(), s.v, s.v + 4);
         return int(mesh.positions.size() / 3) - 1;
     }
     // a → b → c 须是从正面看的顺时针
@@ -246,6 +268,7 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
     std::vector<int> top_id(size_t(N + 1) * (N + 1), -1), bottom_id(size_t(N + 1) * (N + 1), -1);
     std::vector<float> top_pos(size_t(N + 1) * (N + 1) * 3), bottom_pos(size_t(N + 1) * (N + 1) * 3);
     std::vector<GroundColor> top_color(size_t(N + 1) * (N + 1));
+    std::vector<GroundSeason> top_season(size_t(N + 1) * (N + 1));
     std::vector<float> top_normal(size_t(N + 1) * (N + 1) * 3);
     auto node = [&](int i, int j) { return size_t(i) * (N + 1) + size_t(j); };
 
@@ -262,8 +285,8 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             float nz = float(-(at(i + 1, j).top - at(i - 1, j).top) / (2.0 * step));
             float len = std::sqrt(nx * nx + 1.0f + nz * nz);
             const float ux = nx / len, uy = 1.0f / len, uz = nz / len;
-            top_color[k] = ground_color(p_terrain, c, mesh.origin_x + x, mesh.origin_z + z, uy, step);
-            top_id[k] = b.vertex(x, float(c.top), z, ux, uy, uz, top_color[k]);
+            top_color[k] = ground_color(p_terrain, c, mesh.origin_x + x, mesh.origin_z + z, uy, step, top_season[k]);
+            top_id[k] = b.vertex(x, float(c.top), z, ux, uy, uz, top_color[k], top_season[k]);
             top_pos[k * 3] = x, top_pos[k * 3 + 1] = float(c.top), top_pos[k * 3 + 2] = z;
             top_normal[k * 3] = ux, top_normal[k * 3 + 1] = uy, top_normal[k * 3 + 2] = uz;
 
@@ -339,10 +362,10 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                     // 裙边：邻块精度不同，两边的面对不齐，垂一圈同色的面把缝遮住（两面都画，从哪边看都有）
                     const float a_low[3] = { top_pos[ka * 3], top_pos[ka * 3 + 1] - skirt, top_pos[ka * 3 + 2] };
                     const float b_low[3] = { top_pos[kb * 3], top_pos[kb * 3 + 1] - skirt, top_pos[kb * 3 + 2] };
-                    const int va = b.vertex(top_pos[ka * 3], top_pos[ka * 3 + 1], top_pos[ka * 3 + 2], top_normal[ka * 3], top_normal[ka * 3 + 1], top_normal[ka * 3 + 2], top_color[ka]);
-                    const int vb = b.vertex(top_pos[kb * 3], top_pos[kb * 3 + 1], top_pos[kb * 3 + 2], top_normal[kb * 3], top_normal[kb * 3 + 1], top_normal[kb * 3 + 2], top_color[kb]);
-                    const int vc = b.vertex(b_low[0], b_low[1], b_low[2], top_normal[kb * 3], top_normal[kb * 3 + 1], top_normal[kb * 3 + 2], top_color[kb]);
-                    const int vd = b.vertex(a_low[0], a_low[1], a_low[2], top_normal[ka * 3], top_normal[ka * 3 + 1], top_normal[ka * 3 + 2], top_color[ka]);
+                    const int va = b.vertex(top_pos[ka * 3], top_pos[ka * 3 + 1], top_pos[ka * 3 + 2], top_normal[ka * 3], top_normal[ka * 3 + 1], top_normal[ka * 3 + 2], top_color[ka], top_season[ka]);
+                    const int vb = b.vertex(top_pos[kb * 3], top_pos[kb * 3 + 1], top_pos[kb * 3 + 2], top_normal[kb * 3], top_normal[kb * 3 + 1], top_normal[kb * 3 + 2], top_color[kb], top_season[kb]);
+                    const int vc = b.vertex(b_low[0], b_low[1], b_low[2], top_normal[kb * 3], top_normal[kb * 3 + 1], top_normal[kb * 3 + 2], top_color[kb], top_season[kb]);
+                    const int vd = b.vertex(a_low[0], a_low[1], a_low[2], top_normal[ka * 3], top_normal[ka * 3 + 1], top_normal[ka * 3 + 2], top_color[ka], top_season[ka]);
                     b.triangle(va, vb, vc, false);
                     b.triangle(va, vc, vd, false);
                     b.triangle(va, vc, vb, false);

@@ -92,3 +92,6 @@ islands = Array[NodePath]([NodePath("../IslandA"), NodePath("../IslandB")])
 [node name="Ship" parent="." instance=ExtResource("1_ship")]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
+
+[node name="Atmosphere" type="Atmosphere" parent="."]
+map_path = NodePath("../Map")

@@ -55,7 +55,6 @@ mesh = SubResource("cloud_mesh")
 [node name="World" type="World" parent="."]
 data_dir = "res://worlds/2051"
 terrain_seed = 2051
-calendar_offset = 3.0
 
 [node name="Farm" type="Farm" parent="World"]
 
@@ -72,3 +71,6 @@ seed = 2051
 
 [node name="Ship" parent="." instance=ExtResource("2_ship")]
 layout = PackedStringArray("0,0,-2:storage", "0,0,-1:power", "0,0,0:bridge")
+
+[node name="Atmosphere" type="Atmosphere" parent="."]
+map_path = NodePath("../World")

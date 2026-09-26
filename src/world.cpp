@@ -24,6 +24,7 @@
 #include "hinterland.h"
 #include "scatter_stream.h"
 #include "site_stream.h"
+#include "weather_view.h"
 #include "world_clock.h"
 #include "world_ground.h"
 #include "world_map.h"
@@ -39,6 +40,7 @@ constexpr double RIVER_RETARGET_M = 64.0; // 焦点挪了这么远才重新挑�
 constexpr double RIVER_SYNC_M = 1000.0; // 瞬移时这么近的水面块当场建好，远的照常排队
 constexpr double PREPARE_RADIUS_M = 80.0; // 瞬移时落点这么近的叶块当场建好
 constexpr const char *RIVER_SHADER = "res://shaders/river.gdshader";
+constexpr const char *GROUND_SHADER = "res://shaders/ground.gdshader";
 
 double tile_distance(const TileLayout &p_layout, const TileKey &p_key, double p_x, double p_z) {
     double x, z;
@@ -117,11 +119,11 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_runoff"), &World::get_runoff);
     ClassDB::bind_method(D_METHOD("get_river_at", "x", "z"), &World::get_river_at);
     ClassDB::bind_method(D_METHOD("get_river_chunk_count"), &World::get_river_chunk_count);
+    ClassDB::bind_method(D_METHOD("get_weather_at", "x", "z", "y"), &World::get_weather_at, DEFVAL(NAN));
+    ClassDB::bind_method(D_METHOD("get_snow_line"), &World::get_snow_line);
     ClassDB::bind_method(D_METHOD("find_river_near", "x", "z", "radius", "min_acc_km2"), &World::find_river_near);
     ClassDB::bind_method(D_METHOD("set_river_radius", "value"), &World::set_river_radius);
     ClassDB::bind_method(D_METHOD("get_river_radius"), &World::get_river_radius);
-    ClassDB::bind_method(D_METHOD("set_calendar_offset", "value"), &World::set_calendar_offset);
-    ClassDB::bind_method(D_METHOD("get_calendar_offset"), &World::get_calendar_offset);
     ClassDB::bind_method(D_METHOD("set_runoff_override", "value"), &World::set_runoff_override);
     ClassDB::bind_method(D_METHOD("get_runoff_override"), &World::get_runoff_override);
     ClassDB::bind_method(D_METHOD("get_stream_frame", "frame"), &World::get_stream_frame);
@@ -149,7 +151,6 @@ void World::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "split", PROPERTY_HINT_RANGE, "0.5,4,0.05"), "set_split", "get_split");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "build_threads", PROPERTY_HINT_RANGE, "1,16,1"), "set_build_threads", "get_build_threads");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "river_radius", PROPERTY_HINT_RANGE, "500,20000,100"), "set_river_radius", "get_river_radius");
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "calendar_offset", PROPERTY_HINT_RANGE, "0,400,1"), "set_calendar_offset", "get_calendar_offset");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "runoff_override", PROPERTY_HINT_RANGE, "-1,8,0.05"), "set_runoff_override", "get_runoff_override");
 }
 
@@ -199,23 +200,38 @@ bool World::load() {
         isl.max_shore_m = double(row.get("max_shore_m", 1000.0));
         islands.push_back(isl);
     }
-    // 河的水情：weather.tsv（没有就常年一个样）；年降水与一年几天也给河网定尺度
+    // 河的水情与天气：weather.tsv（没有就常年一个样、常年晴）；年降水与一年几天也给河网定尺度
     RiverRules river_rules;
+    Climate climate;
     const String weather_path = data_dir.path_join("weather.tsv");
     if (FileAccess::file_exists(weather_path)) {
-        const PackedByteArray weather = FileAccess::get_file_as_bytes(weather_path);
-        if (RiverRegime::parse(std::string(reinterpret_cast<const char *>(weather.ptr()), size_t(weather.size())), regime, error)) {
+        const PackedByteArray bytes = FileAccess::get_file_as_bytes(weather_path);
+        const std::string text(reinterpret_cast<const char *>(bytes.ptr()), size_t(bytes.size()));
+        if (RiverRegime::parse(text, regime, error)) {
             river_rules.precip_mm = regime.precip_mm();
             river_rules.year_days = regime.year_days();
         } else {
             ERR_PRINT(String("World: 读不了 ") + weather_path + "：" + String::utf8(error.c_str()));
             regime = RiverRegime::steady();
         }
+        if (!parse_climate(text, climate, error)) {
+            ERR_PRINT(String("World: weather.tsv 的天气读不了：") + String::utf8(error.c_str()));
+            climate = Climate();
+        }
     } else {
         regime = RiverRegime::steady();
     }
     terrain = WorldTerrain(grid, islands, uint64_t(terrain_seed), river_rules);
     layout = TileLayout(grid);
+    // 天气模型：慢变量（积雪、冰、物候）按海拔分箱，箱从岛群最低的地到最高的峰
+    double low = 1e18, high = -1e18;
+    for (size_t k = 0; k < grid.height.size(); k++) {
+        if (grid.shore[k] > 0.0f) {
+            low = std::min(low, double(grid.height[k]));
+            high = std::max(high, double(grid.height[k]));
+        }
+    }
+    weather = climate.days.empty() || low > high ? WeatherModel() : WeatherModel(climate, low, high);
 
     // 码头：在原地形上量好，再把停机坪压进地形里——都在第一块地面开建之前
     const String sites_path = data_dir.path_join("sites.tsv");
@@ -243,11 +259,22 @@ bool World::load() {
         }
     }
 
-    ground_material.instantiate();
-    ground_material->set_roughness(1.0);
-    ground_material->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-    // 顶点色是按 sRGB 调的；不声明的话引擎当线性值用，整片地会发白
-    ground_material->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
+    const Ref<Shader> ground_shader = ResourceLoader::get_singleton()->load(GROUND_SHADER);
+    if (ground_shader.is_valid()) {
+        Ref<ShaderMaterial> m;
+        m.instantiate();
+        m->set_shader(ground_shader);
+        ground_material = m;
+    } else {
+        ERR_PRINT(String("World: 读不了地皮着色器 ") + GROUND_SHADER + String(U"，地皮不换季、不盖雪"));
+        Ref<StandardMaterial3D> m;
+        m.instantiate();
+        m->set_roughness(1.0);
+        m->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+        // 顶点色是按 sRGB 调的；不声明的话引擎当线性值用，整片地会发白
+        m->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
+        ground_material = m;
+    }
 
     if (terrain.has_rivers()) {
         river_chunk_keys = river_chunks(terrain, river_mesh_rules);
@@ -283,8 +310,7 @@ void World::update_runoff() {
         runoff = runoff_override;
     } else {
         const WorldClock *clock = WorldClock::get_singleton();
-        const double day = clock ? clock->get_seconds() / clock->get_rules().day_seconds : 0.0;
-        runoff = regime.runoff(day + calendar_offset);
+        runoff = regime.runoff(clock ? clock->get_calendar_day() : 0.0);
     }
     if (river_material.is_valid()) {
         river_material->set_shader_parameter("runoff", runoff);
@@ -428,6 +454,24 @@ int World::get_river_chunk_count() const {
     return n;
 }
 
+Dictionary World::get_weather_at(double p_x, double p_z, double p_y) const {
+    if (!loaded) {
+        return Dictionary();
+    }
+    double y = p_y;
+    if (std::isnan(y)) {
+        y = get_surface_height(p_x, p_z);
+        y = std::isnan(y) ? 0.0 : y;
+    }
+    const WorldClock *clock = WorldClock::get_singleton();
+    return weather_view::to_dictionary(weather.sample(clock ? clock->get_calendar_day() : 0.0, p_x, p_z, y));
+}
+
+double World::get_snow_line() const {
+    const WorldClock *clock = WorldClock::get_singleton();
+    return loaded ? weather.snow_line(clock ? clock->get_calendar_day() : 0.0) : 1e9;
+}
+
 Dictionary World::get_river_at(double p_x, double p_z) const {
     Dictionary out;
     RiverHit hit;
@@ -501,6 +545,8 @@ JobPool::Work World::tile_job(const TileKey &p_key) const {
         for (int64_t k = 0; k < out->colors.size(); k++) {
             c[k] = Color(m.colors[size_t(k) * 4], m.colors[size_t(k) * 4 + 1], m.colors[size_t(k) * 4 + 2], m.colors[size_t(k) * 4 + 3]);
         }
+        out->season.resize(int64_t(m.season.size()));
+        std::copy(m.season.begin(), m.season.end(), out->season.ptrw());
         out->indices = int32s(m.indices);
         // 碰撞按生成的先后切段（一行行生成的，相邻的三角面挨着：每段是一条带子）
         const int64_t faces = int64_t(m.collision.size() / 9);
@@ -552,10 +598,12 @@ void World::adopt(std::unique_ptr<TileArrays> p_tile) {
         arrays[Mesh::ARRAY_VERTEX] = m.vertices;
         arrays[Mesh::ARRAY_NORMAL] = m.normals;
         arrays[Mesh::ARRAY_COLOR] = m.colors;
+        arrays[Mesh::ARRAY_CUSTOM0] = m.season;
         arrays[Mesh::ARRAY_INDEX] = m.indices;
         Ref<ArrayMesh> mesh;
         mesh.instantiate();
-        mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+        const uint64_t format = uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT;
+        mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
         mesh->surface_set_material(0, ground_material);
 
         Node3D *root = memnew(Node3D);

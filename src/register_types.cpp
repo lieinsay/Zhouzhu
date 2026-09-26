@@ -3,6 +3,7 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/godot.hpp>
 
+#include "atmosphere.h"
 #include "build_overlay.h"
 #include "build_panel.h"
 #include "dev_tools.h"
@@ -69,6 +70,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Hinterland);
     GDREGISTER_CLASS(Expedition);
     GDREGISTER_CLASS(DevTools);
+    GDREGISTER_CLASS(Atmosphere);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {

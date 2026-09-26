@@ -12,6 +12,7 @@
 
 class Farm;
 class SharedLooks;
+class WeatherModel;
 
 // 地面宿主：Farm、Shipyard、Settlement、Villagers 挂在它下面、变换留在原点，用它的局部坐标，地面只问它。
 // 游戏尺度的岛（Island）、岛群（World，Farm 与 Shipyard 挂它）、岛群里的一个村（WorldVillage，Settlement 与 Villagers 挂它）、
@@ -39,6 +40,8 @@ public:
     virtual YardPlan host_yard() const { return YardPlan(); }
     // 共用的材质与网格（shared_looks.h）：岛群里的村都用 World 那一份；返回 nullptr 的宿主，聚落与村民各自建一份
     virtual SharedLooks *host_looks() const { return nullptr; }
+    // 这张地图的天气（weather.h）：有气候数据的地图（岛群）给，村子据此按时令过日子、庄稼按气温长；没有返回 nullptr（照固定钟点、庄稼照常）
+    virtual const WeatherModel *host_weather() const { return nullptr; }
 
     // 局部坐标原点在地图坐标里的 xz（双精度：岛群里的村离原点几十公里，单精度的节点位置不够）
     virtual void host_origin(double &r_x, double &r_z) const {

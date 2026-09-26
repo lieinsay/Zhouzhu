@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <map>
 #include <memory>
 #include <vector>
@@ -24,6 +25,7 @@
 #include "shared_looks.h"
 #include "stream_meter.h"
 #include "terrain_tile.h"
+#include "weather.h"
 #include "world_grid.h"
 #include "world_sites.h"
 #include "world_terrain.h"
@@ -37,6 +39,7 @@ struct TileArrays : JobResult {
     double origin_x = 0.0, origin_z = 0.0;
     godot::PackedVector3Array vertices, normals;
     godot::PackedColorArray colors;
+    godot::PackedByteArray season; // 季相份额（CUSTOM0，RGBA8）
     godot::PackedInt32Array indices;
     // 碰撞三角面（只有叶块有），切成几段：一段一个凹多边形，主线程一段段挂（整块一次挂要十几毫秒）
     std::vector<godot::PackedVector3Array> face_parts;
@@ -67,7 +70,9 @@ struct RiverArrays : JobResult {
 // 也是地图宿主（MapHost）：码头、脚下的聚落（SiteStream 铺好的村）、流式焦点、岛群地图面板都由它回答。
 // 河（world_river.h）：栅格有水文就在建地形时建好河网、凿好河道；weather.tsv 给一年的水情。水面按 river_mesh 切成块，
 // 焦点 river_radius 内的块挂上、远了拆；共用一份水面材质（game/shaders/river.gdshader），每帧按全局钟算出今天的径流指数设进去，
-// 所以水涨水落不用重建网格。第 0 天对上 weather.tsv 的第 calendar_offset 天；runoff_override ≥ 0 时不看钟（测试、调试用）。
+// 所以水涨水落不用重建网格。径流按全局钟的历日取（WorldClock 的日历：历日 0 = weather.tsv 的第 0 天）；runoff_override ≥ 0 时不看钟（测试、调试用）。
+// 天气（weather.h）：同一份 weather.tsv 建天气模型（海拔分箱按栅格的高低），地图宿主 / 地面宿主把它交给天与光（Atmosphere）、村子、农田、账房；
+// 地面块的顶点带季相份额，地皮着色器（game/shaders/ground.gdshader）按时令换季、按雪线盖雪。
 // 资源（resource_sites.h、resource_scatter.h）：加载时按 resources.tsv 把全部采场与地标规划好（只有位置），采场的存量账也在这里（按全局钟回满）；
 // 实物由 SiteStream 走近了才摆。地上一株株的散布物由 ResourceScatter 按块生成（ScatterStream 交给这里的任务池），
 // 摆放、碰撞在 ScatterStream 节点；散布物采空、长回的账（ScatterLedger）也在这里。
@@ -119,13 +124,13 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     godot::Vector3 focus;
     godot::Vector3 targeted_focus;
     bool has_target = false;
-    godot::Ref<godot::StandardMaterial3D> ground_material;
+    godot::Ref<godot::Material> ground_material; // 地皮着色器；读不了退回顶点色的 StandardMaterial3D（不换季）
 
     // 河
     double river_radius = 4000.0; // 焦点这么远以内的水面块挂上（×1.25 以外拆）
-    double calendar_offset = 0.0; // 游戏第 0 天是 weather.tsv 的第几天
     double runoff_override = -1.0; // ≥ 0：径流指数钉死在这个值
     RiverRegime regime;
+    WeatherModel weather; // weather.tsv 的天气（没有这份文件就是没有数据的：常年晴）
     RiverMeshRules river_mesh_rules;
     std::vector<RiverChunkKey> river_chunk_keys; // 有河的块
     std::map<int64_t, godot::Node3D *> river_nodes; // 已挂上的水面块（空块为 nullptr）
@@ -183,6 +188,13 @@ public:
     double get_runoff() const { return runoff; }
     godot::Dictionary get_river_at(double p_x, double p_z) const;
     int get_river_chunk_count() const;
+    // 天气：此刻（全局钟的历日）该处（世界 xz；y 缺省取地面高）的天气，见 WeatherSample：{ kind, kind_name, day_kind, day_kind_name, cloud, cloud_cover, coverage,
+    // precip, precip_mm_h, snow_frac, temp_c, wind_x, wind_z, wind_ms, storm, fog, fog_top, wet, front, sailable, snow_mm, ice, green, leaf, autumn, spring, crop }
+    godot::Dictionary get_weather_at(double p_x, double p_z, double p_y = NAN) const;
+    // 雪线（积雪 > 1 mm 最低的海拔；没有雪为 1e9）、河的冰线
+    double get_snow_line() const;
+    WeatherModel &get_weather() { return weather; }
+    const WeatherModel &get_weather() const { return weather; }
     // 该处附近（p_radius 以内）汇流至少 p_min_acc_km2 的河中线上最近一点：
     // { x, z, dir_x, dir_z（顺水）, width, floodplain, acc_km2, mouth（这条河出不出岸缘）, mouth_x, mouth_z, mouth_dir_x, mouth_dir_z（河口的流向）}；没有返回空字典
     godot::Dictionary find_river_near(double p_x, double p_z, double p_radius, double p_min_acc_km2) const;
@@ -247,6 +259,7 @@ public:
     Farm *host_farm() const override; // 下面的 Farm 子节点
     YardPlan host_yard() const override; // 主码头旁的船坞坪
     void host_origin(double &r_x, double &r_z) const override { r_x = r_z = 0.0; }
+    const WeatherModel *host_weather() const override { return loaded ? &weather : nullptr; }
 
     // MapHost
     godot::Node3D *map_node() override { return this; }
@@ -280,6 +293,7 @@ public:
     void map_resource_taken(const ResourceSpot &p_spot) override;
     bool map_landing_height(double p_x, double p_z, double &r_y) const override { return terrain.surface(p_x, p_z, r_y); }
     bool map_water_at(double p_x, double p_z) const override;
+    WeatherModel *map_weather() override { return loaded ? &weather : nullptr; }
 
     void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
     godot::NodePath get_sites_path() const { return sites_path; }
@@ -296,8 +310,6 @@ public:
     int get_build_threads() const { return build_threads; }
     void set_river_radius(double p_value) { river_radius = p_value; }
     double get_river_radius() const { return river_radius; }
-    void set_calendar_offset(double p_value) { calendar_offset = p_value; }
-    double get_calendar_offset() const { return calendar_offset; }
     void set_runoff_override(double p_value);
     double get_runoff_override() const { return runoff_override; }
 };

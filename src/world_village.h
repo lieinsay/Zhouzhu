@@ -149,6 +149,7 @@ public:
     uint64_t host_seed() const override { return seed * 2654435761ull + uint64_t(site.id) * 2ull + (site.hamlet ? 1ull : 0ull); }
     Farm *host_farm() const override { return world ? world->host_farm() : nullptr; }
     SharedLooks *host_looks() const override { return world ? &world->get_looks() : nullptr; }
+    const WeatherModel *host_weather() const override { return world ? world->host_weather() : nullptr; }
     void host_origin(double &r_x, double &r_z) const override {
         r_x = site.x;
         r_z = site.z;

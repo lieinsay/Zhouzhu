@@ -129,6 +129,8 @@ target_sources(
     zhouzhu
     PRIVATE
         ${ZHOUZHU_CORE_SOURCES}
+        src/atmosphere.cpp
+        src/atmosphere.h
         src/build_mode.cpp
         src/build_mode.h
         src/build_overlay.cpp
@@ -211,6 +213,8 @@ target_sources(
         src/template_library.h
         src/villagers.cpp
         src/villagers.h
+        src/weather_view.cpp
+        src/weather_view.h
         src/world.cpp
         src/world.h
         src/world_clock.cpp

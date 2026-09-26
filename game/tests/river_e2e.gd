@@ -1,6 +1,6 @@
 extends Node
 ## 岛群的河（world_2051.tscn）端到端测试：
-## 开局（不钉径流，跟着钟与 world_2051 的 calendar_offset）：雨季里水不小，出生点最近的溪沿途 200 m 处处有水、有水深
+## 开局（不钉径流，跟着全局钟的日历：开局是一年里的第 3 天）：雨季里水不小，出生点最近的溪沿途 200 m 处处有水、有水深
 ## → 主码头附近找一条大河 → 瞬移到河滩上、面朝下游 → 脚下有河况、HUD 报河宽水深 → 河心的地面是河床、水面高过河床
 ## → 径流钉在年均 / 枯水 / 大水三档：水深、水面宽跟着涨落，大水漫出平岸 → 源头的小溪枯水时断流 → 放开钉子后跟着钟走、换日子水情变
 ## → 到这条河的河口看跌水 → 飞到河的上空往下游看。
@@ -211,13 +211,14 @@ func _physics_process(delta: float) -> void:
 			# 放开钉子：径流跟着钟与日历走；换一天水情不同
 			world.set_runoff_override(-1.0)
 			var seen := {}
-			for day in [2.0, 30.0, 60.0, 100.0, 150.0, 200.0, 250.0, 300.0]:
-				world.set_calendar_offset(day)
+			var shift0: int = GameClock.get_calendar_shift()
+			for day in [2, 30, 60, 100, 150, 200, 250, 300]:
+				GameClock.set_calendar_shift(day - GameClock.get_calendar_start())  # 拨日历（钟不走）
 				world.set_runoff_override(-1.0)
 				seen[snappedf(world.get_runoff(), 0.01)] = true
 			if not _expect(seen.size() >= 4, "换了日子径流不变：%s" % [seen.keys()]):
 				return
-			world.set_calendar_offset(0.0)
+			GameClock.set_calendar_shift(shift0)
 			world.set_runoff_override(1.5)
 			if not river.get("mouth", false):
 				_finish(true, "大河不出岸缘，不看河口")

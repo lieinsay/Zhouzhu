@@ -58,6 +58,9 @@ struct TileMesh {
     std::vector<float> positions; // xyz
     std::vector<float> normals; // xyz
     std::vector<float> colors; // rgba，sRGB
+    // 季相份额（每顶点 4 个字节，0..255）：草（枯黄）、田（休耕 / 青苗 / 黄熟）、灌丛（冬天发褐）、林（落叶的秋色、光秃）；
+    // 崖壁、岛底、露岩、河床是 0。地皮着色器（game/shaders/ground.gdshader）按它与时令给顶点色换季
+    std::vector<uint8_t> season;
     std::vector<int32_t> indices; // 正面顺时针（Godot 约定）
     std::vector<float> collision; // 每三个点（xyz）一个三角面；只有叶块才有
     int land_quads = 0;

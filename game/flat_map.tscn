@@ -66,3 +66,6 @@ layout_path = "res://settlements/flat_map.txt"
 [node name="Ship" parent="." instance=ExtResource("1_ship")]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
+
+[node name="Atmosphere" type="Atmosphere" parent="."]
+map_path = NodePath("../Map")
