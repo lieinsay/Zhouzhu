@@ -414,26 +414,22 @@ void SiteStream::ensure_near(const Vector3 &p_point) {
     }
     refresh(1 << 20);
     collect_jobs();
-    // 落点周围 folk_radius 以内的村：当场备好、挂上，近处的格子挂齐细模，招好村民
+    // 落点跟前（ENSURE_VILLAGE_M 以内）的村：当场备好、挂上，ENSURE_DETAIL_M 以内的格子挂齐细模（人可能就落在房子边上）；
+    // 更远的村、更远的格子、村民（账本与导航格）都照常在后台备、分帧挂——瞬移那一帧不再把一两公里内的村子连人一起铺完
     const int count = int(world->get_sites().settlements.size());
     for (int k = 0; k < count; k++) {
-        if (edge_distance(k) > folk_radius) {
+        if (edge_distance(k) > ENSURE_VILLAGE_M) {
             continue;
         }
         WorldVillage *village = villages.count(k) ? villages[k] : build_village(k, prepare_now(k));
         for (int c = 0; c < village->get_cell_count(); c++) {
-            if (village->cell_distance_to(c, focus) <= detail_radius) {
+            if (village->cell_distance_to(c, focus) <= ENSURE_DETAIL_M) {
                 world->get_pool().cancel(JobPool::key(JobKind::CELL, cell_id(k, c)));
                 village->mount_cell_now(c);
             }
         }
-        if (!village->has_folk()) {
-            const auto nav = navs.find(k);
-            const bool fresh = nav != navs.end() && nav->second.layout_sig == layout_signature(village->get_settlement()->get_model());
-            village->set_folk(true, per_house, max_folk, fresh ? nav->second.nav : nullptr); // 账本没开就当场开、导航格没备就现算
-            navs.erase(k);
-        }
     }
+    refresh_villages(); // 刚挂上的村：远一点的格子、村民交给后台
 }
 
 void SiteStream::refresh(int p_build_budget) {

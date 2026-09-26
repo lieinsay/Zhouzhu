@@ -22,7 +22,7 @@ class Hinterland;
 //     村民——离村子边缘 folk_radius 以内：远处账房先开好账（后台，request 插队）、后台备好导航格，两样都齐了才招（每村 max_folk 封顶）；
 //   采场与地标：resource_radius 以内摆出采掘面与堆场、泉眼 / 温泉 / 洞穴的样子（便宜，每回最多摆 resource_budget 处，由近及远）。
 // 都带回滞：拆的距离比建的远 hysteresis 倍；布置模式改过还没存的村不拆（拆了改动就丢了）。
-// 瞬移前调 ensure_near：落点周围 folk_radius 以内的村子当场备好、挂上、近处的格子挂齐细模、招好村民（后台排着的就地拿过来做），更远的照常排队。
+// 瞬移前调 ensure_near：落点跟前的村子当场备好、挂上、脚边的格子挂齐细模（后台排着的就地拿过来做），更远的格子、村子、村民照常排队、分帧挂。
 // 这里只持有「哪些建了、哪些备着」；码头几何在 World，村子清单在 WorldVillage，村子的账（人、仓、田）在远处账房 Hinterland（可以不接：那就走近了从头招人）。
 class SiteStream : public godot::Node3D {
     GDCLASS(SiteStream, godot::Node3D)
@@ -76,6 +76,8 @@ class SiteStream : public godot::Node3D {
     JobPool::Work cell_job(WorldVillage *p_village, int p_cell) const;
     JobPool::Work nav_job(WorldVillage *p_village) const;
     static uint64_t cell_id(int p_index, int p_cell) { return uint64_t(p_index) * 65536ull + uint64_t(p_cell); }
+    static constexpr double ENSURE_VILLAGE_M = 150.0; // 瞬移：落点离村子边缘这么近的村当场挂
+    static constexpr double ENSURE_DETAIL_M = 120.0; // 瞬移：这么近的格子当场挂齐细模
 
 protected:
     static void _bind_methods();
@@ -86,7 +88,7 @@ public:
 
     void set_focus(const godot::Vector3 &p_focus);
     godot::Vector3 get_focus() const { return focus; }
-    // 同步把 p_point 周围该有的码头、村子（folk_radius 以内：简模 + 近处格子的细模 + 村民）都建好（瞬移、开局用）
+    // 同步把 p_point 周围该有的码头、跟前的村子（简模 + 脚边格子的细模）建好（瞬移、开局用）；别的交给后台，几帧到一两秒内挂齐
     void ensure_near(const godot::Vector3 &p_point);
 
     // 查询（给地图、HUD、测试）

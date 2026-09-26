@@ -37,6 +37,7 @@ constexpr int64_t COLLISION_PART_FACES = 2048; // 叶块的碰撞按这么多个
 constexpr uint64_t RIVER_BUDGET_USEC = 2000; // 每帧最多花这么久挂水面块
 constexpr double RIVER_RETARGET_M = 64.0; // 焦点挪了这么远才重新挑水面块
 constexpr double RIVER_SYNC_M = 1000.0; // 瞬移时这么近的水面块当场建好，远的照常排队
+constexpr double PREPARE_RADIUS_M = 80.0; // 瞬移时落点这么近的叶块当场建好
 constexpr const char *RIVER_SHADER = "res://shaders/river.gdshader";
 
 double tile_distance(const TileLayout &p_layout, const TileKey &p_key, double p_x, double p_z) {
@@ -1165,9 +1166,9 @@ void World::map_focus(const Vector3 &p_global) {
 }
 
 void World::map_prepare(const Vector3 &p_global) {
-    prepare_at(p_global);
+    prepare_at(p_global, PREPARE_RADIUS_M); // 脚下与周围一圈的叶块（带碰撞）当场建好，更远的照常排队
     if (site_stream) {
-        site_stream->ensure_near(p_global); // 码头的栈桥、近处的村子与村民，人落地前就在
+        site_stream->ensure_near(p_global); // 码头的栈桥、落点跟前的村子（细模带碰撞），人落地前就在
     }
     if (scatter_stream) {
         scatter_stream->ensure_near(p_global); // 近处的树与树干的碰撞（村子先铺：压着房子的要藏）
