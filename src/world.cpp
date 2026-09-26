@@ -55,6 +55,7 @@ void World::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_ready_at", "point"), &World::is_ready_at);
     ClassDB::bind_method(D_METHOD("get_surface_height", "x", "z"), &World::get_surface_height);
     ClassDB::bind_method(D_METHOD("get_island_at", "x", "z"), &World::get_island_at);
+    ClassDB::bind_method(D_METHOD("get_cover_at", "x", "z"), &World::get_cover_at);
     ClassDB::bind_method(D_METHOD("get_info"), &World::get_info);
     ClassDB::bind_method(D_METHOD("is_loaded"), &World::is_loaded);
     ClassDB::bind_method(D_METHOD("get_tile_count"), &World::get_tile_count);
@@ -700,6 +701,25 @@ double World::get_surface_height(double p_x, double p_z) const {
 
 int World::get_island_at(double p_x, double p_z) const {
     return loaded ? int(grid.island[grid.nearest_cell(p_x, p_z)]) : -1;
+}
+
+Dictionary World::get_cover_at(double p_x, double p_z) const {
+    Dictionary out;
+    if (!loaded) {
+        return out;
+    }
+    const CoverMix m = terrain.cover(p_x, p_z);
+    PackedFloat32Array weights;
+    weights.resize(COVER_CLASSES);
+    for (int k = 0; k < COVER_CLASSES; k++) {
+        weights.set(k, m.w[k]);
+    }
+    const int dominant = m.dominant();
+    const Array classes = Dictionary(info.get("landcover", Dictionary())).get("classes", Array());
+    out["dominant"] = dominant;
+    out["name"] = dominant < classes.size() ? String(classes[dominant]) : String();
+    out["weights"] = weights;
+    return out;
 }
 
 int World::get_pending_count() const {

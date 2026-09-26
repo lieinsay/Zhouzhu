@@ -139,6 +139,9 @@ public:
     double get_surface_height(double p_x, double p_z) const;
     // 该处最近的岛号（没有地也给最近的那座）；未加载返回 -1
     int get_island_at(double p_x, double p_z) const;
+    // 该处（世界 xz）的地表份额（与地皮、散布同一份，见 cover_blend.h）：
+    // { dominant（份额最大的地表类下标）, name（world.json 的类名）, weights（各类的份额，下标即地表类）}；未加载返回空字典
+    godot::Dictionary get_cover_at(double p_x, double p_z) const;
     godot::Dictionary get_info() const { return info; }
     bool is_loaded() const { return loaded; }
     int get_tile_count() const { return int(tiles.size()); }
