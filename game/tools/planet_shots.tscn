@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tools/planet_shots.gd" id="1_driver"]
+
+[node name="PlanetShots" type="Node"]
+script = ExtResource("1_driver")
