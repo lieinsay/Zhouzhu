@@ -65,8 +65,28 @@ Fade look_fade(ScatterLook p_look, bool p_felled) {
     }
 }
 
-void set_fade(GeometryInstance3D *p_view, const Fade &p_fade, bool p_can_fade) {
+// 时令（着色器的实例参数 season）：阔叶里落叶树的份额、草本的枯黄、挂雪、随风摆
+Vector4 look_season(ScatterLook p_look, bool p_felled) {
+    if (p_felled) {
+        return Vector4(0.0f, 0.0f, 1.0f, 0.0f);
+    }
+    switch (p_look) {
+        case ScatterLook::BROADLEAF:
+            return Vector4(0.8f, 0.0f, 0.7f, 1.0f);
+        case ScatterLook::CONIFER:
+            return Vector4(0.0f, 0.0f, 0.85f, 0.6f);
+        case ScatterLook::SHRUB:
+            return Vector4(0.0f, 0.6f, 0.6f, 0.8f);
+        case ScatterLook::REEDS:
+            return Vector4(0.0f, 1.0f, 0.3f, 1.4f);
+        default:
+            return Vector4(0.0f, 0.0f, 1.0f, 0.0f);
+    }
+}
+
+void set_fade(GeometryInstance3D *p_view, const Fade &p_fade, bool p_can_fade, const Vector4 &p_season = Vector4(0.0f, 0.0f, 1.0f, 0.0f)) {
     if (p_can_fade) {
+        p_view->set_instance_shader_parameter("season", p_season);
         p_view->set_instance_shader_parameter("fade", Vector4(p_fade.in0, p_fade.in1, p_fade.out0, p_fade.out1));
     } else {
         // 着色器没有：退回按块的可见距离
@@ -466,7 +486,7 @@ void ScatterStream::adopt_far(std::unique_ptr<FarTreesJob> p_job) {
         }
         MultiMeshInstance3D *view = make_view(conifer ? "conifer" : "broadleaf", meshes.low_mesh(conifer ? ScatterLook::CONIFER : ScatterLook::BROADLEAF),
                 conifer ? p_job->conifer : p_job->broadleaf, count, false);
-        set_fade(view, fade, true);
+        set_fade(view, fade, true, look_season(conifer ? ScatterLook::CONIFER : ScatterLook::BROADLEAF, false));
         root->add_child(view);
     }
     add_child(root);
@@ -594,7 +614,7 @@ void ScatterStream::build_visuals(Chunk &r_chunk) {
             }
             const String name = String(deposits::scatter(l).key) + (felled ? String("_felled") : String());
             MultiMeshInstance3D *view = make_view(name, mesh, buffer, int(list.size()), tree && !felled);
-            set_fade(view, look_fade(l, felled != 0), can_fade);
+            set_fade(view, look_fade(l, felled != 0), can_fade, look_season(l, felled != 0));
             root->add_child(view);
             // 树：细模往外接一份低模（同一批实例），到 FAR_LOD_M 交给远处的林子
             if (tree && !felled && can_fade) {
@@ -604,7 +624,7 @@ void ScatterStream::build_visuals(Chunk &r_chunk) {
                 fade.out0 = float(FAR_LOD_M - FAR_BAND_M);
                 fade.out1 = float(FAR_LOD_M + FAR_BAND_M);
                 MultiMeshInstance3D *low = make_view(name + String("_low"), meshes.low_mesh(l), buffer, int(list.size()), true);
-                set_fade(low, fade, true);
+                set_fade(low, fade, true, look_season(l, false));
                 root->add_child(low);
             }
         }

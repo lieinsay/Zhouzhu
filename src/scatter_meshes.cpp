@@ -133,8 +133,10 @@ struct Builder {
 constexpr const char *SCATTER_SHADER = "res://shaders/scatter.gdshader";
 
 const Color BARK(0.36f, 0.27f, 0.18f);
-const Color LEAF(0.27f, 0.45f, 0.2f);
-const Color NEEDLE(0.17f, 0.34f, 0.2f);
+// 叶子的顶点色 alpha 标 0.5（别的是 1）：着色器按它给叶子换季、随风摆
+constexpr float FOLIAGE = 0.5f;
+const Color LEAF(0.27f, 0.45f, 0.2f, FOLIAGE);
+const Color NEEDLE(0.17f, 0.34f, 0.2f, FOLIAGE);
 
 Ref<ArrayMesh> make(ScatterLook p_look, const Ref<Material> &p_material) {
     Builder b;
@@ -152,7 +154,7 @@ Ref<ArrayMesh> make(ScatterLook p_look, const Ref<Material> &p_material) {
             b.frustum(Vector3(), 5.6, 1.2, 9.0, 0.0, 8, NEEDLE.lightened(0.1f));
         } break;
         case ScatterLook::SHRUB: {
-            const Color leaf(0.33f, 0.44f, 0.2f);
+            const Color leaf(0.33f, 0.44f, 0.2f, FOLIAGE);
             b.blob(Vector3(0, 0.55f, 0), Vector3(1.0f, 0.75f, 1.0f), 0, 0.15, 21, leaf);
             b.blob(Vector3(0.5f, 0.45f, 0.35f), Vector3(0.7f, 0.55f, 0.7f), 0, 0.15, 22, leaf.lightened(0.07f));
             b.frustum(Vector3(), -0.1, 0.08, 0.4, 0.05, 4, BARK);
@@ -162,7 +164,8 @@ Ref<ArrayMesh> make(ScatterLook p_look, const Ref<Material> &p_material) {
             for (int k = 0; k < 12; k++) {
                 const double a = TAU * k / 12.0 + 0.4 * std::sin(k * 1.7), r = 0.25 + 0.55 * std::fmod(k * 0.618, 1.0);
                 const double h = 1.5 + 0.9 * std::fmod(k * 0.382 + 0.2, 1.0);
-                const Color stalk = Color(0.62f, 0.6f, 0.36f).lerp(Color(0.4f, 0.52f, 0.28f), float(std::fmod(k * 0.27, 1.0)));
+                Color stalk = Color(0.62f, 0.6f, 0.36f).lerp(Color(0.4f, 0.52f, 0.28f), float(std::fmod(k * 0.27, 1.0)));
+                stalk.a = FOLIAGE;
                 b.frustum(Vector3(real_t(r * std::cos(a)), 0, real_t(r * std::sin(a))), -0.1, 0.05, h, 0.0, 3, stalk);
             }
         } break;
