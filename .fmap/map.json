@@ -1773,6 +1773,252 @@
       ],
       "since": "e49",
       "parent": "scatter-stream"
+    },
+    {
+      "id": "skyisle-export-weather",
+      "label": "逐日天气与气候参数",
+      "detail": "export_skyisle.py --weather：把 weather_y0.csv 与 climate.json、planet.json、config 里的直减率雪温转成 weather.tsv（旧四列照读）。雨量、气温、类型不变，河的水情逐位一样。",
+      "tag": "工具",
+      "evidence": "336 天；RiverRegime 照旧解析（world_rivers 单测）",
+      "sources": [
+        "tools/export_skyisle.py",
+        "game/worlds/2051/weather.tsv"
+      ],
+      "since": "e50",
+      "parent": "skyisle-export"
+    },
+    {
+      "id": "world-clock-calendar",
+      "label": "日历与拨时间",
+      "detail": "开局是一年里的第 calendar_start 天（3）；shift_days 只动日历，step_hours 往回拨 = 偏移退一天 + 钟往前，set_date 拨到某天某时，paused；get_date 与「一月初四 · 巳时 · 第 1 日 · 09:40」。钟的秒只往前，村子的账也只往前结。",
+      "tag": "引擎构件",
+      "evidence": "weather_e2e：往回拨两个钟头日子不变、钟的秒只往前；拨到深冬第 170 天",
+      "sources": [
+        "src/world_clock.h",
+        "src/world_clock.cpp"
+      ],
+      "since": "e51",
+      "parent": "world-clock"
+    },
+    {
+      "id": "world-node-weather",
+      "label": "天气模型与宿主一问",
+      "detail": "加载时按岛群的高低建 WeatherModel；map_weather 给天与光与开发者覆盖，host_weather 给挂在下面的农田与村子；get_weather_at / get_snow_line 给脚本；calendar_offset 去掉，径流按全局钟的历日取。",
+      "tag": "场景角色",
+      "evidence": "weather_e2e 深冬雪线 733 m、主峰积雪 131 mm；river_e2e PASS",
+      "sources": [
+        "src/world.h",
+        "src/world.cpp",
+        "src/weather_view.h",
+        "src/weather_view.cpp"
+      ],
+      "since": "e52",
+      "parent": "world-node"
+    },
+    {
+      "id": "terrain-tile-season",
+      "label": "季相份额",
+      "detail": "ground_color 按地表过渡场的份额算出草（草坡、高山草甸、湿地、滩草）、田（可耕地、梯田）、灌丛、林，乘上不露岩不是河床的份额，存成 CUSTOM0 的 RGBA8。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "weather_shots：林子四季、草坡枯黄",
+      "sources": [
+        "src/terrain_tile.h",
+        "src/terrain_tile.cpp"
+      ],
+      "since": "e53",
+      "parent": "terrain-tile"
+    },
+    {
+      "id": "scatter-stream-season",
+      "label": "落叶、雪压、随风摆",
+      "detail": "散布着色器读海拔表：阔叶里八成落叶（按根的位置哈希），叶子按叶量抖动着掉光；叶子顶点色 alpha 标 0.5，各种样子的时令参数（落叶份额、枯黄、挂雪、摆幅）按 MultiMesh 设。",
+      "tag": "引擎构件",
+      "evidence": "weather_shots forest_warm / autumn / winter / spring",
+      "sources": [
+        "game/shaders/scatter.gdshader",
+        "src/scatter_meshes.cpp",
+        "src/scatter_stream.cpp"
+      ],
+      "since": "e54",
+      "parent": "scatter-stream"
+    },
+    {
+      "id": "world-river-ice",
+      "label": "封冻与发浑",
+      "detail": "河的着色器按河床海拔从海拔表取负积温：平岸深 1.2 m 以下的溪涧过 8、河过 20 封冻，冰面不起波纹；径流过 1.8 起水色发浑。",
+      "tag": "引擎构件",
+      "evidence": "体检：冷季河冰线 1066 m",
+      "sources": [
+        "game/shaders/river.gdshader"
+      ],
+      "since": "e55",
+      "parent": "world-river-water"
+    },
+    {
+      "id": "village-sim-season",
+      "label": "按时令过日子",
+      "detail": "分界点由 SeasonView 给（出工收工随日出日落）；坏天气歇工按 15 分钟一格、在格边上变（远处半小时一结与近处逐帧同一个格边）；推进一开始此刻该在家就叫回家（覆盖一下子变天）；冷得不长就不播不开荒；账本里的地按村心的时令倍数长。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：冬天七点半没人出门、风暴里当场往家走停了再出门、有时令的六天远近差 13%",
+      "sources": [
+        "src/day_clock.h",
+        "src/day_clock.cpp",
+        "src/village_sim.cpp",
+        "src/villager_model.cpp",
+        "src/field_book.cpp"
+      ],
+      "since": "e56",
+      "parent": "village-sim"
+    },
+    {
+      "id": "farm-model-season",
+      "label": "庄稼按气温长",
+      "detail": "growth_rate 乘时令倍数；勘察记下地块的海拔，FarmModel::advance 逐格问 GrowthClimate（近处是 FieldClimate）；Farm.get_season_factor，农事提示说天冷。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "weather_e2e：深冬台面播粟时令倍数 0、快进一个钟头长势不动",
+      "sources": [
+        "src/farm_model.h",
+        "src/farm_model.cpp",
+        "src/farm.cpp",
+        "src/farm_hand.cpp"
+      ],
+      "since": "e57",
+      "parent": "farm-model"
+    },
+    {
+      "id": "flight-wind",
+      "label": "风推船",
+      "detail": "FlightInput 多一个风推的速度：对地速度 = 对空气的（追油门、侧滑衰减）+ 风推的那份；wind_drift 从风算出推多少。Ship 掌舵时问天与光要风。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "17 条旧 e2e 照过（开局风小不漂）",
+      "sources": [
+        "src/flight_model.h",
+        "src/flight_model.cpp",
+        "src/ship.cpp"
+      ],
+      "since": "e58",
+      "parent": "flight-model"
+    },
+    {
+      "id": "dev-tools-weather",
+      "label": "F6 时间与天气",
+      "detail": "面板读出日期、日出日落、太阳月亮、此地天气、今天的大势、雪线、河冰线、物候与覆盖；键与按钮拨时间、换天气；覆盖只在设定变了或换了场景时推给当前场景的天与光。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "weather_e2e：F6 读数、→ 拨钟、3 换小雨、0 换回自动、换到平板岛覆盖跟过去",
+      "sources": [
+        "src/dev_tools.h",
+        "src/dev_tools.cpp",
+        "src/input_actions.cpp"
+      ],
+      "since": "e59",
+      "parent": "dev-tools-node"
+    },
+    {
+      "id": "site-survey-weather",
+      "label": "一年的天气摘要",
+      "detail": "有 weather.tsv 就报 12 个月的表，再抽邑治、最高的村、最远的村一年里每两个钟头取一次局地天气：雨雪差出四成不达标；远处结算按时令（--calendar）。",
+      "tag": "工具",
+      "evidence": "2051：局地雨雪 99–109%；邑治歇工 46 个钟头、高处 228 个钟头",
+      "sources": [
+        "tools/site_survey.cpp"
+      ],
+      "since": "e60",
+      "parent": "site-survey-tool"
+    },
+    {
+      "id": "almanac",
+      "label": "历法与日月",
+      "detail": "历日 → 年季月日（「三月初四」）；太阳赤纬、高度、方位、日出日落（极昼极夜夹住），朔望 28 天的月亮；日出日落定出工收工。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests almanac（南半球冬夏、极昼极夜、朔望）",
+      "sources": [
+        "src/almanac.h",
+        "src/almanac.cpp"
+      ],
+      "since": "e61"
+    },
+    {
+      "id": "weather-noise",
+      "label": "云团噪声",
+      "detail": "整数哈希值噪声 + 四层 fbm，按 1024 格循环；覆盖率 → 门槛的分位表。与 game/shaders/weather.gdshaderinc 逐式相同：天上的云与地上的雨同一张场。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "对 numpy 参照 1e-9；分位表重取样 ±0.03",
+      "sources": [
+        "src/weather_noise.h",
+        "src/weather_noise.cpp"
+      ],
+      "since": "e61"
+    },
+    {
+      "id": "weather-model",
+      "label": "天气模型",
+      "detail": "解析 weather.tsv；某一刻某一点 = 前后两天的大势按锋面（顺风扫过、过渡 2.5 h）混 + 随风漂的云团 + 海拔（直减率、日变化、地形抬升、雨雪相变、云海漫顶）；积雪、冰、物候、作物、地湿按海拔分箱逐日一年；开发者覆盖按 blend 渐入、气温偏移等效成海拔。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：雨量对账、换天连续、锋面晚到 1.6 h、冷季雪线 424 m、覆盖",
+      "sources": [
+        "src/weather.h",
+        "src/weather.cpp"
+      ],
+      "since": "e61"
+    },
+    {
+      "id": "local-season",
+      "label": "一处的时令",
+      "detail": "天气模型 + 村心位置与海拔 + 日历偏移 → SeasonView：作息、坏天气歇工（按格）、庄稼倍数、这时节播不播；FieldClimate 给近处农田逐格。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests local season",
+      "sources": [
+        "src/local_season.h",
+        "src/local_season.cpp"
+      ],
+      "since": "e61"
+    },
+    {
+      "id": "atmosphere",
+      "label": "Atmosphere 天与光",
+      "detail": "每个场景一个：按相机处的天气平滑后驱动日月光、天空着色器、环境光与雾（云海漫顶的高度雾）、雨雪粒子（屋里不下）、闪电；每帧设全局着色器参数；开发者覆盖渐入渐出；给 HUD、船、面板读天气。",
+      "tag": "场景角色",
+      "evidence": "weather_e2e：夜里日光熄、风暴下雨打闪、大雪新雪积起来",
+      "sources": [
+        "src/atmosphere.h",
+        "src/atmosphere.cpp"
+      ],
+      "since": "e61"
+    },
+    {
+      "id": "weather-shaders",
+      "label": "天空、地皮与共用着色器",
+      "detail": "sky.gdshader（昼夜晨昏、日月星、云层、阴沉、雨雾、闪电）、ground.gdshader（换季、盖雪、雨后变深）、weather.gdshaderinc（云团噪声与海拔表取样、全局参数声明）。",
+      "tag": "资产",
+      "evidence": "weather_shots 目视",
+      "sources": [
+        "game/shaders/sky.gdshader",
+        "game/shaders/ground.gdshader",
+        "game/shaders/weather.gdshaderinc",
+        "game/project.godot"
+      ],
+      "since": "e61"
+    },
+    {
+      "id": "weather-e2e",
+      "label": "时间与天气端到端测试",
+      "detail": "开局季节、F6 面板、夜里、往回拨钟、深冬雪线与播下不长、风暴歇工与风停出门、偏冷、大雪、换地图覆盖跟过去。",
+      "tag": "验收",
+      "evidence": "PASS",
+      "sources": [
+        "game/tests/weather_e2e.gd"
+      ],
+      "since": "e61"
+    },
+    {
+      "id": "weather-shots",
+      "label": "时令与天气截图工具",
+      "detail": "码头望山的昼夜晨昏与雨暴、云海漫顶、主峰四季与暴风雪、阔叶林四季、高处的溪冬夏；主峰、林子、溪按地形自己找。",
+      "tag": "工具",
+      "sources": [
+        "game/tools/weather_shots.gd"
+      ],
+      "since": "e61"
     }
   ],
   "edges": [
@@ -3967,6 +4213,262 @@
       "from": "scatter-stream-far",
       "to": "scatter-stream-lod",
       "label": "淡入淡出"
+    },
+    {
+      "from": "weather-model",
+      "to": "almanac",
+      "label": "日历、日照",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "weather-model",
+      "to": "weather-noise",
+      "label": "云团",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "weather-model",
+      "to": "skyisle-export-weather",
+      "label": "weather.tsv",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "local-season",
+      "to": "weather-model",
+      "label": "那一处的天气",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "local-season",
+      "to": "almanac",
+      "label": "日出日落",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "village-sim-season",
+      "to": "local-season",
+      "label": "作息、歇工、冬闲",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "farm-model-season",
+      "to": "local-season",
+      "label": "时令倍数",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "villagers-node",
+      "to": "local-season",
+      "label": "近处的时令",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "hinterland",
+      "to": "local-season",
+      "label": "远处的时令",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "farm-node",
+      "to": "local-season",
+      "label": "逐格按海拔",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "world-node-weather",
+      "to": "weather-model",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "world-clock-calendar",
+      "to": "almanac",
+      "label": "日期",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "atmosphere",
+      "to": "weather-model",
+      "label": "相机处的天气",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "atmosphere",
+      "to": "world-clock-calendar",
+      "label": "历日",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "atmosphere",
+      "to": "map-host",
+      "label": "地图的天气模型",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "atmosphere",
+      "to": "weather-shaders",
+      "label": "天空参数、全局参数",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "weather-shaders",
+      "to": "weather-noise",
+      "label": "同一个式子",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "terrain-tile-season",
+      "to": "world-terrain-cover",
+      "label": "地表份额",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "scatter-stream-season",
+      "to": "weather-shaders",
+      "label": "海拔表",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "world-river-ice",
+      "to": "weather-shaders",
+      "label": "负积温",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "dev-tools-weather",
+      "to": "atmosphere",
+      "label": "覆盖、读数",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "dev-tools-weather",
+      "to": "world-clock-calendar",
+      "label": "拨时间",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "expedition",
+      "to": "atmosphere",
+      "label": "HUD 的季节天气、风",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "ship",
+      "to": "atmosphere",
+      "label": "风",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "ship",
+      "to": "flight-wind",
+      "label": "下风漂",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "site-survey-weather",
+      "to": "weather-model",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "site-survey-weather",
+      "to": "local-season",
+      "label": "歇工钟头",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "weather-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "weather-e2e",
+      "to": "dev-tools-weather",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "weather-shots",
+      "to": "world-2051-scene",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "weather-shots",
+      "to": "atmosphere",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "world-2051-scene",
+      "to": "atmosphere",
+      "chains": [
+        "seasons-weather"
+      ]
+    },
+    {
+      "from": "main-scene",
+      "to": "atmosphere",
+      "chains": [
+        "seasons-weather"
+      ]
     }
   ],
   "chains": [
@@ -5311,6 +5813,129 @@
         "wild-landing",
         "world-2051-scene",
         "scatter-stream"
+      ]
+    },
+    {
+      "id": "seasons-weather",
+      "title": "拓展：时令与天气——日升月落、四季流转，各地天气不一样、换天有过渡",
+      "story": "玩家在岛群里过日子：太阳东升西落、夜里星月当空，天气一道锋面一道锋面地扫过来，头顶的乌云底下正下着雨，山上下雪、河谷下雨；日子过到冷季，林子染黄落光、山头积雪、高处的溪封冻，村民日出而作、大雨就回家、冬天不再播种，地里的庄稼冷了不长；掌舵时风大，船往下风漂。开发者按 F6 拨到任何一天任何钟点、换成任意天气看它的样子，默认就是此时此地该有的天气。",
+      "date": "2026-09-26",
+      "color": "#c264d9",
+      "commits": "35d1bea..d2c9a6c",
+      "steps": [
+        {
+          "text": "离线导出：weather.tsv 带上这处的纬度、黄赤交角、台面、直减率、季名与每天的风",
+          "nodes": [
+            "skyisle-export",
+            "skyisle-export-weather"
+          ]
+        },
+        {
+          "text": "进入岛群：World 用它建天气模型——逐日大势按锋面顺风扫过、云团随风漂、按海拔定气温雨雪，积雪、冰、物候按海拔分箱算好一年",
+          "nodes": [
+            "world-2051-scene",
+            "world-node",
+            "world-node-weather",
+            "weather-model",
+            "weather-noise",
+            "almanac"
+          ]
+        },
+        {
+          "text": "全局钟走着，历日 = 钟的日 + 日历偏移；天与光按相机那一点取天气，驱动日月、天空与同一张云团场的云、雾、雨雪、闪电，HUD 报季节与此地天气",
+          "nodes": [
+            "world-clock",
+            "world-clock-calendar",
+            "atmosphere",
+            "almanac",
+            "weather-shaders",
+            "expedition"
+          ]
+        },
+        {
+          "text": "地皮、树、河读海拔表换季：草枯黄、田休耕与黄熟、阔叶秋色落光、雪线下来、高处的溪封冻",
+          "nodes": [
+            "terrain-tile",
+            "terrain-tile-season",
+            "scatter-stream",
+            "scatter-stream-season",
+            "world-river-water",
+            "world-river-ice",
+            "weather-shaders"
+          ]
+        },
+        {
+          "text": "村子按时令过日子：日出出工、日落收工，大雨风暴当场回家、雨停再出门，冬天不播；庄稼按气温长，远处账房同一套",
+          "nodes": [
+            "villagers-node",
+            "hinterland",
+            "village-sim",
+            "village-sim-season",
+            "local-season",
+            "farm-node",
+            "farm-model",
+            "farm-model-season"
+          ]
+        },
+        {
+          "text": "掌舵时风大船往下风漂，HUD 多一行风与禁航",
+          "nodes": [
+            "ship",
+            "flight-model",
+            "flight-wind",
+            "atmosphere",
+            "expedition"
+          ]
+        },
+        {
+          "text": "开发者按 F6：拨钟点（能往回）、拨日子月季、暂停快进；天气默认自动，换成九种天气或偏气温，村子庄稼跟着变，换地图照样生效",
+          "nodes": [
+            "dev-tools-node",
+            "dev-tools-weather",
+            "world-clock-calendar",
+            "atmosphere"
+          ]
+        }
+      ],
+      "nodes": [
+        "almanac",
+        "weather-noise",
+        "weather-model",
+        "local-season",
+        "atmosphere",
+        "weather-shaders",
+        "weather-e2e",
+        "weather-shots",
+        "skyisle-export",
+        "skyisle-export-weather",
+        "world-2051-scene",
+        "world-node",
+        "world-node-weather",
+        "world-clock",
+        "world-clock-calendar",
+        "expedition",
+        "terrain-tile",
+        "terrain-tile-season",
+        "scatter-stream",
+        "scatter-stream-season",
+        "world-river-water",
+        "world-river-ice",
+        "villagers-node",
+        "hinterland",
+        "village-sim",
+        "village-sim-season",
+        "farm-node",
+        "farm-model",
+        "farm-model-season",
+        "ship",
+        "flight-model",
+        "flight-wind",
+        "dev-tools-node",
+        "dev-tools-weather",
+        "map-host",
+        "world-terrain-cover",
+        "site-survey-weather",
+        "main-scene"
       ]
     }
   ],
@@ -6828,6 +7453,320 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e50",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：导出长出逐日天气与气候参数",
+      "summary": "weather.tsv 头里多纬度、黄赤交角、北半球夏至、台面、直减率、岸缘、云海漫多高、雪的气温、季名；每天多风向风速、能否出航、风暴号；--weather 只写这一份。",
+      "commits": "35d1bea",
+      "nodes": [
+        "skyisle-export",
+        "skyisle-export-weather"
+      ],
+      "info": {
+        "node": "skyisle-export",
+        "children": [
+          "skyisle-export-weather"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e51",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：全局钟长出日历",
+      "summary": "历日 = 钟的日 + 日历偏移；拨日子只动日历、往回拨钟点是日历退一天钟往前走、暂停；钟点文字带日期。",
+      "commits": "695f086",
+      "nodes": [
+        "world-clock",
+        "world-clock-calendar"
+      ],
+      "info": {
+        "node": "world-clock",
+        "children": [
+          "world-clock-calendar"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e52",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：World 长出天气模型与季相地皮",
+      "summary": "同一份 weather.tsv 建天气模型，径流改看全局日历，宿主多一问 host_weather / map_weather。",
+      "commits": "e0c1a65",
+      "nodes": [
+        "world-node",
+        "world-node-weather"
+      ],
+      "info": {
+        "node": "world-node",
+        "children": [
+          "world-node-weather"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e53",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：分块地面长出季相份额",
+      "summary": "每个顶点多带草、田、灌丛、林的份额（露岩、河床是 0），地皮着色器按它换季。",
+      "commits": "e0c1a65",
+      "nodes": [
+        "terrain-tile",
+        "terrain-tile-season"
+      ],
+      "info": {
+        "node": "terrain-tile",
+        "children": [
+          "terrain-tile-season"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e54",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：散布摆放长出时令",
+      "summary": "落叶树秋色、落光、春芽，常绿冬暗，灌丛苇枯黄，积雪盖顶，随风摆。",
+      "commits": "37b06b1",
+      "nodes": [
+        "scatter-stream",
+        "scatter-stream-season"
+      ],
+      "info": {
+        "node": "scatter-stream",
+        "children": [
+          "scatter-stream-season"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e55",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：河的水面长出封冻与发浑",
+      "summary": "按河床海拔的负积温封冻，涨水发浑。",
+      "commits": "37b06b1",
+      "nodes": [
+        "world-river-water",
+        "world-river-ice"
+      ],
+      "info": {
+        "node": "world-river-water",
+        "children": [
+          "world-river-ice"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e56",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：村落模拟长出按时令过日子",
+      "summary": "作息随日出日落、坏天气歇工、冷天不播；远近同一套。",
+      "commits": "e42c7a9..005c6b9",
+      "nodes": [
+        "village-sim",
+        "village-sim-season"
+      ],
+      "info": {
+        "node": "village-sim",
+        "children": [
+          "village-sim-season"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e57",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：农田长出按气温长",
+      "summary": "日均温 5 °C 以下不长、16 °C 以上照常，积雪盖着不长；近处逐格按海拔。",
+      "commits": "e42c7a9..005c6b9",
+      "nodes": [
+        "farm-model",
+        "farm-model-season"
+      ],
+      "info": {
+        "node": "farm-model",
+        "children": [
+          "farm-model-season"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e58",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：飞行模型长出风推船",
+      "summary": "风过 5 m/s 船往下风漂，到 15 m/s 漂风速的六成；没人掌舵的船不漂。",
+      "commits": "93340da..0717f0f",
+      "nodes": [
+        "flight-model",
+        "flight-wind"
+      ],
+      "info": {
+        "node": "flight-model",
+        "children": [
+          "flight-wind"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e59",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：开发者工具长出 F6 时间与天气",
+      "summary": "拨钟点（能往回）、拨日子月季、暂停与快进档；天气默认自动，可覆盖成九种、偏气温；换地图照样生效。",
+      "commits": "a76c517",
+      "nodes": [
+        "dev-tools-node",
+        "dev-tools-weather"
+      ],
+      "info": {
+        "node": "dev-tools-node",
+        "children": [
+          "dev-tools-weather"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e60",
+      "type": "extend",
+      "date": "2026-09-26",
+      "title": "拓展「时令与天气」：体检长出一年的天气摘要",
+      "summary": "逐月的台面均温、雨量、雪线、河冰线、物候、作息；三处村子一年的局地雨雪对账与歇工钟头。",
+      "commits": "fd9d94d",
+      "nodes": [
+        "site-survey-tool",
+        "site-survey-weather"
+      ],
+      "info": {
+        "node": "site-survey-tool",
+        "children": [
+          "site-survey-weather"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e61",
+      "type": "slice",
+      "date": "2026-09-26",
+      "title": "切片：拓展：时令与天气——日升月落、四季流转，各地天气不一样、换天有过渡",
+      "summary": "玩家在岛群里过日子：太阳东升西落、夜里星月当空，天气一道锋面一道锋面地扫过来，头顶的乌云底下正下着雨，山上下雪、河谷下雨；日子过到冷季，林子染黄落光、山头积雪、高处的溪封冻，村民日出而作、大雨就回家、冬天不再播种，地里的庄稼冷了不长；掌舵时风大，船往下风漂。开发者按 F6 拨到任何一天任何钟点、换成任意天气看它的样子，默认就是此时此地该有的天气。",
+      "commits": "35d1bea..d2c9a6c",
+      "chain": "seasons-weather",
+      "nodes": [
+        "almanac",
+        "weather-noise",
+        "weather-model",
+        "local-season",
+        "atmosphere",
+        "weather-shaders",
+        "weather-e2e",
+        "weather-shots",
+        "skyisle-export",
+        "skyisle-export-weather",
+        "world-2051-scene",
+        "world-node",
+        "world-node-weather",
+        "world-clock",
+        "world-clock-calendar",
+        "expedition",
+        "terrain-tile",
+        "terrain-tile-season",
+        "scatter-stream",
+        "scatter-stream-season",
+        "world-river-water",
+        "world-river-ice",
+        "villagers-node",
+        "hinterland",
+        "village-sim",
+        "village-sim-season",
+        "farm-node",
+        "farm-model",
+        "farm-model-season",
+        "ship",
+        "flight-model",
+        "flight-wind",
+        "dev-tools-node",
+        "dev-tools-weather",
+        "map-host",
+        "world-terrain-cover",
+        "site-survey-weather",
+        "main-scene"
+      ],
+      "info": {
+        "created": [
+          "almanac",
+          "weather-noise",
+          "weather-model",
+          "local-season",
+          "atmosphere",
+          "weather-shaders",
+          "weather-e2e",
+          "weather-shots"
+        ],
+        "reused": [
+          "skyisle-export",
+          "skyisle-export-weather",
+          "world-2051-scene",
+          "world-node",
+          "world-node-weather",
+          "world-clock",
+          "world-clock-calendar",
+          "expedition",
+          "terrain-tile",
+          "terrain-tile-season",
+          "scatter-stream",
+          "scatter-stream-season",
+          "world-river-water",
+          "world-river-ice",
+          "villagers-node",
+          "hinterland",
+          "village-sim",
+          "village-sim-season",
+          "farm-node",
+          "farm-model",
+          "farm-model-season",
+          "ship",
+          "flight-model",
+          "flight-wind",
+          "dev-tools-node",
+          "dev-tools-weather",
+          "map-host",
+          "world-terrain-cover",
+          "site-survey-weather",
+          "main-scene"
+        ],
+        "updated": []
       }
     }
   ],
