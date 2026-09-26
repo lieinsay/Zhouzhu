@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include <godot_cpp/classes/geometry_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
@@ -111,6 +112,11 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     struct Tile {
         TileKey key;
         godot::Node3D *node = nullptr;
+        godot::GeometryInstance3D *view = nullptr; // 画出来的网格（剔除余量按真球面的下弯放，见 update_cull_margins）
+        bool far_mode = false; // 离相机远（着色器压近了）：引擎不剔，这里按视锥的四个侧面自己剔；不投影
+        bool shown = true;
+        godot::Vector3 sphere_center; // 自己剔用的包围球（平面坐标）
+        double sphere_radius = 0.0;
         godot::StaticBody3D *body = nullptr; // 叶块的碰撞体（碰撞一段段往上挂）
         int parts_left = 0; // 还有几段碰撞没挂
     };
@@ -124,6 +130,10 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     godot::Vector3 focus;
     godot::Vector3 targeted_focus;
     bool has_target = false;
+    // 画面按真球面弯（PlanetView）：远处的块下弯几百米，引擎按平面的包围盒剔除会错剪地平线附近的块——按离相机最远的角的下弯放宽
+    bool margins_on = false;
+    bool margins_dirty = false;
+    godot::Vector3 margin_cam;
     godot::Ref<godot::Material> ground_material; // 地皮着色器；读不了退回顶点色的 StandardMaterial3D（不换季）
 
     // 河
@@ -152,6 +162,7 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     void adopt_ready_tiles();
     void mount_collision(const CollisionPart &p_part);
     void prune();
+    void update_cull_margins();
     bool target_has(const TileKey &p_key) const;
     void update_runoff();
     void stream_rivers(bool p_all);

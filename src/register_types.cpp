@@ -8,6 +8,7 @@
 #include "build_panel.h"
 #include "dev_tools.h"
 #include "expedition.h"
+#include "far_groups.h"
 #include "farm.h"
 #include "flat_map.h"
 #include "hinterland.h"
@@ -16,6 +17,7 @@
 #include "island.h"
 #include "island_map.h"
 #include "placed_props.h"
+#include "planet_view.h"
 #include "player.h"
 #include "refit_overlay.h"
 #include "refit_panel.h"
@@ -71,6 +73,8 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Expedition);
     GDREGISTER_CLASS(DevTools);
     GDREGISTER_CLASS(Atmosphere);
+    GDREGISTER_CLASS(PlanetView);
+    GDREGISTER_CLASS(FarGroups);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {

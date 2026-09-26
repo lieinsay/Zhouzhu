@@ -145,6 +145,10 @@ target_sources(
         src/build_panel.h
         src/curved_material.cpp
         src/curved_material.h
+        src/far_groups.cpp
+        src/far_groups.h
+        src/planet_view.cpp
+        src/planet_view.h
         src/dev_tools.cpp
         src/dev_tools.h
         src/dock_builder.cpp

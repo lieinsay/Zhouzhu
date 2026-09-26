@@ -5,6 +5,7 @@
 #include <limits>
 
 #include <godot_cpp/classes/array_mesh.hpp>
+#include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/collision_shape3d.hpp>
 #include <godot_cpp/classes/concave_polygon_shape3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -15,13 +16,16 @@
 #include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/static_body3d.hpp>
 #include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "dock_builder.h"
 #include "farm.h"
 #include "shipyard.h"
 #include "hinterland.h"
+#include "planet_view.h"
 #include "scatter_stream.h"
 #include "site_stream.h"
 #include "weather_view.h"
@@ -41,6 +45,10 @@ constexpr double RIVER_SYNC_M = 1000.0; // 瞬移时这么近的水面块当场�
 constexpr double PREPARE_RADIUS_M = 80.0; // 瞬移时落点这么近的叶块当场建好
 constexpr const char *RIVER_SHADER = "res://shaders/river.gdshader";
 constexpr const char *GROUND_SHADER = "res://shaders/ground.gdshader";
+constexpr double MARGIN_RETARGET_M = 500.0; // 相机挪了这么远才重算地面块的剔除余量
+constexpr double MARGIN_SLACK_M = 40.0;
+constexpr double FAR_MODE_M = 9000.0; // 块离相机最近处比这远：着色器压近了它，自己剔、不投影（见 update_cull_margins）
+constexpr real_t FAR_MODE_MARGIN_M = 1.0e6f;
 
 double tile_distance(const TileLayout &p_layout, const TileKey &p_key, double p_x, double p_z) {
     double x, z;
@@ -612,6 +620,8 @@ void World::adopt(std::unique_ptr<TileArrays> p_tile) {
         MeshInstance3D *view = memnew(MeshInstance3D);
         view->set_mesh(mesh);
         root->add_child(view);
+        tile.view = view;
+        margins_dirty = true;
         if (!m.face_parts.empty()) {
             tile.body = memnew(StaticBody3D);
             root->add_child(tile.body);
@@ -718,6 +728,101 @@ void World::_process(double /* p_delta */) {
     }
     adopt_ready_tiles();
     prune();
+    update_cull_margins();
+}
+
+void World::update_cull_margins() {
+    const PlanetView *pv = PlanetView::active_view();
+    if (!pv) {
+        if (margins_on) {
+            for (auto &it : tiles) {
+                Tile &t = it.second;
+                if (t.view) {
+                    t.view->set_extra_cull_margin(0.0f);
+                    t.view->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_ON);
+                    t.view->set_visible(true);
+                    t.far_mode = false;
+                    t.shown = true;
+                }
+            }
+            margins_on = false;
+        }
+        return;
+    }
+    const PlanetVec c = pv->camera_flat();
+    const Vector3 cam(real_t(c.x), real_t(c.y), real_t(c.z));
+    const bool moved = !margins_on || Vector2(cam.x - margin_cam.x, cam.z - margin_cam.z).length() > MARGIN_RETARGET_M;
+    if (moved || margins_dirty) {
+        margins_on = true;
+        margins_dirty = false;
+        margin_cam = cam;
+        for (auto &it : tiles) {
+            Tile &t = it.second;
+            if (!t.view) {
+                continue;
+            }
+            double x = 0.0, z = 0.0;
+            layout.corner(t.key, x, z);
+            const double s = layout.size(t.key.level);
+            const double dx = std::max(std::abs(x - c.x), std::abs(x + s - c.x)), dz = std::max(std::abs(z - c.z), std::abs(z + s - c.z));
+            const double nx = std::max({ x - c.x, 0.0, c.x - (x + s) }), nz = std::max({ z - c.z, 0.0, c.z - (z + s) });
+            // 离相机最远的角：下弯 d²/2R；另加相机还会挪的那一段（MARGIN_RETARGET_M 内）与水平的细微收缩
+            const double far = std::hypot(dx, dz) + MARGIN_RETARGET_M;
+            const double near = std::max(0.0, std::hypot(nx, nz) - MARGIN_RETARGET_M);
+            const bool far_mode = near > FAR_MODE_M;
+            if (far_mode) {
+                // 远块：着色器把它沿视线压到 26 km 以内（CurveSqueeze），按平面位置的包围盒会被远平面剪掉、侧面放宽了又白画——
+                // 引擎不剔（余量放到极大），每帧按视锥的四个侧面自己剔（侧面过相机，压近不改方向）；也不投影（阴影只画 500 m 内，压过的位置投出来是错的）
+                const AABB box = t.view->get_aabb();
+                t.sphere_center = t.node->get_position() + box.get_center();
+                t.sphere_radius = 0.5 * box.size.length() + pv->drop_at(far) + MARGIN_SLACK_M;
+                if (!t.far_mode) {
+                    t.view->set_extra_cull_margin(FAR_MODE_MARGIN_M);
+                    t.view->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
+                }
+            } else {
+                t.view->set_extra_cull_margin(real_t(pv->drop_at(far) + (far - CurveSqueeze::distance(far)) + MARGIN_SLACK_M));
+                if (t.far_mode) {
+                    t.view->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_ON);
+                }
+                if (!t.shown) {
+                    t.view->set_visible(true);
+                    t.shown = true;
+                }
+            }
+            t.far_mode = far_mode;
+        }
+    }
+    // 远块按视锥的四个侧面自己剔
+    const Camera3D *camera = get_viewport() ? get_viewport()->get_camera_3d() : nullptr;
+    if (!camera) {
+        return;
+    }
+    const TypedArray<Plane> planes = camera->get_frustum(); // 近、远、左、上、右、下（法线朝外）
+    if (planes.size() < 6) {
+        return;
+    }
+    Plane sides[4];
+    for (int k = 0; k < 4; k++) {
+        sides[k] = planes[k + 2];
+    }
+    for (auto &it : tiles) {
+        Tile &t = it.second;
+        if (!t.view || !t.far_mode) {
+            continue;
+        }
+        bool inside = true;
+        for (const Plane &p : sides) {
+            if (p.distance_to(t.sphere_center) > t.sphere_radius) {
+                inside = false;
+                break;
+            }
+        }
+        if (inside != t.shown) {
+            t.view->set_visible(inside);
+            t.shown = inside;
+        }
+    }
 }
 
 void World::prepare_at(const Vector3 &p_point, double p_radius) {

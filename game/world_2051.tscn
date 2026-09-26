@@ -74,3 +74,7 @@ layout = PackedStringArray("0,0,-2:storage", "0,0,-1:power", "0,0,0:bridge")
 
 [node name="Atmosphere" type="Atmosphere" parent="."]
 map_path = NodePath("../World")
+
+[node name="PlanetView" type="PlanetView" parent="."]
+
+[node name="FarGroups" type="FarGroups" parent="."]
