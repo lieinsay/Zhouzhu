@@ -7,6 +7,8 @@
                                    # 只换地形（terrain.bin / weather.tsv / world.json 的岛表与栅格）：村、码头等点位沿用已有的 world.json
     python tools/export_skyisle.py --resources <岛群目录> game/worlds/2051
                                    # 只写 resources.tsv（点 / 片 / 赋存区 / 采场），别的文件不动（采场挂的村号按生成器的聚落层算，须与已有 world.json 同一版）
+    python tools/export_skyisle.py --weather <岛群目录> game/worlds/2051
+                                   # 只写 weather.tsv（逐日天气与气候参数），别的文件不动
 
 读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json，写五份文件。
 生成器（台面口径那一版起）的 height_m 是主岛陆地高程的中位数，峰由第三层长出来；聚落层没有码头、只有泊场——
@@ -36,9 +38,14 @@ terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北�
     河道据此下切），导出的高程上重算的 D8 会把整片流域改道。下游格的汇流 = 本格 + 各上游格的汇流，所以按汇流从大到小，
     每格挑一个汇流比自己大、「剩余容量」还装得下自己的同岛邻格，装完剩得最少的优先（best fit）。反推之后重算汇流与生成器对照。
 
-weather.tsv —— 一年的逐日天气（skyisle-gen 的 weather_y0.csv），给河的水情：
+weather.tsv —— 一年的逐日天气（skyisle-gen 的 weather_y0.csv）与这处的气候参数，给河的水情和天气系统（src/weather.*）：
     # year_days <一年几天>  precip_mm <年降水>
-    day  precip_mm  temp_c  type
+    # calendar seasons <4>  months_per_season <3>  days_per_month <28>  solstice_n <北半球夏至是第几天>
+    # sun lat <纬度°，南负>  lon <经度°>  tilt <黄赤交角°>
+    # climate ref_m <台面高：逐日气温是这个高度的>  lapse <直减率 °C/km>  rim_m <主岛岸缘高>  fog_rise_m <云海漫顶时漫到岸缘以上多高>  snow_temp <°C，低于它的降水是雪>
+    # season_names <逗号分隔>
+    day  precip_mm  temp_c  type  wind_from_deg  wind_ms  sailable(0/1)  storm_event（0 = 不是风暴日）
+    （旧版只有前四列、只有第一行头；游戏两版都读，缺的参数取默认）
 
 world.json —— 岛表与点位，坐标全换成游戏的米：x 向东、z 向南，原点 = 群心。
     villages：生成器的村（镇的市户并进镇所在的村，记 town），其后是专业聚落（记 special，村号接着往下编）；
@@ -403,15 +410,47 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
     print(f"{dst}: {rows}×{cols} @ {res:g} m, {len(islands)} 岛, {len(world['villages'])} 村, {len(world['docks'])} 码头")
 
 
+def run_setting(src: Path, section: str, key: str, default: float) -> float:
+    """岛群目录上两级是这一轮的产物目录：从它的 config.resolved.toml 里取一个数（没有就用默认）。"""
+    path = src.parent.parent / "config.resolved.toml"
+    if not path.exists():
+        return default
+    import tomllib
+    node = tomllib.loads(path.read_text(encoding="utf-8"))
+    for part in section.split("."):
+        node = node.get(part, {}) if isinstance(node, dict) else {}
+    value = node.get(key) if isinstance(node, dict) else None
+    return float(value) if value is not None else default
+
+
 def write_weather(src: Path, info: dict, dst: Path) -> None:
     import csv
     climate = json.loads((src / "climate.json").read_text(encoding="utf-8"))
-    year_days = int(climate["calendar"]["year_days"])
-    lines = [f"# 由 tools/export_skyisle.py 从 weather_y0.csv 导出，别手改。year_days {year_days}  precip_mm {info['hydro']['precip_mm']:g}"]
+    cal = climate["calendar"]
+    year_days = int(cal["year_days"])
+    planet_path = src.parent.parent / "s01_planet" / "planet.json"
+    tilt = json.loads(planet_path.read_text(encoding="utf-8"))["axial_tilt_deg"] if planet_path.exists() else 34.0
+    ref = float(climate["annual"]["temp_ref_height_m"])
+    rim = float(info["islands"][0]["rim_m"])
+    lapse = run_setting(src, "s04.climate", "lapse_c_per_km", 6.0)
+    snow_temp = run_setting(src, "island.weather", "snow_temp_c", 0.5)
+    fog_max = run_setting(src, "island.weather", "fog_surface_max_m", 800.0)
+    fog_rise = 120.0 + 0.25 * max(0.0, fog_max - ref)  # 与生成器岛屿页的季相层同一式：台面越低，云海漫得越高
+    lines = [
+        f"# 由 tools/export_skyisle.py 从 weather_y0.csv / climate.json 导出，别手改。year_days {year_days}  precip_mm {info['hydro']['precip_mm']:g}",
+        f"# calendar seasons {int(cal['seasons'])}  months_per_season {int(cal['months_per_season'])}  days_per_month {int(cal['days_per_month'])}"
+        f"  solstice_n {cal['day_offset_solstice_n']:g}",
+        f"# sun lat {info['meta']['lat']:.4f}  lon {info['meta']['lon']:.4f}  tilt {tilt:g}",
+        f"# climate ref_m {ref:g}  lapse {lapse:g}  rim_m {rim:g}  fog_rise_m {fog_rise:.1f}  snow_temp {snow_temp:g}",
+        f"# season_names {','.join(climate['season_names'])}",
+    ]
     with open(src / "weather_y0.csv", encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
-            lines.append("\t".join((row["day"], row["precip_mm"], row["temp_c"], row["type"])))
+            sailable = "1" if row["sailable"].strip().lower() in ("true", "1") else "0"
+            lines.append("\t".join((row["day"], row["precip_mm"], row["temp_c"], row["type"], row["wind_from_deg"], row["wind_ms"], sailable,
+                                    row["storm_event"])))
     (dst / "weather.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    print(f"{dst / 'weather.tsv'}: {len(lines) - 5} 天，纬度 {info['meta']['lat']:.2f}°，交角 {tilt:g}°，台面 {ref:g} m，岸缘 {rim:g} m")
 
 
 def write_sites(world: dict, dst: Path) -> None:
@@ -468,6 +507,9 @@ def write_resources(src: Path, dst: Path) -> None:
 if __name__ == "__main__":
     if len(sys.argv) == 4 and sys.argv[1] == "--resources":
         write_resources(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif len(sys.argv) == 4 and sys.argv[1] == "--weather":
+        weather_src = Path(sys.argv[2])
+        write_weather(weather_src, json.loads((weather_src / "island.json").read_text(encoding="utf-8")), Path(sys.argv[3]))
     elif len(sys.argv) == 3 and sys.argv[1] == "--sites":
         out = Path(sys.argv[2])
         write_sites(json.loads((out / "world.json").read_text(encoding="utf-8")), out)
