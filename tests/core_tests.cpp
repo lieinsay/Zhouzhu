@@ -4613,6 +4613,17 @@ void test_village_seasons() {
         {
             const LocalSeason season(&wx, day, 20.0, 0.0, -70.0, h); // 时令记着最近问过的格：天气换了就换一份（游戏里每帧、每次结算都现造）
             bed.season = &season;
+            // 开发者覆盖不在格边上变：推进一秒，外面的人就都改成往家走
+            {
+                HeldFields held(s.held, &bed.farm);
+                const VillageWorld w = bed.world(near, near ? static_cast<FieldBook *>(&bed.near_fields) : &held);
+                advance_village(s, w, s.clock + 1.0);
+            }
+            int busy = 0;
+            for (const PersonState &p : s.people) {
+                busy += p.phase != FolkPhase::INDOORS && p.task.kind != TaskKind::GO_HOME ? 1 : 0;
+            }
+            check(busy == 0, std::string(near ? "近处" : "远处") + "：天气一变（覆盖），外面的人当场都往家走（还有 " + std::to_string(busy) + " 人在干活）");
             if (near) {
                 bed.run_near(s, clock_at(0, 10.0, day));
             } else {

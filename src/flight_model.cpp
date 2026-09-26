@@ -12,6 +12,13 @@ double approach(double p_value, double p_target, double p_tau, double p_dt) {
 
 } // namespace
 
+void wind_drift(double p_wind_x, double p_wind_z, double &r_x, double &r_z, double p_calm_ms, double p_share) {
+    const double speed = std::hypot(p_wind_x, p_wind_z);
+    const double k = speed > 1e-9 ? std::clamp((speed - p_calm_ms) / 10.0, 0.0, 1.0) * p_share : 0.0;
+    r_x = p_wind_x * k;
+    r_z = p_wind_z * k;
+}
+
 void flight_forward(double p_yaw, double &r_x, double &r_z) {
     r_x = -std::sin(p_yaw);
     r_z = -std::cos(p_yaw);
@@ -34,8 +41,11 @@ FlightState flight_step(const FlightState &p_state, const FlightInput &p_input, 
     double v_fwd = s.vx * fx + s.vz * fz;
     double v_side = s.vx * rx + s.vz * rz;
     const double target = throttle >= 0.0 ? throttle * p_params.max_speed : throttle * p_params.reverse_speed;
-    v_fwd = approach(v_fwd, target, p_params.accel_tau, p_dt);
-    v_side = approach(v_side, 0.0, p_params.side_tau, p_dt);
+    // 风：对地的速度 = 对空气的（追油门、侧滑衰减）+ 风推的那一份
+    const double drift_fwd = p_input.drift_x * fx + p_input.drift_z * fz;
+    const double drift_side = p_input.drift_x * rx + p_input.drift_z * rz;
+    v_fwd = approach(v_fwd, target + drift_fwd, p_params.accel_tau, p_dt);
+    v_side = approach(v_side, drift_side, p_params.side_tau, p_dt);
     s.vx = v_fwd * fx + v_side * rx;
     s.vz = v_fwd * fz + v_side * rz;
 

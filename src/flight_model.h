@@ -20,7 +20,11 @@ struct FlightInput {
     double throttle = 0.0; // −1 倒车 … +1 全速
     double rudder = 0.0; // −1 左 … +1 右
     double lift = 0.0; // −1 降 … +1 升
+    double drift_x = 0.0, drift_z = 0.0; // 风把船往哪推（m/s，世界系）：船对空气的速度追油门，对地再加上它
 };
+
+// 风把船推多快：风速 p_calm_ms 以下不推，往上渐渐推到风速的 p_share（风暴里船往下风漂）
+void wind_drift(double p_wind_x, double p_wind_z, double &r_x, double &r_z, double p_calm_ms = 5.0, double p_share = 0.6);
 
 struct FlightState {
     double vx = 0.0, vy = 0.0, vz = 0.0; // 世界系速度

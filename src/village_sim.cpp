@@ -441,6 +441,16 @@ void advance_village(VillageState &r_state, const VillageWorld &p_world, double 
     const DayRules &day = *p_world.day;
     const SeasonView *season = p_world.season;
     double t = r_state.clock;
+    // 此刻该在家，外面却有人在干别的：当场叫回家。按作息走时分界点上已经叫过了，这里什么都不做；
+    // 天气（开发者覆盖）不在格边上一下子变了的时候，就靠这一步
+    if (home_at(t, p_world)) {
+        for (int k = 0; k < int(r_state.people.size()); k++) {
+            const PersonState &p = r_state.people[size_t(k)];
+            if (p.phase != FolkPhase::INDOORS && p.task.kind != TaskKind::GO_HOME) {
+                assign(r_state, p_world, k, t);
+            }
+        }
+    }
     int stalled = 0; // 连着几步没往前走（有人一直「到点」却落不了地）：兜底往前挪一点，免得死循环
     while (t < p_until) {
         DayMark mark = DayMark::WORK_START;

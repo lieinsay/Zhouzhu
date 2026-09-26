@@ -11,6 +11,7 @@ namespace {
 
 constexpr double PI = 3.14159265358979323846;
 constexpr int KIND_COUNT = int(WeatherKind::COUNT);
+constexpr double HEAVY_MM_H = 1.2; // 每小时过这么多算大雨 / 大雪
 
 //                                                    云量  雨区   至少mm 风至少 风暴 云海 雪
 const WeatherKindDef KINDS[KIND_COUNT] = {
@@ -428,9 +429,12 @@ WeatherModel::DayState WeatherModel::day_state(long long p_day) const {
 WeatherModel::DayState WeatherModel::override_state(long long p_day) const {
     DayState s = day_state(p_day);
     const WeatherKindDef &def = weather_kinds::at(over.kind);
-    s.cloud = def.cloud;
-    s.coverage = def.coverage;
-    s.mm = def.coverage > 0.0 ? 2.0 * def.min_mm : 0.0;
+    // 开发者要看的就是这种天气：下雨下雪的覆盖让雨区铺满（强弱照旧随云团起伏），多云多盖一点，所以人站在哪儿都看得见；
+    // 云海漫顶看的是雾漫上来，不下毛毛雨
+    const bool wet = def.coverage > 0.0 && def.fog <= 0.0;
+    s.cloud = wet ? 1.0 : (over.kind == WeatherKind::CLOUDY ? 0.85 : def.cloud);
+    s.coverage = wet ? 1.0 : 0.0;
+    s.mm = wet ? 2.0 * def.min_mm : 0.0;
     if (def.snowy) {
         s.temp = std::min(s.temp, rules.snow_override_c);
     }
@@ -487,7 +491,10 @@ void WeatherModel::cloud_drift(double p_day, double &r_x, double &r_z) const {
     r_z = years * drift_z[size_t(year)] + drift_z[size_t(doy)] + tz * per_day * frac;
 }
 
-ElevationState WeatherModel::elevation(double p_day, double p_h) const {
+ElevationState WeatherModel::elevation(double p_day_in, double p_h_in) const {
+    // 不是有限数（上层的位置坏了）：当台面、第 0 天，别拿它当下标
+    const double p_day = std::isfinite(p_day_in) ? p_day_in : 0.0;
+    const double p_h = std::isfinite(p_h_in) ? p_h_in : climate.ref_m;
     const double blend = std::clamp(over.blend, 0.0, 1.0);
     // 气温偏移等效成海拔挪动：冷 1 °C ≈ 高 1000 / 直减率 米
     const double h = p_h - over.temp_offset_c * blend * 1000.0 / std::max(0.1, climate.lapse);
@@ -520,7 +527,9 @@ ElevationState WeatherModel::elevation(double p_day, double p_h) const {
     return e;
 }
 
-double WeatherModel::mean_temperature(double p_day, double p_h) const {
+double WeatherModel::mean_temperature(double p_day_in, double p_h_in) const {
+    const double p_day = std::isfinite(p_day_in) ? p_day_in : 0.0;
+    const double p_h = std::isfinite(p_h_in) ? p_h_in : climate.ref_m;
     double front = 0.0;
     int di = 0;
     const DayState s = blended(p_day, 0.0, 0.0, front, di);
@@ -571,7 +580,11 @@ void WeatherModel::elevation_table(double p_day, std::vector<float> &r_out) cons
     }
 }
 
-WeatherSample WeatherModel::sample(double p_day, double p_x, double p_z, double p_h) const {
+WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in, double p_h_in) const {
+    // 不是有限数（上层的位置坏了）：按群心、台面、第 0 天取，别拿它当下标
+    const double p_day = std::isfinite(p_day_in) ? p_day_in : 0.0;
+    const double p_x = std::isfinite(p_x_in) ? p_x_in : 0.0, p_z = std::isfinite(p_z_in) ? p_z_in : 0.0;
+    const double p_h = std::isfinite(p_h_in) ? p_h_in : climate.ref_m;
     WeatherSample out;
     double front = 0.0;
     int di = 0;
@@ -595,7 +608,7 @@ WeatherSample WeatherModel::sample(double p_day, double p_x, double p_z, double 
         rate = s.mm / 24.0 / std::max(0.05, out.coverage) * (0.5 + core) * inside * oro;
     }
     out.precip_mm_h = rate;
-    out.precip = 1.0 - std::exp(-rate / 4.0);
+    out.precip = 1.0 - std::exp(-rate / 3.0);
 
     const double hour = (p_day - std::floor(p_day)) * 24.0;
     const double clouds = std::max(out.cloud, 0.5 * out.cloud_cover);
@@ -612,6 +625,7 @@ WeatherSample WeatherModel::sample(double p_day, double p_x, double p_z, double 
     if (s.fog > 1e-3) {
         out.fog_top = climate.rim_m + climate.fog_rise_m;
     }
+    out.sea_fog = std::clamp(s.fog, 0.0, 1.0);
     const double sea_fog = s.fog * smoothstep(out.fog_top + 40.0, out.fog_top - 60.0, p_h);
     out.fog = std::clamp(std::max(sea_fog, 0.25 * out.precip * (1.0 + out.snow_frac)), 0.0, 1.0);
 
@@ -633,7 +647,7 @@ WeatherSample WeatherModel::sample(double p_day, double p_x, double p_z, double 
     if (out.storm > 0.5) {
         out.kind = snowy ? WeatherKind::BLIZZARD : WeatherKind::STORM;
     } else if (rate > 0.05) {
-        if (rate > 4.0) {
+        if (rate > HEAVY_MM_H) {
             out.kind = snowy ? WeatherKind::HEAVY_SNOW : WeatherKind::HEAVY_RAIN;
         } else {
             out.kind = snowy ? WeatherKind::SNOW : WeatherKind::RAIN;
