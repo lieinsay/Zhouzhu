@@ -69,6 +69,7 @@
 #include "wild_landing.h"
 #include "world_terrain.h"
 #include "almanac.h"
+#include "planet_data.h"
 #include "planet_frame.h"
 
 namespace {
@@ -4835,6 +4836,84 @@ void test_planet_frame() {
     }
 }
 
+// 行星包（planet_data）：game/planet/seed42 的 planet.bin / lods.bin 读得出、数对得上生成器、2051 的粗版与仓库里的细版是同一个群
+void test_planet_data() {
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
+    std::printf("[planet_data]\n");
+    PlanetData pd;
+    std::string err;
+    const bool loaded = pd.load_files(dir, err); // 先读：实参的求值次序不定，拼提示时 err 可能还是空的
+    check(loaded, "行星包读得出：" + err);
+    if (pd.node_count() == 0) {
+        return;
+    }
+    check(pd.seed == 42 && pd.node_count() == 8000, "seed 42、8000 个岛群");
+    check_near(pd.radius_km, 6371.0, 1e-6, "行星半径");
+    check_near(pd.tilt_deg, 34.0, 1e-6, "黄赤交角");
+    check(pd.calendar.year_days == 336 && pd.calendar.seasons == 4 && pd.calendar.months_per_season == 3 && pd.calendar.days_per_month == 28,
+            "历法 336 天、4 季 × 3 月 × 28 天");
+    check_near(pd.calendar.solstice_n, 126.0, 1e-6, "北半球夏至第 126 天（与 weather.tsv 同）");
+    double land = 0.0;
+    for (int k = 0; k < pd.node_count(); k++) {
+        land += pd.node(k).area_km2;
+    }
+    check(std::abs(land - 2.5e7) < 2.5e4, "全行星陆地 2500 万 km²（得到 " + std::to_string(land) + "）");
+    const PlanetNode &n51 = pd.node(2051);
+    check(std::abs(n51.lat + 31.65) < 0.01 && std::abs(n51.lon - 152.15) < 0.01, "2051 在南纬 31.65°、东经 152.15°");
+    check(std::abs(n51.area_km2 - 2587.0) < 2.0 && n51.cls == 1 && n51.pop > 0.0, "2051：陆地 2587 km²、中疏、有人口");
+    check(pd.nearest_node(n51.lat, n51.lon) == 2051, "离 2051 群心最近的是 2051");
+    check(pd.nearest_node(n51.lat - 0.9, n51.lon - 0.5) == 2050, "往西南 100 km 最近的是 2050");
+    check_near(pd.node_distance_m(2051, 2050), 114000.0, 1500.0, "2051 与 2050 相距 114 km");
+    const std::vector<int> near160 = pd.nodes_within(n51.lat, n51.lon, 160000.0);
+    check(near160.size() == 2 && near160[0] == 2051 && near160[1] == 2050, "160 km 内只有 2051 与 2050（1827 在 174 km）");
+    check(pd.nodes_within(n51.lat, n51.lon, 500000.0).size() == 16, "500 km 内 16 群（含自己）");
+    check(pd.nodes_within(-89.0, 0.0, 800000.0).size() > 0 && pd.nearest_node(0.0, 0.0) >= 0, "极点、赤道也找得到群");
+    // 每群都有粗版
+    int missing = 0;
+    for (int k = 0; k < pd.node_count(); k++) {
+        missing += pd.lod_resolutions(k).empty() ? 1 : 0;
+    }
+    check(missing == 0, "每个岛群都有粗版（没有的 " + std::to_string(missing) + "）");
+    const std::vector<double> r51 = pd.lod_resolutions(2051);
+    check(r51.size() == 2 && r51.front() == 2000.0 && r51.back() == 500.0, "2051 有 2 km 与 500 m 两份粗版");
+    // 2051 的粗版：陆地面积、岛数与细版对得上
+    const PlanetLod fine = pd.lod(2051, 600.0), coarse = pd.lod(2051);
+    check(fine.res_m == 500.0 && coarse.res_m == 2000.0, "lod() 按格距挑：≤ 600 m 给 500 m，不限给最粗的");
+    check(fine.islands.size() == 32 && std::abs(fine.land_km2() - 2587.0) < 0.03 * 2587.0, "500 m 粗版：32 岛、陆地差不到 3%（" + std::to_string(fine.land_km2()) + " km²）");
+    check(std::abs(coarse.land_km2() - 2587.0) < 0.05 * 2587.0, "2 km 粗版：陆地差不到 5%");
+    // 与仓库里 2051 的细版（terrain.bin）是同一个群：粗版里的实地格，细版在那儿也是陆地
+    std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/terrain.bin", std::ios::binary);
+    const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    WorldGrid g;
+    if (parse_world_grid(bin.data(), bin.size(), g, err)) {
+        int solid = 0, agree = 0;
+        double peak_err = 0.0;
+        for (int r = 0; r < fine.rows; r++) {
+            for (int c = 0; c < fine.cols; c++) {
+                if (fine.land[fine.index(r, c)] < 250) {
+                    continue;
+                }
+                double x = 0.0, z = 0.0;
+                fine.cell_center(r, c, x, z);
+                solid++;
+                agree += g.shore_at(x, z) > 0.0 ? 1 : 0;
+                peak_err = std::max(peak_err, g.height_at(x, z) - fine.height[fine.index(r, c)]);
+            }
+        }
+        check(solid > 8000 && agree >= solid * 0.99, "粗版的实地格在细版里 99% 以上也是陆地（" + std::to_string(agree) + " / " + std::to_string(solid) + "）");
+        check(peak_err < 20.0, "粗版的高是块内最高点：细版格心（双三次插值会冲过一点）不高出它 20 m（多出 " + std::to_string(peak_err) + " m）");
+    }
+    // 1° 场
+    const PlanetGrid *u = pd.grid("s04.wind_local.u");
+    const PlanetGrid *edges = pd.grid("s04.band_local.edges");
+    const PlanetGrid *precip = pd.grid("s04.climate_grid.precip");
+    check(u && u->rows == 180 && u->cols == 360 && std::abs(u->lat0 + 89.5) < 1e-6, "局地风 1° 网格、第 0 行在南");
+    check(edges && edges->rows == 8 && edges->cols == 360, "带界 8 × 360");
+    check(precip && std::isfinite(precip->sample(n51.lat, n51.lon)) && precip->sample(n51.lat, n51.lon) > 0.0, "气候场在 2051 取得到降水");
+    check(u && std::abs(u->sample(10.0, 179.9) - u->sample(10.0, -180.1)) < 1e-4, "经度绕回：180° 两边一样");
+    check(pd.column("s03.plate") && pd.grid("s03.plates.plate_id"), "第三层要的板块也在包里（P6 用）");
+}
+
 int main() {
     test_rng();
     test_almanac();
@@ -4892,6 +4971,7 @@ int main() {
     test_placeables();
     test_ship_bay();
     test_goldens();
+    test_planet_data();
     test_planet_frame();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;

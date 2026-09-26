@@ -8,6 +8,8 @@
 //   一年里每两个钟头取一次局地天气，看雨量对不对得上那一年、坏天气歇工多少钟头（局地雨量差出四成就不达标）
 //   有 resources.tsv 时另把采场与地标落一遍（采掘面、堆场；采掘面要在 60 m 内够得着开局的船野泊，规划时就量好了，只看地面、不看房子），
 //   再抽样生成散布（每隔 --scatter-stride 块取一块，默认 6），报每公顷长了多少、每块花多少时间、泊地上有没有树
+//   build/Release/zhouzhu_site_survey.exe --planet game/planet/seed42 [--home 2051] [--overlap]
+//                                          # 行星包：摘要、邻群表、坐标自检、每群粗版对陆地；--overlap 另查邻群陆地叠没叠
 //   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
 //         --sim H（远处结算几个游戏小时；0 = 不结）、--scatter-stride N（散布抽样的间隔块数；0 = 不抽）、
 //         --calendar N（开局是一年里的第几天，远处结算的时令按它；默认 3，与 WorldClock 一致）
@@ -27,8 +29,11 @@
 
 #include <cmath>
 #include <map>
+#include <tuple>
 
 #include "almanac.h"
+#include "planet_data.h"
+#include "planet_frame.h"
 #include "freight.h"
 #include "local_season.h"
 #include "resource_scatter.h"
@@ -60,7 +65,187 @@ double since_ms(const std::chrono::steady_clock::time_point &p_start) {
 
 } // namespace
 
+// ---------------------------------------------------------------- 行星体检（--planet）
+// 行星包（game/planet/<seed>）读一遍：摘要、2051 的邻群表、坐标自检、每群粗版解开对陆地；--overlap 另查邻群陆地叠没叠（Release 下几十秒）。
+int survey_planet(const std::string &p_dir, int p_home, bool p_overlap) {
+    const auto t0 = std::chrono::steady_clock::now();
+    PlanetData pd;
+    std::string error;
+    if (!pd.load_files(p_dir, error)) {
+        std::fprintf(stderr, "%s\n", error.c_str());
+        return 2;
+    }
+    auto file_mb = [&](const char *p_name) {
+        std::ifstream in(p_dir + "/" + p_name, std::ios::binary | std::ios::ate);
+        return in ? double(in.tellg()) / 1e6 : 0.0;
+    };
+    int fails = 0;
+    double land = 0.0, pop = 0.0;
+    int by_cls[4] = { 0, 0, 0, 0 }, constrained = 0, crossing = 0;
+    const std::vector<double> *viol = pd.column("lod.violation_km"), *cons = pd.column("lod.constrained");
+    for (int k = 0; k < pd.node_count(); k++) {
+        const PlanetNode &n = pd.node(k);
+        land += n.area_km2;
+        pop += n.pop;
+        by_cls[std::clamp(n.cls, 0, 3)]++;
+        constrained += cons && (*cons)[size_t(k)] > 0.5 ? 1 : 0;
+        crossing += viol && (*viol)[size_t(k)] > 1.5 ? 1 : 0; // 越过分界线（半道缝以外）
+    }
+    std::printf("行星 seed %d（%s）：半径 %.0f km、倾角 %.0f°、一年 %d 天；%d 个岛群（密接 %d、中疏 %d、稀疏 %d、孤悬 %d），陆地 %.4g km²、人口 %.4g\n", pd.seed,
+            pd.source.c_str(), pd.radius_km, pd.tilt_deg, pd.calendar.year_days, pd.node_count(), by_cls[0], by_cls[1], by_cls[2], by_cls[3], land, pop);
+    std::printf("包：planet.bin %.1f MB、lods.bin %.1f MB（%d 份粗版）；1° 场 %d 张\n", file_mb("planet.bin"), file_mb("lods.bin"), pd.lod_count(), int(pd.all_grids().size()));
+    std::printf("势力范围：布局重摆过的 %d 群，陆地仍越过分界线的 %d 群\n", constrained, crossing);
+    // 邻群表
+    const PlanetNode &home = pd.node(p_home);
+    std::printf("%d（南纬 %.2f°、东经 %.2f°）600 km 内的岛群：\n", p_home, -home.lat, home.lon);
+    std::printf("  节点   距离 km   方位°   陆地 km²   主峰 m   粗版\n");
+    for (int k : pd.nodes_within(home.lat, home.lon, 600000.0)) {
+        if (k == p_home) {
+            continue;
+        }
+        const PlanetNode &n = pd.node(k);
+        std::string res;
+        for (double r : pd.lod_resolutions(k)) {
+            res += (res.empty() ? "" : " / ") + std::to_string(int(r)) + " m";
+        }
+        std::printf("  %5d  %7.1f  %6.1f  %9.0f  %7.0f   %s\n", k, pd.node_distance_m(p_home, k) / 1000.0, bearing_deg(home.lat, home.lon, n.lat, n.lon), n.area_km2,
+                n.peak_m, res.c_str());
+    }
+    // 坐标自检：往返、换锚（与单测同一套）
+    {
+        const PlanetShape shape;
+        const GroupFrame a(home.lat, home.lon, shape);
+        const std::vector<int> around = pd.nodes_within(home.lat, home.lon, 2000000.0);
+        const int nb = around.size() > 1 ? around[1] : p_home; // 最近的另一个群
+        const GroupFrame b(pd.node(nb).lat, pd.node(nb).lon, shape);
+        double rt = 0.0;
+        for (int k = 0; k < 200; k++) {
+            const PlanetVec p(137.0 * k - 13000.0, 40.0 * (k % 50), 11000.0 - 101.0 * k);
+            rt = std::max(rt, (a.to_flat(a.to_planet(p)) - p).length());
+        }
+        const PlanetVec cam = a.latlon_flat(0.5 * (home.lat + pd.node(nb).lat), 0.5 * (home.lon + pd.node(nb).lon)) + PlanetVec(0.0, 2000.0, 0.0);
+        const CurveView va = CurveView::at(a, cam), vb = CurveView::at(b, rebase_point(a, b, cam));
+        const PlanetBasis q = rebase_rotation(a, b, cam);
+        double jump = 0.0;
+        for (int k = 0; k < 50; k++) {
+            const PlanetVec p = cam + PlanetVec(900.0 * std::cos(k * 0.4) * k, -300.0, 900.0 * std::sin(k * 0.4) * k);
+            jump = std::max(jump, ((vb.visual(b, rebase_point(a, b, p)) - vb.cam) - q.apply(va.visual(a, p) - cam)).length());
+        }
+        const bool ok = rt < 1e-3 && jump < 0.02;
+        fails += ok ? 0 : 1;
+        std::printf("坐标自检：往返 %.4f mm、与 %d 之间换锚画面差 %.3f mm %s\n", rt * 1000.0, nb, jump * 1000.0, ok ? "" : "✗");
+    }
+    // 每群粗版解开，对陆地
+    {
+        const auto t1 = std::chrono::steady_clock::now();
+        int missing = 0, off = 0;
+        double worst = 0.0;
+        int worst_node = -1;
+        for (int k = 0; k < pd.node_count(); k++) {
+            const PlanetLod l = pd.lod(k);
+            if (l.empty()) {
+                missing++;
+                continue;
+            }
+            const double e = std::abs(l.land_km2() - pd.node(k).area_km2) / std::max(1.0, pd.node(k).area_km2);
+            off += e > 0.1 ? 1 : 0;
+            if (e > worst) {
+                worst = e;
+                worst_node = k;
+            }
+        }
+        std::printf("粗版：%d 群全部解开 %.0f ms；没有粗版的 %d 群；陆地与生成器差一成以上的 %d 群（最大 %.0f%%，#%d）\n", pd.node_count(), since_ms(t1), missing, off,
+                worst * 100.0, worst_node);
+        fails += missing > 0 ? 1 : 0;
+    }
+    if (p_overlap) {
+        // 邻群陆地：把每群粗版的陆地格（占比 ≥ 一半）放上球面，查不同群的格子相距多近（格距 2 km，格心相距 < 2 km 算「叠上」、< 4 km 算「挨着」）
+        const auto t2 = std::chrono::steady_clock::now();
+        struct Cell {
+            PlanetVec u;
+            int node;
+        };
+        const double R = pd.radius_km * 1000.0;
+        const double bucket_m = 4000.0;
+        std::map<std::tuple<int, int, int>, std::vector<Cell>> hash;
+        auto key = [&](const PlanetVec &p_u) {
+            const PlanetVec p = p_u * (R / bucket_m);
+            return std::make_tuple(int(std::floor(p.x)), int(std::floor(p.y)), int(std::floor(p.z)));
+        };
+        size_t cells = 0;
+        for (int k = 0; k < pd.node_count(); k++) {
+            const PlanetLod l = pd.lod(k);
+            const GroupFrame f(pd.node(k).lat, pd.node(k).lon, PlanetShape());
+            for (int r = 0; r < l.rows; r++) {
+                for (int c = 0; c < l.cols; c++) {
+                    if (l.land[l.index(r, c)] < 128) {
+                        continue;
+                    }
+                    double x = 0.0, z = 0.0;
+                    l.cell_center(r, c, x, z);
+                    const PlanetVec u = f.to_planet(PlanetVec(x, 0.0, z)).normalized();
+                    hash[key(u)].push_back({ u, k });
+                    cells++;
+                }
+            }
+        }
+        std::map<std::pair<int, int>, double> pairs; // (小, 大) → 最近格心距（米）
+        for (const auto &kv : hash) {
+            const auto [bx, by, bz] = kv.first;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        auto it = hash.find(std::make_tuple(bx + dx, by + dy, bz + dz));
+                        if (it == hash.end()) {
+                            continue;
+                        }
+                        for (const Cell &a : kv.second) {
+                            for (const Cell &b : it->second) {
+                                if (a.node >= b.node) {
+                                    continue;
+                                }
+                                const double d = (a.u - b.u).length() * R;
+                                if (d < 4000.0) {
+                                    auto &best = pairs.try_emplace({ a.node, b.node }, 1e18).first->second;
+                                    best = std::min(best, d);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        int overlap = 0, touch = 0;
+        for (const auto &kv : pairs) {
+            (kv.second < 2000.0 ? overlap : touch)++;
+        }
+        std::printf("邻群陆地（2 km 粗版、%zu 个陆地格，%.0f ms）：格心相距 < 2 km（叠上）%d 对、2–4 km（挨着）%d 对\n", cells, since_ms(t2), overlap, touch);
+        int shown = 0;
+        for (const auto &kv : pairs) {
+            if (kv.second < 2000.0 && shown++ < 8) {
+                std::printf("   叠上：%d–%d 相距 %.1f km（群心 %.0f km）\n", kv.first.first, kv.first.second, kv.second / 1000.0,
+                        pd.node_distance_m(kv.first.first, kv.first.second) / 1000.0);
+            }
+        }
+    }
+    std::printf("行星体检 %.0f ms，%s\n", since_ms(t0), fails ? "有不达标" : "全部达标");
+    return fails ? 1 : 0;
+}
+
 int main(int argc, char **argv) {
+    if (argc >= 3 && std::string(argv[1]) == "--planet") {
+        int home = 2051;
+        bool overlap = false;
+        for (int k = 3; k < argc; k++) {
+            const std::string opt = argv[k];
+            if (opt == "--home" && k + 1 < argc) {
+                home = std::atoi(argv[++k]);
+            } else if (opt == "--overlap") {
+                overlap = true;
+            }
+        }
+        return survey_planet(argv[2], home, overlap);
+    }
     if (argc < 2) {
         std::fprintf(stderr, "用法：zhouzhu_site_survey <岛群目录> [--seed N] [--report 明细.tsv] [--max-missing 0.02]\n");
         return 2;

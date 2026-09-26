@@ -70,6 +70,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/map_image.h
     src/placeables.cpp
     src/placeables.h
+    src/planet_data.cpp
+    src/planet_data.h
     src/planet_frame.cpp
     src/planet_frame.h
     src/recipes.cpp
@@ -285,3 +287,5 @@ if(MSVC)
     target_compile_options(zhouzhu_site_survey PRIVATE /utf-8)
 endif()
 add_test(NAME site_survey_2051 COMMAND zhouzhu_site_survey ${CMAKE_CURRENT_SOURCE_DIR}/game/worlds/2051)
+# 行星包体检：摘要、邻群表、坐标自检、每群粗版对陆地（邻群叠没叠要 --overlap，手动跑）
+add_test(NAME site_survey_planet COMMAND zhouzhu_site_survey --planet ${CMAKE_CURRENT_SOURCE_DIR}/game/planet/seed42)
