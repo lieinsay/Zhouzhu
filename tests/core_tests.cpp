@@ -4,6 +4,7 @@
 //   ctest --test-dir build -C Debug --output-on-failure
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -11,10 +12,12 @@
 #include <fstream>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
 
+#include "cover_blend.h"
 #include "crops.h"
 #include "deposit_kinds.h"
 #include "day_clock.h"
@@ -1429,6 +1432,166 @@ void test_terrain_tiles() {
     check(walls > 0, "岸边的块有崖壁");
     const TileMesh coarse = build_tile_mesh(t, layout, { 1, 0, 0 });
     check(coarse.collision.empty(), "粗块不带碰撞");
+
+    // 地皮色跨 可耕地 | 林地（r = 750 m）是渐变：相邻顶点（2 m）色差很小，走过这一块又变了一大截
+    {
+        const TileMesh edge = build_tile_mesh(t, layout, layout.leaf_at(760.0, 30.0));
+        const double step = layout.step(layout.get_max_level());
+        std::map<std::pair<int, int>, std::array<float, 3>> top;
+        for (size_t k = 0; k < edge.positions.size() / 3; k++) {
+            if (edge.normals[k * 3 + 1] > 0.5f) {
+                const int j = int(std::lround(edge.positions[k * 3] / step)), i = int(std::lround(edge.positions[k * 3 + 2] / step));
+                top[{ i, j }] = { edge.colors[k * 4], edge.colors[k * 4 + 1], edge.colors[k * 4 + 2] };
+            }
+        }
+        float jump = 0.0f, lo = 1.0f, hi = 0.0f;
+        for (const auto &[key, c] : top) {
+            lo = std::min(lo, c[0]);
+            hi = std::max(hi, c[0]);
+            for (const std::pair<int, int> d : { std::pair<int, int>{ 0, 1 }, std::pair<int, int>{ 1, 0 } }) {
+                const auto next = top.find({ key.first + d.first, key.second + d.second });
+                if (next != top.end()) {
+                    for (int ch = 0; ch < 3; ch++) {
+                        jump = std::max(jump, std::abs(next->second[size_t(ch)] - c[size_t(ch)]));
+                    }
+                }
+            }
+        }
+        std::printf("  可耕地 | 林地的叶块：%zu 个顶点，红通道 %.2f … %.2f，相邻顶点最多差 %.3f\n", top.size(), lo, hi, jump);
+        check(top.size() > 4000 && hi - lo > 0.1 && jump < 0.1, "地皮色跨地表类渐变：整块变了一大截，相邻 2 m 的顶点差不过 0.1（一刀切是 0.3）");
+    }
+}
+
+// 两类各占一半的合成栅格：x < 0 草坡（6）、x > 0 林地（4），交界线在 x = 0（两列格心 −50、+50 之间）
+WorldGrid half_grid() {
+    WorldGrid g;
+    g.rows = 24;
+    g.cols = 24;
+    g.res = 100.0;
+    g.x0 = -1150.0;
+    g.z0 = -1150.0;
+    const size_t n = size_t(g.rows) * size_t(g.cols);
+    g.height.assign(n, 200.0f);
+    g.shore.assign(n, 5000.0f);
+    g.island.assign(n, 0);
+    g.stream.assign(n, 0);
+    g.landcover.resize(n);
+    for (int r = 0; r < g.rows; r++) {
+        for (int c = 0; c < g.cols; c++) {
+            g.landcover[g.index(r, c)] = g.x0 + c * g.res < 0.0 ? 6 : 4;
+        }
+    }
+    return g;
+}
+
+// 沿 z = p_z 横穿交界：林地份额一成、九成处的 x（没找到返回 NaN）
+void cover_profile(const CoverBlend &p_blend, double p_z, double p_footprint, double &r_x10, double &r_x90) {
+    r_x10 = r_x90 = std::numeric_limits<double>::quiet_NaN();
+    for (double x = -300.0; x <= 300.0; x += 0.5) {
+        const float w = p_blend.mix(x, p_z, p_footprint).w[4];
+        if (std::isnan(r_x10) && w >= 0.1f) {
+            r_x10 = x;
+        }
+        if (std::isnan(r_x90) && w >= 0.9f) {
+            r_x90 = x;
+        }
+    }
+}
+
+void test_cover_blend() {
+    std::printf("cover_blend\n");
+    const WorldGrid g = half_grid();
+    CoverRules plain;
+    plain.warp_m = 0.0;
+    plain.bend_m = 0.0;
+    plain.breakup_m = 0.0;
+    const CoverBlend straight(g, 7, plain);
+    check(straight.valid() && !CoverBlend().valid(), "有栅格才有效");
+
+    // 份额：非负、和为 1；深处全是本类；交界线上各半
+    bool sums = true, ranged = true;
+    for (double x = -900.0; x <= 900.0; x += 3.7) {
+        const CoverMix m = straight.mix(x, 123.0);
+        double sum = 0.0;
+        for (float w : m.w) {
+            sum += w;
+            ranged = ranged && w >= 0.0f && w <= 1.0f;
+        }
+        sums = sums && std::abs(sum - 1.0) < 1e-5;
+    }
+    check(sums && ranged, "份额都在 [0, 1] 里、和为 1");
+    check(straight.mix(-260.0, 0.0).w[6] == 1.0f && straight.mix(260.0, 0.0).w[4] == 1.0f, "离交界两格半以外全是本类（4×4 格都是一类）");
+    check_near(straight.mix(0.0, 40.0).w[4], 0.5, 1e-4, "交界线上各半");
+    check(straight.mix(0.0, 0.0).dominant() == 4 || straight.mix(0.0, 0.0).dominant() == 6, "主类是两类之一");
+    check(straight.mix(-30.0, 0.0).dominant() == 6 && straight.mix(30.0, 0.0).dominant() == 4, "交界两侧的主类");
+    check_near(straight.mix(-30.0, 0.0).w[6] + straight.mix(-30.0, 0.0).w[4], 1.0, 1e-5, "只有这两类");
+
+    // 过渡带的宽度：近处按 transition_m（40 m）；远处（取样隔半格以上）换成 B 样条的平滑，一百多米
+    double x10, x90;
+    cover_profile(straight, 0.0, 0.0, x10, x90);
+    const double narrow = x90 - x10;
+    check(std::abs(narrow - 40.0) < 2.0 && std::abs(x10 + x90) < 1.0, "林地一成到九成 40 m、对着交界线对称（" + std::to_string(narrow) + " m）");
+    cover_profile(straight, 0.0, 100.0, x10, x90);
+    const double smooth_only = x90 - x10;
+    check(smooth_only > 100.0, "取样隔一格：B 样条平滑，一百多米（" + std::to_string(smooth_only) + " m）");
+    cover_profile(straight, 0.0, 2.0, x10, x90);
+    check(x90 - x10 < narrow + 3.0, "叶块（2 m 一个顶点）几乎不放宽");
+    cover_profile(straight, 0.0, 25.0, x10, x90);
+    check(x90 - x10 > narrow + 5.0 && x90 - x10 < smooth_only, "中等间距放宽一些（" + std::to_string(x90 - x10) + " m）");
+
+    // 只有一格的小片也在，面积与一格一样（一半处的交界线就是最近格的边）
+    {
+        WorldGrid lone = g;
+        std::fill(lone.landcover.begin(), lone.landcover.end(), uint8_t(6));
+        lone.landcover[lone.nearest_cell(50.0, 50.0)] = 5;
+        const CoverBlend spot(lone, 7, plain);
+        int inside = 0;
+        for (double z = -60.0; z < 160.0; z += 1.0) {
+            for (double x = -60.0; x < 160.0; x += 1.0) {
+                inside += spot.mix(x + 0.5, z + 0.5).dominant() == 5 ? 1 : 0;
+            }
+        }
+        check(spot.mix(50.0, 50.0).w[5] > 0.95f, "一格的小片：格心上几乎全是它");
+        check(std::abs(inside - 10000) < 1500, "一格的小片：占了的地方约一格（四个角磨圆一点，" + std::to_string(inside) + " m²）");
+    }
+
+    // 默认规则：连续（半米内份额变不过 0.05），交界线扭过、碎过，沿着走进退几十米，同一个种子处处一样
+    const CoverBlend ragged(g, 7);
+    const CoverBlend other(g, 8);
+    double jump = 0.0, lo = 1e9, hi = -1e9;
+    bool same = true, differs = false;
+    for (double z = -400.0; z <= 400.0; z += 10.0) {
+        double prev = ragged.mix(-200.0, z).w[4], cross = std::numeric_limits<double>::quiet_NaN();
+        for (double x = -199.75; x <= 200.0; x += 0.25) {
+            const double w = ragged.mix(x, z).w[4];
+            jump = std::max(jump, std::abs(w - prev));
+            if (std::isnan(cross) && w >= 0.5) {
+                cross = x;
+            }
+            prev = w;
+        }
+        if (!std::isnan(cross)) {
+            lo = std::min(lo, cross);
+            hi = std::max(hi, cross);
+        }
+        const CoverMix a = ragged.mix(7.0, z), b = CoverBlend(g, 7).mix(7.0, z), c = other.mix(7.0, z);
+        same = same && std::equal(a.w, a.w + COVER_CLASSES, b.w);
+        differs = differs || a.w[4] != c.w[4];
+    }
+    std::printf("  直交界扭碎后：一半处的 x 在 %.0f … %.0f m 之间，半米内份额最多变 %.3f\n", lo, hi, jump);
+    check(jump < 0.05, "份额连续：半米内变不过 0.05（" + std::to_string(jump) + "）");
+    check(hi - lo > 30.0 && lo > -150.0 && hi < 150.0, "交界线扭成犬牙：进退几十米，不出一格半");
+    check(same && differs, "同一个种子处处一样，换种子就换样子");
+
+    // 同一套平滑给别的逐格量用
+    check_near(ragged.smooth(ragged.stencil(333.0, -71.0), [](size_t) { return 0.3; }), 0.3, 1e-6, "处处一样的量平滑后不变");
+    const CoverStencil st = straight.stencil(0.0, 0.0);
+    check_near(straight.smooth(st, [&g](size_t k) { return g.landcover[k] == 4 ? 1.0 : 0.0; }), 0.5, 1e-6, "交界线上林地格的平滑份额是一半");
+    float labels[2];
+    straight.blend(st, 0.0, 0.0, 0.0, 9, 2, [&g](size_t k) { return g.landcover[k] == 4 ? 1 : 0; }, labels);
+    check_near(labels[1], 0.5, 1e-4, "别的类别也按同一套混（交界线上各半）");
+    check_near(cover_ramp(0.5, 0.0, 1.0), 0.5, 1e-9, "渐入：一半处一半");
+    check(cover_ramp(-1.0, 0.0, 1.0) == 0.0 && cover_ramp(2.0, 0.0, 1.0) == 1.0 && cover_ramp(0.9, 1.0, 0.0) < 0.1, "渐入夹在 [0, 1]、可以反着");
 }
 
 void test_map_image() {
@@ -3333,6 +3496,62 @@ void test_scatter() {
     check(blocked == 0, "每处采场的泊地 14 m 内都没有树（规划说落得下船，游戏里就落得下）");
 }
 
+// 散布的过渡：草坡 | 林地 一条直交界（同 half_grid），按林地份额分五档量树、灌丛的密度与树的大小
+void test_scatter_ecotone() {
+    std::printf("scatter ecotone\n");
+    WorldGrid g = half_grid();
+    const size_t n = g.height.size();
+    g.field.assign(n * WorldGrid::FIELD_COUNT, 0);
+    g.patch.assign(n, 0);
+    WorldIsland isl;
+    isl.rim_m = 200.0;
+    isl.max_shore_m = 5000.0;
+    const WorldTerrain t(g, { isl }, 11);
+    const ResourceScatter scatter(t, WorldSites(), ResourceData(), ResourcePlan(), 2051);
+    constexpr int BINS = 5;
+    const double edges[BINS + 1] = { 0.0, 0.05, 0.35, 0.65, 0.95, 1.01 };
+    auto bin_of = [&](double w) {
+        int b = 0;
+        while (b + 1 < BINS && w >= edges[b + 1]) {
+            b++;
+        }
+        return b;
+    };
+    double area[BINS] = {}, trees[BINS] = {}, shrubs[BINS] = {}, scale[BINS] = {};
+    const double X0 = -384.0, X1 = 384.0, Z0 = -640.0, Z1 = 640.0; // 整块：x 3 块 × 2、z 5 块 × 2
+    for (double z = Z0 + 1.0; z < Z1; z += 2.0) {
+        for (double x = X0 + 1.0; x < X1; x += 2.0) {
+            area[bin_of(t.cover(x, z).w[4])] += 4.0;
+        }
+    }
+    for (int iz = int(Z0 / 128.0); iz < int(Z1 / 128.0); iz++) {
+        for (int ix = int(X0 / 128.0); ix < int(X1 / 128.0); ix++) {
+            for (const ScatterItem &it : scatter.chunk(ScatterChunkKey{ ix, iz })) {
+                const int b = bin_of(t.cover(it.x, it.z).w[4]);
+                if (it.kind() == ScatterLook::BROADLEAF || it.kind() == ScatterLook::CONIFER) {
+                    trees[b]++;
+                    scale[b] += it.scale;
+                } else if (it.kind() == ScatterLook::SHRUB) {
+                    shrubs[b]++;
+                }
+            }
+        }
+    }
+    double tree_d[BINS], shrub_d[BINS];
+    std::printf("  林地份额   面积 m²    树 / 公顷  灌丛 / 公顷  树的平均大小\n");
+    for (int b = 0; b < BINS; b++) {
+        tree_d[b] = area[b] > 0.0 ? trees[b] / area[b] * 10000.0 : 0.0;
+        shrub_d[b] = area[b] > 0.0 ? shrubs[b] / area[b] * 10000.0 : 0.0;
+        std::printf("  %.2f–%.2f  %8.0f  %9.1f  %10.1f  %8.2f\n", edges[b], std::min(1.0, edges[b + 1]), area[b], tree_d[b], shrub_d[b], trees[b] > 0 ? scale[b] / trees[b] : 0.0);
+    }
+    check(area[1] > 10000.0 && area[2] > 10000.0 && area[3] > 10000.0, "交界处有一条几十米宽的过渡带（1.3 km 长的交界，每档都有一公顷以上）");
+    check(tree_d[0] < tree_d[1] && tree_d[1] < tree_d[2] && tree_d[2] < tree_d[3] && tree_d[3] < tree_d[4] * 1.1, "树的密度随林地份额一档档升上去，不是一刀切");
+    check(tree_d[2] > 0.3 * tree_d[4] && tree_d[2] < 0.7 * tree_d[4], "过渡带中间树约是林子里的一半（" + std::to_string(tree_d[2] / tree_d[4]) + "）");
+    check(tree_d[0] < 0.1 * tree_d[4], "草坡那边只零星几棵");
+    check(shrub_d[2] > 2.0 * shrub_d[0] && shrub_d[2] > 2.0 * shrub_d[4], "林缘一圈灌丛带：过渡带中间的灌丛比两边都密一倍以上");
+    check(scale[2] / trees[2] < 0.85 * scale[4] / trees[4], "林缘的树矮一截");
+}
+
 // 野泊：平地、斜坡、崖边、水边、太高
 struct TestLandingGround : LandingGround {
     std::function<bool(double, double, double &)> h;
@@ -3706,6 +3925,7 @@ int main() {
     test_village_sim();
     test_world_grid();
     test_world_terrain();
+    test_cover_blend();
     test_terrain_tiles();
     test_map_image();
     test_world_2051();
@@ -3720,6 +3940,7 @@ int main() {
     test_freight();
     test_gather();
     test_scatter();
+    test_scatter_ecotone();
     test_wild_landing();
     test_item_slots();
     test_recipes();
