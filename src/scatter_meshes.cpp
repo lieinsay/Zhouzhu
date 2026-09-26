@@ -6,6 +6,8 @@
 #include <map>
 #include <vector>
 
+#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/variant/packed_color_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
@@ -111,7 +113,7 @@ struct Builder {
         }
     }
 
-    Ref<ArrayMesh> build(const Ref<StandardMaterial3D> &p_material) const {
+    Ref<ArrayMesh> build(const Ref<Material> &p_material) const {
         Ref<ArrayMesh> mesh;
         mesh.instantiate();
         if (v.is_empty()) {
@@ -128,11 +130,13 @@ struct Builder {
     }
 };
 
+constexpr const char *SCATTER_SHADER = "res://shaders/scatter.gdshader";
+
 const Color BARK(0.36f, 0.27f, 0.18f);
 const Color LEAF(0.27f, 0.45f, 0.2f);
 const Color NEEDLE(0.17f, 0.34f, 0.2f);
 
-Ref<ArrayMesh> make(ScatterLook p_look, const Ref<StandardMaterial3D> &p_material) {
+Ref<ArrayMesh> make(ScatterLook p_look, const Ref<Material> &p_material) {
     Builder b;
     switch (p_look) {
         case ScatterLook::BROADLEAF: {
@@ -199,7 +203,20 @@ Ref<ArrayMesh> make(ScatterLook p_look, const Ref<StandardMaterial3D> &p_materia
     return b.build(p_material);
 }
 
-Ref<ArrayMesh> make_stump(bool p_tree, const Ref<StandardMaterial3D> &p_material) {
+// 低模：阔叶一根六棱干 + 一团（盖住细模那三团），针叶一根干 + 一个锥（盖住细模那三层）
+Ref<ArrayMesh> make_low(ScatterLook p_look, const Ref<Material> &p_material) {
+    Builder b;
+    if (p_look == ScatterLook::BROADLEAF) {
+        b.frustum(Vector3(), -0.3, 0.3, 3.6, 0.22, 4, BARK);
+        b.blob(Vector3(0.05f, 5.3f, 0.0f), Vector3(2.9f, 2.3f, 2.9f), 0, 0.1, 11, LEAF);
+    } else if (p_look == ScatterLook::CONIFER) {
+        b.frustum(Vector3(), -0.3, 0.28, 2.0, 0.18, 3, BARK);
+        b.frustum(Vector3(), 1.6, 2.3, 9.0, 0.0, 6, NEEDLE.lightened(0.04f));
+    }
+    return b.build(p_material);
+}
+
+Ref<ArrayMesh> make_stump(bool p_tree, const Ref<Material> &p_material) {
     Builder b;
     if (p_tree) {
         b.frustum(Vector3(), -0.3, 0.36, 0.45, 0.32, 6, BARK, true, Color(0.72f, 0.58f, 0.4f));
@@ -224,14 +241,48 @@ uint64_t hash64(uint64_t p_x) {
 
 } // namespace scatter_meshes
 
-Ref<StandardMaterial3D> ScatterMeshes::material() {
+Ref<Material> ScatterMeshes::material() {
     if (shared.is_null()) {
-        shared.instantiate();
-        shared->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-        shared->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
-        shared->set_roughness(0.95f);
+        const Ref<Shader> shader = ResourceLoader::get_singleton()->load(scatter_meshes::SCATTER_SHADER);
+        if (shader.is_valid()) {
+            Ref<ShaderMaterial> m;
+            m.instantiate();
+            m->set_shader(shader);
+            shared = m;
+            fading = true;
+        } else {
+            ERR_PRINT(String(U"散布：读不了着色器 ") + scatter_meshes::SCATTER_SHADER + String(U"，退回不分远近的材质"));
+            Ref<StandardMaterial3D> m;
+            m.instantiate();
+            m->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+            m->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
+            m->set_roughness(0.95f);
+            shared = m;
+        }
     }
     return shared;
+}
+
+bool ScatterMeshes::can_fade() {
+    material();
+    return fading;
+}
+
+void ScatterMeshes::set_eye(const Vector3 &p_eye) {
+    if (can_fade()) {
+        Ref<ShaderMaterial>(shared)->set_shader_parameter("eye", p_eye);
+    }
+}
+
+Ref<ArrayMesh> ScatterMeshes::low_mesh(ScatterLook p_look) {
+    if (p_look != ScatterLook::BROADLEAF && p_look != ScatterLook::CONIFER) {
+        return Ref<ArrayMesh>();
+    }
+    Ref<ArrayMesh> &m = low[int(p_look)];
+    if (m.is_null()) {
+        m = scatter_meshes::make_low(p_look, material());
+    }
+    return m;
 }
 
 Ref<ArrayMesh> ScatterMeshes::mesh(ScatterLook p_look) {
