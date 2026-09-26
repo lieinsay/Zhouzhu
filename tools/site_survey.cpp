@@ -4,10 +4,13 @@
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --report out.tsv # 另写逐条明细（每个码头 / 村一行）
 //   build/Release/zhouzhu_site_survey.exe game/worlds/2051 --sim 24      # 另把全部村落开账、在远处结 24 个游戏小时，报花费
 //   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --rivers 河.tsv  # 另把河网逐点写出（河号、x、z、平岸水面、宽、深、汇流）
+//   有 weather.tsv 时另报一年的天气（逐月的台面气温、雨量、雪线、河冰线、物候、日出日落定的出工收工），再抽几处村子
+//   一年里每两个钟头取一次局地天气，看雨量对不对得上那一年、坏天气歇工多少钟头（局地雨量差出四成就不达标）
 //   有 resources.tsv 时另把采场与地标落一遍（采掘面、堆场；采掘面要在 60 m 内够得着开局的船野泊，规划时就量好了，只看地面、不看房子），
 //   再抽样生成散布（每隔 --scatter-stride 块取一块，默认 6），报每公顷长了多少、每块花多少时间、泊地上有没有树
 //   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
-//         --sim H（远处结算几个游戏小时；0 = 不结）、--scatter-stride N（散布抽样的间隔块数；0 = 不抽）
+//         --sim H（远处结算几个游戏小时；0 = 不结）、--scatter-stride N（散布抽样的间隔块数；0 = 不抽）、
+//         --calendar N（开局是一年里的第几天，远处结算的时令按它；默认 3，与 WorldClock 一致）
 //
 // 游戏里走近了才铺的东西，这里一次全铺：同一套纯算法（world_sites.h），所以这里铺得好，游戏里就铺得好。
 // 退出码：0 = 全部达标；1 = 有码头找不到岸缘，或摆不下的房子超过上限，或资源点落不了地 / 野泊不下的超过上限；2 = 读不了资产。
@@ -25,9 +28,12 @@
 #include <cmath>
 #include <map>
 
+#include "almanac.h"
 #include "freight.h"
+#include "local_season.h"
 #include "resource_scatter.h"
 #include "resource_sites.h"
+#include "weather.h"
 #include "wild_landing.h"
 #include "world_ground.h"
 #include "world_grid.h"
@@ -66,6 +72,7 @@ int main(int argc, char **argv) {
     double sim_hours = 0.0;
     std::string rivers_path;
     int scatter_stride = 6;
+    int calendar_start = 3;
     for (int k = 2; k + 1 < argc; k += 2) {
         const std::string opt = argv[k];
         if (opt == "--seed") {
@@ -80,6 +87,8 @@ int main(int argc, char **argv) {
             sim_hours = std::atof(argv[k + 1]);
         } else if (opt == "--scatter-stride") {
             scatter_stride = std::atoi(argv[k + 1]);
+        } else if (opt == "--calendar") {
+            calendar_start = std::atoi(argv[k + 1]);
         }
     }
 
@@ -106,6 +115,19 @@ int main(int argc, char **argv) {
             std::fprintf(stderr, "weather.tsv 坏了：%s\n", error.c_str());
             return 2;
         }
+    }
+    // 天气模型：与 World 同一份（海拔分箱从最低的地到最高的峰）
+    Climate climate;
+    WeatherModel wx;
+    if (!weather.empty() && parse_climate(weather, climate, error)) {
+        double low = 1e18, high = -1e18;
+        for (size_t k = 0; k < grid.height.size(); k++) {
+            if (grid.shore[k] > 0.0f) {
+                low = std::min(low, double(grid.height[k]));
+                high = std::max(high, double(grid.height[k]));
+            }
+        }
+        wx = WeatherModel(climate, low, high);
     }
     auto river_started = std::chrono::steady_clock::now();
     WorldTerrain terrain(grid, sites.terrain_islands(), seed, river_rules);
@@ -367,7 +389,98 @@ int main(int argc, char **argv) {
         }
     }
 
+    // 天气：逐月摘要，再抽几处村子看局地一年
+    bool weather_ok = true;
+    if (wx.has_data()) {
+        const Climate &c = wx.get_climate();
+        const CalendarRules &cal = c.calendar;
+        const auto weather_started = std::chrono::steady_clock::now();
+        std::printf("天气：一年 %d 天，纬度 %.2f°、交角 %.0f°，台面 %.0f m、岸缘 %.0f m，年降水 %.0f mm；海拔分箱 %.0f..%.0f m\n", cal.year_days, cal.latitude_deg,
+                cal.tilt_deg, c.ref_m, c.rim_m, c.precip_mm, wx.get_h_lo(), wx.get_h_hi());
+        std::printf("  月   季      台面均温  雨量 雨日  雪线(最低)  河冰线   绿(台面) 叶(800m) 作物   日出  日落  出工  收工\n");
+        for (int m = 0; m < cal.months(); m++) {
+            const int d0 = m * cal.days_per_month, d1 = d0 + cal.days_per_month;
+            double temp = 0.0, rain = 0.0, snow_line = 1e9, ice_line = 1e9;
+            int rain_days = 0;
+            for (int d = d0; d < d1; d++) {
+                temp += c.days[size_t(d)].temp_c / cal.days_per_month;
+                rain += c.days[size_t(d)].precip_mm;
+                rain_days += c.days[size_t(d)].precip_mm > 0.1 ? 1 : 0;
+                snow_line = std::min(snow_line, wx.snow_line(d + 0.5));
+                ice_line = std::min(ice_line, wx.ice_line(d + 0.5, 20.0));
+            }
+            const double mid = 0.5 * (d0 + d1);
+            const ElevationState e_ref = wx.elevation(mid, c.ref_m), e_800 = wx.elevation(mid, 800.0);
+            const SunState sun = sun_at(mid, cal);
+            double start = 0.0, end = 0.0;
+            daylight_work_hours(mid, cal, DaylightWork(), start, end);
+            auto line_text = [](double v) { return v > 1e8 ? std::string("   没有") : std::to_string(int(std::lround(v))) + " m"; };
+            const CalendarDate date = calendar_date(mid, cal);
+            std::printf("  %2d  %-8s %6.1f °C %5.0f %4d  %9s  %8s   %5.2f   %5.2f   %5.2f  %5.2f %5.2f %5.2f %5.2f\n", m + 1, wx.season_name(date.season).c_str(), temp, rain,
+                    rain_days, line_text(snow_line).c_str(), line_text(ice_line).c_str(), e_ref.green, e_800.leaf, e_ref.crop, sun.sunrise_hour, sun.sunset_hour, start, end);
+        }
+        // 局地：邑治（村001）、最高的村、离邑治最远的村——一年里每两个钟头取一次
+        std::vector<const SiteSettlement *> picks;
+        const SiteSettlement *seat = sites.village_by_id(1), *highest = nullptr, *farthest = nullptr;
+        double best_h = -1e18, best_d = -1.0;
+        for (const SiteSettlement &s : sites.settlements) {
+            double y = 0.0;
+            if (s.hamlet || !terrain.surface(s.x, s.z, y)) {
+                continue;
+            }
+            if (y > best_h) {
+                best_h = y;
+                highest = &s;
+            }
+            const double d = seat ? std::hypot(s.x - seat->x, s.z - seat->z) : 0.0;
+            if (d > best_d) {
+                best_d = d;
+                farthest = &s;
+            }
+        }
+        for (const SiteSettlement *s : { seat, highest, farthest }) {
+            if (s) {
+                picks.push_back(s);
+            }
+        }
+        int samples = 0;
+        const DayRules day;
+        for (const SiteSettlement *s : picks) {
+            double y = 0.0;
+            terrain.surface(s->x, s->z, y);
+            double mm = 0.0, snow_mm = 0.0;
+            int storm_hours = 0, snowy_hours = 0;
+            for (int step = 0; step < cal.year_days * 12; step++) {
+                const WeatherSample ws = wx.sample(step / 12.0 + 1.0 / 24.0, s->x, s->z, y);
+                mm += ws.precip_mm_h * 2.0;
+                snow_mm += ws.precip_mm_h * ws.snow_frac * 2.0;
+                storm_hours += ws.storm > 0.5 ? 2 : 0;
+                snowy_hours += ws.precip_mm_h > 0.05 && ws.snow_frac > 0.5 ? 2 : 0;
+                samples++;
+            }
+            const double oro = 1.0 + wx.get_rules().orographic_per_km * std::clamp((y - c.ref_m) / 1000.0, -0.3, 1.5);
+            // 数据里的小雨常只有零点几毫米，画出来按「至少这么多」下：期望 = 每天 max(数据, 这种天气至少) 之和
+            double expect = 0.0;
+            for (const ClimateDay &d : c.days) {
+                const WeatherKindDef &k = weather_kinds::at(d.kind);
+                expect += k.coverage > 0.0 ? std::max(d.precip_mm, k.min_mm) : 0.0;
+            }
+            expect *= oro;
+            const LocalSeason season(&wx, day, double(calendar_start), s->x, s->z, y);
+            int shelter_ticks = 0;
+            for (int tick = 0; tick < cal.year_days * 96; tick++) {
+                shelter_ticks += season.sheltering(game_seconds(tick * 0.25, day)) ? 1 : 0;
+            }
+            const double ratio = mm / std::max(1.0, expect);
+            weather_ok = weather_ok && ratio > 0.6 && ratio < 1.4;
+            std::printf("  %s（%.0f m）：一年局地雨雪 %.0f mm（按天气类型应有 %.0f，%.0f%%；其中雪 %.0f mm、下雪 %d 个钟头），风暴 %d 个钟头，坏天气歇工 %.0f 个钟头\n",
+                    s->name.c_str(), y, mm, expect, 100.0 * ratio, snow_mm, snowy_hours, storm_hours, shelter_ticks * 0.25);
+        }
+        std::printf("  天气取样 %d 次，%.0f ms（每次 %.1f µs）\n", samples, since_ms(weather_started), 1000.0 * since_ms(weather_started) / std::max(1, samples));
+    }
+
     // 远处结算：与游戏里的远处账房（Hinterland）同一份开账与结算（world_ledger），全部村落从卯时前开账，每处半个钟头一结
+    // 有天气时按时令结（开局是一年里的第 calendar_start 天）
     bool sim_ok = true;
     if (sim_hours > 0.0) {
         const DayRules day;
@@ -403,7 +516,8 @@ int main(int argc, char **argv) {
         for (double t = t0 + step; t <= until + 1e-6; t += step) {
             for (size_t k = 0; k < ledgers.size(); k++) {
                 const auto s0 = std::chrono::steady_clock::now();
-                settle_world_ledger(ledgers[k], land, &taken, day, sim_rules, t);
+                const LocalSeason season(&wx, day, double(calendar_start), ledgers[k].x, ledgers[k].z, world_ledger_height(ledgers[k]));
+                settle_world_ledger(ledgers[k], land, &taken, day, sim_rules, t, wx.has_data() ? &season : nullptr);
                 const double ms = since_ms(s0);
                 total_ms += ms;
                 settles++;
@@ -434,7 +548,7 @@ int main(int argc, char **argv) {
                 sim_ok ? "都对得上" : "有对不上的");
     }
 
-    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing && no_berth_ratio <= max_missing && sim_ok && resources_ok;
+    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing && no_berth_ratio <= max_missing && sim_ok && resources_ok && weather_ok;
     std::printf("%s\n", pass ? "达标" : "不达标");
     return pass ? 0 : 1;
 }
