@@ -18,10 +18,13 @@
 #include <godot_cpp/classes/physics_shape_query_parameters3d.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/classes/prism_mesh.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/torus_mesh.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
+#include "atmosphere.h"
+#include "flight_model.h"
 #include "freight.h"
 #include "input_actions.h"
 
@@ -778,6 +781,11 @@ void Ship::step_flight(double p_delta) {
         in.throttle = input->get_axis(input_actions::MOVE_BACK, input_actions::MOVE_FORWARD);
         in.rudder = input->get_axis(input_actions::MOVE_LEFT, input_actions::MOVE_RIGHT);
         in.lift = input->get_axis(input_actions::DESCEND, input_actions::ASCEND);
+        // 风大时船往下风漂（天与光按船此刻的位置给风）；没人掌舵时不漂——停着的船不会被吹走
+        if (Atmosphere *atmosphere = Object::cast_to<Atmosphere>(get_tree()->get_first_node_in_group(Atmosphere::GROUP))) {
+            const Vector2 wind = atmosphere->wind_at(get_global_position());
+            wind_drift(wind.x, wind.y, in.drift_x, in.drift_z);
+        }
     }
     state = flight_step(state, in, apply_gear(params, gear), p_delta);
 

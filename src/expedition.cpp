@@ -14,6 +14,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
+#include "atmosphere.h"
 #include "farm.h"
 #include "input_actions.h"
 #include "land_berth.h"
@@ -1022,9 +1023,14 @@ String Expedition::get_status_text() const {
 }
 
 String Expedition::clock_text() const {
-    // 全局只有一个钟：到哪都一样
+    // 全局只有一个钟：到哪都一样；后面接此地的季节与天气（天与光按人站的那一点取）
     const WorldClock *clock = WorldClock::get_singleton();
-    return clock ? clock->get_clock_text() : String();
+    String text = clock ? clock->get_clock_text() : String();
+    Atmosphere *atmosphere = is_inside_tree() ? Object::cast_to<Atmosphere>(get_tree()->get_first_node_in_group(Atmosphere::GROUP)) : nullptr;
+    if (atmosphere && player) {
+        text += String(U"    ") + atmosphere->hud_text(player->get_global_position());
+    }
+    return text;
 }
 
 void Expedition::update_hud() {
@@ -1129,6 +1135,13 @@ void Expedition::update_hud() {
             } else if (target >= 0) {
                 lines.clear();
                 lines.push_back(helm.course_text(map->map_dock_berth(target), map->map_course_name(target, arrived)));
+            }
+            // 风大、禁航：掌舵时多一行（船往下风漂由 Ship 按同一份风算）
+            if (Atmosphere *atmosphere = Object::cast_to<Atmosphere>(get_tree()->get_first_node_in_group(Atmosphere::GROUP)); atmosphere && ship) {
+                const String sailing = atmosphere->sailing_text(ship->get_global_position());
+                if (!sailing.is_empty()) {
+                    lines.push_back(String(U"风：") + sailing);
+                }
             }
             prompt = helm.piloting_prompt(berths());
             break;
