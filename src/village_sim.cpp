@@ -478,7 +478,7 @@ void advance_village(VillageState &r_state, const VillageWorld &p_world, double 
     r_state.clock = p_until;
 }
 
-void deploy_village(VillageState &r_state, const VillageWorld &p_world, FarmModel *p_farm) {
+void deploy_village(VillageState &r_state, const VillageWorld &p_world, FarmModel *p_farm, bool p_repath) {
     for (const HeldPlot &h : r_state.held) {
         if (!p_farm || !p_farm->put(h.i, h.j, h.plot)) {
             remove_claim(r_state, p_world, h.i, h.j);
@@ -496,11 +496,25 @@ void deploy_village(VillageState &r_state, const VillageWorld &p_world, FarmMode
                 }
                 break;
             case FolkPhase::WALKING:
-                set_out(r_state, p_world, p); // 从此刻站的地方重新找路
+                if (p_repath || !p.estimated) {
+                    set_out(r_state, p_world, p); // 从此刻站的地方重新找路
+                }
                 break;
         }
     }
     r_state.deployed = p_world.nav != nullptr;
+}
+
+bool repath_walker(VillageState &r_state, const VillageWorld &p_world, int p_index) {
+    if (p_index < 0 || p_index >= int(r_state.people.size()) || !p_world.nav) {
+        return false;
+    }
+    PersonState &p = r_state.people[size_t(p_index)];
+    if (p.phase != FolkPhase::WALKING || !p.estimated) {
+        return false;
+    }
+    set_out(r_state, p_world, p);
+    return true;
 }
 
 void collapse_village(VillageState &r_state, FarmModel *p_farm) {

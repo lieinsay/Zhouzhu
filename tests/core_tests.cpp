@@ -2774,6 +2774,27 @@ void test_village_sim() {
     check(out * 2 >= int(s.people.size()) && at_door * 3 <= out, "下午展开的村：多半人在外面，在自家门口的不到三成（在外 " + std::to_string(out) + "，门口 " + std::to_string(at_door) + "）");
     check(s.water > 0.0 && s.water <= s.water_cap, "水缸有水、不溢出");
 
+    // 展开时先不找路（流式加载：展开那一帧不给几十个人一起找路）：走着的接着估着走，之后 repath_walker 一个个找
+    collapse_village(s, &bed.farm);
+    bed.run_far(s, clock_at(0, 16.5, day));
+    {
+        VillageWorld w = bed.world(true, &bed.near_fields);
+        deploy_village(s, w, &bed.farm, false);
+        int estimated = 0, repathed = 0;
+        for (int k = 0; k < int(s.people.size()); k++) {
+            if (s.people[size_t(k)].phase == FolkPhase::WALKING && s.people[size_t(k)].estimated) {
+                estimated++;
+                repathed += repath_walker(s, w, k) ? 1 : 0;
+            }
+        }
+        bool pathed = true;
+        for (const PersonState &p : s.people) {
+            pathed = pathed && !(p.phase == FolkPhase::WALKING && p.estimated) && (p.phase != FolkPhase::WALKING || !p.path.empty());
+        }
+        check(estimated > 0 && repathed == estimated && pathed && s.deployed, "展开先不找路：走着的 " + std::to_string(estimated) + " 人接着估着走，一个个找路之后都有路");
+        check(!repath_walker(s, w, 0) || s.people[0].phase == FolkPhase::WALKING, "不是估着走的不再找");
+    }
+
     // 远处连着推进，拆成几段结算与一口气结算一样（结算的粒度不改规矩）
     SimBed chunk_bed, whole_bed;
     VillageState chunked, whole;

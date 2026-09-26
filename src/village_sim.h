@@ -55,7 +55,10 @@ void advance_village(VillageState &r_state, const VillageWorld &p_world, double 
 
 // 展开（远 → 近）：p_world 带着导航格。账本里拿着的地放回 p_farm（放不下的——已经有人垦了——认领作废），
 // 站着的吸到最近的可走格，走着的从此刻的位置重新找路（找不到就原地歇一阵，回家的直接进门）。
-void deploy_village(VillageState &r_state, const VillageWorld &p_world, FarmModel *p_farm);
+// p_repath 为假时走着的先不找路、接着估着走（流式加载：展开那一帧不给几十个人一起找路），上层之后用 repath_walker 一个个找。
+void deploy_village(VillageState &r_state, const VillageWorld &p_world, FarmModel *p_farm, bool p_repath = true);
+// 估着走的第 p_index 个人从此刻站的地方按导航格重新找路；不是估着走的（或没有导航格）返回 false
+bool repath_walker(VillageState &r_state, const VillageWorld &p_world, int p_index);
 // 收回（近 → 远）：认领的地连同长势从 p_farm 里拿出来记进账本，走着的改成估着走（还剩的路长照记）
 void collapse_village(VillageState &r_state, FarmModel *p_farm);
 
