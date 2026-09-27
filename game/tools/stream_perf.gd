@@ -12,6 +12,10 @@ extends Node
 ##   Godot --path game res://tools/stream_perf.tscn               # 带窗口：帧时含渲染
 ##   Godot --headless --path game res://tools/stream_perf.tscn    # 无头：只有主线程的活
 ##
+## `--voyage=<秒>`（行星计划 P3，单独跑）：主码头站定 15 s 报内存；god 模式挪到 2051 西南岸外 4.6 km 的云海上空 1800 m，
+##   以 150 m/s 朝 2050 飞 <秒> 秒（默认 240：约 100 s 时过换锚线，再飞到 2050 岸边），再原路飞回同样久（过换锚线回到 2051）；
+##   两段各报帧时（换锚那一帧与下一帧另报）与进程内存。
+##
 ## 不加 --fixed-fps：量的是真帧时（带窗口时加 --disable-vsync，免得被刷新率卡住）。
 ## 末尾加 `-- --fast=<秒> --slow=<秒> --stand=<秒> --high=<秒>` 改各段多久（默认 60 / 30 / 20 / 0）。
 
@@ -32,6 +36,14 @@ var stand_s := 20.0
 var high_s := 0.0
 var high_m := 50000.0
 var orbit_s := 0.0
+var voyage_s := 0.0
+const VOYAGE_FROM := Vector3(-21612.0, 1800.0, 57039.0)  # 2051 平面：西南岸外 4.6 km、朝 2050 主码头的航线上
+const VOYAGE_DIR := Vector3(-0.3739, 0.0, 0.9275)
+const VOYAGE_SPEED := 150.0
+var stream = null  # GroupStream
+var shifts_seen := 0
+var shift_watch := 0
+var shift_ms: Array[float] = []
 var shots_dir := ""
 var orbit = null  # OrbitCamera
 var globe = null  # PlanetGlobe
@@ -63,6 +75,8 @@ func _ready() -> void:
 			high_s = float(arg.trim_prefix("--high="))
 		elif arg.begins_with("--orbit="):
 			orbit_s = float(arg.trim_prefix("--orbit="))
+		elif arg.begins_with("--voyage="):
+			voyage_s = float(arg.trim_prefix("--voyage="))
 		elif arg.begins_with("--shots="):
 			shots_dir = arg.trim_prefix("--shots=")
 	get_tree().root.size = Vector2i(1280, 720)
@@ -73,6 +87,7 @@ func _ready() -> void:
 	scatter = main.get_node("ScatterStream")
 	sites = main.get_node("SiteStream")
 	globe = main.get_node_or_null("PlanetGlobe")
+	stream = main.get_node_or_null("GroupStream")
 	if orbit_s > 0.0:
 		GameClock.restart(10.0)
 		GameClock.paused = true
@@ -171,6 +186,9 @@ func _process(delta: float) -> void:
 		return
 	if orbit_s > 0.0:
 		_orbit_process(delta, ms)
+		return
+	if voyage_s > 0.0:
+		_voyage_process(delta, ms)
 		return
 	frames.append(ms)
 	if ms > SLOW_MS:
@@ -301,3 +319,73 @@ func _orbit_process(delta: float, ms: float) -> void:
 		if elapsed - phase_started > 3.0:
 			_orbit_shot("orbit_after")
 			get_tree().quit(0)
+
+
+# ---- 行星计划 P3：150 m/s 从 2051 飞过换锚线到 2050，再飞回来
+func _voyage_process(delta: float, ms: float) -> void:
+	if phase == 0:
+		if stream == null or not stream.is_ready():
+			return
+		frames.append(ms)
+		if elapsed > SETTLE_S:
+			_report("主码头站定 %d s" % int(SETTLE_S))
+			player.set_god_mode(true)
+			player.global_position = VOYAGE_FROM
+			phase = 1
+			phase_started = elapsed
+			last = Time.get_ticks_usec()
+		return
+	frames.append(ms)
+	if ms > SLOW_MS:
+		slow.append([elapsed, ms, {}])
+	# 换锚：Expedition 在物理帧开头换；这一帧、下一帧的帧时（两次 _process 之间）另记
+	if main.get_shift_count() > shifts_seen:
+		shifts_seen = main.get_shift_count()
+		shift_watch = 3
+		shift_ms.clear()
+		print("stream_perf: 换锚 #%d 在 %.1f s（锚 → %d，编排那一步 %.2f ms）" % [shifts_seen, elapsed, stream.get_anchor_node(), main.get_last_shift_ms()])
+	elif shift_watch > 0:
+		shift_ms.append(ms)
+		shift_watch -= 1
+		if shift_watch == 0:
+			print("stream_perf: 换锚之后三帧的帧时 %s ms" % [shift_ms])
+	# 目标点按 2051 的平面定，每帧换到此刻的锚群平面（换锚之后照样朝同一个真方向飞）
+	var sign := 1.0 if phase == 1 else -1.0
+	var target_2051: Vector3 = VOYAGE_FROM + VOYAGE_DIR * (sign * 400000.0)
+	var target: Vector3 = stream.to_anchor(2051, target_2051)
+	var p := player.global_position
+	var to := Vector3(target.x - p.x, 0.0, target.z - p.z).normalized()
+	player.global_position = Vector3(p.x + to.x * VOYAGE_SPEED * delta, VOYAGE_FROM.y, p.z + to.z * VOYAGE_SPEED * delta)
+	player.velocity = Vector3.ZERO
+	if elapsed - phase_started > voyage_s:
+		var names := {1: "去程（2051 → 2050）", 2: "回程（2050 → 2051）"}
+		_voyage_report("150 m/s %s %d s" % [names[phase], int(voyage_s)])
+		if phase == 2:
+			get_tree().quit(0)
+			return
+		phase = 2
+		phase_started = elapsed
+		last = Time.get_ticks_usec()
+
+
+func _voyage_report(name: String) -> void:
+	var sorted := frames.duplicate()
+	sorted.sort()
+	var n := sorted.size()
+	var total := 0.0
+	for f in sorted:
+		total += f
+	print("stream_perf: %s  %d 帧  平均 %.1f ms  P99 %.1f ms  最慢 %.1f ms  >50 ms %d 帧" % [
+		name, n, total / max(1, n), sorted[int(n * 0.99)] if n > 0 else 0.0, sorted[n - 1] if n > 0 else 0.0, sorted.filter(func(f): return f > 50.0).size()])
+	var worst := slow.duplicate()
+	worst.sort_custom(func(a, b): return a[1] > b[1])
+	for s in worst.slice(0, 8):
+		print("  慢帧 %.1f s：%.0f ms" % [s[0], s[1]])
+	var line := "  各群："
+	for node in stream.get_group_nodes():
+		var st: Dictionary = stream.get_group_state(node)
+		line += "  %d 档 %d 离陆地 %.1f km 地面块 %d" % [node, int(st["tier"]), float(st["land_km"]), int(st["tiles"])]
+	print(line + "  锚 %d" % stream.get_anchor_node())
+	_memory()
+	frames.clear()
+	slow.clear()

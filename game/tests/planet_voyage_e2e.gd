@@ -10,6 +10,7 @@ extends Node
 ##   Godot --headless --path game --fixed-fps 60 res://tests/planet_voyage_e2e.tscn
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图；换锚前后那两张（shift_before / shift_after）拿来对照画面跳没跳。
+## 再加 `--mem`：几个节点上报进程内存（工作集、私有提交、显存）。
 
 const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 1800.0  # 模拟秒
@@ -39,6 +40,7 @@ var phase := Phase.SETTLE
 var elapsed := 0.0
 var phase_started := 0.0
 var shots_dir := ""
+var report_memory := false
 var pending_shot := ""
 var shot_wait := 0
 var held := {}
@@ -69,6 +71,8 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
 			shots_dir = arg.trim_prefix("--shots=")
+		elif arg == "--mem":
+			report_memory = true
 			DirAccess.make_dir_recursive_absolute(shots_dir)
 	get_tree().root.size = Vector2i(1280, 720)
 	main = SCENE.instantiate()
@@ -85,6 +89,25 @@ func _finish(ok: bool, why: String) -> void:
 	_release_all()
 	print("planet_voyage: %s —— %s（阶段 %s，模拟 %.1f s）" % ["PASS" if ok else "FAIL", why, Phase.keys()[phase], elapsed])
 	get_tree().quit(0 if ok else 1)
+
+
+## 进程内存（--mem）：工作集（tasklist）、私有提交（PowerShell）、显存
+func _memory(tag: String) -> void:
+	if not report_memory:
+		return
+	var pid := OS.get_process_id()
+	var out := []
+	var ws := "?"
+	if OS.execute("tasklist", ["/FI", "PID eq %d" % pid, "/FO", "CSV", "/NH"], out) == 0 and out.size() > 0:
+		var cols: PackedStringArray = String(out[0]).strip_edges().split("\",\"")
+		if cols.size() >= 5:
+			ws = cols[4].replace("\"", "")
+	out = []
+	var priv := "?"
+	if OS.execute("powershell", ["-NoProfile", "-Command", "(Get-Process -Id %d).PrivateMemorySize64" % pid], out) == 0 and out.size() > 0:
+		priv = "%.0f MB" % (float(String(out[0]).strip_edges()) / 1048576.0)
+	_log("内存（%s）：工作集 %s、私有提交 %s、显存 %.0f MB" % [tag, ws, priv, Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0])
+	last_tick = Time.get_ticks_usec()
 
 
 func _log(line: String) -> void:
@@ -268,6 +291,7 @@ func _physics_process(delta: float) -> void:
 					return
 				_log("出生在 %s；邑治的账开了（%s）；2050 离陆地 %.0f km、远景" % [player.global_position, seat, float(away["land_km"])])
 				_shot("1_spawn")
+				_memory("2051 主码头")
 				var berth: Transform3D = main.get_origin_berth()
 				waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
 				_goto(Phase.WALK_TO_SHIP)
@@ -452,6 +476,7 @@ func _physics_process(delta: float) -> void:
 			if out > 0:
 				_log("2050：%s 有 %d 人在外面（招了 %d 人；钟点 %s）" % [village, out, folk_total, GameClock.get_clock_text()])
 				_shot("6_folk_2050")
+				_memory("2050 主码头，村民出门")
 				atmo.clear_weather_override()
 				_goto(Phase.ADVANCE_CLOCK)
 			elif in_phase > FOLK_TIMEOUT:
@@ -606,6 +631,7 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "离开 26 个钟头以上该只补最后 24 个钟头（每本该跳过两个钟头以上，实为 %.2f）" % (skipped / restored))
 					return
 				_shot("7_home_again")
+				_memory("回到 2051，账补回")
 				_goto(Phase.DONE)
 			elif in_phase > 240.0:
 				_finish(false, "240 s 里 2051 的账没补回 / 没补结（%s）" % [stats])
