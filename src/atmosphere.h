@@ -14,6 +14,7 @@
 #include <godot_cpp/variant/node_path.hpp>
 
 #include "almanac.h"
+#include "cloud_band.h"
 #include "map_host.h"
 #include "planet_weather.h"
 #include "weather.h"
@@ -32,6 +33,11 @@ class MapHost;
 // 相机处的地方时 = 钟点 + 经度差 / 15°；方向落在相机的局部系（画面的世界轴就是它，远处岛群的受光按真球面对得上）。
 // 雾：高过 2.5 km 起按空气变稀减淡（高空往下看不再是一片白），近地面的雾一点不变。
 // 开发者覆盖（set_weather_override）改在天气模型上，按 override_fade 渐入渐出；村子、庄稼读同一个模型，所以也跟着变。
+// 行星计划 P7（云带之下，D13）：相机降到云带顶（−3800 m）以下，按 cloud_band_at 的剖面——
+//   云带里：浓雾（能见度几十米）、雾色随走进的深度与太阳高度变暗，直射按云带的光学厚度衰减，天被雾盖满；
+//   云底下（−5000 m 以下）：阴天式的漫射光（看不见日面、方向光熄了，环境光是云带顶上的三成多），远处是灰蓝的霾，下雨霾浓；
+//   天空着色器换成从下往上看（云底、海、霾，under_* 参数）、云海漫顶的高度雾撤掉；晨昏只有云底染色（SeaSurface 的云底按太阳的方位染）。
+//   云底、海面的颜色按同一份光给（get_under_look），天空着色器里从下往上看的那一段与网格对得上。气温 y < 0 按 y = 0（天气模型里）。
 class Atmosphere : public godot::Node3D {
     GDCLASS(Atmosphere, godot::Node3D)
 
@@ -70,6 +76,36 @@ class Atmosphere : public godot::Node3D {
     double above_clouds = 0.0; // 相机升过天气云层多少（0..1，有行星数据时）：天不阴、日光不被遮、不下雨雪
     double space_blend = 0.0; // 天上换成大气散射多少（PlanetGlobe 设）：引擎给天空蒙的雾跟着淡掉
     double base_fog_sky = 0.2;
+    // 行星计划 P7：相机在云带的哪儿（没有行星数据时是云带顶上那样：什么都不变）
+    CloudBandRules band_rules;
+    CloudBandState band;
+    double band_fog = 0.06; // 云带里的雾（引擎的指数雾，每米）：50 m 外九成五看不见
+    double under_fog = 1.2e-4; // 云底下的霾（引擎的指数雾，每米）：晴天 25 km 外九成五看不见
+    double under_rain_fog = 1.2e-3; // 下大雨时再加（2 km 上下就看不清）
+    double under_sky_affect = 0.0; // 云底下天空蒙雾的份：天空着色器自己蒙霾（屏幕上的天几乎都被云底、海面网格盖着，主要管反光里的天：留着云底的明暗）
+    godot::Color band_light_tint = godot::Color(0.82f, 0.85f, 0.89f); // 云里的雾、云底下的霾（乘此刻透进来的光）
+    godot::Color base_albedo = godot::Color(0.86f, 0.89f, 0.94f); // 云底的颜色（乘头顶多亮）
+    godot::Color sea_albedo = godot::Color(0.010f, 0.026f, 0.034f); // 海水（漫射的那一份；亮处多是反光）
+
+public:
+    struct UnderLook {
+        godot::Color fog; // 雾 / 霾的颜色（引擎的雾就是它）
+        godot::Color base; // 云底此刻看上去的颜色（反照 × 环境光）
+        godot::Color sea; // 海水漫射的那一份
+        godot::Color ambient; // 环境光（颜色 × 强度）
+        double light = 1.0; // 云里的雾有多亮（0..1，按剖面与昼夜）
+        double zenith = 1.0; // 云底下头顶的云底有多亮（0..1）
+        double dusk = 0.0; // 晨昏 0..1
+        double day = 1.0;
+        godot::Vector3 sun_visual = godot::Vector3(0, 1, 0); // 太阳（画面的世界轴）
+        double wind_x = 0.0, wind_z = 0.0; // 相机处的风（平滑后，锚群平面轴，m/s）：海浪按它
+        double storm = 0.0, precip = 0.0, flash = 0.0;
+    };
+
+private:
+    UnderLook under_look;
+    double env_fog_density = 0.0, env_sky_affect = 0.0, env_ambient = 0.0; // 这一帧设给引擎的（测试录）
+    godot::Color env_fog_color;
     SunState sun_state;
     MoonState moon_state;
     bool have_look = false;
@@ -155,8 +191,15 @@ public:
     godot::Dictionary planet_weather_latlon(double p_lat, double p_lon);
     // 近处云团的几个槽：[{ node, fade }]
     godot::Array get_cloud_slots() const;
-    // 画面此刻跟到哪（平滑后）：{ cloud, cover, precip, snow, fog, storm, wet, wind_x, wind_z, overcast, indoor, flash, rain_ratio, snow_ratio }
+    // 画面此刻跟到哪（平滑后）：{ cloud, cover, precip, snow, fog, storm, wet, wind_x, wind_z, overcast, indoor, flash, rain_ratio, snow_ratio }，
+    // 另有这一帧设给引擎的 { sun_energy, moon_energy, ambient_energy, fog_density, fog_sky_affect, fog_r, fog_g, fog_b } 与云带（行星计划 P7）
+    // { band_inside, band_under, band_below, band_depth, band_sun, band_diffuse, band_light, sea_height }
     godot::Dictionary get_look() const;
+    // 行星计划 P7：船在 p_global 处颠得多厉害（0..1.5）：云带里 1，云底下一点，风暴里（云带里、云底下）再加；云带顶上 0
+    double turbulence_at(const godot::Vector3 &p_global);
+    // 相机在云带的哪儿（cloud_band_at 的剖面）与此刻云底、海、霾的光（SeaSurface 用）
+    const CloudBandState &get_band() const { return band; }
+    const UnderLook &get_under_look() const { return under_look; }
     double get_sun_altitude() const { return sun_state.altitude_deg; }
     bool is_night() const { return sun_state.altitude_deg < -6.0; }
 

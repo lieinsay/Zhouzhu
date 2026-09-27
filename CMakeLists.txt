@@ -165,6 +165,8 @@ target_sources(
         src/planet_view.h
         src/planet_globe.cpp
         src/planet_globe.h
+        src/sea_surface.cpp
+        src/sea_surface.h
         src/planet_host.cpp
         src/planet_host.h
         src/planet_jobs.cpp

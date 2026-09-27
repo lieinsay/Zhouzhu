@@ -22,6 +22,7 @@
 #include "placed_props.h"
 #include "orbit_camera.h"
 #include "planet_globe.h"
+#include "sea_surface.h"
 #include "planet_host.h"
 #include "planet_jobs.h"
 #include "planet_view.h"
@@ -89,6 +90,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(PlanetView);
     GDREGISTER_CLASS(FarGroups);
     GDREGISTER_CLASS(PlanetGlobe);
+    GDREGISTER_CLASS(SeaSurface);
     GDREGISTER_CLASS(OrbitCamera);
 }
 

@@ -133,6 +133,7 @@ void Atmosphere::_bind_methods() {
     ClassDB::bind_method(D_METHOD("hud_text", "global"), &Atmosphere::hud_text);
     ClassDB::bind_method(D_METHOD("get_look"), &Atmosphere::get_look);
     ClassDB::bind_method(D_METHOD("sail_push_at", "global"), &Atmosphere::sail_push_at);
+    ClassDB::bind_method(D_METHOD("turbulence_at", "global"), &Atmosphere::turbulence_at);
     ClassDB::bind_method(D_METHOD("planet_weather_at", "global"), &Atmosphere::planet_weather_at);
     ClassDB::bind_method(D_METHOD("planet_weather_latlon", "lat", "lon"), &Atmosphere::planet_weather_latlon);
     ClassDB::bind_method(D_METHOD("get_cloud_slots"), &Atmosphere::get_cloud_slots);
@@ -315,6 +316,8 @@ void Atmosphere::_process(double p_delta) {
     fog_thin = pv ? std::exp(-std::max(0.0, double(eye.y) - FOG_THIN_FROM_M) / FOG_THIN_SCALE_M) : 1.0;
     // 行星计划 P2：相机升过天气云层，头顶就没有云了——天不再阴、日光不被云遮、不下雨雪（云在脚下，由 PlanetGlobe 的云层叠画画出来）
     above_clouds = pv ? smooth01(cloud_height - 300.0, cloud_height + 300.0, double(eye.y)) : 0.0;
+    // 行星计划 P7：相机在云带的哪儿（云带里的雾、光，云底下的阴天）；没有行星数据的地图没有云带
+    band = pv ? cloud_band_at(double(eye.y), sun_state.dir_y, band_rules) : CloudBandState();
     update_look(eye, p_delta);
     update_lightning(p_delta);
     update_lights();
@@ -467,7 +470,7 @@ void Atmosphere::update_lights() {
         const Vector3 d = pv ? pv->enu_to_visual(enu) : enu;
         const Vector3 up = std::abs(d.y) > 0.99f ? Vector3(0, 0, 1) : Vector3(0, 1, 0);
         sun->set_global_basis(Basis::looking_at(-d, up));
-        const double energy = base_sun * smooth01(-0.04, 0.18, s) * cloud_dim;
+        const double energy = base_sun * smooth01(-0.04, 0.18, s) * cloud_dim * band.sun; // 云带里按走进的深度衰减，云底下看不见日面（P7）
         sun->set_param(Light3D::PARAM_ENERGY, real_t(energy));
         sun->set_color(mix_color(Color(1.0f, 0.52f, 0.28f), Color(1.0f, 0.97f, 0.92f), smooth01(0.0, 0.4, s)));
         sun->set_shadow(energy > 0.05);
@@ -477,7 +480,7 @@ void Atmosphere::update_lights() {
         const Vector3 d = pv ? pv->enu_to_visual(enu) : enu;
         const Vector3 up = std::abs(d.y) > 0.99f ? Vector3(0, 0, 1) : Vector3(0, 1, 0);
         moon->set_global_basis(Basis::looking_at(-d, up));
-        const double energy = 0.2 * (0.25 + 0.75 * moon_state.illuminated) * smooth01(-0.02, 0.15, moon_state.dir_y) * (1.0 - day) * (1.0 - 0.8 * look.cloud);
+        const double energy = 0.2 * (0.25 + 0.75 * moon_state.illuminated) * smooth01(-0.02, 0.15, moon_state.dir_y) * (1.0 - day) * (1.0 - 0.8 * look.cloud) * band.sun;
         moon->set_param(Light3D::PARAM_ENERGY, real_t(energy));
     }
     (void)day;
@@ -489,28 +492,65 @@ void Atmosphere::update_environment() {
     const double dusk = smooth01(-0.22, -0.02, s) * (1.0 - smooth01(0.02, 0.32, s));
     const double below = 1.0 - above_clouds;
     const double overcast = look.overcast * below, haze = look.haze * below;
+    // 行星计划 P7：在云里（云带里）或云下（云底下）——光是云漫射下来的：透进来的光按剖面（直射三成半、漫射六成半），昼夜照乘
+    const double clouded = std::min(1.0, band.inside + band.under); // 云里的份与出了云底的份在云底那一段此消彼长，加起来是 1
+    under_look.day = day;
+    under_look.dusk = dusk;
+    const double day_level = 0.05 + 0.95 * day;
+    under_look.light = day_level * (0.35 * band.sun + 0.65 * band.diffuse); // 云里的雾：顶上亮（日光打进来）、越深越暗
+    under_look.zenith = day_level * band.diffuse; // 从下往上看头顶的云底有多亮（阴天的天顶；往地平线暗到三分之一，CIE 阴天）
+    under_look.wind_x = look.wind_x;
+    under_look.wind_z = look.wind_z;
+    under_look.storm = look.storm;
+    under_look.precip = look.precip;
+    under_look.flash = flash;
     if (env.is_valid()) {
-        // 环境光：白天偏天蓝、夜里是暗蓝（看得见路）、晨昏带暖；阴天压暗；闪电一亮
+        // 环境光：白天偏天蓝、夜里是暗蓝（看得见路）、晨昏带暖；阴天压暗；闪电一亮；云里云下偏灰、按剖面的漫射光暗下去
         Color ambient = mix_color(Color(0.2f, 0.25f, 0.4f), Color(0.62f, 0.7f, 0.84f), day);
         ambient = mix_color(ambient, Color(0.85f, 0.62f, 0.5f), dusk * 0.35);
-        const double energy = base_ambient * (0.5 + 0.5 * day + 0.25 * dusk) * (1.0 - 0.3 * overcast) + flash * 1.2 * below;
+        ambient = mix_color(ambient, mix_color(Color(0.3f, 0.33f, 0.42f), Color(0.64f, 0.68f, 0.74f), day), clouded * 0.8);
+        // 云里云下：环境光按漫射光暗下去，但直射进了云都成了四面八方的散射光，所以另补一份（云底下约是云带顶上的七成，只是没了直射）
+        const double band_ambient = band.diffuse * (1.0 + 0.8 * clouded * (1.0 - band.sun));
+        const double energy = base_ambient * (0.5 + 0.5 * day + 0.25 * dusk) * (1.0 - 0.3 * overcast) * band_ambient + flash * 1.2 * below;
         env->set_ambient_light_color(ambient);
         env->set_ambient_light_energy(real_t(energy));
+        env_ambient = energy;
+        under_look.ambient = ambient * float(energy);
         // 雾：晴天照场景原来的，雨雪天、雾里加浓；云海漫顶按雾顶起高度雾
         Color fog = mix_color(Color(0.05f, 0.07f, 0.11f), base_fog_color, day);
         fog = mix_color(fog, Color(0.9f, 0.62f, 0.45f), dusk * 0.4);
         fog = mix_color(fog, Color(0.56f, 0.6f, 0.65f) * float(0.2 + 0.8 * day), overcast * 0.7);
+        // 云里的雾（乘透进来的光：云带顶附近亮、越深越暗）、云底下的霾（头顶云底亮度的四成多：远处比头顶暗）；晨昏偏暖一点
+        Color cloud_fog = mix_color(band_light_tint * float(under_look.light), band_light_tint * float(0.45 * under_look.zenith), band.under);
+        cloud_fog = mix_color(cloud_fog, Color(cloud_fog.r * 1.2f, cloud_fog.g * 0.92f, cloud_fog.b * 0.82f), dusk * 0.5);
+        fog = mix_color(fog, cloud_fog, clouded);
         env->set_fog_light_color(fog);
-        // 引擎的雾按 fog_sky_affect 蒙在天空上（与雾的浓淡无关）：高空天上换成大气散射时跟着淡掉，太空是黑的
-        env->set_fog_sky_affect(real_t(base_fog_sky * (1.0 - space_blend)));
-        env->set_fog_density(real_t((base_fog + 0.0011 * haze + 0.012 * look.fog * below) * fog_thin));
-        if (look.fog_height > 0.02 && now.fog_top > -1e8) {
+        env_fog_color = fog;
+        under_look.fog = cloud_fog;
+        // 引擎的雾按 fog_sky_affect 蒙在天空上（与雾的浓淡无关）：高空天上换成大气散射时跟着淡掉，太空是黑的；云里天被雾盖满，
+        // 云下不蒙（天空着色器从下往上看的那一段自己蒙霾，反光里留着云底的明暗）
+        double sky_affect = base_fog_sky * (1.0 - space_blend);
+        sky_affect += (1.0 - sky_affect) * band.inside;
+        sky_affect += (under_sky_affect - sky_affect) * band.under;
+        env->set_fog_sky_affect(real_t(sky_affect));
+        env_sky_affect = sky_affect;
+        // 雾的浓淡：云带顶上照天气；云带里是浓雾（能见度几十米）；云底下是霾，下雨、风暴浓起来
+        double density = (base_fog + 0.0011 * haze + 0.012 * look.fog * below) * fog_thin;
+        density += (band_fog - density) * band.inside;
+        density += (under_fog + under_rain_fog * std::clamp(look.precip * 1.3, 0.0, 1.0) + 0.0005 * look.storm - density) * band.under;
+        env->set_fog_density(real_t(density));
+        env_fog_density = density;
+        // 云海漫顶的高度雾：雾顶在岛上，降到云带顶以下就不要了（不然海面上一片死白）
+        if (look.fog_height > 0.02 && now.fog_top > -1e8 && band.below < 0.999) {
             env->set_fog_height(real_t(now.fog_top));
-            env->set_fog_height_density(real_t(0.02 * look.fog_height));
+            env->set_fog_height_density(real_t(0.02 * look.fog_height * (1.0 - band.below)));
         } else {
             env->set_fog_height_density(0.0f);
         }
     }
+    // 云底此刻头顶那一块多亮（透下来的光，不是被照亮的：云底是光源），海水漫射的那一份（反照 × 环境光）
+    under_look.base = base_albedo * float(under_look.zenith);
+    under_look.sea = Color(sea_albedo.r * under_look.ambient.r, sea_albedo.g * under_look.ambient.g, sea_albedo.b * under_look.ambient.b);
     if (sky_material.is_valid()) {
         const WeatherModel *wx = model();
         double dx = 0.0, dz = 0.0;
@@ -529,6 +569,14 @@ void Atmosphere::update_environment() {
         sky_material->set_shader_parameter("rain_haze", haze);
         sky_material->set_shader_parameter("drift", Vector2(real_t(px), real_t(pz)));
         sky_material->set_shader_parameter("flash", flash * below);
+        // 行星计划 P7：云带顶以下天换成从下往上看——云底、海、霾（与 SeaSurface 的网格同一份光）；反光里看得见云底
+        const Vector3 sun_vis = pv ? pv->enu_to_visual(sun_enu) : sun_enu;
+        under_look.sun_visual = sun_vis;
+        sky_material->set_shader_parameter("under_band", band.below);
+        sky_material->set_shader_parameter("under_base_color", under_look.base);
+        sky_material->set_shader_parameter("under_haze_color", under_look.fog);
+        sky_material->set_shader_parameter("under_sea_color", under_look.sea);
+        sky_material->set_shader_parameter("under_haze_density", env_fog_density);
     }
 }
 
@@ -741,9 +789,17 @@ Dictionary Atmosphere::get_weather() const {
     d["has_data"] = wx->has_data();
     d["latitude"] = wx->calendar().latitude_deg;
     d["override"] = get_override();
-    // 相机在哪一层：0 对流层、1 高空（对流层顶以上，气温照对流层顶）、2 太空（100 km 以上）；云层以上多少（0..1）
-    d["altitude_band"] = last_eye.y >= SPACE_M ? 2 : (last_eye.y >= TROPOPAUSE_M ? 1 : 0);
+    // 相机在哪一层：0 对流层、1 高空（对流层顶以上，气温照对流层顶）、2 太空（100 km 以上）、3 云带里、4 云底下（行星计划 P7）；云层以上多少（0..1）
+    int layer = last_eye.y >= SPACE_M ? 2 : (last_eye.y >= TROPOPAUSE_M ? 1 : 0);
+    if (on_planet && band.under > 0.5) {
+        layer = 4;
+    } else if (on_planet && band.inside > 0.5) {
+        layer = 3;
+    }
+    d["altitude_band"] = layer;
     d["above_clouds"] = above_clouds;
+    // 离海面多高（有行星数据时，D13：海面 −5600 m）
+    d["sea_height"] = on_planet ? double(last_eye.y) - VerticalDatum::SEA_Y : NAN;
     return d;
 }
 
@@ -765,7 +821,27 @@ String Atmosphere::hud_text(const Vector3 &p_global) {
         return season + vformat(String(U" · 高空 %d°C"), int(std::lround(s.temp_c)));
     }
     const WeatherSample s = sample_mix(day, p_global, p_global.y);
+    // 行星计划 P7：云带里只报气温（什么都看不见）；云底下报此地的天气（下不下雨按群的天气、离群远了按行星天气场）
+    if (on_planet && double(p_global.y) < VerticalDatum::CLOUD_TOP_Y) {
+        const CloudBandState b = cloud_band_at(double(p_global.y), sun_state.dir_y, band_rules);
+        if (b.under < 0.5) {
+            return season + vformat(String(U" · 云带里 %d°C"), int(std::lround(s.temp_c)));
+        }
+        return season + String(U" · 云底下 · ") + weather_view::short_text(s);
+    }
     return season + String(U" · ") + weather_view::short_text(s);
+}
+
+double Atmosphere::turbulence_at(const Vector3 &p_global) {
+    if (!PlanetView::active_view() || !p_global.is_finite()) {
+        return 0.0;
+    }
+    const CloudBandState b = cloud_band_at(double(p_global.y), sun_state.dir_y, band_rules);
+    if (b.inside <= 0.0 && b.under <= 0.0) {
+        return 0.0; // 云带顶上照旧不颠
+    }
+    const WeatherSample s = sample_mix(calendar_day(), p_global, p_global.y);
+    return std::clamp(b.turbulence + (0.4 * b.inside + 0.8 * b.under) * s.storm + 0.2 * b.under * std::clamp((s.wind_ms - 10.0) / 15.0, 0.0, 1.0), 0.0, 1.5);
 }
 
 Vector2 Atmosphere::wind_at(const Vector3 &p_global) {
@@ -900,6 +976,21 @@ Dictionary Atmosphere::get_look() const {
     d["drops"] = look.drops;
     d["sun_energy"] = sun ? double(sun->get_param(Light3D::PARAM_ENERGY)) : 0.0;
     d["moon_energy"] = moon ? double(moon->get_param(Light3D::PARAM_ENERGY)) : 0.0;
+    // 这一帧设给引擎的（行星计划 P7：升降一趟录下来查连续）
+    d["ambient_energy"] = env_ambient;
+    d["fog_density"] = env_fog_density;
+    d["fog_sky_affect"] = env_sky_affect;
+    d["fog_r"] = env_fog_color.r;
+    d["fog_g"] = env_fog_color.g;
+    d["fog_b"] = env_fog_color.b;
+    d["band_inside"] = band.inside;
+    d["band_under"] = band.under;
+    d["band_below"] = band.below;
+    d["band_depth"] = band.depth;
+    d["band_sun"] = band.sun;
+    d["band_diffuse"] = band.diffuse;
+    d["band_light"] = under_look.light;
+    d["sea_height"] = on_planet ? band.sea_height : NAN;
     return d;
 }
 

@@ -17,6 +17,7 @@
 
 class Atmosphere;
 class PlanetView;
+class SeaSurface;
 class GroupWorld;
 class JobPool;
 
@@ -33,6 +34,8 @@ class JobPool;
 //   - 相机的地面点离锚群超过 geometry_radius（轨道相机飞远了）：锚群的地面、村子、船、人都藏起来，由行星贴图画它（再飞回来就放回去）；
 //   - 行星计划 P5：行星天气场（PlanetView 的 PlanetWeather）的全行星贴图——等经纬 weather_width × weather_height（云量、雨、群的份、风暴），
 //     各格的群与权先在后台算一回（静的），之后游戏钟每走 weather_every_h（或拨钟、开发者覆盖变了）后台重烘一回，天空与云层叠画的行星云层读它。
+//   - 行星计划 P7：云带之下——建 SeaSurface（云底与海面两张跟着相机的网格）、每帧推它；后台按行星包烘白礁的疏密（等经纬 reef_width × reef_height，
+//     src/sea_state.* 的 bake_reef_density），天空（从高空透过云带壳的缝看的海、从下往上看的海）与海面网格一起读。
 // 没有行星数据（PlanetView 没锚定）就什么都不做，天空着色器的 planet_on 是 0，一切照旧。
 class PlanetGlobe : public godot::Node3D {
     GDCLASS(PlanetGlobe, godot::Node3D)
@@ -55,6 +58,10 @@ class PlanetGlobe : public godot::Node3D {
     godot::Ref<godot::ShaderMaterial> overlay_mat;
     godot::Ref<godot::ShaderMaterial> deck_fade_mat;
     godot::MeshInstance3D *overlay = nullptr;
+    SeaSurface *sea = nullptr; // 云底与海面（行星计划 P7）
+    godot::Ref<godot::ImageTexture> reefs_tex; // 白礁的疏密
+    int reef_width = 1024, reef_height = 512;
+    double reef_ms = 0.0;
     godot::Ref<godot::Texture2DArray> surface_color, surface_extra;
     godot::Ref<godot::ImageTexture> trans_tex, ms_tex, fields_tex, fields2_tex, bands_tex;
     // 行星天气场的贴图（行星计划 P5）
@@ -97,6 +104,8 @@ class PlanetGlobe : public godot::Node3D {
     bool overlay_on = false;
 
     bool setup();
+    // 天空、云层叠画、云底与海面几份材质都设这个参数
+    void set_all(const char *p_name, const godot::Variant &p_value);
     void build_fields();
     void start_jobs();
     void collect_jobs();
@@ -116,7 +125,7 @@ public:
     bool is_surface_ready() const { return bake.uploaded; }
     bool is_ready() const { return bake.uploaded && luts_ready; }
     // { surface_ready, luts_ready, bake_wall_ms, bake_cpu_ms, upload_ms, lut_ms, groups, stand_ins, land_km2, blend_planet, blend_atmo, deck_alpha, overlay, anchor_hidden, lateral_km, band_shift,
-    //   weather_ready, weather_bakes, weather_grid_ms, weather_bake_ms, weather_day }
+    //   weather_ready, weather_bakes, weather_grid_ms, weather_bake_ms, weather_day, reefs_ready, reef_ms, sea（SeaSurface::get_state）}
     godot::Dictionary get_state() const;
     // 行星天气场的贴图在某经纬度那一格：(云量, 雨, 群的份, 风暴)；还没烘好是 (−1, −1, −1, −1)
     godot::Color weather_texel(double p_lat, double p_lon) const;

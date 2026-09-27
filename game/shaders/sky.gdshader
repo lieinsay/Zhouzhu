@@ -12,12 +12,14 @@
 //   相机高过 20 km 起天上交叉淡化成大气散射（Hillaire 的两张表逐像素步进，atmo_blend），高过 30 km 起地平线以下画整颗行星
 //   （海、云带壳、贴图岛群、夜里的灯，planet_blend，与 P1 的云带顶网格交叉淡化）；太空里的星星按行星系转、日面与月亮（月相按日月的方向亮）。
 //   地面上（两个 blend 都是 0）天色、晨昏、日月星与原来一样。
+// 行星计划 P7（planet_sea.gdshaderinc）：相机降到云带顶以下，天换成从下往上看——云底（压着的灰）、海（反云底的光、白礁）、霾；under_band 是换过去多少。
 shader_type sky;
 render_mode use_debanding;
 
 #include "res://shaders/weather.gdshaderinc"
 #include "res://shaders/planet_curve.gdshaderinc"
 #include "res://shaders/planet_sky.gdshaderinc"
+#include "res://shaders/planet_sea.gdshaderinc"
 
 uniform vec3 sun_dir = vec3(0.0, 1.0, 0.0);
 uniform vec3 moon_dir = vec3(0.0, -1.0, 0.0);
@@ -214,6 +216,10 @@ void sky() {
 	}
 	// 阴沉：整片天压成灰
 	col = mix(col, overcast_color * mix(0.05, 0.75, day), overcast * 0.85);
+	// 行星计划 P7：相机在云带顶以下——天换成从下往上看的云底、海、霾（云带里被引擎的雾盖满；云底下主要是反光里的天）
+	if (planet_on > 0.5 && under_band > 0.001) {
+		col = mix(col, planet_under_sky(dir, planet_cam_h), under_band);
+	}
 	col += vec3(0.8, 0.85, 1.0) * flash * 1.5;
 	COLOR = col;
 }

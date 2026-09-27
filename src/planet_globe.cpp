@@ -26,6 +26,8 @@
 #include "planet_sky.h"
 #include "planet_surface.h"
 #include "planet_view.h"
+#include "sea_state.h"
+#include "sea_surface.h"
 #include "weather.h"
 #include "world.h"
 #include "world_clock.h"
@@ -69,6 +71,12 @@ struct WeatherGridResult : JobResult {
     double ms = 0.0;
 };
 
+// 白礁的疏密（行星计划 P7）
+struct ReefResult : JobResult {
+    std::vector<uint8_t> density;
+    double ms = 0.0;
+};
+
 struct WeatherBakeResult : JobResult {
     std::vector<float> rgba;
     double day = 0.0;
@@ -79,6 +87,7 @@ struct WeatherBakeResult : JobResult {
 constexpr uint64_t WX_GRID_ID = 200; // 200 + 段号（分 WX_GRID_BANDS 段）
 constexpr int WX_GRID_BANDS = 8;
 constexpr uint64_t WX_BAKE_ID = 300;
+constexpr uint64_t REEF_ID = 400;
 // 排在近处的地面块、600 km 内远处的岛群之后（生存世界刚进来时，远处的替身先画出来）
 constexpr double WX_PRIORITY = FACE_PRIORITY - 1000.0;
 
@@ -212,6 +221,7 @@ void PlanetGlobe::_notification(int p_what) {
                 pool->cancel(JobPool::key(JobKind::PLANET, WX_GRID_ID + uint64_t(b)));
             }
             pool->cancel(JobPool::key(JobKind::PLANET, WX_BAKE_ID));
+            pool->cancel(JobPool::key(JobKind::PLANET, REEF_ID));
         }
     }
 }
@@ -241,6 +251,11 @@ bool PlanetGlobe::setup() {
     sky_mat = atmosphere->get_sky_material();
     build_fields();
     build_overlay();
+    // 云带之下（行星计划 P7）：云底与海面两张跟着相机的网格
+    sea = memnew(SeaSurface);
+    sea->set_name("SeaSurface");
+    add_child(sea);
+    sea->build();
     start_jobs();
     return true;
 }
@@ -330,6 +345,18 @@ void PlanetGlobe::start_jobs() {
             return out;
         });
     }
+    // 白礁的疏密（行星计划 P7）：按行星包的岛龄与陆地撒，几十毫秒，只烘一回（生存世界的行星层也有岛龄）
+    if (reefs_tex.is_null() && !bake.rebaking) {
+        const std::shared_ptr<const PlanetData> data = view->share_planet();
+        const int w = reef_width, h = reef_height;
+        pool->submit(JobPool::key(JobKind::PLANET, REEF_ID), WX_PRIORITY, [data, w, h]() -> std::unique_ptr<JobResult> {
+            std::unique_ptr<ReefResult> out = std::make_unique<ReefResult>();
+            const auto t0 = std::chrono::steady_clock::now();
+            bake_reef_density(*data, w, h, out->density);
+            out->ms = ms_since(t0);
+            return out;
+        });
+    }
     // 行星贴图：一次只交一面（一面要几百毫秒到一秒多，别把四条线程都占了，近处的地面块照样先做）；做完一面再交下一面（collect_jobs）
     submit_face(*pool, view->share_planet(), surface_size, 0);
 }
@@ -373,6 +400,16 @@ void PlanetGlobe::collect_jobs() {
                 print_line(vformat(String(U"PlanetGlobe：行星天气场的贴图 %d × %d 好了——各格的群与权 %.0f ms（一回）、烘一回 %.0f ms（后台）"), weather_width, weather_height, wx_grid_ms,
                         wx_bake_ms));
             }
+            continue;
+        }
+        if (JobPool::id_of(d.key) == REEF_ID) {
+            const ReefResult *r = static_cast<const ReefResult *>(d.result.get());
+            PackedByteArray bytes;
+            bytes.resize(int64_t(r->density.size()));
+            std::memcpy(bytes.ptrw(), r->density.data(), r->density.size());
+            reefs_tex = ImageTexture::create_from_image(Image::create_from_data(reef_width, reef_height, false, Image::FORMAT_R8, bytes));
+            reef_ms = r->ms;
+            textures_pushed = false;
             continue;
         }
         if (JobPool::id_of(d.key) == 100) {
@@ -422,15 +459,25 @@ void PlanetGlobe::collect_jobs() {
     }
 }
 
+void PlanetGlobe::set_all(const char *p_name, const Variant &p_value) {
+    if (sky_mat.is_valid()) {
+        sky_mat->set_shader_parameter(p_name, p_value);
+    }
+    if (overlay_mat.is_valid()) {
+        overlay_mat->set_shader_parameter(p_name, p_value);
+    }
+    if (sea) {
+        if (const Ref<ShaderMaterial> m = sea->get_sea_material(); m.is_valid()) {
+            m->set_shader_parameter(p_name, p_value);
+        }
+        if (const Ref<ShaderMaterial> m = sea->get_base_material(); m.is_valid()) {
+            m->set_shader_parameter(p_name, p_value);
+        }
+    }
+}
+
 void PlanetGlobe::push_textures() {
-    auto both = [&](const char *p_name, const Variant &p_value) {
-        if (sky_mat.is_valid()) {
-            sky_mat->set_shader_parameter(p_name, p_value);
-        }
-        if (overlay_mat.is_valid()) {
-            overlay_mat->set_shader_parameter(p_name, p_value);
-        }
-    };
+    auto both = [&](const char *p_name, const Variant &p_value) { set_all(p_name, p_value); };
     both("planet_fields", fields_tex);
     both("planet_fields2", fields2_tex);
     both("planet_bands", bands_tex);
@@ -447,6 +494,10 @@ void PlanetGlobe::push_textures() {
         both("planet_weather", weather_tex);
     }
     both("planet_weather_on", weather_tex.is_valid() ? 1.0 : 0.0);
+    if (reefs_tex.is_valid()) {
+        both("planet_reefs", reefs_tex);
+    }
+    both("planet_reefs_on", reefs_tex.is_valid() ? 1.0 : 0.0);
     textures_pushed = true;
 }
 
@@ -560,14 +611,7 @@ void PlanetGlobe::_process(double /* p_delta */) {
     const double moon_lit = atmosphere->get_moon_lit();
     update_weather_bake(day);
 
-    auto both = [&](const char *p_name, const Variant &p_value) {
-        if (sky_mat.is_valid()) {
-            sky_mat->set_shader_parameter(p_name, p_value);
-        }
-        if (overlay_mat.is_valid()) {
-            overlay_mat->set_shader_parameter(p_name, p_value);
-        }
-    };
+    auto both = [&](const char *p_name, const Variant &p_value) { set_all(p_name, p_value); };
     both("planet_on", 1.0);
     both("planet_axes", basis);
     both("planet_cam_h", h);
@@ -606,6 +650,10 @@ void PlanetGlobe::_process(double /* p_delta */) {
     }
     update_deck();
     update_anchor_visibility();
+    // 云带之下（行星计划 P7）：云底与海面跟到相机下、按天与光的风推浪
+    if (sea) {
+        sea->update(view, atmosphere, get_process_delta_time());
+    }
 }
 
 void PlanetGlobe::update_deck() {
@@ -703,5 +751,8 @@ Dictionary PlanetGlobe::get_state() const {
     d["weather_grid_ms"] = wx_grid_ms;
     d["weather_bake_ms"] = wx_bake_ms;
     d["weather_day"] = wx_baked_day;
+    d["reefs_ready"] = reefs_tex.is_valid();
+    d["reef_ms"] = reef_ms;
+    d["sea"] = sea ? sea->get_state() : Dictionary();
     return d;
 }

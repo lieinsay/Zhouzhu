@@ -429,7 +429,8 @@ void PlanetView::_process(double /* p_delta */) {
     }
     planet_latlon(cam_planet, cam_lat, cam_lon);
     const double ground = map ? map->map_surface(p) : NAN;
-    ground_clearance = p.y - (std::isfinite(ground) ? ground : VerticalDatum::CLOUD_TOP_Y);
+    // 离下面多高：地面；没有地是云带顶——降到云带顶以下是海面（行星计划 P7）
+    ground_clearance = p.y - (std::isfinite(ground) ? ground : (p.y < VerticalDatum::CLOUD_TOP_Y ? VerticalDatum::SEA_Y : VerticalDatum::CLOUD_TOP_Y));
     push_globals();
     update_camera(camera);
     if (deck) {
