@@ -1647,7 +1647,7 @@
     {
       "id": "stream-perf",
       "label": "流式加载实测工具",
-      "detail": "开局站定、god 150 m/s 与 30 m/s 顺着一串大村飞，报帧时（平均、P99、最慢、超 50 / 100 ms）和最慢那几帧的分项；--orbit 量升落；--voyage 在云海上空 150 m/s 飞过换锚线到 2050 再飞回，换锚那一帧另报，外加进程内存。",
+      "detail": "开局站定、god 150 m/s 与 30 m/s 顺着一串大村飞，报帧时（平均、P99、最慢、超 50 / 100 ms）和最慢那几帧的分项；--orbit 量升落；--voyage 在云海上空 150 m/s 飞过换锚线到 2050 再飞回，换锚那一帧另报，外加进程内存。；--sea：开阔云海上空云带顶上、云带里、云底下、海面上、风暴里各停一阵，再匀速降到海面、升回，报帧时（P7）。",
       "tag": "工具",
       "sources": [
         "game/tools/stream_perf.gd"
@@ -1903,7 +1903,7 @@
     {
       "id": "dev-tools-weather",
       "label": "F6 时间与天气",
-      "detail": "面板读出日期、日出日落、太阳月亮、此地天气、今天的大势、雪线、河冰线、物候与覆盖；键与按钮拨时间、换天气；覆盖只在设定变了或换了场景时推给当前场景的天与光。",
+      "detail": "面板读出日期、日出日落、太阳月亮、此地天气、今天的大势、雪线、河冰线、物候与覆盖；键与按钮拨时间、换天气；覆盖只在设定变了或换了场景时推给当前场景的天与光。有行星数据时相机那一行报离海面多高（云带里 / 云底下另说，P7）。",
       "tag": "切片编排（状态在此）",
       "evidence": "weather_e2e：F6 读数、→ 拨钟、3 换小雨、0 换回自动、换到平板岛覆盖跟过去",
       "sources": [
@@ -1953,7 +1953,7 @@
     {
       "id": "weather-model",
       "label": "天气模型",
-      "detail": "解析 weather.tsv；某一刻某一点 = 前后两天的大势按锋面（顺风扫过、过渡 2.5 h）混 + 随风漂的云团 + 海拔（直减率、日变化、地形抬升、雨雪相变、云海漫顶）；积雪、冰、物候、作物、地湿按海拔分箱逐日一年；开发者覆盖按 blend 渐入、气温偏移等效成海拔。P5：一天的大势拆成公开的 WeatherState；attach_planet 挂行星天气场——群与群之间的大势、锋面、云团取场的，自己的陆地上逐位不变。",
+      "detail": "解析 weather.tsv；某一刻某一点 = 前后两天的大势按锋面（顺风扫过、过渡 2.5 h）混 + 随风漂的云团 + 海拔（直减率、日变化、地形抬升、雨雪相变、云海漫顶）；积雪、冰、物候、作物、地湿按海拔分箱逐日一年；开发者覆盖按 blend 渐入、气温偏移等效成海拔。P5：一天的大势拆成公开的 WeatherState；attach_planet 挂行星天气场——群与群之间的大势、锋面、云团取场的，自己的陆地上逐位不变。行星计划 P7（D13）：y < 0 的气温、积雪、物候一律按 y = 0 取；云海漫顶的雾出了云底就没有。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "core_tests：雨量对账、换天连续、锋面晚到 1.6 h、冷季雪线 424 m、覆盖",
       "sources": [
@@ -2330,7 +2330,7 @@
     {
       "id": "orbit-camera",
       "label": "轨道相机（F7）",
-      "detail": "从当前相机起飞，经纬度、高、航向俯仰双精度；WASD 沿大圆、空格 / Ctrl / 滚轮按离地高成倍升降，Esc 落回人身上；脚本能直接摆。",
+      "detail": "从当前相机起飞，经纬度、高、航向俯仰双精度；WASD 沿大圆、空格 / Ctrl / 滚轮按离地高成倍升降，Esc 落回人身上；脚本能直接摆。行星计划 P7：锚群外脚下是海面（穿得过云带）。",
       "tag": "场景角色",
       "evidence": "dev_tools_e2e：F7 接过相机、滚轮十格 ×13.8、空格 3 s 到三千公里、Esc 落回",
       "sources": [
@@ -2807,6 +2807,144 @@
         "game/tests/planet_weather_e2e.tscn"
       ],
       "since": "e91"
+    },
+    {
+      "id": "atmosphere-under-band",
+      "label": "云带之下的雾与光",
+      "detail": "按 cloud_band 的剖面：云带里引擎的雾每米 0.06、天被雾盖满、雾色随深度与太阳高度变暗、方向光按直射衰减；云底下方向光熄了、环境光偏灰、霾每米 1.2e-4（下雨浓）；天空着色器的 under_* 参数与云底、海面同一份光；get_look 给这一帧设给引擎的读数，turbulence_at 给船。",
+      "tag": "场景角色",
+      "evidence": "sea_descent_e2e：升降 38,619 帧相邻两帧日光最多变 0.0009、雾 0.0002 /m；云带里能见度 50 m、云底下日光 0.003",
+      "sources": [
+        "src/atmosphere.cpp",
+        "src/atmosphere.h"
+      ],
+      "since": "e93",
+      "parent": "atmosphere"
+    },
+    {
+      "id": "cloud-band",
+      "label": "云带的垂直剖面",
+      "detail": "按高给云带里的雾、走进多深、直射（光学厚度 5，按太阳高度算斜程）、漫射光（顶上 1 → 云底下 0.4）、颠簸、离海面多高；船的最低高度 ship_floor_y（海面之上 15 m）。云带顶、云底各几十米软边，读数连续。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测 test_sea_descent：各层读数、每 0.25 m 最多变 0.0125、太阳低更暗",
+      "sources": [
+        "src/cloud_band.h",
+        "src/cloud_band.cpp"
+      ],
+      "since": "e93"
+    },
+    {
+      "id": "sea-state",
+      "label": "海浪与白礁",
+      "detail": "sea_waves：风 → 有效波高、主浪波长（Pierson–Moskowitz，无风 0.5 m 的涌、封顶 9 m / 260 m）、白浪、碎浪；bake_wave_normals：可平铺的海浪法线贴图；bake_reef_density：按行星包的岛龄与陆地撒白礁的疏密（0.38–0.72 算老、σ 90 km）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测：10 m/s 浪 2.14 m / 83 m、法线贴图可平铺、白礁老的多、烘的与逐点对得上",
+      "sources": [
+        "src/sea_state.h",
+        "src/sea_state.cpp"
+      ],
+      "since": "e93"
+    },
+    {
+      "id": "sea-surface",
+      "label": "SeaSurface 云底与海面",
+      "detail": "PlanetGlobe 建：云底（−5000 m，朝下，当光源画）与海面（−5600 m，近密远疏的同心环，300 km）两张跟着相机的网格，相机在云带顶以上藏起来；每帧按天与光的风推浪（Gerstner 相位按帧累加）、给云底此刻的光。",
+      "tag": "场景角色",
+      "evidence": "sea_descent_e2e 海面上空网格画出来、风暴浪 9 m；stream_perf --sea 海面上 0.7 ms",
+      "sources": [
+        "src/sea_surface.h",
+        "src/sea_surface.cpp"
+      ],
+      "since": "e93"
+    },
+    {
+      "id": "planet-sea-shaders",
+      "label": "云底、海面与从下往上看的天（着色器）",
+      "detail": "planet_sea.gdshaderinc（planet_under_sky：与 P2 海洋球同一套同心球面求交，云底按 CIE 阴天、海反云底、霾）、sea.gdshader（四道 Gerstner、两层法线贴图、白沫、白礁）、cloud_base.gdshader（云底当光源、一团团起伏、黄昏染暖）；白礁 planet_reef 在 planet_sky 里，三处共用；三维值噪声挪进 planet_noise.gdshaderinc。",
+      "tag": "着色器",
+      "evidence": "planet_shots --only=sea、sea_descent_e2e 的截图自己看过",
+      "sources": [
+        "game/shaders/planet_sea.gdshaderinc",
+        "game/shaders/sea.gdshader",
+        "game/shaders/cloud_base.gdshader",
+        "game/shaders/planet_noise.gdshaderinc"
+      ],
+      "since": "e93"
+    },
+    {
+      "id": "sea-descent-e2e",
+      "label": "降到海面端到端测试",
+      "detail": "2051 主码头上船 → 开阔云海上空一路降到海面（每帧录光与雾、存 CSV）→ 悬停（最低高度、HUD 与 F6、气温、按 E）→ 风暴 → 升回云带顶以上，读数恢复、升降不跳。",
+      "tag": "验收",
+      "evidence": "PASS（无头与窗口）",
+      "sources": [
+        "game/tests/sea_descent_e2e.gd"
+      ],
+      "since": "e93"
+    },
+    {
+      "id": "planet-globe-reefs",
+      "label": "白礁的疏密",
+      "detail": "任务池里跑 bake_reef_density（Debug 约 50 ms），做成 R8 纹理设给天空、云层叠画、云底与海面的材质（planet_reefs）。老岛群附近多、别处零星；纯氛围。",
+      "tag": "场景角色",
+      "evidence": "sea_descent_e2e 就绪时报白礁烘好 49–53 ms；截图里远处一片片的礁",
+      "sources": [
+        "src/planet_globe.cpp"
+      ],
+      "since": "e94",
+      "parent": "planet-globe"
+    },
+    {
+      "id": "ship-sea-floor",
+      "label": "海面之上 15 m 与颠簸",
+      "detail": "get_floor_y：有行星数据时海面之上 15 m（−5585），岛上靠地面、崖壁、岛底的碰撞，没有行星数据照旧世界 y = 15 m；掌舵时 turbulence_at × 2.6 m/s × flight_bump 上下颠，船身晃一点。",
+      "tag": "场景角色",
+      "evidence": "sea_descent_e2e：按住下降 5 s 最低 −5585.19；云带里颠 1.00、风暴 1.05",
+      "sources": [
+        "src/ship.cpp",
+        "src/ship.h"
+      ],
+      "since": "e95",
+      "parent": "ship"
+    },
+    {
+      "id": "flight-bump",
+      "label": "颠簸",
+      "detail": "flight_bump：两层一维值噪声（零点几到两赫兹），约 −1..1；FlightInput.bump 直接叠在升降上、不被升降的惯性抹平（FlightState.bump 记这一刻的那一份）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测：有界、平滑（一帧最多变 0.067）、平均约为零、拿掉颠簸照舵",
+      "sources": [
+        "src/flight_model.cpp",
+        "src/flight_model.h"
+      ],
+      "since": "e96",
+      "parent": "flight-model"
+    },
+    {
+      "id": "helm-no-footing",
+      "label": "海上无处落脚",
+      "detail": "编排每帧写 no_footing（船在坠落线以下）与 sea_y：按 E 回 REFUSED、提示里写着；course_text 在高度后面报「离海面 N m」。",
+      "tag": "切片编排（状态在此）",
+      "evidence": "sea_descent_e2e：海上按 E 还在掌舵、说「海上无处落脚——升回云海以上再靠岸、离舵」",
+      "sources": [
+        "src/helm.cpp",
+        "src/helm.h",
+        "src/expedition.cpp"
+      ],
+      "since": "e97",
+      "parent": "helm"
+    },
+    {
+      "id": "planet-shots-sea",
+      "label": "云带之下",
+      "detail": "--only=sea：主码头背着主峰往外的开阔云海上空，云带顶上、云带里、刚出云底、云底下、海面上 20 m（平视、仰看）、黄昏朝太阳、风暴里的海面；人留在码头上。",
+      "tag": "工具",
+      "evidence": "改前改后各拍一套，自己看过",
+      "sources": [
+        "game/tools/planet_shots.gd"
+      ],
+      "since": "e98",
+      "parent": "planet-shots"
     }
   ],
   "edges": [
@@ -6085,6 +6223,79 @@
       "chains": [
         "planet"
       ]
+    },
+    {
+      "from": "atmosphere-under-band",
+      "to": "cloud-band",
+      "label": "剖面"
+    },
+    {
+      "from": "sea-surface",
+      "to": "atmosphere-under-band",
+      "label": "云底、海的光与风"
+    },
+    {
+      "from": "sea-surface",
+      "to": "sea-state",
+      "label": "浪、法线贴图"
+    },
+    {
+      "from": "sea-surface",
+      "to": "planet-sea-shaders",
+      "label": "材质"
+    },
+    {
+      "from": "planet-sea-shaders",
+      "to": "planet-curve-shader",
+      "label": "弯曲"
+    },
+    {
+      "from": "planet-sky-shader",
+      "to": "planet-sea-shaders",
+      "label": "从下往上看的天"
+    },
+    {
+      "from": "planet-globe",
+      "to": "sea-surface",
+      "label": "建、每帧推",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "sea-descent-e2e",
+      "to": "world-2051-scene",
+      "label": "场景"
+    },
+    {
+      "from": "sea-descent-e2e",
+      "to": "atmosphere-under-band",
+      "label": "读数"
+    },
+    {
+      "from": "planet-globe-reefs",
+      "to": "sea-state",
+      "label": "bake_reef_density"
+    },
+    {
+      "from": "ship-sea-floor",
+      "to": "cloud-band",
+      "label": "最低高度"
+    },
+    {
+      "from": "ship-sea-floor",
+      "to": "atmosphere-under-band",
+      "label": "颠多厉害"
+    },
+    {
+      "from": "ship-sea-floor",
+      "to": "flight-bump",
+      "label": "颠簸"
+    },
+    {
+      "from": "planet-shots-sea",
+      "to": "atmosphere-under-band",
+      "label": "覆盖天气"
     }
   ],
   "chains": [
@@ -7556,11 +7767,11 @@
     },
     {
       "id": "planet",
-      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外、P2 上到轨道、P3 多岛群与换锚、P4 按需生成、P5 全球天气与风）",
-      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。开发者按 F7 从村口一路升到两万公里：天慢慢变暗、地平线弯成一道镶着蓝边的弧，整颗海洋星球盖着云带、缝里露出海，赤道一条永暴带、西北方一个漩涡，岛群像撒在云上的碎点，夜里亮着灯；再一路落回村口，画面和起飞前一样。玩家在 2051 的主码头上船往西南开，114 km 外的 2050 群越飞越近、越近越细：先是低模，再铺出地面，再有村子码头和林子；飞过两群之间的云海时脚下的锚悄悄换到 2050，画面一点不跳；在 2050 的主码头靠泊下船，天与光已经换成那边的，村子按它自己的地方时过日子；一天多后飞回 2051，离开这些时候村子的账补回来了。开发者在 F2 里打开地球仪，8000 个岛群哪一群都能点：没去过的当场生成，两三秒后人就站在那一群的主码头上，脚下、天上、钟点都是那边的；再去一次只要半秒。开发者还能新建一颗随机种子的行星，六七秒后站在出生的岛群上，远处的岛群先是替身、一会儿换成真的样子，退出再进一切都还在。从轨道上往下看，每个岛群上空的云就是它今天的天气：晴着的群只有零星几团，下雨刮风暴的群盖着一大片白；两群之间云、雨、气温、风一路渐变过去，开船从 2051 飞到 2050，天气读数一帧一帧地连着。飞到开阔的云海上，信风带里船往西北漂、西风带里往东漂；闯进赤道永暴带，风暴把船往外推，HUD 报禁航。",
+      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外、P2 上到轨道、P3 多岛群与换锚、P4 按需生成、P5 全球天气与风、P7 降到海面）",
+      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。开发者按 F7 从村口一路升到两万公里：天慢慢变暗、地平线弯成一道镶着蓝边的弧，整颗海洋星球盖着云带、缝里露出海，赤道一条永暴带、西北方一个漩涡，岛群像撒在云上的碎点，夜里亮着灯；再一路落回村口，画面和起飞前一样。玩家在 2051 的主码头上船往西南开，114 km 外的 2050 群越飞越近、越近越细：先是低模，再铺出地面，再有村子码头和林子；飞过两群之间的云海时脚下的锚悄悄换到 2050，画面一点不跳；在 2050 的主码头靠泊下船，天与光已经换成那边的，村子按它自己的地方时过日子；一天多后飞回 2051，离开这些时候村子的账补回来了。开发者在 F2 里打开地球仪，8000 个岛群哪一群都能点：没去过的当场生成，两三秒后人就站在那一群的主码头上，脚下、天上、钟点都是那边的；再去一次只要半秒。开发者还能新建一颗随机种子的行星，六七秒后站在出生的岛群上，远处的岛群先是替身、一会儿换成真的样子，退出再进一切都还在。从轨道上往下看，每个岛群上空的云就是它今天的天气：晴着的群只有零星几团，下雨刮风暴的群盖着一大片白；两群之间云、雨、气温、风一路渐变过去，开船从 2051 飞到 2050，天气读数一帧一帧地连着。飞到开阔的云海上，信风带里船往西北漂、西风带里往东漂；闯进赤道永暴带，风暴把船往外推，HUD 报禁航。开船往下穿过云带：云里浓雾、船在颠，云底下是阴天的海，浪一道道推过来、远处躺着惨白的礁，最低停在海面之上 15 m，再升回云带顶以上。",
       "date": "2026-09-27",
       "color": "#e5536b",
-      "commits": "a769ef7..7549739",
+      "commits": "a769ef7..0e1d6be",
       "steps": [
         {
           "text": "生成器第三层：邻群按等效半径分界、各退半道缝，越界的群才重摆",
@@ -7903,6 +8114,57 @@
             "site-survey-planet-weather",
             "planet-weather-e2e"
           ]
+        },
+        {
+          "text": "开船飞出岸外往下降：过了云带顶一头扎进浓雾，天与光按云带的剖面让雾浓到几十米外看不见、光越深越暗，船在云里一颠一颠",
+          "nodes": [
+            "atmosphere-under-band",
+            "cloud-band",
+            "atmosphere",
+            "flight-bump",
+            "ship-sea-floor",
+            "ship"
+          ]
+        },
+        {
+          "text": "穿过云底：阴天的光，头顶一层压着的灰、底下是海——两张跟着相机的网格按真球面弯，天空换成从下往上看的云底与海，海面的反光就是它",
+          "nodes": [
+            "sea-surface",
+            "planet-sea-shaders",
+            "planet-sky-shader",
+            "planet-globe",
+            "planet-curve-shader",
+            "atmosphere-under-band"
+          ]
+        },
+        {
+          "text": "浪按当地的风（行星天气场）一道道推过来，风暴里浪高九米、暴雨打闪；远处的海面上一片片惨白的礁，按行星包里老岛群撒",
+          "nodes": [
+            "sea-state",
+            "sea-surface",
+            "planet-weather",
+            "planet-globe-reefs",
+            "planet-data",
+            "planet-sea-shaders"
+          ]
+        },
+        {
+          "text": "降到海面之上 15 m 再按下降也停住，按 E 只说「海上无处落脚」；HUD 与 F6 报离海面多高，气温与 y = 0 一样",
+          "nodes": [
+            "ship-sea-floor",
+            "helm-no-footing",
+            "expedition",
+            "dev-tools-weather",
+            "weather-model"
+          ]
+        },
+        {
+          "text": "sea_descent_e2e 降、停、风暴、升一趟，每帧录光与雾查不跳；planet_shots 拍云带之下，stream_perf 量各层的帧时",
+          "nodes": [
+            "sea-descent-e2e",
+            "planet-shots-sea",
+            "stream-perf"
+          ]
         }
       ],
       "nodes": [
@@ -7983,7 +8245,19 @@
         "site-survey-planet-weather",
         "planet-weather-e2e",
         "world-2051-scene",
-        "flight-wind"
+        "flight-wind",
+        "sea-surface",
+        "atmosphere-under-band",
+        "cloud-band",
+        "flight-bump",
+        "ship-sea-floor",
+        "planet-sea-shaders",
+        "sea-state",
+        "planet-globe-reefs",
+        "helm-no-footing",
+        "dev-tools-weather",
+        "sea-descent-e2e",
+        "planet-shots-sea"
       ]
     }
   ],
@@ -10506,6 +10780,137 @@
         "nodes": [],
         "chains": [],
         "edges": 1
+      }
+    },
+    {
+      "id": "e93",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P7：天与光长出云带之下",
+      "summary": "相机降到云带顶以下：云带里浓雾、越深越暗，云底下阴天的光与霾，天空换成从下往上看；给船颠簸的强度。",
+      "commits": "c12640e",
+      "nodes": [
+        "atmosphere",
+        "atmosphere-under-band",
+        "cloud-band",
+        "sea-state",
+        "sea-surface",
+        "planet-sea-shaders",
+        "sea-descent-e2e"
+      ],
+      "info": {
+        "node": "atmosphere",
+        "children": [
+          "atmosphere-under-band"
+        ],
+        "adopted": [],
+        "peers": [
+          "cloud-band",
+          "sea-state",
+          "sea-surface",
+          "planet-sea-shaders",
+          "sea-descent-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e94",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P7：PlanetGlobe 长出白礁的疏密",
+      "summary": "开局后台按行星包烘白礁的疏密（1024 × 512，几十毫秒），天空、海面一起读；建 SeaSurface。",
+      "commits": "c12640e",
+      "nodes": [
+        "planet-globe",
+        "planet-globe-reefs"
+      ],
+      "info": {
+        "node": "planet-globe",
+        "children": [
+          "planet-globe-reefs"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e95",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P7：船降到海面",
+      "summary": "最低高度改成海面之上 15 m，掌舵时按天与光的颠簸上下乱推。",
+      "commits": "fa81606",
+      "nodes": [
+        "ship",
+        "ship-sea-floor"
+      ],
+      "info": {
+        "node": "ship",
+        "children": [
+          "ship-sea-floor"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e96",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P7：飞行模型长出颠簸",
+      "summary": "一股随机的上下扰动，直接叠在升降上。",
+      "commits": "3880862",
+      "nodes": [
+        "flight-model",
+        "flight-bump"
+      ],
+      "info": {
+        "node": "flight-model",
+        "children": [
+          "flight-bump"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e97",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P7：掌舵长出「海上无处落脚」",
+      "summary": "降到坠落线以下按 E 不离舵、不靠泊，只说这一句；航行那一行报离海面多高。",
+      "commits": "fa81606",
+      "nodes": [
+        "helm",
+        "helm-no-footing"
+      ],
+      "info": {
+        "node": "helm",
+        "children": [
+          "helm-no-footing"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e98",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P7：planet_shots 长出云带之下",
+      "summary": "开阔云海上空从云带顶上一路拍到海面，外加黄昏、风暴。",
+      "commits": "8f01861",
+      "nodes": [
+        "planet-shots",
+        "planet-shots-sea"
+      ],
+      "info": {
+        "node": "planet-shots",
+        "children": [
+          "planet-shots-sea"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
