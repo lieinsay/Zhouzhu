@@ -33,6 +33,7 @@ enum class PartMaterial {
     STRAW, // 席、粮囤
     GRAIN,
     LACQUER, // 鼓、供桌上的朱漆
+    BRICK, // 砖墙（搭建件）
     COUNT,
 };
 

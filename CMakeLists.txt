@@ -67,6 +67,8 @@ set_target_properties(skyisle_core PROPERTIES INTERFACE_COMPILE_OPTIONS "")
 set(ZHOUZHU_CORE_SOURCES
     src/almanac.cpp
     src/almanac.h
+    src/build_pieces.cpp
+    src/build_pieces.h
     src/building_mesh.cpp
     src/building_mesh.h
     src/building_parts.cpp
@@ -128,6 +130,9 @@ set(ZHOUZHU_CORE_SOURCES
     src/map_ground.h
     src/map_image.cpp
     src/map_image.h
+    src/mesh_kit.h
+    src/piece_mesh.cpp
+    src/piece_mesh.h
     src/placeables.cpp
     src/placeables.h
     src/planet_data.cpp
@@ -157,6 +162,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/ship_layout.h
     src/stream_meter.cpp
     src/stream_meter.h
+    src/structure_styles.cpp
+    src/structure_styles.h
     src/template_set.cpp
     src/template_set.h
     src/terrain_edits.cpp

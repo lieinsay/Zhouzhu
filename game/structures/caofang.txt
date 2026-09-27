@@ -1,0 +1,23 @@
+# 草房：两间见方（4 × 4 m），夯土墙、草顶，南墙东边开门、东墙南边开窗
+# piece <物品> <x> <z> <层> <阶> <向>：墙与山墙的「向」0 = 格的北边、1 = 西边；坡顶的「向」是往哪边低（0 +z 1 +x 2 −z 3 −x）
+name 草房
+piece foundation 0 0 0 0 0
+piece foundation 1 0 0 0 0
+piece foundation 0 1 0 0 0
+piece foundation 1 1 0 0 0
+piece earth_wall 0 0 0 0 0
+piece earth_wall 1 0 0 0 0
+piece earth_wall 0 0 0 0 1
+piece earth_wall 0 1 0 0 1
+piece earth_wall 2 0 0 0 1
+piece window_wall 2 1 0 0 1
+piece earth_wall 0 2 0 0 0
+piece door_wall 1 2 0 0 0
+piece thatch_roof 0 0 0 0 2
+piece thatch_roof 1 0 0 0 2
+piece thatch_roof 0 1 0 0 0
+piece thatch_roof 1 1 0 0 0
+piece gable 0 0 0 0 1
+piece gable 0 1 0 0 1
+piece gable 2 0 0 0 1
+piece gable 2 1 0 0 1

@@ -4,105 +4,14 @@
 #include <cmath>
 #include <limits>
 
+#include "mesh_kit.h"
+
 namespace {
 
 constexpr double PROXY_INSET_M = 0.04; // 简模的台基与墙往里缩这么多（细模盖得住它）
 constexpr double PROXY_ROOF_DROP_M = 0.06; // 简模的顶往下压这么多
 
-struct V3 {
-    double x = 0.0, y = 0.0, z = 0.0;
-};
-
-V3 operator+(const V3 &a, const V3 &b) { return { a.x + b.x, a.y + b.y, a.z + b.z }; }
-V3 operator-(const V3 &a, const V3 &b) { return { a.x - b.x, a.y - b.y, a.z - b.z }; }
-V3 operator*(const V3 &a, double s) { return { a.x * s, a.y * s, a.z * s }; }
-V3 cross(const V3 &a, const V3 &b) { return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x }; }
-double dot(const V3 &a, const V3 &b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
-
-// 先绕自己的 x 转 pitch、再绕 y 转 yaw、再平移（与 Godot 的 Basis(Y, yaw) * Basis(X, pitch) 同）
-struct Xform {
-    double m[3][3];
-    V3 o;
-
-    Xform(double p_yaw, double p_pitch, const V3 &p_origin) :
-            o(p_origin) {
-        const double cy = std::cos(p_yaw), sy = std::sin(p_yaw), cp = std::cos(p_pitch), sp = std::sin(p_pitch);
-        const double r[3][3] = { { cy, sy * sp, sy * cp }, { 0.0, cp, -sp }, { -sy, cy * sp, cy * cp } };
-        std::copy(&r[0][0], &r[0][0] + 9, &m[0][0]);
-    }
-    V3 rotate(const V3 &v) const {
-        return { m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z, m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z, m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z };
-    }
-    V3 xform(const V3 &v) const { return rotate(v) + o; }
-};
-
-// 盒子的六个面：法线 n 与面上的两根轴 u、w（u × w = n）；四角按 u、w 逆时针排
-const V3 FACE_N[6] = { { 1, 0, 0 }, { -1, 0, 0 }, { 0, 1, 0 }, { 0, -1, 0 }, { 0, 0, 1 }, { 0, 0, -1 } };
-const V3 FACE_U[6] = { { 0, 1, 0 }, { 0, 0, 1 }, { 0, 0, 1 }, { 1, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 } };
-const V3 FACE_W[6] = { { 0, 0, 1 }, { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0, 1 }, { 0, 1, 0 }, { 1, 0, 0 } };
-const double SU[4] = { -1, 1, 1, -1 }, SW[4] = { -1, -1, 1, 1 };
-
-V3 corner(const V3 &p_half, int p_face, double p_su, double p_sw) {
-    const V3 c = FACE_N[p_face] + FACE_U[p_face] * p_su + FACE_W[p_face] * p_sw;
-    return { c.x * p_half.x, c.y * p_half.y, c.z * p_half.z };
-}
-
-void push3(std::vector<float> &r_out, const V3 &p_v) {
-    r_out.push_back(float(p_v.x));
-    r_out.push_back(float(p_v.y));
-    r_out.push_back(float(p_v.z));
-}
-
-struct Rgba {
-    float r = 1, g = 1, b = 1, a = 1;
-};
-
-// 一个平面多边形（凸），p_points 顺序随意绕，按 p_normal 摆正：从外面看逆时针的点，三角形反着连（Godot 的正面顺时针）
-void polygon(MeshPart &r_part, std::vector<V3> p_points, const V3 &p_normal, const Rgba *p_color) {
-    if (p_points.size() < 3) {
-        return;
-    }
-    if (dot(cross(p_points[1] - p_points[0], p_points[2] - p_points[0]), p_normal) < 0.0) {
-        std::reverse(p_points.begin(), p_points.end());
-    }
-    const int base = r_part.vertex_count();
-    const double len = std::sqrt(dot(p_normal, p_normal));
-    const V3 n = len > 0.0 ? p_normal * (1.0 / len) : V3{ 0, 1, 0 };
-    for (const V3 &p : p_points) {
-        push3(r_part.positions, p);
-        push3(r_part.normals, n);
-        if (p_color) {
-            r_part.colors.insert(r_part.colors.end(), { p_color->r, p_color->g, p_color->b, p_color->a });
-        }
-    }
-    for (int k = 1; k + 1 < int(p_points.size()); k++) {
-        r_part.indices.insert(r_part.indices.end(), { base, base + k + 1, base + k });
-    }
-}
-
-void append_box(MeshPart &r_part, const Xform &p_xf, const V3 &p_size, const Rgba *p_color = nullptr) {
-    const V3 half = p_size * 0.5;
-    for (int f = 0; f < 6; f++) {
-        std::vector<V3> pts;
-        for (int k = 0; k < 4; k++) {
-            pts.push_back(p_xf.xform(corner(half, f, SU[k], SW[k])));
-        }
-        polygon(r_part, pts, p_xf.rotate(FACE_N[f]), p_color);
-    }
-}
-
-void append_box_faces(std::vector<float> &r_faces, const Xform &p_xf, const V3 &p_size) {
-    const V3 half = p_size * 0.5;
-    for (int f = 0; f < 6; f++) {
-        V3 c[4];
-        for (int k = 0; k < 4; k++) {
-            c[k] = p_xf.xform(corner(half, f, SU[k], SW[k]));
-        }
-        for (int i : { 0, 2, 1, 0, 3, 2 }) {
-            push3(r_faces, c[i]);
-        }
-    }
-}
+using namespace mesh_kit;
 
 // 悬山顶：两坡从檐口（高 p_eave、前后 ±p_half_d）到屋脊（高 p_eave + p_rise、z = 0），沿 x 伸到 ±p_half_w；两山各一个三角，檐下一面。建筑局部坐标经 p_xf 摆好
 void append_gable(MeshPart &r_part, const Xform &p_xf, double p_half_w, double p_half_d, double p_eave, double p_rise, bool p_underside, const Rgba *p_color = nullptr) {
@@ -142,6 +51,7 @@ void part_material_color(PartMaterial p_material, float &r_r, float &r_g, float 
         { 0.80f, 0.68f, 0.40f, 1.0f }, // 草、席
         { 0.88f, 0.74f, 0.34f, 1.0f }, // 粮
         { 0.58f, 0.14f, 0.10f, 0.6f }, // 朱漆
+        { 0.60f, 0.33f, 0.25f, 1.0f }, // 砖（搭建件的砖墙）
     };
     const Row &row = ROWS[std::clamp(int(p_material), 0, int(PartMaterial::COUNT) - 1)];
     r_r = row.r;
