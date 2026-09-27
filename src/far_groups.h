@@ -42,6 +42,7 @@ class FarGroups : public godot::Node3D {
         double distance = 0.0;
         double want_res = 0.0; // 该用哪一档（米）
         double built_res = 0.0; // 挂着的是哪一档（0 = 还没有）
+        double queued_res = 0.0; // 交出去、还没挂上也没扔掉的是哪一档（0 = 没有）：做好了取进 ready 以后池里就不算「忙」，靠它才不重复交
         bool stand_in = false; // 挂着的是替身（行星包里还没有它的粗版）
         godot::MeshInstance3D *mesh = nullptr;
         int triangles = 0;
@@ -61,7 +62,7 @@ class FarGroups : public godot::Node3D {
     uint64_t lod_gen_seen = 0; // 行星包的粗版加到第几回了（变了就把替身换成粗版）
     int replaced = 0; // 替身换成了粗版几回（统计）
     void refresh_stand_ins();
-    std::vector<std::unique_ptr<JobResult>> ready; // 做好了等挂的（一帧挂一份：一份上传要几毫秒）
+    std::vector<std::unique_ptr<JobResult>> ready; // 做好了等挂的（一帧挂一份：一份上传要几毫秒；走远了、档换了的每帧全扔）
 
     void select();
     void submit(Group &p_group);

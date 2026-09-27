@@ -180,7 +180,9 @@ void FarGroups::select() {
         const bool fine_now = g.want_res == fine_res ? g.distance < fine_distance + fine_hysteresis
                 : (g.want_res == 0.0 ? g.distance < fine_distance : g.distance < fine_distance - fine_hysteresis);
         const double want = fine_now ? fine_res : coarse_res;
-        if (want != g.want_res || (g.built_res != want && !pool->busy(job_key(g.node, fine_now ? 0 : 1)))) {
+        // 这一档已经交出去了（排着、在做、做好了在 ready 里等挂）就不再交：做好取走以后池里不算「忙」，
+        // 原来只看池里忙不忙，高空飞得快时每挪 4 km 重挑一回、一帧只挂一份，同一群做好的网格一份份攒在 ready 里，内存涨到十几 GB、任务池也被占满
+        if (want != g.want_res || (g.built_res != want && g.queued_res != want)) {
             g.want_res = want;
             submit(g);
         }
@@ -199,6 +201,7 @@ void FarGroups::refresh_stand_ins() {
         Group &g = it.second;
         if (g.stand_in && g.built_res > 0.0 && pd->has_lod(g.node)) {
             g.built_res = 0.0; // 粗版来了：按同一档重建（挂上以前替身照旧画着）
+            g.queued_res = 0.0;
             submit(g);
         }
     }
@@ -208,8 +211,13 @@ void FarGroups::submit(Group &p_group) {
     const int tier = p_group.want_res == fine_res ? 0 : 1;
     pool->cancel(job_key(p_group.node, 1 - tier));
     if (p_group.built_res == p_group.want_res) {
+        p_group.queued_res = 0.0;
         return;
     }
+    if (p_group.queued_res == p_group.want_res) {
+        return; // 这一档已经交出去了
+    }
+    p_group.queued_res = p_group.want_res;
     const std::shared_ptr<const PlanetData> data = planet->share_planet();
     const int node = p_group.node;
     const double max_res = tier == 0 ? fine_res * 1.2 : 1e9;
@@ -273,13 +281,30 @@ void FarGroups::adopt_ready() {
     for (JobPool::Done &d : done) {
         ready.push_back(std::move(d.result));
     }
+    // 走远了、档又换了的这一帧全扔（原来一帧只扔一份：高空飞得快时扔的赶不上攒的，该挂的一份也挂不上）
+    ready.erase(std::remove_if(ready.begin(), ready.end(),
+                        [this](const std::unique_ptr<JobResult> &p_r) {
+                            const FarGroupArrays *a = static_cast<const FarGroupArrays *>(p_r.get());
+                            const auto found = groups.find(a->node);
+                            if (found == groups.end()) {
+                                return true;
+                            }
+                            const double res = a->tier == 0 ? fine_res : coarse_res;
+                            if (res != found->second.want_res) {
+                                if (found->second.queued_res == res) {
+                                    found->second.queued_res = 0.0;
+                                }
+                                return true;
+                            }
+                            return false;
+                        }),
+            ready.end());
     // 一帧挂一份，近的先
     int pick = -1;
     double best = 1e18;
     for (size_t k = 0; k < ready.size(); k++) {
         const FarGroupArrays *a = static_cast<const FarGroupArrays *>(ready[k].get());
-        const auto found = groups.find(a->node);
-        const double d = found == groups.end() ? -1.0 : found->second.distance;
+        const double d = groups.find(a->node)->second.distance;
         if (d < best) {
             best = d;
             pick = int(k);
@@ -339,6 +364,9 @@ void FarGroups::adopt_ready() {
         }
         replaced += g.stand_in && !a->stand_in && g.mesh ? 1 : 0;
         g.built_res = res;
+        if (g.queued_res == res) {
+            g.queued_res = 0.0;
+        }
         g.stand_in = a->stand_in;
         g.triangles = int(a->indices.size() / 3);
         if (g.stand_in && planet->get_planet()->has_lod(g.node)) {
