@@ -4,6 +4,7 @@ extends Node
 ##   Godot --path game --fixed-fps 60 res://tools/terrain_shots.tscn -- --shots=<目录>
 ##
 ## 机位全按出发码头（主码头）与岛心推：人开 god 模式悬在机位附近（地面块按人的位置细分），另放一台相机拍。
+## 浮高计划 Z2 起多几张看同群的岛高低错落（11–16）：机位按岛表里各岛的岛心与岸缘推，岛号是 2051 的。
 
 const SCENE := preload("res://world_2051.tscn")
 
@@ -69,9 +70,10 @@ func _plan() -> void:
 	# 7 从出发码头望山：人眼的高度，朝着上面找到的最高处（远山靠远平面与淡雾才看得见）
 	var eye := world.get_dock_spawn(world.find_dock(main.origin_dock)).origin + Vector3(0, 1.7, 0)
 	views.append(["7_dock_view", eye, eye, Vector3(best.x, eye.y + (best.y - eye.y) * 0.6, best.z)])
-	# 6 小岛：12 号岛（14.7 km²，岛心 (-21920, 16486)），离岛心 4 km 平视，整座岛悬在云海上
-	var islet := Vector3(-21920.0, 0.0, 16486.0)
-	views.append(["6_islet", islet + Vector3(0, 400, -2600), islet + Vector3(-2800, 120, -2800), islet + Vector3(0, -80, 0)])
+	# 6 小岛：12 号岛（14.7 km²，岛心 (-21920, 16486)），离岛心 4 km 平视，整座岛悬在云海上（高度按它的岸缘：浮高以后它比主岛低 150 m）
+	var islet := _island_center(12)
+	var islet_rim := _island_rim(12)
+	views.append(["6_islet", islet + Vector3(0, islet_rim + 124.0, -2600), islet + Vector3(-2800, islet_rim - 156.0, -2800), islet + Vector3(0, islet_rim - 356.0, 0)])
 	# 浮高计划 Z1：云带顶在 −5000 m，岛底（连岩棱）至少高出它 1000 m
 	# 8 岛边往下看：岸外 120 m、岸缘上 30 m，朝外往下约 50° 望——脚下几千米是云带顶
 	views.append(["8_edge_down", dock + out * 60.0, dock + out * 120.0 + Vector3(0, 30.0, 0), dock + out * 2200.0 + Vector3(0, -2600.0, 0)])
@@ -79,6 +81,58 @@ func _plan() -> void:
 	views.append(["9_gap_side", dock + out * 600.0, Vector3(dock.x, -4600.0, dock.z) + out * 8000.0 + side * 1500.0, Vector3(dock.x, -3300.0, dock.z) - out * 6000.0])
 	# 10 远看整座主岛：岸外 25 km、y = −4500，平看——一整座浮山悬在云带顶上
 	views.append(["10_gap_far", dock + out * 600.0, Vector3(dock.x, -4500.0, dock.z) + out * 25000.0, Vector3(dock.x, -3900.0, dock.z) - out * 8000.0])
+	# 浮高计划 Z2：同群的岛按岛龄上下错开（主岛不动，−223…+1325 m）
+	# 11 从主码头望东：码头岸外 30 m、坪上 3 m（背着船坞门架），朝东（方位 85°）平望——8 号（岸缘 910 m、11 km）比码头高 670 m，
+	#    9 号（116 m、8.6 km）、26 号（258 m、15 km）在左手边、与码头差不多高或更低
+	var i19 := _island_center(19)
+	var dock_eye := dock + out * 30.0 + Vector3(0, 3.0, 0)
+	var east := Vector3(sin(deg_to_rad(85.0)), 0.0, -cos(deg_to_rad(85.0)))
+	views.append(["11_dock_east", dock_eye, dock_eye, dock_eye + east * 10000.0 + Vector3(0, 250.0, 0)])
+	# 12 站在 19 号（岸缘 1237 m）北岸往下看：14 号（134 m、北边 5 km）在脚下一千一百米，8 号（910 m）远一点、也低，左手是主岛
+	var i14 := _island_center(14)
+	var to14 := Vector3(i14.x - i19.x, 0.0, i14.z - i19.z).normalized()
+	var edge := i19
+	for k in 200:
+		var q := i19 + to14 * (50.0 * k)
+		var h := world.get_surface_height(q.x, q.z)
+		if is_nan(h):
+			break
+		edge = Vector3(q.x, h, q.z)
+	# 相机悬在崖边外 40 m、比岸上高 25 m（在岸里头往下看只看得见自己脚下的地）；人站在崖边里头 30 m（别拍到人的帽檐）
+	var high_eye19 := edge + to14 * 40.0 + Vector3(0, 25.0, 0)
+	var stand19 := edge - to14 * 30.0
+	stand19.y = world.get_surface_height(stand19.x, stand19.z) + 1.0
+	views.append(["12_high_down", stand19, high_eye19, Vector3(i14.x, _island_rim(14), i14.z)])
+	# 13 从主峰望东：峰上 40 m，朝 19 号、16 号、2 号那一片略往下看——群里的岛一层层落在不同的高度上
+	var summit := best + Vector3(0, 40.0, 0)
+	var i16 := _island_center(16)
+	views.append(["13_peak_view", summit, summit, Vector3(i16.x, summit.y - 900.0, i16.z)])
+	# 14 群外东边 15 km、y = 700 平看整群的东半边：29 号（1166 m）、19 号、8 号高高在上，2 号（121 m）、14 号低低在下，底下远远的是云带顶
+	var i29 := _island_center(29)
+	var side_eye := i29 + Vector3(15000.0, 700.0, 6000.0)
+	views.append(["14_group_side", side_eye, side_eye, Vector3(i19.x, 500.0, i19.z)])
+	# 15 19 号的岛底：岸外 3 km、比它的岸缘低 1600 m 仰看——浮在 1.2 km 高的小岛，倒锥的底还在主岛岸缘之上，远处是主岛的崖
+	var rim19 := _island_rim(19)
+	var out19 := (i19 - dock).normalized()
+	var under_eye := i19 + out19 * 3500.0 + Vector3(0, rim19 - 1600.0, 0)
+	views.append(["15_high_underside", under_eye, under_eye, i19 + Vector3(0, rim19 - 700.0, 0)])
+	# 16 god 在高处斜看整群：群心东南 45 km、y = 6000 m，朝群心往下约 7°——一群浮山各在各的高度上，底下是云带顶
+	var high_eye := Vector3(32000.0, 6000.0, 32000.0)
+	views.append(["16_group_high", high_eye, high_eye, Vector3(0.0, 500.0, 0.0)])
+
+
+func _island_center(p_id: int) -> Vector3:
+	for row in world.get_info()["islands"]:
+		if int(row["id"]) == p_id:
+			return Vector3(float(row["center"][0]), 0.0, float(row["center"][1]))
+	return Vector3.ZERO
+
+
+func _island_rim(p_id: int) -> float:
+	for row in world.get_info()["islands"]:
+		if int(row["id"]) == p_id:
+			return float(row["rim_m"])
+	return 0.0
 
 
 func _physics_process(delta: float) -> void:
