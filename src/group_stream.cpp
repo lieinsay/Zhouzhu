@@ -7,16 +7,20 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/json.hpp>
+#include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 #include "far_groups.h"
 #include "farm.h"
+#include "group_provider.h"
 #include "hinterland.h"
 #include "planet_view.h"
 #include "scatter_stream.h"
 #include "shipyard.h"
 #include "site_stream.h"
+#include "planet_surface.h"
 #include "world.h"
 #include "world_clock.h"
 
@@ -43,6 +47,57 @@ Basis basis_of(const PlanetBasis &p_b) {
 // 绕 y 的转角：Godot 的 y 转 θ 把 x 轴转到 (cos θ, 0, −sin θ)
 double yaw_of(const PlanetBasis &p_b) {
     return std::atan2(-p_b.cols[0].z, p_b.cols[0].x);
+}
+
+// 主线程上慢的几步（拆 / 建一群、换锚）报出来：环境变量 ZHOUZHU_STREAM_TRACE=1 时报超过 8 ms 的（查卡帧用）
+bool trace_on() {
+    static const int on = OS::get_singleton()->has_environment("ZHOUZHU_STREAM_TRACE") ? 1 : 0;
+    return on != 0;
+}
+
+struct TraceStep {
+    const char *what;
+    int node;
+    uint64_t t0;
+    TraceStep(const char *p_what, int p_node) :
+            what(p_what), node(p_node), t0(Time::get_singleton()->get_ticks_usec()) {}
+    ~TraceStep() {
+        const double ms = double(Time::get_singleton()->get_ticks_usec() - t0) / 1000.0;
+        if (trace_on() && ms > 8.0) {
+            print_line(vformat("GroupStream trace: %s #%d %.1f ms", what, node, ms));
+        }
+    }
+};
+
+constexpr double FAR_JUMP_M = 1500000.0; // 瞬移离云团的公共平面那一群这么远：公共平面改成要去的那一群（在群心线性化，几百公里外就歪了）
+constexpr double JUMP_LOAD_TIMEOUT_S = 120.0;
+
+// world.json 的 source（群心的经纬度，与 PlanetView 锚定用的同一个数）：它是第一个键，只读开头 2 KB，不整个解析（整份几百 KB 到几 MB）
+Dictionary read_source(const String &p_dir) {
+    Ref<FileAccess> f = FileAccess::open(p_dir.path_join("world.json"), FileAccess::READ);
+    if (f.is_null()) {
+        return Dictionary();
+    }
+    // 只解到第一个「}」（source 那一段）：2 KB 处可能正好切在一个汉字中间
+    PackedByteArray bytes = f->get_buffer(2048);
+    for (int64_t k = 0; k < bytes.size(); k++) {
+        if (bytes[k] == '}') {
+            bytes.resize(k + 1);
+            break;
+        }
+    }
+    const String head = bytes.get_string_from_utf8();
+    const int a = head.find("\"source\"");
+    const int b = a >= 0 ? head.find("{", a) : -1;
+    const int e = b >= 0 ? head.find("}", b) : -1;
+    if (e > b && b > a) {
+        const Variant v = JSON::parse_string(head.substr(b, e - b + 1));
+        if (v.get_type() == Variant::DICTIONARY) {
+            return v;
+        }
+    }
+    const Variant all = JSON::parse_string(FileAccess::get_file_as_string(p_dir.path_join("world.json")));
+    return all.get_type() == Variant::DICTIONARY ? Dictionary(Dictionary(all).get("source", Dictionary())) : Dictionary();
 }
 
 } // namespace
@@ -73,6 +128,13 @@ void GroupStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_shift_count"), &GroupStream::get_shift_count);
     ClassDB::bind_method(D_METHOD("is_shift_pending"), &GroupStream::is_shift_pending);
     ClassDB::bind_method(D_METHOD("force_shift_to", "node"), &GroupStream::force_shift_to);
+    ClassDB::bind_method(D_METHOD("get_jump_node"), &GroupStream::get_jump_node);
+    ClassDB::bind_method(D_METHOD("get_graveyard_size"), &GroupStream::get_graveyard_size);
+    ClassDB::bind_method(D_METHOD("get_jump_state"), &GroupStream::get_jump_state);
+    ClassDB::bind_method(D_METHOD("save_world"), &GroupStream::save_world);
+    ClassDB::bind_method(D_METHOD("_on_group_ready", "node", "dir"), &GroupStream::on_group_ready);
+    ClassDB::bind_method(D_METHOD("set_provider_path", "value"), &GroupStream::set_provider_path);
+    ClassDB::bind_method(D_METHOD("get_provider_path"), &GroupStream::get_provider_path);
     ClassDB::bind_method(D_METHOD("get_stats"), &GroupStream::get_stats);
     ClassDB::bind_method(D_METHOD("set_auto_shift", "value"), &GroupStream::set_auto_shift);
     ClassDB::bind_method(D_METHOD("get_auto_shift"), &GroupStream::get_auto_shift);
@@ -99,6 +161,7 @@ void GroupStream::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "planet_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "PlanetView"), "set_planet_path", "get_planet_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "home_path"), "set_home_path", "get_home_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "far_groups_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "FarGroups"), "set_far_groups_path", "get_far_groups_path");
+    ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "provider_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "GroupProvider"), "set_provider_path", "get_provider_path");
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "worlds_dir", PROPERTY_HINT_DIR), "set_worlds_dir", "get_worlds_dir");
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "settlements_dir", PROPERTY_HINT_DIR), "set_settlements_dir", "get_settlements_dir");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "detail_in", PROPERTY_HINT_RANGE, "1000,200000,100,suffix:m"), "set_detail_in", "get_detail_in");
@@ -131,65 +194,37 @@ bool GroupStream::setup() {
         return false; // PlanetView 晚一帧锚定：等它
     }
     far_groups = Object::cast_to<FarGroups>(get_node_or_null(far_groups_path));
+    provider = Object::cast_to<GroupProvider>(get_node_or_null(provider_path));
     const PlanetData *pd = planet->get_planet();
-    PlanetShape shape;
-    shape.sea_radius_m = pd->radius_km * 1000.0;
 
-    // 目录：worlds_dir 下以节点号命名、有 terrain.bin 与 world.json 的（仓库里是 2051 与 2050；P4 起加 user:// 的缓存）
+    // 有哪些群的包：GroupProvider 说（仓库里的 + 世界存档目录里的，行星计划 P4）；没有它就照 P3 看 worlds_dir 下以节点号命名的
     std::vector<int> nodes;
-    const PackedStringArray dirs = DirAccess::get_directories_at(worlds_dir);
-    for (int64_t k = 0; k < dirs.size(); k++) {
-        const String name = dirs[k];
-        if (!name.is_valid_int()) {
-            continue;
+    if (provider) {
+        const PackedInt32Array a = provider->available_nodes();
+        for (int64_t k = 0; k < a.size(); k++) {
+            nodes.push_back(a[k]);
         }
-        const int node = int(name.to_int());
-        const String dir = worlds_dir.path_join(name);
-        if (node < 0 || node >= pd->node_count() || !FileAccess::file_exists(dir.path_join("terrain.bin")) || !FileAccess::file_exists(dir.path_join("world.json"))) {
-            continue;
-        }
-        nodes.push_back(node);
-    }
-    if (std::find(nodes.begin(), nodes.end(), home->get_node_id()) == nodes.end()) {
-        nodes.push_back(home->get_node_id());
-    }
-    for (int node : nodes) {
-        std::unique_ptr<Group> g = std::make_unique<Group>();
-        g->node = node;
-        g->home = node == home->get_node_id();
-        g->data_dir = g->home ? home->get_data_dir() : worlds_dir.path_join(itos(node));
-        // 群心按 world.json 的 source（与 PlanetView 锚定用的同一个数）；读不到用行星包的
-        double lat = pd->node(node).lat, lon = pd->node(node).lon;
-        const Dictionary info = g->home ? home->get_info() : Dictionary(JSON::parse_string(FileAccess::get_file_as_string(g->data_dir.path_join("world.json"))));
-        const Dictionary source = info.get("source", Dictionary());
-        if (source.has("lat") && source.has("lon")) {
-            lat = double(source["lat"]);
-            lon = double(source["lon"]);
-        }
-        g->frame = GroupFrame(lat, lon, shape);
-        // 粗版的陆地格心：算焦点到这一群的陆地多远
-        const PlanetLod lod = pd->lod(node);
-        g->land_pad = 0.5 * lod.res_m;
-        for (int r = 0; r < lod.rows; r++) {
-            for (int c = 0; c < lod.cols; c++) {
-                if (lod.land[lod.index(r, c)] < 32) {
-                    continue;
-                }
-                double x = 0.0, z = 0.0;
-                lod.cell_center(r, c, x, z);
-                g->land_x.push_back(x);
-                g->land_z.push_back(z);
-                g->reach_m = std::max(g->reach_m, std::hypot(x, z) + g->land_pad);
+    } else {
+        const PackedStringArray dirs = DirAccess::get_directories_at(worlds_dir);
+        for (int64_t k = 0; k < dirs.size(); k++) {
+            const String name = dirs[k];
+            const String dir = worlds_dir.path_join(name);
+            if (name.is_valid_int() && FileAccess::file_exists(dir.path_join("terrain.bin")) && FileAccess::file_exists(dir.path_join("world.json"))) {
+                nodes.push_back(int(name.to_int()));
             }
         }
-        // 码头表（没载入时也要给位置）
-        const PackedByteArray bytes = FileAccess::get_file_as_bytes(g->data_dir.path_join("sites.tsv"));
-        std::string error;
-        if (bytes.is_empty() || !parse_world_sites(std::string(reinterpret_cast<const char *>(bytes.ptr()), size_t(bytes.size())), g->sites, error)) {
-            g->sites = WorldSites();
+    }
+    home_node = home->get_node_id();
+    if (std::find(nodes.begin(), nodes.end(), home_node) == nodes.end()) {
+        nodes.push_back(home_node);
+    }
+    for (int node : nodes) {
+        if (node < 0 || node >= pd->node_count()) {
+            continue;
         }
-        if (g->home) {
+        if (node == home_node) {
             // 场景里摆的那一群：节点在场景根下，已经载入，是锚、细版
+            Group *g = add_group(node, home->get_data_dir());
             g->parent = home->get_parent();
             g->world = home;
             g->site_stream = home->get_site_stream();
@@ -197,9 +232,11 @@ bool GroupStream::setup() {
             g->hinterland = g->site_stream ? g->site_stream->get_hinterland() : nullptr;
             g->tier = TIER_DETAIL;
             g->loaded_at = now_s();
-            anchor = int(groups.size());
+            g->memory = GroupMemory(); // 上回存下的账 GroupProvider 开局就交给了场景里的账房、农田
+            anchor = index_of(g);
+        } else {
+            add_group(node, provider ? provider->find_group(node) : worlds_dir.path_join(itos(node)));
         }
-        groups.push_back(std::move(g));
     }
     if (anchor < 0) {
         return false;
@@ -219,7 +256,99 @@ bool GroupStream::setup() {
     }
     // 场景里摆的那一群已经载入：不是参考群的话现在设
     apply_cloud_reference(*groups[size_t(anchor)], groups[size_t(anchor)]->world);
+    if (provider) {
+        provider->connect("group_ready", Callable(this, "_on_group_ready"));
+    }
     return true;
+}
+
+GroupStream::Group *GroupStream::add_group(int p_node, const String &p_dir) {
+    if (Group *found = find(p_node)) {
+        return found;
+    }
+    const PlanetData *pd = planet->get_planet();
+    PlanetShape shape;
+    shape.sea_radius_m = pd->radius_km * 1000.0;
+    std::unique_ptr<Group> g = std::make_unique<Group>();
+    g->node = p_node;
+    g->home = p_node == home_node;
+    g->data_dir = p_dir;
+    // 群心按 world.json 的 source（与 PlanetView 锚定用的同一个数）；读不到用行星包的
+    double lat = pd->node(p_node).lat, lon = pd->node(p_node).lon;
+    const Dictionary source = read_source(g->data_dir);
+    if (source.has("lat") && source.has("lon")) {
+        lat = double(source["lat"]);
+        lon = double(source["lon"]);
+    }
+    g->frame = GroupFrame(lat, lon, shape);
+    // 粗版的陆地格心：算焦点到这一群的陆地多远（生存模式还没有粗版的：替身）
+    PlanetLod lod = pd->lod(p_node);
+    if (lod.empty()) {
+        lod = surface_stand_in(*pd, p_node, 2000.0);
+    }
+    g->land_pad = 0.5 * lod.res_m;
+    for (int r = 0; r < lod.rows; r++) {
+        for (int c = 0; c < lod.cols; c++) {
+            if (lod.land[lod.index(r, c)] < 32) {
+                continue;
+            }
+            double x = 0.0, z = 0.0;
+            lod.cell_center(r, c, x, z);
+            g->land_x.push_back(x);
+            g->land_z.push_back(z);
+            g->reach_m = std::max(g->reach_m, std::hypot(x, z) + g->land_pad);
+        }
+    }
+    // 码头表（没载入时也要给位置）
+    const PackedByteArray bytes = FileAccess::get_file_as_bytes(g->data_dir.path_join("sites.tsv"));
+    std::string error;
+    if (bytes.is_empty() || !parse_world_sites(std::string(reinterpret_cast<const char *>(bytes.ptr()), size_t(bytes.size())), g->sites, error)) {
+        g->sites = WorldSites();
+    }
+    // 上回离开时存进世界存档目录的账（退出再进还在）
+    if (provider && !g->home) {
+        provider->load_memory(p_node, g->memory);
+    }
+    groups.push_back(std::move(g));
+    return groups.back().get();
+}
+
+void GroupStream::on_group_ready(int p_node, const String &p_dir) {
+    if (!ready || find(p_node) || !planet || p_node < 0 || p_node >= planet->get_planet()->node_count()) {
+        return;
+    }
+    add_group(p_node, p_dir);
+}
+
+void GroupStream::save_memory(const Group &p_group) const {
+    if (provider) {
+        provider->save_memory(p_group.node, p_group.memory);
+    }
+}
+
+void GroupStream::save_world() {
+    if (!ready || !provider) {
+        return;
+    }
+    for (const auto &gp : groups) {
+        const Group &g = *gp;
+        GroupMemory m = g.memory; // 离开时存下、还没补回去的照留
+        if (g.hinterland) {
+            g.hinterland->save_states(m.ledgers, m.ledgers_at);
+        }
+        if (g.world && g.world->is_loaded()) {
+            m.has_world = true;
+            m.plots.clear();
+            if (Farm *farm = g.world->host_farm()) {
+                m.plots = farm->get_model().plot_entries();
+            }
+            const WorldClock *clock = WorldClock::get_singleton();
+            m.plots_at = clock ? clock->get_seconds() : 0.0;
+            m.stocks = g.world->get_resource_stocks();
+            m.scatter = g.world->get_scatter_ledger();
+        }
+        provider->save_memory(g.node, m);
+    }
 }
 
 void GroupStream::apply_cloud_reference(const Group &p_group, GroupWorld *p_world) const {
@@ -237,6 +366,32 @@ void GroupStream::apply_cloud_reference(const Group &p_group, GroupWorld *p_worl
     f.ox = o.x;
     f.oz = o.z;
     p_world->set_cloud_reference(f, cloud_climate);
+}
+
+void GroupStream::set_cloud_group(const Group &p_group) {
+    if (&p_group == cloud_ref) {
+        return;
+    }
+    cloud_ref = &p_group;
+    cloud_climate.reset();
+    const PackedByteArray wb = FileAccess::get_file_as_bytes(p_group.data_dir.path_join("weather.tsv"));
+    if (!wb.is_empty()) {
+        std::shared_ptr<Climate> c = std::make_shared<Climate>();
+        std::string error;
+        if (parse_climate(std::string(reinterpret_cast<const char *>(wb.ptr()), size_t(wb.size())), *c, error)) {
+            cloud_climate = c;
+        }
+    }
+    for (auto &gp : groups) {
+        if (!gp->world) {
+            continue;
+        }
+        if (gp.get() == cloud_ref) {
+            gp->world->set_cloud_reference(CloudFrame(), cloud_climate); // 自己：单位变换、自己的风
+        } else {
+            apply_cloud_reference(*gp, gp->world);
+        }
+    }
 }
 
 void GroupStream::set_focus(const Vector3 &p_focus) {
@@ -345,8 +500,58 @@ void GroupStream::_process(double p_delta) {
         }
     }
     poll_loading();
+    update_jump();
     update_placements(false);
     feed_focus();
+    reap();
+}
+
+void GroupStream::bury(Node *p_node) {
+    // 停下（不再 _process / _physics_process）、藏起来（邻群的还在地平线上）、改名（同名的新节点照旧叫 World……），等 reap 一点点拆
+    p_node->set_process_mode(PROCESS_MODE_DISABLED);
+    if (Node3D *n3 = Object::cast_to<Node3D>(p_node)) {
+        n3->set_visible(false);
+    }
+    p_node->set_name(vformat("Buried%d_%s", ++buried, String(p_node->get_name())));
+    graveyard.push_back(ObjectID(p_node->get_instance_id()));
+}
+
+void GroupStream::reap() {
+    // 先埋的先拆（账房在 World 前面）；每回摘最深的最后一个叶子（出树只通知它自己），摘完根再放它
+    const uint64_t t0 = Time::get_singleton()->get_ticks_usec();
+    const uint64_t budget = uint64_t(reap_budget_ms * 1000.0);
+    int count = 0;
+    while (!graveyard.empty()) {
+        Node *root = Object::cast_to<Node>(ObjectDB::get_instance(graveyard.front()));
+        if (!root) {
+            graveyard.erase(graveyard.begin());
+            continue;
+        }
+        // 账房后台还在开账（读着这一群的地形）：等它们做完再拆（出树时它会等；排在它后面的 World 也跟着等）
+        if (const Hinterland *h = Object::cast_to<Hinterland>(root); h && h->openings_pending()) {
+            break;
+        }
+        Node *leaf = root;
+        while (leaf->get_child_count() > 0) {
+            leaf = leaf->get_child(leaf->get_child_count() - 1);
+        }
+        const uint64_t t1 = Time::get_singleton()->get_ticks_usec();
+        if (Node *parent = leaf->get_parent()) {
+            parent->remove_child(leaf);
+        }
+        leaf->queue_free();
+        const uint64_t t2 = Time::get_singleton()->get_ticks_usec();
+        if (trace_on() && t2 - t1 > 4000) {
+            print_line(vformat("GroupStream trace: reap %s (%s) %.1f ms", String(leaf->get_name()), leaf->get_class(), double(t2 - t1) / 1000.0));
+        }
+        if (leaf == root) {
+            graveyard.erase(graveyard.begin());
+        }
+        count++;
+        if (t2 - t0 > budget) {
+            break;
+        }
+    }
 }
 
 void GroupStream::update_tiers() {
@@ -361,9 +566,10 @@ void GroupStream::update_tiers() {
     std::sort(order.begin(), order.end(), [](const Group *a, const Group *b) { return a->land_distance < b->land_distance; });
     int detail_left = std::max(0, max_detail - 1);
     const Group *a = anchor_group();
+    bool dropped = false; // 这一回已经降了一群（村子的账存成文本、摘节点要一二十毫秒）：别的下一回（0.25 s 后）再降
     for (Group *g : order) {
         Tier want = TIER_FAR;
-        if (g == a || index_of(g) == pending) {
+        if (g == a || index_of(g) == pending || g->pinned) {
             want = TIER_DETAIL;
         } else {
             const double d = g->land_distance;
@@ -377,12 +583,18 @@ void GroupStream::update_tiers() {
             }
         }
         if (want != g->tier) {
+            const bool drop = want < g->tier && (g->world || g->site_stream);
+            if (drop && dropped) {
+                continue;
+            }
+            dropped = dropped || drop;
             set_tier(*g, want);
         }
     }
 }
 
 void GroupStream::set_tier(Group &r_group, Tier p_tier) {
+    TraceStep trace(p_tier == TIER_FAR ? "set_tier far" : (p_tier == TIER_NEAR ? "set_tier near" : "set_tier detail"), r_group.node);
     if (p_tier == TIER_FAR) {
         if (r_group.tier == TIER_DETAIL) {
             unload_detail(r_group);
@@ -455,6 +667,7 @@ void GroupStream::unload_world(Group &r_group) {
     // 近景 → 远景：农田里的地、采场的存量、散布物的采空账留在内存（下回载入补回）
     GroupWorld *w = r_group.world;
     if (w->is_loaded()) {
+        TraceStep t("world memory", r_group.node);
         GroupMemory &m = r_group.memory;
         m.has_world = true;
         m.plots.clear();
@@ -465,19 +678,19 @@ void GroupStream::unload_world(Group &r_group) {
         m.plots_at = clock ? clock->get_seconds() : 0.0;
         m.stocks = w->get_resource_stocks();
         m.scatter = w->get_scatter_ledger();
+        save_memory(r_group);
     }
     set_far_hidden(r_group, false);
-    if (Node *parent = w->get_parent()) {
-        parent->remove_child(w);
+    // World 交给坟地（它的地面块、水面、农田、船坞一帧拆一点；村子那些已经先埋了，先拆）；别的群的容器随它一起埋
+    if (r_group.container) {
+        bury(r_group.container);
+        r_group.container = nullptr;
+    } else {
+        bury(w);
     }
-    w->queue_free();
     r_group.world = nullptr;
     r_group.loaded_at = -1.0;
     r_group.placed = false;
-    if (r_group.container && r_group.container->get_child_count() == 0) {
-        r_group.container->queue_free();
-        r_group.container = nullptr;
-    }
     unloads++;
 }
 
@@ -499,6 +712,7 @@ void GroupStream::load_detail(Group &r_group) {
     if (!r_group.memory.ledgers.empty()) {
         h->set_saved(r_group.memory.ledgers, r_group.memory.ledgers_at);
         r_group.memory.ledgers.clear();
+        save_memory(r_group); // 交给账房了：存档里只剩农田那一份（没有就删）
     }
     // SiteStream 先进树（账房进树时按路径找它）；它自己找账房时账房还没在，挂好了再告诉它
     r_group.parent->add_child(s);
@@ -517,19 +731,21 @@ void GroupStream::unload_detail(Group &r_group) {
     }
     // 近处的村民先散（账收回账房），账房再把各村的账存成文本留在内存（模拟分级）
     if (r_group.site_stream) {
+        TraceStep t("retire_folk", r_group.node);
         r_group.site_stream->retire_folk();
     }
     if (r_group.hinterland) {
-        r_group.hinterland->save_states(r_group.memory.ledgers, r_group.memory.ledgers_at);
+        {
+            TraceStep t("save_states", r_group.node);
+            r_group.hinterland->save_states(r_group.memory.ledgers, r_group.memory.ledgers_at);
+        }
+        TraceStep t("save_memory(ledgers)", r_group.node);
+        save_memory(r_group);
     }
-    for (Node *n : { static_cast<Node *>(r_group.site_stream), static_cast<Node *>(r_group.scatter_stream), static_cast<Node *>(r_group.hinterland) }) {
-        if (!n) {
-            continue;
+    for (Node *n : { static_cast<Node *>(r_group.hinterland), static_cast<Node *>(r_group.scatter_stream), static_cast<Node *>(r_group.site_stream) }) {
+        if (n) {
+            bury(n);
         }
-        if (Node *parent = n->get_parent()) {
-            parent->remove_child(n);
-        }
-        n->queue_free();
     }
     r_group.site_stream = nullptr;
     r_group.scatter_stream = nullptr;
@@ -537,6 +753,7 @@ void GroupStream::unload_detail(Group &r_group) {
 }
 
 void GroupStream::poll_loading() {
+    TraceStep trace("poll_loading", -1);
     for (auto &gp : groups) {
         Group &g = *gp;
         if (!g.world || !g.world->is_loaded()) {
@@ -553,6 +770,12 @@ void GroupStream::poll_loading() {
                     g.world->set_resource_stocks(g.memory.stocks);
                 }
                 g.world->get_scatter_ledger() = g.memory.scatter;
+                // 补回去了：内存里、存档里都不再留这一份
+                g.memory.has_world = false;
+                g.memory.plots.clear();
+                g.memory.stocks.clear();
+                g.memory.scatter = ScatterLedger();
+                save_memory(g);
             }
         }
         // 地面块挂齐了才让 FarGroups 藏起粗版（锚群 FarGroups 自己不画）
@@ -624,6 +847,10 @@ void GroupStream::feed_focus() {
         if (&g == a || !g.world || !g.world->is_loaded()) {
             continue;
         }
+        if (g.node == jump_node && jump_landing_set) {
+            g.world->set_focus(jump_spawn.origin); // 瞬移要去的：落点周围的地面块先建好（它自己的平面）
+            continue;
+        }
         g.world->set_focus(v3(to_group(g, focus)));
     }
 }
@@ -643,12 +870,23 @@ void GroupStream::update_anchor_choice() {
             best = &g;
         }
     }
-    if (!best || best->land_distance + shift_margin >= a->land_distance) {
+    if (!best) {
+        return;
+    }
+    const PlanetVec q = to_group(*best, focus);
+    const bool on_anchor = !std::isnan(a->world->get_surface_height(focus.x, focus.z));
+    const bool on_best = !std::isnan(best->world->get_surface_height(q.x, q.z));
+    // 行星计划 P4 补的规矩（挨着的群）：脚下是别的群的地、不是锚群的地——换过去，不等云海上空、不看回滞（粗版量的陆地距离差一两公里，真地形说了算）；
+    // 两群的地叠着（脚下两群都有地）不换，锚群照旧
+    if (on_best && !on_anchor) {
+        pending = index_of(best);
+        return;
+    }
+    if (best->land_distance + shift_margin >= a->land_distance) {
         return;
     }
     // 只在云海上空换：脚下两群都没有地
-    const PlanetVec q = to_group(*best, focus);
-    if (!std::isnan(a->world->get_surface_height(focus.x, focus.z)) || !std::isnan(best->world->get_surface_height(q.x, q.z))) {
+    if (on_anchor || on_best) {
         return;
     }
     pending = index_of(best);
@@ -695,6 +933,7 @@ bool GroupStream::begin_shift(GroupShift &r_shift) const {
 }
 
 void GroupStream::commit_shift() {
+    TraceStep trace("commit_shift", pending >= 0 ? groups[size_t(pending)]->node : -1);
     Group *a = anchor_group(), *b = group_at(pending);
     if (!a || !b || !b->world) {
         pending = -1;
@@ -752,6 +991,256 @@ bool GroupStream::force_shift_to(int p_node) {
     }
     pending = index_of(g);
     return true;
+}
+
+// ---------------------------------------------------------------- 跨群瞬移（行星计划 P4）
+
+bool GroupStream::jump_begin(int p_node, String &r_why) {
+    if (!ready) {
+        r_why = String(U"岛群的流式还没就绪");
+        return false;
+    }
+    if (p_node < 0 || p_node >= planet->get_planet()->node_count()) {
+        r_why = vformat(String(U"没有群 #%d"), p_node);
+        return false;
+    }
+    if (p_node == get_anchor_node()) {
+        r_why = vformat(String(U"就在群 #%d"), p_node);
+        return false;
+    }
+    jump_end();
+    jump_node = p_node;
+    jump_error = String();
+    jump_landing_set = false;
+    jump_started = now_s();
+    if (!find(p_node)) {
+        if (!provider) {
+            r_why = String(U"这个场景没有 GroupProvider，只能去认得的群");
+            jump_node = -1;
+            return false;
+        }
+        const String dir = provider->find_group(p_node);
+        if (dir.is_empty()) {
+            const String problem = provider->get_problem();
+            if (!problem.is_empty()) {
+                r_why = vformat(String(U"群 #%d 还没生成过，生成不了：%s"), p_node, problem);
+                jump_node = -1;
+                return false;
+            }
+            provider->request(p_node, GroupProvider::URGENT);
+            jump_phase = JUMP_GENERATING;
+            return true;
+        }
+        add_group(p_node, dir);
+    }
+    jump_phase = JUMP_LOADING;
+    Group *g = find(p_node);
+    g->pinned = true;
+    if (!g->world) {
+        load_world(*g, false); // 后台载入
+        g->tier = TIER_NEAR;
+    }
+    return true;
+}
+
+void GroupStream::update_jump() {
+    if (jump_node < 0) {
+        return;
+    }
+    TraceStep trace("update_jump", jump_node);
+    if (jump_phase == JUMP_GENERATING) {
+        const Dictionary r = provider ? provider->get_request(jump_node) : Dictionary();
+        const int state = int(r.get("state", 0));
+        if (state == GroupProvider::FAILED) {
+            jump_phase = JUMP_FAILED;
+            jump_error = r.get("error", String(U"生成失败"));
+            return;
+        }
+        if (state != GroupProvider::READY) {
+            return;
+        }
+        Group *g = add_group(jump_node, provider->find_group(jump_node));
+        g->pinned = true;
+        if (!g->world) {
+            load_world(*g, false);
+            g->tier = TIER_NEAR;
+        }
+        jump_phase = JUMP_LOADING;
+    }
+    if (jump_phase != JUMP_LOADING) {
+        return;
+    }
+    Group *g = find(jump_node);
+    if (!g || !g->world) {
+        jump_phase = JUMP_FAILED;
+        jump_error = String(U"要去的群没载入起来");
+        return;
+    }
+    if (!g->world->is_loaded()) {
+        if (now_s() - jump_started > JUMP_LOAD_TIMEOUT_S) {
+            jump_phase = JUMP_FAILED;
+            jump_error = String(U"载入超时");
+        }
+        return;
+    }
+    if (!jump_landing_set) {
+        if (!find_landing(*g)) {
+            jump_phase = JUMP_FAILED;
+            jump_error = String(U"这一群没有码头、也没有村子，找不到落点");
+            return;
+        }
+        jump_landing_set = true;
+        g->world->set_focus(jump_spawn.origin);
+    }
+    if (g->tier != TIER_DETAIL) {
+        load_detail(*g);
+        g->tier = TIER_DETAIL;
+    }
+    // 落点周围的叶块（带碰撞）挂齐了才算好
+    if (g->world->is_ready_at(jump_spawn.origin)) {
+        jump_phase = JUMP_READY;
+    }
+}
+
+bool GroupStream::find_landing(Group &r_group) {
+    GroupWorld *w = r_group.world;
+    const WorldSites &s = w->get_sites();
+    // 主码头；没有能靠的主码头就取第一个能靠的码头
+    int pick = -1;
+    for (int k = 0; k < w->get_dock_count() && k < int(s.docks.size()); k++) {
+        if (s.docks[size_t(k)].main && w->is_dock_berthable(k)) {
+            pick = k;
+            break;
+        }
+    }
+    for (int k = 0; pick < 0 && k < w->get_dock_count(); k++) {
+        if (w->is_dock_berthable(k)) {
+            pick = k;
+        }
+    }
+    if (pick >= 0) {
+        jump_spawn = w->get_dock_spawn(pick);
+        jump_berth = w->get_dock_berth(pick);
+        jump_has_berth = true;
+        jump_where = vformat(String(U"%s #%d"), s.docks[size_t(pick)].main ? String(U"主码头") : String(U"码头"), s.docks[size_t(pick)].id);
+        return true;
+    }
+    // 没有码头：邑治（没有邑治就第一个村）的村心，按地面高
+    const SiteSettlement *seat = nullptr;
+    for (const SiteSettlement &v : s.settlements) {
+        if (v.seat && !v.hamlet) {
+            seat = &v;
+            break;
+        }
+    }
+    if (!seat) {
+        for (const SiteSettlement &v : s.settlements) {
+            if (!v.hamlet) {
+                seat = &v;
+                break;
+            }
+        }
+    }
+    if (!seat) {
+        return false;
+    }
+    // 村心可能正是堂屋：往外挪到第一块没有房子的平地（按地面高、离村心 30–120 m）
+    Vector3 at(real_t(seat->x), 0.0f, real_t(seat->z));
+    for (double r = 30.0; r <= 120.0; r += 15.0) {
+        const double y = w->get_surface_height(seat->x + r, seat->z);
+        if (!std::isnan(y)) {
+            at = Vector3(real_t(seat->x + r), real_t(y), real_t(seat->z));
+            break;
+        }
+    }
+    if (at.y == 0.0f) {
+        const double y = w->get_surface_height(seat->x, seat->z);
+        at.y = real_t(std::isnan(y) ? 0.0 : y);
+    }
+    jump_spawn = Transform3D(Basis(), at);
+    jump_berth = Transform3D();
+    jump_has_berth = false;
+    jump_where = vformat(String(U"邑治 %s"), String::utf8(seat->name.c_str()));
+    return true;
+}
+
+int GroupStream::jump_poll(double &r_progress, String &r_text) {
+    if (jump_node < 0) {
+        r_progress = 0.0;
+        r_text = String();
+        return -1;
+    }
+    update_jump();
+    switch (jump_phase) {
+        case JUMP_GENERATING: {
+            const Dictionary r = provider ? provider->get_request(jump_node) : Dictionary();
+            r_progress = 0.7 * double(r.get("progress", 0.0));
+            const int state = int(r.get("state", 0));
+            r_text = state == GroupProvider::QUEUED ? vformat(String(U"群 #%d 排队等生成（前面还在生成别的群）"), jump_node)
+                                                    : vformat(String(U"生成群 #%d：%s"), jump_node, String(r.get("text", String())));
+            return 0;
+        }
+        case JUMP_LOADING: {
+            const Group *g = find(jump_node);
+            const bool loaded = g && g->world && g->world->is_loaded();
+            r_progress = loaded ? 0.9 : 0.75;
+            r_text = loaded ? vformat(String(U"群 #%d：建落点（%s）周围的地面"), jump_node, jump_where) : vformat(String(U"载入群 #%d"), jump_node);
+            return 0;
+        }
+        case JUMP_READY:
+            r_progress = 1.0;
+            r_text = vformat(String(U"群 #%d 好了"), jump_node);
+            return 1;
+        case JUMP_FAILED:
+        default:
+            r_progress = 0.0;
+            r_text = jump_error;
+            return -1;
+    }
+}
+
+bool GroupStream::jump_commit() {
+    Group *g = find(jump_node);
+    if (jump_phase != JUMP_READY || !g || !g->world || !g->world->is_loaded()) {
+        return false;
+    }
+    // 去得远：云团的公共平面改成要去的那一群（线性化在群心，离得远了会歪；瞬移本来就不连续，天上的云跳一下无妨）
+    if (cloud_ref && great_circle_m(cloud_ref->frame.lat_deg, cloud_ref->frame.lon_deg, g->frame.lat_deg, g->frame.lon_deg, g->frame.radius) > FAR_JUMP_M) {
+        set_cloud_group(*g);
+    }
+    pending = index_of(g);
+    return true;
+}
+
+bool GroupStream::jump_landing(Transform3D &r_spawn, Transform3D &r_berth, bool &r_has_berth, String &r_where) {
+    const Group *g = find(jump_node);
+    if (!g || !jump_landing_set) {
+        return false;
+    }
+    r_spawn = transform_from_group(*g, jump_spawn);
+    r_berth = transform_from_group(*g, jump_berth);
+    r_has_berth = jump_has_berth;
+    r_where = jump_where;
+    return true;
+}
+
+void GroupStream::jump_end() {
+    if (Group *g = find(jump_node)) {
+        g->pinned = false;
+    }
+    jump_node = -1;
+    jump_phase = JUMP_NONE;
+    jump_landing_set = false;
+}
+
+Dictionary GroupStream::get_jump_state() const {
+    Dictionary d;
+    d["node"] = jump_node;
+    d["phase"] = int(jump_phase);
+    d["error"] = jump_error;
+    d["where"] = jump_where;
+    d["seconds"] = jump_node >= 0 ? now_s() - jump_started : 0.0;
+    return d;
 }
 
 PackedInt32Array GroupStream::get_group_nodes() const {

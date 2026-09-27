@@ -143,6 +143,25 @@ private:
     // p_extra 里的点）都换到新锚群的平面，再让宿主收尾。宿主没有挂起的换锚返回 false
     bool apply_shift(const std::vector<godot::Vector3 *> &p_extra = {});
     int shifts = 0; // 换了几次锚
+    // 跨群瞬移（行星计划 P4，开发者；行星地图点一下）：宿主把那一群备好（按需生成、后台载入、落点周围的地面），好了换锚、把人船摆到落点
+    enum JumpStage {
+        JUMP_IDLE,
+        JUMP_PREPARE, // 宿主在备
+        JUMP_LAND, // 换过去了，等脚下的碰撞挂上
+    };
+    JumpStage jump_stage = JUMP_IDLE;
+    int jump_node = -1;
+    uint64_t jump_t0 = 0;
+    double jump_progress = 0.0;
+    godot::String jump_text;
+    godot::Vector3 jump_spawn;
+    godot::String jump_where;
+    int jump_land_frames = 0;
+    double jump_prepared_ms = 0.0;
+    godot::Dictionary last_jump; // 上一回瞬移的结果（给测试看）
+    int course_node = -1; // 设了航向的群（行星地图，行星计划 P4）
+    void update_jump();
+    void finish_jump(bool p_ok, const godot::String &p_why);
     double last_shift_ms = 0.0; // 上回换锚这一步花了多久（主线程，毫秒）
     int nearest_open_dock(const godot::Vector3 &p_point) const;
     bool nearest_land(const godot::Vector3 &p_point, godot::Vector3 &r_point) const;
@@ -166,6 +185,14 @@ public:
 
     // 把玩家放到该处（全局 xz；落在地面上）。落点没有地就找最近的陆地；都找不到返回 false
     bool teleport_to(const godot::Vector3 &p_position);
+    // 跨群瞬移（行星计划 P4，开发者）：去群 p_node 的主码头（没有码头就邑治）；没生成过的当场生成。掌舵时不行。开始了返回 true
+    bool request_planet_jump(int p_node);
+    void cancel_planet_jump();
+    // { node, stage（0 没有 1 在备 2 落地）, progress, text, elapsed_ms } 与上一回的结果 last：{ node, ok, why, total_ms, prepare_ms, where }
+    godot::Dictionary get_jump_state() const;
+    // 行星地图设航向：HUD 报那一群的方位与距离，到了那一群就清掉；−1 = 不设
+    void set_planet_course(int p_node);
+    int get_planet_course() const { return course_node; }
     void on_teleport_requested(const godot::Vector3 &p_position);
 
     // 给测试与 HUD 查

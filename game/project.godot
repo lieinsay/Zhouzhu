@@ -67,6 +67,12 @@ wx_cloud_origin={
 "value": Vector2(0, 0)
 }
 
+[zhouzhu]
+
+generator/python="{LOCALAPPDATA}/Programs/Python/Python312/python.exe"
+generator/root="../skyisle-gen"
+generator/run="out/seed42"
+
 [dotnet]
 
 project/assembly_name="zhouzhu"

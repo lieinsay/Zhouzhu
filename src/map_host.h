@@ -140,6 +140,15 @@ public:
     virtual void map_shift_commit() {}
     virtual bool map_shift_toward(const godot::Vector3 &p_global) { return false; }
 
+    // 跨群瞬移（可选，行星计划 P4，只有行星上的宿主 PlanetHost 有）：编排 map_jump_begin 要宿主把那一群备好（没生成过的按需生成、后台载入、落点周围的地面块），
+    // 每帧 map_jump_poll 问（0 还在备 1 好了 −1 失败；r_text 说在做什么 / 为什么）；好了 map_jump_commit 定下换锚（挂起），编排照换锚那样把人船换过去，
+    // 再 map_jump_landing 拿落点（锚群平面：主码头停机坪上的出生位姿与泊位；没有码头是邑治，r_has_berth 为假），最后 map_jump_end
+    virtual bool map_jump_begin(int p_node, godot::String &r_why);
+    virtual int map_jump_poll(double &r_progress, godot::String &r_text) { return -1; }
+    virtual bool map_jump_commit() { return false; }
+    virtual bool map_jump_landing(godot::Transform3D &r_spawn, godot::Transform3D &r_berth, bool &r_has_berth, godot::String &r_where) { return false; }
+    virtual void map_jump_end() {}
+
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
 };
 

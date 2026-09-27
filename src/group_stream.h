@@ -14,6 +14,7 @@
 #include <godot_cpp/variant/transform3d.hpp>
 
 #include "farm_model.h"
+#include "group_memory.h"
 #include "weather.h"
 #include "planet_frame.h"
 #include "resource_scatter.h"
@@ -21,24 +22,12 @@
 #include "world_sites.h"
 
 class FarGroups;
+class GroupProvider;
 class GroupWorld;
 class Hinterland;
 class PlanetView;
 class ScatterStream;
 class SiteStream;
-
-// 一个岛群离开细版 / 近景时留在内存里的东西（模拟分级，计划 4.6；存档是以后的事）
-struct GroupMemory {
-    // 细版 → 近景：各村的账（save_village_state 的文本；sites.settlements 下标 → 文本）与存下时的钟（秒）
-    std::map<int, std::string> ledgers;
-    double ledgers_at = -1.0;
-    // 近景 → 远景：农田里的地（玩家垦的、种的）、采场的存量、散布物的采空账
-    std::vector<std::pair<uint64_t, Plot>> plots;
-    double plots_at = -1.0;
-    std::vector<ResourceStock> stocks;
-    ScatterLedger scatter;
-    bool has_world = false;
-};
 
 // 换锚（行星计划 P3，docs/PLAN-PLANET.md 第 4.2 节）：旧锚群平面 → 新锚群平面。点经真球面精确换过去（rebase_point），
 // 朝向与速度乘该点处的转动（rebase_rotation：两边的局部系在真空间里对齐，是绕竖直轴的一个小角度）
@@ -63,6 +52,12 @@ struct GroupShift {
 // PlanetView 换锚。画面只取决于真球面上的位置与相机，所以换锚那一帧不跳。
 // 场景里摆的那一群（home，2051）的节点在场景根下（名字照旧：World、SiteStream、ScatterStream、Hinterland，测试与工具按名字找）；
 // 别的群建在自己的容器（Group<节点号>）下，子节点同名，所以它们之间的相对路径（../World）照旧。离开细版时村子的账、离开近景时农田与采场的账留在内存（GroupMemory）。
+// 行星计划 P4：
+//   岛群包从 GroupProvider 来（仓库 / 世界存档目录 / 按需生成）：开局认得的是已有包的群，生成好一群（group_ready）就加进来——群只往后加，下标不变；
+//   离开的群的账另存进世界存档目录（GroupProvider::save_memory），退出再进还在；换场景、关窗前 save_world 把载入着的群的账也存下；
+//   跨群瞬移（jump_*）：要去的群先要到包（按需生成）、在后台载入、升到细版、把落点周围的地面块先建好，好了再定下换锚（编排接着换人船、摆到落点）；
+//     去得远（离云团的公共平面那一群 1,500 km 以上）时云团的公共平面改成它；
+//   换锚的规矩补上「挨着的群」：脚下是别的群的地、不是锚群的地，就换过去（不等云海上空、不看回滞）；两群的地叠着的地方不换。
 class GroupStream : public godot::Node3D {
     GDCLASS(GroupStream, godot::Node3D)
 
@@ -95,13 +90,22 @@ public:
         bool placed = false;
         double loaded_at = -1.0; // 载入完的真实时间（秒）
         bool far_hidden = false; // 让 FarGroups 藏起了它的粗版
+        bool pinned = false; // 瞬移要去的：不管多远都载入、升到细版
         GroupMemory memory;
+    };
+    enum JumpPhase {
+        JUMP_NONE,
+        JUMP_GENERATING, // 等 GroupProvider 生成包
+        JUMP_LOADING, // 后台载入、升细版、落点周围的地面块
+        JUMP_READY,
+        JUMP_FAILED,
     };
 
 private:
     godot::NodePath planet_path = "../PlanetView";
     godot::NodePath home_path = "../World";
     godot::NodePath far_groups_path = "../FarGroups";
+    godot::NodePath provider_path = "../GroupProvider";
     godot::String worlds_dir = "res://worlds";
     godot::String settlements_dir = "res://settlements";
     double detail_in = 30000.0, detail_out = 40000.0;
@@ -115,9 +119,11 @@ private:
 
     PlanetView *planet = nullptr;
     FarGroups *far_groups = nullptr;
+    GroupProvider *provider = nullptr;
     std::vector<std::unique_ptr<Group>> groups;
     bool ready = false;
     int anchor = -1;
+    int home_node = -1; // 场景里摆的那一群
     int pending = -1;
     godot::Vector3 focus;
     bool has_focus = false;
@@ -127,6 +133,29 @@ private:
     const Group *cloud_ref = nullptr; // 云团的公共平面：钟的那一群（PlanetView 的 clock_node；没有就是锚群）
     std::shared_ptr<const Climate> cloud_climate; // 它的气候（云团按它的风漂）
     void apply_cloud_reference(const Group &p_group, GroupWorld *p_world) const;
+    void set_cloud_group(const Group &p_group); // 云团的公共平面换成这一群（瞬移得远）：载入着的群都跟着换
+    // 跨群瞬移
+    int jump_node = -1;
+    JumpPhase jump_phase = JUMP_NONE;
+    godot::String jump_error;
+    bool jump_landing_set = false;
+    godot::Transform3D jump_spawn; // 落点（那一群的平面）
+    godot::Transform3D jump_berth;
+    bool jump_has_berth = false;
+    godot::String jump_where;
+    double jump_started = 0.0;
+    void update_jump();
+    bool find_landing(Group &r_group);
+    Group *add_group(int p_node, const godot::String &p_dir);
+    void on_group_ready(int p_node, const godot::String &p_dir);
+    void save_memory(const Group &p_group) const;
+    // 拆一群（降档）不在一帧里拆完（行星计划 P4 量出来的：2051 的村子、地面块一下子拆掉主线程要两三百毫秒）：
+    // 节点先停下、改名（同名的新节点照旧叫 World / SiteStream……）、交给「坟地」，每帧按 reap_budget_ms 从叶子往上拆一点
+    std::vector<godot::ObjectID> graveyard;
+    int buried = 0;
+    double reap_budget_ms = 3.0;
+    void bury(godot::Node *p_node);
+    void reap();
 
     bool setup();
     void update_tiers();
@@ -195,6 +224,19 @@ public:
     // 测试：直接定下换到某群（它得已经是细版、载入完了）
     bool force_shift_to(int p_node);
 
+    // 跨群瞬移（行星计划 P4）：jump_begin 开始备（没有包就要 GroupProvider 生成）；jump_poll 每帧问——0 还在备 1 好了 −1 失败（r_text 说在做什么 / 为什么）；
+    // 好了以后 jump_commit 定下换锚（挂起，编排接着 apply_shift）；换过去以后 jump_landing 给落点：主码头的停机坪与泊位，没有码头就是邑治（锚群平面）
+    bool jump_begin(int p_node, godot::String &r_why);
+    int jump_poll(double &r_progress, godot::String &r_text);
+    bool jump_commit();
+    bool jump_landing(godot::Transform3D &r_spawn, godot::Transform3D &r_berth, bool &r_has_berth, godot::String &r_where);
+    void jump_end(); // 落地了 / 不去了：放下「要去的」
+    int get_jump_node() const { return jump_node; }
+    // { node, phase（0 没有 1 生成 2 载入 3 好了 4 失败）, error, seconds }
+    godot::Dictionary get_jump_state() const;
+    // 换场景、关窗前：载入着的群的账也存进世界存档目录（离开的群的在离开时就存了）
+    void save_world();
+
     // 给脚本
     godot::PackedInt32Array get_group_nodes() const;
     // { node, tier（0 远景 1 近景 2 细版）, anchor, land_km, loaded, loading, tiles, pending_tiles, hidden_far, ledgers_saved, plots_saved }
@@ -206,10 +248,13 @@ public:
     SiteStream *get_group_sites(int p_node) const;
     Hinterland *get_group_hinterland(int p_node) const;
     int get_shift_count() const { return shifts; }
+    int get_graveyard_size() const { return int(graveyard.size()); } // 还没拆完的节点（一群的 World、村子……各算一个）
     godot::Dictionary get_stats() const; // { groups, anchor, shifts, loads, unloads, detail, near }
 
     void set_auto_shift(bool p_value) { auto_shift = p_value; }
     bool get_auto_shift() const { return auto_shift; }
+    void set_provider_path(const godot::NodePath &p_value) { provider_path = p_value; }
+    godot::NodePath get_provider_path() const { return provider_path; }
     void set_planet_path(const godot::NodePath &p_value) { planet_path = p_value; }
     godot::NodePath get_planet_path() const { return planet_path; }
     void set_home_path(const godot::NodePath &p_value) { home_path = p_value; }

@@ -47,8 +47,8 @@ void PlanetHost::_ready() {
 }
 
 void PlanetHost::_process(double /* p_delta */) {
-    // GroupStream 就绪（PlanetView 锚定之后）才知道别的群：码头表补上
-    if (!docks_full && stream && stream->is_ready()) {
+    // GroupStream 就绪（PlanetView 锚定之后）才知道别的群：码头表补上；按需生成的群加进来了再补（群只往后加，已有的下标不变）
+    if (stream && stream->is_ready() && (!docks_full || stream->get_group_count() != docks_groups)) {
         build_docks();
     }
 }
@@ -99,6 +99,7 @@ void PlanetHost::build_docks() {
         }
     }
     docks_full = true;
+    docks_groups = stream->get_group_count();
 }
 
 int PlanetHost::group_index_of(int p_node) const {
@@ -429,6 +430,32 @@ void PlanetHost::map_shift_commit() {
 
 bool PlanetHost::map_shift_toward(const Vector3 &p_global) {
     return stream && stream->is_ready() && stream->request_shift_toward(p_global);
+}
+
+bool PlanetHost::map_jump_begin(int p_node, String &r_why) {
+    if (!stream) {
+        r_why = String(U"没有 GroupStream");
+        return false;
+    }
+    return stream->jump_begin(p_node, r_why);
+}
+
+int PlanetHost::map_jump_poll(double &r_progress, String &r_text) {
+    return stream ? stream->jump_poll(r_progress, r_text) : -1;
+}
+
+bool PlanetHost::map_jump_commit() {
+    return stream && stream->jump_commit();
+}
+
+bool PlanetHost::map_jump_landing(Transform3D &r_spawn, Transform3D &r_berth, bool &r_has_berth, String &r_where) {
+    return stream && stream->jump_landing(r_spawn, r_berth, r_has_berth, r_where);
+}
+
+void PlanetHost::map_jump_end() {
+    if (stream) {
+        stream->jump_end();
+    }
 }
 
 void PlanetHost::map_weather_mix(const Vector3 &p_global, std::vector<WeatherMix> &r_out) {

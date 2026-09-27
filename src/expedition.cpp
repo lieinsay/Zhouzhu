@@ -98,6 +98,11 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_origin_berth"), &Expedition::get_origin_berth);
     ClassDB::bind_method(D_METHOD("get_destination_berth"), &Expedition::get_destination_berth);
     ClassDB::bind_method(D_METHOD("teleport_to", "position"), &Expedition::teleport_to);
+    ClassDB::bind_method(D_METHOD("request_planet_jump", "node"), &Expedition::request_planet_jump);
+    ClassDB::bind_method(D_METHOD("cancel_planet_jump"), &Expedition::cancel_planet_jump);
+    ClassDB::bind_method(D_METHOD("get_jump_state"), &Expedition::get_jump_state);
+    ClassDB::bind_method(D_METHOD("set_planet_course", "node"), &Expedition::set_planet_course);
+    ClassDB::bind_method(D_METHOD("get_planet_course"), &Expedition::get_planet_course);
     ClassDB::bind_method(D_METHOD("on_teleport_requested", "position"), &Expedition::on_teleport_requested);
     ClassDB::bind_method(D_METHOD("is_map_open"), &Expedition::is_map_open);
     ClassDB::bind_method(D_METHOD("get_map"), &Expedition::get_map);
@@ -667,9 +672,10 @@ bool Expedition::apply_shift(const std::vector<Vector3 *> &p_extra) {
 
 void Expedition::_physics_process(double p_delta) {
     // 行星计划 P3：地图宿主定下换锚了——这一帧的移动之前把人、船都换到新锚群的平面
-    if (map->map_shift_pending()) {
+    if (map->map_shift_pending() && jump_stage != JUMP_PREPARE) {
         apply_shift();
     }
+    update_jump();
     const bool interact = !map_open && Input::get_singleton()->is_action_just_pressed(input_actions::INTERACT);
     notice_time = Math::max(0.0, notice_time - p_delta);
     if (notice_time <= 0.0 && notice_label) {
@@ -1055,6 +1061,138 @@ bool Expedition::nearest_land(const Vector3 &p_point, Vector3 &r_point) const {
     return false;
 }
 
+bool Expedition::request_planet_jump(int p_node) {
+    if (!dev_tools) {
+        return false;
+    }
+    if (helm.get_state() != Helm::ON_FOOT) {
+        say(String(U"掌舵时不能瞬移：先靠泊下船"));
+        return false;
+    }
+    if (jump_stage != JUMP_IDLE) {
+        map->map_jump_end();
+        jump_stage = JUMP_IDLE;
+    }
+    String why;
+    if (!map->map_jump_begin(p_node, why)) {
+        say(why);
+        last_jump = Dictionary();
+        last_jump["node"] = p_node;
+        last_jump["ok"] = false;
+        last_jump["why"] = why;
+        return false;
+    }
+    jump_node = p_node;
+    jump_stage = JUMP_PREPARE;
+    jump_t0 = Time::get_singleton()->get_ticks_usec();
+    jump_progress = 0.0;
+    jump_text = vformat(String(U"准备去群 #%d"), p_node);
+    set_map_open(false);
+    return true;
+}
+
+void Expedition::cancel_planet_jump() {
+    if (jump_stage == JUMP_IDLE) {
+        return;
+    }
+    map->map_jump_end();
+    finish_jump(false, String(U"不去了"));
+}
+
+void Expedition::finish_jump(bool p_ok, const String &p_why) {
+    const double total = double(Time::get_singleton()->get_ticks_usec() - jump_t0) / 1000.0;
+    last_jump = Dictionary();
+    last_jump["node"] = jump_node;
+    last_jump["ok"] = p_ok;
+    last_jump["why"] = p_why;
+    last_jump["total_ms"] = total;
+    last_jump["prepare_ms"] = jump_prepared_ms;
+    last_jump["where"] = jump_where;
+    if (p_ok) {
+        say(vformat(String(U"到了群 #%d · %s（%.1f s）"), jump_node, jump_where, total / 1000.0));
+    } else {
+        say(vformat(String(U"去不了群 #%d：%s"), jump_node, p_why));
+    }
+    jump_node = -1;
+    jump_stage = JUMP_IDLE;
+}
+
+void Expedition::update_jump() {
+    if (jump_stage == JUMP_PREPARE) {
+        const int state = map->map_jump_poll(jump_progress, jump_text);
+        if (state < 0) {
+            const String why = jump_text;
+            map->map_jump_end();
+            finish_jump(false, why);
+            return;
+        }
+        if (state == 0) {
+            return;
+        }
+        if (helm.get_state() != Helm::ON_FOOT) {
+            jump_text = vformat(String(U"群 #%d 好了：先下船，再瞬移过去"), jump_node);
+            return;
+        }
+        jump_prepared_ms = double(Time::get_singleton()->get_ticks_usec() - jump_t0) / 1000.0;
+        // 换锚（人、船、摆出来的东西、落脚点都经真球面换到那一群的平面），再摆到落点
+        if (!map->map_jump_commit() || !apply_shift()) {
+            map->map_jump_end();
+            finish_jump(false, String(U"换不过去"));
+            return;
+        }
+        Transform3D spawn, berth;
+        bool has_berth = false;
+        if (!map->map_jump_landing(spawn, berth, has_berth, jump_where)) {
+            map->map_jump_end();
+            finish_jump(false, String(U"找不到落点"));
+            return;
+        }
+        farm_hand.stand_down();
+        if (ship && has_berth) {
+            ship->place_at(berth); // 船跟着去，停在那个码头的泊位上
+        }
+        jump_spawn = spawn.origin;
+        player->set_global_position(jump_spawn + Vector3(0, 0.1f, 0));
+        player->set_velocity(Vector3());
+        player->set_look_yaw(yaw_of(spawn));
+        player->set_facing_yaw(yaw_of(spawn));
+        safe_footing = jump_spawn;
+        has_safe_footing = true;
+        jump_stage = JUMP_LAND;
+        jump_land_frames = 0;
+        return;
+    }
+    if (jump_stage == JUMP_LAND) {
+        // 脚下的碰撞挂上以前人别掉下去（宿主等落点周围的叶块挂齐才说好了，一般一帧就过）
+        if (!map->map_footing(jump_spawn) && jump_land_frames < 600) {
+            player->set_global_position(jump_spawn + Vector3(0, 0.1f, 0));
+            player->set_velocity(Vector3());
+            jump_land_frames++;
+            return;
+        }
+        map->map_jump_end();
+        finish_jump(true, String());
+    }
+}
+
+Dictionary Expedition::get_jump_state() const {
+    Dictionary d;
+    d["node"] = jump_node;
+    d["stage"] = int(jump_stage);
+    d["progress"] = jump_progress;
+    d["text"] = jump_text;
+    d["elapsed_ms"] = jump_stage == JUMP_IDLE ? 0.0 : double(Time::get_singleton()->get_ticks_usec() - jump_t0) / 1000.0;
+    d["last"] = last_jump;
+    return d;
+}
+
+void Expedition::set_planet_course(int p_node) {
+    course_node = p_node;
+    if (p_node >= 0) {
+        say(vformat(String(U"航向：群 #%d（HUD 报方位与距离）"), p_node));
+    }
+}
+
 bool Expedition::teleport_to(const Vector3 &p_position) {
     Vector3 target;
     if (!map || !player || !nearest_land(p_position, target)) {
@@ -1118,6 +1256,18 @@ String Expedition::clock_text() const {
 void Expedition::update_hud() {
     const Vector3 at = player->get_global_position();
     PackedStringArray lines;
+    // 行星航向（行星地图设的）：到了那一群就清掉
+    String course_line;
+    if (course_node >= 0) {
+        const PlanetView *pv = PlanetView::active_view();
+        if (pv && pv->get_anchor_node() == course_node) {
+            say(vformat(String(U"到了航向上的群 #%d"), course_node));
+            course_node = -1;
+        } else if (pv) {
+            const double km = pv->distance_to_node(course_node) / 1000.0;
+            course_line = vformat(String(U"航向：群 #%d · 方位 %d° · %s km"), course_node, int(std::lround(pv->bearing_to_node(course_node))), String::num(km, km < 100.0 ? 1 : 0));
+        }
+    }
     const String location = map->map_location_text(at);
     if (!location.is_empty()) {
         String line = location + (map_panel ? String(U" · M 地图") : String());
@@ -1235,6 +1385,12 @@ void Expedition::update_hud() {
                                                              : String(U"靠泊中"));
             prompt = String(U"……");
             break;
+    }
+    if (!course_line.is_empty()) {
+        lines.insert(std::min<int64_t>(1, lines.size()), course_line);
+    }
+    if (jump_stage != JUMP_IDLE) {
+        lines.insert(std::min<int64_t>(1, lines.size()), vformat(String(U"瞬移：%s · %d%%"), jump_text, int(std::lround(jump_progress * 100.0))));
     }
     String status = String("\n").join(lines);
     // 第一行末尾：脚下（或船下）那处聚落的钟点——村民按它出工收工

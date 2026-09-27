@@ -42,6 +42,7 @@ class PlanetHost : public godot::Node3D, public MapHost {
     };
     std::vector<DockRef> docks;
     bool docks_full = false; // GroupStream 就绪后补上了别的群的码头
+    int docks_groups = 0; // 补码头时 GroupStream 有几群（按需生成的群加进来了就再补，行星计划 P4）
     int panel_node = -1; // 地图面板此刻画的是哪一群
 
     GroupWorld *anchor_world() const;
@@ -97,6 +98,11 @@ public:
     bool map_shift_begin(MapShift &r_shift) override;
     void map_shift_commit() override;
     bool map_shift_toward(const godot::Vector3 &p_global) override;
+    bool map_jump_begin(int p_node, godot::String &r_why) override;
+    int map_jump_poll(double &r_progress, godot::String &r_text) override;
+    bool map_jump_commit() override;
+    bool map_jump_landing(godot::Transform3D &r_spawn, godot::Transform3D &r_berth, bool &r_has_berth, godot::String &r_where) override;
+    void map_jump_end() override;
 
     // 给脚本（测试）
     int get_anchor_node() const;

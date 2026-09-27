@@ -177,7 +177,13 @@ target_sources(
         src/freight_hand.h
         src/gather_hand.cpp
         src/gather_hand.h
+        src/gen_process.cpp
+        src/gen_process.h
+        src/group_provider.cpp
+        src/group_provider.h
         src/group_stream.cpp
+        src/world_session.cpp
+        src/world_session.h
         src/group_stream.h
         src/flat_map.cpp
         src/flat_map.h

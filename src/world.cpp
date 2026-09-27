@@ -9,6 +9,7 @@
 #include <godot_cpp/classes/collision_shape3d.hpp>
 #include <godot_cpp/classes/concave_polygon_shape3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/json.hpp>
@@ -182,6 +183,17 @@ void GroupWorld::_bind_methods() {
 }
 
 GroupWorld::~GroupWorld() {
+    const uint64_t trace_t0 = Time::get_singleton()->get_ticks_usec();
+    struct Done {
+        uint64_t t0;
+        int node;
+        ~Done() {
+            const double ms = double(Time::get_singleton()->get_ticks_usec() - t0) / 1000.0;
+            if (ms > 8.0 && OS::get_singleton()->has_environment("ZHOUZHU_STREAM_TRACE")) {
+                print_line(vformat("GroupWorld trace: free #%d %.1f ms", node, ms));
+            }
+        }
+    } done{ trace_t0, node_id };
     // 线程读着 terrain / layout / scatter（这一群的通道上的活：地面块、水面块、散布、村子……）：先等它们做完，成员再析构
     if (pool) {
         pool->drain_lane(lane);
@@ -295,6 +307,17 @@ void GroupWorld::finish_loading_now() {
 }
 
 void GroupWorld::install() {
+    const uint64_t trace_t0 = Time::get_singleton()->get_ticks_usec();
+    struct Done {
+        uint64_t t0;
+        int node;
+        ~Done() {
+            const double ms = double(Time::get_singleton()->get_ticks_usec() - t0) / 1000.0;
+            if (ms > 8.0 && OS::get_singleton()->has_environment("ZHOUZHU_STREAM_TRACE")) {
+                print_line(vformat("GroupWorld trace: install #%d %.1f ms", node, ms));
+            }
+        }
+    } done{ trace_t0, node_id };
     const Ref<Shader> ground_shader = ResourceLoader::get_singleton()->load(GROUND_SHADER);
     if (ground_shader.is_valid()) {
         Ref<ShaderMaterial> m;

@@ -61,3 +61,8 @@ ResourceSpot MapHost::map_gather_near(const godot::Vector3 &p_global, double p_f
     }
     return spot;
 }
+
+bool MapHost::map_jump_begin(int p_node, godot::String &r_why) {
+    r_why = godot::String(U"这张地图只有一个岛群，去不了别的群");
+    return false;
+}

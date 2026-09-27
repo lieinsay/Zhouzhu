@@ -158,6 +158,15 @@ void Hinterland::save_states(std::map<int, std::string> &r_states, double &r_at)
     r_at = clock ? clock->get_seconds() : 0.0;
 }
 
+bool Hinterland::openings_pending() const {
+    for (const std::future<WorldLedger> &f : in_flight) {
+        if (f.valid() && f.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void Hinterland::set_saved(const std::map<int, std::string> &p_states, double p_at) {
     saved = p_states;
     saved_at = p_at;
