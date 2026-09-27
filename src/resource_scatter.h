@@ -151,4 +151,12 @@ public:
     // 某块里有没有倒着的（给画的那一头：要不要定时看它们长回来）
     bool any_felled_in(const ScatterChunkKey &p_chunk) const;
     size_t size() const { return entries.size(); }
+    // 存盘（行星计划 P4：离开的岛群的账进世界存档目录）：逐条列出、逐条放回
+    template <typename F>
+    void for_each(F p_fn) const {
+        for (const auto &kv : entries) {
+            p_fn(kv.first, kv.second.stock, kv.second.felled);
+        }
+    }
+    void put(uint64_t p_key, const ResourceStock &p_stock, bool p_felled) { entries[p_key] = Entry{ p_stock, p_felled }; }
 };

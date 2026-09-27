@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "cover_blend.h"
+#include "group_memory.h"
 #include "crops.h"
 #include "deposit_kinds.h"
 #include "day_clock.h"
@@ -5000,6 +5001,54 @@ void test_planet_frame() {
     }
 }
 
+// 离开的岛群的账存成文本（行星计划 P4：进世界存档目录，退出再进还在）：村的账（多行、带制表符）、农田的地、采场存量、散布物的采空账，读回逐位一样
+void test_group_memory() {
+    std::printf("[group_memory]\n");
+    GroupMemory m;
+    m.ledgers[0] = "clock\t123.5\nfolk 3\n\n末行没有换行";
+    m.ledgers[17] = "x\n";
+    m.ledgers[250] = "";
+    m.ledgers_at = 86400.125;
+    m.has_world = true;
+    m.plots_at = 90000.0 / 7.0;
+    Plot tilled;
+    tilled.state = PlotState::TILLED;
+    Plot growing;
+    growing.state = PlotState::GROWING;
+    growing.growth = 1.0 / 3.0;
+    growing.crop = &catalog::CROPS[0];
+    m.plots.emplace_back((uint64_t(uint32_t(-5)) << 32) | 7u, tilled);
+    m.plots.emplace_back(uint64_t(42) << 32, growing);
+    m.stocks.resize(3);
+    m.stocks[1].amount = 2.75;
+    m.stocks[1].hour = 1234.5;
+    ResourceStock felled;
+    felled.amount = 0.0;
+    felled.hour = 99.0 + 1e-9;
+    m.scatter.put(0xABCDEF0123456789ull, felled, true);
+    m.scatter.put(5, ResourceStock{ 3.0, 7.0 }, false);
+    const std::string text = save_group_memory(m);
+    GroupMemory r;
+    std::string err;
+    check(load_group_memory(text, r, err), "读得回来：" + err);
+    check(r.ledgers == m.ledgers && r.ledgers_at == m.ledgers_at, "各村的账（多行、带制表符、空的）与存下时的钟逐字一样");
+    bool plots_same = r.plots.size() == m.plots.size() && r.plots_at == m.plots_at;
+    for (size_t k = 0; plots_same && k < m.plots.size(); k++) {
+        plots_same = r.plots[k].first == m.plots[k].first && r.plots[k].second.state == m.plots[k].second.state &&
+                r.plots[k].second.growth == m.plots[k].second.growth && r.plots[k].second.crop == m.plots[k].second.crop;
+    }
+    check(plots_same, "农田的地（键、状态、长势、作物）逐位一样");
+    check(r.stocks.size() == 3 && r.stocks[1].amount == 2.75 && r.stocks[1].hour == 1234.5 && r.stocks[0].amount == -1.0, "采场的存量逐位一样");
+    const ResourceStock *f = r.scatter.find(0xABCDEF0123456789ull);
+    check(r.scatter.size() == 2 && f && f->hour == felled.hour && f->amount == 0.0, "散布物的采空账逐位一样");
+    check(r.has_world && !r.empty(), "近景那一份在");
+    GroupMemory only_ledgers;
+    only_ledgers.ledgers[3] = "a";
+    GroupMemory back;
+    check(load_group_memory(save_group_memory(only_ledgers), back, err) && !back.has_world && back.ledgers.size() == 1, "只有村的账（细版 → 近景）也读得回来");
+    check(GroupMemory().empty() && !load_group_memory("bogus\t1\n", back, err), "空的账是空的；认不出的行报错");
+}
+
 // 按需生成的粗版（行星计划 P4）：行星包先没有粗版（新建世界的样子），再一群一群 add_lods 加进来（lods/<节点>.bin，同格式、一条）；
 // 加进来的与 lods.bin 里那一条解出来一样，同一格距再加一次换成新的；后台照样在读（几条线程一直 lod()）时加也不出错
 void test_planet_add_lods() {
@@ -5608,6 +5657,7 @@ int main() {
     test_goldens();
     test_planet_data();
     test_planet_add_lods();
+    test_group_memory();
     test_planet_frame();
     test_far_group_mesh();
     test_planet_squeeze_height();

@@ -43,6 +43,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/flat_ground.h
     src/freight.cpp
     src/freight.h
+    src/group_memory.cpp
+    src/group_memory.h
     src/flight_model.cpp
     src/flight_model.h
     src/ground_query.h
