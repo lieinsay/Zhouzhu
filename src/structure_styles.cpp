@@ -197,6 +197,13 @@ StylePlan plan_structure_style(const Structures &p_existing, const StructureStyl
             s.pieces[k].bottom = lows[k] - s.y - p_rules.bury_m;
         }
     }
+    // 0 层的门：门外铺台阶下到地面
+    for (Piece &p : s.pieces) {
+        const PieceDef *def = pieces::find(p.item);
+        if (def && def->role == PieceRole::DOOR && p.spot.level == 0) {
+            p.bottom = -door_drop(s, p.spot, p_ground);
+        }
+    }
     // 样式自己得站得住
     for (const Piece &p : s.pieces) {
         if (!piece_supported(s, p)) {

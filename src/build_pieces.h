@@ -99,7 +99,7 @@ struct Piece {
     std::string item;
     PieceSpot spot;
     int open = 0; // 门：0 关着，1 / −1 朝边的法线正 / 反面开着
-    double bottom = 0.0; // 地基：台基底（局部 y，负数）
+    double bottom = 0.0; // 地基：台基底（局部 y，负数）；0 层的门墙：门外地面（门外自动铺几级台阶 + 一块斜板下到这儿，负数；0 = 不铺）
 };
 
 struct Structure {
@@ -154,6 +154,7 @@ struct PieceAim {
 
 struct PiecePlan {
     bool ok = false;
+    bool located = false; // 有没有挑出一个槽（摆不下时也可能有：虚影画成红的）
     std::string why;
     int structure = -1; // 摆进哪一座（Structures 里的下标）；−1 = 新开一座（frame 是新的那座）
     Structure frame; // 那一座的原点与朝向（新开的一座 pieces 为空）
@@ -190,6 +191,12 @@ public:
     void shift(const std::function<void(double &, double &, double &, double &)> &p_move); // 原点与朝向按宿主坐标挪（x, y, z, yaw）
     void touch() { revision++; }
 };
+
+// 0 层的门墙：门外（这条边两侧没有地坪的那一侧）离门 0.8 m 处的地面比地坪低多少（≥ 0；两侧都有地坪、或门外没有地为 0）。
+// 地坪比地面高（台基至少露出 0.45 m），人不会自己上坎：门外铺台阶与斜板，存进门墙的 bottom
+double door_drop(const Structure &p_structure, const PieceSpot &p_spot, const LandingGround &p_ground);
+// 门外那一侧：+1 = 边的法线正向（dir 0 是 +z、dir 1 是 +x），−1 反向，0 = 两侧都有地坪 / 都没有
+int door_outside(const Structure &p_structure, const PieceSpot &p_spot);
 
 // 能不能摆、摆在哪：p_ground 问宿主坐标的地面（改过的地形照算）与水
 PiecePlan plan_piece(const Structures &p_structures, const PieceDef &p_def, const PieceAim &p_aim, const LandingGround &p_ground, const PieceRules &p_rules = PieceRules());

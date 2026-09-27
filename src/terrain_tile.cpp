@@ -445,12 +445,12 @@ double soil_depth_at(const WorldTerrain &p_terrain, double p_x, double p_z) {
 
 namespace {
 
-constexpr GroundColor DUG_SOIL{ 0.36f, 0.27f, 0.19f }; // 挖开的土（潮）
-constexpr GroundColor DUG_STONE{ 0.48f, 0.46f, 0.43f }; // 挖到土层以下：石
-constexpr GroundColor RAISED{ 0.45f, 0.35f, 0.24f }; // 垒上来的土（夯过）
-constexpr GroundColor WALL_SOIL{ 0.33f, 0.25f, 0.18f };
-constexpr GroundColor WALL_STONE{ 0.44f, 0.42f, 0.39f };
-constexpr GroundColor WALL_RAISED{ 0.41f, 0.32f, 0.22f };
+constexpr GroundColor DUG_SOIL{ 0.44f, 0.34f, 0.24f }; // 挖开的土（潮）
+constexpr GroundColor DUG_STONE{ 0.54f, 0.52f, 0.49f }; // 挖到土层以下：石
+constexpr GroundColor RAISED{ 0.52f, 0.41f, 0.29f }; // 垒上来的土（夯过）
+constexpr GroundColor WALL_SOIL{ 0.47f, 0.37f, 0.27f };
+constexpr GroundColor WALL_STONE{ 0.57f, 0.55f, 0.52f };
+constexpr GroundColor WALL_RAISED{ 0.51f, 0.41f, 0.29f };
 constexpr uint64_t BAND_SEED = 0xEA27B5ull;
 constexpr float SKIRT_INNER_M = 0.3f; // 块里没改过的格挨着粗格垂这么深（只遮 T 形接缝）
 constexpr float TILE_EDGE_INSET_M = 0.01f; // 坎在叶块边上时往低的那格让这么多（邻块的裙边在那条线上）

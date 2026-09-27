@@ -6905,6 +6905,19 @@ void test_build_pieces() {
         check(place(list, w.item, aim_local(list.get()[0], w.x, 0.3, w.z), ground), std::string("围墙：") + w.item);
     }
     HouseReport house = check_house(list.get()[0]);
+    // 门墙在 0 层：门外铺台阶下到地面（台基至少露出 0.45 m，人不会自己上坎）
+    {
+        const Piece *door_piece = nullptr;
+        for (const Piece &p : list.get()[0].pieces) {
+            door_piece = p.item == "door_wall" ? &p : door_piece;
+        }
+        check(door_piece && door_piece->bottom < -0.25 && door_outside(list.get()[0], door_piece->spot) == 1, "门墙记下门外地面（比地坪低、在南边）");
+        Structure no_ramp = list.get()[0];
+        for (Piece &p : no_ramp.pieces) {
+            p.bottom = p.item == "door_wall" ? 0.0 : p.bottom;
+        }
+        check(build_structure_mesh(list.get()[0]).collision.size() == build_structure_mesh(no_ramp).collision.size() + 12 * 9, "门外多一块斜板的碰撞（12 个面）");
+    }
     check(!house.complete && house.rooms.size() >= 1 && house.rooms[0].enclosed && house.rooms[0].doors == 1 && house.rooms[0].missing_roof == 4,
             "围好了还没顶：不完整（缺 " + house.missing + "）");
     // 顶：对准墙顶，默认往外低：北两格往北低、南两格往南低

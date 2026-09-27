@@ -283,6 +283,37 @@ const Piece *gable_roof(const Structure &p_s, const EdgeRef &p_edge, int p_level
 
 } // namespace
 
+int door_outside(const Structure &p_structure, const PieceSpot &p_spot) {
+    int x0, z0, x1, z1;
+    edge_cells({ p_spot.x, p_spot.z, p_spot.dir }, x0, z0, x1, z1);
+    const bool a = p_structure.has_floor(x0, z0, p_spot.level), b = p_structure.has_floor(x1, z1, p_spot.level);
+    if (a == b) {
+        return 0;
+    }
+    return a ? 1 : -1; // 负向那格（x0, z0）有地坪：门外在正向
+}
+
+double door_drop(const Structure &p_structure, const PieceSpot &p_spot, const LandingGround &p_ground) {
+    if (p_spot.level != 0) {
+        return 0.0;
+    }
+    const int out = door_outside(p_structure, p_spot);
+    if (out == 0) {
+        return 0.0;
+    }
+    constexpr double PROBE_M = 0.8;
+    const double G = GRID_M;
+    const double lx = p_spot.dir == 0 ? (p_spot.x + 0.5) * G : p_spot.x * G + out * PROBE_M;
+    const double lz = p_spot.dir == 0 ? p_spot.z * G + out * PROBE_M : (p_spot.z + 0.5) * G;
+    double hx, hy, hz;
+    p_structure.to_host(lx, 0.0, lz, hx, hy, hz);
+    double y = 0.0;
+    if (!p_ground.height(hx, hz, y)) {
+        return 0.0;
+    }
+    return std::max(0.0, p_structure.y - y);
+}
+
 bool gable_shape(const Structure &p_structure, const EdgeRef &p_edge, int p_level, double &r_h0, double &r_h1) {
     return gable_roof(p_structure, p_edge, p_level, r_h0, r_h1) != nullptr;
 }
@@ -407,6 +438,15 @@ void spot_bounds(const Structure &p_s, PieceRole p_role, const PieceSpot &p_spot
 void piece_bounds(const Structure &p_s, const Piece &p_piece, double &r_cx, double &r_cy, double &r_cz, double &r_hx, double &r_hy, double &r_hz) {
     const PieceDef *def = pieces::find(p_piece.item);
     spot_bounds(p_s, def ? def->role : PieceRole::FLOOR, p_piece.spot, p_piece.bottom, r_cx, r_cy, r_cz, r_hx, r_hy, r_hz);
+    // 开着的门：门扇转到了墙的一面，外包盒往那一面伸出一扇门宽（对着门扇也点得着）
+    if (def && def->role == PieceRole::DOOR && p_piece.open != 0) {
+        const double s = p_piece.open > 0 ? 1.0 : -1.0, reach = DOOR_W;
+        double &c = p_piece.spot.dir == 0 ? r_cz : r_cx;
+        double &h = p_piece.spot.dir == 0 ? r_hz : r_hx;
+        const double lo = std::min(c - h, c + s * (h + reach)), hi = std::max(c + h, c + s * (h + reach));
+        c = 0.5 * (lo + hi);
+        h = 0.5 * (hi - lo);
+    }
 }
 
 int piece_at(const Structure &p_s, double p_lx, double p_ly, double p_lz, double p_margin) {
@@ -711,6 +751,10 @@ void evaluate(const Structure &p_s, const PieceDef &p_def, Candidate &r_c, const
         }
         return;
     }
+    // 0 层的门：门外铺台阶下到地面
+    if (p_def.role == PieceRole::DOOR && sp.level == 0) {
+        r_c.bottom = -door_drop(p_s, sp, p_ground);
+    }
     // 够不够得着（按吸附点）
     double hx, hy, hz;
     p_s.to_host(r_c.sx, r_c.sy, r_c.sz, hx, hy, hz);
@@ -867,6 +911,7 @@ PiecePlan plan_piece(const Structures &p_structures, const PieceDef &p_def, cons
         }
         if (c.ok) {
             out.ok = true;
+            out.located = true;
             out.structure = c.structure;
             out.frame = frames[k];
             out.spot = c.spot;
@@ -880,6 +925,7 @@ PiecePlan plan_piece(const Structures &p_structures, const PieceDef &p_def, cons
         }
     }
     if (best_bad) {
+        out.located = true;
         out.why = best_bad->why;
         out.structure = best_bad->structure;
         out.frame = *best_bad_frame;

@@ -21,6 +21,11 @@ constexpr double LADDER_BOARD_T = 0.08;
 constexpr double LADDER_ZONE_OVER = 1.2; // 与房子里的梯子同：区域超出上一层楼面这么高
 constexpr double LADDER_ZONE_DEPTH = 1.0;
 constexpr double RIDGE_H = 0.18, RIDGE_D = 0.32;
+constexpr double RAMP_W = 1.4; // 门外台阶多宽
+constexpr double RAMP_SLOPE_DEG = 30.0; // 斜板多陡（人走得上去：Player 的 floor_max_angle 45°）
+constexpr double RAMP_MAX_RUN = 2.4;
+constexpr double STEP_RISE = 0.18; // 画出来的每级台阶多高
+constexpr double RAMP_T = 0.12; // 斜板（碰撞）多厚
 
 struct Out {
     StructureMesh &mesh;
@@ -79,7 +84,27 @@ void dir_vector(int p_dir, int &r_dx, int &r_dz) {
     r_dz = DZ[d];
 }
 
-void append_wall(Out &r_out, const PieceDef &p_def, const Piece &p_piece) {
+// 门外的台阶：从门槛（地坪、墙外皮）往外下到 −drop；画几级石阶，碰撞是一块斜板（人不会自己上坎）
+void append_door_ramp(Out &r_out, const EdgeFrame &p_f, int p_out, double p_drop) {
+    const double t = 0.5 * WALL_T, w = 0.5 * RAMP_W;
+    const double run = std::clamp(p_drop / std::tan(RAMP_SLOPE_DEG * PI / 180.0), 0.35, RAMP_MAX_RUN);
+    const int steps = std::max(1, int(std::ceil(p_drop / STEP_RISE)));
+    const double rise = p_drop / (steps + 1), tread = run / steps;
+    for (int k = 1; k <= steps; k++) {
+        const double n0 = t + (k - 1) * tread;
+        p_f.span(r_out, PartMaterial::STONE, -w, w, -p_drop - 0.1, -k * rise, p_out * n0, p_out * (t + run), false);
+    }
+    // 斜板：顶面贴着台阶的前沿线，从 (n = t, y = 0) 到 (n = t + run, y = −drop)
+    const V3 a = p_f.at(0.0, 0.0, p_out * t), b = p_f.at(0.0, -p_drop, p_out * (t + run));
+    const V3 dir = p_f.dir == 0 ? V3{ 0, 0, double(p_out) } : V3{ double(p_out), 0, 0 };
+    const double yaw = std::atan2(dir.x, dir.z), pitch = std::atan2(p_drop, run);
+    const V3 up{ dir.x * std::sin(pitch), std::cos(pitch), dir.z * std::sin(pitch) };
+    const V3 center = (a + b) * 0.5 - up * (0.5 * RAMP_T);
+    const Xform xf(yaw, pitch, center);
+    append_box_faces(r_out.mesh.collision, xf, { RAMP_W, RAMP_T, std::sqrt(run * run + p_drop * p_drop) });
+}
+
+void append_wall(Out &r_out, const PieceDef &p_def, const Structure &p_s, const Piece &p_piece) {
     const EdgeFrame f = edge_frame(p_piece.spot);
     const double y0 = p_piece.spot.level * STOREY_M, y1 = y0 + STOREY_M;
     const double half = 0.5 * (GRID_M + WALL_T), t = 0.5 * WALL_T;
@@ -101,6 +126,10 @@ void append_wall(Out &r_out, const PieceDef &p_def, const Piece &p_piece) {
             } else {
                 const double s = p_piece.open > 0 ? 1.0 : -1.0;
                 f.span(r_out, PartMaterial::WOOD, -dw + gap, -dw + gap + LEAF_T, y0 + 0.02, y0 + leaf_h, s * (t + 0.01), s * (t + DOOR_W - 2.0 * gap), true);
+            }
+            const int out = door_outside(p_s, p_piece.spot);
+            if (p_piece.spot.level == 0 && out != 0 && p_piece.bottom < -0.05) {
+                append_door_ramp(r_out, f, out, -p_piece.bottom);
             }
             return;
         }
@@ -222,7 +251,7 @@ void append_piece(StructureMesh &r_mesh, const Structure &p_s, const Piece &p_pi
         case PieceRole::WALL:
         case PieceRole::DOOR:
         case PieceRole::WINDOW:
-            append_wall(out, *def, p_piece);
+            append_wall(out, *def, p_s, p_piece);
             return;
         case PieceRole::GABLE:
             append_gable_piece(out, p_s, p_piece);
