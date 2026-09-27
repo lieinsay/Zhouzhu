@@ -17,6 +17,9 @@ constexpr int COLS = 9;
 constexpr real_t PAD = 18;
 constexpr real_t RECIPE_W = 380;
 constexpr real_t RECIPE_ROW = 30;
+constexpr int RECIPE_ONE_COLUMN_MAX = 14; // 配方多过这么多条就分两栏（默认窗口 648 高，一栏放不下）
+constexpr real_t RECIPE_W_TWO = 270; // 两栏时每栏多宽
+constexpr real_t RECIPE_COL_GAP = 8;
 constexpr real_t GAP = 24; // 左右两块之间
 constexpr real_t BOTTOM_RESERVE = 124; // 屏幕底下留给通知那一行
 
@@ -42,6 +45,13 @@ int rows_of(int p_count) {
     return (p_count + COLS - 1) / COLS;
 }
 
+// 配方分几栏、每栏几条、每栏多宽
+void recipe_columns(int p_count, int &r_cols, int &r_per_col, real_t &r_col_w) {
+    r_cols = p_count > RECIPE_ONE_COLUMN_MAX ? 2 : 1;
+    r_per_col = std::max(1, (p_count + r_cols - 1) / r_cols);
+    r_col_w = r_cols == 1 ? RECIPE_W : RECIPE_W_TWO;
+}
+
 } // namespace
 
 void InventoryPanel::_bind_methods() {}
@@ -65,8 +75,12 @@ void InventoryPanel::layout() {
         left_h += 26 + other_rows * PITCH + 12;
     }
     left_h += 26 + 3 * PITCH + 10 + 26 + PITCH + 34; // 主区、快捷栏、说明
-    const real_t right_h = 40 + real_t(view.recipes.size()) * RECIPE_ROW + 10;
-    panel_size = Vector2(PAD + grid_w + GAP + RECIPE_W + PAD, std::max(left_h, right_h) + 36 + PAD);
+    int recipe_cols = 1, per_col = 1;
+    real_t col_w = RECIPE_W;
+    recipe_columns(int(view.recipes.size()), recipe_cols, per_col, col_w);
+    const real_t right_w = recipe_cols * col_w + (recipe_cols - 1) * RECIPE_COL_GAP;
+    const real_t right_h = 40 + real_t(per_col) * RECIPE_ROW + 10;
+    panel_size = Vector2(PAD + grid_w + GAP + right_w + PAD, std::max(left_h, right_h) + 36 + PAD);
     // 居中，但让开底下的通知
     origin = Vector2((get_size().x - panel_size.x) * 0.5f, (get_size().y - BOTTOM_RESERVE - panel_size.y) * 0.5f).floor();
     origin = Vector2(std::max(real_t(0), origin.x), std::max(real_t(8), origin.y));
@@ -94,7 +108,7 @@ void InventoryPanel::layout() {
     }
     const real_t rx = x0 + grid_w + GAP;
     for (int k = 0; k < int(view.recipes.size()); k++) {
-        recipe_rects[size_t(k)] = Rect2(rx, origin.y + 40 + k * RECIPE_ROW, RECIPE_W, RECIPE_ROW - 2);
+        recipe_rects[size_t(k)] = Rect2(rx + (k / per_col) * (col_w + RECIPE_COL_GAP), origin.y + 40 + (k % per_col) * RECIPE_ROW, col_w, RECIPE_ROW - 2);
     }
 }
 
@@ -267,7 +281,8 @@ void InventoryPanel::_draw() {
         draw_rect(Rect2(r.position + Vector2(4, 5), Vector2(18, 18)), Color(cr, cg, cb, row.can ? 1.0f : 0.4f));
         const Color c = row.can ? BRIGHT : DIM;
         text(r.position + Vector2(30, 21), name_of(row.product) + (row.yield > 1 ? vformat(String(U" ×%d"), row.yield) : String()), 17, c);
-        text(r.position + Vector2(128, 21), row.station_ok ? row.inputs : String(U"要") + row.station, 15, row.station_ok ? c : NEED, RECIPE_W - 132);
+        const real_t in_x = r.size.x >= RECIPE_W ? 128 : 104; // 两栏时窄些
+        text(r.position + Vector2(in_x, 21), row.station_ok ? row.inputs : String(U"要") + row.station, 15, row.station_ok ? c : NEED, r.size.x - in_x - 4);
     }
 
     // 悬停的那一格 / 那条配方

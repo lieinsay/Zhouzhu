@@ -41,6 +41,20 @@ const ItemDef ITEMS[] = {
     { "chest", "木箱", 16, 0.68f, 0.5f, 0.3f },
     { "torch", "火把", 64, 0.96f, 0.62f, 0.2f },
     { "fence", "篱笆", 64, 0.56f, 0.45f, 0.3f },
+    // 改地形与搭建（切片十一）：挖出来的土（垒地面、夯墙用），窑里烧的瓦；搭建件（见 build_pieces.h）
+    { "earth", "土", 64, 0.45f, 0.35f, 0.24f },
+    { "roof_tile", "瓦", 64, 0.36f, 0.36f, 0.4f },
+    { "foundation", "地基", 16, 0.52f, 0.5f, 0.46f },
+    { "floorboard", "楼板", 16, 0.56f, 0.43f, 0.29f },
+    { "earth_wall", "夯土墙", 16, 0.76f, 0.64f, 0.46f },
+    { "brick_wall", "砖墙", 16, 0.6f, 0.33f, 0.25f },
+    { "door_wall", "门墙", 16, 0.62f, 0.48f, 0.32f },
+    { "window_wall", "窗墙", 16, 0.7f, 0.58f, 0.42f },
+    { "gable", "山墙", 16, 0.72f, 0.6f, 0.43f },
+    { "thatch_roof", "草顶", 16, 0.8f, 0.68f, 0.4f },
+    { "tile_roof", "瓦顶", 16, 0.3f, 0.3f, 0.34f },
+    { "pillar", "木柱", 16, 0.3f, 0.2f, 0.12f },
+    { "ladder", "梯子", 16, 0.5f, 0.36f, 0.22f },
 };
 const int ITEM_COUNT = int(sizeof(ITEMS) / sizeof(ITEMS[0]));
 

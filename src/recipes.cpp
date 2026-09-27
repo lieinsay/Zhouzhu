@@ -20,6 +20,19 @@ const RecipeDef RECIPES[] = {
     { "kiln", "kiln", 1, Station::WORKBENCH, { { "stone", 8 }, { "clay", 4 } } },
     { "brick", "brick", 4, Station::KILN, { { "clay", 4 }, { "timber", 1 } } },
     { "pottery", "pottery", 1, Station::KILN, { { "clay", 3 }, { "timber", 1 } } },
+    { "roof_tile", "roof_tile", 6, Station::KILN, { { "clay", 3 }, { "firewood", 1 } } },
+    // 搭建件（切片十一）：土木的随身就做得（地基码石、夯土、柴草扎顶、一根木料做柱），要锯刨的上工作台
+    { "foundation", "foundation", 1, Station::HAND, { { "stone", 4 } } },
+    { "earth_wall", "earth_wall", 1, Station::HAND, { { "earth", 3 } } },
+    { "gable", "gable", 1, Station::HAND, { { "earth", 2 } } },
+    { "thatch_roof", "thatch_roof", 1, Station::HAND, { { "firewood", 3 }, { "timber", 1 } } },
+    { "pillar", "pillar", 1, Station::HAND, { { "timber", 1 } } },
+    { "floorboard", "floorboard", 1, Station::WORKBENCH, { { "plank", 4 } } },
+    { "brick_wall", "brick_wall", 1, Station::WORKBENCH, { { "brick", 6 } } },
+    { "door_wall", "door_wall", 1, Station::WORKBENCH, { { "earth", 2 }, { "plank", 3 } } },
+    { "window_wall", "window_wall", 1, Station::WORKBENCH, { { "earth", 2 }, { "plank", 1 } } },
+    { "tile_roof", "tile_roof", 1, Station::WORKBENCH, { { "roof_tile", 4 }, { "timber", 1 } } },
+    { "ladder", "ladder", 1, Station::WORKBENCH, { { "plank", 3 } } },
 };
 const int RECIPE_COUNT = int(sizeof(RECIPES) / sizeof(RECIPES[0]));
 
