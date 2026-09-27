@@ -10,7 +10,7 @@
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
-#include "gen_process.h"
+#include "gen_job.h"
 #include "group_memory.h"
 #include "world_session.h"
 
@@ -20,10 +20,13 @@ class PlanetView;
 // 岛群包从哪来（行星计划 P4，docs/PLAN-PLANET.md 第五节 P4 第 1–3 条、第 4.7 节）：一个场景一个（world_2051.tscn，挂在 World 后面）。按这个次序找：
 //   仓库里的 res://worlds/<节点>/（只有剧情模式 seed42 的世界算：仓库里的 2051、2050 是 seed42 生成的）；
 //   这个世界的存档目录 user://worlds/<世界>/groups/<节点>/；
-//   都没有就在后台调生成器（GenProcess → tools/zhouzhu_gen.py group，一群两三秒），有进度、出错报得清楚；生成好了发 group_ready，GroupStream 接着载入。
-// 同时只起一个生成岛群的进程：瞬移要的（急用）插到最前，其次是焦点 60 km 内的（快到了），再次是船头方向 150 km 内的（预取，走得快时才预取）。
+//   都没有就在后台生成（行星计划 P6e 起在进程内：生成器的 C++ 核心库，GenJob 放进场景的任务池 PlanetJobs，一群一两秒；
+//   项目设置 zhouzhu/generator/backend = "python" 时照旧起 Python 子进程 tools/zhouzhu_gen.py，留作开发时的对照），有进度、出错报得清楚；
+//   生成好了发 group_ready，GroupStream 接着载入。生成器的配置是行星包里的 config.tsv（剧情 res://planet/seed42，生存世界 <世界>/planet）。
+//   这个世界的行星层（①–⑨，C++ 约 1 s）第一回要生成时在后台算一次、进程里留着；有存档目录的场景一开就先在后台备好。
+// 同时只做一件生成岛群的活：瞬移要的（急用）插到最前，其次是焦点 60 km 内的（快到了），再次是船头方向 150 km 内的（预取，走得快时才预取）。
 // 缓存键（4.7）：包里的 stamp.json 记着生成器的提交号、run 的配置哈希、[island] 段哈希、导出版本；已经生成过的不因换版本重生成，只读出来给地图看。
-// 生存模式（行星包里没有粗版，full_lods = false）：另有一条粗版的活——相机 600 km 内还没有粗版的群由近及远一批批生成（zhouzhu_gen.py lods），
+// 生存模式（行星包里没有粗版，full_lods = false）：另有一条粗版的活——相机 600 km 内还没有粗版的群由近及远一批批生成（进程内 make_lod / zhouzhu_gen.py lods），
 //   存进存档目录的 lods/<节点>.bin，加进行星包（PlanetView::add_lod_file），远处的替身陆续换成粗版。
 // 进树时（_enter_tree，比场景里谁都早）把「这一回用哪个世界」（WorldSession 的 pending）配到场景的各节点上：World 的包、SiteStream、PlanetView 的行星包与钟、
 // GroupStream 的村落改动目录、编排的出发码头。没有 pending（测试、工具直接实例化场景）就照场景里配的：没有存档目录，只有仓库里的包。
@@ -70,6 +73,12 @@ private:
     WorldConfig config;
     GenSettings settings;
     bool settings_read = false;
+    std::shared_ptr<const GenConfig> gen_config; // 行星包里的 config.tsv（进程内生成读它）
+    godot::String gen_config_problem;
+    bool gen_config_read = false;
+    GenJob warm_job; // 这个世界的行星层：有存档目录就先在后台备好
+    bool warm_started = false;
+    double warm_wait = 0.0;
 
     struct Request {
         int node = -1;
@@ -81,9 +90,9 @@ private:
         godot::Dictionary seconds;
     };
     std::map<int, Request> requests;
-    GenProcess group_job;
+    GenJob group_job;
     int group_job_node = -1;
-    GenProcess lod_job;
+    GenJob lod_job;
     std::vector<int> lod_job_nodes;
     std::set<int> lod_failed;
     std::map<int, godot::String> stamp_commits; // 读过的 stamp.json 的生成器提交号
@@ -102,6 +111,11 @@ private:
     GroupStream *stream() const;
     const GenSettings &gen_settings();
     godot::String run_dir();
+    const std::shared_ptr<const GenConfig> &gen_cfg();
+    godot::String planet_dir() const;
+    uint64_t world_seed() const;
+    PlanetJobs *jobs() const;
+    void warm_up(double p_delta);
     void apply_config();
     void restore_home();
     void start_next_group();
@@ -126,7 +140,7 @@ public:
     bool is_available(int p_node) const { return !find_group(p_node).is_empty(); }
     // 仓库里、存档目录里都有哪些群的包
     godot::PackedInt32Array available_nodes() const;
-    // 能不能调生成器（有存档目录、找得到 Python 与生成器、run 目录在）；不能时 get_problem 说为什么
+    // 能不能生成（有存档目录；进程内：行星包里有 config.tsv；Python：找得到 Python 与生成器、run 目录在）；不能时 get_problem 说为什么
     bool can_generate();
     godot::String get_problem();
     // 要这一群：已有返回 READY；否则排进队（同一群再要一次只提前、不重排）
@@ -138,7 +152,7 @@ public:
     // 离开的岛群的账（存档目录的 memory/<节点>.txt）：读 / 写（空的删掉）；没有存档目录时什么都不做
     bool load_memory(int p_node, GroupMemory &r_memory) const;
     void save_memory(int p_node, const GroupMemory &p_memory) const;
-    // { generated, failed, queued, running（在生成的群号，−1 = 没有）, lods_added, lod_running, busy_s, world_dir, story, full_lods, can_generate }
+    // { generated, failed, queued, running（在生成的群号，−1 = 没有）, lods_added, lod_running, busy_s, world_dir, story, full_lods, can_generate, backend（cpp / python）}
     godot::Dictionary get_stats();
     godot::Dictionary get_world() const; // { name, mode, world_dir, seed, spawn, story, full_lods }
 

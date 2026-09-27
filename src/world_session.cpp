@@ -155,15 +155,26 @@ Array WorldSession::list_survival() {
     return sorted;
 }
 
-bool WorldMaker::start(int p_seed, String &r_error, const String &p_name) {
+bool WorldMaker::start(int p_seed, String &r_error, const String &p_name, PlanetJobs *p_jobs) {
     if (process.is_running()) {
         r_error = String(U"已经在新建一个世界了");
         return false;
     }
-    const GenSettings settings = GenSettings::resolve();
-    if (!settings.ok()) {
-        r_error = settings.problem;
-        return false;
+    const bool python = gen_backend_is_python();
+    GenSettings settings;
+    std::shared_ptr<const GenConfig> cfg;
+    if (python) {
+        settings = GenSettings::resolve();
+        if (!settings.ok()) {
+            r_error = settings.problem;
+            return false;
+        }
+    } else {
+        // 进程内：生成器的配置取仓库里 seed42 行星包带的 config.tsv（新建的世界照抄一份进它的 planet/）
+        cfg = load_gen_config(String(WorldConfig().planet_dir), r_error);
+        if (!cfg) {
+            return false;
+        }
     }
     seed = p_seed;
     if (seed <= 0) {
@@ -180,13 +191,26 @@ bool WorldMaker::start(int p_seed, String &r_error, const String &p_name) {
         r_error = vformat(String(U"%s 已经有世界了（要重建先删掉这个目录）"), world_dir);
         return false;
     }
-    PackedStringArray args;
-    args.push_back("world");
-    args.push_back("--generator");
-    args.push_back(settings.root);
-    args.push_back("--seed");
-    args.push_back(itos(seed));
-    args.push_back("--world");
-    args.push_back(ps->globalize_path(world_dir));
-    return process.start(settings, args, world_dir.path_join("logs/new_world.jsonl"), 240.0, r_error);
+    if (python) {
+        PackedStringArray args;
+        args.push_back("world");
+        args.push_back("--generator");
+        args.push_back(settings.root);
+        args.push_back("--seed");
+        args.push_back(itos(seed));
+        args.push_back("--world");
+        args.push_back(ps->globalize_path(world_dir));
+        return process.start_python(settings, args, world_dir.path_join("logs/new_world.jsonl"), 240.0, r_error);
+    }
+    const uint64_t s = uint64_t(seed);
+    const std::string dir = ps->globalize_path(world_dir).utf8().get_data();
+    return process.start_cpp(p_jobs, -1.0, [cfg, s, dir](gen_core::GenStatus &st) {
+        gen_core::WorldResult r;
+        std::string err;
+        if (!gen_core::make_world(*cfg, s, dir, &st, r, err)) {
+            st.fail(err);
+            return;
+        }
+        st.finish(r.seconds);
+    }, r_error);
 }

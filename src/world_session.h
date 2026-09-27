@@ -4,12 +4,15 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/string.hpp>
 
-#include "gen_process.h"
+#include "gen_job.h"
+
+class PlanetJobs;
 
 // 世界（行星计划 P4，docs/PLAN-PLANET.md 第 4.8 节、D15）：一个世界 = 种子 + 生成器版本 + 存档目录 user://worlds/<世界>/——
 //   world.json    这个世界是什么：名字、模式（story 剧情 / survival 生存）、种子、出生的岛群、生成器版本、run 与行星包在哪；
-//   planet/       行星包（planet.bin、lods.bin 同格式）：生存模式的；剧情模式直接用仓库里的 res://planet/seed42；
-//   gen/seed<N>/  生成器的 run 目录（行星层 ①–⑨）：按需生成岛群、粗版都读它；剧情模式用项目设置里生成器的 out/seed42；
+//   planet/       行星包（planet.bin、lods.bin、weather.bin 同格式，config.tsv 是生成器的配置）：生存模式的；剧情模式直接用仓库里的 res://planet/seed42；
+//                 进程内按需生成岛群、粗版读它的 config.tsv 与 world.json 的种子（行星计划 P6e）；
+//   gen/seed<N>/  生成器的 run 目录（行星层 ①–⑨）：只有 Python 那条路（开发时对照）建的世界有，那条路按需生成读它；剧情模式用项目设置里生成器的 out/seed42；
 //   groups/<节点>/ 生成过的岛群细版（export_skyisle 的五份 + stamp.json 缓存键，4.7）；
 //   lods/<节点>.bin 生成过的粗版（lods.bin 同格式、一条）；
 //   memory/<节点>.txt 离开的岛群的账（模拟分级，4.6）；
@@ -50,15 +53,17 @@ public:
     static int count_groups(const godot::String &p_world_dir);
 };
 
-// 新建世界（生存模式，D15）：调 zhouzhu_gen.py world——行星层 → 行星包（没有粗版）→ 出生的岛群 → world.json。一次一个
+// 新建世界（生存模式，D15）：行星层 → 行星包（没有粗版）→ 出生的岛群 → world.json。一次一个。
+// 行星计划 P6e 起在进程内做（生成器的 C++ 核心库，配置取仓库里 seed42 行星包的 config.tsv，几秒）；项目设置 zhouzhu/generator/backend = "python"
+// 时照旧调 zhouzhu_gen.py world（开发时对照）。
 class WorldMaker {
-    GenProcess process;
+    GenJob process;
     godot::String world_dir;
     int seed = 0;
 
 public:
-    // p_seed ≤ 0：随机种子；p_name 空 = seed<N>（存档目录 user://worlds/<名字>，已有的先删掉）
-    bool start(int p_seed, godot::String &r_error, const godot::String &p_name = godot::String());
+    // p_seed ≤ 0：随机种子；p_name 空 = seed<N>（存档目录 user://worlds/<名字>，已有的先删掉）；p_jobs 给了就进它的任务池，否则自己开线程
+    bool start(int p_seed, godot::String &r_error, const godot::String &p_name = godot::String(), PlanetJobs *p_jobs = nullptr);
     void poll() { process.poll(); }
     bool is_running() const { return process.is_running(); }
     bool is_done() const { return process.is_done(); }

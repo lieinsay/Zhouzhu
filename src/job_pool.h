@@ -41,6 +41,7 @@ enum class JobKind : uint8_t {
     FAR_GROUP = 8, // 远处的岛群（行星计划 P1 的低模）
     PLANET = 9, // 整颗行星：行星贴图的六个面、大气的两张表（行星计划 P2）
     GROUP_LOAD = 10, // 读一个岛群的包、建连续地形与规划（行星计划 P3：GroupWorld 在后台载入）
+    GENERATE = 11, // 进程内生成：新建世界、生成岛群与粗版（行星计划 P6e：生成器的 C++ 核心库，GenJob）
     TEST = 200, // 单元测试用
 };
 

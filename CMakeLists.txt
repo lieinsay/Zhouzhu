@@ -237,6 +237,8 @@ target_sources(
         src/freight_hand.h
         src/gather_hand.cpp
         src/gather_hand.h
+        src/gen_job.cpp
+        src/gen_job.h
         src/gen_process.cpp
         src/gen_process.h
         src/group_provider.cpp

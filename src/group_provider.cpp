@@ -13,9 +13,11 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "expedition.h"
+#include "gen_core.h"
 #include "farm.h"
 #include "group_stream.h"
 #include "hinterland.h"
+#include "planet_jobs.h"
 #include "planet_view.h"
 #include "site_stream.h"
 #include "world.h"
@@ -29,6 +31,12 @@ namespace {
 constexpr double PREFETCH_EVERY_S = 1.0;
 constexpr double LODS_EVERY_S = 2.0;
 constexpr double TRACE_S = 3.0; // 船头方向按焦点近 3 秒的挪动算
+
+// 进程内生成岛群的活在任务池里的优先级（任务池按离焦点的米数排）：瞬移要的排在一切前面；焦点 60 km 内的排在 20 km 内的地面块之后；
+// 预取的排在 200 km 内的活之后。粗版那条活与备行星层不进任务池、各开一条线程（同 P4 的第二个进程）：排在远处的活后面，开局那几十秒轮不到它们
+double job_priority(int p_priority) {
+    return p_priority == GroupProvider::URGENT ? -1.0 : (p_priority == GroupProvider::NEAR ? 20000.0 : 200000.0);
+}
 
 String abs_path(const String &p_path) {
     return ProjectSettings::get_singleton()->globalize_path(p_path);
@@ -120,6 +128,54 @@ const GenSettings &GroupProvider::gen_settings() {
 
 String GroupProvider::run_dir() {
     return gen_run.is_empty() ? gen_settings().story_run : gen_run;
+}
+
+String GroupProvider::planet_dir() const {
+    return config.planet_dir; // 没配世界（测试直接开场景）时是 WorldConfig 的默认：res://planet/seed42
+}
+
+uint64_t GroupProvider::world_seed() const {
+    return uint64_t(config.seed);
+}
+
+const std::shared_ptr<const GenConfig> &GroupProvider::gen_cfg() {
+    if (!gen_config_read) {
+        gen_config = load_gen_config(planet_dir(), gen_config_problem);
+        gen_config_read = true;
+    }
+    return gen_config;
+}
+
+PlanetJobs *GroupProvider::jobs() const {
+    return PlanetJobs::find(this);
+}
+
+void GroupProvider::warm_up(double p_delta) {
+    // 这个世界的行星层（①–⑨ + PlanetView，C++ 约 1 s）：有存档目录（会按需生成）的场景开了、载入站稳以后（岛群流就绪再过 5 s，
+    // 不跟开局的地面块、村子抢后台）在后台算好、进程里留着，第一群不用等它；在那之前就要生成的，那件活自己先算
+    if (warm_started || gen_backend_is_python() || world_dir.is_empty()) {
+        return;
+    }
+    GroupStream *gs = stream();
+    if (!gs || !gs->is_ready()) {
+        return;
+    }
+    warm_wait += p_delta;
+    if (warm_wait < 5.0) {
+        return;
+    }
+    warm_started = true;
+    const std::shared_ptr<const GenConfig> cfg = gen_cfg();
+    if (!cfg) {
+        return;
+    }
+    const uint64_t seed = world_seed();
+    String error;
+    warm_job.start_cpp(nullptr, 0.0, [cfg, seed](gen_core::GenStatus &st) {
+        st.progress("planet", 0.0, "行星层");
+        gen_core::planet_state(*cfg, seed);
+        st.finish({});
+    }, error);
 }
 
 // ---------------------------------------------------------------- 世界的配置
@@ -283,6 +339,9 @@ String GroupProvider::get_problem() {
     if (world_dir.is_empty()) {
         return String(U"这个场景没有世界存档目录（测试、工具直接开的场景），只能去仓库里有的岛群");
     }
+    if (!gen_backend_is_python()) {
+        return gen_cfg() ? String() : gen_config_problem; // 进程内：只要行星包里的 config.tsv
+    }
     const GenSettings &s = gen_settings();
     if (!s.ok()) {
         return s.problem;
@@ -388,6 +447,7 @@ Dictionary GroupProvider::get_stats() {
     d["story"] = story;
     d["full_lods"] = full_lods;
     d["can_generate"] = can_generate();
+    d["backend"] = gen_backend_is_python() ? String("python") : String("cpp");
     return d;
 }
 
@@ -453,6 +513,8 @@ void GroupProvider::save_memory(int p_node, const GroupMemory &p_memory) const {
 // ---------------------------------------------------------------- 生成
 
 void GroupProvider::_process(double p_delta) {
+    warm_up(p_delta);
+    warm_job.poll();
     poll_group_job();
     if (!group_job.is_running()) {
         start_next_group();
@@ -490,22 +552,52 @@ void GroupProvider::start_next_group() {
         emit_signal("group_failed", best->node, problem);
         return;
     }
-    PackedStringArray args;
-    args.push_back("group");
-    args.push_back("--generator");
-    args.push_back(gen_settings().root);
-    args.push_back("--run");
-    args.push_back(run_dir());
-    args.push_back("--node");
-    args.push_back(itos(best->node));
-    args.push_back("--out");
-    args.push_back(abs_path(world_dir.path_join("groups").path_join(itos(best->node))));
-    if (!full_lods) {
-        args.push_back("--lod-dir");
-        args.push_back(abs_path(world_dir.path_join("lods")));
-    }
     String error;
-    if (!group_job.start(gen_settings(), args, world_dir.path_join("logs").path_join(vformat("group_%d.jsonl", best->node)), group_timeout, error)) {
+    bool started = false;
+    if (gen_backend_is_python()) {
+        PackedStringArray args;
+        args.push_back("group");
+        args.push_back("--generator");
+        args.push_back(gen_settings().root);
+        args.push_back("--run");
+        args.push_back(run_dir());
+        args.push_back("--node");
+        args.push_back(itos(best->node));
+        args.push_back("--out");
+        args.push_back(abs_path(world_dir.path_join("groups").path_join(itos(best->node))));
+        if (!full_lods) {
+            args.push_back("--lod-dir");
+            args.push_back(abs_path(world_dir.path_join("lods")));
+        }
+        started = group_job.start_python(gen_settings(), args, world_dir.path_join("logs").path_join(vformat("group_%d.jsonl", best->node)), group_timeout, error);
+    } else {
+        // 进程内（P6e）：这个世界的行星层（进程里算过就直接用）→ 生成器第三层 → 岛群包的五份 + stamp.json（生存世界顺带粗版），先写 .tmp 再改名
+        const std::shared_ptr<const GenConfig> cfg = gen_cfg();
+        const uint64_t seed = world_seed();
+        const int64_t node = best->node;
+        const std::string out = abs_path(world_dir.path_join("groups").path_join(itos(best->node))).utf8().get_data();
+        const std::string lod = full_lods ? std::string() : std::string(abs_path(world_dir.path_join("lods")).utf8().get_data());
+        const std::string cfg_file = abs_path(planet_dir().path_join("config.tsv")).utf8().get_data();
+        started = group_job.start_cpp(jobs(), job_priority(best->priority), [cfg, seed, node, out, lod, cfg_file](gen_core::GenStatus &st) {
+            if (!gen_core::has_planet_state(*cfg, seed)) {
+                st.progress("planet", 0.02, "这个世界的行星层（进程里第一回用，算一次）");
+            }
+            const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(*cfg, seed);
+            gen_core::GroupTimes t;
+            std::string err;
+            if (!gen_core::make_group(*ps, node, out, lod, cfg_file, &st, 0.1, 1.0, t, err)) {
+                st.fail(err);
+                return;
+            }
+            std::vector<std::pair<std::string, double>> secs = { { "generate", t.generate }, { "write", t.write } };
+            if (!lod.empty()) {
+                secs.push_back({ "lod", t.lod });
+            }
+            secs.push_back({ "total", t.total });
+            st.finish(secs);
+        }, error);
+    }
+    if (!started) {
         best->state = FAILED;
         best->error = error;
         best->text = error;
@@ -515,7 +607,7 @@ void GroupProvider::start_next_group() {
     }
     best->state = RUNNING;
     best->started_at = now_s();
-    best->text = String(U"起了生成进程");
+    best->text = gen_backend_is_python() ? String(U"起了生成进程") : String(U"排进后台生成");
     group_job_node = best->node;
 }
 
@@ -645,22 +737,47 @@ void GroupProvider::update_lods(double p_delta) {
     if (todo.empty()) {
         return;
     }
-    PackedStringArray args;
-    args.push_back("lods");
-    args.push_back("--generator");
-    args.push_back(gen_settings().root);
-    args.push_back("--run");
-    args.push_back(run_dir());
-    String nodes;
-    for (size_t k = 0; k < todo.size(); k++) {
-        nodes += (k ? "," : "") + itos(todo[k]);
-    }
-    args.push_back("--nodes");
-    args.push_back(nodes);
-    args.push_back("--lod-dir");
-    args.push_back(abs_path(world_dir.path_join("lods")));
     String error;
-    if (!lod_job.start(gen_settings(), args, world_dir.path_join("logs").path_join("lods.jsonl"), 60.0 + 20.0 * double(todo.size()), error)) {
+    bool started = false;
+    if (gen_backend_is_python()) {
+        PackedStringArray args;
+        args.push_back("lods");
+        args.push_back("--generator");
+        args.push_back(gen_settings().root);
+        args.push_back("--run");
+        args.push_back(run_dir());
+        String nodes;
+        for (size_t k = 0; k < todo.size(); k++) {
+            nodes += (k ? "," : "") + itos(todo[k]);
+        }
+        args.push_back("--nodes");
+        args.push_back(nodes);
+        args.push_back("--lod-dir");
+        args.push_back(abs_path(world_dir.path_join("lods")));
+        started = lod_job.start_python(gen_settings(), args, world_dir.path_join("logs").path_join("lods.jsonl"), 60.0 + 20.0 * double(todo.size()), error);
+    } else {
+        // 进程内：一群一群做（由近及远），做好一群报一条 lod_done，做不出来的报 lod_failed、接着做下一群
+        const std::shared_ptr<const GenConfig> cfg = gen_cfg();
+        const uint64_t seed = world_seed();
+        const std::string lod_dir = abs_path(world_dir.path_join("lods")).utf8().get_data();
+        const std::vector<int> nodes = todo;
+        started = lod_job.start_cpp(nullptr, 0.0, [cfg, seed, lod_dir, nodes](gen_core::GenStatus &st) {
+            const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(*cfg, seed);
+            for (size_t k = 0; k < nodes.size(); k++) {
+                st.progress("lod", double(k) / double(nodes.size()),
+                        "粗版 " + std::to_string(k + 1) + " / " + std::to_string(nodes.size()) + "：群 #" + std::to_string(nodes[k]));
+                double sec = 0.0;
+                std::string err;
+                if (gen_core::make_lod(*ps, nodes[k], lod_dir, sec, err)) {
+                    st.event("lod_done", nodes[k], "群 #" + std::to_string(nodes[k]) + " 的粗版好了");
+                } else {
+                    st.event("lod_failed", nodes[k], "群 #" + std::to_string(nodes[k]) + " 的粗版做不出来：" + err);
+                }
+            }
+            st.finish({});
+        }, error);
+    }
+    if (!started) {
         ERR_PRINT(String(U"GroupProvider：粗版生成起不来——") + error);
         for (int n : todo) {
             lod_failed.insert(n);

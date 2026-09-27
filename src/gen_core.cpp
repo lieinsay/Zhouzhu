@@ -188,6 +188,11 @@ void GenStatus::fail(const std::string &p_error) {
     state.text = "出错：" + p_error;
 }
 
+bool GenStatus::settled() {
+    std::lock_guard<std::mutex> lock(mutex);
+    return state.done || state.failed;
+}
+
 GenStatus::Snapshot GenStatus::take() {
     std::lock_guard<std::mutex> lock(mutex);
     Snapshot s = state;

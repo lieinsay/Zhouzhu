@@ -121,6 +121,7 @@ wx_cloud_shape2={
 
 [zhouzhu]
 
+generator/backend="cpp"
 generator/python="{LOCALAPPDATA}/Programs/Python/Python312/python.exe"
 generator/root="../skyisle-gen"
 generator/run="out/seed42"

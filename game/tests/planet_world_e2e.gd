@@ -1,6 +1,6 @@
 extends Node
 ## 行星计划 P4：开发机上新建随机世界（生存模式，计划 4.8、D15）——
-## F2「新建世界」走的同一条路（DeveloperTools.new_world：调生成器算行星层 → 行星包（没有粗版）→ 出生的岛群 → world.json），
+## F2「新建世界」走的同一条路（DeveloperTools.new_world：生成器算行星层 → 行星包（没有粗版）→ 出生的岛群 → world.json），
 ## 只是好了不换场景，这里自己实例化 world_2051.tscn（DeveloperTools.prepare_world 把这个世界交给场景里的 GroupProvider）：
 ##   从点下去到在出生群的主码头能走 ≤ 60 s（真实秒）；
 ##   远处是替身（行星包里没有粗版：FarGroups 画的是 planet_surface 的替身，行星贴图里也是）；
@@ -9,7 +9,7 @@ extends Node
 ##   站着等一阵，600 km 内的替身陆续换成粗版（GroupProvider 的粗版那条活，一批批生成、存进存档目录的 lods/）、行星贴图跟着重烘；
 ## 然后「退出再进」：拆掉场景、再进一回——行星层、出生群、粗版都不重生成（存档目录里有的都认，文件一个没重写），替身比第一回少；
 ##   出生群离开时存进存档目录的账（memory/）补回到它的账房。
-## 没有 Python / 生成器时报 SKIP、退出码 77（不算 PASS）。
+## 行星计划 P6e 起新建世界在进程内（生成器的 C++ 核心库），不要 Python；建不了（行星包里没有 config.tsv）时报 SKIP、退出码 77（不算 PASS）。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/planet_world_e2e.tscn [-- --seed=2027 --shots=<目录>]
 

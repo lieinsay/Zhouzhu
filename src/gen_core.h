@@ -42,6 +42,7 @@ public:
     void event(const std::string &p_key, int64_t p_node, const std::string &p_text);
     void finish(const std::vector<std::pair<std::string, double>> &p_seconds);
     void fail(const std::string &p_error);
+    bool settled(); // 说过好了或出错了
     Snapshot take();
 
 private:

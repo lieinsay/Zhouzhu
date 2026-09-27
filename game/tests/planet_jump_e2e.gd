@@ -10,7 +10,8 @@ extends Node
 ## 每一回查：从点下去到能走（人站在那一群的地上、脚下的碰撞挂好）用了多久（真实秒）、期间最慢一帧（真实毫秒），落点是主码头（没有码头是邑治），
 ## 锚换成了那一群、HUD 第一行报「群 #N」，码头边的村子铺出来了，相机的纬度就是那一群的纬度，季节对（2051 在南半球的夏天，北半球同一天是冬天：白天短于 12 小时）。
 ## 没生成过的 ≤ 60 s、有缓存的 ≤ 5 s、期间最慢帧 ≤ 50 ms（计划 P4 的验收，带窗口量；无头下只拦 150 ms 以上的大卡）。
-## 没有 Python / 生成器（GroupProvider.can_generate 为假）时报 SKIP、退出码 77——不算 PASS。
+## 行星计划 P6e 起生成在进程内（生成器的 C++ 核心库），不要 Python：Python 路径设成无效的照样 PASS；只有行星包里没有 config.tsv
+## （GroupProvider.can_generate 为假）时报 SKIP、退出码 77——不算 PASS。项目设置 zhouzhu/generator/backend = python 时照旧调 Python（开发时对照）。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/planet_jump_e2e.tscn
 ##   … -- --nodes=4,3588,162,2484,3922 --shots=<目录>      换一串群去（依次），每落一次存一张截图（去掉 --headless）
