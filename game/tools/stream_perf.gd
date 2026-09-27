@@ -16,6 +16,9 @@ extends Node
 ##   以 150 m/s 朝 2050 飞 <秒> 秒（默认 240：约 100 s 时过换锚线，再飞到 2050 岸边），再原路飞回同样久（过换锚线回到 2051）；
 ##   两段各报帧时（换锚那一帧与下一帧另报）与进程内存。
 ##
+## `--sea=<秒>`（行星计划 P7，单独跑）：主码头站定 15 s；一架自由相机摆到主码头往外（背着主峰）的开阔云海上空，钟停在 10 点、天气覆盖成晴——
+##   云带顶上 150 m、云带里（−4.4 km）、云底下（−5.3 km）、海面上 20 m、风暴里的海面各停 <秒> 秒（相机慢慢转一圈），
+##   再从 −3.5 km 匀速降到海面上 20 m、升回去（各 <秒> 秒）；每段报帧时。
 ## 不加 --fixed-fps：量的是真帧时（带窗口时加 --disable-vsync，免得被刷新率卡住）。
 ## 末尾加 `-- --fast=<秒> --slow=<秒> --stand=<秒> --high=<秒>` 改各段多久（默认 60 / 30 / 20 / 0）。
 
@@ -37,6 +40,11 @@ var high_s := 0.0
 var high_m := 50000.0
 var orbit_s := 0.0
 var voyage_s := 0.0
+var sea_s := 0.0
+var sea_cam: Camera3D = null
+var sea_point := Vector2.ZERO
+var sea_heading := 0.0
+var atmosphere = null
 const VOYAGE_FROM := Vector3(-21612.0, 1800.0, 57039.0)  # 2051 平面：西南岸外 4.6 km、朝 2050 主码头的航线上
 const VOYAGE_DIR := Vector3(-0.3739, 0.0, 0.9275)
 const VOYAGE_SPEED := 150.0
@@ -77,6 +85,8 @@ func _ready() -> void:
 			orbit_s = float(arg.trim_prefix("--orbit="))
 		elif arg.begins_with("--voyage="):
 			voyage_s = float(arg.trim_prefix("--voyage="))
+		elif arg.begins_with("--sea="):
+			sea_s = float(arg.trim_prefix("--sea="))
 		elif arg.begins_with("--shots="):
 			shots_dir = arg.trim_prefix("--shots=")
 	get_tree().root.size = Vector2i(1280, 720)
@@ -88,9 +98,10 @@ func _ready() -> void:
 	sites = main.get_node("SiteStream")
 	globe = main.get_node_or_null("PlanetGlobe")
 	stream = main.get_node_or_null("GroupStream")
-	if orbit_s > 0.0:
+	if orbit_s > 0.0 or sea_s > 0.0:
 		GameClock.restart(10.0)
 		GameClock.paused = true
+	atmosphere = main.get_node_or_null("Atmosphere")
 	last = Time.get_ticks_usec()
 
 
@@ -189,6 +200,9 @@ func _process(delta: float) -> void:
 		return
 	if voyage_s > 0.0:
 		_voyage_process(delta, ms)
+		return
+	if sea_s > 0.0:
+		_sea_process(delta, ms)
 		return
 	frames.append(ms)
 	if ms > SLOW_MS:
@@ -389,3 +403,88 @@ func _voyage_report(name: String) -> void:
 	_memory()
 	frames.clear()
 	slow.clear()
+
+
+# ---------------------------------------------------------------- 云带之下（行星计划 P7）
+
+# 从 from 起朝 away 走，找一处 2.5 km 内没有地的开阔云海，再往外 3 km（同 planet_shots、sea_descent_e2e）
+func _open_sea(from: Vector2, away: Vector2) -> Vector2:
+	for k in 400:
+		var p := from + away * (float(k) * 500.0)
+		var clear := true
+		for r in [0.0, 1000.0, 2500.0]:
+			for a in 12:
+				var q: Vector2 = p + Vector2(cos(TAU * a / 12.0), sin(TAU * a / 12.0)) * float(r)
+				if not is_nan(world.get_surface_height(q.x, q.y)):
+					clear = false
+		if clear:
+			return p + away * 3000.0
+	return from + away * 200000.0
+
+
+# [名字, 起始 y, 结束 y, 天气]
+const SEA_LEGS := [["云带顶上 150 m", -3650.0, -3650.0, "clear"], ["云带里 −4.4 km", -4400.0, -4400.0, "clear"], ["云底下 −5.3 km", -5300.0, -5300.0, "clear"],
+	["海面上 20 m", -5580.0, -5580.0, "clear"], ["风暴里的海面 20 m", -5580.0, -5580.0, "storm"], ["从 −3.5 km 降到海面", -3500.0, -5580.0, "clear"],
+	["从海面升回 −3.5 km", -5580.0, -3500.0, "clear"]]
+
+
+func _sea_process(delta: float, ms: float) -> void:
+	if phase == 0:
+		if elapsed < SETTLE_S:
+			return
+		# 开阔云海：主码头背着主峰往外
+		var berth: Transform3D = main.get_origin_berth()
+		var dock2 := Vector2(berth.origin.x, berth.origin.z)
+		var peak := Vector2.ZERO
+		var peak_h := -1e9
+		for i in range(-60, 61):
+			for j in range(-60, 61):
+				var q := Vector2(j, i) * 1000.0
+				var h := world.get_surface_height(q.x, q.y)
+				if not is_nan(h) and h > peak_h:
+					peak_h = h
+					peak = q
+		var away := (dock2 - peak).normalized()
+		sea_point = _open_sea(dock2, away)
+		sea_heading = atan2(-away.x, -away.y)
+		sea_cam = Camera3D.new()
+		sea_cam.fov = 60.0
+		sea_cam.far = 60000.0
+		add_child(sea_cam)
+		sea_cam.current = true
+		if atmosphere != null:
+			atmosphere.override_fade = 0.05
+		print("stream_perf: 云带之下——开阔云海 %s（离主码头 %.1f km）" % [sea_point, (sea_point - dock2).length() / 1000.0])
+		phase = 1
+		leg = 0
+		phase_started = elapsed
+		frames.clear()
+		slow.clear()
+		_sea_leg_start()
+		return
+	if leg >= SEA_LEGS.size():
+		get_tree().quit(0)
+		return
+	var in_leg := elapsed - phase_started
+	var l: Array = SEA_LEGS[leg]
+	var k := clampf(in_leg / sea_s, 0.0, 1.0)
+	var y: float = lerpf(float(l[1]), float(l[2]), k)
+	sea_cam.global_position = Vector3(sea_point.x, y, sea_point.y)
+	sea_cam.rotation = Vector3(deg_to_rad(-6.0), sea_heading + in_leg * TAU / maxf(1.0, sea_s), 0.0)
+	if in_leg > 1.0:  # 换段那一秒不算（天气覆盖渐入、相机挪过去）
+		frames.append(ms)
+		if ms > SLOW_MS:
+			slow.append([elapsed, ms, _breakdown(Engine.get_process_frames() - 1)])
+	if in_leg >= sea_s + 1.0:
+		_report(str(l[0]))
+		leg += 1
+		phase_started = elapsed
+		if leg < SEA_LEGS.size():
+			_sea_leg_start()
+
+
+func _sea_leg_start() -> void:
+	var l: Array = SEA_LEGS[leg]
+	if atmosphere != null:
+		atmosphere.set_weather_override(str(l[3]), 0.0)
+	sea_cam.global_position = Vector3(sea_point.x, float(l[1]), sea_point.y)

@@ -9,8 +9,11 @@ extends Node
 ##   2 m、200 m、2 km、20 km、200 km、2,000 km、20,000 km × 白天（10 点）、晨昏（日落前后）、夜里（23 点），相机越高越往下看；
 ##   外加整颗星正对赤道、G 定点永暴（北纬 37.5°、西经 10°，那里的正午）、晨昏线、夜里的灯（2051 上空 1,500 km）、一群密的岛群（白天）。
 ##   行星贴图与大气表在后台做好了才拍（PlanetGlobe.is_ready），远处的岛群建好了才拍。
+## 行星计划 P7 · 云带之下（`--only=sea`；不加 --only 时也拍）：主码头往外（背着主峰）找一片开阔的云海，相机从云带顶上一路往下——
+##   云带顶上 150 m、云带里（−4.4 km）、刚出云底（−5.05 km）、云底下（−5.3 km）、海面上 20 m（平视、仰看云底）、黄昏的云底下、风暴里的海面、
+##   白礁（行星包里老岛群附近多的一片）；人留在码头上（相机在海上，人下不了海）。
 ##
-##   Godot --path game --fixed-fps 60 res://tools/planet_shots.tscn -- --shots=<目录> [--only=near|far|orbit]
+##   Godot --path game --fixed-fps 60 res://tools/planet_shots.tscn -- --shots=<目录> [--only=near|far|orbit|sea]
 
 const SCENE := preload("res://world_2051.tscn")
 const WAIT_S := 9.0
@@ -142,6 +145,8 @@ func _plan() -> void:
 		views.append(["near_dock_1500m", dock_eye, Vector3(ground_look.x, _ground(ground_look), ground_look.y), 10.0, false])
 	if (only.is_empty() or only == "orbit") and globe != null and planet != null and planet.is_active():
 		_plan_orbit()
+	if only.is_empty() or only == "sea":
+		_plan_sea(dock, peak, spawn.origin)
 	if not pick.is_empty():
 		views = views.filter(func(v): return v[0] == pick)
 
@@ -173,6 +178,45 @@ func _plan_orbit() -> void:
 	print("planet_shots: 轨道 — 村口 %s（地面 %.0f m，%.3f°, %.3f°），朝邑治 %.0f°" % [gate, ground, ll.x, ll.y, heading])
 
 
+# 从 p 起朝 away 走，找一处 2.5 km 内没有地的开阔云海，再往外 3 km
+func _open_sea(from: Vector2, away: Vector2) -> Vector2:
+	for k in 400:
+		var p := from + away * (float(k) * 500.0)
+		var clear := true
+		for r in [0.0, 1000.0, 2500.0]:
+			for a in 12:
+				var q: Vector2 = p + Vector2(cos(TAU * a / 12.0), sin(TAU * a / 12.0)) * float(r)
+				if not is_nan(world.get_surface_height(q.x, q.y)):
+					clear = false
+		if clear:
+			return p + away * 3000.0
+	return from + away * 200000.0
+
+
+# 云带之下（行星计划 P7）：[名字, 相机, 看向, 钟点, 等远处, 日子, 视角, 人站在哪, 天气]
+func _plan_sea(dock: Vector2, peak: Vector2, stand: Vector3) -> void:
+	var away := (dock - peak).normalized()
+	var sea := _open_sea(dock, away)
+	var side := Vector2(-away.y, away.x)
+	var person := stand + Vector3(0, 1.0, 0)
+	var at := func(h: float) -> Vector3: return Vector3(sea.x, h, sea.y)
+	var look := func(h: float, pitch_deg: float) -> Vector3:
+		var a := deg_to_rad(pitch_deg)
+		var d := Vector3(side.x, 0.0, side.y) * cos(a) + Vector3(0, sin(a), 0)
+		return Vector3(sea.x, h, sea.y) + d * 1000.0
+	views.append(["sea_deck_top", at.call(-3650.0), look.call(-3650.0, -8.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_in_band", at.call(-4400.0), look.call(-4400.0, -5.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_base_exit", at.call(-5050.0), look.call(-5050.0, -6.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_under_base", at.call(-5300.0), look.call(-5300.0, -8.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_surface", at.call(-5580.0), look.call(-5580.0, -3.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_surface_up", at.call(-5580.0), look.call(-5580.0, 30.0), 10.0, false, DAY, 60.0, person, "clear"])
+	# 黄昏朝太阳（方位约 248°）望：云底那一侧染暖
+	var west := Vector3(sin(deg_to_rad(248.0)), 0.0, -cos(deg_to_rad(248.0)))
+	views.append(["sea_dusk", at.call(-5500.0), at.call(-5500.0) + (west * cos(deg_to_rad(4.0)) + Vector3(0, sin(deg_to_rad(4.0)), 0)) * 1000.0, 18.4, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_storm", at.call(-5580.0), look.call(-5580.0, -4.0), 14.0, false, DAY, 60.0, person, "storm"])
+	print("planet_shots: 云带之下 — 开阔云海 %s（离主码头 %.1f km，背着主峰）" % [sea, (sea - dock).length() / 1000.0])
+
+
 # 看向的点：Vector3 照原样；[节点, 俯角°] 朝那一群的主峰（有 PlanetView 时按画面上的位置），俯角另加
 func _look_point(eye: Vector3, look) -> Vector3:
 	if look is Vector3:
@@ -198,13 +242,18 @@ func _apply(v: Array) -> void:
 		return
 	GameClock.set_date(int(v[5]) if v.size() > 5 else DAY, float(v[3]))
 	camera.fov = float(v[6]) if v.size() > 6 else 60.0
-	atmosphere.set_weather_override("clear", 0.0)
-	player.global_position = v[1] - Vector3(0, 6, 0)  # 人在相机下面：相机别钻进人的模型里
+	atmosphere.set_weather_override(str(v[8]) if v.size() > 8 else "clear", 0.0)
+	player.global_position = _stand_of(v)
 	world.prepare_at(v[1])
 	camera.global_position = v[1]
 	camera.look_at(_look_point(v[1], v[2]))
 	camera.current = true
 	atmosphere.snap()
+
+
+# 人站在哪：云带之下那几张站在码头上（v[7]），别的在相机下面 6 m（相机别钻进人的模型里）
+func _stand_of(v: Array) -> Vector3:
+	return v[7] if v.size() > 7 else v[1] - Vector3(0, 6, 0)
 
 
 func _apply_orbit(v: Array) -> void:
@@ -258,7 +307,7 @@ func _process(delta: float) -> void:
 			orbit.set_orbit_state(st["lat"], st["lon"], st["height"], st["heading"], st["pitch"])
 			player.global_position = v[6]
 		else:
-			player.global_position = v[1] - Vector3(0, 6, 0)
+			player.global_position = _stand_of(v)
 			camera.global_position = v[1]
 			camera.look_at(_look_point(v[1], v[2]))
 		waited += delta
@@ -276,7 +325,7 @@ func _process(delta: float) -> void:
 			extra = "，相机 %.3f°, %.3f°" % [ll.x, ll.y]
 		if far_groups != null:
 			extra += "，远处的岛群 %d 群 %d 块 %d 面" % [far_groups.get_group_count(), far_groups.get_chunk_count(), far_groups.get_triangle_count()]
-		if planet != null and planet.is_active() and not v[4]:
+		if planet != null and planet.is_active() and not v[4] and v.size() <= 7:
 			extra += "，2 km 内画面位移最多 %.3f m" % _near_shift(v[1])
 		var env: Environment = main.get_node("WorldEnvironment").environment
 		extra += "，雾 %.7f（天空 %.2f）" % [env.fog_density, env.fog_sky_affect]
