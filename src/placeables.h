@@ -100,6 +100,8 @@ public:
     int overlapping(const PropDef &p_def, double p_x, double p_z, int p_quarter, double p_touch_m, int p_ignore = -1) const;
     // 记下一件（按 check 摆），返回它的 id
     int add(const std::string &p_item, const PlaceCheck &p_check);
+    // 读回：整份换掉（id 接着最大的往下编）
+    void assign(const std::vector<PlacedProp> &p_props);
     bool remove(int p_id);
     // 换锚（行星计划 P3）：每件的位置按 p_point 换、朝向多转 p_yaw（按它所在处）；账变了（场景重摆）
     void shift(const std::function<void(double &, double &, double &, double &)> &p_move);

@@ -101,6 +101,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/freight.h
     src/group_memory.cpp
     src/group_memory.h
+    src/ground_works.cpp
+    src/ground_works.h
     src/flight_model.cpp
     src/flight_model.h
     src/ground_query.h

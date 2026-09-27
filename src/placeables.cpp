@@ -107,6 +107,15 @@ int Placements::add(const std::string &p_item, const PlaceCheck &p_check) {
     return p.id;
 }
 
+void Placements::assign(const std::vector<PlacedProp> &p_props) {
+    props = p_props;
+    next_id = 1;
+    for (const PlacedProp &p : props) {
+        next_id = std::max(next_id, p.id + 1);
+    }
+    revision++;
+}
+
 void Placements::shift(const std::function<void(double &, double &, double &, double &)> &p_move) {
     for (PlacedProp &p : props) {
         p_move(p.x, p.y, p.z, p.yaw_extra);
