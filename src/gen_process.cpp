@@ -1,5 +1,7 @@
 #include "gen_process.h"
 
+#include <chrono>
+
 #include <godot_cpp/classes/dir_access.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/json.hpp>
@@ -94,13 +96,9 @@ bool GenProcess::start(const GenSettings &p_settings, const PackedStringArray &p
     args.append_array(p_args);
     args.push_back("--status");
     args.push_back(status_path);
-    pid = OS::get_singleton()->create_process(p_settings.python, args, false);
-    if (pid <= 0) {
-        r_error = vformat(String(U"起不了生成进程（%s）"), p_settings.python);
-        state = FAILED;
-        error = r_error;
-        return false;
-    }
+    const String python = p_settings.python;
+    pid = -1;
+    spawn = std::async(std::launch::async, [python, args]() { return int(OS::get_singleton()->create_process(python, args, false)); });
     state = RUNNING;
     read_pos = 0;
     started_usec = Time::get_singleton()->get_ticks_usec();
@@ -181,6 +179,18 @@ void GenProcess::poll(std::vector<Dictionary> *r_lines) {
         return;
     }
     const double elapsed = double(Time::get_singleton()->get_ticks_usec() - started_usec) * 1e-6;
+    if (pid < 0) {
+        // 后台还在起进程
+        if (spawn.valid() && spawn.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            pid = spawn.get();
+            if (pid <= 0) {
+                state = FAILED;
+                error = String(U"起不了生成进程（Python 的路径对不对？项目设置 zhouzhu/generator/python）");
+                finished_s = elapsed;
+            }
+        }
+        return;
+    }
     read_lines(r_lines);
     if (state == RUNNING && !OS::get_singleton()->is_process_running(pid)) {
         read_lines(r_lines); // 退出前刚写完的最后一行
@@ -200,6 +210,9 @@ void GenProcess::poll(std::vector<Dictionary> *r_lines) {
 }
 
 void GenProcess::kill() {
+    if (state == RUNNING && pid < 0 && spawn.valid()) {
+        pid = spawn.get(); // 还在起：等它起好再杀
+    }
     if (state == RUNNING && pid > 0) {
         finished_s = elapsed_s();
         OS::get_singleton()->kill(pid);

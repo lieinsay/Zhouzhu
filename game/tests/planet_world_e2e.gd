@@ -71,7 +71,7 @@ func _ready() -> void:
 	t0 = Time.get_ticks_usec()
 	last_tick = t0
 	if not devtools.new_world(seed_value, false, WORLD_NAME):
-		print("planet_world: SKIP —— 新建不了世界：%s" % devtools.get_notice())
+		print("planet_world: SKIP —— %s" % devtools.get_notice())
 		get_tree().quit(77)
 		return
 	_log("新建世界 %s（种子 %d）……" % [WORLD_DIR, seed_value])

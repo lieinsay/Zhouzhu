@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <future>
 #include <vector>
 
 #include <godot_cpp/variant/dictionary.hpp>
@@ -36,7 +37,8 @@ public:
 
 private:
     State state = IDLE;
-    int pid = -1;
+    int pid = -1; // 还没起好（后台在起）为 −1
+    std::future<int> spawn; // 起进程挪到后台：Windows 上 CreateProcess 偶尔要一百毫秒（杀毒扫 python.exe），别卡主线程
     godot::String status_path; // 绝对路径
     int64_t read_pos = 0;
     uint64_t started_usec = 0;
