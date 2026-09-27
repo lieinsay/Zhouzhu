@@ -12,6 +12,8 @@
 //                                          # 行星包：摘要、邻群表、坐标自检、每群粗版对陆地；--overlap 另查邻群陆地叠没叠
 //   build/Release/zhouzhu_site_survey.exe --planet-weather game/planet/seed42 [--grid 2] [--steps 4] [--worlds game/worlds]
 //                                          # 行星天气场（行星计划 P5）：逐日天气包、粗细两版天气对照、一年里全行星的云量与降水按纬度带与 ④ 的气候场对账（±20%）
+//   build/Release/zhouzhu_site_survey.exe --island-floor [<群目录>]
+//                                          # 本机生成过的岛群逐座查岛底离云带顶一千米（浮高计划 F3；缺省查 %APPDATA%\Godot\app_userdata\州渚\worlds\seed42\groups，不进 ctest）
 //   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
 //         --sim H（远处结算几个游戏小时；0 = 不结）、--scatter-stride N（散布抽样的间隔块数；0 = 不抽）、
 //         --calendar N（开局是一年里的第几天，远处结算的时令按它；默认 3，与 WorldClock 一致）
@@ -24,6 +26,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -374,7 +377,71 @@ int survey_planet_weather(const std::string &p_dir, double p_grid, int p_steps, 
     return fails ? 1 : 0;
 }
 
+// ---------------------------------------------------------------- 本机生成过的岛群的岛底（--island-floor，浮高计划 F3）
+// 逐座查 <目录>/<群>/sites.tsv 的岛（island 行：岸缘、崖高、龙骨、最深岸距）：夹过龙骨以后岛底连岩棱都不低于云带顶之上 1000 m。
+// 结果随本机生成过哪些群而变，所以不进 ctest（ctest 的 island_floor 只查仓库里的包与进程内现场生成的几个大群）。
+int survey_island_floor(const std::filesystem::path &p_groups) {
+    std::error_code ec;
+    if (!std::filesystem::is_directory(p_groups, ec)) {
+        std::fprintf(stderr, "没有这个目录：%s\n", p_groups.u8string().c_str());
+        return 2;
+    }
+    const double floor_y = VerticalDatum::ISLAND_BOTTOM_MIN_Y;
+    int n_groups = 0, n_islands = 0, n_clamped = 0, bad = 0;
+    for (const auto &e : std::filesystem::directory_iterator(p_groups, ec)) {
+        std::ifstream in(e.path() / "sites.tsv", std::ios::binary);
+        if (!in) {
+            continue;
+        }
+        const std::string tsv((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        WorldSites sites;
+        std::string err;
+        const std::string name = e.path().filename().u8string();
+        if (!parse_world_sites(tsv, sites, err)) {
+            std::printf("  群 %s：sites.tsv 解析不了（%s）\n", name.c_str(), err.c_str());
+            bad++;
+            continue;
+        }
+        double low_before = 0.0, low_after = 0.0;
+        int clamped = 0;
+        for (const WorldIsland &isl : sites.terrain_islands()) {
+            const IslandBody b = island_body(isl);
+            const double full = 25.0 * std::sqrt(std::max(1.0, isl.max_shore_m)); // 同 world_terrain.cpp 的 KEEL_K · R^KEEL_EXP
+            low_before = std::min(low_before, isl.rim_m - b.wall_m - full);
+            low_after = std::min(low_after, island_lowest(isl, b));
+            clamped += b.keel_m < full - 1e-9 ? 1 : 0;
+            n_islands++;
+        }
+        n_groups++;
+        n_clamped += clamped;
+        const bool ok = low_after >= floor_y - 1e-6;
+        bad += ok ? 0 : 1;
+        std::printf("  群 %s：%zu 座岛，夹前岛心底最深 %.0f m → 连岩棱最深 %.0f m（收短 %d 座）%s\n", name.c_str(), sites.islands.size(), low_before, low_after, clamped,
+                ok ? "" : " ✗");
+    }
+    std::printf("%s：%d 群、%d 座岛，收短龙骨的 %d 座；岛底都在 %.0f m 之上：%s\n", p_groups.u8string().c_str(), n_groups, n_islands, n_clamped, floor_y,
+            bad ? "否" : "是");
+    return bad ? 1 : 0;
+}
+
 int main(int argc, char **argv) {
+    if (argc >= 2 && std::string(argv[1]) == "--island-floor") {
+        std::filesystem::path groups;
+        if (argc >= 3) {
+            groups = std::filesystem::path(argv[2]);
+        } else {
+#ifdef _WIN32
+            // 缺省：游戏存档目录里剧情世界生成过的群（%APPDATA%\Godot\app_userdata\州渚\worlds\seed42\groups）
+            wchar_t *appdata = nullptr;
+            size_t len = 0;
+            if (_wdupenv_s(&appdata, &len, L"APPDATA") == 0 && appdata) {
+                groups = std::filesystem::path(appdata) / L"Godot" / L"app_userdata" / L"州渚" / L"worlds" / L"seed42" / L"groups";
+                free(appdata);
+            }
+#endif
+        }
+        return survey_island_floor(groups);
+    }
     if (argc >= 3 && std::string(argv[1]) == "--planet-weather") {
         double grid = 5.0;
         int steps = 2;

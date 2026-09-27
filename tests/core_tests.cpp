@@ -5983,6 +5983,8 @@ void test_planet_weather() {
     }
 }
 
+std::string read_bytes(const std::string &p_path);
+
 // 浮高计划 F3：岛底（连岩棱与起伏的最深处）至少高出云带顶 1000 m，超了收短龙骨（world_terrain 的 island_body；远处低模 far_group_mesh 照抄）
 void test_island_floor() {
     std::printf("[island_floor]\n");
@@ -6051,52 +6053,91 @@ void test_island_floor() {
             check(false, "行星包读得出：" + err);
         }
     }
-#ifdef _WIN32
-    // 本机生成过的岛群（%APPDATA%\Godot\app_userdata\州渚\worlds\seed42\groups\<群>\sites.tsv，有才测）：每座岛都在最低线之上
-    std::filesystem::path groups;
-    wchar_t *appdata = nullptr;
-    size_t len = 0;
-    if (_wdupenv_s(&appdata, &len, L"APPDATA") == 0 && appdata) {
-        groups = std::filesystem::path(appdata) / L"Godot" / L"app_userdata" / L"州渚" / L"worlds" / L"seed42" / L"groups";
-        free(appdata);
+    // 仓库里的两群细版（浮高以后岸缘 22–1554 m）：每座岛都在最低线之上，岛体厚度与浮高无关
+    for (int node : { 2051, 2050 }) {
+        WorldSites sites;
+        std::string perr;
+        const std::string tsv = read_bytes(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/" + std::to_string(node) + "/sites.tsv");
+        if (!parse_world_sites(tsv, sites, perr)) {
+            check(false, "#" + std::to_string(node) + " 的 sites.tsv 能解析：" + perr);
+            continue;
+        }
+        double low = 0.0, rim_lo = 1e9, rim_hi = -1e9;
+        int clamped = 0;
+        for (const WorldIsland &isl : sites.terrain_islands()) {
+            const IslandBody b = island_body(isl);
+            low = std::min(low, island_lowest(isl, b));
+            clamped += b.keel_m < 25.0 * std::sqrt(std::max(1.0, isl.max_shore_m)) - 1e-9 ? 1 : 0;
+            rim_lo = std::min(rim_lo, isl.rim_m);
+            rim_hi = std::max(rim_hi, isl.rim_m);
+        }
+        std::printf("  仓库 #%d：%zu 座岛，岸缘 %.0f–%.0f m，岛底连岩棱最深 %.0f m（收短 %d 座）\n", node, sites.islands.size(), rim_lo, rim_hi, low, clamped);
+        check(low >= floor_y - 1e-6, "仓库 #" + std::to_string(node) + " 的岛底都在最低线之上");
+        check(clamped == 0, "仓库 #" + std::to_string(node) + "：一座都不用收短龙骨");
     }
-    std::error_code ec;
-    if (!groups.empty() && std::filesystem::is_directory(groups, ec)) {
-        int n_groups = 0, n_islands = 0, n_clamped = 0;
-        for (const auto &e : std::filesystem::directory_iterator(groups, ec)) {
-            std::ifstream in(e.path() / L"sites.tsv", std::ios::binary);
-            if (!in) {
-                continue;
-            }
-            const std::string tsv((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    // 浮高只是整座平移（生成器的岸缘与 keel_m——崖脚的高程——一起加 δ）：岛体（龙骨、崖壁）不跟着变
+    {
+        WorldIsland lo; // 2051 #24 浮高以前
+        lo.rim_m = 228.3;
+        lo.cliff_m = 76.0;
+        lo.keel_m = 152.3;
+        lo.max_shore_m = 1264.9;
+        WorldIsland hi = lo; // 浮高 +1325.4 m 以后（仓库里现在的数）
+        hi.rim_m = 1553.8;
+        hi.keel_m = 1477.7;
+        const IslandBody a = island_body(lo), b = island_body(hi);
+        check_near(a.keel_m, 25.0 * std::sqrt(1264.9), 1e-9, "2051 #24 浮高以前：龙骨 25·√R");
+        check(a.keel_m == b.keel_m && a.wall_m == b.wall_m, "2051 #24 浮高 +1325 m：龙骨、崖壁不变（原先拿崖脚高程 1478 m 当龙骨，高岛反而更厚）");
+        check_near(island_lowest(hi, b) - island_lowest(lo, a), 1325.5, 1e-6, "…岛底跟着整座往上挪");
+    }
+    // 进程内现场生成几个巨岛群（seed42，仓库里的 config.tsv）：主岛的龙骨照 25·√R 要垂进云带，夹过以后每座岛都在最低线之上。
+    // 生成器的主岛不浮，所以夹前的数与上面照抄的一样（原先扫本机 %APPDATA% 里生成过的群，结果随机器变；那一段挪到了 zhouzhu_site_survey --island-floor）
+    {
+        GenConfig cfg;
+        std::string error;
+        if (!parse_gen_config(read_bytes(std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42/config.tsv"), cfg, error)) {
+            check(false, "读 seed42 的 config.tsv（" + error + "）");
+            return;
+        }
+        const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(cfg, 42);
+        for (const Big &g : bigs) {
+            const int node = std::atoi(g.group);
+            const auto t0 = std::chrono::steady_clock::now();
+            const skyisle::island::Group grp = gen_core::generate_group(*ps, node);
+            gen_export::GroupMeta meta;
+            meta.node = node;
+            meta.seed = 42;
+            meta.run = "seed42";
+            meta.cls = int(ps->world.islands.cls[size_t(node)]);
+            meta.tilt_deg = ps->world.planet.axial_tilt_deg;
+            const gen_export::GroupFiles f = gen_export::group_files(grp, meta);
+            const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
             WorldSites sites;
             std::string perr;
-            const std::string name = e.path().filename().string();
-            if (!parse_world_sites(tsv, sites, perr)) {
-                check(false, "本机群 " + name + " 的 sites.tsv 能解析：" + perr);
+            if (!parse_world_sites(f.sites_tsv, sites, perr)) {
+                check(false, std::string("现场生成的 ") + g.group + " 的 sites.tsv 能解析：" + perr);
                 continue;
             }
-            double low_before = 0.0, low_after = 0.0;
+            const std::vector<WorldIsland> isls = sites.terrain_islands();
+            const WorldIsland &m = isls[0];
+            check(std::abs(m.rim_m - g.rim) < 0.05 && std::abs(m.cliff_m - g.cliff) < 0.05 && std::abs(m.max_shore_m - g.shore) < 0.05,
+                    std::string("现场生成的 ") + g.group + " 主岛：岸缘、崖高、最深岸距同上面照抄的");
+            double low = 0.0, low_before = 0.0, rim_lo = 1e9;
             int clamped = 0;
-            for (const WorldIsland &isl : sites.terrain_islands()) {
+            for (const WorldIsland &isl : isls) {
                 const IslandBody b = island_body(isl);
-                const double full = std::max(isl.keel_m, 25.0 * std::sqrt(std::max(1.0, isl.max_shore_m)));
+                const double full = 25.0 * std::sqrt(std::max(1.0, isl.max_shore_m));
+                low = std::min(low, island_lowest(isl, b));
                 low_before = std::min(low_before, isl.rim_m - b.wall_m - full);
-                low_after = std::min(low_after, island_lowest(isl, b));
                 clamped += b.keel_m < full - 1e-9 ? 1 : 0;
-                n_islands++;
+                rim_lo = std::min(rim_lo, isl.rim_m);
             }
-            n_groups++;
-            n_clamped += clamped;
-            check(low_after >= floor_y - 1e-6, "本机群 " + name + " 的岛底都在最低线之上（" + std::to_string(low_after) + "）");
-            std::printf("  本机群 %s：%zu 座岛，夹前岛心底最深 %.0f m → 连岩棱最深 %.0f m（收短 %d 座）\n", name.c_str(), sites.islands.size(), low_before, low_after,
-                    clamped);
+            std::printf("  现场生成 %s（%.1f s）：%zu 座岛，夹前岛心底最深 %.0f m → 连岩棱最深 %.0f m（收短 %d 座），最低的岸缘 %.0f m\n", g.group, s, isls.size(),
+                    low_before, low, clamped, rim_lo);
+            check(low >= floor_y - 1e-6, std::string("现场生成的 ") + g.group + " 每座岛的岛底都在最低线之上");
+            check(clamped >= 1 && island_body(m).keel_m < 25.0 * std::sqrt(m.max_shore_m), std::string("现场生成的 ") + g.group + " 主岛收短了龙骨");
         }
-        std::printf("  本机生成过的 %d 群、%d 座岛，收短龙骨的 %d 座\n", n_groups, n_islands, n_clamped);
-    } else {
-        std::printf("  （本机没有生成过的岛群，跳过这一段）\n");
     }
-#endif
 }
 
 // 行星计划 P7：云带之下——云带的垂直剖面（雾、光、颠簸）、船的最低高度、海浪、白礁、y < 0 的气温（D13）、颠簸的噪声
