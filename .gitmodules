@@ -2,3 +2,9 @@
 	path = extern/godot-cpp
 	url = https://github.com/godotengine/godot-cpp
 	branch = 4.4
+[submodule "extern/skyisle-gen"]
+	path = extern/skyisle-gen
+	url = git@github.com:lieinsay/skyisle-gen.git
+[submodule "extern/zlib"]
+	path = extern/zlib
+	url = https://github.com/madler/zlib

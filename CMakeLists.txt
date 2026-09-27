@@ -9,9 +9,57 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-project(zhouzhu LANGUAGES CXX)
+project(zhouzhu LANGUAGES C CXX)
 
 add_subdirectory(extern/godot-cpp)
+
+# zlib 1.3.1（子模块 extern/zlib，与 Python 3.12 带的同一版）：只编压缩要的几个文件。
+# 进程内生成要写的逐日天气（weather.bin、lods/<节点>.wx）是 zlib.compress(…, 9) 压的，要与 Python 那条路逐字节相同就得用同一份 deflate；
+# 读仍是自己写的解码（src/inflate.*）。
+add_library(zhouzhu_zlib STATIC
+    extern/zlib/adler32.c
+    extern/zlib/compress.c
+    extern/zlib/crc32.c
+    extern/zlib/deflate.c
+    extern/zlib/trees.c
+    extern/zlib/zutil.c
+)
+target_include_directories(zhouzhu_zlib PUBLIC extern/zlib)
+if(MSVC)
+    target_compile_definitions(zhouzhu_zlib PRIVATE _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE)
+    target_compile_options(zhouzhu_zlib PRIVATE /W1)
+endif()
+set_target_properties(zhouzhu_zlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# 生成器的提交号（写进行星包的 source、岛群包的 stamp.json）：配置时读子模块的 HEAD（子模块换了提交会重新配置）
+execute_process(
+    COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}/extern/skyisle-gen" rev-parse --short HEAD
+    OUTPUT_VARIABLE ZHOUZHU_GENERATOR_COMMIT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+)
+if(NOT ZHOUZHU_GENERATOR_COMMIT)
+    set(ZHOUZHU_GENERATOR_COMMIT "?")
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git/modules/extern/skyisle-gen/HEAD")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/.git/modules/extern/skyisle-gen/HEAD")
+endif()
+
+# 生成器的 C++ 核心库（行星计划 P6e，D16）：skyisle-gen 作子模块（extern/skyisle-gen），只编它的 core/——静态库 skyisle_core，
+# 不要 Python 扩展、不要它的自检。浮点照它自己的 CMakeLists（MSVC 默认 /fp:precise、不开 /arch:AVX2：乘加不合并成 FMA，与 numpy 逐位对得上），
+# 这边不给它加任何会改浮点结果的选项。
+# Debug 配置下它也开 /O2（/fp:precise 不变）——/Od 下生成一群要慢几倍，e2e（跑的是 Debug 的扩展）等不起。
+# 运行库照全工程的 CMAKE_MSVC_RUNTIME_LIBRARY（/MD），与别的目标一致。
+set(SKYISLE_PYTHON OFF CACHE BOOL "skyisle-gen：不编 Python 扩展" FORCE)
+set(SKYISLE_TESTS OFF CACHE BOOL "skyisle-gen：不编自检" FORCE)
+set(ZHOUZHU_SAVED_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+if(MSVC)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Zi /O2 /Ob2")
+endif()
+add_subdirectory(extern/skyisle-gen/core EXCLUDE_FROM_ALL)
+set(CMAKE_CXX_FLAGS_DEBUG "${ZHOUZHU_SAVED_CXX_FLAGS_DEBUG}")
+# 核心库的编译选项（/permissive- /W3 …）是 PUBLIC 的：只留给它自己，别传到游戏的代码上
+set_target_properties(skyisle_core PROPERTIES INTERFACE_COMPILE_OPTIONS "")
 
 # 不含 Godot 头的纯算法文件：扩展与单元测试各编一份。
 set(ZHOUZHU_CORE_SOURCES
