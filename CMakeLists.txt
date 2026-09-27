@@ -382,6 +382,15 @@ if(MSVC)
     target_compile_options(zhouzhu_gen_cli PRIVATE /utf-8)
 endif()
 
+# 生成器核心库自己的自检（行星计划 P6e：随机流对 numpy 的参考值、栅格公共件的小例子；源码在子模块里）
+add_executable(skyisle_core_selftest extern/skyisle-gen/core/tests/selftest.cpp)
+target_link_libraries(skyisle_core_selftest PRIVATE skyisle_core)
+set_target_properties(skyisle_core_selftest PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
+if(MSVC)
+    target_compile_options(skyisle_core_selftest PRIVATE /utf-8)
+endif()
+add_test(NAME skyisle_core_selftest COMMAND skyisle_core_selftest)
+
 # 岛群体检：把 2051 的全部码头与村落离线铺一遍（见 tools/site_survey.cpp）
 add_executable(zhouzhu_site_survey ${ZHOUZHU_CORE_SOURCES} tools/site_survey.cpp)
 target_include_directories(zhouzhu_site_survey PRIVATE src)
