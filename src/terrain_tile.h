@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "terrain_edits.h"
 #include "world_terrain.h"
 
 // 岛群地面的分块：一棵四叉树盖住整个栅格，离焦点近的块细分到叶（128 m、64 格即 2 m 一格），
@@ -50,6 +51,11 @@ public:
 
     // 以焦点为准选出这一刻该有的块（只含可能有地的）：焦点到块的水平距离 < 块边长 × p_split 就细分
     std::vector<TileKey> select(double p_focus_x, double p_focus_z, double p_split = 1.25) const;
+
+    // 改地形的格子（terrain_edits.h）：原点取根块的西北角，两格正好一个叶块的粗格、16 格一块正好叶块的八分之一
+    EditGrid edit_grid() const;
+    // 改地形的一块（16 m）落在哪个叶块里
+    TileKey leaf_of_chunk(int p_ci, int p_cj) const;
 };
 
 struct TileMesh {
@@ -68,4 +74,18 @@ struct TileMesh {
     bool empty() const { return indices.empty(); }
 };
 
-TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layout, const TileKey &p_key);
+// p_holes：叶块里改过的块（EditGrid::chunk_key，见 tile_edit_chunks）——这些块里实心粗格的顶面与块边的裙边不出，由补丁（build_edit_patch）画；
+// 崖壁、岛底照出。粗块不看它
+TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layout, const TileKey &p_key, const std::vector<int64_t> &p_holes = {});
+
+// 叶块里有哪几块改过（按键排好）
+std::vector<int64_t> tile_edit_chunks(const TileLayout &p_layout, const TerrainEdits &p_edits, const TileKey &p_key);
+
+// 改过的一块（16 × 16 格）的补丁：块里每个实心粗格逐 1 m 格出顶面——原地形照叶块的粗格插值（同一条对角线，没改过的格与叶块逐位接得上），
+// 加上级数 × 0.5 m；格与格之间级数不同出一道竖直的坎（朝低的那格），坎归高的那格所在的块出，块外没改动时归这一块出（两头都出）；
+// 坎在叶块边上时往低的那格让 1 cm（邻块的裙边在那条线上）。改过的格顶面是土色（挖到土层以下是石色）、不换季；坎按深浅一条条染土 / 石。
+// 没改过的格挨着粗格的块边垂一圈裙边（不进碰撞），遮住 T 形接缝。顶点相对这块所在的叶块的西北角（与叶块同一套坐标）；带碰撞（顶面 + 坎）
+TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_layout, const TerrainEdits &p_edits, int p_ci, int p_cj);
+
+// 一格原地形的土层多厚（米，0.5 m 一档）：往下挖过这么深出石料。按格心的地表份额（裸岩 0、崖缘 0.5、高山草甸 1、湿地 2.5、别的 2）
+double soil_depth_at(const WorldTerrain &p_terrain, double p_x, double p_z);

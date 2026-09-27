@@ -85,6 +85,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/deposit_kinds.h
     src/dock_site.cpp
     src/dock_site.h
+    src/earthworks.cpp
+    src/earthworks.h
     src/far_group_mesh.cpp
     src/far_group_mesh.h
     src/farm_model.cpp
@@ -157,6 +159,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/stream_meter.h
     src/template_set.cpp
     src/template_set.h
+    src/terrain_edits.cpp
+    src/terrain_edits.h
     src/terrain_tile.cpp
     src/terrain_tile.h
     src/value_noise.cpp

@@ -1,12 +1,15 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
 #include "cover_blend.h"
 #include "dock_site.h"
+#include "terrain_edits.h"
 #include "value_noise.h"
 #include "world_grid.h"
 #include "world_river.h"
@@ -71,6 +74,14 @@ class WorldTerrain {
     std::unordered_map<int64_t, std::vector<int>> pad_buckets; // 桶 → 压着这个桶（含坪外 PAD_REACH_M）的坪
     std::vector<YardPlan> yards;
     YardRules yard_rules;
+    // 改地形（切片十一，terrain_edits.h）：主线程换一份新的、后台线程（建地面块、量高、导航格）照读；锁只护着指针，
+    // 外包框放在原子量里——框外的取样（绝大多数）不上锁。拷贝之间共用同一份
+    struct EditSlot {
+        std::mutex mutex;
+        std::shared_ptr<const TerrainEdits> edits;
+        std::atomic<double> min_x{ 1.0 }, min_z{ 1.0 }, max_x{ -1.0 }, max_z{ -1.0 };
+    };
+    std::shared_ptr<EditSlot> edit_slot = std::make_shared<EditSlot>();
 
 public:
     static constexpr double PAD_BUCKET_M = 256.0;
@@ -112,6 +123,13 @@ public:
     const std::vector<YardPlan> &get_yards() const { return yards; }
     // 只问有没有地（比 sample 省：不算高度）
     bool is_land(double p_x, double p_z) const;
-    // 只要顶面（没有地返回 false）
+    // 只要顶面（没有地返回 false）：玩家改过的地方加上改动（切片十一），玩法都问它
     bool surface(double p_x, double p_z, double &r_y) const;
+    // 原地形的顶面（不算玩家的改动）：散布、采场规划要按坐标哈希逐位确定，不许随改动变
+    bool surface_natural(double p_x, double p_z, double &r_y) const;
+
+    // 改地形：换一份（nullptr / 空的 = 没有改动）；此刻的那份；一点比原地形高多少（线程安全）
+    void set_edits(const std::shared_ptr<const TerrainEdits> &p_edits);
+    std::shared_ptr<const TerrainEdits> get_edits() const;
+    double edit_delta(double p_x, double p_z) const;
 };

@@ -213,6 +213,20 @@ TileKey TileLayout::leaf_at(double p_x, double p_z) const {
     return { max_level, std::clamp(int(std::floor((p_x - x0) / s)), 0, n - 1), std::clamp(int(std::floor((p_z - z0) / s)), 0, n - 1) };
 }
 
+EditGrid TileLayout::edit_grid() const {
+    EditGrid g;
+    g.x0 = x0;
+    g.z0 = z0;
+    return g;
+}
+
+TileKey TileLayout::leaf_of_chunk(int p_ci, int p_cj) const {
+    const int per_leaf = int(std::lround(LEAF_M / (EditGrid::CHUNK * EditGrid::CELL_M))); // 一个叶块每边几块
+    const int n = 1 << max_level;
+    auto floor_div = [](int a, int b) { return a >= 0 ? a / b : -((-a + b - 1) / b); };
+    return { max_level, std::clamp(floor_div(p_cj, per_leaf), 0, n - 1), std::clamp(floor_div(p_ci, per_leaf), 0, n - 1) };
+}
+
 bool TileLayout::contains(const TileKey &p_outer, const TileKey &p_inner) const {
     if (p_inner.level < p_outer.level) {
         return false;
@@ -244,7 +258,7 @@ std::vector<TileKey> TileLayout::select(double p_focus_x, double p_focus_z, doub
     return out;
 }
 
-TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layout, const TileKey &p_key) {
+TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layout, const TileKey &p_key, const std::vector<int64_t> &p_holes) {
     constexpr int N = TileLayout::CELLS;
     constexpr int W = N + 3; // 节点 -1 … N+1：外面多一圈，好判断块边上的崖与算法线
     TileMesh mesh;
@@ -262,6 +276,15 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
     }
     auto solid = [&](int qi, int qj) {
         return at(qi, qj).land && at(qi, qj + 1).land && at(qi + 1, qj).land && at(qi + 1, qj + 1).land;
+    };
+    // 改过的块里的粗格：顶面与裙边留给补丁画（build_edit_patch）
+    const int per_chunk = int(std::lround(EditGrid::CHUNK * EditGrid::CELL_M / step));
+    auto holed = [&](int qi, int qj) {
+        if (!leaf || p_holes.empty() || qi < 0 || qj < 0 || qi >= N || qj >= N) {
+            return false;
+        }
+        const int64_t chunk = EditGrid::chunk_key(p_key.iz * (N / per_chunk) + qi / per_chunk, p_key.ix * (N / per_chunk) + qj / per_chunk);
+        return std::binary_search(p_holes.begin(), p_holes.end(), chunk);
     };
 
     Builder b{ mesh, leaf, std::max(WALL_ROW_M, step) };
@@ -330,9 +353,12 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             }
             mesh.land_quads++;
             const size_t k00 = node(i, j), k01 = node(i, j + 1), k10 = node(i + 1, j), k11 = node(i + 1, j + 1);
+            const bool hole = holed(i, j);
             // 从上往下看：x 向右、z 向下，(i,j) → (i,j+1) → (i+1,j) 是顺时针
-            b.triangle(top_id[k00], top_id[k01], top_id[k10], true);
-            b.triangle(top_id[k01], top_id[k11], top_id[k10], true);
+            if (!hole) {
+                b.triangle(top_id[k00], top_id[k01], top_id[k10], true);
+                b.triangle(top_id[k01], top_id[k11], top_id[k10], true);
+            }
             if (i % bottom_stride == 0 && j % bottom_stride == 0) {
                 const int d = bottom_stride;
                 const size_t b00 = node(i, j), b01 = node(i, j + d), b10 = node(i + d, j), b11 = node(i + d, j + d);
@@ -358,7 +384,7 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                 if (!solid(e.qi, e.qj)) {
                     // 崖壁：从顶面垂到岛底
                     b.cliff(&top_pos[ka * 3], &top_pos[kb * 3], &bottom_pos[kb * 3], &bottom_pos[ka * 3], e.nx, e.nz, true);
-                } else if (on_border) {
+                } else if (on_border && !hole) {
                     // 裙边：邻块精度不同，两边的面对不齐，垂一圈同色的面把缝遮住（两面都画，从哪边看都有）
                     const float a_low[3] = { top_pos[ka * 3], top_pos[ka * 3 + 1] - skirt, top_pos[ka * 3 + 2] };
                     const float b_low[3] = { top_pos[kb * 3], top_pos[kb * 3 + 1] - skirt, top_pos[kb * 3 + 2] };
@@ -385,6 +411,278 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                     b.triangle(ua, uc, ud, false);
                     b.triangle(ua, uc, ub, false);
                     b.triangle(ua, ud, uc, false);
+                }
+            }
+        }
+    }
+    return mesh;
+}
+
+std::vector<int64_t> tile_edit_chunks(const TileLayout &p_layout, const TerrainEdits &p_edits, const TileKey &p_key) {
+    std::vector<int64_t> out;
+    if (p_key.level != p_layout.get_max_level() || p_edits.empty()) {
+        return out;
+    }
+    double x = 0.0, z = 0.0;
+    p_layout.corner(p_key, x, z);
+    const double s = p_layout.size(p_key.level);
+    // 往里缩半格：块边正好落在叶块边上，别把隔壁叶块的块也算进来
+    out = p_edits.chunks_in(x + 0.5, z + 0.5, x + s - 0.5, z + s - 0.5);
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+double soil_depth_at(const WorldTerrain &p_terrain, double p_x, double p_z) {
+    // 地表类：0 虚空 1 崖缘 2 裸岩 3 高山草甸 4 林地 5 灌丛 6 草坡 7 可耕地 8 梯田 9 湿地 10 河道 11 湖
+    static const double DEPTH[COVER_CLASSES] = { 0.0, 0.5, 0.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.5, 1.0, 0.0 };
+    const CoverMix mix = p_terrain.cover(p_x, p_z);
+    double d = 0.0;
+    for (int k = 0; k < COVER_CLASSES; k++) {
+        d += mix.w[k] * DEPTH[k];
+    }
+    return std::floor(d / EditGrid::STEP_M + 0.5) * EditGrid::STEP_M;
+}
+
+namespace {
+
+constexpr GroundColor DUG_SOIL{ 0.36f, 0.27f, 0.19f }; // 挖开的土（潮）
+constexpr GroundColor DUG_STONE{ 0.48f, 0.46f, 0.43f }; // 挖到土层以下：石
+constexpr GroundColor RAISED{ 0.45f, 0.35f, 0.24f }; // 垒上来的土（夯过）
+constexpr GroundColor WALL_SOIL{ 0.33f, 0.25f, 0.18f };
+constexpr GroundColor WALL_STONE{ 0.44f, 0.42f, 0.39f };
+constexpr GroundColor WALL_RAISED{ 0.41f, 0.32f, 0.22f };
+constexpr uint64_t BAND_SEED = 0xEA27B5ull;
+constexpr float SKIRT_INNER_M = 0.3f; // 块里没改过的格挨着粗格垂这么深（只遮 T 形接缝）
+constexpr float TILE_EDGE_INSET_M = 0.01f; // 坎在叶块边上时往低的那格让这么多（邻块的裙边在那条线上）
+
+GroundColor shade(const GroundColor &p_c, double p_k) {
+    const float k = float(p_k);
+    return { p_c.r * k, p_c.g * k, p_c.b * k };
+}
+
+} // namespace
+
+TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_layout, const TerrainEdits &p_edits, int p_ci, int p_cj) {
+    constexpr int C = EditGrid::CHUNK;
+    constexpr int N = TileLayout::CELLS;
+    TileMesh mesh;
+    const TileKey key = p_layout.leaf_of_chunk(p_ci, p_cj);
+    mesh.key = key;
+    p_layout.corner(key, mesh.origin_x, mesh.origin_z);
+    const double step = p_layout.step(key.level);
+    const int per = int(std::lround(C * EditGrid::CELL_M / step)); // 一块每边几个粗格（8）
+    const int fine = int(std::lround(step / EditGrid::CELL_M)); // 一个粗格每边几格（2）
+    const int q0i = p_ci * per - key.iz * N, q0j = p_cj * per - key.ix * N; // 这块的第一个粗格在叶块里的行列
+    const int gi0 = p_ci * C, gj0 = p_cj * C; // 这块的第一格（全局格号）
+
+    // 粗格的节点：与叶块逐位同样取样、同样算法线与地皮色（外面多一圈好算法线）
+    const int W = per + 3;
+    std::vector<TerrainSample> s(size_t(W) * W);
+    auto at = [&](int di, int dj) -> TerrainSample & { return s[size_t(di + 1) * W + size_t(dj + 1)]; };
+    for (int di = -1; di <= per + 1; di++) {
+        for (int dj = -1; dj <= per + 1; dj++) {
+            at(di, dj) = p_terrain.sample(mesh.origin_x + (q0j + dj) * step, mesh.origin_z + (q0i + di) * step);
+        }
+    }
+    struct Node {
+        double top = 0.0;
+        double n[3] = { 0.0, 1.0, 0.0 };
+        double c[3] = { 0.0, 0.0, 0.0 };
+        double season[4] = { 0.0, 0.0, 0.0, 0.0 };
+    };
+    std::vector<Node> nodes(size_t(per + 1) * (per + 1));
+    auto node = [&](int di, int dj) -> Node & { return nodes[size_t(di) * (per + 1) + size_t(dj)]; };
+    for (int di = 0; di <= per; di++) {
+        for (int dj = 0; dj <= per; dj++) {
+            const TerrainSample &c = at(di, dj);
+            Node &nd = node(di, dj);
+            nd.top = c.top;
+            const int i = q0i + di, j = q0j + dj;
+            const float x = float(j * step), z = float(i * step);
+            const float nx = float(-(at(di, dj + 1).top - at(di, dj - 1).top) / (2.0 * step));
+            const float nz = float(-(at(di + 1, dj).top - at(di - 1, dj).top) / (2.0 * step));
+            const float len = std::sqrt(nx * nx + 1.0f + nz * nz);
+            const float ux = nx / len, uy = 1.0f / len, uz = nz / len;
+            nd.n[0] = ux, nd.n[1] = uy, nd.n[2] = uz;
+            if (!c.land) {
+                continue;
+            }
+            GroundSeason season;
+            const GroundColor col = ground_color(p_terrain, c, mesh.origin_x + x, mesh.origin_z + z, uy, step, season);
+            nd.c[0] = col.r, nd.c[1] = col.g, nd.c[2] = col.b;
+            for (int k = 0; k < 4; k++) {
+                nd.season[k] = season.v[k];
+            }
+        }
+    }
+    auto solid = [&](int qi, int qj) {
+        return at(qi, qj).land && at(qi, qj + 1).land && at(qi + 1, qj).land && at(qi + 1, qj + 1).land;
+    };
+    // 粗格 (qi, qj) 里的点 (u, v)（u 沿 x、v 沿 z，0..1）：按叶块的两个三角形插值（对角线 (0,1)–(1,0)）
+    struct Attr {
+        double y = 0.0, n[3] = { 0.0, 1.0, 0.0 }, c[3] = { 0.0, 0.0, 0.0 }, season[4] = { 0.0, 0.0, 0.0, 0.0 };
+    };
+    auto interp = [&](int qi, int qj, double u, double v) {
+        const Node &a00 = node(qi, qj), &a01 = node(qi, qj + 1), &a10 = node(qi + 1, qj), &a11 = node(qi + 1, qj + 1);
+        double w00, w01, w10, w11;
+        if (u + v <= 1.0) {
+            w00 = 1.0 - u - v, w01 = u, w10 = v, w11 = 0.0;
+        } else {
+            w00 = 0.0, w01 = 1.0 - v, w10 = 1.0 - u, w11 = u + v - 1.0;
+        }
+        Attr out;
+        out.y = w00 * a00.top + w01 * a01.top + w10 * a10.top + w11 * a11.top;
+        for (int k = 0; k < 3; k++) {
+            out.n[k] = w00 * a00.n[k] + w01 * a01.n[k] + w10 * a10.n[k] + w11 * a11.n[k];
+            out.c[k] = w00 * a00.c[k] + w01 * a01.c[k] + w10 * a10.c[k] + w11 * a11.c[k];
+        }
+        for (int k = 0; k < 4; k++) {
+            out.season[k] = w00 * a00.season[k] + w01 * a01.season[k] + w10 * a10.season[k] + w11 * a11.season[k];
+        }
+        const double len = std::sqrt(out.n[0] * out.n[0] + out.n[1] * out.n[1] + out.n[2] * out.n[2]);
+        for (int k = 0; k < 3; k++) {
+            out.n[k] = len > 0.0 ? out.n[k] / len : (k == 1 ? 1.0 : 0.0);
+        }
+        return out;
+    };
+    // 块里第 (fi, fj) 格的角 (ci, cj ∈ {0, 1})
+    auto corner_attr = [&](int fi, int fj, int ci, int cj) {
+        return interp(fi / fine, fj / fine, double(fj % fine + cj) / fine, double(fi % fine + ci) / fine);
+    };
+    auto local_x = [&](int fj) { return (q0j + fj / fine) * step + double(fj % fine) * EditGrid::CELL_M; }; // 格的西边（叶块局部坐标）
+    auto local_z = [&](int fi) { return (q0i + fi / fine) * step + double(fi % fine) * EditGrid::CELL_M; };
+    std::vector<double> soil(size_t(C) * C, 0.0);
+    auto soil_of = [&](int fi, int fj) -> double & { return soil[size_t(fi) * C + size_t(fj)]; };
+    for (int fi = 0; fi < C; fi++) {
+        for (int fj = 0; fj < C; fj++) {
+            soil_of(fi, fj) = soil_depth_at(p_terrain, mesh.origin_x + local_x(fj) + 0.5, mesh.origin_z + local_z(fi) + 0.5);
+        }
+    }
+    auto cell_solid = [&](int fi, int fj) { return solid(fi / fine, fj / fine); };
+    auto season_of = [](const Attr &p_a) {
+        GroundSeason se;
+        for (int k = 0; k < 4; k++) {
+            se.v[k] = uint8_t(std::lround(std::clamp(p_a.season[k], 0.0, 255.0)));
+        }
+        return se;
+    };
+    auto color_of = [](const Attr &p_a) { return GroundColor{ float(p_a.c[0]), float(p_a.c[1]), float(p_a.c[2]) }; };
+
+    Builder b{ mesh, true };
+    auto push = [&](double x, double y, double z, const double *n, const GroundColor &c, const GroundSeason &se) {
+        return b.vertex(float(x), float(y), float(z), float(n[0]), float(n[1]), float(n[2]), c, se);
+    };
+    const double H = EditGrid::STEP_M;
+
+    // 顶面：每格自己四个顶点（格与格级数不同，角上不共用）
+    for (int fi = 0; fi < C; fi++) {
+        for (int fj = 0; fj < C; fj++) {
+            if (!cell_solid(fi, fj)) {
+                continue;
+            }
+            mesh.land_quads++;
+            const int d = p_edits.step_at(gi0 + fi, gj0 + fj);
+            int id[2][2];
+            for (int ci = 0; ci < 2; ci++) {
+                for (int cj = 0; cj < 2; cj++) {
+                    const Attr a = corner_attr(fi, fj, ci, cj);
+                    GroundColor c = color_of(a);
+                    GroundSeason se;
+                    if (d == 0) {
+                        se = season_of(a);
+                    } else if (d > 0) {
+                        c = RAISED;
+                    } else {
+                        c = -d * H >= soil_of(fi, fj) - 1e-9 ? DUG_STONE : DUG_SOIL;
+                    }
+                    const double x = local_x(fj) + cj * EditGrid::CELL_M, z = local_z(fi) + ci * EditGrid::CELL_M;
+                    id[ci][cj] = push(x, a.y + d * H, z, a.n, c, se);
+                }
+            }
+            b.triangle(id[0][0], id[0][1], id[1][0], true);
+            b.triangle(id[0][1], id[1][1], id[1][0], true);
+        }
+    }
+
+    // 坎与裙边：每格看四个邻格
+    struct Dir {
+        int di, dj;
+    };
+    const Dir dirs[4] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+    for (int fi = 0; fi < C; fi++) {
+        for (int fj = 0; fj < C; fj++) {
+            if (!cell_solid(fi, fj)) {
+                continue;
+            }
+            const int da = p_edits.step_at(gi0 + fi, gj0 + fj);
+            for (const Dir &dir : dirs) {
+                const int ni = fi + dir.di, nj = fj + dir.dj;
+                const bool inside = ni >= 0 && nj >= 0 && ni < C && nj < C;
+                const int db = p_edits.step_at(gi0 + ni, gj0 + nj);
+                const bool other_active = !inside && p_edits.chunk_active(EditGrid::chunk_of(gi0 + ni), EditGrid::chunk_of(gj0 + nj));
+                // 两格共有的那条边的两个端点（这一格的角）
+                int c0i, c0j, c1i, c1j;
+                if (dir.di != 0) {
+                    c0i = c1i = dir.di > 0 ? 1 : 0;
+                    c0j = 0, c1j = 1;
+                } else {
+                    c0j = c1j = dir.dj > 0 ? 1 : 0;
+                    c0i = 0, c1i = 1;
+                }
+                const double x0 = local_x(fj) + c0j * EditGrid::CELL_M, z0 = local_z(fi) + c0i * EditGrid::CELL_M;
+                const double x1 = local_x(fj) + c1j * EditGrid::CELL_M, z1 = local_z(fi) + c1i * EditGrid::CELL_M;
+                const Attr a0 = corner_attr(fi, fj, c0i, c0j), a1 = corner_attr(fi, fj, c1i, c1j);
+                const double n0 = a0.y, n1 = a1.y;
+                if (da == db) {
+                    // 裙边：没改过的格挨着粗格（隔壁块没改动，由叶块画）——遮住 T 形接缝；在叶块边上垂得同叶块的裙边一样深
+                    if (da == 0 && !inside && !other_active) {
+                        const int qi = q0i + fi / fine, qj = q0j + fj / fine;
+                        const bool tile_edge = (dir.di < 0 && qi == 0) || (dir.di > 0 && qi == N - 1) || (dir.dj < 0 && qj == 0) || (dir.dj > 0 && qj == N - 1);
+                        const double depth = tile_edge ? 2.0 + step : SKIRT_INNER_M;
+                        const GroundColor g0 = color_of(a0), g1 = color_of(a1);
+                        const GroundSeason s0 = season_of(a0), s1 = season_of(a1);
+                        const int va = push(x0, n0, z0, a0.n, g0, s0), vb = push(x1, n1, z1, a1.n, g1, s1);
+                        const int vc = push(x1, n1 - depth, z1, a1.n, g1, s1), vd = push(x0, n0 - depth, z0, a0.n, g0, s0);
+                        b.triangle(va, vb, vc, false);
+                        b.triangle(va, vc, vd, false);
+                        b.triangle(va, vc, vb, false);
+                        b.triangle(va, vd, vc, false);
+                    }
+                    continue;
+                }
+                // 坎归谁出：同一块里、隔壁块也有改动时归高的那格；隔壁块没改动（叶块画的）就归这一块
+                if ((inside || other_active) && da < db) {
+                    continue;
+                }
+                const bool a_high = da > db;
+                const int lo = std::min(da, db), hi = std::max(da, db);
+                // 朝外 = 朝低的那格
+                const float ox = float(a_high ? dir.dj : -dir.dj), oz = float(a_high ? dir.di : -dir.di);
+                // 坎后面是高的那格的土：土层按它算
+                const double soil_hi = a_high ? soil_of(fi, fj)
+                                              : inside ? soil_of(ni, nj)
+                                                       : soil_depth_at(p_terrain, mesh.origin_x + local_x(fj) + 0.5 + dir.dj, mesh.origin_z + local_z(fi) + 0.5 + dir.di);
+                // 在叶块边上：往低的那格让一点
+                double sx = 0.0, sz = 0.0;
+                const bool on_tile_edge = (dir.dj != 0 && (std::abs(x0) < 1e-6 || std::abs(x0 - N * step) < 1e-6)) ||
+                        (dir.di != 0 && (std::abs(z0) < 1e-6 || std::abs(z0 - N * step) < 1e-6));
+                if (on_tile_edge) {
+                    sx = ox * TILE_EDGE_INSET_M;
+                    sz = oz * TILE_EDGE_INSET_M;
+                }
+                for (int level = lo; level < hi; level++) {
+                    GroundColor c;
+                    if (level >= 0) {
+                        c = WALL_RAISED;
+                    } else {
+                        c = -(level + 1) * H >= soil_hi - 1e-9 ? WALL_STONE : WALL_SOIL;
+                    }
+                    c = shade(c, 1.0 + 0.05 * hash_noise(BAND_SEED, level * 1.7, 0.0));
+                    const float p0[3] = { float(x0 + sx), float(n0 + (level + 1) * H), float(z0 + sz) };
+                    const float p1[3] = { float(x1 + sx), float(n1 + (level + 1) * H), float(z1 + sz) };
+                    const float p2[3] = { float(x1 + sx), float(n1 + level * H), float(z1 + sz) };
+                    const float p3[3] = { float(x0 + sx), float(n0 + level * H), float(z0 + sz) };
+                    b.wall(p0, p1, p2, p3, ox, oz, c, c, true);
                 }
             }
         }

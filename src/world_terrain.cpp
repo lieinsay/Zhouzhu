@@ -290,6 +290,55 @@ bool WorldTerrain::is_land(double p_x, double p_z) const {
 
 bool WorldTerrain::surface(double p_x, double p_z, double &r_y) const {
     const TerrainSample s = sample(p_x, p_z);
+    r_y = s.top + (s.land ? edit_delta(p_x, p_z) : 0.0);
+    return s.land;
+}
+
+bool WorldTerrain::surface_natural(double p_x, double p_z, double &r_y) const {
+    const TerrainSample s = sample(p_x, p_z);
     r_y = s.top;
     return s.land;
+}
+
+void WorldTerrain::set_edits(const std::shared_ptr<const TerrainEdits> &p_edits) {
+    EditSlot &slot = *edit_slot;
+    std::lock_guard<std::mutex> lock(slot.mutex);
+    slot.edits = p_edits && !p_edits->empty() ? p_edits : nullptr;
+    // 外包框（外扩一格，免得落在框边上的点来回算错）；没有改动时框放成空的
+    double x0 = 1.0, z0 = 1.0, x1 = -1.0, z1 = -1.0;
+    if (slot.edits) {
+        for (int64_t key : slot.edits->chunk_keys()) {
+            int ci = 0, cj = 0;
+            EditGrid::chunk_unkey(key, ci, cj);
+            const EditGrid &g = slot.edits->get_grid();
+            const double cx0 = g.cell_x(cj * EditGrid::CHUNK) - 1.0, cz0 = g.cell_z(ci * EditGrid::CHUNK) - 1.0;
+            const double cx1 = g.cell_x((cj + 1) * EditGrid::CHUNK) + 1.0, cz1 = g.cell_z((ci + 1) * EditGrid::CHUNK) + 1.0;
+            if (x0 > x1) {
+                x0 = cx0, z0 = cz0, x1 = cx1, z1 = cz1;
+            } else {
+                x0 = std::min(x0, cx0), z0 = std::min(z0, cz0), x1 = std::max(x1, cx1), z1 = std::max(z1, cz1);
+            }
+        }
+    }
+    slot.min_x.store(x0);
+    slot.min_z.store(z0);
+    slot.max_x.store(x1);
+    slot.max_z.store(z1);
+}
+
+std::shared_ptr<const TerrainEdits> WorldTerrain::get_edits() const {
+    EditSlot &slot = *edit_slot;
+    std::lock_guard<std::mutex> lock(slot.mutex);
+    return slot.edits;
+}
+
+double WorldTerrain::edit_delta(double p_x, double p_z) const {
+    const EditSlot &slot = *edit_slot;
+    // 框外（绝大多数取样）不用上锁
+    if (p_x < slot.min_x.load(std::memory_order_relaxed) || p_x > slot.max_x.load(std::memory_order_relaxed) ||
+            p_z < slot.min_z.load(std::memory_order_relaxed) || p_z > slot.max_z.load(std::memory_order_relaxed)) {
+        return 0.0;
+    }
+    const std::shared_ptr<const TerrainEdits> edits = get_edits();
+    return edits ? edits->delta_at(p_x, p_z) : 0.0;
 }

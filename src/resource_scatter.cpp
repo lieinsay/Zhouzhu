@@ -462,7 +462,7 @@ std::vector<ScatterItem> ResourceScatter::chunk(const ScatterChunkKey &p_key) co
                 }
                 if (tree_like || bank_like) {
                     double east = 0.0, south = 0.0;
-                    if (!terrain->surface(x + SLOPE_ARM_M, z, east) || !terrain->surface(x, z + SLOPE_ARM_M, south)) {
+                    if (!terrain->surface_natural(x + SLOPE_ARM_M, z, east) || !terrain->surface_natural(x, z + SLOPE_ARM_M, south)) {
                         continue;
                     }
                     // 坡陡起来渐渐长不住：上限的六成起变稀，到上限一株没有

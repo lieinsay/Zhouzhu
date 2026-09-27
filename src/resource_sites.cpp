@@ -71,8 +71,8 @@ public:
 // 前后左右 3 m 的高差 / 6 m；取不到（崖边）返回 false
 bool grade_at(const WorldTerrain &p_terrain, double p_x, double p_z, double &r_grade) {
     double e = 0.0, w = 0.0, n = 0.0, so = 0.0;
-    if (!p_terrain.surface(p_x + SLOPE_ARM_M, p_z, e) || !p_terrain.surface(p_x - SLOPE_ARM_M, p_z, w) || !p_terrain.surface(p_x, p_z - SLOPE_ARM_M, n) ||
-            !p_terrain.surface(p_x, p_z + SLOPE_ARM_M, so)) {
+    if (!p_terrain.surface_natural(p_x + SLOPE_ARM_M, p_z, e) || !p_terrain.surface_natural(p_x - SLOPE_ARM_M, p_z, w) || !p_terrain.surface_natural(p_x, p_z - SLOPE_ARM_M, n) ||
+            !p_terrain.surface_natural(p_x, p_z + SLOPE_ARM_M, so)) {
         return false;
     }
     r_grade = std::max(std::abs(e - w), std::abs(n - so)) / (2.0 * SLOPE_ARM_M);
@@ -386,8 +386,8 @@ ResourcePlan plan_resource_sites(const WorldTerrain &p_terrain, const WorldSites
             plan.unreachable.push_back(w.id);
         }
         ResourceSite site = placed[k].site;
-        p_terrain.surface(site.face_x, site.face_z, site.face_y);
-        p_terrain.surface(site.pile_x, site.pile_z, site.pile_y);
+        p_terrain.surface_natural(site.face_x, site.face_z, site.face_y);
+        p_terrain.surface_natural(site.pile_x, site.pile_z, site.pile_y);
         const ResourceOccurrence *occurrence = p_data.occurrence_by_id(w.occurrence);
         site.working = int(k);
         site.id = w.id;
@@ -426,7 +426,7 @@ ResourcePlan plan_resource_sites(const WorldTerrain &p_terrain, const WorldSites
         mark.island = points[d].island;
         mark.x = landmark_at[d].first;
         mark.z = landmark_at[d].second;
-        p_terrain.surface(mark.x, mark.z, mark.y);
+        p_terrain.surface_natural(mark.x, mark.z, mark.y);
         plan.landmarks.push_back(mark);
     }
     return plan;
