@@ -36,6 +36,7 @@ import traceback
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
+sys.dont_write_bytecode = True  # import 本仓库的导出脚本时别在 tools/ 下留 __pycache__
 LOD_RES = 2000.0  # 游戏里按需生成的粗版只要 2 km 一档（行星包里全行星也是 2 km，计划 D11）
 
 _status_file = None
