@@ -63,7 +63,12 @@ class PlanetGlobe : public godot::Node3D {
         int groups = 0, stand_ins = 0;
         double land_km2 = 0.0;
         bool uploaded = false;
+        bool rebaking = false; // 重烘（生存模式粗版陆续来了）：旧贴图照用，六面都烘好再换
+        uint64_t lod_gen = 0; // 按行星包粗版的第几回烘的
+        double finished_at = 0.0; // 上回烘好的时刻（秒）
+        int rebakes = 0;
     } bake;
+    double rebake_every = 20.0; // 行星包的粗版变了，隔这么久（秒）重烘一回贴图
     bool luts_ready = false;
     bool textures_pushed = false;
     std::vector<godot::ObjectID> hidden_nodes;

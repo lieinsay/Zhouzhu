@@ -24,6 +24,8 @@ class GroupWorld;
 //     算的简化版海拔表——实例参数 season_lines =（雪线、枯黄线、秋色、落叶），CPU 按全局钟的历日每个游戏钟头算一回；
 //   - 不投影、不碰撞（D7：非锚的群只画）；着色器把远处沿视线压近（planet_squeeze），引擎按真位置剔会被远平面剪掉——
 //     包围盒放到极大，每帧按视锥的四个侧面自己剔（侧面过相机，压近不改方向）。
+// 行星计划 P4：还没有粗版的群（生存模式的新世界）画替身——planet_surface 按行星包的数撒的那一团（与行星贴图里的替身同一份），2 km 一档；
+//   行星包加进了它的粗版（lod_generation 变了）就重建，替身换成粗版。
 class FarGroups : public godot::Node3D {
     GDCLASS(FarGroups, godot::Node3D)
 
@@ -40,6 +42,7 @@ class FarGroups : public godot::Node3D {
         double distance = 0.0;
         double want_res = 0.0; // 该用哪一档（米）
         double built_res = 0.0; // 挂着的是哪一档（0 = 还没有）
+        bool stand_in = false; // 挂着的是替身（行星包里还没有它的粗版）
         godot::MeshInstance3D *mesh = nullptr;
         int triangles = 0;
         godot::Vector3 center; // 网格的包围球（群的切平面坐标）：每帧按视锥的四个侧面自己剔
@@ -55,6 +58,9 @@ class FarGroups : public godot::Node3D {
     double sel_lat = 0.0, sel_lon = 0.0;
     double season_hour = -1e9;
     int adopted = 0; // 挂上过几份网格（统计）
+    uint64_t lod_gen_seen = 0; // 行星包的粗版加到第几回了（变了就把替身换成粗版）
+    int replaced = 0; // 替身换成了粗版几回（统计）
+    void refresh_stand_ins();
     std::vector<std::unique_ptr<JobResult>> ready; // 做好了等挂的（一帧挂一份：一份上传要几毫秒）
 
     void select();
@@ -83,6 +89,9 @@ public:
     void set_hidden(int p_node, bool p_hidden);
     bool is_hidden(int p_node) const { return hidden.count(p_node) != 0; }
     double get_group_resolution(int p_node) const; // 挂着的那一档（米）；没有 0
+    int get_stand_in_count() const; // 挂着替身的群数
+    int get_replaced_count() const { return replaced; } // 替身换成粗版几回
+    bool is_stand_in(int p_node) const;
 
     void set_planet_path(const godot::NodePath &p_value) { planet_path = p_value; }
     godot::NodePath get_planet_path() const { return planet_path; }

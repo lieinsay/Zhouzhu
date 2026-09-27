@@ -295,16 +295,19 @@ void PlanetGlobe::start_jobs() {
     bake.start_usec = Time::get_singleton()->get_ticks_usec();
     bake.color.resize(6);
     bake.extra.resize(6);
-    // 大气的两张表（几百毫秒，只算一次）
-    pool->submit(lut_key(), 0.0, []() -> std::unique_ptr<JobResult> {
-        std::unique_ptr<LutResult> out = std::make_unique<LutResult>();
-        const auto t0 = std::chrono::steady_clock::now();
-        const AtmosphereModel atmo;
-        out->trans = atmo_transmittance_lut(atmo);
-        out->ms = atmo_multiscatter_lut(atmo, out->trans);
-        out->ms_time = ms_since(t0);
-        return out;
-    });
+    bake.lod_gen = view->get_planet()->lod_generation();
+    // 大气的两张表（几百毫秒，只算一次；重烘贴图时不再算）
+    if (!luts_ready && !bake.rebaking) {
+        pool->submit(lut_key(), 0.0, []() -> std::unique_ptr<JobResult> {
+            std::unique_ptr<LutResult> out = std::make_unique<LutResult>();
+            const auto t0 = std::chrono::steady_clock::now();
+            const AtmosphereModel atmo;
+            out->trans = atmo_transmittance_lut(atmo);
+            out->ms = atmo_multiscatter_lut(atmo, out->trans);
+            out->ms_time = ms_since(t0);
+            return out;
+        });
+    }
     // 行星贴图：一次只交一面（一面要几百毫秒到一秒多，别把四条线程都占了，近处的地面块照样先做）；做完一面再交下一面（collect_jobs）
     submit_face(*pool, view->share_planet(), surface_size, 0);
 }
@@ -337,7 +340,7 @@ void PlanetGlobe::collect_jobs() {
             submit_face(*pool, view->share_planet(), surface_size, r->face + 1);
         }
     }
-    if (bake.faces_done == 6 && !bake.uploaded) {
+    if (bake.faces_done == 6 && (!bake.uploaded || bake.rebaking)) {
         const uint64_t t0 = Time::get_singleton()->get_ticks_usec();
         TypedArray<Image> colors, extras;
         for (int f = 0; f < 6; f++) {
@@ -351,6 +354,9 @@ void PlanetGlobe::collect_jobs() {
         bake.color.clear();
         bake.extra.clear();
         bake.uploaded = true;
+        bake.rebakes += bake.rebaking ? 1 : 0;
+        bake.rebaking = false;
+        bake.finished_at = double(Time::get_singleton()->get_ticks_usec()) * 1e-6;
         const uint64_t now = Time::get_singleton()->get_ticks_usec();
         bake.upload_ms = double(now - t0) / 1000.0;
         bake.wall_ms = double(now - bake.start_usec) / 1000.0;
@@ -391,6 +397,17 @@ void PlanetGlobe::_process(double /* p_delta */) {
         }
     }
     collect_jobs();
+    // 行星计划 P4：行星包加了粗版（生存模式的新世界，替身陆续换成粗版）——隔 rebake_every 秒整张重烘一回，六面烘好再换（期间旧贴图照用）
+    if (bake.uploaded && !bake.rebaking && view->get_planet()->lod_generation() != bake.lod_gen &&
+            double(Time::get_singleton()->get_ticks_usec()) * 1e-6 - bake.finished_at > rebake_every) {
+        bake.started = false;
+        bake.faces_done = 0;
+        bake.cpu_ms = 0.0;
+        bake.groups = bake.stand_ins = 0;
+        bake.land_km2 = 0.0;
+        bake.rebaking = true;
+        start_jobs();
+    }
     if (!textures_pushed) {
         push_textures();
     }
@@ -568,6 +585,8 @@ Dictionary PlanetGlobe::get_state() const {
     d["lut_ms"] = bake.lut_ms;
     d["groups"] = bake.groups;
     d["stand_ins"] = bake.stand_ins;
+    d["rebakes"] = bake.rebakes;
+    d["rebaking"] = bake.rebaking;
     d["land_km2"] = bake.land_km2;
     d["blend_planet"] = blend_planet;
     d["blend_atmo"] = blend_atmo;

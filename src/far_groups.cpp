@@ -21,6 +21,7 @@
 #include "far_group_mesh.h"
 #include "job_pool.h"
 #include "planet_jobs.h"
+#include "planet_surface.h"
 #include "planet_view.h"
 #include "world.h"
 #include "world_clock.h"
@@ -38,6 +39,7 @@ struct FarGroupArrays : JobResult {
     int node = -1;
     int tier = 0; // 0 细（500 m）1 粗（2 km）
     double res_m = 0.0;
+    bool stand_in = false; // 行星包里没有它的粗版：画的是替身
     PackedVector3Array vertices, normals;
     PackedColorArray colors;
     PackedByteArray season;
@@ -64,6 +66,9 @@ void FarGroups::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_idle"), &FarGroups::is_idle);
     ClassDB::bind_method(D_METHOD("get_nodes"), &FarGroups::get_nodes);
     ClassDB::bind_method(D_METHOD("get_group_resolution", "node"), &FarGroups::get_group_resolution);
+    ClassDB::bind_method(D_METHOD("get_stand_in_count"), &FarGroups::get_stand_in_count);
+    ClassDB::bind_method(D_METHOD("get_replaced_count"), &FarGroups::get_replaced_count);
+    ClassDB::bind_method(D_METHOD("is_stand_in", "node"), &FarGroups::is_stand_in);
     ClassDB::bind_method(D_METHOD("set_planet_path", "value"), &FarGroups::set_planet_path);
     ClassDB::bind_method(D_METHOD("get_planet_path"), &FarGroups::get_planet_path);
     ClassDB::bind_method(D_METHOD("set_map_path", "value"), &FarGroups::set_map_path);
@@ -138,6 +143,7 @@ void FarGroups::_process(double /* p_delta */) {
     if (moved > reselect_m) {
         select();
     }
+    refresh_stand_ins();
     adopt_ready();
     place_all();
     update_seasons(false);
@@ -182,6 +188,22 @@ void FarGroups::select() {
     }
 }
 
+void FarGroups::refresh_stand_ins() {
+    const uint64_t gen = planet->get_planet()->lod_generation();
+    if (gen == lod_gen_seen) {
+        return;
+    }
+    lod_gen_seen = gen;
+    const PlanetData *pd = planet->get_planet();
+    for (auto &it : groups) {
+        Group &g = it.second;
+        if (g.stand_in && g.built_res > 0.0 && pd->has_lod(g.node)) {
+            g.built_res = 0.0; // 粗版来了：按同一档重建（挂上以前替身照旧画着）
+            submit(g);
+        }
+    }
+}
+
 void FarGroups::submit(Group &p_group) {
     const int tier = p_group.want_res == fine_res ? 0 : 1;
     pool->cancel(job_key(p_group.node, 1 - tier));
@@ -196,7 +218,26 @@ void FarGroups::submit(Group &p_group) {
         std::unique_ptr<FarGroupArrays> out = std::make_unique<FarGroupArrays>();
         out->node = node;
         out->tier = tier;
-        const PlanetLod lod = data->lod(node, max_res);
+        PlanetLod lod = data->lod(node, max_res);
+        if (lod.empty()) {
+            // 还没有粗版（生存模式）：替身，岸缘取每块陆地最低的格
+            lod = surface_stand_in(*data, node, 2000.0);
+            out->stand_in = true;
+            int n_isl = 0;
+            for (size_t k = 0; k < lod.land.size(); k++) {
+                n_isl = lod.land[k] ? std::max(n_isl, int(lod.island[k]) + 1) : n_isl;
+            }
+            lod.islands.assign(size_t(n_isl), PlanetLodIsland());
+            std::vector<double> rim(size_t(n_isl), 1e9);
+            for (size_t k = 0; k < lod.land.size(); k++) {
+                if (lod.land[k]) {
+                    rim[lod.island[k]] = std::min(rim[lod.island[k]], double(lod.height[k]));
+                }
+            }
+            for (int i = 0; i < n_isl; i++) {
+                lod.islands[size_t(i)].rim_m = rim[size_t(i)] < 1e8 ? rim[size_t(i)] : 0.0;
+            }
+        }
         const FarGroupMesh m = build_far_group_mesh(lod, radius_m);
         out->res_m = m.res_m;
         if (m.empty()) {
@@ -296,8 +337,15 @@ void FarGroups::adopt_ready() {
             g.center = true_box.get_center(); // 按顶点算的（自定的包围盒是极大的那个）
             g.sphere = 0.5 * true_box.size.length();
         }
+        replaced += g.stand_in && !a->stand_in && g.mesh ? 1 : 0;
         g.built_res = res;
+        g.stand_in = a->stand_in;
         g.triangles = int(a->indices.size() / 3);
+        if (g.stand_in && planet->get_planet()->has_lod(g.node)) {
+            // 这一份在后台建的时候粗版刚好来了：再按粗版建一回
+            g.built_res = 0.0;
+            submit(g);
+        }
         adopted++;
         season_hour = -1e9; // 新挂的这一份也要设时令
     }
@@ -414,6 +462,19 @@ PackedInt32Array FarGroups::get_nodes() const {
         }
     }
     return out;
+}
+
+int FarGroups::get_stand_in_count() const {
+    int n = 0;
+    for (const auto &it : groups) {
+        n += it.second.mesh && it.second.stand_in ? 1 : 0;
+    }
+    return n;
+}
+
+bool FarGroups::is_stand_in(int p_node) const {
+    const auto found = groups.find(p_node);
+    return found != groups.end() && found->second.stand_in;
 }
 
 double FarGroups::get_group_resolution(int p_node) const {

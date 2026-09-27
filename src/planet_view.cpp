@@ -4,6 +4,8 @@
 #include <cmath>
 
 #include <godot_cpp/classes/array_mesh.hpp>
+#include <godot_cpp/classes/dir_access.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
@@ -65,6 +67,9 @@ void PlanetView::_bind_methods() {
     ClassDB::bind_method(D_METHOD("nearest_node"), &PlanetView::nearest_node);
     ClassDB::bind_method(D_METHOD("drop_at", "distance"), &PlanetView::drop_at);
 
+    ClassDB::bind_method(D_METHOD("add_lod_file", "path"), &PlanetView::add_lod_file);
+    ClassDB::bind_method(D_METHOD("set_extra_lods_dir", "value"), &PlanetView::set_extra_lods_dir);
+    ClassDB::bind_method(D_METHOD("get_extra_lods_dir"), &PlanetView::get_extra_lods_dir);
     ClassDB::bind_method(D_METHOD("set_planet_dir", "value"), &PlanetView::set_planet_dir);
     ClassDB::bind_method(D_METHOD("get_planet_dir"), &PlanetView::get_planet_dir);
     ClassDB::bind_method(D_METHOD("set_map_path", "value"), &PlanetView::set_map_path);
@@ -78,6 +83,7 @@ void PlanetView::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_cloud_deck_radius", "value"), &PlanetView::set_cloud_deck_radius);
     ClassDB::bind_method(D_METHOD("get_cloud_deck_radius"), &PlanetView::get_cloud_deck_radius);
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "planet_dir", PROPERTY_HINT_DIR), "set_planet_dir", "get_planet_dir");
+    ADD_PROPERTY(PropertyInfo(Variant::STRING, "extra_lods_dir"), "set_extra_lods_dir", "get_extra_lods_dir");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "map_path"), "set_map_path", "get_map_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "cloud_sea_path"), "set_cloud_sea_path", "get_cloud_sea_path");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "clock_node"), "set_clock_node", "get_clock_node");
@@ -130,6 +136,32 @@ bool PlanetView::load_planet() {
     const PackedByteArray lb = FileAccess::get_file_as_bytes(planet_dir.path_join("lods.bin"));
     if (lb.is_empty() || !planet->parse_lods(lb.ptr(), size_t(lb.size()), error)) {
         ERR_PRINT(String(U"PlanetView：读不了粗版 ") + planet_dir + String(U"/lods.bin：") + String::utf8(error.c_str()) + String(U"——远处的岛群画不出来"));
+    }
+    // 按需生成过的粗版（生存模式的世界存档目录 lods/<节点>.bin）：退出再进不重生成
+    if (!extra_lods_dir.is_empty() && DirAccess::dir_exists_absolute(ProjectSettings::get_singleton()->globalize_path(extra_lods_dir))) {
+        const PackedStringArray files = DirAccess::get_files_at(extra_lods_dir);
+        int added = 0;
+        for (int64_t k = 0; k < files.size(); k++) {
+            if (files[k].get_extension() == "bin" && files[k].get_basename().is_valid_int()) {
+                added += add_lod_file(extra_lods_dir.path_join(files[k])) ? 1 : 0;
+            }
+        }
+        if (added > 0) {
+            print_line(vformat(String(U"PlanetView：存档目录里按需生成过的粗版 %d 份"), added));
+        }
+    }
+    return true;
+}
+
+bool PlanetView::add_lod_file(const String &p_path) {
+    if (!planet) {
+        return false;
+    }
+    const PackedByteArray bytes = FileAccess::get_file_as_bytes(p_path);
+    std::string error;
+    if (bytes.is_empty() || !planet->add_lods(bytes.ptr(), size_t(bytes.size()), error)) {
+        ERR_PRINT(String(U"PlanetView：粗版 ") + p_path + String(U" 读不了：") + String::utf8(error.c_str()));
+        return false;
     }
     return true;
 }

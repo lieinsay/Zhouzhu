@@ -34,6 +34,7 @@ class PlanetView : public godot::Node3D {
     static PlanetView *active;
 
     godot::String planet_dir = "res://planet/seed42";
+    godot::String extra_lods_dir; // 按需生成的粗版（世界存档目录的 lods/，行星计划 P4）：读完行星包接着读这里的 <节点>.bin
     godot::NodePath map_path = "../World";
     godot::NodePath cloud_sea_path = "../CloudSea";
     int clock_node = 2051; // 钟点 = 这个群的地方时（D10）
@@ -84,6 +85,8 @@ public:
     // 换锚（GroupStream 在换锚那一帧调）：锚群改成这一群（它的 world.json 的 source），弯曲、经纬度、刚体摆放从下一回 _process 起按它算
     void set_anchor_world(const GroupWorld *p_world);
     const PlanetData *get_planet() const { return planet.get(); }
+    // 按需生成的一群粗版（lods.bin 同格式）加进行星包（行星计划 P4）：远处的岛群、行星贴图按 lod_generation 自己跟上。读不了返回 false
+    bool add_lod_file(const godot::String &p_path);
     std::shared_ptr<const PlanetData> share_planet() const { return planet; }
     int get_anchor_node() const { return anchor_node; }
     const GroupFrame &get_anchor() const { return anchor; }
@@ -129,6 +132,8 @@ public:
     int nearest_node() const; // 离相机最近的群
 
     void set_planet_dir(const godot::String &p_value) { planet_dir = p_value; }
+    void set_extra_lods_dir(const godot::String &p_value) { extra_lods_dir = p_value; }
+    godot::String get_extra_lods_dir() const { return extra_lods_dir; }
     godot::String get_planet_dir() const { return planet_dir; }
     void set_map_path(const godot::NodePath &p_value) { map_path = p_value; }
     godot::NodePath get_map_path() const { return map_path; }
