@@ -212,7 +212,7 @@ bool PlanetData::parse_planet(const uint8_t *p_data, size_t p_size, std::string 
     return true;
 }
 
-bool PlanetData::parse_lods(const uint8_t *p_data, size_t p_size, std::string &r_error) {
+bool PlanetData::read_lod_index(const uint8_t *p_data, size_t p_size, int p_blob, std::vector<LodEntry> &r_entries, std::string &r_error) {
     if (p_size < 12 || std::memcmp(p_data, "ZZLD", 4) != 0) {
         r_error = "不是粗版包（lods.bin）";
         return false;
@@ -225,8 +225,7 @@ bool PlanetData::parse_lods(const uint8_t *p_data, size_t p_size, std::string &r
         return false;
     }
     const uint32_t n = r.get<uint32_t>();
-    lod_entries.clear();
-    lods_of.clear();
+    r_entries.clear();
     for (uint32_t k = 0; k < n && r.ok; k++) {
         LodEntry e;
         e.node = int(r.get<uint32_t>());
@@ -239,24 +238,90 @@ bool PlanetData::parse_lods(const uint8_t *p_data, size_t p_size, std::string &r
         r.get<uint16_t>();
         e.offset = r.get<uint64_t>();
         e.bytes = r.get<uint32_t>();
+        e.blob = p_blob;
         if (e.offset + e.bytes > p_size) {
             r.ok = false;
         }
-        lod_entries.push_back(e);
+        r_entries.push_back(e);
     }
     if (!r.ok) {
         r_error = "lods.bin 截断";
-        lod_entries.clear();
+        r_entries.clear();
         return false;
     }
-    lod_bytes.assign(p_data, p_data + p_size);
+    return true;
+}
+
+void PlanetData::index_node(int p_node) {
+    std::vector<int> &list = lods_of[p_node];
+    std::sort(list.begin(), list.end(), [&](int p_a, int p_b) { return lod_entries[size_t(p_a)].res_m > lod_entries[size_t(p_b)].res_m; });
+}
+
+bool PlanetData::parse_lods(const uint8_t *p_data, size_t p_size, std::string &r_error) {
+    std::vector<LodEntry> entries;
+    if (!read_lod_index(p_data, p_size, 0, entries, r_error)) {
+        return false;
+    }
+    std::unique_lock<std::shared_mutex> lock(lod_mutex);
+    lod_blobs.clear();
+    lod_blobs.push_back(std::make_shared<const std::vector<uint8_t>>(p_data, p_data + p_size));
+    lod_entries = std::move(entries);
+    lods_of.clear();
     for (int k = 0; k < int(lod_entries.size()); k++) {
         lods_of[lod_entries[size_t(k)].node].push_back(k);
     }
     for (auto &kv : lods_of) {
-        std::sort(kv.second.begin(), kv.second.end(), [&](int p_a, int p_b) { return lod_entries[size_t(p_a)].res_m > lod_entries[size_t(p_b)].res_m; });
+        index_node(kv.first);
     }
+    lod_gen++;
     return true;
+}
+
+bool PlanetData::add_lods(const uint8_t *p_data, size_t p_size, std::string &r_error, std::vector<int> *r_nodes) {
+    std::unique_lock<std::shared_mutex> lock(lod_mutex);
+    std::vector<LodEntry> entries;
+    if (lod_blobs.empty()) {
+        lod_blobs.push_back(std::make_shared<const std::vector<uint8_t>>()); // 0 号留给 lods.bin
+    }
+    const int blob = int(lod_blobs.size());
+    if (!read_lod_index(p_data, p_size, blob, entries, r_error)) {
+        return false;
+    }
+    for (const LodEntry &e : entries) {
+        if (e.node < 0 || e.node >= int(nodes.size())) {
+            r_error = "粗版的群号 " + std::to_string(e.node) + " 不在行星包里";
+            return false;
+        }
+    }
+    lod_blobs.push_back(std::make_shared<const std::vector<uint8_t>>(p_data, p_data + p_size));
+    for (const LodEntry &e : entries) {
+        std::vector<int> &list = lods_of[e.node];
+        // 同一格距已有的：换成新的（旧条目留在表里、不再有人指它）
+        list.erase(std::remove_if(list.begin(), list.end(), [&](int p_k) { return std::abs(lod_entries[size_t(p_k)].res_m - e.res_m) < 1e-3; }), list.end());
+        list.push_back(int(lod_entries.size()));
+        lod_entries.push_back(e);
+        index_node(e.node);
+        if (r_nodes) {
+            r_nodes->push_back(e.node);
+        }
+    }
+    lod_gen++;
+    return true;
+}
+
+int PlanetData::lod_count() const {
+    std::shared_lock<std::shared_mutex> lock(lod_mutex);
+    int n = 0;
+    for (const auto &kv : lods_of) {
+        n += int(kv.second.size());
+    }
+    return n;
+}
+
+bool PlanetData::has_lod(int p_node) const {
+    std::shared_lock<std::shared_mutex> lock(lod_mutex);
+    const auto it = lods_of.find(p_node);
+    return it != lods_of.end() && !it->second.empty();
 }
 
 bool PlanetData::load_files(const std::string &p_dir, std::string &r_error) {
@@ -365,6 +430,7 @@ double PlanetData::node_distance_m(int p_a, int p_b) const {
 }
 
 std::vector<double> PlanetData::lod_resolutions(int p_node) const {
+    std::shared_lock<std::shared_mutex> lock(lod_mutex);
     std::vector<double> out;
     auto it = lods_of.find(p_node);
     if (it != lods_of.end()) {
@@ -391,6 +457,7 @@ int PlanetData::pick_lod(int p_node, double p_max_res_m) const {
 }
 
 bool PlanetData::lod_extent(int p_node, double p_max_res_m, double &r_res_m, double &r_origin_x_km, double &r_origin_y_km, int &r_rows, int &r_cols) const {
+    std::shared_lock<std::shared_mutex> lock(lod_mutex);
     const int pick = pick_lod(p_node, p_max_res_m);
     if (pick < 0) {
         return false;
@@ -406,18 +473,25 @@ bool PlanetData::lod_extent(int p_node, double p_max_res_m, double &r_res_m, dou
 
 PlanetLod PlanetData::lod(int p_node, double p_max_res_m) const {
     PlanetLod out;
-    const int pick = pick_lod(p_node, p_max_res_m);
-    if (pick < 0) {
-        return out;
+    LodEntry e;
+    std::shared_ptr<const std::vector<uint8_t>> bytes;
+    {
+        // 只在挑哪一份时拿锁：条目与那份字节（shared_ptr）抄出来，解格子不拿锁
+        std::shared_lock<std::shared_mutex> lock(lod_mutex);
+        const int pick = pick_lod(p_node, p_max_res_m);
+        if (pick < 0) {
+            return out;
+        }
+        e = lod_entries[size_t(pick)];
+        bytes = lod_blobs[size_t(e.blob)];
     }
-    const LodEntry &e = lod_entries[size_t(pick)];
     out.node = e.node;
     out.res_m = e.res_m;
     out.origin_x_km = e.origin_x_km;
     out.origin_y_km = e.origin_y_km;
     out.rows = e.rows;
     out.cols = e.cols;
-    Reader r{ lod_bytes.data() + e.offset, e.bytes };
+    Reader r{ bytes->data() + e.offset, e.bytes };
     for (int k = 0; k < e.n_islands; k++) {
         PlanetLodIsland i;
         i.center_x_km = r.get<float>();

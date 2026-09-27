@@ -5000,6 +5000,102 @@ void test_planet_frame() {
     }
 }
 
+// 按需生成的粗版（行星计划 P4）：行星包先没有粗版（新建世界的样子），再一群一群 add_lods 加进来（lods/<节点>.bin，同格式、一条）；
+// 加进来的与 lods.bin 里那一条解出来一样，同一格距再加一次换成新的；后台照样在读（几条线程一直 lod()）时加也不出错
+void test_planet_add_lods() {
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
+    std::printf("[planet_add_lods]\n");
+    PlanetData ref;
+    std::string err;
+    if (!ref.load_files(dir, err)) {
+        check(false, "行星包读得出：" + err);
+        return;
+    }
+    std::ifstream pin(dir + "/planet.bin", std::ios::binary);
+    const std::vector<uint8_t> planet_bytes((std::istreambuf_iterator<char>(pin)), std::istreambuf_iterator<char>());
+    std::ifstream lin(dir + "/lods.bin", std::ios::binary);
+    const std::vector<uint8_t> lods((std::istreambuf_iterator<char>(lin)), std::istreambuf_iterator<char>());
+    // 从 lods.bin 里抠出一群一份的条目，拼成只有一条的 lods.bin
+    auto single = [&](int p_node, float p_res) {
+        uint32_t n = 0;
+        std::memcpy(&n, lods.data() + 8, 4);
+        for (uint32_t k = 0; k < n; k++) {
+            const uint8_t *e = lods.data() + 12 + size_t(k) * 36;
+            uint32_t node = 0;
+            float res = 0.0f;
+            std::memcpy(&node, e, 4);
+            std::memcpy(&res, e + 4, 4);
+            if (int(node) != p_node || res != p_res) {
+                continue;
+            }
+            uint64_t off = 0;
+            uint32_t bytes = 0;
+            std::memcpy(&off, e + 24, 8);
+            std::memcpy(&bytes, e + 32, 4);
+            std::vector<uint8_t> out(lods.begin(), lods.begin() + 8);
+            const uint32_t one = 1;
+            out.insert(out.end(), reinterpret_cast<const uint8_t *>(&one), reinterpret_cast<const uint8_t *>(&one) + 4);
+            out.insert(out.end(), e, e + 36);
+            const uint64_t new_off = 12 + 36;
+            std::memcpy(out.data() + 12 + 24, &new_off, 8);
+            out.insert(out.end(), lods.begin() + std::ptrdiff_t(off), lods.begin() + std::ptrdiff_t(off + bytes));
+            return out;
+        }
+        return std::vector<uint8_t>();
+    };
+    PlanetData pd;
+    check(pd.parse_planet(planet_bytes.data(), planet_bytes.size(), err), "行星包读得出");
+    const uint8_t empty[12] = { 'Z', 'Z', 'L', 'D', 1, 0, 0, 0, 0, 0, 0, 0 };
+    check(pd.parse_lods(empty, sizeof(empty), err), "0 条的 lods.bin 读得出（新建世界时还没有粗版）");
+    check(!pd.has_lod(2050) && pd.lod(2050).empty() && pd.lod_count() == 0, "没有粗版：has_lod 为假、lod() 空");
+    const uint64_t gen0 = pd.lod_generation();
+    const std::vector<uint8_t> b2050 = single(2050, 2000.0f);
+    std::vector<int> added;
+    check(!b2050.empty() && pd.add_lods(b2050.data(), b2050.size(), err, &added) && added.size() == 1 && added[0] == 2050, "加进 2050 的 2 km 粗版：" + err);
+    check(pd.has_lod(2050) && pd.lod_generation() == gen0 + 1 && pd.lod_count() == 1, "加了以后有了、代数加一");
+    const PlanetLod a = pd.lod(2050), b = ref.lod(2050, 2000.0);
+    check(a.rows == b.rows && a.cols == b.cols && a.height == b.height && a.land == b.land && a.landcover == b.landcover && a.island == b.island &&
+                    a.islands.size() == b.islands.size() && a.res_m == 2000.0,
+            "加进来的粗版与 lods.bin 里那一条解出来一样");
+    // 同一格距再加一次：换掉，不重复
+    check(pd.add_lods(b2050.data(), b2050.size(), err) && pd.lod_resolutions(2050).size() == 1, "同一格距再加一次换成新的（仍是一份）");
+    // 群号不在行星包里：不收
+    std::vector<uint8_t> bad = b2050;
+    const uint32_t bogus = 999999;
+    std::memcpy(bad.data() + 12, &bogus, 4);
+    check(!pd.add_lods(bad.data(), bad.size(), err), "群号不在行星包里的粗版不收");
+    // 几条线程一直在读，主线程接着加别的群
+    std::atomic<bool> stop{ false };
+    std::atomic<int> reads{ 0 }, wrong{ 0 };
+    std::vector<std::thread> readers;
+    for (int t = 0; t < 4; t++) {
+        readers.emplace_back([&]() {
+            while (!stop.load()) {
+                const PlanetLod l = pd.lod(2050);
+                if (l.rows != b.rows || l.land != b.land) {
+                    wrong++;
+                }
+                reads++;
+            }
+        });
+    }
+    const int more[] = { 2051, 1827, 2049, 2278, 1303, 518, 1083, 3000 };
+    int ok = 0;
+    for (int node : more) {
+        const std::vector<uint8_t> bytes = single(node, 2000.0f);
+        ok += !bytes.empty() && pd.add_lods(bytes.data(), bytes.size(), err) ? 1 : 0;
+    }
+    while (reads.load() < 200) {
+        std::this_thread::yield();
+    }
+    stop = true;
+    for (std::thread &t : readers) {
+        t.join();
+    }
+    check(ok == 8 && wrong.load() == 0, "边读边加：8 群都加上、读的 " + std::to_string(reads.load()) + " 回都对");
+    check(pd.lod(2049).land == ref.lod(2049, 2000.0).land && pd.nodes_within(pd.node(2051).lat, pd.node(2051).lon, 300000.0).size() >= 5, "后加的 2049 也对");
+}
+
 // 行星包（planet_data）：game/planet/seed42 的 planet.bin / lods.bin 读得出、数对得上生成器、2051 的粗版与仓库里的细版是同一个群
 void test_planet_data() {
     const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
@@ -5511,6 +5607,7 @@ int main() {
     test_ship_bay();
     test_goldens();
     test_planet_data();
+    test_planet_add_lods();
     test_planet_frame();
     test_far_group_mesh();
     test_planet_squeeze_height();

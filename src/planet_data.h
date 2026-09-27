@@ -1,8 +1,11 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <memory>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -10,6 +13,8 @@
 // planet.bin：行星参数、8000 个岛群的逐节点属性（按名字的列）、1° 的场（风、气候、板块、带界……第 0 行在南、格心对齐、经度绕回）。
 // lods.bin：每个岛群一到几份粗版（远处看的低模）：块内陆地占比、最高点、地表类、岛号，外加各岛的岸缘 / 岛底 / 峰。
 // 粗版按需解开（整份全解开要一百多 MB）：文件的字节留在内存里，lod() 每次解一条。
+// 行星计划 P4：游戏里按需生成的粗版（存档目录的 lods/<节点>.bin，同格式、一条）随时 add_lods 加进来——远处的岛群、行星贴图的后台活照样在读，
+// 所以粗版的索引与字节由一把读写锁护着（读的只在挑哪一份时拿一下锁，解格子不拿）。
 
 struct PlanetNode {
     double lat = 0.0, lon = 0.0; // 度（群心，东正）
@@ -74,21 +79,27 @@ class PlanetData {
         int rows = 0, cols = 0, n_islands = 0;
         uint64_t offset = 0;
         uint32_t bytes = 0;
+        int blob = 0; // 在哪一份字节里（0 = lods.bin；add_lods 加的一份一个）
     };
 
     std::vector<PlanetNode> nodes;
     std::map<std::string, std::vector<double>> columns;
     std::map<std::string, PlanetGrid> grids;
-    std::vector<uint8_t> lod_bytes;
+    std::vector<std::shared_ptr<const std::vector<uint8_t>>> lod_blobs;
     std::vector<LodEntry> lod_entries;
     std::map<int, std::vector<int>> lods_of; // 节点 → lod_entries 下标（按格距从粗到细）
+    mutable std::shared_mutex lod_mutex; // 护着 lod_blobs / lod_entries / lods_of
+    std::atomic<uint64_t> lod_gen{ 0 }; // parse_lods / add_lods 一次加一
     // 经纬格分桶（2° × 2°）：找附近的群
     static constexpr double BUCKET_DEG = 2.0;
     std::vector<std::vector<int>> buckets;
     int bucket_rows = 0, bucket_cols = 0;
 
     void build_buckets();
-    int pick_lod(int p_node, double p_max_res_m) const; // lod_entries 的下标；没有 −1
+    int pick_lod(int p_node, double p_max_res_m) const; // lod_entries 的下标；没有 −1（调用方拿着锁）
+    // 读一份 lods.bin 格式的字节：条目的偏移按这份字节算（blob 下标 p_blob）
+    static bool read_lod_index(const uint8_t *p_data, size_t p_size, int p_blob, std::vector<LodEntry> &r_entries, std::string &r_error);
+    void index_node(int p_node); // lods_of[p_node] 按格距从粗到细排（拿着写锁）
 
 public:
     int seed = 0;
@@ -117,7 +128,12 @@ public:
     std::vector<int> nodes_within(double p_lat_deg, double p_lon_deg, double p_radius_m) const;
     double node_distance_m(int p_a, int p_b) const;
 
-    int lod_count() const { return int(lod_entries.size()); }
+    int lod_count() const;
+    // 按需生成的粗版（lods/<节点>.bin，lods.bin 同格式）加进来：同一群、同一格距已有的换成新的；r_nodes 给出加了哪几群。线程安全
+    bool add_lods(const uint8_t *p_data, size_t p_size, std::string &r_error, std::vector<int> *r_nodes = nullptr);
+    bool has_lod(int p_node) const;
+    // parse_lods / add_lods 做过几回（远处的岛群、行星贴图据此知道该重做了）
+    uint64_t lod_generation() const { return lod_gen.load(); }
     // 该群有哪几种格距的粗版（米，从粗到细）
     std::vector<double> lod_resolutions(int p_node) const;
     // 解开一份粗版：格距不超过 p_max_res_m 里最粗的一份（都比它粗就给最细的）；没有粗版返回空的
