@@ -13,6 +13,8 @@
 
 #include "atmosphere.h"
 #include "input_actions.h"
+#include "orbit_camera.h"
+#include "planet_view.h"
 #include "player.h"
 #include "expedition.h"
 #include "weather.h"
@@ -45,6 +47,9 @@ void DevTools::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_god", "enabled"), &DevTools::set_god);
     ClassDB::bind_method(D_METHOD("is_god"), &DevTools::is_god);
     ClassDB::bind_method(D_METHOD("toggle_god"), &DevTools::toggle_god);
+    ClassDB::bind_method(D_METHOD("set_orbit", "enabled"), &DevTools::set_orbit);
+    ClassDB::bind_method(D_METHOD("is_orbit"), &DevTools::is_orbit);
+    ClassDB::bind_method(D_METHOD("get_orbit_camera"), &DevTools::get_orbit_camera);
     ClassDB::bind_method(D_METHOD("set_time_lapse", "enabled"), &DevTools::set_time_lapse);
     ClassDB::bind_method(D_METHOD("is_time_lapse"), &DevTools::is_time_lapse);
     ClassDB::bind_method(D_METHOD("switch_to_index", "index"), &DevTools::switch_to_index);
@@ -469,6 +474,62 @@ void DevTools::set_god(bool p_enabled) {
     show_notice(god ? String(U"god 模式：开——空格升、Ctrl 降、Shift 加速") : String(U"god 模式：关"));
 }
 
+bool DevTools::is_orbit() const {
+    return Object::cast_to<OrbitCamera>(ObjectDB::get_instance(orbit_id)) != nullptr;
+}
+
+Node *DevTools::get_orbit_camera() const {
+    return Object::cast_to<OrbitCamera>(ObjectDB::get_instance(orbit_id));
+}
+
+void DevTools::set_orbit(bool p_enabled) {
+    OrbitCamera *orbit = Object::cast_to<OrbitCamera>(ObjectDB::get_instance(orbit_id));
+    Player *player = find_player();
+    if (!p_enabled) {
+        if (!orbit) {
+            return;
+        }
+        Camera3D *prev = Object::cast_to<Camera3D>(ObjectDB::get_instance(orbit_prev_camera));
+        if (!prev && player) {
+            prev = player->get_camera();
+        }
+        if (prev && prev->is_inside_tree()) {
+            prev->make_current();
+        }
+        orbit->queue_free();
+        orbit_id = ObjectID();
+        if (player) {
+            player->set_input_blocked(blocked_before_orbit);
+        }
+        show_notice(String(U"轨道相机：关——落回人身上"));
+        return;
+    }
+    if (orbit) {
+        return;
+    }
+    PlanetView *view = PlanetView::active_view();
+    Node *scene = get_tree()->get_current_scene();
+    Viewport *viewport = get_viewport();
+    Camera3D *current = viewport ? viewport->get_camera_3d() : nullptr;
+    if (!view || !scene || !current) {
+        show_notice(String(U"这张地图没有行星数据，轨道相机用不了（F2 换到「岛群 #2051」）"));
+        return;
+    }
+    orbit = memnew(OrbitCamera);
+    orbit->set_name("OrbitCamera");
+    scene->add_child(orbit);
+    orbit->begin_from(current, view);
+    orbit->make_current();
+    orbit->connect("leave", Callable(this, "set_orbit").bind(false));
+    orbit_id = orbit->get_instance_id();
+    orbit_prev_camera = current->get_instance_id();
+    blocked_before_orbit = player && player->is_input_blocked();
+    if (player) {
+        player->set_input_blocked(true);
+    }
+    show_notice(String(U"轨道相机：鼠标 / 方向键转视角、WASD 平飞、空格 / Ctrl 升降、滚轮升降、Shift 加速 · Esc 落回人身上"));
+}
+
 void DevTools::switch_to_index(int p_index) {
     const Array paths = maps.keys();
     if (p_index >= 0 && p_index < paths.size()) {
@@ -566,6 +627,11 @@ void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
         get_viewport()->set_input_as_handled();
         return;
     }
+    if (p_event->is_action_pressed(input_actions::ORBIT_CAMERA)) {
+        set_orbit(!is_orbit()); // 开着时 F7 由轨道相机自己接（发 leave）
+        get_viewport()->set_input_as_handled();
+        return;
+    }
     // 岛群场景自己管 M；别的场景没有地图，告诉开发者去哪儿找
     if (p_event->is_action_pressed(input_actions::MAP) && !get_tree()->get_first_node_in_group(Expedition::MAP_GROUP)) {
         show_notice(String(U"这张地图没有岛群地图——按 F2 换到有地图的「岛群 #2051」"));
@@ -586,6 +652,14 @@ void DevTools::_process(double p_delta) {
     }
     if (is_time_lapse()) {
         lines.push_back(vformat(String(U"快进 ×%d · F4 关"), int(WorldClock::get_singleton()->get_fast_scale())));
+    }
+    if (const OrbitCamera *orbit = Object::cast_to<OrbitCamera>(ObjectDB::get_instance(orbit_id))) {
+        const Vector2 ll = orbit->get_latlon();
+        const double clearance = orbit->get_clearance();
+        lines.push_back(vformat(String(U"轨道相机 · 离地 %s · %s %s° %s %s° · 平飞 %s · Esc 回到人身上"),
+                clearance >= 10000.0 ? vformat(String(U"%s km"), String::num(clearance / 1000.0, clearance >= 1e6 ? 0 : 1)) : vformat(String(U"%d m"), int(clearance)),
+                ll.x < 0.0 ? String(U"南纬") : String(U"北纬"), String::num(std::abs(ll.x), 2), ll.y < 0.0 ? String(U"西经") : String(U"东经"), String::num(std::abs(ll.y), 2),
+                orbit->get_move_speed() >= 1000.0 ? vformat(String(U"%s km/s"), String::num(orbit->get_move_speed() / 1000.0, 1)) : vformat(String(U"%d m/s"), int(orbit->get_move_speed()))));
     }
     if (WorldClock::get_singleton() && WorldClock::get_singleton()->is_paused()) {
         lines.push_back(String(U"时间停着 · F6 面板里 P 继续"));

@@ -21,6 +21,7 @@ class Player;
 //   F6 开合「时间与天气」面板——读出此时此地的日期、日出日落、天气、雪线；拨钟点（往回拨是日历退一天、钟往前走）、拨日子 / 月 / 季、
 //      暂停与快进档；天气默认「自动」（此时此地该有的），可换成晴、多云、小雨……并偏气温——改在当前场景的天与光（Atmosphere）上，
 //      按它的 override_fade 渐入渐出，村子、庄稼跟着变；换了地图照样生效；
+//   F7 开关轨道相机（行星计划 P2）——有行星数据的地图里，从当前相机的位姿起飞（OrbitCamera），一路升到轨道看整颗星；Esc / F7 落回人身上；
 //   没有岛群地图的场景里按 M，提示去 F2 换一张有地图的。
 // 当前场景的根节点有 dev_tools 属性且为假时，这些键都不理。
 // 「god 开没开」「清单开没开」只在这里；它不认识各场景的编排，只找场景里的 Player。
@@ -41,6 +42,9 @@ class DevTools : public godot::Node {
     bool weather_dirty = false;
     bool blocked_before_menu = false;
     godot::ObjectID player_id;
+    godot::ObjectID orbit_id; // 轨道相机（F7）
+    godot::ObjectID orbit_prev_camera;
+    bool blocked_before_orbit = false;
     godot::Node *player_scene = nullptr; // 找到 player_id 时的当前场景；场景换了就重找
 
     godot::Label *badge = nullptr;
@@ -75,6 +79,10 @@ public:
     bool is_time_lapse() const;
     void set_god(bool p_enabled);
     bool is_god() const { return god; }
+    // 轨道相机（F7）：开的时候从当前相机起飞，关的时候落回原来的相机（人身上）
+    void set_orbit(bool p_enabled);
+    bool is_orbit() const;
+    godot::Node *get_orbit_camera() const;
     void toggle_god() { set_god(!god); }
     // 换到清单里的第 p_index 张（0 起）/ 指定路径的场景
     void switch_to_index(int p_index);

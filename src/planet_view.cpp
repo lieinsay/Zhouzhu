@@ -17,6 +17,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "map_host.h"
+#include "orbit_camera.h"
 #include "world.h"
 
 using namespace godot;
@@ -249,6 +250,12 @@ void PlanetView::_process(double /* p_delta */) {
         return;
     }
     cam = pv(p);
+    // 开发者的轨道相机（F7）自己记着双精度的位置：两万公里高、离锚群几千公里时单精度只到米
+    if (const OrbitCamera *orbit = Object::cast_to<OrbitCamera>(camera)) {
+        if (orbit->has_true_position()) {
+            cam = orbit->get_true_flat();
+        }
+    }
     view = CurveView::at(anchor, cam);
     cam_planet = anchor.to_planet(cam);
     for (int k = 0; k < 3; k++) {

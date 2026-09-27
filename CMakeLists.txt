@@ -155,6 +155,8 @@ target_sources(
         src/planet_view.h
         src/planet_globe.cpp
         src/planet_globe.h
+        src/orbit_camera.cpp
+        src/orbit_camera.h
         src/dev_tools.cpp
         src/dev_tools.h
         src/dock_builder.cpp

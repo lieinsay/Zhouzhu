@@ -5138,6 +5138,69 @@ void test_planet_squeeze_height() {
     check(f_err < 1e-5, "单精度同式（500 km 高，相对差 " + std::to_string(f_err) + "）");
 }
 
+// 行星计划 P2 · 相机在两万公里高时单精度够不够：锚群的网格（着色器同式的 visual）与天空着色器按视线求交的行星边缘，
+// 按单精度算出来的方向与双精度差多少（换成像素：1080 高、60° 视角一像素约 1e-3 rad）
+float ps_hit_f(float r0, float dy, float rs) {
+    // 逐式同 planet_sky.gdshaderinc 的 ps_hit
+    const float b = r0 * dy;
+    const float c = (r0 - rs) * (r0 + rs);
+    const float disc = b * b - c;
+    if (disc < 0.0f) {
+        return -1.0f;
+    }
+    const float sq = std::sqrt(disc);
+    if (c > 0.0f) {
+        return b >= 0.0f ? -1.0f : c / (sq - b);
+    }
+    return b >= 0.0f ? sq + b : -c / (sq - b);
+}
+
+void test_planet_float_orbit() {
+    std::printf("[planet_float_orbit]\n");
+    const GroupFrame anchor(-31.65, 152.15);
+    double worst_mesh = 0.0;
+    for (double lateral : { 0.0, 3.0e5, 5.8e5 }) {
+        for (double h : { 2.0e5, 2.0e6, 2.0e7 }) {
+            const PlanetVec cam(lateral * 0.6, h, -lateral * 0.8);
+            const CurveView view = CurveView::at(anchor, cam);
+            const CurveViewF vf = CurveViewF::from(view);
+            for (int k = 0; k < 40; k++) {
+                const double a = k * 0.9, s = (k % 10) * 11000.0;
+                const PlanetVec p(s * std::cos(a), -3000.0 + (k % 7) * 800.0, s * std::sin(a));
+                const PlanetVec v = view.visual(anchor, p);
+                const float pf[3] = { float(p.x), float(p.y), float(p.z) };
+                float o[3];
+                vf.visual(pf, o);
+                const PlanetVec d(double(o[0]) - v.x, double(o[1]) - v.y, double(o[2]) - v.z);
+                worst_mesh = std::max(worst_mesh, d.length() / (v - cam).length());
+            }
+        }
+    }
+    // 行星的边：相机在两万公里高，扫过边缘的视线在哪一条上开始打到海面（单精度 vs 双精度）
+    const double R = 6376600.0, sea = R - 5600.0;
+    double worst_limb = 0.0;
+    for (double h : { 2.0e5, 2.0e6, 2.0e7 }) {
+        const double r0 = R + h;
+        const double edge = -std::sqrt(1.0 - (sea / r0) * (sea / r0)); // 擦边那条的 dy
+        auto first_hit = [&](bool p_float) {
+            double lo = edge - 0.01, hi = edge + 0.01; // lo 打得到、hi 打不到
+            for (int it = 0; it < 60; it++) {
+                const double mid = 0.5 * (lo + hi);
+                const bool hit = p_float ? ps_hit_f(float(r0), float(mid), float(sea)) > 0.0f : [&] {
+                    const double b = r0 * mid, c = (r0 - sea) * (r0 + sea);
+                    return b * b - c >= 0.0 && b < 0.0;
+                }();
+                (hit ? lo : hi) = mid;
+            }
+            return 0.5 * (lo + hi);
+        };
+        worst_limb = std::max(worst_limb, std::abs(std::acos(std::clamp(first_hit(true), -1.0, 1.0)) - std::acos(std::clamp(first_hit(false), -1.0, 1.0))));
+    }
+    std::printf("  锚群网格的方向差最多 %.2e rad、行星边缘 %.2e rad（一像素约 1e-3 rad）\n", worst_mesh, worst_limb);
+    check(worst_mesh < 2e-6, "两万公里高、离锚群 580 km 以内：锚群网格的画面方向单精度只差 < 2e-6 rad（千分之一像素）");
+    check(worst_limb < 5e-5, "行星的边缘单精度求交只差 < 5e-5 rad（二十分之一像素）");
+}
+
 // 行星计划 P2 · 行星贴图（planet_surface）：立方体面映射往返、像素立体角加起来是 4π、全行星的陆地烘得对、2051 群心那一格是陆地、替身
 void test_planet_surface() {
     std::printf("[planet_surface]\n");
@@ -5325,6 +5388,7 @@ int main() {
     test_planet_frame();
     test_far_group_mesh();
     test_planet_squeeze_height();
+    test_planet_float_orbit();
     test_planet_sky();
     test_planet_surface();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);

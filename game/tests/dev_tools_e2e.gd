@@ -3,6 +3,9 @@ extends Node
 ## 甲乙两岛里按 M → 提示去 F2 换地图 → F3 开 god → 空格升起 → Ctrl 降回地面站住 → Shift 前飞超过 100 m/s
 ## → F3 关、重力回来往下掉 → F3 再开 → F2 开清单、按 2 换到岛群 #2051：新场景里的人还是 god、脚下有地
 ## → 按住空格升到离地 50 km（god 的速度随离地高度放大，一分钟内；行星计划 P1），岛群的画面弯曲开着、相机的经纬度对
+## → HUD 的天气行报「高空」、气温照对流层顶（不再按直减率外推到零下几十上百度；行星计划 P2）
+## → F7 开轨道相机（接过 god 的相机，行星计划 P2）：滚轮往上十格高度成倍涨、按住空格再升，高空换成整颗行星（云带顶网格淡掉、云层叠画开着）
+## → Esc 落回人身上（相机换回人的、输入放开）
 ## → F2、按 1 换回甲乙两岛。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/dev_tools_e2e.tscn
@@ -12,11 +15,11 @@ extends Node
 ## 驱动器自己不是「当前场景」：它把 main.tscn 挂成当前场景，换地图时被换掉的是那个，驱动器留着。
 
 const MAIN := preload("res://main.tscn")
-const TIMEOUT := 200.0
+const TIMEOUT := 240.0
 const CLIMB_M := 50000.0
 const CLIMB_MAX_S := 60.0
 
-enum Phase { START, PRESS_M, GOD_ON, ASCEND, DESCEND, BOOST, GOD_OFF, FALLING, GOD_AGAIN, OPEN_MENU, PICK_2051, IN_2051, CLIMB, BACK, DONE }
+enum Phase { START, PRESS_M, GOD_ON, ASCEND, DESCEND, BOOST, GOD_OFF, FALLING, GOD_AGAIN, OPEN_MENU, PICK_2051, IN_2051, CLIMB, HIGH_HUD, ORBIT_ON, ORBIT_WHEEL, ORBIT_CLIMB, ORBIT_OFF, BACK, DONE }
 
 var dev: DevTools
 var player: Player
@@ -29,6 +32,7 @@ var sent := false
 var shots_dir := ""
 var pending_shot := ""
 var shot_wait := 0
+var orbit_start := 0.0
 
 
 func _ready() -> void:
@@ -226,15 +230,94 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "高空相机的经纬度不对：%s" % ll)
 					return
 				print("dev_tools_e2e: 按住空格 %.1f s 升到离地 %.0f km（god ×%.0f），相机在南纬 %.2f° 东经 %.2f°" % [t, rise / 1000.0, player.get_god_scale(), -ll.x, ll.y])
-				_action("switch_map")
-				_goto(Phase.BACK)
+				_goto(Phase.HIGH_HUD)
 			elif t > CLIMB_MAX_S:
 				_finish(false, "按住空格 %d s 只升了 %.1f km" % [int(CLIMB_MAX_S), rise / 1000.0])
+		Phase.HIGH_HUD:
+			var atmosphere = get_tree().current_scene.get_node("Atmosphere")
+			var line: String = atmosphere.hud_text(player.global_position)
+			var w: Dictionary = atmosphere.get_weather()
+			var re := RegEx.create_from_string("(-?\\d+)°C")
+			var m := re.search(line)
+			var temp := float(m.get_string(1)) if m else -999.0
+			if not line.contains("高空") or temp < -70.0 or temp > 10.0 or int(w["altitude_band"]) != 1:
+				_finish(false, "50 km 高 HUD 的天气行不对：「%s」（层 %s）" % [line, w["altitude_band"]])
+				return
+			print("dev_tools_e2e: 50 km 高 HUD：「%s」" % line)
+			_goto(Phase.ORBIT_ON)
+		Phase.ORBIT_ON:
+			if _once():
+				_action("orbit_camera")
+			if t < 0.3:
+				return
+			var cam := get_viewport().get_camera_3d()
+			if not dev.is_orbit() or cam == null or cam.get_class() != "OrbitCamera" or not player.is_input_blocked():
+				_finish(false, "按 F7 没换成轨道相机（%s，当前相机 %s）" % [dev.is_orbit(), cam.get_class() if cam else "无"])
+				return
+			orbit_start = cam.get_clearance()
+			if absf(orbit_start - CLIMB_M) > 2000.0:
+				_finish(false, "轨道相机没接过原来相机的位置：离地 %.0f m" % orbit_start)
+				return
+			print("dev_tools_e2e: F7 轨道相机接过来，离地 %.1f km" % (orbit_start / 1000.0))
+			_goto(Phase.ORBIT_WHEEL)
+		Phase.ORBIT_WHEEL:
+			if _once():
+				for k in 10:
+					var ev := InputEventMouseButton.new()
+					ev.button_index = MOUSE_BUTTON_WHEEL_UP
+					ev.pressed = true
+					Input.parse_input_event(ev)
+			if t < 2.5:
+				return
+			var cam = get_viewport().get_camera_3d()
+			var gain: float = cam.get_clearance() / orbit_start
+			if gain < 8.0:
+				_finish(false, "滚轮往上十格只升到 %.1f 倍" % gain)
+				return
+			print("dev_tools_e2e: 滚轮往上十格，离地 %.0f km（×%.1f）" % [cam.get_clearance() / 1000.0, gain])
+			orbit_start = cam.get_clearance()
+			_goto(Phase.ORBIT_CLIMB)
+		Phase.ORBIT_CLIMB:
+			Input.action_press("ascend")
+			if t < 3.0:
+				return
+			Input.action_release("ascend")
+			var cam = get_viewport().get_camera_3d()
+			var globe = get_tree().current_scene.get_node("PlanetGlobe")
+			var gs: Dictionary = globe.get_state()
+			if cam.get_clearance() < orbit_start * 2.5:
+				_finish(false, "轨道相机按住空格 3 s 只从 %.0f km 升到 %.0f km" % [orbit_start / 1000.0, cam.get_clearance() / 1000.0])
+				return
+			if gs["blend_planet"] < 0.99 or gs["deck_alpha"] > 0.01 or not gs["overlay"]:
+				_finish(false, "高空没换成整颗行星：%s" % gs)
+				return
+			print("dev_tools_e2e: 按住空格 3 s 升到离地 %.0f km；行星 %.2f、云带顶网格 %.2f、云层叠画 %s、贴图烘好 %s" % [cam.get_clearance() / 1000.0, gs["blend_planet"], gs["deck_alpha"],
+				gs["overlay"], gs["surface_ready"]])
+			_shot("3_orbit")
+			_goto(Phase.ORBIT_OFF)
+		Phase.ORBIT_OFF:
+			if _once():
+				var ev := InputEventAction.new()
+				ev.action = "ui_cancel"
+				ev.pressed = true
+				Input.parse_input_event(ev)
+				var up := InputEventAction.new()
+				up.action = "ui_cancel"
+				Input.parse_input_event(up)
+			if t < 0.5:
+				return
+			var cam := get_viewport().get_camera_3d()
+			if dev.is_orbit() or cam != player.get_camera() or player.is_input_blocked():
+				_finish(false, "Esc 没落回人身上（轨道 %s、当前相机 %s、输入挡着 %s）" % [dev.is_orbit(), cam, player.is_input_blocked()])
+				return
+			print("dev_tools_e2e: Esc 落回人身上")
+			_action("switch_map")
+			_goto(Phase.BACK)
 		Phase.BACK:
 			if t > 0.3 and _once():
 				_key(KEY_1)
 			if _scene_path() == "res://main.tscn" and _find_player() != null:
-				_finish(true, "M 提示、god 升降与加速、关 god 恢复重力、F2 换到 2051 且 god 跟着、一分钟内升到 50 km、换回甲乙两岛")
+				_finish(true, "M 提示、god 升降与加速、关 god 恢复重力、F2 换到 2051 且 god 跟着、一分钟内升到 50 km、高空 HUD、F7 轨道相机（滚轮、空格、整颗行星、Esc 落回）、换回甲乙两岛")
 			elif t > 5.0:
 				_finish(false, "按 1 没换回甲乙两岛（当前 %s）" % _scene_path())
 

@@ -29,6 +29,7 @@ constexpr const char *SWITCH_MAP = "switch_map"; // 开发者：开合换地图�
 constexpr const char *GOD_MODE = "god_mode"; // 开发者：开关 god 模式
 constexpr const char *TIME_LAPSE = "time_lapse"; // 开发者：开关时间快进
 constexpr const char *WEATHER_PANEL = "weather_panel"; // 开发者：开合「时间与天气」面板
+constexpr const char *ORBIT_CAMERA = "orbit_camera"; // 开发者：开关轨道相机（行星计划 P2）
 constexpr const char *GEAR_UP = "gear_up"; // 掌舵时升一档
 constexpr const char *GEAR_DOWN = "gear_down"; // 掌舵时降一档
 constexpr const char *NEXT_STYLE = "next_style"; // 布置时换下一套房屋模板；室内编辑时换下一样工具

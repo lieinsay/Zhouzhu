@@ -54,6 +54,7 @@ void input_actions::register_all() {
     bind(GOD_MODE, { KEY_F3 });
     bind(TIME_LAPSE, { KEY_F4 });
     bind(WEATHER_PANEL, { KEY_F6 });
+    bind(ORBIT_CAMERA, { KEY_F7 });
     bind(FLY_DOWN, { KEY_CTRL, KEY_C });
     bind(NEXT_STYLE, { KEY_V });
     bind(PREV_STYLE, { KEY_Z });

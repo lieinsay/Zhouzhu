@@ -17,6 +17,7 @@
 #include "island.h"
 #include "island_map.h"
 #include "placed_props.h"
+#include "orbit_camera.h"
 #include "planet_globe.h"
 #include "planet_view.h"
 #include "player.h"
@@ -77,6 +78,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(PlanetView);
     GDREGISTER_CLASS(FarGroups);
     GDREGISTER_CLASS(PlanetGlobe);
+    GDREGISTER_CLASS(OrbitCamera);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {
