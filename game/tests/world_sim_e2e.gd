@@ -1,9 +1,9 @@
 extends Node
 ## 看不见的地方也在按自己的逻辑运转（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
-## 清早 05:45 主码头 #1 出生 → M 开地图点到村031 旁：卯时一到有人出门，记下仓、水缸、账
-## → 点回主码头、上船掌舵、换疾档飞 23 km 到岛 #2 的码头 #26（途中村031 的村民散了、账收回远处账房，远处的账接着记）
-## → 下船，F4 快进待到 11 点（途中断言村031 与 8.5 km 外村004 的账都在远处推进）→ F4 关
-## → 上船飞回主码头 → 点地图回村031：钟点一路连续（没倒流、没跳）、HUD 与全局钟一致；
+## 清早 05:45 主码头 #1 出生 → M 开地图点到村029 旁：卯时一到有人出门，记下仓、水缸、账
+## → 点回主码头、上船掌舵、换疾档飞 23 km 到岛 #2 的码头 #28（途中村029 的村民散了、账收回远处账房，远处的账接着记）
+## → 下船，F4 快进待到 11 点（途中断言村029 与 8.5 km 外村004 的账都在远处推进）→ F4 关
+## → 上船飞回主码头 → 点地图回村029：钟点一路连续（没倒流、没跳）、HUD 与全局钟一致；
 ##   仓里的粮按规矩变了（起初 + 收 − 播 − 吃，对得上账）、水缸有水；村民散在各自的岗位上，不在自家门口扎堆；地块都回到了农田里。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/world_sim_e2e.tscn
@@ -14,7 +14,7 @@ const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 2400.0  # 模拟秒
 const START_HOUR := 5.75
 const STAY_UNTIL_HOUR := 11.0  # 在目的码头快进待到这个钟点再飞回去（船 20 m/s，疾档回程三个多钟头，得赶在收工前回到村里）
-const VILLAGE_A := 31  # 主码头 2.5 km 外的村子（有田有水：农夫、挑水的都有）
+const VILLAGE_A := 29  # 主码头 2.5 km 外的村子（有田有水：农夫、挑水的都有；浮高计划 Z2 重导前这一处是村031）
 const VILLAGE_B := 4  # 村004：8.5 km 外，这一趟一直在远处（邑治就在主码头旁，不合适）
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
 const CRUISE_CLEARANCE := 60.0
@@ -552,15 +552,18 @@ func _check_return(folk: Villagers) -> void:
 	if away_h < 8.0:
 		_finish(false, "只离开了 %.1f 个钟头，不到大半天" % away_h)
 		return
-	# 村民：多半在外面，在自家门口扎堆的不到三成，有人在干活
+	# 村民：多半在外面，在自家门口扎堆的不到三成，有人在干活；在岗的（在做活或在去做活、送东西的路上，不算串门、歇着、回家）不少于四分之一
+	# （浮高计划 Z2：这一处的村子 66 → 76 户、房子多一圈，那一刻走在去地里、送粮路上的多，正在做活的 9 人，原来 14–15 人；原先只数正在做活的）
 	var outside := 0
 	var at_door := 0
 	var working := 0
+	var on_duty := 0
 	for i in folk.get_villager_count():
 		if folk.get_villager_phase(i) == Villagers.INDOORS:
 			continue
 		outside += 1
 		working += 1 if folk.get_villager_phase(i) == Villagers.WORKING else 0
+		on_duty += 0 if folk.get_villager_task(i) in ["chat", "wait", "go_home"] else 1
 		var p := folk.get_villager_position(i)
 		var door := folk.get_villager_door(i)
 		if Vector2(p.x - door.x, p.z - door.z).length() < 3.0:
@@ -574,9 +577,9 @@ func _check_return(folk: Villagers) -> void:
 		if folk.get_villager_phase(i) != Villagers.INDOORS:
 			var key := "%s·%s" % [folk.get_villager_job(i), folk.get_villager_task(i)]
 			jobs[key] = jobs.get(key, 0) + 1
-	_log("村民 %d 人：在外 %d、在干活 %d、在自家门口 %d；%s" % [folk.get_villager_count(), outside, working, at_door, jobs])
-	if outside * 2 < folk.get_villager_count() or at_door * 3 > outside or working * 4 < outside:
-		_finish(false, "村民不在各自岗位上（在外 %d / %d，门口 %d，干活 %d）" % [outside, folk.get_villager_count(), at_door, working])
+	_log("村民 %d 人：在外 %d、在干活 %d、在岗 %d、在自家门口 %d；%s" % [folk.get_villager_count(), outside, working, on_duty, at_door, jobs])
+	if outside * 2 < folk.get_villager_count() or at_door * 3 > outside or working == 0 or on_duty * 4 < outside:
+		_finish(false, "村民不在各自岗位上（在外 %d / %d，门口 %d，干活 %d，在岗 %d）" % [outside, folk.get_villager_count(), at_door, working, on_duty])
 		return
 	# 地：认领的地都回到了农田里
 	var farm: Farm = world.get_node("Farm")

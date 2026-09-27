@@ -1,8 +1,8 @@
 extends Node
 ## 真实比例岛群里跑一趟船（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
-## 主码头 #1 的停机坪上出生 → 旁边的邑治（407 户）已经铺出来、房子站在地上、地图上的码头与村子和 3D 里一一对应
-## → M 开地图点 8.5 km 外的村004 瞬移过去：253 户的房子站在地上、村民陆续出门 → 再开地图点回主码头
-## → 走过栈桥上船 → 掌舵、升空、R 换到疾档 → 飞 23 km 到岛 #2 的码头 #26（途中贴着地形保持高度）→ 近了换回泊档
+## 主码头 #1 的停机坪上出生 → 旁边的邑治（395 户）已经铺出来、房子站在地上、地图上的码头与村子和 3D 里一一对应
+## → M 开地图点 8.5 km 外的村004 瞬移过去：256 户的房子站在地上、村民陆续出门 → 再开地图点回主码头
+## → 走过栈桥上船 → 掌舵、升空、R 换到疾档 → 飞 23 km 到岛 #2 的码头 #28（途中贴着地形保持高度；浮高计划 Z2 重导前是 #26，岛 #2 现在比主岛低 90 m）→ 近了换回泊档
 ## → 按 E 靠泊 → 下船走上岛 #2 的停机坪 → 码头边的村子房子站在地上、有人出门。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/voyage_2051_e2e.tscn
@@ -15,7 +15,7 @@ const SETTLE_TIMEOUT := 30.0
 const FOLK_TIMEOUT := 60.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
 const SEAT_ID := 1  # 邑治：主码头 #1 旁 400 m
-const FAR_VILLAGE_ID := 4  # 村004：主码头 8.5 km 外、253 户
+const FAR_VILLAGE_ID := 4  # 村004：主码头 8.5 km 外、256 户
 const CRUISE_CLEARANCE := 60.0  # 飞越陆地时离地至少这么高
 const SLOW_DOWN_AT := 2000.0  # 离目的泊位这么近换回泊档
 
@@ -61,7 +61,7 @@ func _ready() -> void:
 	sites = main.get_node("SiteStream")
 	map = main.get_map()
 	dest_index = world.find_dock(main.destination_dock)
-	# 目的码头边上最近的聚落（#26 边上是村126）
+	# 目的码头边上最近的聚落（#28 边上是村124）
 	var dock := world.get_dock_position(dest_index)
 	var best := INF
 	var info: Dictionary = world.get_info()
@@ -301,8 +301,8 @@ func _physics_process(delta: float) -> void:
 				_finish(false, why)
 				return
 			var count: int = near.get_settlement().get_count()
-			if count != 410:
-				_finish(false, "邑治 407 户该有 407 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
+			if count != 398:
+				_finish(false, "邑治 395 户该有 395 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
 				return
 			if sites.get_village(FAR_VILLAGE_ID) != null:
 				_finish(false, "8.5 km 外的村%03d 不该铺出来" % FAR_VILLAGE_ID)
@@ -350,8 +350,8 @@ func _physics_process(delta: float) -> void:
 						_finish(false, why)
 						return
 					var count: int = far_village.get_settlement().get_count()
-					if count != 254:
-						_finish(false, "村004 253 户该有 253 座民居 + 船台，实为 %d 座" % count)
+					if count != 257:
+						_finish(false, "村004 256 户该有 256 座民居 + 船台，实为 %d 座" % count)
 						return
 					_log("村004：%d 座房子都站在地上，村民 %d 人" % [count, far_village.get_villagers().get_villager_count() if far_village.get_villagers() else 0])
 					player.set_look_yaw(0.0)  # 望着村子：落点在村心南边 250 m，look_yaw 0 朝北

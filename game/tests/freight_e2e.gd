@@ -1,7 +1,7 @@
 extends Node
 ## 跑货（world_2051.tscn），只通过输入（动作、转视角）操作，一路不瞬移：
-## 主码头 #1 出生：船上带一节储存区、4 个货位；村031、烧炭营43（专业聚落也是村）都有船台
-## → 走上船掌舵，飞 2.5 km 到村031 的船台，提示「按 E 落上船台」→ 落上去：船舷贴着跳板顶
+## 主码头 #1 出生：船上带一节储存区、4 个货位；村029、烧炭营43（专业聚落也是村）都有船台
+## → 走上船掌舵，飞 2.5 km 到村029 的船台，提示「按 E 落上船台」→ 落上去：船舷贴着跳板顶
 ## → 走下跳板到村仓（跳板脚前）：提示里有托运 → E 接下、打包第一箱：村仓少 5 份，人抱着箱子
 ## → 抱着箱子走上跳板：慢、跳不起来；到舵旁按 E 被拒（抱着箱子掌不了舵）→ 放上 0 号货位
 ## → 下跳板打包第二箱、上来放上 2 号货位 → 掌舵：航向行指着托运的目的村 → 飞 8.6 km 到 9 号岛烧炭营43 的船台落下
@@ -15,9 +15,9 @@ const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 900.0  # 模拟秒
 const SETTLE_TIMEOUT := 30.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const ORIGIN_VILLAGE := 31  # 村031：主码头 2.5 km 外、66 户
-const DEST_VILLAGE := 203  # 烧炭营43：9 号岛上、离村031 最近的别岛村子
-const ORIGIN_STORE := 132  # 村031 开账时的土产：66 户 × 2
+const ORIGIN_VILLAGE := 29  # 村029：主码头 2.5 km 外、76 户（浮高计划 Z2 重导前这一处是村031、66 户）
+const DEST_VILLAGE := 198  # 烧炭营43：9 号岛上、离村029 最近的别岛村子（重导前村号 203；9 号岛浮高 −62 m）
+const ORIGIN_STORE := 152  # 村029 开账时的土产：76 户 × 2
 const CRUISE_CLEARANCE := 60.0
 const SLOW_DOWN_AT := 1500.0
 

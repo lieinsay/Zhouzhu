@@ -24,7 +24,7 @@ const AWAY_DOCK := 2050001  # 2050 的主码头 #1（地图宿主的码头号带
 # 2051 平面里：两群陆地等远的那一点（换锚线上），与从 2051 主码头往 2050 主码头的方向
 const LINE := Vector3(-27354.0, 0.0, 71282.0)
 const OUT_DIR := Vector3(-0.3739, 0.0, 0.9275)
-const CRUISE_Y := 1500.0  # 云海上空飞（云带顶 −5000 m，两群的岸缘都在几百米）
+const CRUISE_Y := 1500.0  # 云海上空飞（云带顶 −5000 m；两群主岛的岸缘在几百米，浮高以后别的岛岸缘到 1.3–1.6 km，但这一段只飞两群之间的云海，进港前瞬移到主码头外 1.5 km 的云海上空）
 
 enum Phase { SETTLE, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, JUMP_OUT, CROSS_OUT, JUMP_IN, APPROACH, MOORING, WALK_ASHORE, CHECK_AWAY, ADVANCE_CLOCK,
 	WALK_BACK, TAKE_HELM_BACK, CLIMB_BACK, JUMP_BACK, CROSS_BACK, STOP, LEAVE_HELM, SHOT_BEFORE, FORCE_SHIFT, SHOT_AFTER, RETAKE_HELM, CHECK_HOME, DONE }
