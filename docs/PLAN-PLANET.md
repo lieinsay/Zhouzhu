@@ -819,7 +819,7 @@ Zhouzhu（游戏）
 | P3 多岛群与换锚 | 计划中 | | |
 | P4 按需生成 | 计划中 | | |
 | P5 全球天气与风 | 计划中 | | |
-| P6 生成器后端换 C++、游戏内新建世界（a–e） | 进行中：P6a、P6b 完成（2026-09-27） | skyisle-gen 5d37473..3813684（a）、1d76935..b01e5ee（b） | P6a：core/（CMake + nanobind，`python core/build.py`）、第三层地形段；P6b：资源、聚落与层级、四季、逐日天气、粗版，整群 generate 进 C++（写产物仍在前端）。两个后端整套产物逐字节相同（30 群对照 + 三 seed 180 群 + 22 个邦都 + 200 群粗版）；整群 generate 中位 7.34 s → 0.62 s（4 线程），全行星粗版 28 进程约 4 分钟（原两小时）；默认后端仍是 python；逐位只在本机（Windows、numpy 2.5.2、OpenBLAS SkylakeX）验过，ME Pro 未编 |
+| P6 生成器后端换 C++、游戏内新建世界（a–e） | 进行中：P6a、P6b、P6c 完成（2026-09-27） | skyisle-gen 5d37473..3813684（a）、1d76935..b01e5ee（b）、e54076b..a13fbff（c） | P6a：core/（CMake + nanobind，`python core/build.py`）、第三层地形段；P6b：资源、聚落与层级、四季、逐日天气、粗版，整群 generate 进 C++（写产物仍在前端）；P6c：行星层 ①–④ 进 C++（`run / stage --backend cpp`，缓存 key 分后端），三个 seed 两个后端逐位相同、六次 check 全过。至今两个后端整套产物逐字节相同；整群 generate 中位 7.34 s → 0.62 s（4 线程），①–④ 0.77 s → 0.38 s，全行星粗版 28 进程约 4 分钟（原两小时）；默认后端仍是 python；逐位只在本机（Windows、numpy 2.5.2、OpenBLAS SkylakeX）验过，ME Pro 未编 |
 | P7 降到海面 | 计划中 | | P2 之后随时 |
 
 ## 七、各期共同的规矩（提示词最后一句「照第七节的规矩收尾」指这里）
