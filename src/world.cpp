@@ -42,6 +42,7 @@ using namespace godot;
 namespace {
 
 constexpr uint64_t ADOPT_BUDGET_USEC = 4000; // 每帧最多花这么久往场景里挂地面块（连碰撞）
+constexpr size_t COLLISION_BATCH = 256; // 碰撞段一帧最多从最近的这么多段里挂（按距离挑，不整排）
 constexpr int64_t COLLISION_PART_FACES = 2048; // 叶块的碰撞按这么多个三角面一段（一段挂上 1～3 ms）
 constexpr uint64_t RIVER_BUDGET_USEC = 2000; // 每帧最多花这么久挂水面块
 constexpr double RIVER_RETARGET_M = 64.0; // 焦点挪了这么远才重新挑水面块
@@ -811,6 +812,7 @@ void GroupWorld::adopt(std::unique_ptr<TileArrays> p_tile) {
     }
     Tile tile;
     tile.key = key;
+    tile.serial = ++tile_serial;
     if (!m.empty()) {
         Array arrays;
         arrays.resize(Mesh::ARRAY_MAX);
@@ -840,7 +842,7 @@ void GroupWorld::adopt(std::unique_ptr<TileArrays> p_tile) {
             root->add_child(tile.body);
             tile.parts_left = int(m.face_parts.size());
             for (const PackedVector3Array &faces : m.face_parts) {
-                collision_ready.push_back({ key, faces });
+                collision_ready.push_back({ key, tile.serial, faces });
             }
         }
         add_child(root);
@@ -851,8 +853,8 @@ void GroupWorld::adopt(std::unique_ptr<TileArrays> p_tile) {
 
 void GroupWorld::mount_collision(const CollisionPart &p_part) {
     const auto found = tiles.find(p_part.key.packed());
-    if (found == tiles.end() || !found->second.body) {
-        return; // 块已经拆了
+    if (found == tiles.end() || !found->second.body || found->second.serial != p_part.serial) {
+        return; // 块已经拆了（或拆了又挂了一回：这是上一回的段）
     }
     Ref<ConcavePolygonShape3D> shape;
     shape.instantiate();
@@ -884,18 +886,42 @@ void GroupWorld::adopt_ready_tiles() {
         adopt(std::move(tile_ready[k]));
     }
     tile_ready.erase(tile_ready.begin(), tile_ready.begin() + int64_t(k));
-    // 碰撞一段段挂：近的先
-    if (collision_ready.empty() || !in_budget()) {
+    // 碰撞一段段挂：近的先。已经拆了的块的段先扔；不整排，挑最近的一批（god 高空飞过以后块成批地拆了又挂，段攒到七八千，
+    // 带窗口的 Debug 下光是整排一回就用完了这一帧的预算，一段也挂不上，落脚处的块永远「没挂好」）；这一帧的预算用完了也至少挂一段
+    if (collision_ready.empty()) {
         return;
     }
-    std::stable_sort(collision_ready.begin(), collision_ready.end(), [&](const CollisionPart &a, const CollisionPart &b) {
-        return tile_distance(layout, a.key, fx, fz) < tile_distance(layout, b.key, fx, fz);
-    });
-    size_t c = 0;
-    for (; c < collision_ready.size() && in_budget(); c++) {
-        mount_collision(collision_ready[c]);
+    collision_ready.erase(std::remove_if(collision_ready.begin(), collision_ready.end(),
+                                  [this](const CollisionPart &p_part) {
+                                      const auto found = tiles.find(p_part.key.packed());
+                                      return found == tiles.end() || !found->second.body || found->second.serial != p_part.serial;
+                                  }),
+            collision_ready.end());
+    if (collision_ready.empty()) {
+        return;
     }
-    collision_ready.erase(collision_ready.begin(), collision_ready.begin() + int64_t(c));
+    std::vector<std::pair<double, size_t>> near;
+    near.reserve(collision_ready.size());
+    for (size_t i = 0; i < collision_ready.size(); i++) {
+        near.push_back({ tile_distance(layout, collision_ready[i].key, fx, fz), i });
+    }
+    const size_t batch = std::min<size_t>(near.size(), COLLISION_BATCH);
+    std::partial_sort(near.begin(), near.begin() + int64_t(batch), near.end());
+    std::vector<char> mounted(collision_ready.size(), 0);
+    for (size_t c = 0; c < batch && (c == 0 || in_budget()); c++) {
+        mount_collision(collision_ready[near[c].second]);
+        mounted[near[c].second] = 1;
+    }
+    size_t w = 0;
+    for (size_t i = 0; i < collision_ready.size(); i++) {
+        if (!mounted[i]) {
+            if (w != i) {
+                collision_ready[w] = std::move(collision_ready[i]);
+            }
+            w++;
+        }
+    }
+    collision_ready.resize(w);
 }
 
 void GroupWorld::prune() {

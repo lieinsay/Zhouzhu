@@ -137,12 +137,15 @@ class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
         double sphere_radius = 0.0;
         godot::StaticBody3D *body = nullptr; // 叶块的碰撞体（碰撞一段段往上挂）
         int parts_left = 0; // 还有几段碰撞没挂
+        uint64_t serial = 0; // 第几回挂上的（同一格拆了又挂，旧的碰撞段不能挂到新的块上）
     };
     std::map<uint64_t, Tile> tiles; // 已挂进场景的
     struct CollisionPart {
         TileKey key;
+        uint64_t serial = 0; // 哪一回挂上的块的段
         godot::PackedVector3Array faces;
     };
+    uint64_t tile_serial = 0;
     std::vector<CollisionPart> collision_ready; // 挂上了网格、碰撞还没挂完的段
     std::vector<TileKey> target; // 这一刻该有的
     godot::Vector3 focus;
