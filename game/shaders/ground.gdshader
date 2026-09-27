@@ -23,13 +23,15 @@ uniform vec3 spring_leaf : source_color = vec3(0.40, 0.58, 0.24);
 uniform vec3 snow_color : source_color = vec3(0.93, 0.95, 0.98);
 
 varying vec3 v_world;
-varying vec3 v_up; // 世界法线
+varying vec3 v_group; // 这一群的平面坐标（碎斑按它取：邻群摆了刚体变换，换锚前后花样不变）
+varying vec3 v_up; // 这一群的平面里的法线
 varying vec4 v_season;
 
 void vertex() {
 	// world_vertex_coords：VERTEX、NORMAL 已是世界（平面）坐标
 	v_world = VERTEX;
-	v_up = normalize(NORMAL);
+	v_group = wx_group_pos(VERTEX);
+	v_up = normalize(mat3(wx_group_inv) * NORMAL);
 	v_season = CUSTOM0;
 	COLOR.rgb = wx_srgb_to_linear(COLOR.rgb);
 	VERTEX = planet_visual(v_world);
@@ -41,7 +43,7 @@ void fragment() {
 	vec4 e0 = wx_elev_row(v_world.y, 0); // 积雪 mm、负积温、绿、叶
 	vec4 e1 = wx_elev_row(v_world.y, 1); // 秋色、春芽、作物、日均温
 	float herb = v_season.r, field = v_season.g, shrub = v_season.b, forest = v_season.a;
-	float blotch = wx_blotch(v_world.xz / 23.0);
+	float blotch = wx_blotch(v_group.xz / 23.0);
 	float dormant = clamp(1.0 - e0.b, 0.0, 1.0);
 
 	// 草：不绿时枯黄（碎斑：有的地方先黄）
@@ -61,7 +63,7 @@ void fragment() {
 	base = mix(base, canopy, forest * broadleaf);
 
 	// 雪：积雪按碎斑进退、陡坡挂不住、背阴坡多留；河床、崖壁（法线水平）自然没有
-	float snow_mm = e0.r * (0.55 + 0.9 * wx_blotch(v_world.xz / 61.0 + vec2(17.0, 5.0))) * (1.0 + 0.5 * v_up.z * wx_misc.x);
+	float snow_mm = e0.r * (0.55 + 0.9 * wx_blotch(v_group.xz / 61.0 + vec2(17.0, 5.0))) * (1.0 + 0.5 * v_up.z * wx_hemi());
 	float cover = smoothstep(0.8, 9.0, snow_mm) * smoothstep(0.42, 0.7, v_up.y); // 五十度上下还挂得住
 	base = mix(base, snow_color, cover);
 

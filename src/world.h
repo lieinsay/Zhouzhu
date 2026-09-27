@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <godot_cpp/classes/geometry_instance3d.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
@@ -146,6 +147,15 @@ class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
     bool margins_dirty = false;
     godot::Vector3 margin_cam;
     godot::Ref<godot::Material> ground_material; // 地皮着色器；读不了退回顶点色的 StandardMaterial3D（不换季）
+    // 每群一份的着色器参数（行星计划 P3）：这一群自己的海拔表（积雪、物候、作物……，按这一群的天气模型每帧算）、分箱的高低、极向，
+    // 设在这一群的地皮、水面、散布材质上（weather.gdshaderinc 的 wx_group_*）；另有「世界 → 这一群平面」的变换，碎斑与树种的哈希按它取
+    godot::Ref<godot::ImageTexture> elev_texture;
+    std::vector<float> elev_values;
+    std::vector<godot::Ref<godot::ShaderMaterial>> shaded; // 设了 wx_group_* 的材质
+    godot::Transform3D shaded_xform; // 上回设的全局变换
+    bool shaded_xform_set = false;
+    void update_shading();
+    void push_shading(const godot::Ref<godot::ShaderMaterial> &p_material) const;
 
     // 河
     double river_radius = 4000.0; // 焦点这么远以内的水面块挂上（×1.25 以外拆）
@@ -273,6 +283,9 @@ public:
     // 锚群才有碰撞：关了地面块的碰撞体撤出物理（节点、形状都留着，开了立刻回来）
     void set_physics_on(bool p_on);
     bool is_physics_on() const { return physics_on; }
+    // 这一群的着色器参数设到一份材质上（地皮、水面在这里设；散布的材质 ScatterStream 交过来）；以后每帧跟着这一群的海拔表与摆放
+    void track_shading(const godot::Ref<godot::Material> &p_material);
+    godot::Ref<godot::Texture2D> get_elev_texture() const { return elev_texture; }
     SharedLooks &get_looks() { return looks; } // 岛群里各村共用的材质与网格
     static double clock_hours(); // 全局钟：从第 0 天子夜起的游戏钟头
     // 测试与调试：按采场号查一处采场 { index, kind, face, pile, item, name, grade, cap, stock（此刻）, island, reach, landing, built }；没落地返回空字典

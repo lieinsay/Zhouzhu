@@ -10,6 +10,7 @@
 #include <godot_cpp/classes/concave_polygon_shape3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
@@ -18,6 +19,7 @@
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/projection.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -273,7 +275,65 @@ void GroupWorld::install() {
         }
     }
     loaded = true;
+    track_shading(ground_material);
+    track_shading(river_material);
     update_runoff();
+}
+
+void GroupWorld::track_shading(const Ref<Material> &p_material) {
+    const Ref<ShaderMaterial> m = p_material;
+    if (m.is_null() || std::find(shaded.begin(), shaded.end(), m) != shaded.end()) {
+        return;
+    }
+    if (elev_texture.is_null()) {
+        update_shading(); // 头一回：先把海拔表做出来
+    }
+    push_shading(m);
+    m->set_shader_parameter("wx_group_inv", Projection(get_global_transform().affine_inverse()));
+    shaded.push_back(m);
+}
+
+void GroupWorld::push_shading(const Ref<ShaderMaterial> &p_material) const {
+    p_material->set_shader_parameter("wx_group_elev", elev_texture);
+    // 分箱的高低、极向（南半球 +1：背阴坡朝 +z）；w = 1 表示用这一群自己的
+    p_material->set_shader_parameter("wx_group", Vector4(real_t(weather.get_h_lo()), real_t(weather.get_h_hi()), weather.calendar().latitude_deg < 0.0 ? 1.0f : -1.0f, 1.0f));
+}
+
+void GroupWorld::update_shading() {
+    // 这一群的海拔表（与 Atmosphere 给全局 wx_elev 的同一个格式：两行，每箱 RGBA float）；覆盖（开发者改天气）跟着这一群的天气模型
+    const WorldClock *clock = WorldClock::get_singleton();
+    weather.elevation_table(clock ? clock->get_calendar_day() : 0.0, elev_values);
+    const int bins = weather.get_bins(), fields = WeatherModel::table_fields();
+    PackedByteArray bytes;
+    bytes.resize(int64_t(bins) * 2 * 4 * int64_t(sizeof(float)));
+    float *out = reinterpret_cast<float *>(bytes.ptrw());
+    for (int b = 0; b < bins; b++) {
+        const float *e = &elev_values[size_t(b) * size_t(fields)];
+        float *r0 = out + size_t(b) * 4, *r1 = out + (size_t(bins) + size_t(b)) * 4;
+        for (int k = 0; k < 4; k++) {
+            r0[k] = e[k]; // 积雪 mm、负积温、绿、叶
+            r1[k] = e[4 + k]; // 秋、春芽、作物、日均温
+        }
+    }
+    const Ref<Image> image = Image::create_from_data(bins, 2, false, Image::FORMAT_RGBAF, bytes);
+    if (elev_texture.is_valid() && elev_texture->get_width() == bins && elev_texture->get_height() == 2) {
+        elev_texture->update(image);
+    } else {
+        elev_texture = ImageTexture::create_from_image(image); // 头一回，或载入之后分箱变了：连分箱的高低一起重设
+        for (const Ref<ShaderMaterial> &m : shaded) {
+            push_shading(m);
+        }
+    }
+    // 摆放变了（邻群跟着相机、换锚）：世界 → 这一群平面的变换跟上
+    const Transform3D xf = get_global_transform();
+    if (!shaded_xform_set || !xf.is_equal_approx(shaded_xform)) {
+        shaded_xform = xf;
+        shaded_xform_set = true;
+        const Projection inv(xf.affine_inverse());
+        for (const Ref<ShaderMaterial> &m : shaded) {
+            m->set_shader_parameter("wx_group_inv", inv);
+        }
+    }
 }
 
 bool GroupWorld::load_data(std::string &r_error) {
@@ -798,6 +858,7 @@ void GroupWorld::_process(double /* p_delta */) {
         return;
     }
     update_runoff();
+    update_shading();
     {
         StreamTimer timer(this, StreamChannel::RIVERS);
         if (!river_targeted || Vector2(focus.x - river_focus.x, focus.z - river_focus.z).length() > RIVER_RETARGET_M) {

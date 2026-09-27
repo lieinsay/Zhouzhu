@@ -48,7 +48,7 @@ void vertex() {
 		VERTEX = vec3(0.0);
 	}
 	v_foliage = COLOR.a < 0.75 ? 1.0 : 0.0;
-	v_seed = fract(sin(dot(origin.xz, vec2(12.9898, 78.233))) * 43758.5453);
+	v_seed = fract(sin(dot(wx_group_pos(origin).xz, vec2(12.9898, 78.233))) * 43758.5453); // 这一群的平面坐标：换锚前后树种不变
 	vec4 e0 = wx_elev_row(origin.y, 0); // 积雪、负积温、绿、叶
 	vec4 e1 = wx_elev_row(origin.y, 1); // 秋、春芽、作物、日均温
 	v_snow = e0.r;

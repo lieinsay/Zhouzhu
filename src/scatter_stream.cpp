@@ -180,6 +180,7 @@ void ScatterStream::_ready() {
     world = Object::cast_to<GroupWorld>(get_node_or_null(world_path));
     ERR_FAIL_NULL_MSG(world, "ScatterStream 找不到 World（world_path）");
     world_id = world->get_instance_id();
+    world->track_shading(meshes.material()); // 这一群的海拔表、极向、平面坐标（行星计划 P3：每群一份）
 }
 
 void ScatterStream::_notification(int p_what) {

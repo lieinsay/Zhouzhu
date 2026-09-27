@@ -8,12 +8,21 @@
 //    wx_wet         地湿 0..1（相机那一带）
 //    wx_wind        风 (往 x 吹 m/s, 往 z 吹 m/s, 阵风 0..1, 风暴 0..1)
 //    wx_misc        (极向：南半球 +1（背阴坡朝 +z）北半球 −1, 夜色 0..1, 0, 0)
+// 3. 每群一份（行星计划 P3，材质参数；GroupWorld 设在这一群的地皮、水面、散布材质上）：一个场景里有好几个岛群时，各群按自己的天气模型换季、盖雪；
+//    没设的（天空、云带顶、甲乙两岛、平板岛）照旧用上面的全局参数。
+//    wx_group_elev  这一群的海拔表（格式同 wx_elev）
+//    wx_group       (分箱最低, 最高, 极向, 1 = 用这一群的)
+//    wx_group_inv   世界坐标 → 这一群的平面坐标（邻群摆了刚体变换，锚群是单位阵）：碎斑、树种这些按位置的哈希按它取，换锚前后不变
 
 global uniform sampler2D wx_elev;
 global uniform vec2 wx_elev_range;
 global uniform float wx_wet;
 global uniform vec4 wx_wind;
 global uniform vec4 wx_misc;
+
+uniform sampler2D wx_group_elev : filter_nearest;
+uniform vec4 wx_group = vec4(0.0, 2100.0, -1.0, 0.0);
+uniform mat4 wx_group_inv = mat4(1.0);
 
 uint wx_hash(ivec2 p) {
 	uvec2 q = uvec2(p & ivec2(1023));
@@ -63,16 +72,37 @@ float wx_threshold(float coverage) {
 	return mix(Q[k], Q[k + 1], c - float(k));
 }
 
-// 海拔表的一行，按海拔在两箱之间插值；表还没设（1 × 1 的默认图）时给「暖季、没雪」
+// 海拔表的一行，按海拔在两箱之间插值；表还没设（1 × 1 的默认图）时给「暖季、没雪」。材质设了这一群的表（wx_group.w = 1）就用它的
 vec4 wx_elev_row(float h, int row) {
-	ivec2 size = textureSize(wx_elev, 0);
+	bool own = wx_group.w > 0.5;
+	ivec2 size = own ? textureSize(wx_group_elev, 0) : textureSize(wx_elev, 0);
 	if (size.x < 2 || size.y < 2) {
 		return row == 0 ? vec4(0.0, 0.0, 1.0, 1.0) : vec4(0.0, 0.0, 0.5, 18.0);
 	}
-	float span = max(1.0, wx_elev_range.y - wx_elev_range.x);
-	float u = clamp((h - wx_elev_range.x) / span, 0.0, 1.0) * float(size.x - 1);
+	vec2 range = own ? wx_group.xy : wx_elev_range;
+	float span = max(1.0, range.y - range.x);
+	float u = clamp((h - range.x) / span, 0.0, 1.0) * float(size.x - 1);
 	int i = min(size.x - 2, int(floor(u)));
-	return mix(texelFetch(wx_elev, ivec2(i, row), 0), texelFetch(wx_elev, ivec2(i + 1, row), 0), u - float(i));
+	vec4 a;
+	vec4 b;
+	if (own) {
+		a = texelFetch(wx_group_elev, ivec2(i, row), 0);
+		b = texelFetch(wx_group_elev, ivec2(i + 1, row), 0);
+	} else {
+		a = texelFetch(wx_elev, ivec2(i, row), 0);
+		b = texelFetch(wx_elev, ivec2(i + 1, row), 0);
+	}
+	return mix(a, b, u - float(i));
+}
+
+// 极向（南半球 +1）：这一群的，没设用全局的
+float wx_hemi() {
+	return wx_group.w > 0.5 ? wx_group.z : wx_misc.x;
+}
+
+// 世界坐标 → 这一群的平面坐标（没设就是原样）
+vec3 wx_group_pos(vec3 world) {
+	return (wx_group_inv * vec4(world, 1.0)).xyz;
 }
 
 vec3 wx_srgb_to_linear(vec3 c) {
