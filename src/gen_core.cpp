@@ -11,6 +11,8 @@
 #include "skyisle/island/build.hpp"
 #include "skyisle/island/climate.hpp"
 #include "skyisle/island/generate.hpp"
+#include "skyisle/island/resources.hpp"
+#include "skyisle/island/settle.hpp"
 #include "skyisle/planet/view.hpp"
 
 #include "gen_export.h"
@@ -97,11 +99,6 @@ gen_export::GroupMeta meta_of(const PlanetState &p_planet, int64_t p_node) {
     return m;
 }
 
-std::array<double, 3> precip_formula(const GenConfig &p_config) {
-    return { p_config.island.get("climate.precip_mm_min", 150.0), p_config.island.get("climate.precip_mm_max", 4000.0),
-        p_config.island.get("climate.precip_mm_exp", 1.3) };
-}
-
 // 本群的 NodeInputs（③④ + ⑨ 的人口与邦都）：与 Python 前端 island/engine.inputs(full=True) 同值
 isl::NodeInputs inputs_of(const PlanetState &p_planet, int64_t p_node, bool p_polity) {
     isl::NodeInputs x = pln::node_inputs(p_planet.world.islands, p_planet.world.climate, p_node, p_planet.seed, p_planet.config.planet);
@@ -111,8 +108,45 @@ isl::NodeInputs inputs_of(const PlanetState &p_planet, int64_t p_node, bool p_po
     return x;
 }
 
+} // namespace
+
+std::array<double, 3> precip_formula(const GenConfig &p_config) {
+    return { p_config.island.get("climate.precip_mm_min", 150.0), p_config.island.get("climate.precip_mm_max", 4000.0),
+        p_config.island.get("climate.precip_mm_exp", 1.3) };
+}
+
+isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry *r_lod, gen_export::WeatherEntry *r_weather) {
+    // 与生成器的 island::generate（steps = 5、第 0 年）一步一步同：地形 → 水系 → 资源 → 四季与逐日曲线 → 逐日天气 → 聚落。
+    // 拆开来做只为在水系之后取粗版（块降采样读的地表、河湖还没被资源的开采、聚落的开垦改过——同 skyisle island lod 另跑的那一遍），
+    // 省掉生存世界里为粗版再跑一遍地形 + 水系；单测 gen_seed42 查这条路与 island::generate、与单跑粗版逐字节相同。
+    const GenConfig &cfg = p_planet.config;
+    const int threads = cfg.threads();
+    const isl::NodeInputs x = inputs_of(p_planet, p_node, true);
+    isl::Group g = isl::build_terrain(x, p_planet.view, cfg.island, 0.0, threads);
+    isl::finalize_islands(g);
+    isl::build_hydro(g, p_planet.view, cfg.island, threads);
+    isl::finalize_islands(g);
+    if (r_lod) {
+        *r_lod = gen_export::lod_entry(p_node, g, isl::block_reduce(g, gen_export::lod_factor(g.res_km * 1000.0)));
+    }
+    isl::build_resources(g, cfg.island);
+    g.clim = isl::build_climate(g.inp, p_planet.view, cfg.island);
+    g.daily = isl::daily_curves(g.clim, g.inp);
+    g.has_climate = true;
+    g.wparams = isl::season_params(g.clim, cfg.island);
+    skyisle::Rng r = isl::part_rng(g.inp, "weather:0");
+    g.weather = isl::simulate_year(r, g.clim, g.daily, g.wparams, g.inp.height_m, cfg.island, g.islands[0].rim_j, g.inp.lapse_c_per_km);
+    g.year = 0;
+    g.has_weather = true;
+    if (r_weather) {
+        *r_weather = gen_export::weather_entry(p_node, g, meta_of(p_planet, p_node));
+    }
+    isl::build_settlements(g, p_planet.view, cfg.island);
+    return g;
+}
+
 // 粗版：同 lod.build_lod（cpp 后端）——原生分辨率的地形 + 水系 → 四季、逐日曲线、一年的逐日天气（岸缘取水系之后主岛的 rim_m）→ 块降采样
-void lod_of(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather) {
+void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather) {
     const GenConfig &cfg = p_planet.config;
     const isl::NodeInputs x = inputs_of(p_planet, p_node, false);
     isl::Group g = isl::build_terrain(x, p_planet.view, cfg.island, 0.0, cfg.threads());
@@ -133,6 +167,8 @@ void lod_of(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r
     r_lod = gen_export::lod_entry(p_node, g, b);
     r_weather = gen_export::weather_entry(p_node, g, meta_of(p_planet, p_node));
 }
+
+namespace {
 
 bool write_lod_files(const PlanetState &p_planet, const std::string &p_lod_dir, const gen_export::LodEntry &p_lod, const gen_export::WeatherEntry &p_weather,
         std::string &r_error) {
@@ -287,8 +323,10 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         if (p_status) {
             p_status->progress("generate", p_p0 + 0.05 * span, "生成岛群 #" + std::to_string(p_node) + "：布局、地形、水系、气候、天气、聚落、资源");
         }
-        const isl::NodeInputs x = inputs_of(p_planet, p_node, true);
-        const isl::Group g = isl::generate(x, p_planet.view, cfg.island, 0, 5, 0.0, cfg.threads());
+        const bool want_lod = !p_lod_dir.empty();
+        gen_export::LodEntry lod;
+        gen_export::WeatherEntry wx;
+        const isl::Group g = generate_group(p_planet, p_node, want_lod ? &lod : nullptr, want_lod ? &wx : nullptr);
         r_times.generate = now_s() - t0;
         const double t1 = now_s();
         if (p_status) {
@@ -316,14 +354,11 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
             }
         }
         r_times.write = now_s() - t1;
-        if (!p_lod_dir.empty()) {
+        if (want_lod) {
             const double t2 = now_s();
             if (p_status) {
                 p_status->progress("lod", p_p0 + 0.85 * span, "岛群 #" + std::to_string(p_node) + "：2 km 粗版");
             }
-            gen_export::LodEntry lod;
-            gen_export::WeatherEntry wx;
-            lod_of(p_planet, p_node, lod, wx);
             if (!write_lod_files(p_planet, p_lod_dir, lod, wx, r_error)) {
                 return false;
             }
@@ -382,7 +417,7 @@ bool make_lod(const PlanetState &p_planet, int64_t p_node, const std::string &p_
     try {
         gen_export::LodEntry lod;
         gen_export::WeatherEntry wx;
-        lod_of(p_planet, p_node, lod, wx);
+        lod_only(p_planet, p_node, lod, wx);
         if (!write_lod_files(p_planet, p_lod_dir, lod, wx, r_error)) {
             return false;
         }

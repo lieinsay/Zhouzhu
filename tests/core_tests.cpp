@@ -6292,19 +6292,38 @@ void test_gen_seed42() {
         check(a0 > 0 && a0 == b0 && mine.compare(0, a0, repo, 0, b0) == 0, "planet.bin：头与 lod.* 之前的 36 列逐字节相同");
         check(mine.size() - a1 == repo.size() - b1 && mine.compare(a1, std::string::npos, repo, b1, std::string::npos) == 0, "planet.bin：30 张场逐字节相同");
     }
-    for (int node : { 2050, 2051 }) {
-        const auto t1 = std::chrono::steady_clock::now();
-        isl::NodeInputs x = skyisle::planet::node_inputs(ps->world.islands, ps->world.climate, node, 42, cfg.planet);
-        skyisle::planet::apply_polity(ps->society.polity, node, cfg.planet, x);
-        const isl::Group g = isl::generate(x, ps->view, cfg.island, 0, 5, 0.0, cfg.threads());
+    auto meta = [&](int node) {
         gen_export::GroupMeta m;
         m.node = node;
         m.seed = 42;
         m.run = "seed42";
         m.cls = int(ps->world.islands.cls[size_t(node)]);
         m.tilt_deg = ps->world.planet.axial_tilt_deg;
-        const gen_export::GroupFiles f = gen_export::group_files(g, m);
+        return m;
+    };
+    for (int node : { 2050, 2051 }) {
+        const auto t1 = std::chrono::steady_clock::now();
+        gen_export::LodEntry lod;
+        gen_export::WeatherEntry wx;
+        const isl::Group g = gen_core::generate_group(*ps, node, &lod, &wx);
+        const gen_export::GroupFiles f = gen_export::group_files(g, meta(node));
         const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t1).count();
+        if (node == 2050) {
+            // 拆开来一步一步生成（为了在水系之后取粗版）与生成器的 island::generate 逐字节相同；顺带的粗版与单跑粗版（同 skyisle island lod）逐字节相同
+            isl::NodeInputs x = skyisle::planet::node_inputs(ps->world.islands, ps->world.climate, node, 42, cfg.planet);
+            skyisle::planet::apply_polity(ps->society.polity, node, cfg.planet, x);
+            const gen_export::GroupFiles f2 = gen_export::group_files(isl::generate(x, ps->view, cfg.island, 0, 5, 0.0, cfg.threads()), meta(node));
+            check(f.terrain_bin == f2.terrain_bin && f.world_json == f2.world_json && f.sites_tsv == f2.sites_tsv && f.resources_tsv == f2.resources_tsv &&
+                            f.weather_tsv == f2.weather_tsv,
+                    "#2050：拆开来生成与 island::generate 的包逐字节相同");
+            gen_export::LodEntry lod2;
+            gen_export::WeatherEntry wx2;
+            gen_core::lod_only(*ps, node, lod2, wx2);
+            const std::array<double, 3> pf = gen_core::precip_formula(cfg);
+            check(gen_export::lods_bin({ lod }) == gen_export::lods_bin({ lod2 }), "#2050：顺带的粗版与单跑粗版逐字节相同");
+            check(gen_export::weather_bin({ wx }, pf, "") == gen_export::weather_bin({ wx2 }, pf, ""), "#2050：顺带的逐日天气与单跑粗版的逐字节相同");
+            check(lod.rows > 0 && lod.cols > 0 && lod.n_islands == int(g.islands.size()) && lod.res_m == 2000.0, "#2050：粗版 2 km、岛数对");
+        }
         const std::string dir = root + "/game/worlds/" + std::to_string(node);
         const std::string n = "#" + std::to_string(node) + " ";
         check(f.terrain_bin == read_bytes(dir + "/terrain.bin"), n + "terrain.bin 逐字节相同");

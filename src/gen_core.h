@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "gen_config.h"
+#include "gen_export.h"
 #include "skyisle/island/types.hpp"
 #include "skyisle/planet/civ.hpp"
 #include "skyisle/planet/planet.hpp"
@@ -64,6 +65,15 @@ struct PlanetState {
 std::shared_ptr<const PlanetState> planet_state(const GenConfig &p_config, uint64_t p_seed);
 bool has_planet_state(const GenConfig &p_config, uint64_t p_seed);
 void clear_planet_states();
+
+// 一群的生成器第三层：与 island::generate（steps = 5、第 0 年）同，r_lod / r_weather 给了就在水系之后顺带出这一群的粗版与逐日天气
+// （同 skyisle island lod 另跑一遍地形 + 水系的结果，逐字节相同）
+skyisle::island::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry *r_lod = nullptr,
+        gen_export::WeatherEntry *r_weather = nullptr);
+// 只出粗版（地形 + 水系 + 四季与一年的逐日天气，不跑资源、聚落：同 skyisle island lod）
+void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather);
+// [island.climate] precip_mm_min / max / exp（逐日天气包头里的 precip_formula）
+std::array<double, 3> precip_formula(const GenConfig &p_config);
 
 // 一群：生成器第三层（地形 → 水系 → 资源 → 四季 → 天气 → 聚落）→ 岛群包的五份 + stamp.json，先写 <out>.tmp、写好再改名成 <out>；
 // p_lod_dir 非空（生存世界）：顺带出这一群 2 km 的粗版 <lod_dir>/<节点>.bin 与第 0 年的逐日天气 <lod_dir>/<节点>.wx（天气先写）。
