@@ -1,5 +1,7 @@
 """州渚 × skyisle-gen 的生成包装（行星计划 P4，docs/PLAN-PLANET.md 第 4.7、4.8 节）：游戏在开发机上按需调生成器（它的 Python 前端，默认 C++ 后端）。
-游戏只经这一个脚本调生成器（计划第八节的退路：统一经一个包装脚本调用、PYTHONUTF8=1、超时就杀）；P6e 换成进程内的 C++ 核心时，换掉的就是这一层。
+游戏只经这一个脚本调生成器（计划第八节的退路：统一经一个包装脚本调用、PYTHONUTF8=1、超时就杀）。
+行星计划 P6e 起游戏默认在进程内生成（生成器的 C++ 核心库，src/gen_core.*、src/gen_export.*，写出的文件与这里逐字节相同）；
+这个脚本留作开发时的对照：项目设置 zhouzhu/generator/backend = "python" 时游戏照旧调它。
 
     python -X utf8 tools/zhouzhu_gen.py group --generator <skyisle-gen 根> --run <run 目录> --node N --out <岛群包目录>
                                              [--lod-dir <粗版目录>] --status <状态文件>
@@ -149,7 +151,7 @@ def make_group(ctx, gen_root: Path, run: Path, node: int, out: Path, lod_dir: Pa
     progress("export", p0 + 0.6 * span, f"岛群 #{node}：导出游戏的包（terrain.bin、world.json、sites.tsv、weather.tsv、resources.tsv）")
     tmp = out.parent / f"{out.name}.tmp"
     shutil.rmtree(tmp, ignore_errors=True)
-    export_skyisle.export(raw, tmp)
+    export_skyisle.export(raw, tmp, run=run)  # 头里的直减率、雪温、交角按 run 的配置（原先 raw 放在包旁边，上两级找不到 run，一直落到默认值——值一样）
     seconds["export"] = round(time.perf_counter() - t2, 2)
     if lod_dir is not None:
         progress("lod", p0 + 0.85 * span, f"岛群 #{node}：2 km 粗版")

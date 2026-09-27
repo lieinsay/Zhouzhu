@@ -71,6 +71,8 @@ resources.tsv —— 资源的三种形态（skyisle-gen resources.py，它的 D
     x z 是格心（米，游戏坐标），deposit / occurrence 的 grade 是 上 / 中 / 下，subtype 没有就空着。
 
 只依赖 numpy + scipy。游戏运行时不需要它，也不读 skyisle-gen 的 out/。
+行星计划 P6e：游戏进程内生成用的是这里的 C++ 版（src/gen_export.*，连同生成器 Python 前端在中间做的那一步），两边写出的文件逐字节相同；
+改这里的格式或写法，C++ 那边要一起改（单测 gen_seed42 与 tools/zhouzhu_gen.cpp 的对照会报出来）。
 """
 
 import json
@@ -267,7 +269,8 @@ def docks_from_landings(settle, island, res, origin_km, owner_of):
     return docks
 
 
-def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
+def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = None) -> None:
+    """run：生成器的 run 目录（weather.tsv 头里的直减率、雪温、云海漫顶与黄赤交角从它的配置、planet.json 取）；缺省是岛群目录的上两级（out/<run>/islands/<节点>）。"""
     terrain = np.load(src / "terrain.npz")
     info = json.loads((src / "island.json").read_text(encoding="utf-8"))
     settle = json.loads((src / "settlements.json").read_text(encoding="utf-8")) if not terrain_only else {}
@@ -331,7 +334,7 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
         assert patch.max() < 65535
         f.write(np.where(land & (patch >= 0), patch + 1, 0).astype("<u2").tobytes())
 
-    write_weather(src, info, dst)
+    write_weather(src, info, dst, run)
 
     islands = []
     for isl in info["islands"]:
@@ -410,9 +413,9 @@ def export(src: Path, dst: Path, terrain_only: bool = False) -> None:
     print(f"{dst}: {rows}×{cols} @ {res:g} m, {len(islands)} 岛, {len(world['villages'])} 村, {len(world['docks'])} 码头")
 
 
-def run_setting(src: Path, section: str, key: str, default: float) -> float:
-    """岛群目录上两级是这一轮的产物目录：从它的 config.resolved.toml 里取一个数（没有就用默认）。"""
-    path = src.parent.parent / "config.resolved.toml"
+def run_setting(src: Path, section: str, key: str, default: float, run: Path | None = None) -> float:
+    """这一轮的产物目录（run，缺省是岛群目录的上两级）：从它的 config.resolved.toml 里取一个数（没有就用默认）。"""
+    path = (run if run is not None else src.parent.parent) / "config.resolved.toml"
     if not path.exists():
         return default
     import tomllib
@@ -423,18 +426,18 @@ def run_setting(src: Path, section: str, key: str, default: float) -> float:
     return float(value) if value is not None else default
 
 
-def write_weather(src: Path, info: dict, dst: Path) -> None:
+def write_weather(src: Path, info: dict, dst: Path, run: Path | None = None) -> None:
     import csv
     climate = json.loads((src / "climate.json").read_text(encoding="utf-8"))
     cal = climate["calendar"]
     year_days = int(cal["year_days"])
-    planet_path = src.parent.parent / "s01_planet" / "planet.json"
+    planet_path = (run if run is not None else src.parent.parent) / "s01_planet" / "planet.json"
     tilt = json.loads(planet_path.read_text(encoding="utf-8"))["axial_tilt_deg"] if planet_path.exists() else 34.0
     ref = float(climate["annual"]["temp_ref_height_m"])
     rim = float(info["islands"][0]["rim_m"])
-    lapse = run_setting(src, "s04.climate", "lapse_c_per_km", 6.0)
-    snow_temp = run_setting(src, "island.weather", "snow_temp_c", 0.5)
-    fog_max = run_setting(src, "island.weather", "fog_surface_max_m", 800.0)
+    lapse = run_setting(src, "s04.climate", "lapse_c_per_km", 6.0, run)
+    snow_temp = run_setting(src, "island.weather", "snow_temp_c", 0.5, run)
+    fog_max = run_setting(src, "island.weather", "fog_surface_max_m", 800.0, run)
     fog_rise = 120.0 + 0.25 * max(0.0, fog_max - ref)  # 与生成器岛屿页的季相层同一式：台面越低，云海漫得越高
     lines = [
         f"# 由 tools/export_skyisle.py 从 weather_y0.csv / climate.json 导出，别手改。year_days {year_days}  precip_mm {info['hydro']['precip_mm']:g}",

@@ -10,7 +10,10 @@ run 目录里没有粗版（新建世界：只算了行星层）照样导：lods
 
 粗版先用生成器批跑：skyisle island lod --run out/seed42 --lod-res 2000,1000（全行星），
                    skyisle island lod --run out/seed42 --lod-res 500 --near 2051 --radius 600（近邻）。
-只依赖 numpy。游戏运行时不需要它，也不读 skyisle-gen 的 out/。两份文件都是小端、不压缩（纯 C++ 读，不引 zlib）：
+只依赖 numpy。游戏运行时不需要它，也不读 skyisle-gen 的 out/。
+行星计划 P6e：游戏进程内生成用的是这里的 C++ 版（src/gen_export.*，连同生成器 Python 前端在中间做的那一步），两边写出的文件逐字节相同；
+改这里的格式或写法，C++ 那边要一起改（单测 gen_seed42 与 tools/zhouzhu_gen.cpp 的对照会报出来）。
+两份文件都是小端、不压缩（纯 C++ 读，不引 zlib）：
 
 planet.bin —— 行星层：
     char[4] "ZZPL"
