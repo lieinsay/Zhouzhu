@@ -4076,6 +4076,36 @@ void test_job_pool() {
         check(pool.thread_count() == 0 && pool.state(key(600)) == JobPool::State::NONE, "停：排着的撤掉、线程收了");
     }
     {
+        // 优先级是 NaN（玩家掉出世界时按距离给的就是）：排到最后，次序不乱——同键再交、撤、重排都照常，一件不多一件不少
+        const double nan = std::numeric_limits<double>::quiet_NaN();
+        JobPool pool;
+        std::mutex m;
+        std::vector<int> order;
+        const auto work = [&](int v) {
+            return [&, v]() {
+                std::lock_guard<std::mutex> lock(m);
+                order.push_back(v);
+                return std::unique_ptr<JobResult>(new TestResult(v));
+            };
+        };
+        for (int k = 0; k < 8; k++) {
+            pool.submit(key(uint64_t(k)), (k % 2) ? nan : double(k), work(k));
+        }
+        pool.submit(key(1), nan, work(101));
+        pool.submit(key(2), nan, work(102));
+        check(pool.cancel(key(3)) && pool.cancel(key(5)) && pool.state(key(3)) == JobPool::State::NONE, "NaN 的撤得掉");
+        pool.reprioritize(JobKind::TEST, [&](uint64_t k) { return k == key(4) ? nan : (k == key(7) ? -1.0 : 1.0); });
+        check(pool.queued_count(JobKind::TEST) == 5 && pool.state(key(7)) == JobPool::State::NONE, "重排成 NaN 的留着、负的撤掉：排着 5 件");
+        pool.start(1);
+        std::vector<JobPool::Done> done;
+        for (int spin = 0; spin < 2000 && done.size() < 5; spin++) {
+            pool.collect(JobKind::TEST, done);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        check(done.size() == 5 && pool.queued_count(JobKind::TEST) == 0, "做完 5 件，一件不多一件不少");
+        check(order == std::vector<int>({ 0, 6, 101, 102, 4 }), "同优先级先来先做、NaN 排到最后、同键再交按新做法");
+    }
+    {
         // 行星计划 P3：通道——几个岛群共用一个池，同一种活同一个号分开排、分开取、分开撤；拆一个群只等它自己的
         const auto lane_key = [](uint64_t id, int lane) { return JobPool::key(JobKind::TEST, id, lane); };
         check(JobPool::lane_of(lane_key(5, 3)) == 3 && JobPool::id_of(lane_key(5, 3)) == 5 && JobPool::kind_of(lane_key(5, 3)) == JobKind::TEST &&
