@@ -33,6 +33,7 @@ class LocalSeason : public SeasonView {
     double day_offset = 0.0;
     double x = 0.0, z = 0.0, h = 0.0;
     SeasonRules rules;
+    double local_offset_h = 0.0;
     // 同一格反复问（推进时每个事件都问一次）：记下最近问过的格
     mutable int64_t cached_tick = INT64_MIN;
     mutable bool cached_shelter = false;
@@ -46,8 +47,9 @@ class LocalSeason : public SeasonView {
 public:
     LocalSeason() = default;
     // p_x / p_z / p_h：这一处的世界坐标与海拔
+    // p_local_offset_h：这一处的地方时比钟点早几个钟头（经度差 / 15°；行星计划 P3）
     LocalSeason(const WeatherModel *p_model, const DayRules &p_day, double p_day_offset, double p_x, double p_z, double p_h,
-            const SeasonRules &p_rules = SeasonRules());
+            const SeasonRules &p_rules = SeasonRules(), double p_local_offset_h = 0.0);
 
     double calendar_day(double p_seconds) const { return p_seconds / day.day_seconds + day_offset; }
     const WeatherModel *get_model() const { return model; }
@@ -57,6 +59,7 @@ public:
     double next_shelter_change(double p_from, double p_until) const override;
     double growth_factor(double p_seconds) const override;
     bool sowing(double p_seconds) const override;
+    double local_offset_hours() const override { return local_offset_h; }
 };
 
 // 近处农田（一张地图的一片田）：某一刻，按格子的海拔问

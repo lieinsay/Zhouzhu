@@ -102,6 +102,8 @@ class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
     bool loading = false; // 后台正在读
     bool physics_on = true; // 锚群才有碰撞
     int node_id = -1; // world.json 的 source.node（生成器的节点号）
+    CloudFrame cloud_frame; // 云团的公共平面（载入时装进 weather）
+    std::shared_ptr<const Climate> cloud_ref; // 参考群的气候（云团按它的风漂）；空 = 按自己的
 
     WorldGrid grid;
     WorldTerrain terrain;
@@ -289,6 +291,10 @@ public:
     uint64_t job_key(JobKind p_kind, uint64_t p_id) const { return JobPool::key(p_kind, p_id, lane); }
     bool is_loading() const { return loading; }
     int get_node_id() const { return node_id; }
+    // 这一群的地方时比钟点早几个钟头（经度差 / 15°；钟点是 PlanetView 的 clock_node 的地方时，D10）；没有行星数据、或就是钟的那一群为 0
+    double get_local_offset_hours() const;
+    // 云团的公共平面与参考群的风（行星计划 P3，weather.h 的 CloudFrame）：GroupStream 在载入前设，载入时装进天气模型
+    void set_cloud_reference(const CloudFrame &p_frame, const std::shared_ptr<const Climate> &p_ref_climate);
     // 锚群才有碰撞：关了地面块的碰撞体撤出物理（节点、形状都留着，开了立刻回来）
     void set_physics_on(bool p_on);
     bool is_physics_on() const { return physics_on; }

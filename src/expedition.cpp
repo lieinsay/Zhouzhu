@@ -17,6 +17,7 @@
 #include <godot_cpp/core/math.hpp>
 
 #include "atmosphere.h"
+#include "planet_view.h"
 #include "farm.h"
 #include "input_actions.h"
 #include "land_berth.h"
@@ -1098,6 +1099,15 @@ String Expedition::clock_text() const {
     // 全局只有一个钟：到哪都一样；后面接此地的季节与天气（天与光按人站的那一点取）
     const WorldClock *clock = WorldClock::get_singleton();
     String text = clock ? clock->get_clock_text() : String();
+    // 行星上：人所在处的地方时（钟点是参考经度的地方时，D10；这里按人的经度差换算，15° 一小时）
+    if (const PlanetView *pv = PlanetView::active_view(); pv && clock && player) {
+        const Vector2 ll = pv->latlon_at(player->get_global_position());
+        double d = std::fmod(double(ll.y) - pv->get_clock_longitude(), 360.0);
+        d = d > 180.0 ? d - 360.0 : (d < -180.0 ? d + 360.0 : d);
+        const double hour = std::fmod(clock->get_hour() + d / 15.0 + 24.0, 24.0);
+        const int minutes = int(std::floor(hour * 60.0 + 1e-6));
+        text += vformat(String(U" · 地方时 %02d:%02d"), (minutes / 60) % 24, minutes % 60);
+    }
     Atmosphere *atmosphere = is_inside_tree() ? Object::cast_to<Atmosphere>(get_tree()->get_first_node_in_group(Atmosphere::GROUP)) : nullptr;
     if (atmosphere && player) {
         text += String(U"    ") + atmosphere->hud_text(player->get_global_position());

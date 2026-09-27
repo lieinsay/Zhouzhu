@@ -21,6 +21,20 @@ bool MapHost::map_landing_height(double p_x, double p_z, double &r_y) const {
     return !std::isnan(r_y);
 }
 
+void MapHost::map_weather_mix(const godot::Vector3 &p_global, std::vector<WeatherMix> &r_out) {
+    r_out.clear();
+    if (WeatherModel *wx = map_weather()) {
+        r_out.push_back(WeatherMix{ wx, p_global, 1.0 });
+    }
+}
+
+void MapHost::map_weather_models(std::vector<WeatherModel *> &r_out) {
+    r_out.clear();
+    if (WeatherModel *wx = map_weather()) {
+        r_out.push_back(wx);
+    }
+}
+
 int MapHost::map_find_dock(int p_id) const {
     for (int k = 0; k < map_dock_count(); k++) {
         if (map_dock_id(k) == p_id) {

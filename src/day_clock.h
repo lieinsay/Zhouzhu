@@ -58,6 +58,8 @@ public:
     virtual double growth_factor(double p_seconds) const { return 1.0; }
     // 这时节播不播种（冷得庄稼不长就不播）
     virtual bool sowing(double p_seconds) const { return true; }
+    // 这一处的地方时比钟点早几个钟头（行星计划 P3：钟点是参考经度的地方时，D10；东边早）。作息的钟点都按地方时，换到钟点要减它
+    virtual double local_offset_hours() const { return 0.0; }
 };
 
 struct DayMarks {

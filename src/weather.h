@@ -143,6 +143,19 @@ struct WeatherOverride {
     double fresh_snow_mm = 0.0;
 };
 
+// 行星计划 P3：云团噪声在一张「公共平面」上取——钟的那一群（2051）的平面。别的群把自己的平面坐标换过去（绕 y 转 + 平移，在群心线性化），
+// 云团也按那一群的逐日风一起漂：天上的云在几群之间连得上，换锚时花样不跳，抬头看见的云底下照旧是雨区（雨区按同一张噪声判）。
+// 单位变换 + 自己的风 = 原来的样子（2051 自己、甲乙两岛、平板岛）
+struct CloudFrame {
+    double m00 = 1.0, m02 = 0.0, m20 = 0.0, m22 = 1.0; // 这一群的平面轴 → 公共平面（列：x 轴、z 轴的像）
+    double ox = 0.0, oz = 0.0;
+    bool identity() const { return m00 == 1.0 && m02 == 0.0 && m20 == 0.0 && m22 == 1.0 && ox == 0.0 && oz == 0.0; }
+    void apply(double p_x, double p_z, double &r_x, double &r_z) const {
+        r_x = m00 * p_x + m02 * p_z + ox;
+        r_z = m20 * p_x + m22 * p_z + oz;
+    }
+};
+
 class WeatherModel {
     Climate climate;
     WeatherRules rules;
@@ -155,6 +168,11 @@ class WeatherModel {
     std::vector<double> soil_wet; // [天] 地湿 0..1（前期降水指数）
     std::vector<double> drift_x, drift_z; // [天] 那天子夜时云团已经漂了多远（米）；多一个 = 一整年
     WeatherOverride over;
+    CloudFrame cloud_frame;
+    // 按参考群的风漂（share_cloud_drift）：每天子夜累计漂了多远、那一天每天漂多远
+    bool shared_drift = false;
+    int ref_year = 1;
+    std::vector<double> ref_drift_x, ref_drift_z, ref_step_x, ref_step_z;
 
     struct DayState;
     DayState day_state(long long p_day) const;
@@ -194,11 +212,21 @@ public:
     // 云团此刻漂到哪（米；场在 (x − 漂移) / cell_m 处取）
     void cloud_drift(double p_day, double &r_x, double &r_z) const;
 
+    // 云团的公共平面与漂移（行星计划 P3，见 CloudFrame）
+    void set_cloud_frame(const CloudFrame &p_frame) { cloud_frame = p_frame; }
+    const CloudFrame &get_cloud_frame() const { return cloud_frame; }
+    void share_cloud_drift(const Climate &p_ref);
+    bool has_shared_drift() const { return shared_drift; }
+
     // 开发者覆盖
     void set_override(const WeatherOverride &p_override) { over = p_override; }
     const WeatherOverride &get_override() const { return over; }
     WeatherOverride &edit_override() { return over; }
 };
+
+// 几处的天气按权混成一份（行星计划 P3：相机在群与群之间，按到各群陆地的距离加权过渡）：数值按权平均、风按分量，
+// 天气类型、这天的大势、能不能出航照权最大的那一份；雾顶取有雾的那几份的平均
+WeatherSample blend_weather(const std::vector<WeatherSample> &p_samples, const std::vector<double> &p_weights);
 
 // 雨雪相变（雪的份额）、「天气字」等给界面与测试的小工具
 double snow_fraction(double p_temp_c, double p_snow_temp, double p_band_c);

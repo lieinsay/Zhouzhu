@@ -43,6 +43,14 @@ DayMarks day_marks(int p_day, const DayRules &p_rules, const SeasonView *p_seaso
     DayMarks m{ p_rules.work_start, p_rules.lunch_start, p_rules.lunch_end, p_rules.work_end };
     if (p_season) {
         p_season->work_hours(p_day, m.work_start, m.work_end);
+        // 作息按这一处的地方时（出工收工随日出日落、午歇照 DayRules 的钟点），换到钟点：东边的早、西边的晚
+        const double offset = p_season->local_offset_hours();
+        if (offset != 0.0) {
+            m.work_start -= offset;
+            m.work_end -= offset;
+            m.lunch_start -= offset;
+            m.lunch_end -= offset;
+        }
         // 出工在歇晌之前、收工在歇晌之后（极端的时令也不让分界点倒过来）
         m.work_start = std::min(m.work_start, p_rules.lunch_start - 0.25);
         m.work_end = std::max(m.work_end, p_rules.lunch_end + 0.25);

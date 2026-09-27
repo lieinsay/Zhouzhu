@@ -42,6 +42,8 @@ public:
     virtual SharedLooks *host_looks() const { return nullptr; }
     // 这张地图的天气（weather.h）：有气候数据的地图（岛群）给，村子据此按时令过日子、庄稼按气温长；没有返回 nullptr（照固定钟点、庄稼照常）
     virtual const WeatherModel *host_weather() const { return nullptr; }
+    // 这里的地方时比钟点早几个钟头（行星计划 P3：钟点是参考经度的地方时，D10）；村子按它作息。没有行星数据的地图是 0
+    virtual double host_local_offset_h() const { return 0.0; }
 
     // 局部坐标原点在地图坐标里的 xz（双精度：岛群里的村离原点几十公里，单精度的节点位置不够）
     virtual void host_origin(double &r_x, double &r_z) const {

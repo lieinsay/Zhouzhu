@@ -322,7 +322,8 @@ VillageWorld Villagers::world(bool p_near) {
     const WeatherModel *wx = host ? host->host_weather() : nullptr;
     if (wx) {
         const WorldClock *clock = WorldClock::get_singleton();
-        season = LocalSeason(wx, day(), clock ? double(clock->get_calendar_offset()) : 0.0, season_x, season_z, season_h);
+        season = LocalSeason(wx, day(), clock ? double(clock->get_calendar_offset()) : 0.0, season_x, season_z, season_h, SeasonRules(),
+                host ? host->host_local_offset_h() : 0.0);
         w.season = &season;
     }
     return w;

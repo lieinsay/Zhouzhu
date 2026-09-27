@@ -13,8 +13,8 @@ double crop_season_factor(double p_mean_temp_c, double p_snow_mm, const SeasonRu
 }
 
 LocalSeason::LocalSeason(const WeatherModel *p_model, const DayRules &p_day, double p_day_offset, double p_x, double p_z, double p_h,
-        const SeasonRules &p_rules) :
-        model(p_model), day(p_day), day_offset(p_day_offset), x(p_x), z(p_z), h(p_h), rules(p_rules) {}
+        const SeasonRules &p_rules, double p_local_offset_h) :
+        model(p_model), day(p_day), day_offset(p_day_offset), x(p_x), z(p_z), h(p_h), rules(p_rules), local_offset_h(p_local_offset_h) {}
 
 void LocalSeason::evaluate(int64_t p_tick) const {
     if (p_tick == cached_tick) {

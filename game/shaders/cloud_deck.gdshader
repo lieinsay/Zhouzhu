@@ -20,8 +20,9 @@ void vertex() {
 }
 
 void fragment() {
-	float a = wx_value(v_flat.xz / 14000.0 + vec2(311.0, 97.0));
-	float b = wx_value(v_flat.xz / 3700.0 + vec2(53.0, 211.0));
+	vec2 pc = wx_cloud_pos(v_flat.xz); // 公共平面：换锚不跳
+	float a = wx_value(pc / 14000.0 + vec2(311.0, 97.0));
+	float b = wx_value(pc / 3700.0 + vec2(53.0, 211.0));
 	float shade = 1.0 + mottle * ((a - 0.5) * 1.2 + (b - 0.5) * 0.6);
 	ALBEDO = albedo.rgb * shade;
 	ROUGHNESS = 1.0;

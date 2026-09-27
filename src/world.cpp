@@ -241,6 +241,35 @@ void GroupWorld::_ready() {
     emit_signal("rebuilt"); // 挂在下面的 Farm、Shipyard 先于这里 _ready，此刻才等到地面
 }
 
+double GroupWorld::get_local_offset_hours() const {
+    const PlanetView *pv = PlanetView::active_view();
+    if (!pv || node_id < 0 || node_id == pv->get_clock_node()) {
+        return 0.0;
+    }
+    const Dictionary source = info.get("source", Dictionary());
+    if (!source.has("lon")) {
+        return 0.0;
+    }
+    double d = std::fmod(double(source["lon"]) - pv->get_clock_longitude(), 360.0);
+    if (d > 180.0) {
+        d -= 360.0;
+    } else if (d < -180.0) {
+        d += 360.0;
+    }
+    return d / 15.0;
+}
+
+void GroupWorld::set_cloud_reference(const CloudFrame &p_frame, const std::shared_ptr<const Climate> &p_ref_climate) {
+    cloud_frame = p_frame;
+    cloud_ref = p_ref_climate;
+    if (loaded) {
+        weather.set_cloud_frame(cloud_frame);
+        if (cloud_ref) {
+            weather.share_cloud_drift(*cloud_ref);
+        }
+    }
+}
+
 void GroupWorld::finish_loading_now() {
     if (!loading) {
         return;
@@ -418,6 +447,11 @@ bool GroupWorld::load_data(std::string &r_error) {
         }
     }
     weather = climate.days.empty() || low > high ? WeatherModel() : WeatherModel(climate, low, high);
+    // 行星计划 P3：云团在公共平面上取、按参考群的风漂（GroupStream 载入前设的；场景里摆的那一群就是参考群，单位变换）
+    weather.set_cloud_frame(cloud_frame);
+    if (cloud_ref) {
+        weather.share_cloud_drift(*cloud_ref);
+    }
 
     // 码头：在原地形上量好，再把停机坪压进地形里——都在第一块地面开建之前
     const String sites_path = data_dir.path_join("sites.tsv");

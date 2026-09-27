@@ -150,6 +150,7 @@ public:
     Farm *host_farm() const override { return world ? world->host_farm() : nullptr; }
     SharedLooks *host_looks() const override { return world ? &world->get_looks() : nullptr; }
     const WeatherModel *host_weather() const override { return world ? world->host_weather() : nullptr; }
+    double host_local_offset_h() const override { return world ? world->get_local_offset_hours() : 0.0; }
     void host_origin(double &r_x, double &r_z) const override {
         r_x = site.x;
         r_z = site.z;

@@ -14,6 +14,7 @@
 #include <godot_cpp/variant/node_path.hpp>
 
 #include "almanac.h"
+#include "map_host.h"
 #include "weather.h"
 
 class MapHost;
@@ -72,6 +73,9 @@ class Atmosphere : public godot::Node3D {
     MoonState moon_state;
     bool have_look = false;
     godot::Vector3 last_eye;
+    // 相机在真球面上的位置（行星系，有 PlanetView 时）：换锚时世界坐标一下子挪上百公里，真位置不动——按它判「一帧挪太远」，换锚那一帧照旧平滑
+    double last_true[3] = { 0.0, 0.0, 0.0 };
+    bool have_true = false;
     struct Look {
         double cloud = 0.1, cover = 0.12, precip = 0.0, snow = 0.0, fog = 0.0, storm = 0.0, wet = 0.0, wind_x = 0.0, wind_z = 0.0;
         double overcast = 0.0, haze = 0.0, fog_height = 0.0, grad_x = 0.0, grad_z = 0.0;
@@ -86,6 +90,12 @@ class Atmosphere : public godot::Node3D {
     double random01();
 
     WeatherModel *model();
+    // 某一点的天气：地图宿主给的几份按权混（行星上在群与群之间过渡）；p_h 是高
+    WeatherSample sample_mix(double p_day, const godot::Vector3 &p_global, double p_h);
+    std::vector<WeatherMix> mix_buf;
+    std::vector<WeatherSample> mix_samples;
+    std::vector<double> mix_weights;
+    std::vector<WeatherModel *> models_buf;
     double calendar_day() const;
     void build();
     void update_override(double p_delta);

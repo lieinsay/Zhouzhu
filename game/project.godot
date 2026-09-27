@@ -58,6 +58,14 @@ wx_misc={
 "type": "vec4",
 "value": Vector4(1, 0, 0, 0)
 }
+wx_cloud_frame={
+"type": "vec4",
+"value": Vector4(1, 0, 0, 1)
+}
+wx_cloud_origin={
+"type": "vec2",
+"value": Vector2(0, 0)
+}
 
 [dotnet]
 

@@ -4583,6 +4583,54 @@ void test_weather_model() {
     check(s.snow_frac > 0.9 && s.temp_c < 0.0 && s.snow_mm >= 29.0, "覆盖成大雪（暖季也行）：台面零下、下的是雪、新雪留得住");
 }
 
+// 行星计划 P3：几群的天气——按权混、云团的公共平面、地方时的作息
+void test_group_weather() {
+    Climate c;
+    if (!load_2051_climate(c)) {
+        std::printf("group weather（跳过：没有 2051 资产）\n");
+        return;
+    }
+    std::printf("group weather（2051）\n");
+    const WeatherModel own(c, 0.0, 2050.0);
+    WeatherModel shared(c, 0.0, 2050.0);
+    shared.share_cloud_drift(c); // 按自己的气候「共享」：漂移与原来的逐位一样
+    double worst = 0.0;
+    for (double d = 0.0; d < 700.0; d += 13.37) {
+        double ax, az, bx, bz;
+        own.cloud_drift(d, ax, az);
+        shared.cloud_drift(d, bx, bz);
+        worst = std::max(worst, std::max(std::abs(ax - bx), std::abs(az - bz)));
+    }
+    check(worst == 0.0, "按自己的气候共享漂移：与原来逐位一样（" + std::to_string(worst) + "）");
+    // 公共平面：单位变换就是原样；转 90°、平移后，这一群平面上的点与公共平面上的点取到同一团云
+    WeatherModel turned(c, 0.0, 2050.0);
+    CloudFrame f;
+    f.m00 = 0.0, f.m02 = -1.0, f.m20 = 1.0, f.m22 = 0.0, f.ox = 1234.0, f.oz = -987.0;
+    turned.set_cloud_frame(f);
+    double cx = 0.0, cz = 0.0;
+    f.apply(3000.0, -500.0, cx, cz);
+    const WeatherSample s1 = turned.sample(12.4, 3000.0, -500.0, c.ref_m), s2 = own.sample(12.4, cx, cz, c.ref_m);
+    check_near(s1.cloud, s2.cloud, 1e-12, "转过、挪过的群：同一点在公共平面上取到同一团云");
+    // 按权混：一份就是原样；两份各半时数值取中间、风按分量、类型照权大的
+    WeatherSample a = own.sample(2.5, 0.0, 0.0, c.ref_m), b = a;
+    b.temp_c = a.temp_c + 10.0;
+    b.wind_x = -a.wind_x;
+    b.kind = WeatherKind::STORM;
+    const WeatherSample one = blend_weather({ a }, { 1.0 });
+    check(one.temp_c == a.temp_c && one.kind == a.kind, "一份：原样");
+    const WeatherSample half = blend_weather({ a, b }, { 0.6, 0.4 });
+    check_near(half.temp_c, a.temp_c + 4.0, 1e-9, "六四开：气温取加权平均");
+    check_near(half.wind_x, 0.2 * a.wind_x, 1e-9, "风按分量混");
+    check(half.kind == a.kind, "类型照权大的那份");
+    // 地方时：西边 2.2 分钟（2050 比 2051 的钟点晚）——出工、午歇、收工的钟点都往后挪同样的量
+    const DayRules day;
+    const LocalSeason here(&own, day, 294.0, 0.0, 0.0, c.ref_m), west(&own, day, 294.0, 0.0, 0.0, c.ref_m, SeasonRules(), -0.0363);
+    const DayMarks h = day_marks(3, day, &here), w = day_marks(3, day, &west);
+    check_near(w.work_start - h.work_start, 0.0363, 1e-9, "西边的地方时晚：出工的钟点往后挪");
+    check_near(w.lunch_start - h.lunch_start, 0.0363, 1e-9, "午歇同样");
+    check_near(w.work_end - h.work_end, 0.0363, 1e-9, "收工同样");
+}
+
 void test_local_season() {
     Climate c;
     if (!load_2051_climate(c)) {
@@ -5412,6 +5460,7 @@ int main() {
     test_local_season();
     test_job_pool();
     test_resume_clock();
+    test_group_weather();
     test_stream_meter();
     test_building_mesh();
     test_noise();

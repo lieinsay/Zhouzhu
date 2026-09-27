@@ -14,6 +14,7 @@
 #include <godot_cpp/variant/transform3d.hpp>
 
 #include "farm_model.h"
+#include "weather.h"
 #include "planet_frame.h"
 #include "resource_scatter.h"
 #include "resource_sites.h"
@@ -106,6 +107,7 @@ private:
     double detail_in = 30000.0, detail_out = 40000.0;
     double near_in = 55000.0, near_out = 70000.0;
     double shift_margin = 2000.0;
+    double blend_m = 9100.0; // 天气的过渡：离两群陆地的距离差 20 km 时九成对一成
     double check_interval = 0.25;
     double place_step = 200.0;
     int max_detail = 2;
@@ -122,6 +124,9 @@ private:
     double since_check = 1e9;
     int shifts = 0;
     int loads = 0, unloads = 0;
+    const Group *cloud_ref = nullptr; // 云团的公共平面：钟的那一群（PlanetView 的 clock_node；没有就是锚群）
+    std::shared_ptr<const Climate> cloud_climate; // 它的气候（云团按它的风漂）
+    void apply_cloud_reference(const Group &p_group, GroupWorld *p_world) const;
 
     bool setup();
     void update_tiers();
@@ -169,6 +174,9 @@ public:
     // 这一点（锚群平面）在哪一群的陆地上 / 离哪一群的陆地最近（p_within 以内）；没有返回 nullptr
     Group *group_near(const godot::Vector3 &p_anchor_point, double p_within) const;
 
+    // 某群离锚群多近（按缓存的焦点到各群陆地的距离）：天气在群与群之间按它加权过渡（权 ∝ exp(−距离 / blend_m)，过渡带约 20 km）
+    double get_blend_m() const { return blend_m; }
+
     // 行星云层（PlanetGlobe）：载入了的群的群心（行星系单位向量）、那一带的云量（它自己的天气模型在群心、台面高处取）、
     // 权（刚载入的 20 s 里从 0 渐到 1，锚群是 1）；≤ 4 群，锚群在前
     struct CloudGroup {
@@ -192,6 +200,9 @@ public:
     // { node, tier（0 远景 1 近景 2 细版）, anchor, land_km, loaded, loading, tiles, pending_tiles, hidden_far, ledgers_saved, plots_saved }
     godot::Dictionary get_group_state(int p_node) const;
     GroupWorld *get_group_world(int p_node) const;
+    // 某群平面上的一点 → 锚群平面；反过来（经真球面，精确；测试、工具用）
+    godot::Vector3 to_anchor(int p_node, const godot::Vector3 &p_group_point) const;
+    godot::Vector3 from_anchor(int p_node, const godot::Vector3 &p_anchor_point) const;
     SiteStream *get_group_sites(int p_node) const;
     Hinterland *get_group_hinterland(int p_node) const;
     int get_shift_count() const { return shifts; }

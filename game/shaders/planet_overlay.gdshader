@@ -68,7 +68,7 @@ void fragment() {
 		if (local_w > 0.001) {
 			// 交点换回锚群的平面坐标：flat ≈ c + δ(c) + R_c · (画面上相对相机的位移)
 			vec3 flat_p = planet_curve_cam + planet_curve_dcam + planet_curve_basis * (dir * tc);
-			vec2 q = flat_p.xz / cell_m - drift;
+			vec2 q = wx_cloud_pos(flat_p.xz) / cell_m - drift;
 			float field = wx_fbm(q);
 			float cov = clamp(cloud_cover + dot(cover_grad, (flat_p.xz - planet_curve_cam.xz) / 1000.0), 0.0, 1.0);
 			float thr = wx_threshold(cov);

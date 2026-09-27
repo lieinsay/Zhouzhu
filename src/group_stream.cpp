@@ -66,6 +66,8 @@ void GroupStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_group_nodes"), &GroupStream::get_group_nodes);
     ClassDB::bind_method(D_METHOD("get_group_state", "node"), &GroupStream::get_group_state);
     ClassDB::bind_method(D_METHOD("get_group_world", "node"), &GroupStream::get_group_world);
+    ClassDB::bind_method(D_METHOD("to_anchor", "node", "group_point"), &GroupStream::to_anchor);
+    ClassDB::bind_method(D_METHOD("from_anchor", "node", "anchor_point"), &GroupStream::from_anchor);
     ClassDB::bind_method(D_METHOD("get_group_sites", "node"), &GroupStream::get_group_sites);
     ClassDB::bind_method(D_METHOD("get_group_hinterland", "node"), &GroupStream::get_group_hinterland);
     ClassDB::bind_method(D_METHOD("get_shift_count"), &GroupStream::get_shift_count);
@@ -199,7 +201,42 @@ bool GroupStream::setup() {
         }
         groups.push_back(std::move(g));
     }
-    return anchor >= 0;
+    if (anchor < 0) {
+        return false;
+    }
+    // 云团的公共平面：钟的那一群（2051）；它的气候读一份（云团按它的风漂）
+    cloud_ref = find(planet->get_clock_node());
+    if (!cloud_ref) {
+        cloud_ref = groups[size_t(anchor)].get();
+    }
+    const PackedByteArray wb = FileAccess::get_file_as_bytes(cloud_ref->data_dir.path_join("weather.tsv"));
+    if (!wb.is_empty()) {
+        std::shared_ptr<Climate> c = std::make_shared<Climate>();
+        std::string error;
+        if (parse_climate(std::string(reinterpret_cast<const char *>(wb.ptr()), size_t(wb.size())), *c, error)) {
+            cloud_climate = c;
+        }
+    }
+    // 场景里摆的那一群已经载入：不是参考群的话现在设
+    apply_cloud_reference(*groups[size_t(anchor)], groups[size_t(anchor)]->world);
+    return true;
+}
+
+void GroupStream::apply_cloud_reference(const Group &p_group, GroupWorld *p_world) const {
+    if (!p_world || !cloud_ref || &p_group == cloud_ref) {
+        return; // 参考群自己：单位变换、自己的风
+    }
+    // 这一群的平面 → 参考群的平面：在群心线性化（群心 0，高度不管）
+    const PlanetBasis r = rebase_rotation(p_group.frame, cloud_ref->frame, PlanetVec());
+    const PlanetVec o = rebase_point(p_group.frame, cloud_ref->frame, PlanetVec());
+    CloudFrame f;
+    f.m00 = r.cols[0].x;
+    f.m02 = r.cols[2].x;
+    f.m20 = r.cols[0].z;
+    f.m22 = r.cols[2].z;
+    f.ox = o.x;
+    f.oz = o.z;
+    p_world->set_cloud_reference(f, cloud_climate);
 }
 
 void GroupStream::set_focus(const Vector3 &p_focus) {
@@ -394,6 +431,7 @@ void GroupStream::load_world(Group &r_group, bool p_sync) {
     w->set_terrain_seed(r_group.node);
     w->set_async_load(!p_sync);
     w->set_physics_on(false);
+    apply_cloud_reference(r_group, w); // 云团的公共平面：载入时装进它的天气模型
     Farm *farm = memnew(Farm);
     farm->set_name("Farm");
     w->add_child(farm);
@@ -745,6 +783,16 @@ Dictionary GroupStream::get_group_state(int p_node) const {
     d["plots_saved"] = int(g->memory.plots.size());
     d["placement"] = g->placement;
     return d;
+}
+
+Vector3 GroupStream::to_anchor(int p_node, const Vector3 &p_group_point) const {
+    const Group *g = find(p_node);
+    return g ? from_group(*g, pv(p_group_point)) : p_group_point;
+}
+
+Vector3 GroupStream::from_anchor(int p_node, const Vector3 &p_anchor_point) const {
+    const Group *g = find(p_node);
+    return g ? v3(to_group(*g, p_anchor_point)) : p_anchor_point;
 }
 
 GroupWorld *GroupStream::get_group_world(int p_node) const {

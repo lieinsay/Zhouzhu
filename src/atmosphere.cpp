@@ -173,6 +173,25 @@ WeatherModel *Atmosphere::model() {
     return wx ? wx : &fallback;
 }
 
+WeatherSample Atmosphere::sample_mix(double p_day, const Vector3 &p_global, double p_h) {
+    if (!map) {
+        return model()->sample(p_day, p_global.x, p_global.z, p_h);
+    }
+    map->map_weather_mix(p_global, mix_buf);
+    if (mix_buf.size() <= 1) {
+        WeatherModel *wx = mix_buf.empty() ? model() : mix_buf[0].model;
+        const Vector3 at = mix_buf.empty() ? p_global : mix_buf[0].local;
+        return wx->sample(p_day, at.x, at.z, p_h);
+    }
+    mix_samples.clear();
+    mix_weights.clear();
+    for (const WeatherMix &m : mix_buf) {
+        mix_samples.push_back(m.model->sample(p_day, m.local.x, m.local.z, p_h));
+        mix_weights.push_back(m.weight);
+    }
+    return blend_weather(mix_samples, mix_weights);
+}
+
 const WeatherModel *Atmosphere::get_model_const() {
     return model();
 }
@@ -282,7 +301,7 @@ void Atmosphere::_process(double p_delta) {
         eye = last_eye; // 相机的位置坏了（NaN）：照上一帧的
     }
     update_override(p_delta);
-    now = wx->sample(day, eye.x, eye.z, std::min(double(eye.y), TROPOPAUSE_M));
+    now = sample_mix(day, eye, std::min(double(eye.y), TROPOPAUSE_M)); // 行星上：几群按离各群陆地的距离过渡
     // 日月：有行星数据时按相机的经纬度（钟点是参考经度的地方时，D10），否则按这张图的纬度、钟点就是当地时
     CalendarRules rules = wx->calendar();
     const PlanetView *pv = PlanetView::active_view();
@@ -355,10 +374,30 @@ void Atmosphere::update_override(double p_delta) {
     } else if (o.fresh_snow_mm > 0.0 && now.temp_c > model()->get_climate().snow_temp) {
         o.fresh_snow_mm = std::max(0.0, o.fresh_snow_mm - p_delta * 1.5);
     }
+    // 行星上几群各有一个模型：覆盖（渐入渐出、新雪）以锚群的为准，推完抄给别的群（行星计划 P3）
+    if (map) {
+        map->map_weather_models(models_buf);
+        for (WeatherModel *m : models_buf) {
+            if (&m->edit_override() != &o) {
+                m->set_override(o);
+            }
+        }
+    }
 }
 
 void Atmosphere::update_look(const Vector3 &p_eye, double p_delta) {
-    const bool jump = !have_look || p_eye.distance_to(last_eye) > JUMP_M;
+    bool jump = !have_look || p_eye.distance_to(last_eye) > JUMP_M;
+    if (const PlanetView *pv = PlanetView::active_view()) {
+        const PlanetVec c = pv->camera_planet();
+        const double dx = c.x - last_true[0], dy = c.y - last_true[1], dz = c.z - last_true[2];
+        jump = !have_look || !have_true || std::sqrt(dx * dx + dy * dy + dz * dz) > JUMP_M;
+        last_true[0] = c.x;
+        last_true[1] = c.y;
+        last_true[2] = c.z;
+        have_true = true;
+    } else {
+        have_true = false;
+    }
     const double k = jump ? 1.0 : 1.0 - std::exp(-p_delta / std::max(0.01, smoothing));
     have_look = true;
     // 云量往外的梯度：东、南各 5 km 再取一次（锋面过来时远处的天先阴）
@@ -509,6 +548,10 @@ void Atmosphere::update_globals(double p_day) {
     rs->global_shader_parameter_set("wx_wind", Vector4(real_t(look.wind_x), real_t(look.wind_z), real_t(gust), real_t(look.storm)));
     const double night = 1.0 - smooth01(-0.12, 0.2, sun_state.dir_y);
     rs->global_shader_parameter_set("wx_misc", Vector4(wx->calendar().latitude_deg < 0.0 ? 1.0f : -1.0f, real_t(night), 0.0f, 0.0f));
+    // 云团的公共平面（行星计划 P3）：锚群平面 → 钟的那一群的平面；天空、云层叠画、云带顶的云团花样按它取，换锚不跳
+    const CloudFrame &cf = wx->get_cloud_frame();
+    rs->global_shader_parameter_set("wx_cloud_frame", Vector4(real_t(cf.m00), real_t(cf.m02), real_t(cf.m20), real_t(cf.m22)));
+    rs->global_shader_parameter_set("wx_cloud_origin", Vector2(real_t(cf.ox), real_t(cf.oz)));
 }
 
 void Atmosphere::update_particles(const Vector3 &p_eye, double p_delta) {
@@ -573,7 +616,7 @@ Dictionary Atmosphere::get_weather() const {
 }
 
 Dictionary Atmosphere::weather_at(const Vector3 &p_global) {
-    return weather_view::to_dictionary(model()->sample(calendar_day(), p_global.x, p_global.z, p_global.y));
+    return weather_view::to_dictionary(sample_mix(calendar_day(), p_global, p_global.y));
 }
 
 String Atmosphere::hud_text(const Vector3 &p_global) {
@@ -586,20 +629,20 @@ String Atmosphere::hud_text(const Vector3 &p_global) {
     }
     if (double(p_global.y) >= TROPOPAUSE_M) {
         // 对流层顶以上：气温照对流层顶的（平流层下部近乎不变），没有晴雨
-        const WeatherSample s = wx->sample(day, p_global.x, p_global.z, TROPOPAUSE_M);
+        const WeatherSample s = sample_mix(day, p_global, TROPOPAUSE_M);
         return season + vformat(String(U" · 高空 %d°C"), int(std::lround(s.temp_c)));
     }
-    const WeatherSample s = wx->sample(day, p_global.x, p_global.z, p_global.y);
+    const WeatherSample s = sample_mix(day, p_global, p_global.y);
     return season + String(U" · ") + weather_view::short_text(s);
 }
 
 Vector2 Atmosphere::wind_at(const Vector3 &p_global) {
-    const WeatherSample s = model()->sample(calendar_day(), p_global.x, p_global.z, p_global.y);
+    const WeatherSample s = sample_mix(calendar_day(), p_global, p_global.y);
     return Vector2(real_t(s.wind_x), real_t(s.wind_z));
 }
 
 String Atmosphere::sailing_text(const Vector3 &p_global) {
-    const WeatherSample s = model()->sample(calendar_day(), p_global.x, p_global.z, p_global.y);
+    const WeatherSample s = sample_mix(calendar_day(), p_global, p_global.y);
     String text;
     if (s.wind_ms >= 5.0) {
         text = vformat(String(U"%s %d m/s，船往下风漂"), String::utf8(wind_name(s.wind_x, s.wind_z).c_str()), int(std::lround(s.wind_ms)));

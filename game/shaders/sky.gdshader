@@ -176,7 +176,7 @@ void sky() {
 				float thick = 0.0;
 				if (local_w > 0.001) {
 					vec2 p = POSITION.xz + dir.xz * t;
-					vec2 q = p / cell_m - drift;
+					vec2 q = wx_cloud_pos(p) / cell_m - drift; // 云团在公共平面上取（行星计划 P3）
 					float field = wx_fbm(q);
 					float cov = clamp(cloud_cover + dot(cover_grad, (p - POSITION.xz) / 1000.0), 0.0, 1.0);
 					float thr = wx_threshold(cov);

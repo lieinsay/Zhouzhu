@@ -19,6 +19,10 @@ global uniform vec2 wx_elev_range;
 global uniform float wx_wet;
 global uniform vec4 wx_wind;
 global uniform vec4 wx_misc;
+// 4. 云团的公共平面（行星计划 P3，Atmosphere 按锚群设）：锚群平面 (x, z) → 钟的那一群（2051）的平面——几个群的云连得上、换锚时云团的花样不跳。
+//    wx_cloud_frame = (m00, m02, m20, m22)，wx_cloud_origin = 平移；单位变换就是原来的样子
+global uniform vec4 wx_cloud_frame;
+global uniform vec2 wx_cloud_origin;
 
 uniform sampler2D wx_group_elev : filter_nearest;
 uniform vec4 wx_group = vec4(0.0, 2100.0, -1.0, 0.0);
@@ -93,6 +97,11 @@ vec4 wx_elev_row(float h, int row) {
 		b = texelFetch(wx_elev, ivec2(i + 1, row), 0);
 	}
 	return mix(a, b, u - float(i));
+}
+
+// 锚群平面上的一点 → 云团的公共平面（与 C++ 的 CloudFrame::apply 同式）
+vec2 wx_cloud_pos(vec2 p) {
+	return vec2(wx_cloud_frame.x * p.x + wx_cloud_frame.y * p.y, wx_cloud_frame.z * p.x + wx_cloud_frame.w * p.y) + wx_cloud_origin;
 }
 
 // 极向（南半球 +1）：这一群的，没设用全局的
