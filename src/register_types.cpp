@@ -21,6 +21,7 @@
 #include "island_map.h"
 #include "placed_props.h"
 #include "works_view.h"
+#include "style_panel.h"
 #include "orbit_camera.h"
 #include "planet_globe.h"
 #include "sea_surface.h"
@@ -66,6 +67,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(HotbarBar);
     GDREGISTER_CLASS(PlacedProps);
     GDREGISTER_CLASS(WorksView);
+    GDREGISTER_CLASS(StylePanel);
     GDREGISTER_CLASS(RefitPanel);
     GDREGISTER_CLASS(RefitOverlay);
     GDREGISTER_CLASS(BuildPanel);

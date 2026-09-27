@@ -454,7 +454,7 @@ func _run() -> void:
 	var bench := await _place_held(face)
 	if bench < 0:
 		return
-	var bench_node: Node3D = main.get_node("Placed").get_prop_node(bench)
+	var bench_node: Node3D = main.get_prop_node(bench)
 	if bench_node == null or not (bench_node is StaticBody3D) or main.get_ghost()["on"]:
 		_finish(false, "工作台该是带碰撞的实物、手上空了虚影收起（%s，虚影 %s）" % [bench_node, main.get_ghost()])
 		return
@@ -602,7 +602,7 @@ func _run() -> void:
 	var torch := await _place_held(face)
 	if torch < 0:
 		return
-	var torch_node: Node3D = main.get_node("Placed").get_prop_node(torch)
+	var torch_node: Node3D = main.get_prop_node(torch)
 	if torch_node == null or torch_node.find_children("*", "OmniLight3D", true, false).is_empty():
 		_finish(false, "火把该带一盏光")
 		return

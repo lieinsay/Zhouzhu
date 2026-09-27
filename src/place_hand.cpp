@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/input.hpp>
 
 #include "crops.h"
+#include "ground_works.h"
 #include "input_actions.h"
 #include "settlement.h"
 #include "ship.h"
@@ -37,8 +38,14 @@ String obstacle_name(Object *p_hit) {
 
 void PlaceHand::setup(PlacedProps *p_view) {
     view = p_view;
-    placed = Placements();
-    view->sync(placed);
+}
+
+Placements *PlaceHand::placed() const {
+    return site.works ? &site.works->props : nullptr;
+}
+
+Transform3D PlaceHand::frame_xform() const {
+    return site.frame ? site.frame->get_global_transform() : Transform3D();
 }
 
 void PlaceHand::stand_down() {
@@ -50,8 +57,10 @@ void PlaceHand::stand_down() {
 }
 
 void PlaceHand::update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_def, bool p_on_ship) {
-    const Vector3 at = p_player->get_global_position();
-    ghost = plan_placement(MapLandingGround(p_map), p_def, at.x, at.z, p_player->get_look_yaw(), turns, placed, rules);
+    // 在营造账的局部坐标里摆（岛群的锚群就是全局坐标）；虚影、物理查挡、资源点按全局
+    const Transform3D xf = frame_xform();
+    const Vector3 at = xf.affine_inverse().xform(p_player->get_global_position());
+    ghost = plan_placement(MapFrameGround(p_map, xf), p_def, at.x, at.z, p_player->get_look_yaw() - xf.basis.get_euler().y, turns, *placed(), rules);
     if (ghost.ok && p_on_ship) {
         ghost.ok = false;
         ghost.why = "船上摆不了：下船摆在地上";
@@ -63,7 +72,7 @@ void PlaceHand::update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_
         double hx = 0.0, hz = 0.0;
         prop_half_extent(p_def, ghost.quarter, hx, hz);
         const double reach = SITE_CLEAR_M + std::max(hx, hz);
-        const Vector3 center(real_t(ghost.x), real_t(ghost.y), real_t(ghost.z));
+        const Vector3 center = xf.xform(Vector3(real_t(ghost.x), real_t(ghost.y), real_t(ghost.z)));
         const ResourceSpot spot = p_map->map_resource_near(center, reach);
         if (spot.site >= 0) {
             const bool pile = Vector2(center.x - spot.pile.x, center.z - spot.pile.z).length() <= reach;
@@ -71,22 +80,34 @@ void PlaceHand::update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_
             ghost.why = pile ? "这是资源点的堆场，别占着" : "这是资源点的采掘面，别占着";
         }
     }
+    PlaceCheck global = ghost;
+    const Vector3 g = xf.xform(Vector3(real_t(ghost.x), real_t(ghost.y), real_t(ghost.z)));
+    global.x = g.x, global.y = g.y, global.z = g.z;
+    global.low = ghost.low + (g.y - ghost.y);
     if (ghost.ok) {
         TypedArray<RID> exclude;
         exclude.push_back(p_player->get_rid());
-        if (Object *hit = view->obstacle(p_def, ghost, exclude)) {
+        if (Object *hit = view->obstacle(p_def, global, exclude)) {
             ghost.ok = false;
             ghost.why = play::to_std(obstacle_name(hit));
+            global.ok = false;
         }
     }
     ghost_on = true;
     ghost_item = p_def.item;
-    view->show_ghost(ghost_item, ghost);
+    view->show_ghost(ghost_item, global);
 }
 
-void PlaceHand::look(MapHost *p_map, Player *p_player, PackHand &p_pack, bool p_on_ship) {
-    const Vector3 at = p_player->get_global_position();
-    facing_id = placed.facing(at.x, at.y, at.z, p_player->get_look_yaw(), rules);
+void PlaceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, PackHand &p_pack, bool p_on_ship) {
+    site = p_site;
+    if (!placed()) {
+        facing_id = -1;
+        stand_down();
+        return;
+    }
+    const Transform3D xf = frame_xform();
+    const Vector3 at = xf.affine_inverse().xform(p_player->get_global_position());
+    facing_id = placed()->facing(at.x, at.y, at.z, p_player->get_look_yaw() - xf.basis.get_euler().y, rules);
     const PropDef *holding = props::find(p_pack.held_item());
     if (holding) {
         Input *input = Input::get_singleton();
@@ -97,7 +118,6 @@ void PlaceHand::look(MapHost *p_map, Player *p_player, PackHand &p_pack, bool p_
     } else if (ghost_on) {
         stand_down();
     }
-    view->sync(placed);
 }
 
 bool PlaceHand::claims(const PackHand &p_pack, bool p_interact, bool p_remove) const {
@@ -110,10 +130,14 @@ bool PlaceHand::engaged() const {
 
 PlaceHand::Step PlaceHand::act(PackHand &p_pack, bool p_interact, bool p_remove, const Say &p_say) {
     Step out;
+    Placements *list = placed();
+    if (!list) {
+        return out;
+    }
     const PropDef *holding = props::find(p_pack.held_item());
     if (p_remove && facing_id >= 0) {
         out.used = true;
-        const PlacedProp *prop = placed.find(facing_id);
+        const PlacedProp *prop = list->find(facing_id);
         const std::string problem = pickup_problem(*prop);
         if (!problem.empty()) {
             p_say(utf8(problem));
@@ -121,7 +145,7 @@ PlaceHand::Step PlaceHand::act(PackHand &p_pack, bool p_interact, bool p_remove,
             p_say(String(U"背包满了，收不回来"));
         } else {
             const std::string item = prop->item;
-            placed.remove(facing_id);
+            list->remove(facing_id);
             p_pack.items().put(item, 1);
             p_pack.refresh_bar();
             facing_id = -1;
@@ -137,7 +161,7 @@ PlaceHand::Step PlaceHand::act(PackHand &p_pack, bool p_interact, bool p_remove,
         } else if (!ghost.ok) {
             p_say(String(U"摆不了：") + utf8(ghost.why));
         } else if (p_pack.items().take_at(p_pack.get_selected(), 1) == 1) {
-            placed.add(holding->item, ghost);
+            list->add(holding->item, ghost);
             p_pack.refresh_bar();
             p_say(String(U"摆下了") + utf8(catalog::item_name(holding->item)));
             if (!props::find(p_pack.held_item())) {
@@ -145,27 +169,30 @@ PlaceHand::Step PlaceHand::act(PackHand &p_pack, bool p_interact, bool p_remove,
             }
         }
     }
-    view->sync(placed);
     return out;
 }
 
 unsigned PlaceHand::stations_near(const Vector3 &p_at) const {
-    return placed.stations_near(p_at.x, p_at.y, p_at.z, rules.station_range_m);
+    if (!placed()) {
+        return 0;
+    }
+    const Vector3 at = frame_xform().affine_inverse().xform(p_at);
+    return placed()->stations_near(at.x, at.y, at.z, rules.station_range_m);
 }
 
 ItemSlots *PlaceHand::container(int p_id) {
-    PlacedProp *prop = placed.find(p_id);
+    PlacedProp *prop = placed() ? placed()->find(p_id) : nullptr;
     return prop && prop->contents.size() > 0 ? &prop->contents : nullptr;
 }
 
 bool PlaceHand::is_openable(int p_id) const {
-    const PlacedProp *prop = placed.find(p_id);
+    const PlacedProp *prop = placed() ? placed()->find(p_id) : nullptr;
     const PropDef *def = prop ? props::find(prop->item) : nullptr;
     return def && (def->slots > 0 || def->station >= 0);
 }
 
 String PlaceHand::title_of(int p_id) const {
-    const PlacedProp *prop = placed.find(p_id);
+    const PlacedProp *prop = placed() ? placed()->find(p_id) : nullptr;
     if (!prop) {
         return String();
     }
@@ -174,7 +201,7 @@ String PlaceHand::title_of(int p_id) const {
 }
 
 String PlaceHand::prompt(const PackHand &p_pack) const {
-    const PlacedProp *prop = facing_id >= 0 ? placed.find(facing_id) : nullptr;
+    const PlacedProp *prop = facing_id >= 0 && placed() ? placed()->find(facing_id) : nullptr;
     const PropDef *def = prop ? props::find(prop->item) : nullptr;
     const String name = prop ? utf8(catalog::item_name(prop->item)) : String();
     const String item = utf8(catalog::item_name(ghost_item));

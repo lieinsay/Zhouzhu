@@ -88,6 +88,8 @@ public:
     bool is_god_mode() const { return god_mode; }
     void set_look_yaw(double p_yaw);
     double get_look_yaw() const { return look_yaw; }
+    void set_look_pitch(double p_pitch); // 测试、截图摆视角（准星的射线跟着相机）
+    double get_look_pitch() const { return look_pitch; }
     void set_facing_yaw(double p_yaw); // 身体模型朝向
     // 换锚（行星计划 P3）：视线与身体模型一起转 p_dyaw（弧度），速度乘 p_rotation
     void shift(const godot::Vector3 &p_position, double p_dyaw, const godot::Basis &p_rotation);

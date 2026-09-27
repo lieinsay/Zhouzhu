@@ -237,6 +237,8 @@ target_sources(
         src/orbit_camera.cpp
         src/orbit_camera.h
         src/dev_tools.cpp
+        src/dig_hand.cpp
+        src/dig_hand.h
         src/dev_tools.h
         src/dock_builder.cpp
         src/dock_builder.h
@@ -287,10 +289,13 @@ target_sources(
         src/island_map.h
         src/island_mesh.cpp
         src/island_mesh.h
+        src/aim.h
         src/map_host.cpp
         src/map_host.h
         src/pack_hand.cpp
         src/pack_hand.h
+        src/piece_hand.cpp
+        src/piece_hand.h
         src/place_hand.cpp
         src/place_hand.h
         src/placed_props.cpp
@@ -320,6 +325,8 @@ target_sources(
         src/shipyard.h
         src/site_stream.cpp
         src/site_stream.h
+        src/style_panel.cpp
+        src/style_panel.h
         src/template_library.cpp
         src/template_library.h
         src/villagers.cpp

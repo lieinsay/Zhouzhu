@@ -28,6 +28,8 @@ public:
     bool step(MapHost *p_map, Player *p_player, PackHand &p_pack, bool p_hands_full, bool p_interact, double p_delta, const Say &p_say);
     // 放下手上的活（开面板、上舵时）
     void stand_down();
+    // 手上拿着挖垒的家伙（锹镐、土）时，这一下 E 让不让给采集：采场的采掘面前，或面前那一株正对手上的家伙（石镐对石块、木锹对黏土坡）才让
+    bool prefers(MapHost *p_map, Player *p_player, const PackHand &p_pack) const;
 
     bool is_working() const { return working; }
     int get_site() const { return spot.site; } // 够得着的资源点（地图的下标）；没有 −1

@@ -8,7 +8,9 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/node_path.hpp>
 
+#include "aim.h"
 #include "build_mode.h"
+#include "dig_hand.h"
 #include "farm_hand.h"
 #include "freight_hand.h"
 #include "gather_hand.h"
@@ -16,12 +18,17 @@
 #include "interior_edit.h"
 #include "item_slots.h"
 #include "map_host.h"
+#include "ground_works.h"
 #include "pack_hand.h"
+#include "piece_hand.h"
 #include "place_hand.h"
 #include "player.h"
 #include "refit_bench.h"
 #include "ship.h"
 #include "world_map.h"
+
+class StylePanel;
+class WorksView;
 
 // 玩家编排：哪张地图都是它（甲乙两岛 main.tscn、岛群 world_2051.tscn、平板岛测试图），场景只配属性。
 // 地图只认地图宿主（MapHost，map 属性指过去）：地面、码头、船坞、农田、脚下的聚落、流式焦点、岛群地图面板都问它。
@@ -31,7 +38,11 @@
 //   跑货（FreightHand：港口村的村仓前接托运、打包、交货，船上货位前装卸；资源点的堆场把背包里的原料打成箱、抱着自家的箱子在堆场 / 村仓拆回背包；
 //   抱着货箱不能掌舵、不能改船，船上有货也不能改船）、采集（GatherHand：资源点的采掘面前按住 E，一份份采进背包）、
 //   室内编辑（InteriorEdit，T，开发者：布置模式里光标下那座，或人站在里面的那座）、
-//   摆放（PlaceHand：手上拿着能摆的东西时身前出虚影、E 摆、X 收起；E 打开木箱 / 工作台 / 窑）。
+//   摆放（PlaceHand：手上拿着能摆的东西时身前出虚影、E 摆、X 收起；E 打开木箱 / 工作台 / 窑）、
+//   搭建（PieceHand，切片十一：手上拿着搭建件时准星处出吸附好的虚影、E 摆、X 拆、E 开关门；G 挑整座样式一次摆下）、
+//   挖与垒（DigHand：手上拿着木锹 / 石镐按住 E 挖准星那一格、拿着土按 E 垒）。
+// 营造的账（摆件、搭建件、改地形）按脚下那处地面问地图宿主要（map_works_at：岛群每一群一份、存进世界存档）；地图不给的（甲乙两岛、平板岛）用编排自带的一份（全局坐标、不能改地形）。
+// 准星：拿着搭建件、锹镐、土时屏幕中心一个点，相机往前的射线打到的第一样东西就是准星落点（每帧打一回交给搭建与挖垒）。
 // 背包（Tab）照 MC：36 格、前 9 格是快捷栏（1–9 / 滚轮选，拿在手上的就是选中那格）；人在船上时船舱（每节储存区 12 格，账在这里）列在背包上面，
 // 开着木箱时是木箱；右边是配方，身边 3 m 有工作台 / 窑就多几条能合。开着背包时鼠标放出来，点法照 MC，键盘也能全做。
 // 另外：开局把船停在出发码头的泊位上、人放在它的停机坪上；HUD（位置、目标、背包、钟点、提示）；M 开合岛群地图、开发者点图瞬移；
@@ -83,6 +94,16 @@ private:
     RefitBench refit;
     BuildMode build;
     InteriorEdit interior;
+    DigHand dig;
+    PieceHand piece;
+    GroundWorks fallback_works; // 地图不给营造账时自带的一份（全局坐标、不能改地形）
+    WorksView *fallback_view = nullptr;
+    godot::Control *crosshair = nullptr;
+    StylePanel *style_panel = nullptr;
+    bool style_open = false;
+    bool aim_override = false; // 测试另给一条准星射线
+    godot::Vector3 aim_from, aim_to;
+    AimHit aim; // 这一帧的准星
     int origin_index = -1; // 地图的码头下标
     int destination_index = -1;
     bool arrived = false;
@@ -127,6 +148,10 @@ private:
     void sync_hold(); // 船舱格数跟上船
     int bay_in_use() const; // 船舱里的东西并叠后占几格
     void place_act(bool p_interact, bool p_remove); // 这一下 E / X 归摆放：收回、打开（开背包）、摆下
+    WorksSite works_at(const godot::Vector3 &p_global); // 这一点的营造账（地图给的，或自带的那一份）
+    AimHit compute_aim() const;
+    void set_style_open(bool p_open);
+    void refresh_style_panel();
     void set_map_open(bool p_open);
     void on_foot(double p_delta, bool p_interact);
     void toggle_interior(const godot::Vector3 &p_at);
@@ -263,6 +288,23 @@ public:
     godot::Vector3 get_interior_cursor() const { return interior.is_open() ? interior.get_cursor_global() : godot::Vector3(); }
     godot::String get_interior_tool() const { return interior.get_tool_name(); }
     int get_interior_level() const { return interior.get_level(); }
+    // 改地形与搭建（切片十一，给测试查 / 驱动）：另给一条准星射线（全局坐标，不用相机）/ 还给相机；
+    // 挖垒的准星那一格 { on, ok, why, i, j, working }；搭建的虚影（PieceHand::ghost_state）；准星对着的 (座, 件)；
+    // 脚下那处地面的营造账里有几座 [{ id, x, y, z, yaw, pieces, complete, missing }] 与计数 { structures, pieces, props, edited_cells }；
+    // 整座样式：名字、开没开面板、拿起第几套；人在不在一座完整的屋里
+    void set_aim_ray(const godot::Vector3 &p_from, const godot::Vector3 &p_to);
+    void clear_aim_ray() { aim_override = false; }
+    godot::Dictionary get_dig_target() const;
+    godot::Dictionary get_piece_ghost() const { return piece.ghost_state(); }
+    godot::Vector2i get_look_piece() const { return godot::Vector2i(piece.get_look_structure(), piece.get_look_piece()); }
+    godot::Array get_structures();
+    godot::Dictionary get_works_counts();
+    godot::PackedStringArray get_style_names() const;
+    bool is_style_open() const { return style_open; }
+    int get_style_index() const { return piece.get_style_index(); }
+    void select_style(int p_index);
+    bool is_inside_house();
+    godot::Node3D *get_prop_node(int p_id); // 脚下那处地面的营造账里某件摆件的实物（测试查）
     godot::String get_interior_template() const { return interior.is_open() ? interior.get_template_id() : godot::String(); }
     int get_interior_building() const { return interior.is_open() ? interior.get_index() : -1; }
     double get_interior_camera_yaw() const { return interior.get_camera_yaw(); } // 室内编辑视角的相机方位：W 把光标往 (−sin, 0, −cos) 挪

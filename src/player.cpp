@@ -43,6 +43,8 @@ void Player::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_input_blocked", "blocked"), &Player::set_input_blocked);
     ClassDB::bind_method(D_METHOD("is_input_blocked"), &Player::is_input_blocked);
     ClassDB::bind_method(D_METHOD("set_look_yaw", "yaw"), &Player::set_look_yaw);
+    ClassDB::bind_method(D_METHOD("set_look_pitch", "pitch"), &Player::set_look_pitch);
+    ClassDB::bind_method(D_METHOD("get_look_pitch"), &Player::get_look_pitch);
     ClassDB::bind_method(D_METHOD("get_look_yaw"), &Player::get_look_yaw);
     ClassDB::bind_method(D_METHOD("set_facing_yaw", "yaw"), &Player::set_facing_yaw);
     ClassDB::bind_method(D_METHOD("get_camera"), &Player::get_camera);
@@ -313,6 +315,11 @@ void Player::set_controlled(bool p_controlled) {
 
 void Player::set_look_yaw(double p_yaw) {
     look_yaw = p_yaw;
+    apply_look();
+}
+
+void Player::set_look_pitch(double p_pitch) {
+    look_pitch = std::clamp(p_pitch, PITCH_MIN, PITCH_MAX);
     apply_look();
 }
 

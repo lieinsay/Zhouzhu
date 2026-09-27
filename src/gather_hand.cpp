@@ -37,6 +37,14 @@ double GatherHand::stock_now() const {
     return spot.stock ? stock_amount(*spot.stock, spot.cap, spot.refill_hours, clock_hours()) : 0.0;
 }
 
+bool GatherHand::prefers(MapHost *p_map, Player *p_player, const PackHand &p_pack) const {
+    const ResourceSpot near = p_map->map_gather_near(p_player->get_global_position(), face_range, p_player->get_look_yaw());
+    if (near.site < 0 || !near.stock) {
+        return false;
+    }
+    return !near.scatter || catalog::tool_speed(p_pack.held_item(), near.item) > 1.0;
+}
+
 void GatherHand::stand_down() {
     working = false;
     work_time = 0.0;

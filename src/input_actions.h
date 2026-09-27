@@ -35,7 +35,8 @@ constexpr const char *GEAR_DOWN = "gear_down"; // 掌舵时降一档
 constexpr const char *NEXT_STYLE = "next_style"; // 布置时换下一套房屋模板；室内编辑时换下一样工具
 constexpr const char *PREV_STYLE = "prev_style"; // 上一套 / 上一样
 constexpr const char *EDIT_INTERIOR = "edit_interior"; // 开发者：开合室内编辑（改房屋模板）
-constexpr const char *SAVE_AS = "save_as"; // 室内编辑时另存为新模板
+constexpr const char *SAVE_AS = "save_as"; // 室内编辑时另存为新模板；样式面板里把看着的那一座另存成样式
+constexpr const char *STYLE_PANEL = "style_panel"; // 开合整座样式面板（切片十一）
 constexpr const char *FLY_DOWN = "fly_down"; // god 模式下往下飞（Shift 已是加速，不能再用来降）
 // 快捷栏 1–9：步行时选中那一格（拿在手上）；开着背包时把光标那一格放上快捷栏的那一格
 inline constexpr const char *HOTBAR[9] = { "hotbar_1", "hotbar_2", "hotbar_3", "hotbar_4", "hotbar_5", "hotbar_6", "hotbar_7", "hotbar_8", "hotbar_9" };

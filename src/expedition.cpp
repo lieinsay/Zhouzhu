@@ -7,12 +7,16 @@
 
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/canvas_layer.hpp>
+#include <godot_cpp/classes/color_rect.hpp>
 #include <godot_cpp/classes/display_server.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
+#include <godot_cpp/classes/physics_direct_space_state3d.hpp>
+#include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
 
@@ -26,7 +30,9 @@
 #include "scatter_stream.h"
 #include "settlement.h"
 #include "shipyard.h"
+#include "style_panel.h"
 #include "wild_landing.h"
+#include "works_view.h"
 #include "world_clock.h"
 
 using namespace godot;
@@ -34,6 +40,7 @@ using namespace godot;
 namespace {
 
 constexpr double MAP_FIRST_VIEW_M = 16000.0; // 第一次打开地图时屏幕宽对应多少米
+constexpr double AIM_REACH_M = 9.0; // 准星的射线从相机起、过了人再往前这么远
 constexpr double LAND_RING_STEP_M = 25.0;
 constexpr double INLAND_NUDGE_M = 20.0; // 找到的陆地再往里挪这么多，别落在崖边上
 
@@ -139,6 +146,19 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_recipe_index", "id"), &Expedition::get_recipe_index);
     ClassDB::bind_method(D_METHOD("get_stations"), &Expedition::get_stations);
     ClassDB::bind_method(D_METHOD("get_placed_props"), &Expedition::get_placed_props);
+    ClassDB::bind_method(D_METHOD("set_aim_ray", "from", "to"), &Expedition::set_aim_ray);
+    ClassDB::bind_method(D_METHOD("clear_aim_ray"), &Expedition::clear_aim_ray);
+    ClassDB::bind_method(D_METHOD("get_dig_target"), &Expedition::get_dig_target);
+    ClassDB::bind_method(D_METHOD("get_piece_ghost"), &Expedition::get_piece_ghost);
+    ClassDB::bind_method(D_METHOD("get_look_piece"), &Expedition::get_look_piece);
+    ClassDB::bind_method(D_METHOD("get_structures"), &Expedition::get_structures);
+    ClassDB::bind_method(D_METHOD("get_works_counts"), &Expedition::get_works_counts);
+    ClassDB::bind_method(D_METHOD("get_style_names"), &Expedition::get_style_names);
+    ClassDB::bind_method(D_METHOD("is_style_open"), &Expedition::is_style_open);
+    ClassDB::bind_method(D_METHOD("get_style_index"), &Expedition::get_style_index);
+    ClassDB::bind_method(D_METHOD("select_style", "index"), &Expedition::select_style);
+    ClassDB::bind_method(D_METHOD("is_inside_house"), &Expedition::is_inside_house);
+    ClassDB::bind_method(D_METHOD("get_prop_node", "id"), &Expedition::get_prop_node);
     ClassDB::bind_method(D_METHOD("get_ghost"), &Expedition::get_ghost);
     ClassDB::bind_method(D_METHOD("get_facing_prop"), &Expedition::get_facing_prop);
     ClassDB::bind_method(D_METHOD("is_aboard"), &Expedition::is_aboard);
@@ -301,9 +321,31 @@ void Expedition::build_hud() {
     pack.setup(starting_pack, inventory, hotbar);
     PlacedProps *placed = memnew(PlacedProps);
     placed->set_name("Placed");
-    placed->set_as_top_level(true); // 摆出来的东西用全局坐标
+    placed->set_as_top_level(true); // 虚影用全局坐标（摆出来的东西由营造账的 WorksView 画）
     add_child(placed);
     place.setup(placed);
+    // 地图不给营造账时自带的那一份（全局坐标）
+    fallback_view = memnew(WorksView);
+    fallback_view->set_name("Works");
+    fallback_view->set_as_top_level(true);
+    add_child(fallback_view);
+    fallback_view->setup(&fallback_works, nullptr);
+    dig.setup(this);
+    piece.setup(this);
+    // 准星：拿着搭建件、锹镐、土时屏幕中心一个点
+    ColorRect *dot = memnew(ColorRect);
+    dot->set_name("Crosshair");
+    dot->set_color(Color(1.0f, 1.0f, 0.92f, 0.85f));
+    dot->set_anchors_preset(Control::PRESET_CENTER);
+    dot->set_offset(SIDE_LEFT, -3);
+    dot->set_offset(SIDE_TOP, -3);
+    dot->set_offset(SIDE_RIGHT, 3);
+    dot->set_offset(SIDE_BOTTOM, 3);
+    dot->set_mouse_filter(Control::MOUSE_FILTER_IGNORE);
+    dot->set_visible(false);
+    layer->add_child(dot);
+    crosshair = dot;
+    style_panel = top_right_panel<StylePanel>(layer, "Styles");
     RefitPanel *refit_panel = top_right_panel<RefitPanel>(layer, "Refit");
     RefitOverlay *refit_overlay = memnew(RefitOverlay);
     refit_overlay->set_name("RefitOverlay");
@@ -401,7 +443,11 @@ int Expedition::get_recipe_index(const String &p_id) const {
 
 Array Expedition::get_placed_props() const {
     Array out;
-    for (const PlacedProp &p : place.get_placed().get_props()) {
+    const Placements *list = place.get_placed();
+    if (!list) {
+        return out;
+    }
+    for (const PlacedProp &p : list->get_props()) {
         Dictionary d;
         d["id"] = p.id;
         d["item"] = String::utf8(p.item.c_str());
@@ -413,6 +459,150 @@ Array Expedition::get_placed_props() const {
         out.push_back(d);
     }
     return out;
+}
+
+void Expedition::set_aim_ray(const Vector3 &p_from, const Vector3 &p_to) {
+    aim_override = true;
+    aim_from = p_from;
+    aim_to = p_to;
+}
+
+Dictionary Expedition::get_dig_target() const {
+    Dictionary d;
+    d["on"] = dig.has_target();
+    d["ok"] = dig.target_ok();
+    d["why"] = dig.target_why();
+    d["i"] = dig.target_i();
+    d["j"] = dig.target_j();
+    d["working"] = dig.is_working();
+    return d;
+}
+
+Array Expedition::get_structures() {
+    Array out;
+    const WorksSite site = works_at(player->get_global_position());
+    if (!site.works) {
+        return out;
+    }
+    for (const Structure &st : site.works->structures.get()) {
+        Dictionary d;
+        d["id"] = st.id;
+        d["x"] = st.x;
+        d["y"] = st.y;
+        d["z"] = st.z;
+        d["yaw"] = st.yaw;
+        d["pieces"] = int(st.pieces.size());
+        const HouseReport report = check_house(st);
+        d["complete"] = report.complete;
+        d["missing"] = String::utf8(report.missing.c_str());
+        out.push_back(d);
+    }
+    return out;
+}
+
+Dictionary Expedition::get_works_counts() {
+    Dictionary d;
+    const WorksSite site = works_at(player->get_global_position());
+    d["structures"] = site.works ? site.works->structures.size() : 0;
+    d["pieces"] = site.works ? site.works->structures.piece_count() : 0;
+    d["props"] = site.works ? site.works->props.size() : 0;
+    d["edited_cells"] = site.works && site.works->edits ? site.works->edits->cell_count() : 0;
+    d["terrain"] = site.terrain;
+    return d;
+}
+
+PackedStringArray Expedition::get_style_names() const {
+    PackedStringArray out;
+    for (int k = 0; k < piece.get_style_count(); k++) {
+        out.push_back(String::utf8(piece.get_style(k).name.c_str()));
+    }
+    return out;
+}
+
+void Expedition::select_style(int p_index) {
+    piece.set_style(p_index);
+    set_style_open(false);
+}
+
+Node3D *Expedition::get_prop_node(int p_id) {
+    const WorksSite site = works_at(player->get_global_position());
+    WorksView *view = site.view.is_valid() ? Object::cast_to<WorksView>(ObjectDB::get_instance(site.view)) : nullptr;
+    return view && view->get_props_view() ? view->get_props_view()->get_prop_node(p_id) : nullptr;
+}
+
+bool Expedition::is_inside_house() {
+    return piece.inside_house(player->get_global_position());
+}
+
+WorksSite Expedition::works_at(const Vector3 &p_global) {
+    WorksSite site = map ? map->map_works_at(p_global) : WorksSite();
+    if (!site.works) {
+        site.works = &fallback_works;
+        site.frame = nullptr;
+        site.terrain = false;
+        site.view = fallback_view ? fallback_view->get_instance_id() : ObjectID();
+    }
+    return site;
+}
+
+AimHit Expedition::compute_aim() const {
+    AimHit out;
+    Vector3 from, to;
+    if (aim_override) {
+        from = aim_from;
+        to = aim_to;
+    } else {
+        Camera3D *camera = player->get_camera();
+        if (!camera || !camera->is_inside_tree()) {
+            return out;
+        }
+        const Transform3D xf = camera->get_global_transform();
+        from = xf.origin;
+        const real_t arm = (from - player->get_global_position()).length();
+        to = from - xf.basis.get_column(2) * (arm + real_t(AIM_REACH_M));
+    }
+    out.from = from;
+    Ref<PhysicsRayQueryParameters3D> query = PhysicsRayQueryParameters3D::create(from, to, 1);
+    TypedArray<RID> exclude;
+    exclude.push_back(player->get_rid());
+    query->set_exclude(exclude);
+    const Dictionary hit = player->get_world_3d()->get_direct_space_state()->intersect_ray(query);
+    if (hit.is_empty()) {
+        return out;
+    }
+    out.hit = true;
+    out.point = hit["position"];
+    out.normal = hit["normal"];
+    out.collider = Object::cast_to<Object>(hit["collider"]);
+    return out;
+}
+
+void Expedition::set_style_open(bool p_open) {
+    style_open = p_open;
+    if (style_panel) {
+        style_panel->set_visible(style_open);
+    }
+    if (style_open) {
+        refresh_style_panel();
+    }
+}
+
+void Expedition::refresh_style_panel() {
+    if (!style_panel || !style_open) {
+        return;
+    }
+    std::vector<String> names, bills;
+    for (int k = 0; k < piece.get_style_count(); k++) {
+        const StructureStyle &st = piece.get_style(k);
+        names.push_back(String::utf8(st.name.c_str()));
+        String bill;
+        for (const auto &b : style_bill(st)) {
+            const int have = pack.items().count(b.first);
+            bill += (bill.is_empty() ? String() : String(U"、")) + PackHand::name_of(b.first) + vformat(" %d/%d", have, b.second);
+        }
+        bills.push_back(bill);
+    }
+    style_panel->refresh(names, bills, piece.get_style_index());
 }
 
 Dictionary Expedition::get_ghost() const {
@@ -480,6 +670,9 @@ Transform3D Expedition::get_destination_berth() const {
 void Expedition::close_panels() {
     gather.stand_down();
     place.stand_down();
+    piece.stand_down();
+    dig.stand_down();
+    set_style_open(false);
     if (pack.is_open()) {
         set_pack_open(false);
     }
@@ -494,6 +687,9 @@ void Expedition::set_pack_open(bool p_open, PackSide p_side, int p_prop) {
         farm_hand.stand_down();
         gather.stand_down();
         place.stand_down();
+        piece.stand_down();
+        dig.stand_down();
+        set_style_open(false);
         pack_side = p_side;
         pack_prop = p_prop;
         pack.open_with(nullptr, String());
@@ -638,15 +834,17 @@ bool Expedition::apply_shift(const std::vector<Vector3 *> &p_extra) {
         const Vector3 o = ship->get_global_position();
         ship->shift(s.point(o), s.yaw(o), s.rotation(o));
     }
-    // 摆出来的东西（全局坐标的账）
-    place.edit_placed().shift([&s](double &x, double &y, double &z, double &yaw) {
+    // 自带的那份营造账（全局坐标）；岛群的营造账在各群的局部坐标里、实物挂在群的节点下，跟着群的摆放走，不用换
+    const auto move = [&s](double &x, double &y, double &z, double &yaw) {
         const Vector3 p = Vector3(real_t(x), real_t(y), real_t(z));
         yaw += s.yaw(p);
         const Vector3 q = s.point(p);
         x = q.x;
         y = q.y;
         z = q.z;
-    });
+    };
+    fallback_works.props.shift(move);
+    fallback_works.structures.shift(move);
     // 自己记的位置
     if (has_safe_footing) {
         safe_footing = s.point(safe_footing);
@@ -720,7 +918,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
     if (!map_open) {
         const bool aboard = ship && ship->is_aboard(at);
         if (input->is_action_just_pressed(input_actions::INVENTORY)) {
-            if (refit.is_open() || build.is_open() || interior.is_open()) {
+            if (refit.is_open() || build.is_open() || interior.is_open() || style_open) {
                 close_panels(); // Tab 先合上开着的那个
             } else if (pack.is_open()) {
                 set_pack_open(false);
@@ -730,12 +928,40 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         }
         if (!pack.is_open() && !refit.is_open() && !build.is_open() && !interior.is_open()) {
             for (int k = 0; k < PackHand::HOTBAR; k++) {
-                if (input->is_action_just_pressed(input_actions::HOTBAR[k])) {
+                if (!input->is_action_just_pressed(input_actions::HOTBAR[k])) {
+                    continue;
+                }
+                if (style_open) {
+                    // 开着样式面板：1–9 拿起那一套样式
+                    if (k < piece.get_style_count()) {
+                        select_style(k);
+                        say(String(U"拿起了样式「") + String::utf8(piece.get_style(k).name.c_str()) + String(U"」：准星处出整座的虚影，E 摆下"));
+                    }
+                } else {
                     pack.select(k); // 1–9：拿起快捷栏那一格
                 }
             }
         }
         sync_pack_side();
+        // G：整座样式面板（手上拿着样式时是放下样式）
+        if (input->is_action_just_pressed(input_actions::STYLE_PANEL) && !pack.is_open() && !refit.is_open() && !build.is_open() && !interior.is_open()) {
+            if (style_open) {
+                set_style_open(false);
+            } else if (piece.get_style_index() >= 0) {
+                piece.set_style(-1);
+                say(String(U"放下了样式"));
+            } else {
+                set_style_open(true);
+            }
+        }
+        if (style_open) {
+            if (input->is_action_just_pressed(input_actions::SAVE_AS)) {
+                String message;
+                piece.save_looked_as_style(message);
+                say(message);
+            }
+            refresh_style_panel();
+        }
         if (dev_tools && input->is_action_just_pressed(input_actions::BUILD_MODE)) {
             if (build.is_open()) {
                 close_panels();
@@ -749,16 +975,27 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
             toggle_interior(at);
         }
         Shipyard *bench = RefitBench::bench_near(map->map_shipyards(), at, helm_range);
-        // 摆放先看一眼（看着哪件、手上能摆的出虚影）；看着木箱 / 工作台 / 窑按 E、手上拿着能摆的按 E、看着摆出来的按 X，
-        // 都先归摆放，堆场、村仓往后排（船上不让摆：货位、舵照旧）
+        // 摆放、搭建先看一眼（看着哪件、手上能摆的出虚影）；看着木箱 / 工作台 / 窑按 E、手上拿着能摆的 / 搭建件按 E、看着摆出来的 / 搭好的按 X、
+        // 看着门按 E，都先归摆放与搭建，堆场、村仓往后排（船上不让摆：货位、舵照旧）
         const bool panel_open = refit.is_open() || interior.is_open() || build.is_open() || pack.is_open();
+        const WorksSite site = works_at(at);
+        const bool free = player->is_god_mode(); // god 模式：搭建、挖垒不扣料不给料
+        aim = compute_aim();
         if (panel_open || freight.is_holding()) {
             place.stand_down(); // 抱着货箱腾不出手
+            piece.stand_down();
+            dig.stand_down();
         } else {
-            place.look(map, player, pack, aboard);
+            place.look(site, map, player, pack, aboard);
+            if (aboard) {
+                piece.stand_down();
+            } else {
+                piece.look(site, map, player, pack, aim, free);
+            }
         }
         const bool remove = input->is_action_just_pressed(input_actions::REMOVE);
-        const bool placing_first = !aboard && !panel_open && !freight.is_holding() && place.claims(pack, p_interact, remove);
+        const bool piece_first = !aboard && !panel_open && !freight.is_holding() && piece.claims(pack, p_interact, remove);
+        const bool placing_first = piece_first || (!aboard && !panel_open && !freight.is_holding() && place.claims(pack, p_interact, remove));
         if (refit.is_open()) {
             refit.browse(ship, p_interact, say_fn(), bay_in_use()); // 开着改装：E 是加一节
         } else if (interior.is_open()) {
@@ -768,9 +1005,14 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         } else if (pack.is_open()) {
             pack.browse(p_interact, say_fn()); // 开着背包：E 是拿放东西、合成，不是上舵、不是干活
         } else if (placing_first) {
-            place_act(p_interact, remove); // 这一下 E / X 是摆放的事（摆、收、打开木箱 / 工作台 / 窑）
+            if (piece_first) {
+                piece.act(player, pack, p_interact, remove, free, say_fn()); // 这一下 E / X 是搭建的事（摆、拆、开关门、摆整座）
+            } else {
+                place_act(p_interact, remove); // 这一下 E / X 是摆放的事（摆、收、打开木箱 / 工作台 / 窑）
+            }
             farm_hand.stand_down();
             gather.stand_down();
+            dig.stand_down();
         } else if (freight.step(map, ship, player, pack, p_interact, say_fn())) {
             farm_hand.stand_down(); // 这一下 E 是村仓前 / 货位前 / 堆场的事
             gather.stand_down();
@@ -793,6 +1035,10 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
                 board();
                 return;
             }
+        } else if (!aboard && !freight.is_holding() && DigHand::holds(pack) && !gather.prefers(map, player, pack) &&
+                dig.step(map, site, player, pack, aim, free, p_interact, p_delta, say_fn())) {
+            farm_hand.stand_down(); // 这一下 E 是挖垒的事（手上的锹镐、土；面前是对口的资源才让给采集）
+            gather.stand_down();
         } else if (gather.step(map, player, pack, freight.is_holding(), p_interact, p_delta, say_fn())) {
             farm_hand.stand_down(); // 这一下 E 是采掘面前的事
         } else if (freight.is_holding()) {
@@ -1258,6 +1504,10 @@ String Expedition::clock_text() const {
 
 void Expedition::update_hud() {
     const Vector3 at = player->get_global_position();
+    if (crosshair) {
+        crosshair->set_visible(helm.get_state() == Helm::ON_FOOT && !map_open && !pack.is_open() && !refit.is_open() && !build.is_open() && !interior.is_open() &&
+                (DigHand::holds(pack) || piece.holds(pack)));
+    }
     PackedStringArray lines;
     // 行星航向（行星地图设的）：到了那一群就清掉
     String course_line;
@@ -1323,6 +1573,9 @@ void Expedition::update_hud() {
             if (bench) {
                 prompt = RefitBench::ship_in(ship, bench) ? String(U"按 E 改装空艇") : String(U"画样台 · 空艇不在船坞里");
             }
+            if (piece.inside_house(at)) {
+                lines.push_back(String(U"在自己盖的屋里（一座完整的屋）"));
+            }
             // 背包一眼看全，手上拿着什么；脚下有农田就说田的事
             String pack_line = pack.summary();
             const String fields = farm_hand.fields_text();
@@ -1336,9 +1589,24 @@ void Expedition::update_hud() {
                 break;
             }
             const bool aboard = ship && ship->is_aboard(at);
+            if (!aboard && !freight.is_holding() && piece.holds(pack)) {
+                prompt = piece.prompt(pack); // 手上拿着搭建件 / 样式：先说这个
+                break;
+            }
             if (!aboard && !freight.is_holding() && place.engaged()) {
                 prompt = place.prompt(pack); // 看着木箱 / 工作台、手上拿着能摆的：先说这个
                 break;
+            }
+            if (!aboard && !freight.is_holding() && piece.get_look_piece() >= 0) {
+                prompt = piece.prompt(pack); // 准星对着搭好的一件：拆、开关门、这座还缺什么
+                break;
+            }
+            if (!aboard && !freight.is_holding() && DigHand::holds(pack) && !gather.prefers(map, player, pack)) {
+                const String digging = dig.prompt(pack);
+                if (!digging.is_empty()) {
+                    prompt = digging; // 手上的锹镐、土：挖垒的事
+                    break;
+                }
             }
             const String cargo = freight.prompt(map, pack);
             if (!cargo.is_empty()) {
