@@ -79,7 +79,13 @@ class Atmosphere : public godot::Node3D {
     struct Look {
         double cloud = 0.1, cover = 0.12, precip = 0.0, snow = 0.0, fog = 0.0, storm = 0.0, wet = 0.0, wind_x = 0.0, wind_z = 0.0;
         double overcast = 0.0, haze = 0.0, fog_height = 0.0, grad_x = 0.0, grad_z = 0.0;
+        // 雨雪粒子跟的降水与雪的份额：比天色跟得快（drop_smoothing），HUD 说停了，雨丝一两秒内就停（行星计划 P4 查出来的：原来跟 precip，
+        // 大雨在 rain_ratio 上是饱和的，天气停了还要下五六秒）
+        double drops = 0.0, drops_snow = 0.0;
     } look;
+    double drop_smoothing = 0.5; // 真实秒
+    double last_day = 0.0; // 上一帧的历日：一帧里钟挪了 CLOCK_JUMP_H 以上（拨钟、测试跳钟）画面直接跟上
+    bool have_day = false;
     double flash = 0.0, flash_timer = 4.0, flicker = 0.0;
     double indoor = 0.0, indoor_timer = 0.0;
     bool indoor_hit = false;

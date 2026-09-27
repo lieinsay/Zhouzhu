@@ -65,6 +65,9 @@ var near_out := 0.0
 var seat_clock_saved := 0.0
 var clock_step_at := 0.0
 var shot_ll := PackedFloat64Array()
+var dry_s := 0.0  # 此地此刻没有降水多久了（HUD 报晴、多云……）
+var dry_frames := 0  # 查过「没有降水就不下雨丝」的帧数
+var snap_checked := false
 
 
 func _ready() -> void:
@@ -158,6 +161,9 @@ func _process(_delta: float) -> void:
 	if shot_wait > 0:
 		return
 	get_viewport().get_texture().get_image().save_png(shots_dir.path_join(pending_shot + ".png"))
+	var shot_atmo: Atmosphere = main.get_node("Atmosphere")
+	_log("截图 %s：钟 %s，此地「%s」降水 %.2f；雨丝 %.2f、雪 %.2f" % [pending_shot, GameClock.get_clock_text(), shot_atmo.get_weather()["kind_name"],
+		float(shot_atmo.get_weather()["precip"]), float(shot_atmo.get_look()["rain_ratio"]), float(shot_atmo.get_look()["snow_ratio"])])
 	pending_shot = ""
 
 
@@ -266,6 +272,17 @@ func _physics_process(delta: float) -> void:
 		shift_jump_m = _latlon_m(cam_before, after)
 		_log("换锚 #%d：锚 → %d，这一步 %.2f ms；相机在真球面上前后差 %.3f m（这一帧该走 %.3f m）" % [shifts_seen, stream.get_anchor_node(), main.get_last_shift_ms(), shift_jump_m, cam_speed * delta])
 	cam_before = _cam_state()
+	# 雨雪粒子与此地此刻的天一致（行星计划 P4 查出来的：原来雨丝跟平滑过的降水，大雨时是饱和的——HUD 早报了晴，雨还要下五六秒）：
+	# 没有降水持续 1.5 s，雨雪粒子就该停了
+	var atmo_now: Atmosphere = main.get_node("Atmosphere")
+	var wx_now: Dictionary = atmo_now.get_weather()
+	dry_s = dry_s + delta if float(wx_now["precip"]) < 0.02 else 0.0
+	if dry_s > 1.5:
+		dry_frames += 1
+		var look_now: Dictionary = atmo_now.get_look()
+		if float(look_now["rain_ratio"]) + float(look_now["snow_ratio"]) > 0.05:
+			_finish(false, "此地此刻「%s」没有降水已 %.1f s，雨雪粒子还在下（雨丝 %.2f、雪 %.2f；HUD：%s）" % [wx_now["kind_name"], dry_s, float(look_now["rain_ratio"]), float(look_now["snow_ratio"]), main.get_status_text().get_slice("\n", 0)])
+			return
 	cam_speed = ship.get_speed() if main.get_state() != 0 else player.velocity.length()
 	match phase:
 		Phase.SETTLE:
@@ -468,6 +485,12 @@ func _physics_process(delta: float) -> void:
 							out += 1
 							village = v.get_site_name()
 			var atmo: Atmosphere = main.get_node("Atmosphere")
+			if step == 3:
+				# 截图存好了（截图晚三帧：先别撤覆盖、别拨钟，否则拍到的是之后的天）
+				if pending_shot.is_empty():
+					atmo.clear_weather_override()
+					_goto(Phase.ADVANCE_CLOCK)
+				return
 			if step == 1 and folk_total > 0 and out == 0 and in_phase > 5.0:
 				var w: Dictionary = atmo.get_weather()
 				_log("2050：码头边的村招了 %d 人都在屋里，此地此刻「%s」（风暴 %.2f、降水 %.2f）——覆盖成晴，看他们出门" % [folk_total, w.get("kind_name", "?"), float(w.get("storm", 0.0)), float(w.get("precip", 0.0))])
@@ -477,8 +500,7 @@ func _physics_process(delta: float) -> void:
 				_log("2050：%s 有 %d 人在外面（招了 %d 人；钟点 %s）" % [village, out, folk_total, GameClock.get_clock_text()])
 				_shot("6_folk_2050")
 				_memory("2050 主码头，村民出门")
-				atmo.clear_weather_override()
-				_goto(Phase.ADVANCE_CLOCK)
+				step = 3
 			elif in_phase > FOLK_TIMEOUT:
 				_finish(false, "2050 的码头边 %.0f s 里没人出门（铺出来的村 %s）" % [FOLK_TIMEOUT, sites.get_built_villages()])
 		Phase.ADVANCE_CLOCK:
@@ -499,6 +521,15 @@ func _physics_process(delta: float) -> void:
 			waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
 			_goto(Phase.WALK_BACK)
 		Phase.WALK_BACK:
+			# 钟拨了 26 个钟头：天与光照新的时刻直接跟上（原来从拨钟前的风暴慢慢淡，截图里 HUD 报晴、画面还在下大雨）
+			if not snap_checked and in_phase > 0.05:
+				snap_checked = true
+				var sw: Dictionary = (main.get_node("Atmosphere") as Atmosphere).get_weather()
+				var sl: Dictionary = (main.get_node("Atmosphere") as Atmosphere).get_look()
+				if absf(float(sl["precip"]) - float(sw["precip"])) > 0.05 or absf(float(sl["drops"]) - float(sw["precip"])) > 0.05:
+					_finish(false, "拨钟 26 h 后天与光该直接跟上：此地「%s」降水 %.2f，画面还在 %.2f（雨丝跟的 %.2f）" % [sw["kind_name"], float(sw["precip"]), float(sl["precip"]), float(sl["drops"])])
+					return
+				_log("拨钟后此地「%s」降水 %.2f，画面跟上了（%.2f）、雨丝 %.2f" % [sw["kind_name"], float(sw["precip"]), float(sl["precip"]), float(sl["rain_ratio"])])
 			if step == 0:
 				var home := stream.get_group_state(HOME)
 				if int(home["tier"]) == GroupStream.TIER_FAR and not bool(home["loaded"]):
@@ -636,4 +667,5 @@ func _physics_process(delta: float) -> void:
 			elif in_phase > 240.0:
 				_finish(false, "240 s 里 2051 的账没补回 / 没补结（%s）" % [stats])
 		Phase.DONE:
+			_log("雨雪粒子对得上此地此刻的天：没有降水的 %d 帧里都没下" % dry_frames)
 			_finish(true, "2051 主码头上船 → 换锚线前 10 km → 飞过换锚线（相机在真球面上跳了 %.3f m、那一帧前后 %.1f ms、跨群最慢 %.1f ms）→ 2050 主码头靠泊下船（地方时、有人出门）→ 2051 降到远景、拨钟 26 h → 飞回、2051 重新载入、停船手动换锚（相机挪了 %.4f m）→ 2051 的账补回、只补最后一天" % [cross_jump_m, shift_frame_ms, cross_max_ms, manual_jump_m])

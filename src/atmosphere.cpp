@@ -34,6 +34,7 @@ namespace {
 
 constexpr const char *SKY_SHADER = "res://shaders/sky.gdshader";
 constexpr double JUMP_M = 400.0; // 相机一帧挪这么远（瞬移、换地图）：画面不平滑，直接跟上
+constexpr double CLOCK_JUMP_H = 3.0; // 钟一帧挪这么多游戏钟头（拨了半天、一天）：画面照新的时刻直接跟上，不从几个钟头前的天慢慢淡过来（F6 拨 ±1 h 照旧平滑）
 constexpr double INDOOR_REACH_M = 30.0; // 头顶这么高以内有东西就算在屋里 / 舱里（不下雨雪）
 constexpr double INDOOR_CHECK_S = 0.25;
 constexpr double FOG_THIN_FROM_M = 2500.0; // 有行星数据时：相机高过这里，雾按 exp(−(高 − 2500) / 7000) 减淡（空气变稀）
@@ -398,7 +399,16 @@ void Atmosphere::update_look(const Vector3 &p_eye, double p_delta) {
     } else {
         have_true = false;
     }
+    const double today = calendar_day();
+    if (have_day && std::fabs(today - last_day) * 24.0 > CLOCK_JUMP_H) {
+        jump = true;
+    }
+    last_day = today;
+    have_day = true;
     const double k = jump ? 1.0 : 1.0 - std::exp(-p_delta / std::max(0.01, smoothing));
+    const double k_drops = jump ? 1.0 : 1.0 - std::exp(-p_delta / std::max(0.01, drop_smoothing));
+    look.drops += (now.precip - look.drops) * k_drops;
+    look.drops_snow += (now.snow_frac - look.drops_snow) * k_drops;
     have_look = true;
     // 云量往外的梯度：东、南各 5 km 再取一次（锋面过来时远处的天先阴）
     const WeatherModel *wx = model();
@@ -556,8 +566,9 @@ void Atmosphere::update_globals(double p_day) {
 
 void Atmosphere::update_particles(const Vector3 &p_eye, double p_delta) {
     const double shelter = (1.0 - indoor) * (1.0 - above_clouds); // 屋里、云层以上不下
-    rain_ratio = precipitation ? std::clamp(look.precip * 1.5, 0.0, 1.0) * (1.0 - look.snow) * shelter : 0.0;
-    snow_ratio = precipitation ? std::clamp(look.precip * 1.8, 0.0, 1.0) * look.snow * shelter : 0.0;
+    // 雨丝、雪片跟 drops（比天色跟得快）：此地此刻没有降水（HUD 报晴、多云），一两秒内就停
+    rain_ratio = precipitation ? std::clamp(look.drops * 1.5, 0.0, 1.0) * (1.0 - look.drops_snow) * shelter : 0.0;
+    snow_ratio = precipitation ? std::clamp(look.drops * 1.8, 0.0, 1.0) * look.drops_snow * shelter : 0.0;
     const double bright = 0.15 + 0.85 * smooth01(-0.12, 0.2, sun_state.dir_y);
     if (rain) {
         rain->set_amount_ratio(real_t(rain_ratio));
@@ -669,6 +680,7 @@ Dictionary Atmosphere::get_look() const {
     d["flash"] = flash;
     d["rain_ratio"] = rain_ratio;
     d["snow_ratio"] = snow_ratio;
+    d["drops"] = look.drops;
     d["sun_energy"] = sun ? double(sun->get_param(Light3D::PARAM_ENERGY)) : 0.0;
     d["moon_energy"] = moon ? double(moon->get_param(Light3D::PARAM_ENERGY)) : 0.0;
     return d;
