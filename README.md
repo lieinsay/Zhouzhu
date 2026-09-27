@@ -1554,8 +1554,11 @@ Debug 扩展、带窗口 1280 × 720（`stream_perf --disable-vsync -- --sea=20`
 - **构建要点**：`cmake -S . -B build` 会编子模块里的核心库；**Debug 配置下核心库与 `zhouzhu_gen` 也开 `/O2`**（只换优化级别，`/fp:precise` 不变；
   Debug 与 Release 写出的文件逐字节相同，验过）——`/Od` 下生成一群要慢几倍，e2e 跑的是 Debug 的扩展。运行库照全工程的 `CMAKE_MSVC_RUNTIME_LIBRARY`（`/MD`）。
   子模块的 HEAD 变了 CMake 会自己重新配置（提交号要重读）。
-- **推送顺序：先推 skyisle-gen，再推 Zhouzhu。** 子模块指向生成器本地分支 `island-rivers-resources-settle` 的 `ef3525a`（P6a–d 与 P5 前置的 28 个提交都还没推到 GitHub）；
-  先推 Zhouzhu 的话，别的机器 `git submodule update` 会找不到这个提交。
+- **推送顺序：先推 skyisle-gen，再推 Zhouzhu。** 子模块指向生成器分支 `island-rivers-resources-settle` 上的提交（起初 `ef3525a`，附庸修正后 `b96b83a`，2026-09-27 都已推到 GitHub）；
+  以后升子模块也一样：先推 Zhouzhu 的话，别的机器 `git submodule update` 会找不到那个提交。
+- **升子模块要重导行星包的头**：`planet.bin` 与 `weather.bin` 头里 source 行记着生成器提交号，单测 `gen_seed42` 拿子模块的提交号比，所以升子模块后要用
+  `tools/export_planet.py` 重导一遍（内容不变也会各差 6 字节，仓库每次多约 17 MB 的二进制）；`config.tsv` 只在生成器的配置变了时才要重导。
+  注意别在用 `--backend python` 跑过的 run 目录上重导 `config.tsv`（它会把 `engine.backend` 写成 python）。
 - **测试**：单测多两段——`gen_format`（Python 写法的边界、scipy 的并列、config.tsv 的三种值与换行）与 `gen_seed42`（seed42 的行星层 + 2051、2050：
   与仓库里 Python 那条路导出的包逐字节相同，`planet.bin` 除 `lod.*` 五列）；ctest 另加生成器自己的自检 `skyisle_core_selftest`（随机流对 numpy 的参考值）。
 
@@ -1628,7 +1631,8 @@ Debug 扩展、带窗口 1280 × 720（`stream_perf --disable-vsync -- --sea=20`
 - 在算的一群停不下来：瞬移换了目标，前一群照样算完、包照写（下回去就有缓存）；场景拆的时候要等它（与行星层、新建世界一样），最多一两秒。
 - 大群（#833 那样 245 万格）生成时进程内存临时多出约 750 MB；两个细版群都载入着时再生成一个大群，峰值会贴近 P3 定的 1.5 GB。
 - 这个会话（进程）里第一回按需生成，若行星层还没备好（场景开了不到 5 s、或刚新建世界又换了种子）要多等约 1 s。
-- 生成器 ⑨ 附庸判定的怪处（P6d 留下的「待用户拍板」）照旧没动。
+- 生成器 ⑨ 附庸判定的怪处（P6d 留下的「待用户拍板」）后来用户定了修：生成器 aede58a 两个后端一起改，seed42 附庸 0 → 147；
+  游戏读的 polity.npz 逐字节不变；子模块升到 b96b83a，行星包重导后只有 planet.bin、weather.bin 头里 source 行的提交号变了（lods.bin、config.tsv 不变）。
 
 ## 开发者工具（哪张地图里都能用）
 
