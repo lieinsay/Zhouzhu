@@ -79,9 +79,15 @@ int PlanetHost::get_anchor_node() const {
 
 void PlanetHost::build_docks() {
     docks.clear();
-    // 场景里那一群的码头在前：下标、号与它自己的一样（World 的码头下标就是 sites.tsv 的行序）
+    // 场景里那一群的码头在前：下标、号与它自己的一样（World 的码头下标就是 sites.tsv 的行序）。
+    // GroupStream 就绪以后按它记的 sites.tsv 排（行星计划 P4：按需生成的群加进来要重排码头表，这时场景里那一群可能已经拆了，照样排在前面，下标不变）
+    const GroupStream::Group *home_group = stream && stream->is_ready() ? stream->group_of(home_node) : nullptr;
     const GroupWorld *home = Object::cast_to<GroupWorld>(ObjectDB::get_instance(home_id));
-    if (home && home->is_loaded()) {
+    if (home_group) {
+        for (int k = 0; k < int(home_group->sites.docks.size()); k++) {
+            docks.push_back(DockRef{ home_node, k, home_group->sites.docks[size_t(k)].id, true });
+        }
+    } else if (home && home->is_loaded()) {
         for (int k = 0; k < home->get_dock_count(); k++) {
             docks.push_back(DockRef{ home_node, k, home->get_dock_id(k), true });
         }
