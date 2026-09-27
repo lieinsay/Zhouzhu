@@ -137,6 +137,9 @@ bool PlanetView::try_anchor() {
     Node *node = get_node_or_null(map_path);
     map = MapHost::of(node);
     GroupWorld *world = Object::cast_to<GroupWorld>(node);
+    if (!world && map) {
+        world = Object::cast_to<GroupWorld>(map->map_node()); // 地图宿主是 PlanetHost（行星计划 P3）：锚 = 它此刻的锚群
+    }
     if (!world || !world->is_loaded()) {
         return false;
     }
@@ -160,6 +163,20 @@ bool PlanetView::try_anchor() {
     }
     build_deck();
     return true;
+}
+
+void PlanetView::set_anchor_world(const GroupWorld *p_world) {
+    if (!p_world || !planet) {
+        return;
+    }
+    const Dictionary source = p_world->get_info().get("source", Dictionary());
+    if (!source.has("lat") || !source.has("lon")) {
+        return;
+    }
+    PlanetShape shape;
+    shape.sea_radius_m = planet->radius_km * 1000.0;
+    anchor = GroupFrame(double(source["lat"]), double(source["lon"]), shape);
+    anchor_node = int(source.get("node", -1));
 }
 
 void PlanetView::build_deck() {

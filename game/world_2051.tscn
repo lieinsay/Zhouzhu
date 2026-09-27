@@ -82,3 +82,5 @@ map_path = NodePath("../World")
 [node name="FarGroups" type="FarGroups" parent="."]
 
 [node name="PlanetGlobe" type="PlanetGlobe" parent="."]
+
+[node name="GroupStream" type="GroupStream" parent="."]

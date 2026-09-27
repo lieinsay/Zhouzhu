@@ -218,6 +218,7 @@ void GroupWorld::_ready() {
     site_stream = Object::cast_to<SiteStream>(get_node_or_null(sites_path));
     scatter_stream = Object::cast_to<ScatterStream>(get_node_or_null(scatter_path));
     attach_pool();
+    set_physics_on(physics_on); // 进树前就定了是邻群（GroupStream 建的）：船坞跟着撤出物理
     if (async_load) {
         // 后台读（Debug 下 2051 约 1 s）：这期间主线程不碰地形这些成员；_process 里等它做完再装
         loading = true;
@@ -238,6 +239,29 @@ void GroupWorld::_ready() {
     install();
     set_process(true);
     emit_signal("rebuilt"); // 挂在下面的 Farm、Shipyard 先于这里 _ready，此刻才等到地面
+}
+
+void GroupWorld::finish_loading_now() {
+    if (!loading) {
+        return;
+    }
+    std::unique_ptr<JobResult> r = pool->run_now(job_key(JobKind::GROUP_LOAD, 0));
+    if (!r) {
+        std::vector<JobPool::Done> done;
+        pool->collect(JobKind::GROUP_LOAD, done, lane);
+        if (!done.empty()) {
+            r = std::move(done.front().result);
+        }
+    }
+    loading = false;
+    const GroupLoadDone *g = static_cast<const GroupLoadDone *>(r.get());
+    if (!g || !g->ok) {
+        ERR_PRINT(String("World: ") + (g ? String::utf8(g->error.c_str()) : String(U"后台载入没有结果")));
+        set_process(false);
+        return;
+    }
+    install();
+    emit_signal("rebuilt");
 }
 
 void GroupWorld::install() {
@@ -878,13 +902,18 @@ void GroupWorld::_process(double /* p_delta */) {
 }
 
 void GroupWorld::set_physics_on(bool p_on) {
-    if (physics_on == p_on) {
-        return;
-    }
     physics_on = p_on;
+    const ProcessMode mode = physics_on ? PROCESS_MODE_INHERIT : PROCESS_MODE_DISABLED;
     for (auto &it : tiles) {
         if (it.second.body) {
-            it.second.body->set_process_mode(physics_on ? PROCESS_MODE_INHERIT : PROCESS_MODE_DISABLED);
+            it.second.body->set_process_mode(mode);
+        }
+    }
+    // 船坞（主码头旁的坪、坞墩、门架）也是碰撞体：邻群的撤出物理
+    const TypedArray<Node> children = get_children();
+    for (int64_t k = 0; k < children.size(); k++) {
+        if (Shipyard *yard = Object::cast_to<Shipyard>(children[k])) {
+            yard->set_process_mode(mode);
         }
     }
 }
@@ -1521,6 +1550,11 @@ String GroupWorld::map_location_text(const Vector3 &p_global) const {
 
 WorldMap *GroupWorld::map_make_panel() {
     WorldMap *panel = memnew(WorldMap);
+    map_fill_panel(panel);
+    return panel;
+}
+
+void GroupWorld::map_fill_panel(WorldMap *panel) const {
     panel->setup(grid, info);
     for (int k = 0; k < get_dock_count(); k++) {
         panel->set_dock(get_dock_id(k), is_dock_berthable(k), get_dock_position(k));
@@ -1557,7 +1591,6 @@ WorldMap *GroupWorld::map_make_panel() {
         patch_kinds[size_t(d.id)] = int(kind - deposits::KINDS);
     }
     panel->set_resource_patches(patch_kinds);
-    return panel;
 }
 
 void GroupWorld::map_refresh_panel(WorldMap *p_panel) const {

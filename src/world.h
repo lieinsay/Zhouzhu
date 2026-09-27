@@ -258,6 +258,13 @@ public:
     godot::PackedInt32Array get_freight_port_ids() const; // 能托运的村的村号
     SiteStream *get_site_stream() const { return site_stream; }
     ScatterStream *get_scatter_stream() const { return scatter_stream; }
+    // GroupStream 升到细版时挂上、降回近景时拆掉（场景里摆的 World 在 _ready 里按路径找）
+    void set_streams(SiteStream *p_sites, ScatterStream *p_scatter) {
+        site_stream = p_sites;
+        scatter_stream = p_scatter;
+    }
+    // 后台载入还没做完：在这条线程上当场做完、装上（瞬移、回位要马上落到这一群）
+    void finish_loading_now();
 
     // 流式加载的主线程分项计时（stream_meter.h）：C++ 里用 StreamTimer 计一段；脚本按帧号查一帧的分项（毫秒），或各项累计
     StreamMeter &get_meter() { return meter; }
@@ -269,6 +276,8 @@ public:
     const ResourceData &get_resource_data() const { return resource_data; }
     const ResourcePlan &get_resource_plan() const { return resource_plan; }
     ResourceStock *resource_stock(int p_index);
+    const std::vector<ResourceStock> &get_resource_stocks() const { return resource_stocks; }
+    void set_resource_stocks(const std::vector<ResourceStock> &p_stocks) { resource_stocks = p_stocks; }
     const ResourceScatter &get_scatter() const { return scatter; }
     ScatterLedger &get_scatter_ledger() { return scatter_ledger; }
     const ScatterLedger &get_scatter_ledger() const { return scatter_ledger; }
@@ -333,6 +342,8 @@ public:
     int map_pending() const override;
     godot::String map_location_text(const godot::Vector3 &p_global) const override;
     WorldMap *map_make_panel() override;
+    // 面板照这一群重画（新建、换锚后 PlanetHost 让已有的面板换成新锚群的图）
+    void map_fill_panel(WorldMap *p_panel) const;
     void map_refresh_panel(WorldMap *p_panel) const override;
     double map_view_distance() const override { return 60000.0; } // 岛群近百公里宽，远处的岛也要看得见
     const std::vector<FreightPort> &map_freight_ports() const override { return freight_ports; }

@@ -11,6 +11,7 @@
 #include "far_groups.h"
 #include "farm.h"
 #include "flat_map.h"
+#include "group_stream.h"
 #include "hinterland.h"
 #include "hotbar_bar.h"
 #include "inventory_panel.h"
@@ -68,6 +69,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(PlanetJobs);
     GDREGISTER_CLASS(GroupWorld);
     GDREGISTER_CLASS(World);
+    GDREGISTER_CLASS(GroupStream);
     GDREGISTER_CLASS(WorldMap);
     GDREGISTER_CLASS(WorldVillage);
     GDREGISTER_CLASS(WorldDock);

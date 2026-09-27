@@ -1,6 +1,8 @@
 #pragma once
 
 #include <future>
+#include <map>
+#include <string>
 #include <memory>
 #include <vector>
 
@@ -42,6 +44,11 @@ class Hinterland : public godot::Node {
     size_t ring = 0; // 轮到第几处
     int current = -1; // 正在结的那一处（一处要结好几片时跨帧接着结）
     std::vector<int> urgent; // 近处要招村民、等着开账的（先开这几处）
+    // 上回离开细版时存下的账（sites.settlements 下标 → save_village_state 的文本；GroupStream 交过来）：开账时补回，离开超过一天的只补最后一天
+    std::map<int, std::string> saved;
+    double saved_at = -1.0;
+    int restored = 0; // 补回了几本
+    double skipped_hours = 0.0; // 补回时按汇总跳过的钟头（离开超过一天的部分）
 
     // 实测
     double frame_us = 0.0, frame_max_us = 0.0, frame_avg_us = 0.0;
@@ -72,6 +79,11 @@ public:
     std::shared_ptr<VillageState> checkout(int p_index, const SettlementLayout &p_layout);
     // 近处的清单变了（村民散了之前）：记下来，远处照新清单记账
     void set_layout(int p_index, const SettlementLayout &p_layout);
+    // 模拟分级（行星计划 P3，计划 4.6）：离开细版前把开了的账存成文本（后台在开的先等它开完）、此刻的钟；
+    // 回来时（新的账房）交回来，开账时照文本补回，从存下的那一刻接着结——离开超过 1 个游戏日的只补最后 1 日，前面的视为按汇总过了
+    void save_states(std::map<int, std::string> &r_states, double &r_at);
+    void set_saved(const std::map<int, std::string> &p_states, double p_at);
+    int get_restored() const { return restored; }
     std::shared_ptr<ClaimRegistry> get_registry() const { return taken; }
     const WorldLedger *get_ledger(int p_index) const;
     VillageState *get_state(int p_index); // 这处的账本（跑货从它的仓里扣、往里交）；没开账为 nullptr

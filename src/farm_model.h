@@ -128,6 +128,13 @@ public:
     int count(PlotState p_state) const;
     // 表里的格子（垦过的），(i, j) 成对
     std::vector<int> plot_cells() const;
+    // 整张地块表（键 = 格号），存下再放回：岛群远了拆掉、回来补上（行星计划 P3）；放回不查勘察（当初就是垦得了的）
+    std::vector<std::pair<uint64_t, Plot>> plot_entries() const { return std::vector<std::pair<uint64_t, Plot>>(plots.begin(), plots.end()); }
+    void put_entry(uint64_t p_key, const Plot &p_plot) {
+        if (p_plot.state != PlotState::WILD) {
+            plots[p_key] = p_plot;
+        }
+    }
 
     // 粟苗的外观阶段：0 刚出土 … STAGES − 1 成熟
     static constexpr int STAGES = 4;

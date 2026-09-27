@@ -524,6 +524,15 @@ void SiteStream::refresh(int p_build_budget) {
     }
 }
 
+void SiteStream::retire_folk() {
+    for (auto &[index, village] : villages) {
+        if (village->has_folk()) {
+            village->set_folk(false, per_house, max_folk);
+        }
+        navs.erase(index);
+    }
+}
+
 int SiteStream::get_detailed_cell_count() const {
     int n = 0;
     for (const auto &entry : villages) {

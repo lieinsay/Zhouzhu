@@ -330,6 +330,21 @@ void Farm::_physics_process(double p_delta) {
     }
 }
 
+void Farm::restore_plots(const std::vector<std::pair<uint64_t, Plot>> &p_entries, double p_saved_at) {
+    for (const auto &entry : p_entries) {
+        model.put_entry(entry.first, entry.second);
+    }
+    const std::vector<int> cells = model.plot_cells();
+    for (size_t k = 0; k + 1 < cells.size(); k += 2) {
+        refresh_plot(Vector2i(cells[k], cells[k + 1]));
+    }
+    // 下一个物理帧按「存下时 → 此刻」长（Farm::_physics_process 按 clock_seen 算走过的钟头）
+    const WorldClock *clock = WorldClock::get_singleton();
+    if (clock && p_saved_at >= 0.0) {
+        clock_seen = p_saved_at;
+    }
+}
+
 bool Farm::has_ground(const Vector2i &p_cell) const {
     return ground && p_cell != NO_CELL && model.land_at(p_cell.x, p_cell.y) != Arability::NO_GROUND;
 }

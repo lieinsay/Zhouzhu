@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <memory>
 #include <vector>
 
@@ -46,6 +47,7 @@ class FarGroups : public godot::Node3D {
         bool shown = true;
     };
     std::map<int, Group> groups;
+    std::set<int> hidden; // GroupStream 载入了、地面块挂齐了的群：粗版藏起来（行星计划 P3）
     std::shared_ptr<JobPool> pool; // 场景里共用的（PlanetJobs）；没有就借 map_path 那个岛群的
     PlanetView *planet = nullptr;
     godot::Ref<godot::ShaderMaterial> material;
@@ -77,6 +79,9 @@ public:
     int get_wanted_count() const { return int(groups.size()); }
     bool is_idle() const; // 该挂的都挂上了（档也对）
     godot::PackedInt32Array get_nodes() const; // 挂着网格的群号
+    // 某群的粗版藏不藏（GroupStream 把它载入成近景 / 细版、地面块挂齐了就藏）
+    void set_hidden(int p_node, bool p_hidden);
+    bool is_hidden(int p_node) const { return hidden.count(p_node) != 0; }
     double get_group_resolution(int p_node) const; // 挂着的那一档（米）；没有 0
 
     void set_planet_path(const godot::NodePath &p_value) { planet_path = p_value; }

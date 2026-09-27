@@ -14,6 +14,7 @@
 #include "planet_data.h"
 #include "planet_frame.h"
 
+class GroupWorld;
 class MapHost;
 
 // 行星的画面（行星计划 P1，docs/PLAN-PLANET.md 第 4.2 节）：一个场景一个，挂在有行星数据的地图里（world_2051.tscn）。
@@ -79,6 +80,8 @@ public:
     static PlanetView *active_view();
 
     bool is_active() const { return loaded && anchored; }
+    // 换锚（GroupStream 在换锚那一帧调）：锚群改成这一群（它的 world.json 的 source），弯曲、经纬度、刚体摆放从下一回 _process 起按它算
+    void set_anchor_world(const GroupWorld *p_world);
     const PlanetData *get_planet() const { return planet.get(); }
     std::shared_ptr<const PlanetData> share_planet() const { return planet; }
     int get_anchor_node() const { return anchor_node; }

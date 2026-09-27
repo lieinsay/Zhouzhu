@@ -121,6 +121,14 @@ void FarGroups::cancel_all() {
     }
 }
 
+void FarGroups::set_hidden(int p_node, bool p_hidden) {
+    if (p_hidden) {
+        hidden.insert(p_node);
+    } else {
+        hidden.erase(p_node);
+    }
+}
+
 void FarGroups::_process(double /* p_delta */) {
     if (!planet || !planet->is_active() || !pool) {
         return;
@@ -324,6 +332,8 @@ void FarGroups::place_all() {
                 }
             }
         }
+        // 锚群（换锚之后它的粗版可能还在）、GroupStream 载入了的群：不画粗版
+        inside = inside && !hidden.count(it.first) && it.first != planet->get_anchor_node();
         if (inside) {
             g.mesh->set_global_transform(xf);
         }

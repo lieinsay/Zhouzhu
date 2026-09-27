@@ -112,8 +112,47 @@ WorldLedgerSpec Hinterland::spec_of(int p_index) const {
 }
 
 void Hinterland::install(int p_index, WorldLedger &&p_ledger) {
+    const auto found = saved.find(p_index);
+    if (found != saved.end()) {
+        // 上回离开时存下的账：照文本补回（人、仓、水缸、认领的地、流水），认领的格子重新登记到全图认领表
+        VillageState state;
+        std::string error;
+        if (load_village_state(found->second, state, error)) {
+            *p_ledger.state = std::move(state);
+            for (const Claim &c : p_ledger.state->claims) {
+                taken->add(c.i, c.j);
+            }
+            for (const HeldPlot &h : p_ledger.state->held) {
+                taken->add(h.i, h.j);
+            }
+            restored++;
+        } else {
+            ERR_PRINT(String(U"Hinterland：存下的账读不回来（") + String::utf8(error.c_str()) + String(U"），这一处重新开账"));
+        }
+        saved.erase(found);
+    }
     ledgers[size_t(p_index)] = std::make_unique<WorldLedger>(std::move(p_ledger));
     opened++;
+}
+
+void Hinterland::save_states(std::map<int, std::string> &r_states, double &r_at) {
+    collect_openings(true); // 后台在开的：等它开完一并存下
+    for (size_t k = 0; k < ledgers.size(); k++) {
+        if (ledgers[k]) {
+            r_states[int(k)] = save_village_state(*ledgers[k]->state);
+        }
+    }
+    // 上回存下、这回还没来得及开账的：原样留着
+    for (const auto &entry : saved) {
+        r_states.emplace(entry.first, entry.second);
+    }
+    const WorldClock *clock = WorldClock::get_singleton();
+    r_at = clock ? clock->get_seconds() : 0.0;
+}
+
+void Hinterland::set_saved(const std::map<int, std::string> &p_states, double p_at) {
+    saved = p_states;
+    saved_at = p_at;
 }
 
 void Hinterland::collect_openings(bool p_install) {
@@ -340,6 +379,9 @@ Dictionary Hinterland::get_stats() const {
     d["slice_avg_us"] = slices > 0 ? slice_us_total / double(slices) : 0.0;
     d["slice_max_us"] = slice_max_us;
     d["us_per_village_hour"] = settled_hours > 0.0 ? slice_us_total / settled_hours : 0.0;
+    d["restored"] = restored; // 从上回存下的文本补回了几本（模拟分级）
+    d["waiting_restore"] = int(saved.size()); // 存下了、还没开账补回的
+    d["skipped_hours"] = skipped_hours;
     d["claims"] = taken ? int(taken->size()) : 0;
     int people = 0, deployed = 0;
     double stalest = 0.0;

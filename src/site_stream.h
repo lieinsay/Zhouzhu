@@ -114,6 +114,9 @@ public:
     WorldVillage *village_at(const godot::Vector3 &p_point, double p_margin = 40.0) const;
 
     Hinterland *get_hinterland() const { return hinterland; }
+    void set_hinterland(Hinterland *p_hinterland) { hinterland = p_hinterland; } // GroupStream 建的：账房比它晚进树
+    // 近处的村民都散了（账本收回账房）：降回近景、拆掉之前
+    void retire_folk();
     void set_hinterland_path(const godot::NodePath &p_value) { hinterland_path = p_value; }
     godot::NodePath get_hinterland_path() const { return hinterland_path; }
     void set_world_path(const godot::NodePath &p_value) { world_path = p_value; }
