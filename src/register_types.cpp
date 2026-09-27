@@ -20,6 +20,7 @@
 #include "placed_props.h"
 #include "orbit_camera.h"
 #include "planet_globe.h"
+#include "planet_host.h"
 #include "planet_jobs.h"
 #include "planet_view.h"
 #include "player.h"
@@ -70,6 +71,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(GroupWorld);
     GDREGISTER_CLASS(World);
     GDREGISTER_CLASS(GroupStream);
+    GDREGISTER_CLASS(PlanetHost);
     GDREGISTER_CLASS(WorldMap);
     GDREGISTER_CLASS(WorldVillage);
     GDREGISTER_CLASS(WorldDock);

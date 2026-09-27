@@ -32,7 +32,7 @@ material = SubResource("cloud_material")
 size = Vector2(240000, 240000)
 
 [node name="World2051" type="Expedition"]
-map = NodePath("World")
+map = NodePath("PlanetHost")
 origin_dock = 1
 destination_dock = 26
 kill_altitude = -40.0
@@ -75,12 +75,15 @@ seed = 2051
 layout = PackedStringArray("0,0,-2:storage", "0,0,-1:power", "0,0,0:bridge")
 
 [node name="Atmosphere" type="Atmosphere" parent="."]
-map_path = NodePath("../World")
+map_path = NodePath("../PlanetHost")
 
 [node name="PlanetView" type="PlanetView" parent="."]
+map_path = NodePath("../PlanetHost")
 
 [node name="FarGroups" type="FarGroups" parent="."]
 
 [node name="PlanetGlobe" type="PlanetGlobe" parent="."]
 
 [node name="GroupStream" type="GroupStream" parent="."]
+
+[node name="PlanetHost" type="PlanetHost" parent="."]
