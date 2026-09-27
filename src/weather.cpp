@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <sstream>
 
+#include "planet_weather.h"
 #include "weather_noise.h"
 
 namespace {
@@ -59,7 +60,6 @@ double hash01(uint64_t p_seed, long long p_k) {
     return double(mix64(p_seed ^ mix64(uint64_t(p_k))) >> 11) * (1.0 / 9007199254740992.0);
 }
 
-// 风从 p_from_deg 来，往哪吹（x 东、z 南），单位向量
 void wind_to(double p_from_deg, double &r_x, double &r_z) {
     const double to = (p_from_deg + 180.0) * PI / 180.0;
     r_x = std::sin(to);
@@ -87,6 +87,103 @@ std::vector<std::string> split(const std::string &p_text, char p_sep) {
 }
 
 } // namespace
+
+void weather_wind_to(double p_from_deg, double &r_x, double &r_z) {
+    wind_to(p_from_deg, r_x, r_z);
+}
+
+double weather_front_jitter_h(long long p_day, const WeatherRules &p_rules) {
+    return (2.0 * hash01(p_rules.seed, p_day) - 1.0) * p_rules.front_jitter_h;
+}
+
+// ---------------------------------------------------------------- 一天的大势
+
+void WeatherState::mix_toward(const WeatherState &p_other, double p_t) {
+    if (p_t <= 0.0) {
+        return;
+    }
+    auto lerp = [p_t](double &a, double b) { a += (b - a) * p_t; };
+    lerp(cloud, p_other.cloud);
+    lerp(coverage, p_other.coverage);
+    lerp(mm, p_other.mm);
+    lerp(temp, p_other.temp);
+    lerp(wind_x, p_other.wind_x);
+    lerp(wind_z, p_other.wind_z);
+    lerp(storm, p_other.storm);
+    lerp(fog, p_other.fog);
+    lerp(sailable, p_other.sailable);
+    for (int k = 0; k < KIND_COUNT; k++) {
+        lerp(w[k], p_other.w[k]);
+    }
+}
+
+void WeatherState::add(const WeatherState &p_other, double p_w) {
+    cloud += p_other.cloud * p_w;
+    coverage += p_other.coverage * p_w;
+    mm += p_other.mm * p_w;
+    temp += p_other.temp * p_w;
+    wind_x += p_other.wind_x * p_w;
+    wind_z += p_other.wind_z * p_w;
+    storm += p_other.storm * p_w;
+    fog += p_other.fog * p_w;
+    sailable += p_other.sailable * p_w;
+    for (int k = 0; k < KIND_COUNT; k++) {
+        w[k] += p_other.w[k] * p_w;
+    }
+}
+
+void WeatherState::clear() {
+    cloud = coverage = mm = temp = wind_x = wind_z = storm = fog = sailable = 0.0;
+    std::fill(w, w + KIND_COUNT, 0.0);
+}
+
+WeatherKind WeatherState::dominant() const {
+    return WeatherKind(int(std::max_element(w, w + KIND_COUNT) - w));
+}
+
+WeatherState weather_day_state(const ClimateDay &p_day) {
+    const WeatherKindDef &def = weather_kinds::at(p_day.kind);
+    WeatherState s;
+    s.cloud = def.cloud;
+    s.coverage = def.coverage;
+    s.mm = def.coverage > 0.0 ? std::max(p_day.precip_mm, def.min_mm) : 0.0;
+    s.temp = p_day.temp_c;
+    double tx = 0.0, tz = 0.0;
+    wind_to(p_day.wind_from_deg, tx, tz);
+    const double speed = std::max(p_day.wind_ms, def.wind_min_ms);
+    s.wind_x = tx * speed;
+    s.wind_z = tz * speed;
+    s.storm = def.storm;
+    s.fog = def.fog;
+    s.sailable = p_day.sailable ? 1.0 : 0.0;
+    s.w[int(p_day.kind)] = 1.0;
+    return s;
+}
+
+WeatherState weather_override_state(const WeatherState &p_base, const ClimateDay &p_day, const WeatherOverride &p_over, const WeatherRules &p_rules) {
+    WeatherState s = p_base;
+    const WeatherKindDef &def = weather_kinds::at(p_over.kind);
+    // 开发者要看的就是这种天气：下雨下雪的覆盖让雨区铺满（强弱照旧随云团起伏），多云多盖一点，所以人站在哪儿都看得见；
+    // 云海漫顶看的是雾漫上来，不下毛毛雨
+    const bool wet = def.coverage > 0.0 && def.fog <= 0.0;
+    s.cloud = wet ? 1.0 : (p_over.kind == WeatherKind::CLOUDY ? 0.85 : def.cloud);
+    s.coverage = wet ? 1.0 : 0.0;
+    s.mm = wet ? 2.0 * def.min_mm : 0.0;
+    if (def.snowy) {
+        s.temp = std::min(s.temp, p_rules.snow_override_c);
+    }
+    const double speed = std::max(std::hypot(s.wind_x, s.wind_z), def.wind_min_ms);
+    double tx = 0.0, tz = 0.0;
+    wind_to(p_day.wind_from_deg, tx, tz);
+    s.wind_x = tx * speed;
+    s.wind_z = tz * speed;
+    s.storm = def.storm;
+    s.fog = def.fog;
+    s.sailable = def.storm < 0.5 && speed < 10.0 ? 1.0 : 0.0;
+    std::fill(s.w, s.w + KIND_COUNT, 0.0);
+    s.w[int(p_over.kind)] = 1.0;
+    return s;
+}
 
 // ---------------------------------------------------------------- 天气类型
 
@@ -255,31 +352,6 @@ bool parse_climate(const std::string &p_text, Climate &r_climate, std::string &r
 
 // ---------------------------------------------------------------- 模型
 
-struct WeatherModel::DayState {
-    double cloud = 0.0, coverage = 0.0, mm = 0.0, temp = 18.0, wind_x = 0.0, wind_z = 0.0, storm = 0.0, fog = 0.0, sailable = 1.0;
-    double w[KIND_COUNT] = {};
-
-    void mix_toward(const DayState &p_other, double p_t) {
-        if (p_t <= 0.0) {
-            return;
-        }
-        auto lerp = [p_t](double &a, double b) { a += (b - a) * p_t; };
-        lerp(cloud, p_other.cloud);
-        lerp(coverage, p_other.coverage);
-        lerp(mm, p_other.mm);
-        lerp(temp, p_other.temp);
-        lerp(wind_x, p_other.wind_x);
-        lerp(wind_z, p_other.wind_z);
-        lerp(storm, p_other.storm);
-        lerp(fog, p_other.fog);
-        lerp(sailable, p_other.sailable);
-        for (int k = 0; k < KIND_COUNT; k++) {
-            lerp(w[k], p_other.w[k]);
-        }
-    }
-    WeatherKind dominant() const { return WeatherKind(int(std::max_element(w, w + KIND_COUNT) - w)); }
-};
-
 WeatherModel::WeatherModel() {
     climate.calendar.year_days = 336;
     build_tables();
@@ -408,49 +480,12 @@ const float *WeatherModel::row(long long p_day) const {
     return &table[size_t(pmod(p_day, year)) * size_t(bins) * FIELDS];
 }
 
-WeatherModel::DayState WeatherModel::day_state(long long p_day) const {
-    const ClimateDay &cd = day(p_day);
-    const WeatherKindDef &def = weather_kinds::at(cd.kind);
-    DayState s;
-    s.cloud = def.cloud;
-    s.coverage = def.coverage;
-    s.mm = def.coverage > 0.0 ? std::max(cd.precip_mm, def.min_mm) : 0.0;
-    s.temp = cd.temp_c;
-    double tx = 0.0, tz = 0.0;
-    wind_to(cd.wind_from_deg, tx, tz);
-    const double speed = std::max(cd.wind_ms, def.wind_min_ms);
-    s.wind_x = tx * speed;
-    s.wind_z = tz * speed;
-    s.storm = def.storm;
-    s.fog = def.fog;
-    s.sailable = cd.sailable ? 1.0 : 0.0;
-    s.w[int(cd.kind)] = 1.0;
-    return s;
+WeatherState WeatherModel::day_state(long long p_day) const {
+    return weather_day_state(day(p_day));
 }
 
-WeatherModel::DayState WeatherModel::override_state(long long p_day) const {
-    DayState s = day_state(p_day);
-    const WeatherKindDef &def = weather_kinds::at(over.kind);
-    // 开发者要看的就是这种天气：下雨下雪的覆盖让雨区铺满（强弱照旧随云团起伏），多云多盖一点，所以人站在哪儿都看得见；
-    // 云海漫顶看的是雾漫上来，不下毛毛雨
-    const bool wet = def.coverage > 0.0 && def.fog <= 0.0;
-    s.cloud = wet ? 1.0 : (over.kind == WeatherKind::CLOUDY ? 0.85 : def.cloud);
-    s.coverage = wet ? 1.0 : 0.0;
-    s.mm = wet ? 2.0 * def.min_mm : 0.0;
-    if (def.snowy) {
-        s.temp = std::min(s.temp, rules.snow_override_c);
-    }
-    const double speed = std::max(std::hypot(s.wind_x, s.wind_z), def.wind_min_ms);
-    double tx = 0.0, tz = 0.0;
-    wind_to(day(p_day).wind_from_deg, tx, tz);
-    s.wind_x = tx * speed;
-    s.wind_z = tz * speed;
-    s.storm = def.storm;
-    s.fog = def.fog;
-    s.sailable = def.storm < 0.5 && speed < 10.0 ? 1.0 : 0.0;
-    std::fill(s.w, s.w + KIND_COUNT, 0.0);
-    s.w[int(over.kind)] = 1.0;
-    return s;
+WeatherState WeatherModel::override_state(long long p_day, const WeatherState &p_base) const {
+    return weather_override_state(p_base, day(p_day), over, rules);
 }
 
 double WeatherModel::front_arrival(long long p_day, double p_x, double p_z) const {
@@ -458,23 +493,49 @@ double WeatherModel::front_arrival(long long p_day, double p_x, double p_z) cons
     double tx = 0.0, tz = 0.0;
     wind_to(cd.wind_from_deg, tx, tz);
     const double along_km = (p_x * tx + p_z * tz) / 1000.0; // 顺风量：上风先到
-    const double jitter_h = (2.0 * hash01(rules.seed, p_day) - 1.0) * rules.front_jitter_h;
+    const double jitter_h = weather_front_jitter_h(p_day, rules);
     return double(p_day) + (jitter_h + along_km / std::max(1.0, rules.front_kmh)) / 24.0;
 }
 
-WeatherModel::DayState WeatherModel::blended(double p_day, double p_x, double p_z, double &r_front, int &r_day_index) const {
-    const long long k = (long long)std::floor(p_day);
-    const double half = 0.5 * rules.front_width_h / 24.0;
-    const double arrive_k = front_arrival(k, p_x, p_z), arrive_next = front_arrival(k + 1, p_x, p_z);
-    const double wk = smoothstep(arrive_k - half, arrive_k + half, p_day);
-    const double wn = smoothstep(arrive_next - half, arrive_next + half, p_day);
-    DayState s = day_state(k - 1);
-    s.mix_toward(day_state(k), wk);
-    s.mix_toward(day_state(k + 1), wn);
-    r_front = std::max(1.0 - std::fabs(2.0 * wk - 1.0), 1.0 - std::fabs(2.0 * wn - 1.0));
-    r_day_index = int(wn > 0.5 ? k + 1 : (wk > 0.5 ? k : k - 1));
+void WeatherModel::attach_planet(const std::shared_ptr<const PlanetWeather> &p_planet, int p_node, const GroupFrame &p_frame) {
+    planet = p_planet;
+    planet_node = p_planet ? p_node : -1;
+    planet_frame = p_frame;
+}
+
+WeatherState WeatherModel::blended(double p_day, double p_x, double p_z, double &r_front, int &r_day_index, PlanetPart *r_planet) const {
+    WeatherState s;
+    bool own = true;
+    if (planet) {
+        // 行星天气场：群与群之间按距离与风向过渡（planet_weather.h）；气温按这一群的台面给。
+        // 这一群自己的陆地上（别的群、背景的权都丢了）场说「照你自己的算」：下面的老路，与没挂场时逐位一样
+        const PlanetGroupSample g = planet->sample_group(planet_node, planet_frame, climate.ref_m, p_day, p_x, p_z, r_planet != nullptr);
+        if (!g.own) {
+            own = false;
+            s = g.state;
+            r_front = g.front;
+            r_day_index = g.day_index;
+            if (r_planet) {
+                r_planet->used = true;
+                r_planet->field = g.field;
+                r_planet->fog_top = g.fog_top;
+            }
+        }
+    }
+    if (own) {
+        const long long k = (long long)std::floor(p_day);
+        const double half = 0.5 * rules.front_width_h / 24.0;
+        const double arrive_k = front_arrival(k, p_x, p_z), arrive_next = front_arrival(k + 1, p_x, p_z);
+        const double wk = smoothstep(arrive_k - half, arrive_k + half, p_day);
+        const double wn = smoothstep(arrive_next - half, arrive_next + half, p_day);
+        s = day_state(k - 1);
+        s.mix_toward(day_state(k), wk);
+        s.mix_toward(day_state(k + 1), wn);
+        r_front = std::max(1.0 - std::fabs(2.0 * wk - 1.0), 1.0 - std::fabs(2.0 * wn - 1.0));
+        r_day_index = int(wn > 0.5 ? k + 1 : (wk > 0.5 ? k : k - 1));
+    }
     if (over.blend > 0.0) {
-        DayState o = over.kind == WeatherKind::COUNT ? s : override_state(r_day_index); // COUNT：天气照自动，只偏气温
+        WeatherState o = over.kind == WeatherKind::COUNT ? s : override_state(r_day_index, day_state(r_day_index)); // COUNT：天气照自动，只偏气温
         o.temp += over.temp_offset_c;
         s.mix_toward(o, std::clamp(over.blend, 0.0, 1.0));
     }
@@ -566,7 +627,7 @@ double WeatherModel::mean_temperature(double p_day_in, double p_h_in) const {
     const double p_h = std::isfinite(p_h_in) ? p_h_in : climate.ref_m;
     double front = 0.0;
     int di = 0;
-    const DayState s = blended(p_day, 0.0, 0.0, front, di);
+    const WeatherState s = blended(p_day, 0.0, 0.0, front, di);
     return s.temp + climate.lapse * (climate.ref_m - p_h) / 1000.0;
 }
 
@@ -622,17 +683,22 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
     WeatherSample out;
     double front = 0.0;
     int di = 0;
-    const DayState s = blended(p_day, p_x, p_z, front, di);
+    PlanetPart part;
+    const WeatherState s = blended(p_day, p_x, p_z, front, di, &part);
     out.front = front;
     out.day_kind = s.dominant();
 
-    double dx = 0.0, dz = 0.0;
-    cloud_drift(p_day, dx, dz);
-    double cx = p_x, cz = p_z; // 云团噪声在公共平面上取（单位变换时就是原样）
-    if (!cloud_frame.identity()) {
-        cloud_frame.apply(p_x, p_z, cx, cz);
+    double field = part.field;
+    if (!part.used) {
+        // 云团：这一群的平面上一张随风漂的 fbm（挂了行星天气场时由场给：这一群的陆地上就是这一张，群与群之间几群的按权混）
+        double dx = 0.0, dz = 0.0;
+        cloud_drift(p_day, dx, dz);
+        double cx = p_x, cz = p_z; // 云团噪声在公共平面上取（单位变换时就是原样）
+        if (!cloud_frame.identity()) {
+            cloud_frame.apply(p_x, p_z, cx, cz);
+        }
+        field = wx_fbm((cx - dx) / rules.cell_m, (cz - dz) / rules.cell_m);
     }
-    const double field = wx_fbm((cx - dx) / rules.cell_m, (cz - dz) / rules.cell_m);
     out.cloud_cover = std::clamp(s.cloud, 0.0, 1.0);
     out.coverage = std::clamp(s.coverage, 0.0, 1.0);
     const double cthr = wx_threshold(out.cloud_cover);
@@ -661,7 +727,7 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
     out.storm = std::clamp(s.storm, 0.0, 1.0);
 
     if (s.fog > 1e-3) {
-        out.fog_top = climate.rim_m + climate.fog_rise_m;
+        out.fog_top = part.used && part.fog_top > -1e8 ? part.fog_top : climate.rim_m + climate.fog_rise_m;
     }
     out.sea_fog = std::clamp(s.fog, 0.0, 1.0);
     const double sea_fog = s.fog * smoothstep(out.fog_top + 40.0, out.fog_top - 60.0, p_h);

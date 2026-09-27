@@ -50,6 +50,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/ground_query.h
     src/house_template.cpp
     src/house_template.h
+    src/inflate.cpp
+    src/inflate.h
     src/interior_rules.cpp
     src/interior_rules.h
     src/inventory.cpp
@@ -82,6 +84,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/planet_sky.h
     src/planet_surface.cpp
     src/planet_surface.h
+    src/planet_weather.cpp
+    src/planet_weather.h
     src/recipes.cpp
     src/recipes.h
     src/resource_scatter.cpp

@@ -75,6 +75,8 @@
 #include "planet_frame.h"
 #include "planet_sky.h"
 #include "planet_surface.h"
+#include "planet_weather.h"
+#include "inflate.h"
 
 namespace {
 
@@ -4593,36 +4595,18 @@ void test_group_weather() {
     }
     std::printf("group weather（2051）\n");
     const WeatherModel own(c, 0.0, 2050.0);
-    WeatherModel shared(c, 0.0, 2050.0);
-    shared.share_cloud_drift(c); // 按自己的气候「共享」：漂移与原来的逐位一样
-    double worst = 0.0;
-    for (double d = 0.0; d < 700.0; d += 13.37) {
-        double ax, az, bx, bz;
-        own.cloud_drift(d, ax, az);
-        shared.cloud_drift(d, bx, bz);
-        worst = std::max(worst, std::max(std::abs(ax - bx), std::abs(az - bz)));
-    }
-    check(worst == 0.0, "按自己的气候共享漂移：与原来逐位一样（" + std::to_string(worst) + "）");
-    // 公共平面：单位变换就是原样；转 90°、平移后，这一群平面上的点与公共平面上的点取到同一团云
-    WeatherModel turned(c, 0.0, 2050.0);
-    CloudFrame f;
-    f.m00 = 0.0, f.m02 = -1.0, f.m20 = 1.0, f.m22 = 0.0, f.ox = 1234.0, f.oz = -987.0;
-    turned.set_cloud_frame(f);
-    double cx = 0.0, cz = 0.0;
-    f.apply(3000.0, -500.0, cx, cz);
-    const WeatherSample s1 = turned.sample(12.4, 3000.0, -500.0, c.ref_m), s2 = own.sample(12.4, cx, cz, c.ref_m);
-    check_near(s1.cloud, s2.cloud, 1e-12, "转过、挪过的群：同一点在公共平面上取到同一团云");
-    // 按权混：一份就是原样；两份各半时数值取中间、风按分量、类型照权大的
-    WeatherSample a = own.sample(2.5, 0.0, 0.0, c.ref_m), b = a;
-    b.temp_c = a.temp_c + 10.0;
-    b.wind_x = -a.wind_x;
-    b.kind = WeatherKind::STORM;
-    const WeatherSample one = blend_weather({ a }, { 1.0 });
-    check(one.temp_c == a.temp_c && one.kind == a.kind, "一份：原样");
-    const WeatherSample half = blend_weather({ a, b }, { 0.6, 0.4 });
-    check_near(half.temp_c, a.temp_c + 4.0, 1e-9, "六四开：气温取加权平均");
-    check_near(half.wind_x, 0.2 * a.wind_x, 1e-9, "风按分量混");
-    check(half.kind == a.kind, "类型照权大的那份");
+    // 一天的大势：按权加起来（群与群之间的混法）一份就是原样，两份各半取中间
+    const WeatherState a = weather_day_state(c.days[2]), b = weather_day_state(c.days[3]);
+    WeatherState one;
+    one.clear();
+    one.add(a, 1.0);
+    check(one.cloud == a.cloud && one.temp == a.temp && one.wind_x == a.wind_x && one.dominant() == a.dominant(), "按权加：一份就是原样");
+    WeatherState half;
+    half.clear();
+    half.add(a, 0.5);
+    half.add(b, 0.5);
+    check_near(half.temp, 0.5 * (a.temp + b.temp), 1e-12, "两份各半：气温取中间");
+    check_near(half.wind_x, 0.5 * (a.wind_x + b.wind_x), 1e-12, "风按分量混");
     // 地方时：西边 2.2 分钟（2050 比 2051 的钟点晚）——出工、午歇、收工的钟点都往后挪同样的量
     const DayRules day;
     const LocalSeason here(&own, day, 294.0, 0.0, 0.0, c.ref_m), west(&own, day, 294.0, 0.0, 0.0, c.ref_m, SeasonRules(), -0.0363);
@@ -5596,7 +5580,332 @@ void test_planet_surface() {
     check(st.stand_ins == st.groups && st.groups > 500 && st.land_km2 > 1e6, "一律画替身也烘得出来（" + std::to_string(st.groups) + " 群、" + std::to_string(st.land_km2) + " km²）");
 }
 
-int main() {
+// ---------------------------------------------------------------- 行星计划 P5：逐日天气包与行星天气场
+
+// zlib / DEFLATE 的解压：Python zlib 压的三段（固定码表、不压的块、长一点的固定码表），坏了的流报错
+void test_inflate() {
+    std::printf("[inflate]\n");
+    const std::vector<uint8_t> fixed = { 120, 218, 203, 72, 205, 201, 201, 87, 200, 64, 39, 117, 20, 10, 114, 18, 243, 82, 75, 20, 202, 83, 19, 75, 50, 82, 139, 20, 1, 48, 36, 14,
+        178 };
+    const std::vector<uint8_t> stored = { 120, 1, 1, 18, 0, 237, 255, 115, 116, 111, 114, 101, 100, 32, 98, 108, 111, 99, 107, 32, 49, 50, 51, 52, 53, 63, 161, 5, 220 };
+    std::vector<uint8_t> out;
+    std::string err;
+    check(zlib_inflate(fixed.data(), fixed.size(), out, 40, err) && std::string(out.begin(), out.end()) == "hello hello hello hello, planet weather!",
+            "固定码表的块解得开、Adler-32 对（" + err + "）");
+    check(zlib_inflate(stored.data(), stored.size(), out, 18, err) && std::string(out.begin(), out.end()) == "stored block 12345", "不压的块解得开（" + err + "）");
+    std::vector<uint8_t> bad = fixed;
+    bad[12] ^= 0x5A;
+    check(!zlib_inflate(bad.data(), bad.size(), out, 40, err), "坏了的流报错（" + err + "）");
+    check(!zlib_inflate(fixed.data(), fixed.size() - 3, out, 40, err), "截断的流报错");
+    check(!zlib_inflate(fixed.data(), fixed.size(), out, 41, err), "解开的字节数与包头记的不一样报错");
+}
+
+namespace {
+
+struct WeatherFixture {
+    std::shared_ptr<PlanetData> planet;
+    WeatherPack pack;
+    double parse_ms = 0.0;
+};
+
+bool load_weather_fixture(WeatherFixture &r_fx) {
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
+    r_fx.planet = std::make_shared<PlanetData>();
+    std::string err;
+    if (!r_fx.planet->load_files(dir, err)) {
+        check(false, "行星包读得出：" + err);
+        return false;
+    }
+    std::ifstream in(dir + "/weather.bin", std::ios::binary);
+    const std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    const auto t0 = std::chrono::steady_clock::now();
+    const bool ok = r_fx.pack.parse(bytes.data(), bytes.size(), err);
+    r_fx.parse_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+    check(ok, "weather.bin 读得出（" + err + "）");
+    return ok;
+}
+
+// 地图上两点之间的一条大圆：t 从 0 到 1
+void great_circle_at(double p_lat0, double p_lon0, double p_lat1, double p_lon1, double p_t, double &r_lat, double &r_lon) {
+    const PlanetVec a = planet_unit(p_lat0, p_lon0), b = planet_unit(p_lat1, p_lon1);
+    const double om = std::acos(std::clamp(a.dot(b), -1.0, 1.0));
+    const double sa = std::sin((1.0 - p_t) * om) / std::sin(om), sb = std::sin(p_t * om) / std::sin(om);
+    planet_latlon(a * sa + b * sb, r_lat, r_lon);
+}
+
+} // namespace
+
+// 逐日天气包：八千群、与细版 weather.tsv 逐位相同；单群的包（按需生成的 .wx）也读得出
+void test_weather_pack() {
+    std::printf("[weather_pack]\n");
+    WeatherFixture fx;
+    if (!load_weather_fixture(fx)) {
+        return;
+    }
+    const WeatherPack &pk = fx.pack;
+    std::printf("  %zu 群 × %d 天，解开 %.0f ms；季名 %zu 套；④ 的降水折成年降水 %.0f–%.0f mm（p^%.2f）\n", pk.entries.size(), pk.year_days, fx.parse_ms, pk.season_sets.size(),
+            pk.precip_min, pk.precip_max, pk.precip_exp);
+    check(pk.entries.size() == 8000 && pk.year_days == 336, "八千群、一年 336 天");
+    int e51 = -1, e50 = -1;
+    for (int k = 0; k < int(pk.entries.size()); k++) {
+        e51 = pk.entries[size_t(k)].node == 2051 ? k : e51;
+        e50 = pk.entries[size_t(k)].node == 2050 ? k : e50;
+    }
+    check(e51 >= 0 && e50 >= 0, "2051、2050 都在包里");
+    // 有细版的群：与 weather.tsv 逐位相同（粗细两版的天气类型逐日相同的比例报出来）
+    for (int node : { 2051, 2050 }) {
+        std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/" + std::to_string(node) + "/weather.tsv", std::ios::binary);
+        const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        Climate fine;
+        std::string err;
+        if (!parse_climate(text, fine, err)) {
+            check(false, "细版 weather.tsv 读得出");
+            continue;
+        }
+        const int entry = node == 2051 ? e51 : e50;
+        const Climate coarse = pk.climate(entry, fx.planet->node(node).lat, fx.planet->node(node).lon, fx.planet->tilt_deg);
+        int same_kind = 0, same_all = 0;
+        for (size_t d = 0; d < fine.days.size() && d < coarse.days.size(); d++) {
+            const ClimateDay &a = fine.days[d], &b = coarse.days[d];
+            same_kind += a.kind == b.kind ? 1 : 0;
+            same_all += (a.kind == b.kind && a.precip_mm == b.precip_mm && a.temp_c == b.temp_c && a.wind_from_deg == b.wind_from_deg && a.wind_ms == b.wind_ms &&
+                                a.sailable == b.sailable && a.storm == b.storm)
+                    ? 1
+                    : 0;
+        }
+        std::printf("  %d：类型逐日相同 %d / %zu，整行逐位相同 %d；台面 %.0f / %.0f m、岸缘 %.1f / %.1f m\n", node, same_kind, fine.days.size(), same_all, fine.ref_m, coarse.ref_m,
+                fine.rim_m, coarse.rim_m);
+        check(same_all == int(fine.days.size()) && fine.days.size() == 336, std::to_string(node) + "：粗版的逐日天气与细版 weather.tsv 逐位相同");
+        check(std::abs(fine.ref_m - coarse.ref_m) < 0.5 && std::abs(fine.rim_m - coarse.rim_m) < 0.06 && std::abs(fine.fog_rise_m - coarse.fog_rise_m) < 0.06 &&
+                        fine.season_names == coarse.season_names,
+                std::to_string(node) + "：台面、岸缘、云海漫多高、季名一样");
+    }
+    // 全行星一年的构成（生成器报的：晴 47.9%、多云 20.6%……）
+    double share[9] = {};
+    for (const WeatherPackDay &d : pk.days) {
+        share[d.kind_sail & 15] += 1.0 / double(pk.days.size());
+    }
+    std::printf("  全行星一年：晴 %.1f%%、多云 %.1f%%、小雨 %.1f%%、大雨 %.1f%%、云海漫顶 %.1f%%、风暴 %.1f%%、小雪 %.1f%%、大雪 %.1f%%、暴风雪 %.1f%%\n", 100 * share[0],
+            100 * share[1], 100 * share[2], 100 * share[3], 100 * share[4], 100 * share[5], 100 * share[6], 100 * share[7], 100 * share[8]);
+    check(std::abs(share[0] - 0.479) < 0.002 && std::abs(share[5] - 0.054) < 0.002, "全行星的构成与生成器报的一样（晴 47.9%、风暴 5.4%）");
+}
+
+// 行星天气场
+void test_planet_weather() {
+    std::printf("[planet_weather]\n");
+    WeatherFixture fx;
+    if (!load_weather_fixture(fx)) {
+        return;
+    }
+    const PlanetData &pd = *fx.planet;
+    Climate c51;
+    if (!load_2051_climate(c51)) {
+        std::printf("  （跳过：没有 2051 资产）\n");
+        return;
+    }
+    const auto t_build = std::chrono::steady_clock::now();
+    auto pw = std::make_shared<PlanetWeather>(fx.planet);
+    const int added = pw->add_pack(fx.pack);
+    const double build_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_build).count();
+    std::printf("  建场 %.0f ms（%d 群有逐日表）；2051 管 %.1f km、2050 管 %.1f km\n", build_ms, added, pw->reach_km(2051), pw->reach_km(2050));
+    check(added == 8000 && pw->table_count() == 8000, "八千群都有逐日表");
+    check(pw->reach_km(2051) > 40.0 && pw->reach_km(2051) <= 57.5 && pw->reach_km(2050) > 10.0 && pw->reach_km(2050) <= 57.5, "一群管多大：陆地铺多远、不过邻群一半");
+
+    const PlanetNode &n51 = pd.node(2051), &n50 = pd.node(2050);
+    PlanetShape shape;
+    shape.sea_radius_m = pd.radius_km * 1000.0;
+    const GroupFrame f51(n51.lat, n51.lon, shape);
+    // 1. 群自己的陆地上：挂上场与不挂一模一样（逐位）
+    const WeatherModel alone(c51, 0.0, 2050.0);
+    WeatherModel attached(c51, 0.0, 2050.0);
+    pw->set_group_climate(2051, c51);
+    attached.attach_planet(pw, 2051, f51);
+    int same = 0, total = 0;
+    for (double day : { 3.3, 17.9, 40.01, 128.52, 250.77 }) {
+        for (const auto &xz : std::vector<std::pair<double, double>>{ { 0.0, 0.0 }, { 20000.0, 5000.0 }, { -15000.0, 18000.0 }, { 8000.0, -25000.0 } }) {
+            const WeatherSample a = alone.sample(day, xz.first, xz.second, 400.0), b = attached.sample(day, xz.first, xz.second, 400.0);
+            total++;
+            same += (a.cloud == b.cloud && a.precip == b.precip && a.temp_c == b.temp_c && a.wind_x == b.wind_x && a.wind_z == b.wind_z && a.kind == b.kind &&
+                            a.front == b.front && a.fog_top == b.fog_top)
+                    ? 1
+                    : 0;
+        }
+    }
+    check(same == total, "2051 自己的陆地上：挂上行星天气场与不挂逐位一样（" + std::to_string(same) + " / " + std::to_string(total) + "）");
+    // 2. 2051 → 2050 一路：每公里变得不多（大势连着、锋面连着），两头是各自的天气
+    const double day0 = 9.37;
+    double worst_cover = 0.0, worst_temp = 0.0, worst_wind = 0.0, worst_cov = 0.0;
+    PlanetRegional prev;
+    for (int k = 0; k <= 114; k++) {
+        double lat = 0.0, lon = 0.0;
+        great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, k / 114.0, lat, lon);
+        const PlanetRegional r = pw->sample(day0, lat, lon, 0.0);
+        if (k > 0) {
+            worst_cover = std::max(worst_cover, std::abs(r.state.cloud - prev.state.cloud));
+            worst_cov = std::max(worst_cov, std::abs(r.state.coverage - prev.state.coverage));
+            worst_temp = std::max(worst_temp, std::abs(r.state.temp - prev.state.temp));
+            worst_wind = std::max(worst_wind, std::hypot(r.state.wind_x - prev.state.wind_x, r.state.wind_z - prev.state.wind_z));
+        }
+        prev = r;
+    }
+    std::printf("  2051 → 2050 每公里最多变：云量 %.3f、雨区 %.3f、气温 %.2f °C、风 %.2f m/s\n", worst_cover, worst_cov, worst_temp, worst_wind);
+    check(worst_cover < 0.08 && worst_cov < 0.08 && worst_temp < 0.5 && worst_wind < 1.0, "两群之间一路过去没有瞬变（每公里云量、雨区 < 0.08，气温 < 0.5 °C，风 < 1 m/s）");
+    const PlanetRegional at51 = pw->sample(day0, n51.lat, n51.lon, 0.0), at50 = pw->sample(day0, n50.lat, n50.lon, 0.0);
+    check(at51.n == 1 && at51.nodes[0] == 2051 && at51.bg_weight == 0.0 && at50.n == 1 && at50.nodes[0] == 2050, "两个群心各是各的（别的群、背景的权都丢了）");
+    // 3. 时间上：两群中间，三天里每游戏分钟变得不多（锋面扫过也是渐变）
+    double mlat = 0.0, mlon = 0.0;
+    great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, 0.5, mlat, mlon);
+    double worst_t = 0.0;
+    PlanetRegional last = pw->sample(20.0, mlat, mlon, 0.0);
+    for (int m = 1; m <= 3 * 24 * 60; m++) {
+        const PlanetRegional r = pw->sample(20.0 + m / 1440.0, mlat, mlon, 0.0);
+        worst_t = std::max({ worst_t, std::abs(r.state.cloud - last.state.cloud), std::abs(r.state.coverage - last.state.coverage) });
+        last = r;
+    }
+    std::printf("  两群中间三天：每游戏分钟云量、雨区最多变 %.4f；中点的权 2051 %.2f / 2050 %.2f / 背景 %.2f\n", worst_t, last.n > 0 ? last.weights[0] : 0.0,
+            last.n > 1 ? last.weights[1] : 0.0, last.bg_weight);
+    check(worst_t < 0.02, "两群中间换天是渐变（每游戏分钟云量、雨区 < 0.02）");
+    // 4. 云团场一路连续（几群按权混、权过门槛时也不跳）：2051 → 2050 每 10 m 取一次
+    double worst_field = 0.0, prev_field = -1.0;
+    for (int k = 0; k <= 11400; k++) {
+        double lat = 0.0, lon = 0.0;
+        great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, k / 11400.0, lat, lon);
+        const double fv = pw->field(33.3, lat, lon);
+        if (prev_field >= 0.0) {
+            worst_field = std::max(worst_field, std::abs(fv - prev_field));
+        }
+        prev_field = fv;
+    }
+    std::printf("  云团场 2051 → 2050 每 10 m 最多变 %.4f\n", worst_field);
+    check(worst_field < 0.03, "云团场一路连续（每 10 m 变不到 0.03）");
+    // 5. 云团按权混方差不变：过渡带里按门槛取的面积份额还对得上覆盖率
+    {
+        const double cov = 0.5, thr = wx_threshold(cov);
+        int in = 0, n = 0;
+        for (int i = 0; i < 60; i++) {
+            for (int j = 0; j < 60; j++) {
+                double lat = 0.0, lon = 0.0;
+                great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, 0.35 + 0.3 * i / 60.0, lat, lon);
+                lon += (j - 30) * 0.004;
+                in += pw->field(50.0 + 0.001 * j, lat, lon) >= thr ? 1 : 0;
+                n++;
+            }
+        }
+        std::printf("  过渡带里云团场过门槛的份额 %.3f（覆盖率 0.5）\n", double(in) / n);
+        check(std::abs(double(in) / n - cov) < 0.12, "过渡带里按覆盖率取门槛：面积份额还对得上（±0.12）");
+    }
+    // 6. 赤道永暴带、G 定点永暴：风暴、禁航、把船往外推
+    {
+        const PlanetRegional eq = pw->sample(100.0, 1.0, -150.0, 0.0);
+        const PlanetRegional g = pw->sample(100.0, pd.g_lat + 1.0, pd.g_lon, 0.0);
+        std::printf("  赤道（北纬 1°、西经 150°）：带 %d、风暴 %.2f、能出航 %.2f、推 (%.0f, %.0f) m/s；G 圈里：带 %d、风暴 %.2f、推 (%.0f, %.0f)\n", eq.zone_kind, eq.state.storm,
+                eq.state.sailable, eq.push_x, eq.push_z, g.zone_kind, g.state.storm, g.push_x, g.push_z);
+        check(eq.zone_kind == 1 && eq.state.storm > 0.9 && eq.state.sailable < 0.1 && eq.bg_weight > 0.9, "赤道永暴带：风暴、禁航（背景接手）");
+        check(std::hypot(eq.push_x, eq.push_z) > 100.0, "赤道永暴带的核心把船往外推");
+        check(g.zone_kind == 2 && g.state.storm > 0.9 && g.state.sailable < 0.1 && g.push_z < -50.0, "G 圈：风暴、禁航，北边的点往北推（z 南为正）");
+    }
+    // 7. 群间开阔的云海上：风 = ② + 当天的扰动，风向大多跟 ② 走；离群远了（背景接手）就是 ②
+    {
+        const PlanetGrid *u = pd.grid("s04.wind_local.u"), *v = pd.grid("s04.wind_local.v");
+        int agree = 0, n = 0, bg_n = 0, bg_agree = 0;
+        std::vector<double> angles;
+        for (int k = 0; k < 4000; k++) {
+            const double lat = -70.0 + 140.0 * (k % 80) / 79.0, lon = -180.0 + 7.2 * (k / 80);
+            const double ue = u->sample(lat, lon), vn = v->sample(lat, lon);
+            const int near = pd.nearest_node(lat, lon);
+            const double gap = great_circle_m(lat, lon, pd.node(near).lat, pd.node(near).lon, pw->get_radius()) / 1000.0 - pw->reach_km(near);
+            if (std::hypot(ue, vn) < 3.0 || gap < 150.0) {
+                continue;
+            }
+            for (double day : { 30.25, 130.5, 230.75 }) {
+                const PlanetRegional r = pw->sample(day, lat, lon, 0.0);
+                if (r.zone > 0.01) {
+                    continue;
+                }
+                const double we = r.state.wind_x, wn = -r.state.wind_z;
+                const double ang = std::abs(std::atan2(we * vn - wn * ue, we * ue + wn * vn)) * 180.0 / 3.14159265358979;
+                angles.push_back(ang);
+                agree += ang < 45.0 ? 1 : 0;
+                n++;
+                if (r.bg_weight > 0.9) {
+                    bg_n++;
+                    bg_agree += ang < 5.0 ? 1 : 0;
+                }
+            }
+        }
+        std::sort(angles.begin(), angles.end());
+        const double median = angles.empty() ? 180.0 : angles[angles.size() / 2];
+        std::printf("  离群 150 km 以外的云海上 %d 次（② 风 ≥ 3 m/s）：风向与 ② 差 45° 以内 %d 次（%.0f%%），中位差 %.1f°；背景接手的 %d 次里差 5° 以内 %d 次\n", n, agree,
+                100.0 * agree / std::max(1, n), median, bg_n, bg_agree);
+        check(n > 200 && agree >= n * 0.8 && median < 20.0, "群间开阔的云海上风向大多跟 ② 走（八成差 45° 以内、中位差 20° 以内）");
+        check(bg_n == 0 || bg_agree == bg_n, "背景接手的地方就是 ② 的风");
+    }
+    // 8. 细版为准：换一份逐日表，场跟着换
+    {
+        Climate hot = c51;
+        for (ClimateDay &d : hot.days) {
+            d.temp_c += 10.0;
+        }
+        const double before = pw->sample(5.5, n51.lat, n51.lon, c51.ref_m).state.temp;
+        pw->set_group_climate(2051, hot);
+        const double after = pw->sample(5.5, n51.lat, n51.lon, c51.ref_m).state.temp;
+        pw->set_group_climate(2051, c51);
+        check_near(after - before, 10.0, 1e-9, "细版为准：set_group_climate 换了表，场里那一群跟着换");
+    }
+    // 9. 全行星的天气贴图：群上是群的天气、赤道永暴带是风暴
+    {
+        const auto t0 = std::chrono::steady_clock::now();
+        std::shared_ptr<const PlanetWeather::BakeGrid> grid = pw->prepare_bake(256, 128);
+        const double prep_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        std::vector<float> rgba;
+        const auto t1 = std::chrono::steady_clock::now();
+        pw->bake(*grid, 12.25, rgba);
+        const double bake_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t1).count();
+        const int W = 256, H = 128;
+        auto texel = [&](double lat, double lon) {
+            const int r = std::clamp(int((lat + 90.0) / 180.0 * H), 0, H - 1), c = std::clamp(int((lon + 180.0) / 360.0 * W), 0, W - 1);
+            return &rgba[(size_t(r) * W + size_t(c)) * 4];
+        };
+        const float *t51 = texel(n51.lat, n51.lon), *teq = texel(0.3, -150.0);
+        const PlanetRegional r51 = pw->sample(12.25, -90.0 + (int((n51.lat + 90.0) / 180.0 * H) + 0.5) * 180.0 / H, -180.0 + (int((n51.lon + 180.0) / 360.0 * W) + 0.5) * 360.0 / W, 0.0);
+        std::printf("  贴图 256 × 128：备 %.0f ms、烘 %.0f ms；2051 那格云量 %.2f（取样 %.2f）群 %.2f；赤道那格风暴 %.2f、群 %.2f\n", prep_ms, bake_ms, t51[0], r51.state.cloud, t51[2],
+                teq[3], teq[2]);
+        check(std::abs(t51[0] - r51.state.cloud) < 0.05 && t51[2] > 0.95, "贴图上 2051 那格的云量就是场在那一点的（±0.05）");
+        check(teq[3] > 0.9 && teq[2] < 0.1, "贴图上赤道永暴带是风暴、背景");
+    }
+    // 10. 用时
+    {
+        const auto t0 = std::chrono::steady_clock::now();
+        double acc = 0.0;
+        for (int k = 0; k < 2000; k++) {
+            double lat = 0.0, lon = 0.0;
+            great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, k / 2000.0, lat, lon);
+            acc += pw->sample(k * 0.013, lat, lon, 0.0).state.cloud;
+        }
+        const double us = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t0).count() / 2000.0;
+        const auto t1 = std::chrono::steady_clock::now();
+        for (int k = 0; k < 2000; k++) {
+            acc += attached.sample(k * 0.013, -40000.0 - 20.0 * k, 60000.0 + 10.0 * k, 300.0).cloud;
+        }
+        const double us2 = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t1).count() / 2000.0;
+        std::printf("  取样：场 %.1f µs / 次、挂场的模型在两群之间 %.1f µs / 次（%.0f）\n", us, us2, acc);
+    }
+}
+
+int main(int argc, char **argv) {
+    // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
+    if (argc > 1) {
+        const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
+            { "weather_model", test_weather_model }, { "group_weather", test_group_weather } };
+        for (int k = 1; k < argc; k++) {
+            const auto it = only.find(argv[k]);
+            if (it != only.end()) {
+                it->second();
+            }
+        }
+        std::printf("%d 项检查，%d 项失败\n", checks, failures);
+        return failures == 0 ? 0 : 1;
+    }
     test_rng();
     test_almanac();
     test_weather_noise();
@@ -5664,6 +5973,9 @@ int main() {
     test_planet_float_orbit();
     test_planet_sky();
     test_planet_surface();
+    test_inflate();
+    test_weather_pack();
+    test_planet_weather();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

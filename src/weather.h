@@ -1,10 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "almanac.h"
+#include "planet_frame.h"
 
 // 天气：一处岛群一年的逐日天气（skyisle-gen 给的 weather.tsv）→ 某一刻、某一点的天气。不含 Godot 头。
 //
@@ -23,6 +25,7 @@
 // 开发者覆盖（WeatherOverride）把大势换成指定的天气、按 blend 渐入（上层按真实时间推 blend）；覆盖成下雨下雪时雨区铺满（强弱照旧随云团起伏），
 // 开发者站在哪儿都看得见；气温偏移按直减率等效成海拔挪动。
 // 线程：构造之后只读（覆盖由主线程改，读它的也都在主线程）。
+// 行星计划 P5：挂上行星天气场（attach_planet）后，大势、锋面、云团改从场里取（见 planet_weather.h）；没挂的（甲乙两岛、平板岛、单测）一切照旧。
 
 enum class WeatherKind : uint8_t {
     CLEAR, // 晴
@@ -143,6 +146,27 @@ struct WeatherOverride {
     double fresh_snow_mm = 0.0;
 };
 
+// 一天的大势（逐日表的一行折成的数：云量、雨区、雨量、台面气温、风、风暴、云海漫顶、能否出航、各类型的份额）；
+// 锋面过渡、群与群之间（行星计划 P5 的行星天气场）都按分量线性地混。风：x 东、z 南（m/s）
+struct WeatherState {
+    double cloud = 0.0, coverage = 0.0, mm = 0.0, temp = 18.0, wind_x = 0.0, wind_z = 0.0, storm = 0.0, fog = 0.0, sailable = 1.0;
+    double w[int(WeatherKind::COUNT)] = {};
+
+    void mix_toward(const WeatherState &p_other, double p_t);
+    // 按权加上另一份（群与群之间混：先清零、各份按权 add、权和为 1）
+    void add(const WeatherState &p_other, double p_w);
+    void clear();
+    WeatherKind dominant() const;
+};
+// 逐日表的一行 → 这一天的大势
+WeatherState weather_day_state(const ClimateDay &p_day);
+// 开发者覆盖成 p_over.kind 时这一天的大势（风向照 p_day 的、风速照 p_base 的；下雨下雪的覆盖让雨区铺满）
+WeatherState weather_override_state(const WeatherState &p_base, const ClimateDay &p_day, const WeatherOverride &p_over, const WeatherRules &p_rules);
+// 风从 p_from_deg 来，往哪吹（x 东、z 南），单位向量
+void weather_wind_to(double p_from_deg, double &r_x, double &r_z);
+// 锋面在第 p_day 天子夜前后抖多少（钟头，−1..1 × front_jitter_h；各群同一个数）
+double weather_front_jitter_h(long long p_day, const WeatherRules &p_rules);
+
 // 行星计划 P3：云团噪声在一张「公共平面」上取——钟的那一群（2051）的平面。别的群把自己的平面坐标换过去（绕 y 转 + 平移，在群心线性化），
 // 云团也按那一群的逐日风一起漂：天上的云在几群之间连得上，换锚时花样不跳，抬头看见的云底下照旧是雨区（雨区按同一张噪声判）。
 // 单位变换 + 自己的风 = 原来的样子（2051 自己、甲乙两岛、平板岛）
@@ -155,6 +179,8 @@ struct CloudFrame {
         r_z = m20 * p_x + m22 * p_z + oz;
     }
 };
+
+class PlanetWeather;
 
 class WeatherModel {
     Climate climate;
@@ -173,11 +199,21 @@ class WeatherModel {
     bool shared_drift = false;
     int ref_year = 1;
     std::vector<double> ref_drift_x, ref_drift_z, ref_step_x, ref_step_z;
+    // 行星计划 P5：挂上行星天气场之后，某一点的大势、锋面、云团都从场里取（这一群的平面坐标换成经纬度）——
+    // 这一群自己的陆地上场就是它自己的逐日表与云团（一模一样），群与群之间按距离与风向过渡；海拔、慢变量、日变化照旧是这一群的
+    std::shared_ptr<const PlanetWeather> planet;
+    int planet_node = -1;
+    GroupFrame planet_frame;
 
-    struct DayState;
-    DayState day_state(long long p_day) const;
-    DayState override_state(long long p_day) const;
-    DayState blended(double p_day, double p_x, double p_z, double &r_front, int &r_day_index) const;
+    // 从场里取了的那一份（群与群之间）：云团场、雾顶
+    struct PlanetPart {
+        bool used = false;
+        double field = 0.5;
+        double fog_top = -1e9;
+    };
+    WeatherState day_state(long long p_day) const;
+    WeatherState override_state(long long p_day, const WeatherState &p_base) const;
+    WeatherState blended(double p_day, double p_x, double p_z, double &r_front, int &r_day_index, PlanetPart *r_planet = nullptr) const;
     double front_arrival(long long p_day, double p_x, double p_z) const;
     void build_tables();
     const float *row(long long p_day) const;
@@ -217,6 +253,13 @@ public:
     const CloudFrame &get_cloud_frame() const { return cloud_frame; }
     void share_cloud_drift(const Climate &p_ref);
     bool has_shared_drift() const { return shared_drift; }
+
+    // 行星天气场（行星计划 P5）：p_node 是这一群的节点号、p_frame 是它的平面系；空指针 = 摘掉（照这一群自己的逐日表）
+    void attach_planet(const std::shared_ptr<const PlanetWeather> &p_planet, int p_node, const GroupFrame &p_frame);
+    bool has_planet() const { return planet != nullptr; }
+    const PlanetWeather *get_planet() const { return planet.get(); }
+    int get_planet_node() const { return planet_node; }
+    const GroupFrame &get_planet_frame() const { return planet_frame; }
 
     // 开发者覆盖
     void set_override(const WeatherOverride &p_override) { over = p_override; }
