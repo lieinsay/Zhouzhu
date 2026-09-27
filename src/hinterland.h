@@ -82,6 +82,9 @@ public:
     // 模拟分级（行星计划 P3，计划 4.6）：离开细版前把开了的账存成文本（后台在开的先等它开完）、此刻的钟；
     // 回来时（新的账房）交回来，开账时照文本补回，从存下的那一刻接着结——离开超过 1 个游戏日的只补最后 1 日，前面的视为按汇总过了
     void save_states(std::map<int, std::string> &r_states, double &r_at);
+    // 同 save_states，只是存成文本那一步在后台做（行星计划 P4：大群几百本账，主线程上要五六十毫秒）。
+    // 调之前近处的村民得先散（SiteStream::retire_folk），之后账房不再动这些账（GroupStream 把它埋了）
+    std::shared_future<std::map<int, std::string>> save_states_async(double &r_at);
     // 后台还有没开完的账（std::async 读着地形）：GroupStream 拆它之前等这些做完（出树时它要等，行星计划 P4：别让主线程卡在这里）
     bool openings_pending() const;
     void set_saved(const std::map<int, std::string> &p_states, double p_at);

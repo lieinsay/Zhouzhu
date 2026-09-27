@@ -237,8 +237,9 @@ func _physics_process(delta: float) -> void:
 			if absf(float(src["lat"])) > 10.0 and (dl - 12.0) * (home_day_length - 12.0) * (-1.0 if float(src["lat"]) > 0.0 else 1.0) <= 0.0:
 				_finish(false, "群 #%d（纬度 %.1f°）此刻白天 %.1f h，季节不对（2051 此刻 %.1f h）" % [node, float(src["lat"]), dl, home_day_length])
 				return
-			var line := "  群 #%d：%s · 相机 %.2f° %.2f° · 此地「%s」%s，白天 %.1f h · 铺出来的村 %d 个 · 地方时比钟点%s %.0f 分钟" % [node, status.get_slice("\n", 0).get_slice("    ", 0),
-				ll.x, ll.y, w["season_name"], w["kind_name"], dl, villages, "早" if float(w["local_offset_h"]) >= 0.0 else "晚", absf(float(w["local_offset_h"])) * 60.0]
+			var look: Dictionary = atmo.get_look()
+			var line := "  群 #%d：%s · 相机 %.2f° %.2f° · 此地「%s」%s（降水 %.2f、雨丝 %.2f）、白天 %.1f h · 铺出来的村 %d 个 · 地方时比钟点%s %.0f 分钟" % [node, status.get_slice("\n", 0).get_slice("    ", 0),
+				ll.x, ll.y, w["season_name"], w["kind_name"], float(w["precip"]), float(look["rain_ratio"]), dl, villages, "早" if float(w["local_offset_h"]) >= 0.0 else "晚", absf(float(w["local_offset_h"])) * 60.0]
 			results.append(line)
 			_log(line)
 			_shot("%d_%d" % [index + 1, node])

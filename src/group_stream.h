@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <future>
 #include <map>
 #include <memory>
 #include <string>
@@ -92,6 +93,7 @@ public:
         bool far_hidden = false; // 让 FarGroups 藏起了它的粗版
         bool pinned = false; // 瞬移要去的：不管多远都载入、升到细版
         GroupMemory memory;
+        std::shared_future<std::map<int, std::string>> ledgers_saving; // 细版 → 近景时各村的账在后台存成文本；好了并进 memory.ledgers、存进存档目录
     };
     enum JumpPhase {
         JUMP_NONE,
@@ -147,13 +149,22 @@ private:
     void update_jump();
     bool find_landing(Group &r_group);
     Group *add_group(int p_node, const godot::String &p_dir);
+    // 读一群的「登记」（world.json 开头的群心、sites.tsv、粗版的陆地格、存档目录里的账）：只碰文件与纯 C++ 的数据，能在后台线程里做
+    std::unique_ptr<Group> make_group(int p_node, const godot::String &p_dir) const;
+    Group *adopt_group(std::unique_ptr<Group> p_group);
+    // 按需生成好的群在后台登记（大群的 sites.tsv 几千行，主线程读要二三十毫秒），好了下一帧加进来
+    std::map<int, std::future<std::unique_ptr<Group>>> adding;
+    void request_add(int p_node, const godot::String &p_dir);
+    void poll_adding();
     void on_group_ready(int p_node, const godot::String &p_dir);
     void save_memory(const Group &p_group) const;
+    void finish_ledgers(Group &r_group, bool p_wait); // 后台存账做完了（或 p_wait 等它做完）：并进 memory.ledgers、存进存档目录
     // 拆一群（降档）不在一帧里拆完（行星计划 P4 量出来的：2051 的村子、地面块一下子拆掉主线程要两三百毫秒）：
     // 节点先停下、改名（同名的新节点照旧叫 World / SiteStream……）、交给「坟地」，每帧按 reap_budget_ms 从叶子往上拆一点
     std::vector<godot::ObjectID> graveyard;
     int buried = 0;
     double reap_budget_ms = 3.0;
+    double drop_hold_until = 0.0; // 换锚以后这一会儿先不降档（落地那几帧留给新锚群挂地面、铺村子；旧锚两秒后再拆）
     void bury(godot::Node *p_node);
     void reap();
 
@@ -177,6 +188,7 @@ private:
 
 protected:
     static void _bind_methods();
+    void _notification(int p_what);
 
 public:
     static constexpr const char *GROUP = "group_stream";

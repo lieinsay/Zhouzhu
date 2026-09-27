@@ -1,6 +1,7 @@
 #include "group_stream.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 
 #include <godot_cpp/classes/dir_access.hpp>
@@ -70,6 +71,7 @@ struct TraceStep {
 };
 
 constexpr double FAR_JUMP_M = 1500000.0; // 瞬移离云团的公共平面那一群这么远：公共平面改成要去的那一群（在群心线性化，几百公里外就歪了）
+constexpr double JUMP_REMEASURE_M = 2000.0; // 焦点一下挪了这么远：到各群陆地的距离当场重量
 constexpr double JUMP_LOAD_TIMEOUT_S = 120.0;
 
 // world.json 的 source（群心的经纬度，与 PlanetView 锚定用的同一个数）：它是第一个键，只读开头 2 KB，不整个解析（整份几百 KB 到几 MB）
@@ -177,6 +179,18 @@ void GroupStream::_bind_methods() {
     BIND_ENUM_CONSTANT(TIER_DETAIL);
 }
 
+void GroupStream::_notification(int p_what) {
+    if (p_what == NOTIFICATION_EXIT_TREE) {
+        // 后台在登记的群（读着 PlanetView 的行星包）：场景拆之前等它们做完
+        for (auto &it : adding) {
+            if (it.second.valid()) {
+                it.second.wait();
+            }
+        }
+        adding.clear();
+    }
+}
+
 void GroupStream::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) {
         set_process(false);
@@ -266,6 +280,10 @@ GroupStream::Group *GroupStream::add_group(int p_node, const String &p_dir) {
     if (Group *found = find(p_node)) {
         return found;
     }
+    return adopt_group(make_group(p_node, p_dir));
+}
+
+std::unique_ptr<GroupStream::Group> GroupStream::make_group(int p_node, const String &p_dir) const {
     const PlanetData *pd = planet->get_planet();
     PlanetShape shape;
     shape.sea_radius_m = pd->radius_km * 1000.0;
@@ -309,15 +327,54 @@ GroupStream::Group *GroupStream::add_group(int p_node, const String &p_dir) {
     if (provider && !g->home) {
         provider->load_memory(p_node, g->memory);
     }
-    groups.push_back(std::move(g));
+    return g;
+}
+
+GroupStream::Group *GroupStream::adopt_group(std::unique_ptr<Group> p_group) {
+    if (Group *found = find(p_group->node)) {
+        return found;
+    }
+    groups.push_back(std::move(p_group));
     return groups.back().get();
 }
 
-void GroupStream::on_group_ready(int p_node, const String &p_dir) {
-    if (!ready || find(p_node) || !planet || p_node < 0 || p_node >= planet->get_planet()->node_count()) {
+void GroupStream::request_add(int p_node, const String &p_dir) {
+    if (find(p_node) || adding.count(p_node)) {
         return;
     }
-    add_group(p_node, p_dir);
+    adding[p_node] = std::async(std::launch::async, [this, p_node, p_dir]() { return make_group(p_node, p_dir); });
+}
+
+void GroupStream::poll_adding() {
+    for (auto it = adding.begin(); it != adding.end();) {
+        if (it->second.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            ++it;
+            continue;
+        }
+        adopt_group(it->second.get());
+        it = adding.erase(it);
+    }
+}
+
+void GroupStream::on_group_ready(int p_node, const String &p_dir) {
+    if (!ready || find(p_node) || !planet || p_node < 0 || p_node >= planet->get_planet()->node_count() || p_node == jump_node) {
+        return;
+    }
+    request_add(p_node, p_dir);
+}
+
+void GroupStream::finish_ledgers(Group &r_group, bool p_wait) {
+    if (!r_group.ledgers_saving.valid()) {
+        return;
+    }
+    if (!p_wait && r_group.ledgers_saving.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        return;
+    }
+    for (const auto &entry : r_group.ledgers_saving.get()) {
+        r_group.memory.ledgers[entry.first] = entry.second;
+    }
+    r_group.ledgers_saving = std::shared_future<std::map<int, std::string>>();
+    save_memory(r_group);
 }
 
 void GroupStream::save_memory(const Group &p_group) const {
@@ -330,7 +387,8 @@ void GroupStream::save_world() {
     if (!ready || !provider) {
         return;
     }
-    for (const auto &gp : groups) {
+    for (auto &gp : groups) {
+        finish_ledgers(*gp, true);
         const Group &g = *gp;
         GroupMemory m = g.memory; // 离开时存下、还没补回去的照留
         if (g.hinterland) {
@@ -399,8 +457,17 @@ void GroupStream::set_focus(const Vector3 &p_focus) {
     if (!p_focus.is_finite()) {
         return;
     }
+    // 一下挪远了（瞬移、跨群瞬移、换锚后摆到落点）：到各群陆地的距离当场重量——天气的混法、HUD 按它，
+    // 不然这一帧还按上回（0.25 s 一量）的，瞬移那一帧的天是离开的那一群的（行星计划 P4 查出来的：落地后几秒还阴着、下着那边的雨）
+    const bool jumped = ready && has_focus && focus.distance_to(p_focus) > JUMP_REMEASURE_M;
     focus = p_focus;
     has_focus = true;
+    if (jumped) {
+        for (auto &g : groups) {
+            g->land_distance = land_distance(*g, focus);
+        }
+        since_check = check_interval; // 下一帧就重新分档
+    }
 }
 
 GroupStream::Group *GroupStream::find(int p_node) const {
@@ -500,6 +567,10 @@ void GroupStream::_process(double p_delta) {
         }
     }
     poll_loading();
+    poll_adding();
+    for (auto &gp : groups) {
+        finish_ledgers(*gp, false);
+    }
     update_jump();
     update_placements(false);
     feed_focus();
@@ -584,7 +655,7 @@ void GroupStream::update_tiers() {
         }
         if (want != g->tier) {
             const bool drop = want < g->tier && (g->world || g->site_stream);
-            if (drop && dropped) {
+            if (drop && (dropped || now_s() < drop_hold_until)) {
                 continue;
             }
             dropped = dropped || drop;
@@ -709,6 +780,7 @@ void GroupStream::load_detail(Group &r_group) {
     s->set_transform(r_group.placement);
     sc->set_transform(r_group.placement);
     // 上回离开细版时存下的各村的账：交给新的账房，开账时补回、补结（模拟分级）
+    finish_ledgers(r_group, true);
     if (!r_group.memory.ledgers.empty()) {
         h->set_saved(r_group.memory.ledgers, r_group.memory.ledgers_at);
         r_group.memory.ledgers.clear();
@@ -735,12 +807,10 @@ void GroupStream::unload_detail(Group &r_group) {
         r_group.site_stream->retire_folk();
     }
     if (r_group.hinterland) {
-        {
-            TraceStep t("save_states", r_group.node);
-            r_group.hinterland->save_states(r_group.memory.ledgers, r_group.memory.ledgers_at);
-        }
-        TraceStep t("save_memory(ledgers)", r_group.node);
-        save_memory(r_group);
+        // 存成文本在后台做（大群几百本账要五六十毫秒）；做完 finish_ledgers 并进来、存进存档目录
+        TraceStep t("save_states_async", r_group.node);
+        finish_ledgers(r_group, true); // 上一回的还没做完（很少）：先等它
+        r_group.ledgers_saving = r_group.hinterland->save_states_async(r_group.memory.ledgers_at);
     }
     for (Node *n : { static_cast<Node *>(r_group.hinterland), static_cast<Node *>(r_group.scatter_stream), static_cast<Node *>(r_group.site_stream) }) {
         if (n) {
@@ -958,6 +1028,7 @@ void GroupStream::commit_shift() {
         far_groups->set_hidden(a->node, a->far_hidden);
     }
     shifts++;
+    drop_hold_until = now_s() + 2.0;
     emit_signal("anchor_changed", a->node, b->node);
 }
 
@@ -1031,7 +1102,9 @@ bool GroupStream::jump_begin(int p_node, String &r_why) {
             jump_phase = JUMP_GENERATING;
             return true;
         }
-        add_group(p_node, dir);
+        request_add(p_node, dir);
+        jump_phase = JUMP_GENERATING; // 包已经在：等后台登记完（update_jump 接着建 World）
+        return true;
     }
     jump_phase = JUMP_LOADING;
     Group *g = find(p_node);
@@ -1059,13 +1132,18 @@ void GroupStream::update_jump() {
         if (state != GroupProvider::READY) {
             return;
         }
-        Group *g = add_group(jump_node, provider->find_group(jump_node));
+        Group *g = find(jump_node);
+        if (!g) {
+            request_add(jump_node, provider->find_group(jump_node)); // 后台登记（sites.tsv、粗版），好了下一帧再建 World
+            return;
+        }
         g->pinned = true;
         if (!g->world) {
             load_world(*g, false);
             g->tier = TIER_NEAR;
         }
         jump_phase = JUMP_LOADING;
+        return;
     }
     if (jump_phase != JUMP_LOADING) {
         return;
@@ -1177,7 +1255,8 @@ int GroupStream::jump_poll(double &r_progress, String &r_text) {
             r_progress = 0.7 * double(r.get("progress", 0.0));
             const int state = int(r.get("state", 0));
             r_text = state == GroupProvider::QUEUED ? vformat(String(U"群 #%d 排队等生成（前面还在生成别的群）"), jump_node)
-                                                    : vformat(String(U"生成群 #%d：%s"), jump_node, String(r.get("text", String())));
+                    : state == GroupProvider::READY  ? vformat(String(U"读群 #%d 的包"), jump_node)
+                                                     : vformat(String(U"生成群 #%d：%s"), jump_node, String(r.get("text", String())));
             return 0;
         }
         case JUMP_LOADING: {
@@ -1268,6 +1347,7 @@ Dictionary GroupStream::get_group_state(int p_node) const {
     d["pending_tiles"] = g->world ? g->world->get_pending_count() : 0;
     d["hidden_far"] = g->far_hidden;
     d["detail"] = g->site_stream != nullptr;
+    const_cast<GroupStream *>(this)->finish_ledgers(*const_cast<Group *>(g), true); // 后台还在存的账：等它存完再报
     d["ledgers_saved"] = int(g->memory.ledgers.size());
     d["plots_saved"] = int(g->memory.plots.size());
     d["placement"] = g->placement;

@@ -158,6 +158,29 @@ void Hinterland::save_states(std::map<int, std::string> &r_states, double &r_at)
     r_at = clock ? clock->get_seconds() : 0.0;
 }
 
+std::shared_future<std::map<int, std::string>> Hinterland::save_states_async(double &r_at) {
+    collect_openings(true); // 后台在开的：开完了的一并存下
+    std::vector<std::pair<int, std::shared_ptr<VillageState>>> states;
+    for (size_t k = 0; k < ledgers.size(); k++) {
+        if (ledgers[k]) {
+            states.emplace_back(int(k), ledgers[k]->state);
+        }
+    }
+    std::map<int, std::string> kept = saved; // 上回存下、这回还没来得及开账的：原样留着
+    const WorldClock *clock = WorldClock::get_singleton();
+    r_at = clock ? clock->get_seconds() : 0.0;
+    return std::async(std::launch::async, [states = std::move(states), kept = std::move(kept)]() {
+        std::map<int, std::string> out;
+        for (const auto &entry : states) {
+            out[entry.first] = save_village_state(*entry.second);
+        }
+        for (const auto &entry : kept) {
+            out.emplace(entry.first, entry.second);
+        }
+        return out;
+    }).share();
+}
+
 bool Hinterland::openings_pending() const {
     for (const std::future<WorldLedger> &f : in_flight) {
         if (f.valid() && f.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
