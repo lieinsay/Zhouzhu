@@ -1381,7 +1381,7 @@
     {
       "id": "place-hand",
       "label": "PlaceHand 摆放",
-      "detail": "手上拿着能摆的东西时身前出虚影（0.5 m 对齐、正面朝人、Q/R 转 90°），绿了 E 摆下；看着木箱 / 工作台 / 窑按 E 打开背包，X 收回（木箱有东西不让）；让开资源点的采掘面与堆场 3 m；给合成报身边 3 m 的设施。摆出来的账（Placements）在它手里。",
+      "detail": "手上拿着能摆的东西时身前出虚影，E 摆、X 收、E 打开木箱 / 工作台 / 窑；切片十一起摆件记在脚下那处地面的营造账里（宿主局部坐标、按群存档），虚影照旧全局。",
       "tag": "玩法部件",
       "evidence": "craft_e2e：找朝向摆下工作台、木箱、窑、火把，让开堆场；E 开木箱 / 工作台 / 窑；X 收木箱（有东西被拒）",
       "sources": [
@@ -3125,6 +3125,249 @@
       ],
       "since": "e106",
       "parent": "skyisle-core"
+    },
+    {
+      "id": "world-node-edits",
+      "label": "岛群接上改地形",
+      "detail": "持有这一群的营造账；改一格换一份账交给地形取样，洞没变只重画那块补丁、洞变了当场重建那一个叶块并挂齐碰撞；后台交来的旧洞不收；答压着什么（水、坪、田、房子、采场、树干、搭建件、摆件、门外台阶）。",
+      "tag": "场景角色",
+      "evidence": "earthworks_e2e",
+      "sources": [
+        "src/world.cpp",
+        "src/world.h"
+      ],
+      "since": "e107",
+      "parent": "world-node"
+    },
+    {
+      "id": "terrain-tile-patch",
+      "label": "留洞与补丁",
+      "detail": "叶块按改过的块留洞；补丁按粗格插值出 1 m 格的顶面（没改过的格与叶块逐位相同）、格间竖直的坎（归高的那格那块、叶块边上让 1 cm）、T 形接缝的裙边；坎按深浅染土 / 石。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests edit_patch",
+      "sources": [
+        "src/terrain_tile.cpp"
+      ],
+      "since": "e108",
+      "parent": "terrain-tile"
+    },
+    {
+      "id": "world-terrain-edits",
+      "label": "取样叠上改动",
+      "detail": "surface() 加上改动（玩法都问它），锁只护指针、外包框在原子量里；散布与采场规划改问 surface_natural()（逐位确定）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests edit_patch（边换边量）",
+      "sources": [
+        "src/world_terrain.cpp"
+      ],
+      "since": "e109",
+      "parent": "world-terrain"
+    },
+    {
+      "id": "scatter-stream-works",
+      "label": "散布让开营造",
+      "detail": "压在改过的格、地基、摆件底下的灌丛石块藏掉（清单照旧确定）；压着房子的另记一份，挖一下只重查营造那一半；答有没有立着的树干。",
+      "tag": "场景角色",
+      "evidence": "earthworks_e2e",
+      "sources": [
+        "src/scatter_stream.cpp"
+      ],
+      "since": "e110",
+      "parent": "scatter-stream"
+    },
+    {
+      "id": "group-stream-works",
+      "label": "按群存取营造账",
+      "detail": "每群一份营造账：登记时读世界存档 works/<群>.txt、载入时交给 GroupWorld、拆了留着；隔 3 秒存变了的，离开、换场景时也存。",
+      "tag": "场景角色",
+      "evidence": "earthworks_e2e（存档重开逐格一样）",
+      "sources": [
+        "src/group_stream.cpp",
+        "src/group_provider.cpp"
+      ],
+      "since": "e111",
+      "parent": "group-stream"
+    },
+    {
+      "id": "dig-hand",
+      "label": "DigHand 挖与垒",
+      "detail": "拿着锹镐按住 E 挖准星那一格、拿着土按 E 垒；准星打在坎上挖后面那格、垒前面那格；进背包 / 扣土，god 不扣不给。",
+      "tag": "玩法部件",
+      "evidence": "earthworks_e2e",
+      "sources": [
+        "src/dig_hand.h",
+        "src/dig_hand.cpp"
+      ],
+      "since": "e112",
+      "parent": "expedition"
+    },
+    {
+      "id": "piece-hand",
+      "label": "PieceHand 搭建",
+      "detail": "拿着搭建件出吸附虚影（物理查挡），E 摆、X 拆、对着门 E 开关、拿着样式 E 摆整座、N 另存样式；报这座完整不完整、人在不在完整的屋里。",
+      "tag": "玩法部件",
+      "evidence": "house_e2e",
+      "sources": [
+        "src/piece_hand.h",
+        "src/piece_hand.cpp"
+      ],
+      "since": "e112",
+      "parent": "expedition"
+    },
+    {
+      "id": "expedition-aim",
+      "label": "准星",
+      "detail": "拿着搭建件、锹镐、土时屏幕中心一个点；每帧从相机往前打一条射线交给挖垒与搭建；测试用 set_aim_ray 另给一条。",
+      "tag": "玩法部件",
+      "evidence": "earthworks_e2e、house_e2e",
+      "sources": [
+        "src/aim.h",
+        "src/expedition.cpp"
+      ],
+      "since": "e112",
+      "parent": "expedition"
+    },
+    {
+      "id": "terrain-edits",
+      "label": "改地形的账（方格台阶）",
+      "detail": "1 m 格、一级 0.5 m、16 × 16 格一块；块不可变、写时复制，整份 shared_ptr<const> 交给后台线程；格子原点取地面块根块的西北角（两格一个粗格、16 格一块是叶块的八分之一）；按块存文本。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests terrain_edits",
+      "sources": [
+        "src/terrain_edits.h",
+        "src/terrain_edits.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "earthworks",
+      "label": "挖与垒的规矩",
+      "detail": "木锹 / 石镐挖一级，土层里出土、以下出石料只石镐挖得动；拿着土垒一级；最深 8 m、最高 4 m；崖边、离岸 3 m、压着东西、垒的格压着人都不行；god 不要家伙。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests earthworks",
+      "sources": [
+        "src/earthworks.h",
+        "src/earthworks.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "build-pieces",
+      "label": "搭建件：格子、吸附、支撑",
+      "detail": "十一种件；一座有自己的格子（2 m、层高 3 m、坡升 1 m）；准星换到每一座的局部格，附近的槽按「准星到外包盒」挑最近能摆的；支撑、拆了站不住不让拆、0 层门外台阶、点选。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests build_pieces",
+      "sources": [
+        "src/build_pieces.h",
+        "src/build_pieces.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "house-check",
+      "label": "完整的屋",
+      "detail": "每层按挨着的地坪格连片：四周全是墙、至少一扇门、每格头顶有顶或封得住的楼板、坡顶接得上、墙顶与坡顶的缝补了山墙；缺什么报什么。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests build_pieces；house_e2e",
+      "sources": [
+        "src/build_pieces.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "piece-mesh",
+      "label": "搭建件几何",
+      "detail": "一座 → 按材质的网格 + 一份碰撞 + 梯子区域：墙两头叠半个墙厚、门扇开关换碰撞、窗棂只画、坡顶出檐出际、两坡补屋脊、山墙梯形、门外台阶 + 斜板。用 mesh_kit 的盒子与竖板。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests build_pieces",
+      "sources": [
+        "src/piece_mesh.h",
+        "src/piece_mesh.cpp",
+        "src/mesh_kit.h"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "structure-styles",
+      "label": "整座样式",
+      "detail": "一座的全部件存成文本（game/structures、user://structures）；件数；摆一整座（地坪取所有地基格里最高处、门外台阶）；仓库带草房、民居。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests structure_styles（仓库里每套都是完整的屋）",
+      "sources": [
+        "src/structure_styles.h",
+        "src/structure_styles.cpp",
+        "game/structures/caofang.txt",
+        "game/structures/minju.txt"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "ground-works",
+      "label": "营造账 GroundWorks",
+      "detail": "一处地面上玩家营造的一切：改地形 + 搭建件 + 摆件（切片十的 Placements 挪进来），宿主局部坐标；存成 / 读回文本逐位一样。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests build_pieces（往返一字不差）",
+      "sources": [
+        "src/ground_works.h",
+        "src/ground_works.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "works-view",
+      "label": "WorksView 营造的实物",
+      "detail": "挂在宿主节点下画营造账：每座一组网格 + 两面都挡的碰撞 + 梯子区域（签名没变不重画），摆件交给 PlacedProps；邻群撤出物理。",
+      "tag": "场景角色",
+      "evidence": "house_e2e",
+      "sources": [
+        "src/works_view.h",
+        "src/works_view.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "style-panel",
+      "label": "StylePanel 样式面板",
+      "detail": "G 开合，列出样式与件数，1–9 拿起一套；只画。",
+      "tag": "界面",
+      "evidence": "house_e2e",
+      "sources": [
+        "src/style_panel.h",
+        "src/style_panel.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "map-works",
+      "label": "地图宿主的营造接口",
+      "detail": "map_works_at（这一点归哪份营造账、坐标系、能不能改地形）、map_earth_cell / cell_center / facts / step / set_earth_step；PlanetHost 转给锚群；地图不给的编排自带一份（全局坐标、不改地形）。",
+      "tag": "契约",
+      "evidence": "earthworks_e2e、house_e2e、craft_e2e",
+      "sources": [
+        "src/map_host.h",
+        "src/planet_host.cpp"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "earthworks-e2e",
+      "label": "挖坑垒土端到端测试",
+      "detail": "停机坪挖不了 → 2 × 2 × 2 m 的坑出土 16 → 木锹挖不动石、石镐凿一级 → 坑底跳不出去 → 垒台阶爬出来 → 土台 → 存档重开都在。",
+      "tag": "验收",
+      "sources": [
+        "game/tests/earthworks_e2e.gd"
+      ],
+      "since": "e113"
+    },
+    {
+      "id": "house-e2e",
+      "label": "拼一座完整的屋端到端测试",
+      "detail": "合墙 → 地基 2 × 2 → 墙门窗 → 草顶 → 山墙完整 → 开门进屋淋不着、关门出不去 → 拆墙不完整 → 样式草房一次摆下。",
+      "tag": "验收",
+      "sources": [
+        "game/tests/house_e2e.gd"
+      ],
+      "since": "e113"
     }
   ],
   "edges": [
@@ -6633,6 +6876,317 @@
       "from": "export-planet-config",
       "to": "skyisle-float",
       "label": "float.* 九个键"
+    },
+    {
+      "from": "dig-hand",
+      "to": "earthworks",
+      "label": "能不能挖 / 垒",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "dig-hand",
+      "to": "map-works",
+      "label": "格子、事实、改一格",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "dig-hand",
+      "to": "voyage-pack",
+      "label": "出土 / 扣土",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "dig-hand",
+      "to": "expedition-aim",
+      "label": "准星",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "map-works",
+      "to": "ground-works",
+      "label": "营造账",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "world-node-edits",
+      "to": "map-works",
+      "label": "实现",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "world-node-edits",
+      "to": "terrain-tile-patch",
+      "label": "留洞、补丁",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "world-node-edits",
+      "to": "world-terrain-edits",
+      "label": "换一份账",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "world-node-edits",
+      "to": "ground-works",
+      "label": "持有",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "world-node-edits",
+      "to": "works-view",
+      "label": "挂实物",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "terrain-tile-patch",
+      "to": "terrain-edits",
+      "label": "级数",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "world-terrain-edits",
+      "to": "terrain-edits",
+      "label": "级数",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "earthworks",
+      "to": "terrain-edits",
+      "label": "一级多高",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "ground-works",
+      "to": "terrain-edits",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "ground-works",
+      "to": "build-pieces",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "ground-works",
+      "to": "placeables",
+      "label": "摆件",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-hand",
+      "to": "build-pieces",
+      "label": "吸附、支撑、拆",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-hand",
+      "to": "house-check",
+      "label": "完整不完整",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-hand",
+      "to": "structure-styles",
+      "label": "整座",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-hand",
+      "to": "piece-mesh",
+      "label": "虚影",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-hand",
+      "to": "map-works",
+      "label": "营造账",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-hand",
+      "to": "expedition-aim",
+      "label": "准星",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-hand",
+      "to": "voyage-pack",
+      "label": "扣件 / 还件",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "house-check",
+      "to": "build-pieces",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-mesh",
+      "to": "build-pieces",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "piece-mesh",
+      "to": "building-mesh",
+      "label": "材质与颜色",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "structure-styles",
+      "to": "build-pieces",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "works-view",
+      "to": "piece-mesh",
+      "label": "网格与碰撞",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "works-view",
+      "to": "placed-props",
+      "label": "摆件的实物",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "works-view",
+      "to": "ground-works",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "style-panel",
+      "to": "structure-styles",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "expedition",
+      "to": "style-panel",
+      "label": "G",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "expedition",
+      "to": "map-works",
+      "label": "营造账（没有就自带一份）",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "place-hand",
+      "to": "map-works",
+      "label": "摆件记在营造账里",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "scatter-stream-works",
+      "to": "ground-works",
+      "label": "压着什么",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "group-stream-works",
+      "to": "ground-works",
+      "label": "存取",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "group-stream-works",
+      "to": "group-provider",
+      "label": "works/<群>.txt",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "group-stream-works",
+      "to": "world-node-edits",
+      "label": "交账",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "earthworks-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "build"
+      ]
+    },
+    {
+      "from": "house-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "build"
+      ]
     }
   ],
   "chains": [
@@ -8666,6 +9220,128 @@
         "skyisle-float",
         "skyisle-export",
         "world-terrain-body"
+      ]
+    },
+    {
+      "id": "build",
+      "title": "切片十一：改地形与搭建——挖坑垒土、搭建件拼一座完整的屋",
+      "story": "玩家拿木锹在地上挖出一个两米深的直壁坑、跳下去待着，垒一级土台阶爬出来；再用挖出来的土夯墙，一件件摆地基、墙、门、窗、草顶、山墙，拼成一座完整的屋，开门进去关上门，外面下雨屋里淋不着；也能挑一整座现成的样式一次摆下。挖的坑和盖的房子退出再进都还在。",
+      "date": "2026-09-28",
+      "color": "#2fb5c4",
+      "commits": "87dce0a..198ba16",
+      "steps": [
+        {
+          "text": "拿起木锹：屏幕中心出准星，准星落到的那一格描框（能挖绿、不能红，停机坪、田、房子、树根底下、崖边都说为什么）",
+          "nodes": [
+            "dig-hand",
+            "expedition-aim",
+            "map-works",
+            "earthworks",
+            "world-node-edits"
+          ]
+        },
+        {
+          "text": "按住 E 一级级往下挖（1 m 一格、一级 0.5 m）：土层里出土，挖到石头要换石镐出石料；坑壁是竖直的坎，地面块当场留洞挂补丁、碰撞跟着改",
+          "nodes": [
+            "dig-hand",
+            "terrain-edits",
+            "terrain-tile-patch",
+            "world-node-edits",
+            "world-terrain-edits",
+            "voyage-pack"
+          ]
+        },
+        {
+          "text": "跳进 2 m 深的坑里站着，跳不出去；拿着土垒一级台阶、一步步爬出来，再垒个土台跳上去；坑里的灌丛石块藏掉",
+          "nodes": [
+            "player",
+            "dig-hand",
+            "world-node-edits",
+            "scatter-stream-works"
+          ]
+        },
+        {
+          "text": "打开背包点配方：土夯成夯土墙、柴扎草顶，工作台上合门墙窗墙，窑里烧瓦",
+          "nodes": [
+            "voyage-pack",
+            "backpack-panel",
+            "recipes",
+            "crops"
+          ]
+        },
+        {
+          "text": "拿着地基对准地面摆下：新开一座、地坪按最高的地面抬 0.45 m；再摆的件都吸附到这一座的格子上（墙立在地基边、顶搭在墙上往外低、山墙补缝），摆不下的说为什么",
+          "nodes": [
+            "piece-hand",
+            "build-pieces",
+            "piece-mesh",
+            "works-view",
+            "ground-works"
+          ]
+        },
+        {
+          "text": "四面墙、一扇门、头顶有顶、山墙封好：提示「这座是一座完整的屋」；对着门按 E 开门，门外自动铺了台阶，走进去 HUD 报在自己的屋里、下雨淋不着；关上门出不去",
+          "nodes": [
+            "house-check",
+            "piece-hand",
+            "works-view",
+            "atmosphere",
+            "expedition"
+          ]
+        },
+        {
+          "text": "X 拆下一面墙这座就不完整了；G 开样式面板拿起「草房」，一次摆下整座",
+          "nodes": [
+            "piece-hand",
+            "structure-styles",
+            "style-panel",
+            "build-pieces"
+          ]
+        },
+        {
+          "text": "营造账（改地形、搭建件、摆件）按群存进世界存档 works/<群>.txt，退出再进、飞走再回来都还在",
+          "nodes": [
+            "ground-works",
+            "group-stream-works",
+            "group-provider",
+            "world-node-edits"
+          ]
+        }
+      ],
+      "nodes": [
+        "terrain-edits",
+        "earthworks",
+        "build-pieces",
+        "house-check",
+        "piece-mesh",
+        "structure-styles",
+        "ground-works",
+        "works-view",
+        "style-panel",
+        "map-works",
+        "earthworks-e2e",
+        "house-e2e",
+        "place-hand",
+        "dig-hand",
+        "expedition-aim",
+        "world-node-edits",
+        "terrain-tile-patch",
+        "world-terrain-edits",
+        "voyage-pack",
+        "player",
+        "scatter-stream-works",
+        "backpack-panel",
+        "recipes",
+        "crops",
+        "piece-hand",
+        "atmosphere",
+        "expedition",
+        "group-stream-works",
+        "group-provider",
+        "placeables",
+        "building-mesh",
+        "placed-props",
+        "world-2051-scene"
       ]
     }
   ],
@@ -11497,6 +12173,210 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e107",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：切片十一：岛群接上改地形（留洞、补丁、营造账）",
+      "summary": "见切片十一链路 build。",
+      "nodes": [
+        "world-node",
+        "world-node-edits"
+      ],
+      "info": {
+        "node": "world-node",
+        "children": [
+          "world-node-edits"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e108",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：切片十一：叶块留洞、改过的块画补丁",
+      "summary": "见切片十一链路 build。",
+      "nodes": [
+        "terrain-tile",
+        "terrain-tile-patch"
+      ],
+      "info": {
+        "node": "terrain-tile",
+        "children": [
+          "terrain-tile-patch"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e109",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：切片十一：取样叠上玩家的改动",
+      "summary": "见切片十一链路 build。",
+      "nodes": [
+        "world-terrain",
+        "world-terrain-edits"
+      ],
+      "info": {
+        "node": "world-terrain",
+        "children": [
+          "world-terrain-edits"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e110",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：切片十一：散布让开改过的格与搭建件",
+      "summary": "见切片十一链路 build。",
+      "nodes": [
+        "scatter-stream",
+        "scatter-stream-works"
+      ],
+      "info": {
+        "node": "scatter-stream",
+        "children": [
+          "scatter-stream-works"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e111",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：切片十一：每群一份营造账、存进世界存档",
+      "summary": "见切片十一链路 build。",
+      "nodes": [
+        "group-stream",
+        "group-stream-works"
+      ],
+      "info": {
+        "node": "group-stream",
+        "children": [
+          "group-stream-works"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e112",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：切片十一：挖垒、搭建、准星",
+      "summary": "见切片十一链路 build。",
+      "nodes": [
+        "expedition",
+        "dig-hand",
+        "piece-hand",
+        "expedition-aim"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "dig-hand",
+          "piece-hand",
+          "expedition-aim"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e113",
+      "type": "slice",
+      "date": "2026-09-28",
+      "title": "切片十一：改地形与搭建——挖坑垒土、搭建件拼一座完整的屋",
+      "summary": "玩家拿木锹在地上挖出一个两米深的直壁坑、跳下去待着，垒一级土台阶爬出来；再用挖出来的土夯墙，一件件摆地基、墙、门、窗、草顶、山墙，拼成一座完整的屋，开门进去关上门，外面下雨屋里淋不着；也能挑一整座现成的样式一次摆下。挖的坑和盖的房子退出再进都还在。",
+      "commits": "87dce0a..198ba16",
+      "chain": "build",
+      "nodes": [
+        "terrain-edits",
+        "earthworks",
+        "build-pieces",
+        "house-check",
+        "piece-mesh",
+        "structure-styles",
+        "ground-works",
+        "works-view",
+        "style-panel",
+        "map-works",
+        "earthworks-e2e",
+        "house-e2e",
+        "place-hand",
+        "dig-hand",
+        "expedition-aim",
+        "world-node-edits",
+        "terrain-tile-patch",
+        "world-terrain-edits",
+        "voyage-pack",
+        "player",
+        "scatter-stream-works",
+        "backpack-panel",
+        "recipes",
+        "crops",
+        "piece-hand",
+        "atmosphere",
+        "expedition",
+        "group-stream-works",
+        "group-provider",
+        "placeables",
+        "building-mesh",
+        "placed-props",
+        "world-2051-scene"
+      ],
+      "info": {
+        "created": [
+          "terrain-edits",
+          "earthworks",
+          "build-pieces",
+          "house-check",
+          "piece-mesh",
+          "structure-styles",
+          "ground-works",
+          "works-view",
+          "style-panel",
+          "map-works",
+          "earthworks-e2e",
+          "house-e2e"
+        ],
+        "reused": [
+          "place-hand",
+          "dig-hand",
+          "expedition-aim",
+          "world-node-edits",
+          "terrain-tile-patch",
+          "world-terrain-edits",
+          "voyage-pack",
+          "player",
+          "scatter-stream-works",
+          "backpack-panel",
+          "recipes",
+          "crops",
+          "piece-hand",
+          "atmosphere",
+          "expedition",
+          "group-stream-works",
+          "group-provider",
+          "placeables",
+          "building-mesh",
+          "placed-props",
+          "world-2051-scene"
+        ],
+        "updated": [
+          "place-hand"
+        ]
       }
     }
   ],
