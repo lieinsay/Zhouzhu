@@ -375,11 +375,10 @@ std::vector<double> PlanetData::lod_resolutions(int p_node) const {
     return out;
 }
 
-PlanetLod PlanetData::lod(int p_node, double p_max_res_m) const {
-    PlanetLod out;
+int PlanetData::pick_lod(int p_node, double p_max_res_m) const {
     auto it = lods_of.find(p_node);
     if (it == lods_of.end() || it->second.empty()) {
-        return out;
+        return -1;
     }
     int pick = it->second.back(); // 最细的
     for (int k : it->second) { // 从粗到细：第一份不超过 p_max_res_m 的
@@ -387,6 +386,29 @@ PlanetLod PlanetData::lod(int p_node, double p_max_res_m) const {
             pick = k;
             break;
         }
+    }
+    return pick;
+}
+
+bool PlanetData::lod_extent(int p_node, double p_max_res_m, double &r_res_m, double &r_origin_x_km, double &r_origin_y_km, int &r_rows, int &r_cols) const {
+    const int pick = pick_lod(p_node, p_max_res_m);
+    if (pick < 0) {
+        return false;
+    }
+    const LodEntry &e = lod_entries[size_t(pick)];
+    r_res_m = e.res_m;
+    r_origin_x_km = e.origin_x_km;
+    r_origin_y_km = e.origin_y_km;
+    r_rows = e.rows;
+    r_cols = e.cols;
+    return true;
+}
+
+PlanetLod PlanetData::lod(int p_node, double p_max_res_m) const {
+    PlanetLod out;
+    const int pick = pick_lod(p_node, p_max_res_m);
+    if (pick < 0) {
+        return out;
     }
     const LodEntry &e = lod_entries[size_t(pick)];
     out.node = e.node;

@@ -50,6 +50,10 @@ planet_curve_radius={
 "type": "float",
 "value": 6376600.0
 }
+planet_curve_squeeze={
+"type": "vec2",
+"value": Vector2(10000, 26000)
+}
 wx_misc={
 "type": "vec4",
 "value": Vector4(1, 0, 0, 0)

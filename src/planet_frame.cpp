@@ -122,18 +122,27 @@ PlanetBasis GroupFrame::local_basis(const PlanetVec &p_flat) const {
     return { { east_c, up_c, south_c } };
 }
 
-double CurveSqueeze::distance(double p_distance) {
-    if (p_distance <= KEEP_M) {
+double CurveSqueeze::distance(double p_distance, double p_keep, double p_limit) {
+    if (p_distance <= p_keep) {
         return p_distance;
     }
     // 有理式 x / (1 + x)：一路单调、不会在单精度里压成同一个数（指数式在 480 km 外就全压到 48 km，远处的深度打架）
-    const double span = LIMIT_M - KEEP_M, x = (p_distance - KEEP_M) / span;
-    return KEEP_M + span * x / (1.0 + x);
+    const double span = p_limit - p_keep, x = (p_distance - p_keep) / span;
+    return p_keep + span * x / (1.0 + x);
+}
+
+void CurveSqueeze::at_height(double p_height, double &r_keep, double &r_limit) {
+    r_keep = KEEP_M + 2.0 * std::max(0.0, p_height - RISE_FROM_M);
+    r_limit = r_keep * (LIMIT_M / KEEP_M);
 }
 
 void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float r_out[3]) {
-    // 逐式同 planet_curve.gdshaderinc 的 planet_squeeze
-    const float keep = float(CurveSqueeze::KEEP_M), limit = float(CurveSqueeze::LIMIT_M);
+    planet_squeeze_f(p_visual, p_cam, float(CurveSqueeze::KEEP_M), float(CurveSqueeze::LIMIT_M), r_out);
+}
+
+void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float p_keep, float p_limit, float r_out[3]) {
+    // 逐式同 planet_curve.gdshaderinc 的 planet_squeeze（keep、limit 是全局参数 planet_curve_squeeze）
+    const float keep = p_keep, limit = p_limit;
     const float rel[3] = { p_visual[0] - p_cam[0], p_visual[1] - p_cam[1], p_visual[2] - p_cam[2] };
     const float d = std::sqrt(rel[0] * rel[0] + rel[1] * rel[1] + rel[2] * rel[2]);
     if (d <= keep) {

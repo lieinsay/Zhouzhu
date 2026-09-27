@@ -19,13 +19,22 @@
 // 画面上的方向不变、深度的先后不变，相机的远平面不用放大（Godot 的投影矩阵是单精度：near 0.05 m、far 1,200 km 时远平面退化）；
 // 引擎的指数雾按压过的距离算，所以远处的雾到 1 − exp(−密度·LIMIT) 就不再变浓（空气透视：三四百公里外还看得见轮廓）。
 // 着色器 planet_curve.gdshaderinc 的 planet_squeeze 与 planet_squeeze_f 逐式相同。
+// 行星计划 P2：相机高过 RISE_FROM_M 起，不压的半径按 KEEP_M + 2 × (高 − RISE_FROM_M) 放大、压到的上限按同一比例（LIMIT / KEEP = 2.6）——
+// 高空往下看时，远处的地面离相机本来就几百上万公里，照 10 km / 26 km 压会把几百米的起伏压到单精度分不开（深度打架）；
+// 放大之后看得见的都在「不压」的一段里，远平面跟着放大、近平面按远平面的百万分之一（投影矩阵单精度，比值别过 1e6）。
+// 30 km 以下与 P1 一样。着色器读全局参数 planet_curve_squeeze =（keep, limit），PlanetView 每帧按相机的高设。
 struct CurveSqueeze {
     static constexpr double KEEP_M = 10000.0;
     static constexpr double LIMIT_M = 26000.0;
-    // 压过之后离相机多远
-    static double distance(double p_distance);
+    static constexpr double RISE_FROM_M = 30000.0;
+    // 压过之后离相机多远（P1 的 10 km / 26 km）
+    static double distance(double p_distance) { return distance(p_distance, KEEP_M, LIMIT_M); }
+    static double distance(double p_distance, double p_keep, double p_limit);
+    // 相机在游戏 y = p_height 时的 keep、limit
+    static void at_height(double p_height, double &r_keep, double &r_limit);
 };
 void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float r_out[3]);
+void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float p_keep, float p_limit, float r_out[3]);
 
 // 垂直结构（D13）：游戏 y（云带顶以上的米，生成器的高度零点）
 struct VerticalDatum {

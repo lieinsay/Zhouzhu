@@ -76,6 +76,10 @@ set(ZHOUZHU_CORE_SOURCES
     src/planet_data.h
     src/planet_frame.cpp
     src/planet_frame.h
+    src/planet_sky.cpp
+    src/planet_sky.h
+    src/planet_surface.cpp
+    src/planet_surface.h
     src/recipes.cpp
     src/recipes.h
     src/resource_scatter.cpp

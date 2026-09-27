@@ -16,12 +16,14 @@
 //   planet_curve_basis   R_c：列 = 相机处的东、上、南（在锚群的切平面坐标里）
 //   planet_curve_dcam    δ(c)
 //   planet_curve_radius  R（米，海面半径 + 5,600）
+//   planet_curve_squeeze 远处往相机压的 (keep, limit)：30 km 以下是 (10 km, 26 km)，相机再高按高度放大（P2，同 C++ 的 CurveSqueeze::at_height）
 
 global uniform float planet_curve_on;
 global uniform vec3 planet_curve_cam;
 global uniform mat3 planet_curve_basis;
 global uniform vec3 planet_curve_dcam;
 global uniform float planet_curve_radius;
+global uniform vec2 planet_curve_squeeze;
 
 vec3 planet_delta(vec3 p) {
 	float s2 = p.x * p.x + p.z * p.z;
@@ -38,18 +40,18 @@ vec3 planet_curved(vec3 p) {
 	return planet_curve_cam + off * planet_curve_basis; // 行向量 × 矩阵 = R_cᵀ · off
 }
 
-// 远处沿视线往相机压
-const float PLANET_SQUEEZE_KEEP = 10000.0;
-const float PLANET_SQUEEZE_LIMIT = 26000.0;
+// 远处沿视线往相机压（keep、limit 是全局参数 planet_curve_squeeze）
 vec3 planet_squeeze(vec3 v) {
+	float keep = planet_curve_squeeze.x;
+	float limit = planet_curve_squeeze.y;
 	vec3 rel = v - planet_curve_cam;
 	float d = length(rel);
-	if (d <= PLANET_SQUEEZE_KEEP) {
+	if (d <= keep) {
 		return v;
 	}
-	float span = PLANET_SQUEEZE_LIMIT - PLANET_SQUEEZE_KEEP;
-	float x = (d - PLANET_SQUEEZE_KEEP) / span;
-	float d2 = PLANET_SQUEEZE_KEEP + span * x / (1.0 + x);
+	float span = limit - keep;
+	float x = (d - keep) / span;
+	float d2 = keep + span * x / (1.0 + x);
 	return planet_curve_cam + rel * (d2 / d);
 }
 

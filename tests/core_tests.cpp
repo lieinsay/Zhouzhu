@@ -72,6 +72,8 @@
 #include "almanac.h"
 #include "planet_data.h"
 #include "planet_frame.h"
+#include "planet_sky.h"
+#include "planet_surface.h"
 
 namespace {
 
@@ -5022,6 +5024,246 @@ void test_far_group_mesh() {
     }
 }
 
+// 行星计划 P2 · 大气（planet_sky）：透过率表的参数化往返、查表与直接积分对得上、地平线以下给 0、多次散射表有限且随太阳变亮；
+// 行星系里的日月与 almanac 在当地算的方向一致
+void test_planet_sky() {
+    std::printf("[planet_sky]\n");
+    const AtmosphereModel atmo;
+    double worst_rt = 0.0;
+    for (int k = 0; k < 200; k++) {
+        const double r = atmo.bottom_km + 0.1 + (atmo.top_km - atmo.bottom_km - 0.2) * (k % 20) / 19.0;
+        const double horizon = -std::sqrt(std::max(0.0, 1.0 - (atmo.bottom_km / r) * (atmo.bottom_km / r)));
+        const double mu = horizon + 1e-4 + (1.0 - horizon - 1e-4) * (k / 20) / 9.0;
+        double u = 0.0, v = 0.0, r2 = 0.0, mu2 = 0.0;
+        atmo_transmittance_uv(atmo, r, mu, u, v);
+        atmo_transmittance_r_mu(atmo, u, v, r2, mu2);
+        worst_rt = std::max({ worst_rt, std::abs(r2 - r), std::abs(mu2 - mu) });
+    }
+    check(worst_rt < 1e-6, "透过率表的 (r, mu) ↔ (u, v) 往返差 < 1e-6（得到 " + std::to_string(worst_rt) + "）");
+    const auto t0 = std::chrono::steady_clock::now();
+    const SkyLut trans = atmo_transmittance_lut(atmo);
+    const auto t1 = std::chrono::steady_clock::now();
+    const SkyLut ms = atmo_multiscatter_lut(atmo, trans);
+    const auto t2 = std::chrono::steady_clock::now();
+    std::printf("  透过率表 %d×%d %.1f ms、多次散射表 %d×%d %.1f ms\n", trans.width, trans.height, std::chrono::duration<double, std::milli>(t1 - t0).count(), ms.width,
+            ms.height, std::chrono::duration<double, std::milli>(t2 - t1).count());
+    double lut[3], direct[3];
+    atmo_transmittance(atmo, trans, atmo.bottom_km, 1.0, lut);
+    atmo_transmittance_direct(atmo, atmo.bottom_km, 1.0, 200, direct);
+    std::printf("  海面朝天顶的透过率 %.4f %.4f %.4f\n", lut[0], lut[1], lut[2]);
+    check(std::abs(lut[0] - direct[0]) < 3e-3 && std::abs(lut[2] - direct[2]) < 3e-3, "查表与直接积分对得上（天顶）");
+    check(lut[0] > 0.9 && lut[0] < 0.97 && lut[2] > 0.7 && lut[2] < 0.8 && lut[2] < lut[1] && lut[1] < lut[0], "天顶透过率：红 0.9–0.97、蓝 0.7–0.8，蓝最少（Rayleigh）");
+    double worst_lut = 0.0;
+    for (int k = 0; k < 40; k++) {
+        const double r = atmo.bottom_km + 5.6 + k * 2.3;
+        const double mu = 1.0 - k * 0.024;
+        atmo_transmittance(atmo, trans, r, mu, lut);
+        atmo_transmittance_direct(atmo, r, mu, 200, direct);
+        worst_lut = std::max(worst_lut, std::abs(lut[1] - direct[1]));
+    }
+    check(worst_lut < 0.01, "高处各方向查表与直接积分差 < 0.01（得到 " + std::to_string(worst_lut) + "）");
+    atmo_transmittance(atmo, trans, atmo.bottom_km + 5.6, -0.2, lut);
+    check(lut[0] == 0.0 && lut[1] == 0.0, "地平线以下（打到海面）透过率 0");
+    atmo_transmittance(atmo, trans, atmo.bottom_km + 400.0, 0.2, lut);
+    check(lut[0] > 0.99, "400 km 高往上几乎全透");
+    bool finite = true;
+    for (float f : ms.rgb) {
+        finite = finite && std::isfinite(f) && f >= 0.0f;
+    }
+    double noon[3], dusk[3], night[3], high[3];
+    ms.sample(1.0, 0.056, noon);
+    ms.sample(0.5, 0.056, dusk);
+    ms.sample(0.2, 0.056, night);
+    ms.sample(1.0, 0.9, high);
+    std::printf("  多次散射（5.6 km）：正午 %.5f %.5f %.5f、日落 %.5f、夜 %.6f、90 km 正午 %.6f\n", noon[0], noon[1], noon[2], dusk[2], night[2], high[2]);
+    check(finite, "多次散射表处处有限、不为负");
+    check(noon[2] > dusk[2] && dusk[2] > night[2] && noon[2] > noon[0], "多次散射：太阳越高越亮，蓝多于红");
+    // Ψ_ms 是照到那一点的多次散射光（大半是下面的云带与低层大气反上来的），90 km 处比近地面暗；乘上那里的散射系数就几乎没有了
+    check(high[2] > 0.0 && high[2] < noon[2], "90 km 处照到的多次散射比近地面暗");
+
+    // 行星系里的日月：换到当地的东、上、南，与 almanac 在那一点算的方向一致
+    CalendarRules rules;
+    const double clock_lon = 152.15;
+    double worst_sun = 0.0, worst_moon = 0.0;
+    for (int k = 0; k < 30; k++) {
+        const double day = 3.0 + k * 11.37;
+        const double lat = -80.0 + k * 5.3, lon = -170.0 + k * 11.0;
+        double s[3], m[3];
+        planet_sun_dir(day, clock_lon, rules, s);
+        planet_moon_dir(day, clock_lon, rules, m);
+        const GroupFrame f(lat, lon);
+        const PlanetVec sv(s[0], s[1], s[2]), mv(m[0], m[1], m[2]);
+        CalendarRules here = rules;
+        here.latitude_deg = lat;
+        const double local_day = day + (lon - clock_lon) / 360.0;
+        const SunState st = sun_at(local_day, here);
+        const double e = sv.dot(f.east), u = sv.dot(f.up), so = -sv.dot(f.north);
+        worst_sun = std::max(worst_sun, std::abs(e - st.dir_x) + std::abs(u - st.dir_y) + std::abs(so - st.dir_z));
+        CalendarRules at = rules;
+        at.latitude_deg = -31.65;
+        const GroupFrame g(-31.65, clock_lon);
+        const MoonState mo = moon_at(day, at);
+        worst_moon = std::max(worst_moon, std::abs(mv.dot(g.east) - mo.dir_x) + std::abs(mv.dot(g.up) - mo.dir_y) + std::abs(-mv.dot(g.north) - mo.dir_z));
+    }
+    // almanac 在当地按「当地历日」算赤纬（经度差最多半天，赤纬差不到 0.6°）；行星系按钟的历日：三个分量的绝对差加起来 < 0.03
+    check(worst_sun < 0.03, "行星系的太阳换到各地，与 almanac 当地算的差 < 0.03（得到 " + std::to_string(worst_sun) + "）");
+    check(worst_moon < 1e-6, "参考经度上行星系的月亮与 almanac 一致（得到 " + std::to_string(worst_moon) + "）");
+}
+
+// 行星计划 P2 · 远处往相机压随相机的高放大：30 km 以下同 P1；两万公里高时看得见的都不压；单精度同式
+void test_planet_squeeze_height() {
+    std::printf("[planet_squeeze_height]\n");
+    double keep = 0.0, limit = 0.0;
+    CurveSqueeze::at_height(2.0, keep, limit);
+    check(keep == CurveSqueeze::KEEP_M && limit == CurveSqueeze::LIMIT_M, "地面上同 P1（10 km / 26 km）");
+    CurveSqueeze::at_height(30000.0, keep, limit);
+    check(keep == CurveSqueeze::KEEP_M, "30 km 以下不变");
+    CurveSqueeze::at_height(2.0e7, keep, limit);
+    check(keep > 2.6e7 && std::abs(limit / keep - 2.6) < 1e-9, "两万公里高：不压的一段盖过整颗星（到星的另一边约 2.6 万公里）");
+    // 两万公里高往下看，远处岛群 100 m 的起伏压过之后还分得开（相机的世界坐标约 2e7，单精度的格约 2 m）
+    const double d0 = 2.0e7, d1 = d0 + 100.0;
+    check(CurveSqueeze::distance(d1, keep, limit) - CurveSqueeze::distance(d0, keep, limit) > 50.0, "两万公里处相隔 100 m 压过之后还差 50 m 以上");
+    check(CurveSqueeze::distance(d1) - CurveSqueeze::distance(d0) < 1e-3, "照 P1 的压法同一处只差不到 1 mm（所以要放大）");
+    double f_err = 0.0;
+    CurveSqueeze::at_height(500000.0, keep, limit);
+    for (double d = 0.0; d < 3.0e6; d += 7919.0) {
+        const float cam[3] = { 10.0f, 500000.0f, -20.0f };
+        const float v[3] = { cam[0] + float(d * 0.6), cam[1] - float(d * 0.8), cam[2] };
+        float o[3];
+        planet_squeeze_f(v, cam, float(keep), float(limit), o);
+        const double got = std::sqrt(double(o[0] - cam[0]) * (o[0] - cam[0]) + double(o[1] - cam[1]) * (o[1] - cam[1]) + double(o[2] - cam[2]) * (o[2] - cam[2]));
+        const double s = CurveSqueeze::distance(d, keep, limit);
+        f_err = std::max(f_err, std::abs(got - s) / std::max(1.0, s));
+    }
+    check(f_err < 1e-5, "单精度同式（500 km 高，相对差 " + std::to_string(f_err) + "）");
+}
+
+// 行星计划 P2 · 行星贴图（planet_surface）：立方体面映射往返、像素立体角加起来是 4π、全行星的陆地烘得对、2051 群心那一格是陆地、替身
+void test_planet_surface() {
+    std::printf("[planet_surface]\n");
+    double worst = 0.0;
+    int faces_hit[6] = { 0, 0, 0, 0, 0, 0 };
+    for (int k = 0; k < 2000; k++) {
+        const double z = std::cos(k * 2.399963) * 0.999, lon = k * 0.7123;
+        const double d[3] = { std::sqrt(1.0 - z * z) * std::cos(lon), std::sqrt(1.0 - z * z) * std::sin(lon), z };
+        double u = 0.0, v = 0.0, back[3];
+        const int f = planet_cube::face_of(d, u, v);
+        faces_hit[f]++;
+        planet_cube::dir_of(f, u, v, back);
+        worst = std::max(worst, std::abs(back[0] - d[0]) + std::abs(back[1] - d[1]) + std::abs(back[2] - d[2]));
+        worst = u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0 ? 1.0 : worst;
+    }
+    check(worst < 1e-12, "立方体面映射往返（得到 " + std::to_string(worst) + "）");
+    check(*std::min_element(faces_hit, faces_hit + 6) > 200, "六个面都用得上");
+    double omega = 0.0, lo = 1e9, hi = 0.0;
+    for (int j = 0; j < 128; j++) {
+        for (int i = 0; i < 128; i++) {
+            const double w = planet_cube::texel_solid_angle(128, i, j);
+            omega += w;
+            lo = std::min(lo, w);
+            hi = std::max(hi, w);
+        }
+    }
+    check(std::abs(omega * 6.0 - 4.0 * 3.14159265358979) < 1e-3, "像素立体角六面加起来是 4π（得到 " + std::to_string(omega * 6.0) + "）");
+    check(hi / lo < 1.5, "atan 拉匀之后像素面积最大最小差不到一半（得到 " + std::to_string(hi / lo) + "）");
+
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
+    PlanetData pd;
+    std::string err;
+    if (!pd.load_files(dir, err)) {
+        check(false, "行星包读得出：" + err);
+        return;
+    }
+    SurfaceBakeRules rules;
+    rules.size = 512;
+    double land = 0.0, ms_total = 0.0, ms_max = 0.0;
+    int groups = 0, lit = 0;
+    SurfaceFace home;
+    int home_face = -1;
+    double hu = 0.0, hv = 0.0;
+    {
+        const PlanetVec h = planet_unit(pd.node(2051).lat, pd.node(2051).lon);
+        const double d[3] = { h.x, h.y, h.z };
+        home_face = planet_cube::face_of(d, hu, hv);
+    }
+    for (int f = 0; f < 6; f++) {
+        SurfaceFace face;
+        SurfaceBakeStats st;
+        bake_surface_face(pd, f, rules, face, &st);
+        land += st.land_km2;
+        groups += st.groups;
+        lit += int(st.lit_texels);
+        ms_total += st.ms;
+        ms_max = std::max(ms_max, st.ms);
+        check(st.stand_ins == 0, "seed42 每群都有粗版，不用替身（面 " + std::to_string(f) + "）");
+        if (f == home_face) {
+            home = std::move(face);
+        }
+    }
+    std::printf("  512² × 6：陆地 %.3g km²、%d 群次、有灯 %d 像素；六面共 %.0f ms（最慢一面 %.0f ms）\n", land, groups, lit, ms_total, ms_max);
+    check(std::abs(land - 2.5e7) < 0.08 * 2.5e7, "烘进去的陆地 ≈ 2500 万 km²（得到 " + std::to_string(land) + "）");
+    check(groups >= 8000, "8000 群都烘进去了（跨面的算两次）");
+    check(lit > 1000, "夜里有灯的像素上千");
+    if (!home.color.empty()) {
+        const int i = std::min(rules.size - 1, int(hu * rules.size)), j = std::min(rules.size - 1, int(hv * rules.size));
+        int best = 0;
+        for (int dj = -2; dj <= 2; dj++) {
+            for (int di = -2; di <= 2; di++) {
+                const int ii = std::clamp(i + di, 0, rules.size - 1), jj = std::clamp(j + dj, 0, rules.size - 1);
+                best = std::max(best, int(home.color[(size_t(jj) * size_t(rules.size) + size_t(ii)) * 4 + 3]));
+            }
+        }
+        check(best > 128, "2051 群心附近的像素是陆地（份额 " + std::to_string(best) + " / 255）");
+    }
+    // 替身：面积按行星包
+    const PlanetLod s = surface_stand_in(pd, 2049, 2000.0);
+    check(!s.empty() && std::abs(s.land_km2() - pd.node(2049).area_km2) < 0.3 * pd.node(2049).area_km2,
+            "替身的陆地与行星包差不到三成（" + std::to_string(s.land_km2()) + " / " + std::to_string(pd.node(2049).area_km2) + " km²）");
+    // BC3：压过再解开，平滑的渐变与贴图里的海岸都差得不多
+    {
+        const int W = 64;
+        std::vector<uint8_t> img(size_t(W) * W * 4), blocks(size_t(W / 4) * (W / 4) * 16), back(size_t(W) * W * 4);
+        for (int y = 0; y < W; y++) {
+            for (int x = 0; x < W; x++) {
+                uint8_t *p = &img[(size_t(y) * W + size_t(x)) * 4];
+                const bool land = (x - 30) * (x - 30) + (y - 34) * (y - 34) < 300;
+                const double a = land ? 1.0 : 0.0;
+                p[0] = uint8_t(std::lround(a * (90 + x)));
+                p[1] = uint8_t(std::lround(a * (120 + y)));
+                p[2] = uint8_t(std::lround(a * 60));
+                p[3] = uint8_t(std::lround(a * 255));
+            }
+        }
+        bc3_encode_image(img.data(), W, W, blocks.data());
+        double err = 0.0, aerr = 0.0;
+        for (int by = 0; by < W / 4; by++) {
+            for (int bx = 0; bx < W / 4; bx++) {
+                uint8_t px[64];
+                bc3_decode_block(&blocks[(size_t(by) * (W / 4) + size_t(bx)) * 16], px);
+                for (int y = 0; y < 4; y++) {
+                    for (int x = 0; x < 4; x++) {
+                        const uint8_t *s = &img[(size_t(by * 4 + y) * W + size_t(bx * 4 + x)) * 4];
+                        for (int c = 0; c < 3; c++) {
+                            err += std::abs(int(s[c]) - int(px[(y * 4 + x) * 4 + c]));
+                        }
+                        aerr += std::abs(int(s[3]) - int(px[(y * 4 + x) * 4 + 3]));
+                    }
+                }
+            }
+        }
+        err /= W * W * 3.0;
+        aerr /= W * W;
+        std::printf("  BC3 往返：颜色平均差 %.2f、份额平均差 %.2f（满 255）\n", err, aerr);
+        check(err < 6.0 && aerr < 2.0, "BC3 压过再解开，颜色平均差 < 6、份额 < 2");
+    }
+    SurfaceBakeRules forced = rules;
+    forced.force_stand_ins = true;
+    SurfaceFace face;
+    SurfaceBakeStats st;
+    bake_surface_face(pd, home_face, forced, face, &st);
+    check(st.stand_ins == st.groups && st.groups > 500 && st.land_km2 > 1e6, "一律画替身也烘得出来（" + std::to_string(st.groups) + " 群、" + std::to_string(st.land_km2) + " km²）");
+}
+
 int main() {
     test_rng();
     test_almanac();
@@ -5082,6 +5324,9 @@ int main() {
     test_planet_data();
     test_planet_frame();
     test_far_group_mesh();
+    test_planet_squeeze_height();
+    test_planet_sky();
+    test_planet_surface();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

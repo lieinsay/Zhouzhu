@@ -88,6 +88,7 @@ class PlanetData {
     int bucket_rows = 0, bucket_cols = 0;
 
     void build_buckets();
+    int pick_lod(int p_node, double p_max_res_m) const; // lod_entries 的下标；没有 −1
 
 public:
     int seed = 0;
@@ -121,4 +122,6 @@ public:
     std::vector<double> lod_resolutions(int p_node) const;
     // 解开一份粗版：格距不超过 p_max_res_m 里最粗的一份（都比它粗就给最细的）；没有粗版返回空的
     PlanetLod lod(int p_node, double p_max_res_m = 1e9) const;
+    // 只要那一份的栅格范围（不解格子）：格距、左上角、行列；没有粗版返回 false
+    bool lod_extent(int p_node, double p_max_res_m, double &r_res_m, double &r_origin_x_km, double &r_origin_y_km, int &r_rows, int &r_cols) const;
 };
