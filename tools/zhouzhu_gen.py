@@ -8,10 +8,11 @@
 
 group：生成器第三层（与 skyisle island <节点> 同一份 island.generate，只是不画预览图）→ tools/export_skyisle.py 的五份文件；
        先写到 <out>.tmp、写好 stamp.json 再改名成 <out>（游戏读不到半截的包）。
-       --lod-dir 给了就顺带出这一群 2 km 的粗版（与 skyisle island lod 同一份 build_lod）→ <lod-dir>/<节点>.bin（lods.bin 同格式、一条）。
+       --lod-dir 给了就顺带出这一群 2 km 的粗版（与 skyisle island lod 同一份 build_lod）→ <lod-dir>/<节点>.bin（lods.bin 同格式、一条），
+       与它第 0 年的逐日天气 → <lod-dir>/<节点>.wx（weather.bin 同格式、一条；行星计划 P5 的行星天气场读它）。
        stamp.json 是缓存键（计划 4.7）：生成器提交号、run 的 config.resolved.toml 哈希、[island] 段哈希、导出版本（terrain.bin 版本 + 导出脚本哈希）。
        同一个世界里已经生成过的不因换版本重生成——游戏只读它、记下来；要强制重生成就删掉那一群的目录。
-lods：一批群的粗版，照给的次序（游戏按由近及远排好）一群一群做，写好一份报一次进度；做不出来的记进状态、接着做下一群。
+lods：一批群的粗版（各带 .wx 天气），照给的次序（游戏按由近及远排好）一群一群做，写好一份报一次进度；做不出来的记进状态、接着做下一群。
 world：新建世界（生存模式，计划 4.8、D15）：
        行星层 ①–⑨（skyisle run --upto 9，不出图）→ <world>/gen/seed<N>/；
        tools/export_planet.py → <world>/planet/{planet.bin, lods.bin}（这时没有粗版：lods.bin 0 条，远处先画替身）；
@@ -98,8 +99,9 @@ def export_version() -> dict:
     return {"terrain_version": export_skyisle.VERSION, "script_sha1": sha1_bytes((TOOLS / "export_skyisle.py").read_bytes())}
 
 
-def write_lod_file(ctx, node: int, lod_dir: Path) -> float:
-    """一群 2 km 的粗版 → <lod_dir>/<节点>.bin（lods.bin 同格式、一条）；返回用时。"""
+def write_lod_file(ctx, node: int, lod_dir: Path, run: Path | None = None) -> float:
+    """一群 2 km 的粗版 → <lod_dir>/<节点>.bin（lods.bin 同格式、一条）；顺带出的第 0 年逐日天气 → <lod_dir>/<节点>.wx
+    （weather.bin 同格式、一条，行星计划 P5：生存世界的行星天气场也以各群当天的天气为真值）。返回用时。"""
     from skyisle_gen import island as isl
     from skyisle_gen.island.lod import build_lod
     import export_planet
@@ -108,6 +110,10 @@ def write_lod_file(ctx, node: int, lod_dir: Path) -> float:
     built = build_lod(ctx, node, c, [LOD_RES], weather=True)
     arr, meta = built[float(LOD_RES)]
     lod_dir.mkdir(parents=True, exist_ok=True)
+    wx = export_planet.weather_of(arr)
+    if wx is not None:
+        # 天气先写：游戏看到 <节点>.bin 就去读 .wx，别让它读到半截
+        export_planet.write_weather(lod_dir / f"{node}.wx", [(node, wx)], export_planet.precip_formula_of(run) if run else (150.0, 4000.0, 1.3))
     export_planet.write_lods(lod_dir / f"{node}.bin", [(node, meta, arr)])
     return time.perf_counter() - t0
 
@@ -147,7 +153,7 @@ def make_group(ctx, gen_root: Path, run: Path, node: int, out: Path, lod_dir: Pa
     seconds["export"] = round(time.perf_counter() - t2, 2)
     if lod_dir is not None:
         progress("lod", p0 + 0.85 * span, f"岛群 #{node}：2 km 粗版")
-        seconds["lod"] = round(write_lod_file(ctx, node, lod_dir), 2)
+        seconds["lod"] = round(write_lod_file(ctx, node, lod_dir, run), 2)
     stamp = {
         "node": node,
         "created": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -190,7 +196,7 @@ def cmd_lods(a: dict) -> dict:
     for k, node in enumerate(nodes):
         progress("lod", k / max(1, len(nodes)), f"粗版 {k + 1} / {len(nodes)}：群 #{node}")
         try:
-            sec = write_lod_file(ctx, node, lod_dir)
+            sec = write_lod_file(ctx, node, lod_dir, run)
             done.append(node)
             status(stage="lod", progress=round((k + 1) / len(nodes), 3), text=f"群 #{node} 的粗版好了（{sec:.1f} s）", lod_done=node)
         except Exception as e:

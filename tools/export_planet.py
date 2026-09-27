@@ -1,8 +1,9 @@
 """把 skyisle-gen 的一个行星（十步管线的 run 目录 + 第三层粗版）转成游戏的行星包（docs/PLAN-PLANET.md P0）。
 
-    python tools/export_planet.py <run 目录> <输出目录> [--lod-res 2000] [--near 2051 --near-res 500 --near-radius 600] [--generator <skyisle-gen 根>]
-    python tools/export_planet.py D:/Project/skyisle-gen/out/seed42 game/planet/seed42
+    python tools/export_planet.py <run 目录> <输出目录> [--lod-res 2000] [--near 2051 --near-res 500 --near-radius 600] [--generator <skyisle-gen 根>] [--fine <岛群包目录>]
+    python tools/export_planet.py D:/Project/skyisle-gen/out/seed42 game/planet/seed42 --near 2051 --fine game/worlds
 
+--fine：有细版的群（<目录>/<节点>/weather.tsv）拿来与粗版的逐日天气对一遍，报类型逐日相同的比例（行星计划 P5）。
 --generator：记生成器提交号用（缺省按 run 目录的上上级，即 skyisle-gen/out/<run>；新建世界的 run 在游戏的存档目录里，要给）。
 run 目录里没有粗版（新建世界：只算了行星层）照样导：lods.bin 是 0 条，lod.* 列是 NaN，游戏里远处先画替身（计划 4.8）。
 单群的粗版（游戏按需生成的，tools/zhouzhu_gen.py 调 write_lods）写成同格式、只有一条的 lods/<节点>.bin。
@@ -20,7 +21,7 @@ planet.bin —— 行星层：
     列（每个节点一个值）：u8 名字长、名字（UTF-8）、u8 类型（0 f32、1 i32、2 i16、3 u8）、N 个值
         名字 = 来源.字段：s03.lat、s03.area_km2……（islands.npz 的逐节点数组）、s04.precip……（climate_islands.npz）、
         s09.pop / s09.state / s09.polity（polity.npz）、lod.peak_m / lod.rim_m（粗版量出的主岛峰高、岸缘）、
-        lod.violation_km / lod.constrained（势力范围：越界多少 km、布局重摆过没有）
+        lod.violation_km / lod.constrained（势力范围：越界多少 km、布局重摆过没有）、lod.extent_km（群心到最远的陆地格心）
     场（1° 网格，格心对齐，第 0 行在南）：u8 名字长、名字、u16 行、u16 列、f32 lat0 lon0 dlat dlon（第 0 行第 0 列的格心、步长，度）、
         u8 类型、行 × 列 个值。名字 = s03.plates.<键>、s04.climate_grid.<键>、s04.wind_local.<键>、s04.band_local.edges（8 × 360，行 = 带界）
     第三层（岛群生成器）要读的行星产物都在里面（P6 移植进游戏时不用再导）。
@@ -34,6 +35,22 @@ lods.bin —— 岛群粗版（远处看的低模）：
         u16 段头：最高位 1 = 陆地段、0 = 虚空段，低 15 位 = 格数；陆地段后面跟 格数 × { u16 高（米，块内陆地的最高点——远处的山看剪影）、
         u8 地表类 << 4 | 陆地占比（地表类是生成器 LANDCOVER_CLASSES 的下标；占比 1–15，×17 还原成 0–255）、u8 岛号 }——一格 4 字节
     同一个节点可以有几条（不同格距）：全行星 --lod-res，--near 节点周围 --near-radius km 内另加 --near-res。
+
+weather.bin —— 各岛群一年的逐日天气（行星计划 P5：行星天气场以各群当天的天气为真值）。生成器的粗版顺带出了第 0 年的逐日天气
+    （islands_lod/<格距>/<节点>.npz 的 weather_<列> 与 weather_meta，与细版的 weather_y0.csv 逐行相同）；无损，读回与 weather.tsv 逐位相同：
+    char[4] "ZZWX"
+    u32  版本 = 1
+    u32  一年几天 D、条数 N、头文本字节数、压缩数据字节数、解压后字节数
+    头文本（UTF-8）：一行一条「键 值…」——types（逗号分隔的类型名，下标 = type）、calendar（seasons months_per_season days_per_month solstice_n）、
+                     year、precip_formula（④ 的相对降水 → 年降水 mm：min max exp）、season_names <k> <逗号分隔>（第 k 套季名）、source
+    索引（每条，不压缩）：u32 节点、u8 季名套号、u8 0、u16 0、f32 ref_m lapse rim_m fog_rise_m snow_temp precip_mm precip_climate_mm
+        （台面、直减率 °C/km、主岛岸缘、云海漫多高、雪温、年降水（weather.tsv 头那个）、气候年降水）
+    数据：zlib（RFC 1950）压一整块，里面按列、条目在外日在内：
+        N·D 个 u8：type | sailable << 4
+        湿日（type ≥ 2）的雨量：u16（0.1 mm），先全部低字节再全部高字节
+        风暴日（type 风暴 / 暴风雪）的风暴号：u8
+        N·D 个 u16 的 zigzag(当天 − 前一天)：气温（0.1 °C）、风从哪来（度，整数、0–360 原样）、风速（0.1 m/s）——各一列，每列先低字节再高字节；每条第 0 天减 0
+    单群的（游戏按需生成的，tools/zhouzhu_gen.py 调 write_weather）写成同格式、只有一条的 lods/<节点>.wx。
 """
 
 import json
@@ -45,7 +62,10 @@ from pathlib import Path
 import numpy as np
 
 VERSION = 1
+WEATHER_VERSION = 1
 DTYPES = {np.dtype(np.float32): 0, np.dtype(np.int32): 1, np.dtype(np.int16): 2, np.dtype(np.uint8): 3}
+WEATHER_TYPES = ["晴", "多云", "小雨", "大雨", "云海漫顶", "风暴", "小雪", "大雪", "暴风雪"]  # 生成器 island/weather.py 的 TYPES
+STORM_TYPES = (5, 8)
 
 
 def as_column(a):
@@ -141,19 +161,149 @@ def write_lods(path: Path, entries) -> int:
     return path.stat().st_size
 
 
+def weather_of(arr) -> dict | None:
+    """粗版 npz（或 build_lod 给的 arrays）里的逐日天气：{"meta": weather_meta 的 dict, 列名: 数组}；没带天气返回 None。"""
+    if "weather_meta" not in arr or "weather_type" not in arr:
+        return None
+    wx = {k[len("weather_"):]: np.asarray(arr[k]) for k in arr if k.startswith("weather_") and k != "weather_meta"}
+    wx["meta"] = json.loads(str(arr["weather_meta"]))
+    return wx
+
+
+def weather_entries(run: Path, res: float, nodes=None):
+    """run 的粗版目录里带天气的群：[(节点, 天气)]（按节点号排）。"""
+    out = []
+    d = run / "islands_lod" / str(int(round(res)))
+    if not d.is_dir():
+        return out
+    for p in sorted(d.glob("*.npz"), key=lambda p: int(p.stem)):
+        node = int(p.stem)
+        if nodes is not None and node not in nodes:
+            continue
+        with np.load(p) as z:
+            if "weather_meta" not in z.files:
+                continue
+            wx = weather_of({k: z[k] for k in z.files if k.startswith("weather_")})
+        if wx is not None:
+            out.append((node, wx))
+    return out
+
+
+def _zigzag(a):
+    a = np.asarray(a, dtype=np.int64)
+    return np.where(a >= 0, 2 * a, -2 * a - 1)
+
+
+def _u16_planes(a) -> bytes:
+    a = np.asarray(a, dtype=np.int64)
+    assert a.size == 0 or (a.min() >= 0 and a.max() < 65536), "超出 u16"
+    b = a.astype("<u2").view(np.uint8).reshape(-1, 2)
+    return b[:, 0].tobytes() + b[:, 1].tobytes()
+
+
+def _tenths(a, what):
+    v = np.round(np.asarray(a, dtype=np.float64) * 10.0).astype(np.int64)
+    assert np.allclose(v / 10.0, np.asarray(a, dtype=np.float64), atol=1e-9), f"{what} 不是 0.1 的整数倍（生成器按 csv 舍过的才能无损存）"
+    return v
+
+
+def write_weather(path: Path, entries, precip_formula=(150.0, 4000.0, 1.3), source: str = "") -> int:
+    """entries：[(节点, 天气)]（weather_of 给的）→ weather.bin 格式写到 path（先写 .tmp 再改名）；返回字节数。"""
+    import zlib
+    entries = sorted(entries, key=lambda e: e[0])
+    D = int(entries[0][1]["type"].size) if entries else 336
+    season_sets = []
+    index = bytearray()
+    types, sails, precips, storms, temps, wdirs, wspeeds = [], [], [], [], [], [], []
+    for node, wx in entries:
+        m = wx["meta"]
+        assert list(m["types"]) == WEATHER_TYPES, f"群 {node} 的天气类型表与生成器的不一样"
+        assert wx["type"].size == D, f"群 {node} 的天数 {wx['type'].size} ≠ {D}"
+        names = ",".join(m["season_names"])
+        if names not in season_sets:
+            season_sets.append(names)
+        cl = m["climate"]
+        index += struct.pack("<IBBH7f", node, season_sets.index(names), 0, 0, cl["ref_m"], cl["lapse_c_per_km"], cl["rim_m"],
+                             round(float(cl["fog_rise_m"]), 1), cl["snow_temp_c"], float(m["precip_mm"]), float(m["precip_climate_mm"]))
+        t = np.asarray(wx["type"], dtype=np.int64)
+        types.append(t)
+        sails.append(np.asarray(wx["sailable"]).astype(np.int64))
+        p = _tenths(wx["precip_mm"], "雨量")
+        assert (p[t < 2] == 0).all(), f"群 {node} 晴、多云的日子有雨量"
+        precips.append(p[t >= 2])
+        st = np.isin(t, STORM_TYPES)
+        ev = np.asarray(wx["storm_event"], dtype=np.int64)
+        assert (ev[~st] == 0).all() and ev.max(initial=0) < 256, f"群 {node} 的风暴号不在风暴日上或太大"
+        storms.append(ev[st])
+        temps.append(np.diff(_tenths(wx["temp_c"], "气温"), prepend=0))
+        wdirs.append(np.diff(np.asarray(wx["wind_from_deg"], dtype=np.int64), prepend=0))
+        wspeeds.append(np.diff(_tenths(wx["wind_ms"], "风速"), prepend=0))
+    cat = lambda xs: np.concatenate(xs) if xs else np.zeros(0, np.int64)
+    raw = (np.asarray(cat(types) | (cat(sails) << 4), dtype=np.uint8).tobytes() + _u16_planes(cat(precips)) +
+           np.asarray(cat(storms), dtype=np.uint8).tobytes() + _u16_planes(_zigzag(cat(temps))) + _u16_planes(_zigzag(cat(wdirs))) +
+           _u16_planes(_zigzag(cat(wspeeds))))
+    packed = zlib.compress(raw, 9)
+    cal = entries[0][1]["meta"]["calendar"] if entries else {"seasons": 4, "months_per_season": 3, "days_per_month": 28, "day_offset_solstice_n": 126}
+    year = entries[0][1]["meta"].get("year", 0) if entries else 0
+    head = [
+        "types " + ",".join(WEATHER_TYPES),
+        f"calendar {int(cal['seasons'])} {int(cal['months_per_season'])} {int(round(float(cal['days_per_month'])))} {float(cal['day_offset_solstice_n']):g}",
+        f"year {int(year)}",
+        f"precip_formula {precip_formula[0]:g} {precip_formula[1]:g} {precip_formula[2]:g}",
+    ] + [f"season_names {k} {s}" for k, s in enumerate(season_sets)] + ([f"source {source}"] if source else [])
+    head_b = ("\n".join(head) + "\n").encode("utf-8")
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "wb") as f:
+        f.write(b"ZZWX" + struct.pack("<6I", WEATHER_VERSION, D, len(entries), len(head_b), len(packed), len(raw)))
+        f.write(head_b)
+        f.write(bytes(index))
+        f.write(packed)
+    tmp.replace(path)
+    return path.stat().st_size
+
+
+def precip_formula_of(run: Path):
+    """run 的 [island] precip_mm_min / max / exp（④ 的相对降水折成年降水 mm，生成器 hydro.precip_mm）。"""
+    try:
+        import tomllib
+        cfg = tomllib.loads((run / "config.resolved.toml").read_text(encoding="utf-8"))
+        isl = cfg.get("island", {})
+        return (float(isl.get("precip_mm_min", 150.0)), float(isl.get("precip_mm_max", 4000.0)), float(isl.get("precip_mm_exp", 1.3)))
+    except Exception:
+        return (150.0, 4000.0, 1.3)
+
+
+def compare_fine(entries, fine_dir: Path) -> None:
+    """有细版的群：weather.tsv 与粗版的逐日天气比（类型逐日相同的比例、各列一样不一样）。"""
+    by_node = dict(entries)
+    for d in sorted(p for p in fine_dir.iterdir() if (p / "weather.tsv").exists() and p.name.isdigit()):
+        node = int(d.name)
+        if node not in by_node:
+            print(f"  细版 {node}：行星包里没有它的逐日天气")
+            continue
+        wx = by_node[node]
+        rows = [ln.split("\t") for ln in (d / "weather.tsv").read_text(encoding="utf-8").splitlines() if ln and not ln.startswith("#")]
+        n = min(len(rows), wx["type"].size)
+        same_type = sum(1 for k in range(n) if rows[k][3] == WEATHER_TYPES[int(wx["type"][k])])
+        same_all = sum(1 for k in range(n) if rows[k][1:8] == [str(float(wx["precip_mm"][k])), str(float(wx["temp_c"][k])), WEATHER_TYPES[int(wx["type"][k])],
+                                                              str(int(wx["wind_from_deg"][k])), str(float(wx["wind_ms"][k])), "1" if wx["sailable"][k] else "0",
+                                                              str(int(wx["storm_event"][k]))])
+        print(f"  细版 {node}：类型逐日相同 {same_type}/{n}（{100.0 * same_type / max(1, n):.1f}%），整行相同 {same_all}/{n}")
+
+
 def main():
     args = sys.argv[1:]
     if len(args) < 2:
         print(__doc__)
         return 2
-    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None}
+    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None, "--fine": None}
     for i in range(2, len(args), 2):
         opt[args[i]] = args[i + 1]
     return export_planet(Path(args[0]), Path(args[1]), opt)
 
 
 def export_planet(run: Path, dst: Path, opt: dict) -> int:
-    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None, **opt}
+    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None, "--fine": None, **opt}
     dst.mkdir(parents=True, exist_ok=True)
 
     planet = json.loads((run / "s01_planet" / "planet.json").read_text(encoding="utf-8"))
@@ -181,18 +331,28 @@ def export_planet(run: Path, dst: Path, opt: dict) -> int:
     peak = np.full(N, np.nan, np.float32)
     rim = np.full(N, np.nan, np.float32)
     viol = np.full(N, np.nan, np.float32)
+    extent = np.full(N, np.nan, np.float32)
     constrained = np.zeros(N, np.uint8)
     lod_res = [float(x) for x in opt["--lod-res"].split(",")]
-    for node, meta, _arr in lod_entries(run, lod_res[0]):
+    for node, meta, arr in lod_entries(run, lod_res[0]):
         main = meta["islands"][0]
         peak[node], rim[node] = main["peak_m"], main["rim_m"]
         t = meta.get("territory", {})
         viol[node] = t.get("violation_km", -1e3)
         constrained[node] = 1 if t.get("constrained") else 0
+        # 陆地铺多远：群心到最远的陆地格心（km）——行星天气场按它定一群的天气管多大一片（P5）
+        r = meta["raster"]
+        rr, cc = np.nonzero(arr["land"] > 0)
+        if rr.size:
+            res_km = float(r["res_m"]) / 1000.0
+            x = r["origin_km"][0] + (cc + 0.5) * res_km
+            y = r["origin_km"][1] - (rr + 0.5) * res_km
+            extent[node] = float(np.sqrt(x * x + y * y).max())
     columns.append(("lod.peak_m", peak))
     columns.append(("lod.rim_m", rim))
     columns.append(("lod.violation_km", viol))       # 势力范围：陆地越过与邻群分界线多少 km（≤ 0 没越界）
     columns.append(("lod.constrained", constrained))  # 1 = 布局因势力范围重摆过
+    columns.append(("lod.extent_km", extent))        # 群心到最远的陆地格心（km，粗版量的；没有粗版为 NaN）
 
     # ---- 场
     grids = []
@@ -252,11 +412,19 @@ def export_planet(run: Path, dst: Path, opt: dict) -> int:
             entries += [(node, meta, arr) for node, meta, arr in lod_entries(run, res, near_set)]
     write_lods(dst / "lods.bin", entries)
 
+    # ---- 逐日天气（行星计划 P5）：粗版顺带出的第 0 年（与细版 weather.tsv 逐行相同）
+    wx_entries = weather_entries(run, lod_res[0])
+    write_weather(dst / "weather.bin", wx_entries, precip_formula_of(run), f"{run.name} {commit}")
+
     missing = int(np.isnan(peak).sum())
     mb = lambda p: (dst / p).stat().st_size / 1e6
     print(f"{dst / 'planet.bin'}: {N} 群、{len(columns)} 列、{len(grids)} 张场，{mb('planet.bin'):.1f} MB；生成器 {commit}")
     print(f"{dst / 'lods.bin'}: {len(entries)} 条粗版（{', '.join(f'{int(r)} m' for r in lod_res)}"
           f"{'；近邻 ' + opt['--near-res'] + ' m' if opt['--near'] is not None else ''}），{mb('lods.bin'):.1f} MB；没有粗版的群 {missing}")
+    print(f"{dst / 'weather.bin'}: {len(wx_entries)} 群的逐日天气，{mb('weather.bin'):.1f} MB；没有天气的群 {N - len(wx_entries)}"
+          f"；合计 {sum(mb(p) for p in ('planet.bin', 'lods.bin', 'weather.bin')):.1f} MB")
+    if opt["--fine"]:
+        compare_fine(wx_entries, Path(opt["--fine"]))
     return 0
 
 
