@@ -805,7 +805,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         }
     }
     track_footing();
-    if (player->get_global_position().y < kill_altitude) {
+    if (!player->is_god_mode() && player->get_global_position().y < kill_altitude) { // god 模式飞下云带看海不算坠落
         respawn();
     }
 }

@@ -18,8 +18,9 @@
 // 屋里：头顶 6 m 内有东西（天花板、舱顶）就把相机的弹簧臂缓缓收到 indoor_arm，出来再放回场景里配的长度——还是第三人称，只是近些。
 // 抱着货箱（上层 set_carrying）：身前画一只箱子，只能慢走（carry_speed），不能疾跑、不能跳；箱子是谁的、装的什么它不知道。
 // god 模式（开发者工具开的，它不知道是谁）：不受重力，按相机的水平朝向飞，空格升、Ctrl 降、Shift 加速；碰撞照旧，降到地上就站住。
-// 速度随离地高度放大：× (1 + 离上一次站着的地面多高 / god_scale_height)——300 m 起一倍、50 km 时一百六十多倍，
+// 速度随离地高度放大：× (1 + 离上一次站着的地面多高（往上往下都算） / god_scale_height)——300 m 起一倍、50 km 时一百六十多倍，
 // 不按 Shift 升到 50 km 约 51 s、从 50 km 降回来也差不多（行星计划 P1）；贴着地面还是 god_speed。
+// 有行星数据的地图里往下飞穿得过云带，停在海面之上 GOD_SEA_CLEARANCE_M（海面只是画出来的，没有碰撞）；飞在岛下面不算坠落（Expedition 管）。
 //
 // 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D、Sensor（Area3D）。
 class Player : public godot::CharacterBody3D {

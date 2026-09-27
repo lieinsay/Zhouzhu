@@ -18,6 +18,8 @@
 #include <godot_cpp/core/math.hpp>
 
 #include "input_actions.h"
+#include "planet_frame.h"
+#include "planet_view.h"
 
 using namespace godot;
 
@@ -27,6 +29,7 @@ constexpr double GROUND_ACCEL = 14.0; // 水平速度逼近目标的速率（1/s
 constexpr double AIR_ACCEL = 3.0;
 constexpr double TURN_RATE = 12.0; // 身体转向移动方向的速率
 constexpr double GOD_ACCEL = 6.0; // god 模式下速度逼近目标的速率（1/s）
+constexpr double GOD_SEA_CLEARANCE_M = 2.0; // 有行星数据时 god 往下飞停在海面之上这么高
 constexpr double PITCH_MIN = -1.3;
 constexpr double PITCH_MAX = 0.6;
 constexpr double ROOF_PROBE = 6.0; // 头顶这么高以内有东西挡着，就算在屋里（屋檐下、舱房里）
@@ -170,6 +173,16 @@ void Player::_physics_process(double p_delta) {
         velocity += (target - velocity) * real_t(1.0 - std::exp(-GOD_ACCEL * p_delta));
         set_velocity(velocity);
         move_and_slide();
+        if (PlanetView::active_view() != nullptr) {
+            const double floor_y = VerticalDatum::SEA_Y + GOD_SEA_CLEARANCE_M;
+            Vector3 at = get_global_position();
+            if (at.y < floor_y) {
+                at.y = real_t(floor_y);
+                set_global_position(at);
+                velocity.y = std::max(velocity.y, real_t(0));
+                set_velocity(velocity);
+            }
+        }
         if (is_on_floor()) {
             ground_y = get_global_position().y;
         }
@@ -269,7 +282,7 @@ double Player::get_god_scale() const {
     if (std::isnan(ground_y) || !is_inside_tree()) {
         return 1.0;
     }
-    return 1.0 + std::max(0.0, double(get_global_position().y) - ground_y) / std::max(1.0, god_scale_height);
+    return 1.0 + std::abs(double(get_global_position().y) - ground_y) / std::max(1.0, god_scale_height); // 往下飞向海面也一样放大
 }
 
 void Player::set_god_mode(bool p_enabled) {
