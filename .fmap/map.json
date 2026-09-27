@@ -598,8 +598,8 @@
     },
     {
       "id": "world-node",
-      "label": "World 流式地面",
-      "detail": "岛群的流式地面：焦点一动按四叉树重选块，缺的块交给后台任务池（离焦点近的先），引擎数组在后台备好，主线程按每帧 4 ms 预算挂；叶块碰撞切成两千个三角面一段、一段段挂，脚下的挂齐了才算站得住。水面块也在池里建。World 持有任务池（给 SiteStream、ScatterStream 用）、主线程分项计时与共用的材质网格。",
+      "label": "GroupWorld 流式地面（World）",
+      "detail": "一个岛群的流式地面（GroupWorld，可以多实例；World 是场景里摆的那一群的兼容名）：焦点一动按四叉树重选块，缺的块交给后台任务池（离焦点近的先，按自己的通道），引擎数组在后台备好，主线程按每帧 4 ms 预算挂；叶块碰撞切成两千个三角面一段、一段段挂，脚下的挂齐了才算站得住。水面块也在池里建。任务池借 PlanetJobs 的（没有时自己起一个），给 SiteStream、ScatterStream 用；主线程分项计时与共用的材质网格。",
       "tag": "场景角色",
       "evidence": "world_e2e：出生 0.2 s 站稳，瞬移后 1 s 内脚下有碰撞",
       "sources": [
@@ -877,7 +877,7 @@
     {
       "id": "map-host",
       "label": "MapHost 地图宿主",
-      "detail": "编排只认它：地面高、岛号、站稳；码头（泊位、出生、岸缘点、名字、能不能靠）；船坞、脚下的田与聚落；流式焦点与瞬移准备；HUD 位置行与目标行；岛群地图面板。",
+      "detail": "编排只认它：地面高、岛号、站稳；码头（泊位、出生、岸缘点、名字、能不能靠）；船坞、脚下的田与聚落；流式焦点与瞬移准备；HUD 位置行与目标行；岛群地图面板；换锚（map_shift_pending / begin / commit / toward，默认没有）；相机处按哪几群的天气混（map_weather_mix，默认只有自己）。",
       "tag": "引擎构件",
       "sources": [
         "src/map_host.h",
@@ -999,7 +999,7 @@
     {
       "id": "hinterland",
       "label": "Hinterland 远处账房",
-      "detail": "远处账房：每处村落一本账，后台开账（近的先，近处要招村民的 request 插队），远处按同一套规矩分片结算、每帧有预算；招村民时借出账本、散了收回。",
+      "detail": "远处账房：每处村落一本账，后台开账（近的先，近处要招村民的 request 插队），远处按同一套规矩分片结算、每帧有预算；招村民时借出账本、散了收回。每个细版岛群一个（P3），拆掉前把账存成文本交给 GroupStream，回来时读回、从 resume_clock 补结。",
       "tag": "场景角色",
       "evidence": "Release 每次结算平均 0.098 ms；游戏内每帧平均约 0.1 ms",
       "sources": [
@@ -1623,7 +1623,7 @@
     {
       "id": "job-pool",
       "label": "后台任务池",
-      "detail": "几条工作线程按优先级（离焦点多远，米）取活；同键再交换成新的、正在做的不排第二份；按种类撤、重排；急用时排着的当场做、正在做的等它做完。地面、水面、散布、村子备料、细模、导航格、远处的林子都进这一个池。",
+      "detail": "几条工作线程按优先级（离焦点多远，米）取活；同键再交换成新的、正在做的不排第二份；按种类撤、重排；急用时排着的当场做、正在做的等它做完。地面、水面、散布、村子备料、细模、导航格、远处的林子、远处的岛群、行星贴图、岛群的后台载入都进这一个池（P3 起由 PlanetJobs 持有，按岛群分通道）。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "core_tests job pool 14 项",
       "sources": [
@@ -1647,12 +1647,13 @@
     {
       "id": "stream-perf",
       "label": "流式加载实测工具",
-      "detail": "开局站定、god 150 m/s 与 30 m/s 顺着一串大村飞，报帧时（平均、P99、最慢、超 50 / 100 ms）和最慢那几帧的分项。",
+      "detail": "开局站定、god 150 m/s 与 30 m/s 顺着一串大村飞，报帧时（平均、P99、最慢、超 50 / 100 ms）和最慢那几帧的分项；--orbit 量升落；--voyage 在云海上空 150 m/s 飞过换锚线到 2050 再飞回，换锚那一帧另报，外加进程内存。",
       "tag": "工具",
       "sources": [
         "game/tools/stream_perf.gd"
       ],
-      "since": "e43"
+      "since": "e43",
+      "evidence": "--voyage=240：去程最慢 44.3 ms、换锚那一帧 11.2 ms；回程最慢 11.6 ms"
     },
     {
       "id": "building-mesh",
@@ -2230,7 +2231,7 @@
     {
       "id": "far-groups",
       "label": "FarGroups 远处的岛群",
-      "detail": "相机 600 km 内的群（锚除外）在后台（World 的任务池）按粗版建低模，280 km 内 500 m、以外 2 km；每帧按 PlanetView 的刚体变换摆上去、按视锥侧面自己剔；far_group.gdshader 按各群的简化版海拔表（纬度、海面年均温、温差、直减率）换季积雪；不投影、不碰撞。",
+      "detail": "相机 600 km 内的群（锚除外）在后台（PlanetJobs 的池，通道 0）按粗版建低模，280 km 内 500 m、以外 2 km；每帧按 PlanetView 的刚体变换摆上去、按视锥侧面自己剔；GroupStream 载入了的群、地面挂齐后把低模藏起来；far_group.gdshader 按各群的简化版海拔表换季积雪；不投影、不碰撞。",
       "tag": "场景角色",
       "evidence": "planet_shots：19 群 34.7 万面；主峰上望见 205 km 外的 2049、深冬 2049 积雪；50 km 高空帧时 0.7 ms",
       "sources": [
@@ -2360,6 +2361,186 @@
       ],
       "since": "e71",
       "parent": "planet-shots"
+    },
+    {
+      "id": "job-pool-lanes",
+      "label": "按岛群分通道",
+      "detail": "键 = 种类 8 位 | 通道 4 位 | 号 52 位；做完的按键的高 12 位分桶取；通道 0 给远处岛群与行星贴图，1–15 给各岛群；drain_lane 只等本通道正在做的活。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：通道分开排取撤、drain 只等自己的、键的位数（河块号 26 + 26 位不溢出）",
+      "sources": [
+        "src/job_pool.h",
+        "src/job_pool.cpp"
+      ],
+      "since": "e72",
+      "parent": "job-pool"
+    },
+    {
+      "id": "planet-jobs",
+      "label": "PlanetJobs 共用任务池",
+      "detail": "场景里一个（排在最前），进树就起 4 条工作线程；各岛群、远处的岛群、行星贴图都借它的池，岛群按需领一条通道、拆掉时还回。没有它时 GroupWorld 自己起一个池（平板岛、老场景照旧）。",
+      "tag": "场景角色",
+      "evidence": "18 条老 e2e 照旧通过",
+      "sources": [
+        "src/planet_jobs.h",
+        "src/planet_jobs.cpp",
+        "game/world_2051.tscn"
+      ],
+      "since": "e72"
+    },
+    {
+      "id": "world-node-async",
+      "label": "后台载入与碰撞开关",
+      "detail": "async_load 时读 terrain.bin、点位、天气在任务池里做，材质与节点回主线程装，读完才铺地面；physics_on 关掉时地面块、树干、船坞整群撤碰撞（PROCESS_MODE_DISABLED），换锚时旧锚撤、新锚挂。",
+      "tag": "场景角色",
+      "evidence": "planet_voyage_e2e：2050 Debug 后台约 3 s 读完、再约 1 s 地面块挂齐；换锚后旧锚无碰撞",
+      "sources": [
+        "src/world.cpp"
+      ],
+      "since": "e73",
+      "parent": "world-node"
+    },
+    {
+      "id": "world-node-group-shading",
+      "label": "每群一份着色器参数",
+      "detail": "海拔表、分箱高低、极向、世界 → 这一群平面的变换从全局参数改成这一群材质上的参数（wx_group_elev / wx_group / wx_group_inv），地皮、树、河、村子的材质都登记进来；雪斑与散布的随机按这一群平面上的坐标取，换锚、摆到别处都不变。",
+      "tag": "引擎构件",
+      "evidence": "weather_shots 18 张与改前逐像素差 0.00–0.65（雨丝、风摆除外）",
+      "sources": [
+        "src/world.cpp",
+        "game/shaders/weather.gdshaderinc",
+        "game/shaders/ground.gdshader",
+        "game/shaders/scatter.gdshader"
+      ],
+      "since": "e73",
+      "parent": "world-node"
+    },
+    {
+      "id": "group-stream",
+      "label": "GroupStream 岛群分档",
+      "detail": "列出 res://worlds 里有细版的群，按焦点到各群陆地（行星包 2 km 粗版的陆地格心）的距离给档：远景只有低模；近景载入 GroupWorld（场景里那一群是 World、其余挂在 Group<节点> 下，带农田与船坞）；细版再挂 SiteStream、ScatterStream、Hinterland（定制村子读 settlements/<节点>）。邻群的节点按焦点处线性化的刚体变换（转角 + 水平平移，高不动）摆进锚群的平面，焦点每挪 200 m 重摆；焦点只喂给锚群。",
+      "tag": "场景角色",
+      "evidence": "planet_voyage_e2e：去程 2050 进近景、细版，在 2050 时 2051 降到远景、World 拆掉，回程重新载入；stream_perf --voyage 150 m/s 跨群最慢 44.3 ms",
+      "sources": [
+        "src/group_stream.h",
+        "src/group_stream.cpp",
+        "game/world_2051.tscn"
+      ],
+      "since": "e74"
+    },
+    {
+      "id": "group-stream-shift",
+      "label": "换锚",
+      "detail": "begin_shift 给出 MapShift（rebase_point / rebase_rotation / 转角），commit_shift 把焦点换过去、新锚摆成单位变换并挂碰撞、旧锚撤碰撞，PlanetView 改锚、远景重藏，发 anchor_changed；瞬移、复活跨群时 request_shift_toward 先同步载入再换。",
+      "tag": "场景角色",
+      "evidence": "planet_voyage_e2e：飞过换锚线相机在真球面上跳 2–3 mm，停船手动换 0.7 mm；换锚那一帧 11.2 ms（Debug 窗口）",
+      "sources": [
+        "src/group_stream.cpp",
+        "src/planet_frame.cpp"
+      ],
+      "since": "e75",
+      "parent": "group-stream"
+    },
+    {
+      "id": "group-stream-memory",
+      "label": "离开的群的账",
+      "detail": "细版 → 近景：村子的账存成文本（save_village_state）；近景 → 远景：另存农田的地块表、采场存量、散布物的采空账。回来时读回，从 resume_clock(存时, 现在, 1 日) 补结——离开超过 1 个游戏日的只补最后 1 日，其余视为按汇总过了；只在内存里，退出游戏就没了。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests resume_clock；planet_voyage_e2e 拨钟 26 h 后回到 2051，账补回、只补最后一天",
+      "sources": [
+        "src/group_stream.h",
+        "src/hinterland.cpp",
+        "src/world_ledger.cpp",
+        "src/farm.cpp"
+      ],
+      "since": "e75",
+      "parent": "group-stream"
+    },
+    {
+      "id": "planet-voyage-e2e",
+      "label": "多岛群跑船端到端测试",
+      "detail": "2051 主码头上船 → 挪到换锚线前 10 km → 飞过换锚线（相机不跳、帧时）→ 2050 主码头靠泊下船（地方时、村民出门）→ 2051 降到远景、拨钟 26 h → 飞回、2051 重新载入、停船手动换锚 → 2051 的账补回；--shots 拍各阶段与换锚前后，--mem 报内存。",
+      "tag": "验收",
+      "evidence": "无头与带窗口都 PASS；带窗口内存 1137 / 1255 / 1130 MB（私有提交）",
+      "sources": [
+        "game/tests/planet_voyage_e2e.gd",
+        "game/tests/planet_voyage_e2e.tscn"
+      ],
+      "since": "e75"
+    },
+    {
+      "id": "expedition-shift",
+      "label": "换锚那一步",
+      "detail": "map_shift_pending 为真时：begin 拿 MapShift，人与船的位置、朝向、速度乘 rebase_rotation，摆出来的东西、落脚点、出生点照换，野泊复位，跑货的单子作废并说一声，再 commit；瞬移、复活跨群时先叫宿主 map_shift_toward。HUD 钟点后加「地方时 HH:MM」（人所在处的经度）。",
+      "tag": "玩法部件",
+      "evidence": "换锚时编排这一步 0.18 ms；planet_voyage_e2e 飞过换锚线接着开到 2050 靠泊",
+      "sources": [
+        "src/expedition.cpp",
+        "src/ship.cpp",
+        "src/player.cpp",
+        "src/placeables.cpp",
+        "src/freight.cpp"
+      ],
+      "since": "e76",
+      "parent": "expedition"
+    },
+    {
+      "id": "planet-host",
+      "label": "PlanetHost 行星上的地图宿主",
+      "detail": "实现 MapHost，按位置分派给锚群（锚群脚下没地时问其他载入了的群）；码头表跨群——场景里那一群的号照旧，其余 = 群号 × 1000 + 码头号（岛号同样），场景里配的起止码头不用改；HUD 位置行带「群 #N · 」，在两群之间报「云海上空」与到各群的距离；地图面板画锚群；换锚与天气的混法交给 GroupStream。",
+      "tag": "场景角色",
+      "evidence": "planet_voyage_e2e 以码头 2050001 为目的靠泊；18 条老 e2e 照旧",
+      "sources": [
+        "src/planet_host.h",
+        "src/planet_host.cpp",
+        "game/world_2051.tscn"
+      ],
+      "since": "e77"
+    },
+    {
+      "id": "weather-model-cloud-frame",
+      "label": "云团的公共平面",
+      "detail": "CloudFrame：云团噪声在参考群（钟的那一群，2051）的平面上取；share_cloud_drift 让别的群借参考群每天的风漂，漂移逐位一样；blend_weather 按 exp(−(距离 − 最近) / 9.1 km) 加权混几群的天气（距离差 20 km 时九成对一成）。这是 P5 行星天气场之前的过渡。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests：共享漂移逐位不变、公共平面上取到同一团云、blend_weather",
+      "sources": [
+        "src/weather.h",
+        "src/weather.cpp",
+        "game/shaders/weather.gdshaderinc"
+      ],
+      "since": "e78",
+      "parent": "weather-model"
+    },
+    {
+      "id": "atmosphere-group-blend",
+      "label": "群与群之间的天",
+      "detail": "宿主给 WeatherMix（哪几群、各多少份），当下、某处的天气、HUD、风都按它混；开发者覆盖抄给每一群；云团按公共平面取（wx_cloud_frame / wx_cloud_origin）；日月方向换到画面的世界轴（原来差一个子午线收敛角）；行星云层的「岛群附近」按载入了的各群群心的天气取（planet_group0..3）。",
+      "tag": "场景角色",
+      "evidence": "planet_voyage_e2e 换锚前后截图平均差 1.7 / 765（一像素的边与阴影）；planet_shots 51 张与改前 0.00–0.30",
+      "sources": [
+        "src/atmosphere.cpp",
+        "src/planet_globe.cpp",
+        "game/shaders/planet_sky.gdshaderinc",
+        "game/shaders/sky.gdshader",
+        "game/project.godot"
+      ],
+      "since": "e79",
+      "parent": "atmosphere"
+    },
+    {
+      "id": "local-season-longitude",
+      "label": "地方时",
+      "detail": "LocalSeason 带一个地方时偏移（经度差 × 4 分钟 / 度，钟的那一群为 0）；SeasonView.local_offset_hours 把日出日落、出工收工的钟点一起挪；账房与近处村民都读这一群的偏移。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests 地方时挪作息；planet_voyage_e2e 2050 的 HUD 地方时对、村民按它出门",
+      "sources": [
+        "src/local_season.h",
+        "src/local_season.cpp",
+        "src/day_clock.cpp",
+        "src/world_village.h"
+      ],
+      "since": "e80",
+      "parent": "local-season"
     }
   ],
   "edges": [
@@ -5129,6 +5310,308 @@
       "chains": [
         "planet"
       ]
+    },
+    {
+      "from": "planet-jobs",
+      "to": "job-pool",
+      "label": "一个池",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "far-groups",
+      "to": "planet-jobs",
+      "label": "通道 0",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "planet-jobs",
+      "label": "通道 0",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "planet-jobs",
+      "label": "借池、领通道",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "world-node-group-shading",
+      "to": "weather-shaders",
+      "label": "材质参数",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "far-groups",
+      "label": "藏低模",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "world-node",
+      "label": "载入 / 拆 / 摆",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "world-node-async",
+      "label": "后台载入",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "planet-data",
+      "label": "群表、陆地格心",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "planet-frame",
+      "label": "刚体摆法",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "planet-view",
+      "label": "锚群",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "site-stream",
+      "label": "细版",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "scatter-stream",
+      "label": "细版",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "hinterland",
+      "label": "细版",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "farm-node",
+      "label": "每群一片",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream",
+      "to": "planet-jobs",
+      "label": "通道",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream-shift",
+      "to": "planet-frame",
+      "label": "rebase",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream-shift",
+      "to": "world-node-async",
+      "label": "碰撞开关",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream-memory",
+      "to": "world-ledger",
+      "label": "resume_clock",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream-memory",
+      "to": "hinterland",
+      "label": "账本文本",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream-memory",
+      "to": "farm-node",
+      "label": "地块表",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "group-stream-memory",
+      "to": "scatter-ledger",
+      "label": "采空账",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-voyage-e2e",
+      "to": "world-2051-scene",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-voyage-e2e",
+      "to": "group-stream",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "expedition-shift",
+      "to": "map-host",
+      "label": "MapShift",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "expedition-shift",
+      "to": "ship",
+      "label": "shift",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "expedition-shift",
+      "to": "player",
+      "label": "shift",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "expedition-shift",
+      "to": "placeables",
+      "label": "摆出来的东西",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "expedition-shift",
+      "to": "freight",
+      "label": "作废单子",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-host",
+      "to": "map-host",
+      "label": "实现",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-host",
+      "to": "group-stream",
+      "label": "锚、各群、换锚",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-host",
+      "to": "world-node",
+      "label": "分派",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "world-2051-scene",
+      "to": "planet-host",
+      "label": "Expedition 的 map",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "world-node",
+      "to": "weather-model-cloud-frame",
+      "label": "参考群",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "atmosphere-group-blend",
+      "to": "map-host",
+      "label": "WeatherMix",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "atmosphere-group-blend",
+      "to": "weather-model-cloud-frame",
+      "label": "blend_weather",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "group-stream",
+      "label": "各群的云量",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "hinterland",
+      "to": "local-season-longitude",
+      "label": "这一群的偏移",
+      "chains": [
+        "planet"
+      ]
     }
   ],
   "chains": [
@@ -6600,11 +7083,11 @@
     },
     {
       "id": "planet",
-      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外、P2 上到轨道）",
-      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。开发者按 F7 从村口一路升到两万公里：天慢慢变暗、地平线弯成一道镶着蓝边的弧，整颗海洋星球盖着云带、缝里露出海，赤道一条永暴带、西北方一个漩涡，岛群像撒在云上的碎点，夜里亮着灯；再一路落回村口，画面和起飞前一样。",
+      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外、P2 上到轨道、P3 多岛群与换锚）",
+      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。开发者按 F7 从村口一路升到两万公里：天慢慢变暗、地平线弯成一道镶着蓝边的弧，整颗海洋星球盖着云带、缝里露出海，赤道一条永暴带、西北方一个漩涡，岛群像撒在云上的碎点，夜里亮着灯；再一路落回村口，画面和起飞前一样。玩家在 2051 的主码头上船往西南开，114 km 外的 2050 群越飞越近、越近越细：先是低模，再铺出地面，再有村子码头和林子；飞过两群之间的云海时脚下的锚悄悄换到 2050，画面一点不跳；在 2050 的主码头靠泊下船，天与光已经换成那边的，村子按它自己的地方时过日子；一天多后飞回 2051，离开这些时候村子的账补回来了。",
       "date": "2026-09-27",
       "color": "#e5536b",
-      "commits": "a769ef7..98896ca",
+      "commits": "a769ef7..ce7a5bf",
       "steps": [
         {
           "text": "生成器第三层：邻群按等效半径分界、各退半道缝，越界的群才重摆",
@@ -6752,6 +7235,64 @@
             "planet-shots-orbit",
             "stream-perf"
           ]
+        },
+        {
+          "text": "两群之间飞：GroupStream 按到各群陆地的距离给档——55 km 内后台载入邻群的地面（远景低模顶着，挂齐才藏），30 km 内铺出村子、码头、林子；邻群按刚体变换摆在锚群的平面里",
+          "nodes": [
+            "group-stream",
+            "world-node",
+            "world-node-async",
+            "far-groups",
+            "planet-jobs",
+            "job-pool-lanes"
+          ]
+        },
+        {
+          "text": "飞过换锚线（离另一群的陆地近 2 km 以上、脚下是云海）：人、船、相机、摆出来的东西按真球面一起换到新锚群的平面，旧锚撤碰撞、新锚挂，画面不跳",
+          "nodes": [
+            "group-stream-shift",
+            "expedition-shift",
+            "planet-host",
+            "planet-frame",
+            "planet-view",
+            "world-node-async"
+          ]
+        },
+        {
+          "text": "天与光在群间按距离过渡，云团在公共平面上连着；每群的地皮、树按自己的海拔表换季，日月与行星云层跟着换锚",
+          "nodes": [
+            "atmosphere-group-blend",
+            "weather-model-cloud-frame",
+            "world-node-group-shading",
+            "planet-globe"
+          ]
+        },
+        {
+          "text": "在 2050 的主码头靠泊下船：码头号带群号（2050001），HUD 报「群 #2050 · 」与地方时，村民按 2050 的经度作息出门",
+          "nodes": [
+            "planet-host",
+            "expedition",
+            "local-season-longitude",
+            "site-stream",
+            "villagers-node"
+          ]
+        },
+        {
+          "text": "飞远了的群降档：村子的账、地块、采场存量、采空账存进内存；飞回来读回补结，离开超过一天的只补最后一天",
+          "nodes": [
+            "group-stream-memory",
+            "hinterland",
+            "world-ledger",
+            "farm-node",
+            "scatter-ledger"
+          ]
+        },
+        {
+          "text": "planet_voyage_e2e 走一遍全程，stream_perf --voyage 量 150 m/s 跨群的帧时与内存",
+          "nodes": [
+            "planet-voyage-e2e",
+            "stream-perf"
+          ]
         }
       ],
       "nodes": [
@@ -6788,7 +7329,27 @@
         "dev-tools-node",
         "atmosphere-high-altitude",
         "planet-shots-orbit",
-        "stream-perf"
+        "stream-perf",
+        "planet-jobs",
+        "group-stream",
+        "planet-voyage-e2e",
+        "planet-host",
+        "world-node-async",
+        "job-pool-lanes",
+        "group-stream-shift",
+        "expedition-shift",
+        "atmosphere-group-blend",
+        "weather-model-cloud-frame",
+        "world-node-group-shading",
+        "expedition",
+        "local-season-longitude",
+        "site-stream",
+        "villagers-node",
+        "group-stream-memory",
+        "hinterland",
+        "world-ledger",
+        "farm-node",
+        "scatter-ledger"
       ]
     }
   ],
@@ -8854,6 +9415,205 @@
         "node": "planet-shots",
         "children": [
           "planet-shots-orbit"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e72",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：任务池按岛群分通道",
+      "summary": "任务键加 4 位通道号，每个岛群一条通道；排、取、撤、重排、急用都只动自己那条，一群拆掉时只等自己的活。全行星一个池，由场景里的 PlanetJobs 持有。",
+      "commits": "e835716",
+      "chain": "planet",
+      "nodes": [
+        "job-pool",
+        "job-pool-lanes",
+        "planet-jobs"
+      ],
+      "info": {
+        "node": "job-pool",
+        "children": [
+          "job-pool-lanes"
+        ],
+        "adopted": [],
+        "peers": [
+          "planet-jobs"
+        ]
+      }
+    },
+    {
+      "id": "e73",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：World 拆成可多实例的 GroupWorld",
+      "summary": "GroupWorld 一群一个，World 留作场景里那一群的兼容名（平板岛不动）；读数据可以挪到后台、碰撞整群开关、着色器参数改成每群一份的材质参数。",
+      "commits": "e835716、1c6dae3",
+      "chain": "planet",
+      "nodes": [
+        "world-node",
+        "world-node-async",
+        "world-node-group-shading"
+      ],
+      "info": {
+        "node": "world-node",
+        "children": [
+          "world-node-async",
+          "world-node-group-shading"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e74",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：GroupStream——岛群按远近分三档",
+      "summary": "按焦点到各群陆地的距离分远景 / 近景 / 细版：近景 55 km 进、70 km 出，载入 GroupWorld（后台读，远景低模顶着，地面块挂齐才藏）；细版 30 km 进、40 km 出，挂上村子、树林、账房、农田，同时 ≤ 2 个；邻群按焦点处线性化的刚体变换摆在锚群的平面里。",
+      "commits": "fc99777",
+      "chain": "planet",
+      "nodes": [
+        "far-groups",
+        "group-stream"
+      ],
+      "info": {
+        "node": "far-groups",
+        "children": [],
+        "adopted": [],
+        "peers": [
+          "group-stream"
+        ]
+      }
+    },
+    {
+      "id": "e75",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：换锚与离开的群的账",
+      "summary": "只在云海上空换锚：焦点离另一群的陆地比离锚群近 2 km 以上、两边脚下都是云海时，宿主定下、编排在下一个物理帧开头把人船和摆出来的东西按真球面换过去。离开的群账本存成文本留在内存，回来读回补结，离开超过 1 个游戏日的只补最后 1 日。",
+      "commits": "4b03e7a、9df0ef2",
+      "chain": "planet",
+      "nodes": [
+        "group-stream",
+        "group-stream-shift",
+        "group-stream-memory",
+        "planet-voyage-e2e"
+      ],
+      "info": {
+        "node": "group-stream",
+        "children": [
+          "group-stream-shift",
+          "group-stream-memory"
+        ],
+        "adopted": [],
+        "peers": [
+          "planet-voyage-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e76",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：编排在换锚时搬人船",
+      "summary": "物理帧开头看宿主有没有待换的锚，有就把人、船、摆出来的东西、落脚点与出生点按真球面换过去；跑货的单子换群作废；HUD 钟点后加地方时。",
+      "commits": "4b03e7a",
+      "chain": "planet",
+      "nodes": [
+        "expedition",
+        "expedition-shift"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "expedition-shift"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e77",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：PlanetHost——行星上的地图宿主",
+      "summary": "MapHost 多了换锚（map_shift_*）与群间天气（map_weather_mix）的接口；PlanetHost 按位置分派给锚群，码头表、HUD 位置行、地图面板跨群，码头号带群号。",
+      "commits": "740ddd6",
+      "chain": "planet",
+      "nodes": [
+        "map-host",
+        "planet-host"
+      ],
+      "info": {
+        "node": "map-host",
+        "children": [],
+        "adopted": [],
+        "peers": [
+          "planet-host"
+        ]
+      }
+    },
+    {
+      "id": "e78",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：云团的公共平面与群间混合",
+      "summary": "云团噪声放到钟的那一群的平面上、按它的风漂，各群共用——两群的云连得上、换锚不跳；几群的天气按距离加权混。",
+      "commits": "845ee97",
+      "chain": "planet",
+      "nodes": [
+        "weather-model",
+        "weather-model-cloud-frame"
+      ],
+      "info": {
+        "node": "weather-model",
+        "children": [
+          "weather-model-cloud-frame"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e79",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：天与光在群间过渡",
+      "summary": "相机处的天气按到各载入群陆地的距离加权混；日月改成换到画面的世界轴；行星云层的岛群附近按载入了的各群一份份取。",
+      "commits": "845ee97、4b03e7a",
+      "chain": "planet",
+      "nodes": [
+        "atmosphere",
+        "atmosphere-group-blend"
+      ],
+      "info": {
+        "node": "atmosphere",
+        "children": [
+          "atmosphere-group-blend"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e80",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P3：按经度的地方时",
+      "summary": "村子按各自所在经度的地方时作息：钟是钟的那一群的地方时，别的群挪一个经度差。",
+      "commits": "845ee97",
+      "chain": "planet",
+      "nodes": [
+        "local-season",
+        "local-season-longitude"
+      ],
+      "info": {
+        "node": "local-season",
+        "children": [
+          "local-season-longitude"
         ],
         "adopted": [],
         "peers": []
