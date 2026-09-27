@@ -1,6 +1,6 @@
 # 浮高计划：岛各自浮在不同高度，云带与海往下让
 
-> 状态：进行中（2026-09-27 定稿）。起因：用户在游戏里看到「所有岛的地面一样高」「海面离岛挺近」，讨论后说「你的建议没问题，开工吧」。
+> 状态：完成（2026-09-27 定稿，同日 G、Z1、Z2 三期做完）。起因：用户在游戏里看到「所有岛的地面一样高」「海面离岛挺近」，讨论后说「你的建议没问题，开工吧」。
 > Mellos 页 `float-islands`。各期共同的规矩照 [PLAN-PLANET.md](PLAN-PLANET.md) 第七节（Mellos 页换成本页）。
 
 ## 一、目标
@@ -69,7 +69,7 @@ G（生成器）与 Z1（游戏）互不依赖，并行；Z2 等两者都完成�
 > 你在 D:\Project\Zhouzhu 的 main 上工作。任务：浮高计划 Z2 期——合流。G 期（skyisle-gen 的若干提交）已给岛加浮高并重生成了 seed42 的 2051、2050 细版与全行星粗版；Z1 期已下移垂直结构、夹龙骨。计划在 docs/PLAN-FLOAT.md，第五节有前两期的记录。
 >
 > 1. 子模块 extern/skyisle-gen 升到 G 的最后一个提交（从子模块的 remote `local`，即 D:/Project/skyisle-gen 取；生成器还没推，推送时要先推它）；重编。
-> 2. 重导：2051、2050 细版用 tools/export_skyisle.py（照 README 的做法）再跑 site_survey；行星包 `tools/export_planet.py D:/Project/skyisle-gen/out/seed42 game/planet/seed42 --near 2051 --fine game/worlds`——config.tsv 的 engine.backend 必须还是 cpp，导完 diff config.tsv 只该多出浮高那几个键。
+> 2. 重导：2051、2050 细版用 tools/export_skyisle.py（照 README 的做法）再跑 site_survey；行星包 `tools/export_planet.py D:/Project/skyisle-gen/out/seed42 game/planet/seed42 --near 2051 --fine game/worlds`——config.tsv 的 engine.backend 必须还是 cpp，导完 diff config.tsv 只该多出浮高那几个键（`float.*` 九个），外加索桥两个键的值变（F7：`layout.bridge_max_km` 2.0 → 0.1、`layout.bridge_max_dh_m` 250 → 30）。
 > 3. 进程内生成与 Python 路径逐字节对照（ctest 的 gen_seed42、gen_format）全过。
 > 4. 游戏跟上：码头、村子、资源点、跑货、村民按新数据；e2e 的路线与金标（村号、码头号、路点、CRUISE_Y 这类写死的高度）改成新数据的；查跑货船、野泊、村民的船在高低不同的岛之间会不会爬升（航路是否假设同一高度）。
 > 5. 验证：ctest 与全部 e2e 全过；带窗口截图自己看——从 2051 主码头、主峰看同群的岛高低错落，从岛边看岛底与云带顶之间的空，god 或 F7 从高处看整群。
@@ -81,6 +81,6 @@ G（生成器）与 Z1（游戏）互不依赖，并行；Z2 等两者都完成�
 
 | 期 | 状态 | 提交 | 记录 |
 |---|---|---|---|
-| G 生成器浮高 | 进行中 | | |
+| G 生成器浮高 | 完成（2026-09-27） | skyisle-gen cea1566..8a2f12b（分支 island-rivers-resources-settle，8 个） | 第三层给非主岛加浮高 δ（按岛龄 + 随机，−500…+1500 m，主岛 0，岸缘 + δ ≥ 20 m；island.json 每岛 float_m；check 加 IS-float；新命令 `skyisle island floats`），两个后端逐位相同；三 seed 全行星 |δ| 中位 405 m、p90 1,015–1,017 m、最高 +1,474 m、往上 69.7–69.8%、与岛龄差秩相关 −0.578；索桥改成岸距 ≤ 100 m、高差 ≤ 30 m（F7），seed42 全行星 75,768 → 64 座；pytest 158；重生成 seed42 的 2051、2050 细版（村 160 → 155、43 → 41，泊场 211 → 206、52 → 48）与全行星粗版（带逐日天气），config.resolved.toml 写回 cpp |
 | Z1 垂直结构、夹龙骨 | 完成（2026-09-27） | Zhouzhu da7fd8c、037b5ff（+ 工具 4dd047a，文档、fmap） | 云带 −5000…−6200、海面 −6800、R = 海面 + 6800 m（新常数 PLANET_DEFAULT_R；写死的 6376600 C++ 六处、着色器三处，着色器的 PS_SEA_Y / PS_BAND_Y / PS_BASE_Y 与 far_group 剪岛底的线，project.godot、world_2051.tscn 各一处，测试与 planet_shots / stream_perf 的高度）；夹龙骨按「连岩棱与起伏的最深处 ≥ −4000」（比「岸缘 − 崖壁 − 龙骨」严），崖壁不动，远处低模同一条。本机生成过的 43 群 1,431 座岛收短 7 座（都是主岛）：4684 岛心底 −5152 → −3732、4981 −4947 → −3734、4855 −4705 → −3738、#8 −4719 → −3723；2051、2050 一座不收。ctest 全过（新段 island_floor），24 条 e2e 全过；sea_descent 降到海面 567 s（原 471 s），各层读数与下移前一样；god 到海面 37.7 s；窗口截图看过（terrain_shots 新加三个机位） |
-| Z2 合流 | 未开始 | | |
+| Z2 合流 | 完成（2026-09-27） | Zhouzhu 90046a0、ff78164、65bd826、28e450b、a958aca、398dd0d、e51f7b2（+ 文档、fmap） | 子模块 b96b83a → 8a2f12b；2051、2050 细版与行星包重导：config.tsv 只多 float.* 九个键、两个索桥键的值变，engine.backend 仍是 cpp，planet.bin / weather.bin 只差 source 行，lods.bin 非主岛高度变；2051 非主岛 −223…+1325 m（岸缘 22–1,554 m），村 211 → 206、散户 991 → 970、码头 60 → 61（目的码头 #26 → #28，同一座），邑治 407 → 395 户，采场 257 → 254；2050 −433…+913 m，码头 20 → 16、村 52 → 48；岛体龙骨不再与生成器的 keel_m（崖脚高程，随浮高平移）取大——否则 7 座高岛越浮越厚；ctest island_floor 改成只查仓库的包与进程内现场生成的 4684 / 4981 / 4855，扫本机目录挪进 `zhouzhu_site_survey --island-floor`；gen_format / gen_seed42 42 项全过，ctest 5 条全过（core 1,420 项），24 条 e2e 全过（村031 → 村029、烧炭营43 村号 203 → 198 等同一处地方换号，world_sim 的在岗判据）；游戏里没有自动开的船，替人掌舵的 e2e 飞法贴地形或路上没有岛，不用修；terrain_shots 加 11–16 六个机位，窗口截图看过（头顶有岛、脚下有岛、岛底悬空） |
