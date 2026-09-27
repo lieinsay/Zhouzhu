@@ -325,3 +325,5 @@ endif()
 add_test(NAME site_survey_2051 COMMAND zhouzhu_site_survey ${CMAKE_CURRENT_SOURCE_DIR}/game/worlds/2051)
 # 行星包体检：摘要、邻群表、坐标自检、每群粗版对陆地（邻群叠没叠要 --overlap，手动跑）
 add_test(NAME site_survey_planet COMMAND zhouzhu_site_survey --planet ${CMAKE_CURRENT_SOURCE_DIR}/game/planet/seed42)
+# 行星天气场（行星计划 P5）：粗细两版天气对照、一年里全行星的云量与降水与 ④ 的气候场对账（5° 的格、一天两个时刻；细一点的用 --grid 2 --steps 4）
+add_test(NAME site_survey_planet_weather COMMAND zhouzhu_site_survey --planet-weather ${CMAKE_CURRENT_SOURCE_DIR}/game/planet/seed42)

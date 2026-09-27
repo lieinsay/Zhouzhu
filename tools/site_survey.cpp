@@ -10,6 +10,8 @@
 //   再抽样生成散布（每隔 --scatter-stride 块取一块，默认 6），报每公顷长了多少、每块花多少时间、泊地上有没有树
 //   build/Release/zhouzhu_site_survey.exe --planet game/planet/seed42 [--home 2051] [--overlap]
 //                                          # 行星包：摘要、邻群表、坐标自检、每群粗版对陆地；--overlap 另查邻群陆地叠没叠
+//   build/Release/zhouzhu_site_survey.exe --planet-weather game/planet/seed42 [--grid 2] [--steps 4] [--worlds game/worlds]
+//                                          # 行星天气场（行星计划 P5）：逐日天气包、粗细两版天气对照、一年里全行星的云量与降水按纬度带与 ④ 的气候场对账（±20%）
 //   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
 //         --sim H（远处结算几个游戏小时；0 = 不结）、--scatter-stride N（散布抽样的间隔块数；0 = 不抽）、
 //         --calendar N（开局是一年里的第几天，远处结算的时令按它；默认 3，与 WorldClock 一致）
@@ -34,6 +36,7 @@
 #include "almanac.h"
 #include "planet_data.h"
 #include "planet_frame.h"
+#include "planet_weather.h"
 #include "freight.h"
 #include "local_season.h"
 #include "resource_scatter.h"
@@ -232,7 +235,162 @@ int survey_planet(const std::string &p_dir, int p_home, bool p_overlap) {
     return fails ? 1 : 0;
 }
 
+// ---------------------------------------------------------------- 行星天气场体检（--planet-weather，行星计划 P5）
+// 逐日天气包读一遍、有细版的群与 weather.tsv 对照（类型逐日相同的比例 ≥ 95%）；
+// 再按 p_grid 度的格、一天 p_steps 个时刻取一年的「大势」（不含云团：云团按门槛取，面积份额就是云量），
+// 按纬度带与全行星（按面积加权）报年均云量、年降水，与 ④ 的气候场对账：
+//   降水对 ④ 的相对降水按生成器的式子折成的年降水（hydro.precip_mm）；云量对「气候云量」（④ 的降水、风暴按生成器逐日天气的统计折成的，
+//   永暴带、G 圈里是风暴——就是离群远了行星天气场用的那一份）。差出两成就不达标。
+int survey_planet_weather(const std::string &p_dir, double p_grid, int p_steps, const std::string &p_worlds) {
+    const auto t0 = std::chrono::steady_clock::now();
+    auto pd = std::make_shared<PlanetData>();
+    std::string error;
+    if (!pd->load_files(p_dir, error)) {
+        std::fprintf(stderr, "%s\n", error.c_str());
+        return 2;
+    }
+    std::string bytes;
+    if (!read_file(p_dir + "/weather.bin", bytes)) {
+        std::fprintf(stderr, "读不了 %s/weather.bin\n", p_dir.c_str());
+        return 2;
+    }
+    WeatherPack pack;
+    const auto t_parse = std::chrono::steady_clock::now();
+    if (!pack.parse(reinterpret_cast<const uint8_t *>(bytes.data()), bytes.size(), error)) {
+        std::fprintf(stderr, "weather.bin：%s\n", error.c_str());
+        return 2;
+    }
+    const double parse_ms = since_ms(t_parse);
+    auto file_mb = [&](const char *p_name) {
+        std::ifstream in(p_dir + "/" + p_name, std::ios::binary | std::ios::ate);
+        return in ? double(in.tellg()) / 1e6 : 0.0;
+    };
+    int fails = 0;
+    auto pw = std::make_shared<PlanetWeather>(pd);
+    pw->add_pack(pack);
+    const double pack_mb = file_mb("planet.bin") + file_mb("lods.bin") + file_mb("weather.bin");
+    std::printf("逐日天气包：%zu 群 × %d 天、%.1f MB，解开 %.0f ms；行星包合计 %.1f MB（计划 ≤ 60 MB）\n", pack.entries.size(), pack.year_days, file_mb("weather.bin"), parse_ms,
+            pack_mb);
+    // 粗细两版：有细版的群
+    int fine_groups = 0, same_kind = 0, same_all = 0, days_total = 0;
+    for (int k = 0; k < int(pack.entries.size()); k++) {
+        const int node = pack.entries[size_t(k)].node;
+        std::string text;
+        if (!read_file(p_worlds + "/" + std::to_string(node) + "/weather.tsv", text)) {
+            continue;
+        }
+        Climate fine;
+        if (!parse_climate(text, fine, error)) {
+            continue;
+        }
+        const Climate coarse = pack.climate(k, pd->node(node).lat, pd->node(node).lon, pd->tilt_deg);
+        int sk = 0, sa = 0;
+        const size_t n = std::min(fine.days.size(), coarse.days.size());
+        for (size_t d = 0; d < n; d++) {
+            const ClimateDay &a = fine.days[d], &b = coarse.days[d];
+            sk += a.kind == b.kind ? 1 : 0;
+            sa += a.kind == b.kind && a.precip_mm == b.precip_mm && a.temp_c == b.temp_c && a.wind_from_deg == b.wind_from_deg && a.wind_ms == b.wind_ms &&
+                            a.sailable == b.sailable && a.storm == b.storm
+                    ? 1
+                    : 0;
+        }
+        std::printf("  细版 %d：天气类型逐日相同 %d / %zu，整行逐位相同 %d\n", node, sk, n, sa);
+        fine_groups++;
+        same_kind += sk;
+        same_all += sa;
+        days_total += int(n);
+    }
+    if (fine_groups > 0) {
+        const double ratio = double(same_kind) / std::max(1, days_total);
+        std::printf("粗细两版：%d 群，天气类型逐日相同 %.1f%%（计划 ≥ 95%%），整行逐位相同 %.1f%% %s\n", fine_groups, 100.0 * ratio, 100.0 * same_all / std::max(1, days_total),
+                ratio >= 0.95 ? "" : "✗");
+        fails += ratio >= 0.95 ? 0 : 1;
+    }
+    // 一年
+    const auto t_year = std::chrono::steady_clock::now();
+    struct Band {
+        double w = 0.0, cloud = 0.0, cloud_ref = 0.0, mm = 0.0, mm_ref = 0.0, share = 0.0, storm = 0.0;
+    };
+    const int n_bands = 12; // 每 15°
+    std::vector<Band> bands(size_t(n_bands) + 1); // 最后一个 = 全行星
+    const int rows = int(std::round(180.0 / p_grid)), cols = int(std::round(360.0 / p_grid));
+    const int year = pack.year_days;
+    long long samples = 0;
+    for (int r = 0; r < rows; r++) {
+        const double lat = -90.0 + (r + 0.5) * p_grid;
+        const double area = std::cos(lat * SURVEY_PI / 180.0);
+        const int bi = std::clamp(int((lat + 90.0) / 15.0), 0, n_bands - 1);
+        for (int c = 0; c < cols; c++) {
+            const double lon = -180.0 + (c + 0.5) * p_grid;
+            double cloud = 0.0, cloud_ref = 0.0, mm = 0.0, share = 0.0, storm = 0.0;
+            for (int d = 0; d < year; d++) {
+                for (int s = 0; s < p_steps; s++) {
+                    const double day = d + (s + 0.5) / p_steps;
+                    const PlanetRegional w = pw->sample(day, lat, lon, 0.0, false);
+                    cloud += w.state.cloud;
+                    mm += w.state.precip;
+                    share += w.group_share;
+                    storm += w.state.storm;
+                    samples++;
+                }
+                cloud_ref += pw->climate_state(d + 0.5, lat, lon, 0.0).cloud;
+            }
+            const double n = double(year) * p_steps;
+            for (Band *b : { &bands[size_t(bi)], &bands.back() }) {
+                b->w += area;
+                b->cloud += area * cloud / n;
+                b->cloud_ref += area * cloud_ref / year;
+                b->mm += area * mm / n * year; // 年降水（mm）：每天的量取一年的平均再乘天数
+                b->mm_ref += area * pw->climate_precip_mm(lat, lon);
+                b->share += area * share / n;
+                b->storm += area * storm / n;
+            }
+        }
+    }
+    const double year_ms = since_ms(t_year);
+    std::printf("一年（%g° 的格、一天 %d 个时刻，%lld 次取样，%.0f ms、每次 %.2f µs）：\n", p_grid, p_steps, samples, year_ms, year_ms * 1000.0 / std::max(1LL, samples));
+    std::printf("  纬度带        面积份   群管的份   年均云量 / 气候云量      年降水 mm / ④ 的         风暴\n");
+    for (int k = 0; k <= n_bands; k++) {
+        const Band &b = bands[size_t(k)];
+        if (b.w <= 0.0) {
+            continue;
+        }
+        const double cr = b.cloud / std::max(1e-9, b.cloud_ref), mr = b.mm / std::max(1e-9, b.mm_ref);
+        const double area_share = b.w / bands.back().w;
+        // 两极各一小块（面积不到 2%）只报不判：那里群少、按背景
+        const bool judged = k == n_bands || area_share >= 0.02;
+        const bool ok = !judged || (std::abs(cr - 1.0) <= 0.2 && std::abs(mr - 1.0) <= 0.2);
+        fails += ok ? 0 : 1;
+        if (k == n_bands) {
+            std::printf("  全行星      %5.1f%%   %6.1f%%   %.3f / %.3f（%+5.1f%%）  %6.0f / %6.0f（%+5.1f%%）  %.3f %s\n", 100.0, 100.0 * b.share / b.w, b.cloud / b.w, b.cloud_ref / b.w,
+                    100.0 * (cr - 1.0), b.mm / b.w, b.mm_ref / b.w, 100.0 * (mr - 1.0), b.storm / b.w, ok ? "" : "✗");
+        } else {
+            std::printf("  %+4d…%+4d°  %5.1f%%   %6.1f%%   %.3f / %.3f（%+5.1f%%）  %6.0f / %6.0f（%+5.1f%%）  %.3f %s\n", -90 + 15 * k, -75 + 15 * k, 100.0 * area_share,
+                    100.0 * b.share / b.w, b.cloud / b.w, b.cloud_ref / b.w, 100.0 * (cr - 1.0), b.mm / b.w, b.mm_ref / b.w, 100.0 * (mr - 1.0), b.storm / b.w,
+                    ok ? "" : (judged ? "✗" : ""));
+        }
+    }
+    std::printf("行星天气场体检 %.0f ms，%s\n", since_ms(t0), fails ? "有不达标" : "全部达标（±20%）");
+    return fails ? 1 : 0;
+}
+
 int main(int argc, char **argv) {
+    if (argc >= 3 && std::string(argv[1]) == "--planet-weather") {
+        double grid = 5.0;
+        int steps = 2;
+        std::string worlds = std::string(argv[2]) + "/../../worlds";
+        for (int k = 3; k < argc; k++) {
+            const std::string opt = argv[k];
+            if (opt == "--grid" && k + 1 < argc) {
+                grid = std::atof(argv[++k]);
+            } else if (opt == "--steps" && k + 1 < argc) {
+                steps = std::max(1, std::atoi(argv[++k]));
+            } else if (opt == "--worlds" && k + 1 < argc) {
+                worlds = argv[++k];
+            }
+        }
+        return survey_planet_weather(argv[2], grid, steps, worlds);
+    }
     if (argc >= 3 && std::string(argv[1]) == "--planet") {
         int home = 2051;
         bool overlap = false;
