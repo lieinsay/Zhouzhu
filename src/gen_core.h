@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -45,10 +46,14 @@ public:
     void fail(const std::string &p_error);
     bool settled(); // 说过好了或出错了
     Snapshot take();
+    // 撤：一批一批做的活（补粗版）在两群之间看它，停下来（在算的那一群照样算完）
+    void cancel() { cancelled_flag.store(true); }
+    bool cancelled() const { return cancelled_flag.load(); }
 
 private:
     std::mutex mutex;
     Snapshot state;
+    std::atomic<bool> cancelled_flag{ false };
 };
 
 // 一个世界的行星层：①–⑨（⑧ 跳过：游戏只要人口与邦）+ 第三层要的 PlanetView。算一回、之后只读，几件活可以同时读

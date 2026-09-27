@@ -763,7 +763,7 @@ void GroupProvider::update_lods(double p_delta) {
         const std::vector<int> nodes = todo;
         started = lod_job.start_cpp(nullptr, 0.0, [cfg, seed, lod_dir, nodes](gen_core::GenStatus &st) {
             const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(*cfg, seed);
-            for (size_t k = 0; k < nodes.size(); k++) {
+            for (size_t k = 0; k < nodes.size() && !st.cancelled(); k++) {
                 st.progress("lod", double(k) / double(nodes.size()),
                         "粗版 " + std::to_string(k + 1) + " / " + std::to_string(nodes.size()) + "：群 #" + std::to_string(nodes[k]));
                 double sec = 0.0;

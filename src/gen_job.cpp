@@ -50,6 +50,10 @@ std::shared_ptr<const GenConfig> load_gen_config(const String &p_planet_dir, Str
 }
 
 GenJob::~GenJob() {
+    // 场景拆了：自己开的线程上还在做的活，一批一批做的（补粗版）在两群之间就停，别的做完；等它收尾
+    if (status) {
+        status->cancel();
+    }
     join();
 }
 
@@ -183,6 +187,9 @@ void GenJob::kill() {
     }
     if (pool) {
         pool->cancel(pool_key); // 排着的撤掉；在算的撤不掉，由它算完
+    }
+    if (status) {
+        status->cancel();
     }
     finished_s = elapsed_s();
     state = FAILED;
