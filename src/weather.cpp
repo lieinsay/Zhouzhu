@@ -562,7 +562,7 @@ void WeatherModel::cloud_drift(double p_day, double &r_x, double &r_z) const {
 ElevationState WeatherModel::elevation(double p_day_in, double p_h_in) const {
     // 不是有限数（上层的位置坏了）：当台面、第 0 天，别拿它当下标
     const double p_day = std::isfinite(p_day_in) ? p_day_in : 0.0;
-    const double p_h = std::isfinite(p_h_in) ? p_h_in : climate.ref_m;
+    const double p_h = air_height(std::isfinite(p_h_in) ? p_h_in : climate.ref_m); // y < 0 按 y = 0（D13）
     const double blend = std::clamp(over.blend, 0.0, 1.0);
     // 气温偏移等效成海拔挪动：冷 1 °C ≈ 高 1000 / 直减率 米
     const double h = p_h - over.temp_offset_c * blend * 1000.0 / std::max(0.1, climate.lapse);
@@ -597,7 +597,7 @@ ElevationState WeatherModel::elevation(double p_day_in, double p_h_in) const {
 
 double WeatherModel::mean_temperature(double p_day_in, double p_h_in) const {
     const double p_day = std::isfinite(p_day_in) ? p_day_in : 0.0;
-    const double p_h = std::isfinite(p_h_in) ? p_h_in : climate.ref_m;
+    const double p_h = air_height(std::isfinite(p_h_in) ? p_h_in : climate.ref_m); // y < 0 按 y = 0（D13）
     double front = 0.0;
     int di = 0;
     const WeatherState s = blended(p_day, 0.0, 0.0, front, di);
@@ -688,7 +688,7 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
     const double hour = (p_day - std::floor(p_day)) * 24.0;
     const double clouds = std::max(out.cloud, 0.5 * out.cloud_cover);
     const double diurnal = rules.diurnal_c * (1.0 - 0.6 * clouds) * std::cos(2.0 * PI * (hour - 14.5) / 24.0);
-    out.temp_c = s.temp + climate.lapse * (climate.ref_m - p_h) / 1000.0 + diurnal - 1.5 * std::min(1.0, rate / 4.0);
+    out.temp_c = s.temp + climate.lapse * (climate.ref_m - air_height(p_h)) / 1000.0 + diurnal - 1.5 * std::min(1.0, rate / 4.0); // y < 0 按 y = 0（D13）
     out.snow_frac = snow_fraction(out.temp_c, climate.snow_temp, rules.snow_band_c);
 
     const double gust = 1.0 + 0.15 * std::clamp((p_h - ref_h) / 1000.0, 0.0, 2.0);
@@ -701,7 +701,8 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
         out.fog_top = part.used && part.fog_top > -1e8 ? part.fog_top : climate.rim_m + climate.fog_rise_m;
     }
     out.sea_fog = std::clamp(s.fog, 0.0, 1.0);
-    const double sea_fog = s.fog * smoothstep(out.fog_top + 40.0, out.fog_top - 60.0, p_h);
+    // 云海漫顶：雾顶以下是漫上来的云；出了云带底（D13，行星计划 P7）就不在云里了
+    const double sea_fog = s.fog * smoothstep(out.fog_top + 40.0, out.fog_top - 60.0, p_h) * smoothstep(VerticalDatum::CLOUD_BASE_Y - 60.0, VerticalDatum::CLOUD_BASE_Y + 40.0, p_h);
     out.fog = std::clamp(std::max(sea_fog, 0.25 * out.precip * (1.0 + out.snow_frac)), 0.0, 1.0);
 
     const ElevationState e = elevation(p_day, p_h);

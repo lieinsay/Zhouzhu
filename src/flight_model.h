@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 // 空艇飞行模型：纯函数，不含 Godot 头。
 // 只管「速度与航向怎么随输入变」；碰撞与位置积分是 Ship 的 move_and_slide 的事。
 //
@@ -21,15 +23,20 @@ struct FlightInput {
     double rudder = 0.0; // −1 左 … +1 右
     double lift = 0.0; // −1 降 … +1 升
     double drift_x = 0.0, drift_z = 0.0; // 风把船往哪推（m/s，世界系）：船对空气的速度追油门，对地再加上它
+    double bump = 0.0; // 颠簸（行星计划 P7，云带里、风暴里）：这一刻上下乱推的速度（m/s），调用方按 flight_bump × 强度给
 };
+
+// 颠簸：随时间平滑起伏、没有规律的一股上下扰动，约 −1..1（两层一维值噪声，零点几到两赫兹）；p_seed 分开几条船。强度由调用方乘
+double flight_bump(double p_time_s, uint64_t p_seed = 0);
 
 // 风把船推多快：风速 p_calm_ms 以下不推，往上渐渐推到风速的 p_share（风暴里船往下风漂）
 void wind_drift(double p_wind_x, double p_wind_z, double &r_x, double &r_z, double p_calm_ms = 5.0, double p_share = 0.6);
 
 struct FlightState {
-    double vx = 0.0, vy = 0.0, vz = 0.0; // 世界系速度
+    double vx = 0.0, vy = 0.0, vz = 0.0; // 世界系速度（vy 含颠簸）
     double yaw = 0.0;
     double yaw_rate = 0.0;
+    double bump = 0.0; // vy 里这一刻颠簸的那一份：升降按舵追，颠簸直接叠上去（不被升降的惯性抹平）
 };
 
 // 船头方向（水平单位向量）

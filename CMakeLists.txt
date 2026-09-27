@@ -23,6 +23,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/building_parts.h
     src/buildings.cpp
     src/buildings.h
+    src/cloud_band.cpp
+    src/cloud_band.h
     src/cover_blend.cpp
     src/cover_blend.h
     src/crops.cpp
@@ -95,6 +97,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/rng.h
     src/river_mesh.cpp
     src/river_mesh.h
+    src/sea_state.cpp
+    src/sea_state.h
     src/settlement_model.cpp
     src/settlement_model.h
     src/ship_layout.cpp

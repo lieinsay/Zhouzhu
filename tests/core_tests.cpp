@@ -77,6 +77,8 @@
 #include "planet_surface.h"
 #include "planet_weather.h"
 #include "inflate.h"
+#include "cloud_band.h"
+#include "sea_state.h"
 
 namespace {
 
@@ -5964,11 +5966,198 @@ void test_planet_weather() {
     }
 }
 
+// 行星计划 P7：云带之下——云带的垂直剖面（雾、光、颠簸）、船的最低高度、海浪、白礁、y < 0 的气温（D13）、颠簸的噪声
+void test_sea_descent() {
+    std::printf("[sea_descent]\n");
+    const CloudBandRules rules;
+    {
+        const CloudBandState a = cloud_band_at(-3000.0, 0.9);
+        check(a.inside == 0.0 && a.under == 0.0 && a.below == 0.0 && a.depth == 0.0, "云带顶上：不在云里、天空照旧");
+        check_near(a.sun, 1.0, 1e-12, "云带顶上：直射全在");
+        check_near(a.diffuse, 1.0, 1e-12, "云带顶上：漫射光全在");
+        check_near(a.turbulence, 0.0, 1e-12, "云带顶上：不颠");
+        const CloudBandState m = cloud_band_at(-4400.0, 0.9);
+        check_near(m.inside, 1.0, 1e-12, "云带当中：雾最浓");
+        check_near(m.turbulence, rules.turbulence_in, 1e-12, "云带当中：颠");
+        check(m.sun < 0.1 && m.sun > 0.0, "云带当中：直射只剩一点（" + std::to_string(m.sun) + "）");
+        check(m.diffuse < 1.0 && m.diffuse > rules.under_diffuse, "云带当中：漫射光在顶上与云底下之间（" + std::to_string(m.diffuse) + "）");
+        const CloudBandState u = cloud_band_at(-5300.0, 0.9);
+        check(u.inside == 0.0 && u.under == 1.0 && u.below == 1.0, "云底下：出了云、天空从下往上看");
+        check(u.sun < 0.01, "云底下：日面看不见（直射 " + std::to_string(u.sun) + "）");
+        check_near(u.diffuse, rules.under_diffuse, 1e-9, "云底下：阴天式的漫射光");
+        check_near(u.turbulence, rules.turbulence_under, 1e-12, "云底下：只剩一点颠");
+        check_near(cloud_band_at(-5585.0, 0.9).sea_height, 15.0, 1e-9, "离海面多高：船的最低处离海面 15 m");
+        // 太阳低时云里暗得快
+        check(cloud_band_at(-4400.0, 0.15).sun < m.sun && cloud_band_at(-4400.0, 0.15).diffuse < m.diffuse, "太阳低：直射与漫射都更暗");
+        // 连续：每 0.25 m 一步从 +200 m 走到海面，各读数变得不多（两处软边各几十米）
+        double worst = 0.0;
+        CloudBandState prev = cloud_band_at(200.0, 0.8);
+        for (double y = 199.75; y >= -5600.0; y -= 0.25) {
+            const CloudBandState s = cloud_band_at(y, 0.8);
+            worst = std::max({ worst, std::abs(s.inside - prev.inside), std::abs(s.under - prev.under), std::abs(s.below - prev.below), std::abs(s.sun - prev.sun),
+                    std::abs(s.diffuse - prev.diffuse), std::abs(s.turbulence - prev.turbulence) });
+            prev = s;
+        }
+        std::printf("  剖面：每 0.25 m 最多变 %.4f；云带当中直射 %.3f、漫射 %.2f；云底下漫射 %.2f\n", worst, m.sun, m.diffuse, u.diffuse);
+        check(worst < 0.02, "升降一趟读数连续（每 0.25 m 最多变 " + std::to_string(worst) + "）");
+        check_near(ship_floor_y(true, 15.0), -5585.0, 1e-9, "船的最低高度：海上是海面之上 15 m");
+        check_near(ship_floor_y(false, 15.0), 15.0, 1e-9, "船的最低高度：没有行星数据的地图照旧世界 y = 15 m");
+    }
+    {
+        // 海浪：没风也有涌，风越大浪越高越长；风暴按大风算、封顶
+        const SeaWaves calm = sea_waves(0.0, 0.0);
+        check_near(calm.height_m, SeaWaveRules().calm_height_m, 1e-12, "没风：只有涌");
+        check(calm.foam == 0.0 && calm.chop == 0.0, "没风：没有白浪");
+        const SeaWaves ten = sea_waves(10.0, 0.0);
+        check_near(ten.height_m, 2.14, 0.05, "10 m/s：有效波高约 2.1 m（Pierson–Moskowitz）");
+        check_near(ten.length_m, 83.0, 3.0, "10 m/s：主浪波长约 83 m");
+        bool mono = true;
+        SeaWaves last = sea_waves(0.0, 0.0);
+        for (int k = 1; k <= 40; k++) {
+            const SeaWaves w = sea_waves(k * 0.75, 0.0);
+            mono = mono && w.height_m >= last.height_m && w.length_m >= last.length_m && w.foam >= last.foam;
+            last = w;
+        }
+        check(mono, "风越大浪越高、越长、白浪越多");
+        const SeaWaves storm = sea_waves(3.0, 1.0);
+        check_near(storm.height_m, SeaWaveRules().max_height_m, 1e-9, "风暴：浪封顶");
+        check(storm.chop > 0.99 && storm.foam > 0.99, "风暴：满是白浪、飞沫");
+        std::printf("  浪：无风 %.2f m / %.0f m，10 m/s %.2f m / %.0f m，20 m/s %.2f m / %.0f m，风暴 %.2f m / %.0f m\n", calm.height_m, calm.length_m, ten.height_m,
+                ten.length_m, sea_waves(20.0, 0.0).height_m, sea_waves(20.0, 0.0).length_m, storm.height_m, storm.length_m);
+        // 法线贴图：确定、可平铺（左右、上下两边接得上）、斜率平均为零
+        std::vector<uint8_t> a, b;
+        bake_wave_normals(64, 7, a);
+        bake_wave_normals(64, 7, b);
+        check(a == b && a.size() == size_t(64 * 64 * 4), "海浪法线贴图：同一个种子逐位相同");
+        std::vector<uint8_t> big;
+        bake_wave_normals(256, 7, big);
+        double edge = 0.0, inner = 0.0, mean_x = 0.0;
+        for (int j = 0; j < 256; j++) {
+            auto at = [&](int i, int c) { return double(big[(size_t(j) * 256 + size_t((i + 256) % 256)) * 4 + size_t(c)]); };
+            edge = std::max(edge, std::abs(at(0, 2) - at(255, 2)));
+            inner = std::max(inner, std::abs(at(128, 2) - at(127, 2)));
+            for (int i = 0; i < 256; i++) {
+                mean_x += at(i, 0) - 127.5;
+            }
+        }
+        mean_x /= 256.0 * 256.0;
+        check(edge <= inner + 2.0, "海浪法线贴图：左右两边接得上（边上相邻差 " + std::to_string(edge) + "，里面 " + std::to_string(inner) + "）");
+        check(std::abs(mean_x) < 3.0, "海浪法线贴图：斜率平均为零（" + std::to_string(mean_x) + "）");
+    }
+    {
+        // 颠簸的噪声：有界、平滑、平均为零、确定；不同的种子不一样
+        double lo = 1e9, hi = -1e9, mean = 0.0, jump = 0.0;
+        double prev = flight_bump(0.0, 3);
+        const int n = 60 * 600;
+        for (int k = 1; k <= n; k++) {
+            const double v = flight_bump(k / 60.0, 3);
+            lo = std::min(lo, v);
+            hi = std::max(hi, v);
+            mean += v;
+            jump = std::max(jump, std::abs(v - prev));
+            prev = v;
+        }
+        mean /= n;
+        std::printf("  颠簸：%.2f…%.2f，平均 %.3f，一帧最多变 %.3f\n", lo, hi, mean, jump);
+        check(lo >= -1.0 && hi <= 1.0 && hi - lo > 1.0, "颠簸：在 −1..1 里、起伏够大");
+        check(std::abs(mean) < 0.1, "颠簸：平均约为零");
+        check(jump < 0.1, "颠簸：平滑（一帧最多变 " + std::to_string(jump) + "）");
+        check(flight_bump(12.3, 3) == flight_bump(12.3, 3) && flight_bump(12.3, 3) != flight_bump(12.3, 4), "颠簸：确定、种子不同就不同");
+        // 飞行模型：颠簸直接叠在升降上，不被升降的惯性抹平；拿掉了升降照舵
+        const FlightParams params;
+        FlightState s;
+        FlightInput in;
+        in.bump = 2.0;
+        s = flight_step(s, in, params, 1.0 / 60.0);
+        check_near(s.vy, 2.0, 1e-9, "颠簸：这一帧就往上推 2 m/s");
+        in.bump = -1.5;
+        s = flight_step(s, in, params, 1.0 / 60.0);
+        check_near(s.vy, -1.5, 1e-9, "颠簸：下一帧换成往下推");
+        in.bump = 0.0;
+        in.lift = 1.0;
+        for (int k = 0; k < 60 * 10; k++) {
+            s = flight_step(s, in, params, 1.0 / 60.0);
+        }
+        check_near(s.vy, params.max_climb, 0.01, "颠簸停了：升降照舵");
+    }
+    {
+        // y < 0 的气温取 y = 0 处的（D13：云带是一层逆温）；y > 0 照直减率
+        Climate c;
+        if (load_2051_climate(c)) {
+            const WeatherModel wx(c, 0.0, 2050.0);
+            const double x = 12000.0, z = -8000.0, day = 3.5;
+            const double t0 = wx.sample(day, x, z, 0.0).temp_c;
+            check_near(wx.sample(day, x, z, -3000.0).temp_c, t0, 1e-12, "y = −3000（云带顶上）的气温同 y = 0");
+            check_near(wx.sample(day, x, z, -5585.0).temp_c, t0, 1e-12, "海面上 15 m 的气温同 y = 0（生成器的海面温度）");
+            check(wx.sample(day, x, z, 1000.0).temp_c < t0 - 3.0, "y > 0 照直减率往上减");
+            check_near(wx.mean_temperature(day, -4400.0), wx.mean_temperature(day, 0.0), 1e-12, "日均气温：y < 0 同 y = 0");
+            check_near(wx.elevation(day, -4400.0).temp_mean, wx.elevation(day, 0.0).temp_mean, 1e-12, "海拔表：y < 0 同 y = 0");
+            check(wx.sample(day, x, z, -5300.0).fog <= wx.sample(day, x, z, -4400.0).fog, "云底下不在云海漫顶的雾里");
+            std::printf("  气温：y = 0 %.1f °C、−3000 %.1f、−5585 %.1f、+1000 %.1f\n", t0, wx.sample(day, x, z, -3000.0).temp_c, wx.sample(day, x, z, -5585.0).temp_c,
+                    wx.sample(day, x, z, 1000.0).temp_c);
+        }
+    }
+    {
+        // 白礁：按行星包，老岛群附近多、别处零星；烘成等经纬的一张与逐点的式子对得上
+        const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
+        PlanetData pd;
+        std::string err;
+        if (!pd.load_files(dir, err)) {
+            check(false, "行星包读得出：" + err);
+            return;
+        }
+        const ReefRules rr;
+        int oldest = -1, youngest = -1;
+        for (int k = 0; k < pd.node_count(); k++) {
+            if (oldest < 0 || pd.node(k).age > pd.node(oldest).age) {
+                oldest = k;
+            }
+            if (youngest < 0 || pd.node(k).age < pd.node(youngest).age) {
+                youngest = k;
+            }
+        }
+        int by_age[5] = { 0, 0, 0, 0, 0 };
+        for (int k = 0; k < pd.node_count(); k++) {
+            by_age[std::clamp(int(pd.node(k).age * 5.0), 0, 4)]++;
+        }
+        std::printf("  岛龄：0–0.2 %d 群、0.2–0.4 %d、0.4–0.6 %d、0.6–0.8 %d、0.8–1 %d\n", by_age[0], by_age[1], by_age[2], by_age[3], by_age[4]);
+        const double d_old = reef_density_at(pd, pd.node(oldest).lat, pd.node(oldest).lon, rr);
+        const double d_young =reef_density_at(pd, pd.node(youngest).lat, pd.node(youngest).lon, rr);
+        const double d_home = reef_density_at(pd, pd.node(2051).lat, pd.node(2051).lon, rr);
+        const auto t0 = std::chrono::steady_clock::now();
+        std::vector<uint8_t> tex;
+        bake_reef_density(pd, 1024, 512, tex, rr);
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        double worst = 0.0, sum = 0.0, over = 0.0, area = 0.0;
+        for (int r = 0; r < 512; r++) {
+            const double lat = -90.0 + (r + 0.5) * 180.0 / 512;
+            const double wa = std::cos(lat * 3.14159265358979 / 180.0);
+            for (int c = 0; c < 1024; c++) {
+                const double v = tex[size_t(r) * 1024 + size_t(c)] / 255.0;
+                sum += v * wa;
+                over += v > 0.3 ? wa : 0.0;
+                area += wa;
+            }
+        }
+        for (int k = 0; k < 40; k++) {
+            const int r = (k * 37 + 11) % 512, c = (k * 131 + 7) % 1024;
+            const double lat = -90.0 + (r + 0.5) * 180.0 / 512, lon = -180.0 + (c + 0.5) * 360.0 / 1024;
+            worst = std::max(worst, std::abs(tex[size_t(r) * 1024 + size_t(c)] / 255.0 - reef_density_at(pd, lat, lon, rr)));
+        }
+        std::printf("  白礁：最老的群 #%d（岛龄 %.2f）%.2f、最年轻的 #%d（%.2f）%.2f、2051（%.2f）%.2f；全行星平均 %.3f、三成以上的面积 %.1f%%；烘 1024 × 512 %.0f ms\n", oldest,
+                pd.node(oldest).age, d_old, youngest, pd.node(youngest).age, d_young, pd.node(2051).age, d_home, sum / area, 100.0 * over / area, ms);
+        check(d_old > 0.5, "最老的岛群附近白礁多");
+        check(d_young < d_old, "年轻的岛群附近比老的少");
+        check(worst < 0.01, "烘的贴图与逐点的式子对得上（最多差 " + std::to_string(worst) + "）");
+        check(sum / area > rr.base && sum / area < 0.5, "全行星平均：比零星多、远没到处都是");
+    }
+}
+
 int main(int argc, char **argv) {
     // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
     if (argc > 1) {
         const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
-            { "weather_model", test_weather_model }, { "group_weather", test_group_weather } };
+            { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent } };
         for (int k = 1; k < argc; k++) {
             const auto it = only.find(argv[k]);
             if (it != only.end()) {
@@ -6048,6 +6237,7 @@ int main(int argc, char **argv) {
     test_inflate();
     test_weather_pack();
     test_planet_weather();
+    test_sea_descent();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

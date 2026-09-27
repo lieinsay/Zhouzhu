@@ -49,8 +49,39 @@ FlightState flight_step(const FlightState &p_state, const FlightInput &p_input, 
     s.vx = v_fwd * fx + v_side * rx;
     s.vz = v_fwd * fz + v_side * rz;
 
-    s.vy = approach(s.vy, lift * p_params.max_climb, p_params.climb_tau, p_dt);
+    // 升降：去掉上一刻的颠簸再追舵，这一刻的颠簸直接叠上去
+    const double climb = approach(s.vy - s.bump, lift * p_params.max_climb, p_params.climb_tau, p_dt);
+    s.bump = std::isfinite(p_input.bump) ? p_input.bump : 0.0;
+    s.vy = climb + s.bump;
     return s;
+}
+
+namespace {
+
+// 一维值噪声：整点上的哈希（−1..1），五次平滑插值
+double bump_hash(int64_t p_i, uint64_t p_seed) {
+    uint64_t h = uint64_t(p_i) * 0x9E3779B97F4A7C15ull ^ (p_seed + 0x632BE59BD9B4E019ull);
+    h ^= h >> 31;
+    h *= 0xBF58476D1CE4E5B9ull;
+    h ^= h >> 29;
+    return double(h >> 11) * (2.0 / 9007199254740992.0) - 1.0;
+}
+
+double bump_noise(double p_x, uint64_t p_seed) {
+    const double i = std::floor(p_x);
+    const double f = p_x - i;
+    const double u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    const double a = bump_hash(int64_t(i), p_seed), b = bump_hash(int64_t(i) + 1, p_seed);
+    return a + (b - a) * u;
+}
+
+} // namespace
+
+double flight_bump(double p_time_s, uint64_t p_seed) {
+    if (!std::isfinite(p_time_s)) {
+        return 0.0;
+    }
+    return 0.7 * bump_noise(p_time_s * 0.8, p_seed) + 0.3 * bump_noise(p_time_s * 2.1 + 17.3, p_seed ^ 0x5851F42D4C957F2Dull);
 }
 
 namespace {

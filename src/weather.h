@@ -214,10 +214,14 @@ public:
     const ClimateDay &day(long long p_day) const;
     std::string season_name(int p_season) const;
 
+    // p_h 是游戏 y（云带顶以上的米）。y < 0（云带里、云底下、海面上）的气温一律取 y = 0 处的值（D13：云带是一层逆温，
+    // 把海和岛上的空气隔开，不按直减率往下推；y = 0 就是生成器的「海面温度」）；积雪、物候这些慢变量同样按 y = 0 取
     WeatherSample sample(double p_day, double p_x, double p_z, double p_h) const;
     ElevationState elevation(double p_day, double p_h) const;
-    // 日均气温（不含日变化、不含雨区降温），给庄稼与作息
+    // 日均气温（不含日变化、不含雨区降温），给庄稼与作息；y < 0 同上取 y = 0 处的
     double mean_temperature(double p_day, double p_h) const;
+    // 取气温用的高：y < 0 一律按 y = 0（D13）
+    static double air_height(double p_h) { return p_h > 0.0 ? p_h : 0.0; }
     // 积雪（> 1 mm 水当量）最低处的海拔；哪儿都没雪返回 1e9
     double snow_line(double p_day) const;
     // 负积温 ≥ p_threshold 最低处的海拔（p_threshold 8 = 溪涧冻，20 = 河冻）；哪儿都不冻返回 1e9
