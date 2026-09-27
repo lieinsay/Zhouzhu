@@ -433,6 +433,7 @@ bool PlanetHost::map_shift_begin(MapShift &r_shift) {
     r_shift.point = [s](const Vector3 &p) { return s.point(p); };
     r_shift.rotation = [s](const Vector3 &p) { return s.rotation(p); };
     r_shift.yaw = [s](const Vector3 &p) { return s.yaw(p); };
+    r_shift.regroup = s.from_node != s.to_node;
     return true;
 }
 

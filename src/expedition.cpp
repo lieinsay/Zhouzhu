@@ -660,7 +660,7 @@ bool Expedition::apply_shift(const std::vector<Vector3 *> &p_extra) {
     wild_frame = ~uint64_t(0);
     wild_ok = false;
     // 跑货的村仓与航线只在一个岛群里：接着的单子送不到了，箱子算自家的货
-    if (freight.is_active()) {
+    if (s.regroup && freight.is_active()) {
         freight.void_order();
         say(String(U"换了岛群：这单托运作废，船上的箱子算自家的货"));
     }

@@ -58,6 +58,13 @@ struct GroupShift {
 //   离开的群的账另存进世界存档目录（GroupProvider::save_memory），退出再进还在；换场景、关窗前 save_world 把载入着的群的账也存下；
 //   跨群瞬移（jump_*）：要去的群先要到包（按需生成）、在后台载入、升到细版、把落点周围的地面块先建好，好了再定下换锚（编排接着换人船、摆到落点）；
 //   换锚的规矩补上「挨着的群」：脚下是别的群的地、不是锚群的地，就换过去（不等云海上空、不看回滞）；两群的地叠着的地方不换。
+// 锚跟着人走（god 飞到高空绕着行星转、再落地时查出来的：原来只在细版的群之间换锚，高空巡航时一群也进不了细版，锚一直是出发那一群，
+// 人在它的平面里跑出几千上万公里、一圈下来平面坐标 4 万公里——超过 AEQD 的对跖点，画面弯曲的展开式失效、锚群的地在平面里够不着）：
+//   平面坐标规范化：焦点离锚群心远过对跖点（πR）就「换到锚群自己」（rebase_point(a, a, p) 给出同一点在对跖点以内的写法），坐标不超过半圈；
+//   远离锚群时换到近的群：焦点离锚群的陆地远过 far_anchor_m、平着挪得比 far_anchor_speed 慢（停下、往下落、开船），
+//   就挑认得的群里离焦点的陆地最近的（比锚群近 far_anchor_gain_m 以上）载入、升细版、换过去——不看脚下有没有地；
+//   焦点下面最近的那一群还没有包就向 GroupProvider 要（它比认得的都近、正在生成，就等它生成好了直接换过去，不先载入远处的一群）。
+//   高空巡航时只做规范化，停下来、慢下来再换，免得一路上一群群地载入。
 class GroupStream : public godot::Node3D {
     GDCLASS(GroupStream, godot::Node3D)
 
@@ -112,6 +119,9 @@ private:
     double detail_in = 30000.0, detail_out = 40000.0;
     double near_in = 55000.0, near_out = 70000.0;
     double shift_margin = 2000.0;
+    double far_anchor_m = 150000.0;
+    double far_anchor_gain_m = 50000.0;
+    double far_anchor_speed = 3000.0;
     double check_interval = 0.25;
     double place_step = 200.0;
     int max_detail = 2;
@@ -129,6 +139,17 @@ private:
     bool has_focus = false;
     double since_check = 1e9;
     int shifts = 0;
+    int rebases = 0; // 平面坐标规范化（换到锚群自己）几次
+    int far_shifts = 0; // 远离锚群时换到近的群几次
+    int far_target = -1; // 为了远离锚群时换过去而载入的那一群（下标）
+    double sim_time = 0.0; // 累计的 _process 时间（秒；焦点平着挪多快按它，不按真实时间：无头下模拟比真实快）
+    PlanetVec speed_ref; // 上一回量速度时焦点在行星系里的方向（单位向量）
+    double speed_ref_t = -1.0;
+    double focus_speed = 0.0; // 焦点平着挪多快（米 / 秒，按真球面，换锚不跳）
+    void measure_speed();
+    bool canonical_focus() const; // 焦点在锚群平面里没超过对跖点
+    void update_far_anchor();
+    void drop_far_target();
     int loads = 0, unloads = 0;
     // 行星天气场（行星计划 P5）：PlanetView 读好了逐日天气包，就挂到载入了的各群的天气模型上（群与群之间的天气、云团从场里取）
     void attach_weather();
@@ -244,8 +265,9 @@ public:
     SiteStream *get_group_sites(int p_node) const;
     Hinterland *get_group_hinterland(int p_node) const;
     int get_shift_count() const { return shifts; }
+    int get_rebase_count() const { return rebases; } // 平面坐标规范化了几次（锚没换）
     int get_graveyard_size() const { return int(graveyard.size()); } // 还没拆完的节点（一群的 World、村子……各算一个）
-    godot::Dictionary get_stats() const; // { groups, anchor, shifts, loads, unloads, detail, near }
+    godot::Dictionary get_stats() const; // { groups, anchor, shifts, rebases, far_shifts, far_target, focus_speed, loads, unloads, detail, near }
 
     void set_auto_shift(bool p_value) { auto_shift = p_value; }
     bool get_auto_shift() const { return auto_shift; }
@@ -271,6 +293,12 @@ public:
     double get_near_out() const { return near_out; }
     void set_shift_margin(double p_value) { shift_margin = p_value; }
     double get_shift_margin() const { return shift_margin; }
+    void set_far_anchor_m(double p_value) { far_anchor_m = p_value; }
+    double get_far_anchor_m() const { return far_anchor_m; }
+    void set_far_anchor_gain_m(double p_value) { far_anchor_gain_m = p_value; }
+    double get_far_anchor_gain_m() const { return far_anchor_gain_m; }
+    void set_far_anchor_speed(double p_value) { far_anchor_speed = p_value; }
+    double get_far_anchor_speed() const { return far_anchor_speed; }
 };
 
 VARIANT_ENUM_CAST(GroupStream::Tier);

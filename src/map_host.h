@@ -50,6 +50,7 @@ struct MapShift {
     std::function<godot::Vector3(const godot::Vector3 &)> point;
     std::function<godot::Basis(const godot::Vector3 &)> rotation;
     std::function<double(const godot::Vector3 &)> yaw;
+    bool regroup = true; // 换到了别的岛群（false：平面坐标规范化，还在同一群的平面里——跑货的单子照旧）
 };
 
 // 地图宿主：玩家编排（Expedition）只认它。一张地图要让所有玩法跑起来，最少回答这些：

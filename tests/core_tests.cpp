@@ -5032,6 +5032,44 @@ void test_planet_frame() {
         check(std::abs(yaw.y - 1.0) < 1e-6, "换锚的转动只绕竖直轴（上还是上）");
         check((rebase_point(b, a, cam_b) - cam_a).length() < 1e-3, "换锚往返回到原处");
     }
+    // 平面坐标规范化（god 高空绕行星转查出来的）：换到锚群自己 = 同一个真球面点在对跖点（πR）以内的写法；没过对跖点的不变；
+    // 刚过对跖点 δ（游戏里每帧都查，δ 不过一帧走的几公里）换成离群心 πR − δ、方位反过来：转动近乎不转（朝向、视线不跳），离群心的方向走一步在真空间里一样；
+    // 整整一圈（数学上；游戏里到不了）又回到群心附近。对跖点附近平面在真球面上横着压扁（sinθ/θ）、过了对跖点还是镜像的，横着走一步没有对应的转动，只比离群心的方向
+    {
+        const double half = 3.14159265358979323846 * a.radius;
+        const PlanetVec near_p(3.0e6, 5.0e5, -4.0e6);
+        check((rebase_point(a, a, near_p) - near_p).length() < 1e-3, "规范化：对跖点以内的点不变（5,000 km 处差 < 1 mm）");
+        double pos_err = 0.0, radial_err = 0.0, yaw_err = 0.0, len_err = 0.0;
+        const auto angle = [](const PlanetVec &p_u, const PlanetVec &p_v) {
+            return std::atan2(p_u.cross(p_v).length(), p_u.dot(p_v));
+        };
+        for (int k = 0; k < 8; k++) {
+            const double az = 0.3 + k * 0.785, e = std::sin(az), n = std::cos(az);
+            for (double s : { half + 1000.0, half + 5000.0, 2.0 * half + 30000.0 }) {
+                const PlanetVec p(e * s, 5.0e5, -n * s);
+                const PlanetVec q = rebase_point(a, a, p);
+                const double sq = std::hypot(q.x, q.z);
+                const double want = std::abs(std::remainder(s, 2.0 * half));
+                len_err = std::max(len_err, std::abs(sq - want));
+                pos_err = std::max(pos_err, (a.to_planet(q) - a.to_planet(p)).length());
+                check(sq <= half + 1.0 && std::abs(q.y - p.y) < 1e-3, "规范化：换过去在对跖点以内、高度不变");
+                if (s > 2.0 * half) {
+                    continue;
+                }
+                const PlanetBasis r = rebase_rotation(a, a, p);
+                yaw_err = std::max(yaw_err, std::abs(std::atan2(-r.cols[0].z, r.cols[0].x)));
+                const PlanetVec out(e, 0.0, -n);
+                const auto step = [&](const PlanetVec &p_from, const PlanetVec &p_dir) { return a.to_planet(p_from + p_dir) - a.to_planet(p_from); };
+                radial_err = std::max(radial_err, angle(step(p, out), step(q, r.apply(out))));
+            }
+        }
+        std::printf("  规范化：离群心差 %.3f m、真球面位置差 %.3f mm；刚过对跖点换过去转了 %.4f°、离群心走一步的方向差 %.4f°\n", len_err, pos_err * 1000.0,
+                yaw_err * 57.29578, radial_err * 57.29578);
+        check(len_err < 1.0, "规范化：离群心 = 走过的大圆距离对一圈取余（差 < 1 m）");
+        check(pos_err < 0.01, "规范化：真球面上是同一点（差 < 1 cm）");
+        check(yaw_err < 0.5 / 57.29578, "规范化：刚过对跖点换过去，朝向几乎不转（< 0.5°，视线不跳）");
+        check(radial_err < 1e-3, "规范化：离群心的方向走一步在真空间里一样（差 < 0.06°）");
+    }
 }
 
 // 离开的岛群的账存成文本（行星计划 P4：进世界存档目录，退出再进还在）：村的账（多行、带制表符）、农田的地、采场存量、散布物的采空账，读回逐位一样

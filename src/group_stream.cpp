@@ -159,6 +159,12 @@ void GroupStream::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_near_out"), &GroupStream::get_near_out);
     ClassDB::bind_method(D_METHOD("set_shift_margin", "value"), &GroupStream::set_shift_margin);
     ClassDB::bind_method(D_METHOD("get_shift_margin"), &GroupStream::get_shift_margin);
+    ClassDB::bind_method(D_METHOD("set_far_anchor_m", "value"), &GroupStream::set_far_anchor_m);
+    ClassDB::bind_method(D_METHOD("get_far_anchor_m"), &GroupStream::get_far_anchor_m);
+    ClassDB::bind_method(D_METHOD("set_far_anchor_gain_m", "value"), &GroupStream::set_far_anchor_gain_m);
+    ClassDB::bind_method(D_METHOD("get_far_anchor_gain_m"), &GroupStream::get_far_anchor_gain_m);
+    ClassDB::bind_method(D_METHOD("set_far_anchor_speed", "value"), &GroupStream::set_far_anchor_speed);
+    ClassDB::bind_method(D_METHOD("get_far_anchor_speed"), &GroupStream::get_far_anchor_speed);
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "planet_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "PlanetView"), "set_planet_path", "get_planet_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "home_path"), "set_home_path", "get_home_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "far_groups_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "FarGroups"), "set_far_groups_path", "get_far_groups_path");
@@ -170,6 +176,9 @@ void GroupStream::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "near_in", PROPERTY_HINT_RANGE, "1000,300000,100,suffix:m"), "set_near_in", "get_near_in");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "near_out", PROPERTY_HINT_RANGE, "1000,300000,100,suffix:m"), "set_near_out", "get_near_out");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "shift_margin", PROPERTY_HINT_RANGE, "0,20000,10,suffix:m"), "set_shift_margin", "get_shift_margin");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "far_anchor_m", PROPERTY_HINT_RANGE, "10000,2000000,1000,suffix:m"), "set_far_anchor_m", "get_far_anchor_m");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "far_anchor_gain_m", PROPERTY_HINT_RANGE, "0,1000000,1000,suffix:m"), "set_far_anchor_gain_m", "get_far_anchor_gain_m");
+    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "far_anchor_speed", PROPERTY_HINT_RANGE, "0,1000000,10,suffix:m/s"), "set_far_anchor_speed", "get_far_anchor_speed");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_shift"), "set_auto_shift", "get_auto_shift");
     ADD_SIGNAL(MethodInfo("anchor_changed", PropertyInfo(Variant::INT, "from_node"), PropertyInfo(Variant::INT, "to_node")));
 
@@ -514,8 +523,14 @@ void GroupStream::_process(double p_delta) {
         focus = a->world->get_focus(); // 地图宿主还没喂过：用锚群自己的焦点（Expedition 直接接 World 时）
     }
     since_check += p_delta;
+    sim_time += p_delta;
+    // 平面坐标过了对跖点：每帧都看（高空一秒几百公里，等 0.25 s 一回的分档会越过几十公里）
+    if (auto_shift && pending < 0 && a && a->world && !canonical_focus()) {
+        pending = anchor;
+    }
     if (since_check >= check_interval) {
         since_check = 0.0;
+        measure_speed();
         update_tiers();
         if (auto_shift) {
             update_anchor_choice();
@@ -888,6 +903,11 @@ void GroupStream::update_anchor_choice() {
     if (pending >= 0 || !a || !a->world) {
         return;
     }
+    // 平面坐标规范化：焦点在锚群平面里远过对跖点（高空绕着行星转了大半圈）——换到锚群自己，坐标回到半圈以内（编排照换锚那样换人船）
+    if (!canonical_focus()) {
+        pending = anchor;
+        return;
+    }
     Group *best = nullptr;
     for (auto &gp : groups) {
         Group &g = *gp;
@@ -898,26 +918,104 @@ void GroupStream::update_anchor_choice() {
             best = &g;
         }
     }
-    if (!best) {
+    if (best) {
+        const PlanetVec q = to_group(*best, focus);
+        const bool on_anchor = !std::isnan(a->world->get_surface_height(focus.x, focus.z));
+        const bool on_best = !std::isnan(best->world->get_surface_height(q.x, q.z));
+        // 行星计划 P4 补的规矩（挨着的群）：脚下是别的群的地、不是锚群的地——换过去，不等云海上空、不看回滞（粗版量的陆地距离差一两公里，真地形说了算）；
+        // 两群的地叠着（脚下两群都有地）不换，锚群照旧
+        if (on_best && !on_anchor) {
+            pending = index_of(best);
+            return;
+        }
+        // 只在云海上空换：脚下两群都没有地
+        if (best->land_distance + shift_margin < a->land_distance && !on_anchor && !on_best) {
+            pending = index_of(best);
+            return;
+        }
+    }
+    update_far_anchor();
+}
+
+bool GroupStream::canonical_focus() const {
+    const Group *a = anchor_group();
+    if (!a) {
+        return true;
+    }
+    // 过了对跖点 1 km 才换（回滞：换过去以后在对跖点以内 1 km，要再往外挪 2 km 才又换）
+    return std::hypot(double(focus.x), double(focus.z)) <= Math_PI * a->frame.radius + 1000.0;
+}
+
+void GroupStream::measure_speed() {
+    const Group *a = anchor_group();
+    if (!a || !focus.is_finite()) {
         return;
     }
-    const PlanetVec q = to_group(*best, focus);
-    const bool on_anchor = !std::isnan(a->world->get_surface_height(focus.x, focus.z));
-    const bool on_best = !std::isnan(best->world->get_surface_height(q.x, q.z));
-    // 行星计划 P4 补的规矩（挨着的群）：脚下是别的群的地、不是锚群的地——换过去，不等云海上空、不看回滞（粗版量的陆地距离差一两公里，真地形说了算）；
-    // 两群的地叠着（脚下两群都有地）不换，锚群照旧
-    if (on_best && !on_anchor) {
-        pending = index_of(best);
+    // 在行星系里量（换锚、规范化时平面坐标跳，真球面上的位置不跳）；只看水平
+    const PlanetVec u = a->frame.to_planet(PlanetVec(focus.x, 0.0, focus.z)).normalized();
+    if (speed_ref_t >= 0.0 && sim_time > speed_ref_t) {
+        focus_speed = (u - speed_ref).length() * a->frame.radius / (sim_time - speed_ref_t);
+    }
+    speed_ref = u;
+    speed_ref_t = sim_time;
+}
+
+void GroupStream::drop_far_target() {
+    if (Group *t = group_at(far_target)) {
+        if (t->node != jump_node) {
+            t->pinned = false; // 不再为它留细版：照距离分档（多半降回远景）
+        }
+    }
+    far_target = -1;
+}
+
+void GroupStream::update_far_anchor() {
+    Group *a = anchor_group();
+    // 离锚群的陆地还不远、平着挪得快（高空巡航：一路上一群群地载入不划算，只做规范化）、正在瞬移：不换
+    if (!a || jump_node >= 0 || a->land_distance <= far_anchor_m || focus_speed >= far_anchor_speed) {
+        drop_far_target();
         return;
     }
-    if (best->land_distance + shift_margin >= a->land_distance) {
+    // 认得的群里离焦点的陆地最近的（按真球面量，update_tiers 刚量过）
+    Group *best = nullptr;
+    for (auto &gp : groups) {
+        Group &g = *gp;
+        if (&g != a && (!best || g.land_distance < best->land_distance)) {
+            best = &g;
+        }
+    }
+    // 焦点下面最近的那一群还没有包：向 GroupProvider 要（生成好了登记进来，下一回就挑得上它）；
+    // 它比认得的群都近、正在生成，就等它，不先载入远处的一群再换一回
+    if (provider && planet) {
+        double lat = 0.0, lon = 0.0;
+        a->frame.flat_latlon(pv(focus), lat, lon);
+        const PlanetData *pd = planet->get_planet();
+        const int n = pd->nearest_node(lat, lon);
+        if (n >= 0 && !find(n) && !adding.count(n) && provider->can_generate()) {
+            const int state = provider->request(n, GroupProvider::NEAR);
+            const double d = great_circle_m(lat, lon, pd->node(n).lat, pd->node(n).lon, a->frame.radius);
+            if ((state == GroupProvider::QUEUED || state == GroupProvider::RUNNING) && (!best || d + far_anchor_gain_m < best->land_distance)) {
+                drop_far_target();
+                return;
+            }
+        }
+    }
+    if (!best || best->land_distance + far_anchor_gain_m > a->land_distance) {
+        drop_far_target();
         return;
     }
-    // 只在云海上空换：脚下两群都没有地
-    if (on_anchor || on_best) {
-        return;
+    if (group_at(far_target) != best) {
+        drop_far_target();
+        far_target = index_of(best);
+        best->pinned = true; // update_tiers 给它细版：先后台载入，载入完了挂上村子、散布
+        if (!best->world) {
+            load_world(*best, false);
+            best->tier = TIER_NEAR;
+        }
     }
-    pending = index_of(best);
+    if (best->world && best->world->is_loaded() && best->tier == TIER_DETAIL) {
+        pending = far_target; // 不看脚下有没有地：离锚群已经很远了
+    }
 }
 
 bool GroupStream::begin_shift(GroupShift &r_shift) const {
@@ -940,6 +1038,17 @@ void GroupStream::commit_shift() {
         return;
     }
     focus = v3(rebase_point(a->frame, b->frame, pv(focus)));
+    if (a == b) {
+        // 平面坐标规范化（换到锚群自己）：锚、碰撞、PlanetView 都不动；邻群按新写法的焦点重摆
+        pending = -1;
+        rebases++;
+        update_placements(true);
+        return;
+    }
+    if (group_at(far_target) == b) {
+        far_shifts++;
+        drop_far_target(); // 成了锚：锚本来就是细版
+    }
     anchor = pending;
     pending = -1;
     // 新锚归位、挂上碰撞；旧锚按焦点摆上刚体变换、撤掉碰撞
@@ -1315,6 +1424,10 @@ Dictionary GroupStream::get_stats() const {
     d["groups"] = int(groups.size());
     d["anchor"] = get_anchor_node();
     d["shifts"] = shifts;
+    d["rebases"] = rebases;
+    d["far_shifts"] = far_shifts;
+    d["far_target"] = group_at(far_target) ? group_at(far_target)->node : -1;
+    d["focus_speed"] = focus_speed;
     d["loads"] = loads;
     d["unloads"] = unloads;
     d["detail"] = detail;
