@@ -2043,7 +2043,8 @@
       "sources": [
         "docs/PLAN-PLANET.md"
       ],
-      "since": "e63"
+      "since": "e63",
+      "parent": "skyisle-core"
     },
     {
       "id": "skyisle-lod",
@@ -2054,7 +2055,8 @@
       "sources": [
         "docs/PLAN-PLANET.md"
       ],
-      "since": "e63"
+      "since": "e63",
+      "parent": "skyisle-core"
     },
     {
       "id": "export-planet",
@@ -2539,7 +2541,7 @@
     {
       "id": "group-provider",
       "label": "GroupProvider 岛群包从哪来",
-      "detail": "仓库 res://worlds（只算 seed42 的世界）→ 世界存档目录 groups/<节点> → 后台调生成器；同时一个生成进程，瞬移 > 焦点 60 km > 船头 150 km（预取）；缓存键 stamp.json 只读出来；生存世界另补 600 km 内的粗版；进树时把 pending 的世界配到场景各节点。",
+      "detail": "仓库 res://worlds（只算 seed42 的世界）→ 世界存档目录 groups/<节点> → 后台生成（P6e 起在进程内：生成器的 C++ 核心库；backend = python 时照旧起子进程）；同时一件生成岛群的活，瞬移 > 焦点 60 km > 船头 150 km（预取）；缓存键 stamp.json 只读出来；生存世界另补 600 km 内的粗版；进树时把 pending 的世界配到场景各节点。",
       "tag": "场景角色",
       "evidence": "planet_jump_e2e、planet_world_e2e",
       "sources": [
@@ -2551,7 +2553,7 @@
     {
       "id": "gen-process",
       "label": "GenProcess 生成子进程",
-      "detail": "项目设置 zhouzhu/generator/python、root、run（环境变量能盖）；OS::create_process 起 tools/zhouzhu_gen.py，读状态文件新写完的整行（一件活一个文件），退出没说好了、超时都算失败。P6e 换成进程内 C++ 时换的就是这一层。",
+      "detail": "项目设置 zhouzhu/generator/python、root、run（环境变量能盖）；OS::create_process 起 tools/zhouzhu_gen.py，读状态文件新写完的整行（一件活一个文件），退出没说好了、超时都算失败。P6e 起退成开发时的对照：只在项目设置 zhouzhu/generator/backend = python 时由 GenJob 调。",
       "tag": "引擎构件",
       "sources": [
         "src/gen_process.h",
@@ -2562,7 +2564,7 @@
     {
       "id": "zhouzhu-gen",
       "label": "生成包装脚本 zhouzhu_gen.py",
-      "detail": "group / lods / world 三个子命令；在自己的进程里 import 生成器与导出脚本、不画预览图、不写字节码；包先写 .tmp 再改名，stamp.json 记缓存键；进度一行一个 JSON；写粗版时顺带写 lods/<节点>.wx（P5 的逐日天气，一条）。",
+      "detail": "group / lods / world 三个子命令；在自己的进程里 import 生成器与导出脚本、不画预览图、不写字节码；包先写 .tmp 再改名，stamp.json 记缓存键；进度一行一个 JSON；写粗版时顺带写 lods/<节点>.wx。P6e 起游戏默认不调它，留作对照（写出的与进程内逐字节相同）。",
       "tag": "工具",
       "evidence": "seed42 #3000 的五份与 skyisle island + export_skyisle 逐字节相同；一群 3.4 s、新世界 4.9 s",
       "sources": [
@@ -2945,6 +2947,141 @@
       ],
       "since": "e98",
       "parent": "planet-shots"
+    },
+    {
+      "id": "export-planet-config",
+      "label": "config.tsv 生成器的配置",
+      "detail": "engine.planet_config / island/engine.flat_config 展平 config.resolved.toml：一行「表 类型 键 值」，表 planet / island / engine，数写 Python 的 repr；游戏唯一不能自己算的输入，升级子模块后重导一回。仓库里的 seed42 包补上，剧情世界与新建世界用同一份。",
+      "tag": "工具",
+      "evidence": "seed42 的快照与当前 default.toml 展平后逐键相同；新世界照抄的与 Python 那条路写的逐字节相同",
+      "sources": [
+        "tools/export_planet.py",
+        "game/planet/seed42/config.tsv"
+      ],
+      "since": "e99",
+      "parent": "export-planet"
+    },
+    {
+      "id": "skyisle-core",
+      "label": "生成器核心库（子模块）",
+      "detail": "extern/skyisle-gen 子模块（URL GitHub，指向本地分支 island-rivers-resources-settle 的 ef3525a，还没推送：先推它再推 Zhouzhu），CMake 只编 core/ 的静态库 skyisle_core：行星层 ①–⑨（planet::run、run_society、planet_view、node_inputs、apply_polity）与第三层（island::generate、block_reduce）；浮点照它自己的 /fp:precise、不开 AVX2，它 PUBLIC 的编译选项不传给游戏；Debug 配置下也 /O2。生成器的代码一行没改。",
+      "tag": "外部：skyisle-gen",
+      "evidence": "ctest skyisle_core_selftest（随机流对 numpy 的参考值）；seed42 行星层与 2051 / 2050 与仓库里的包逐字节相同",
+      "sources": [
+        "extern/skyisle-gen/core/CMakeLists.txt",
+        "CMakeLists.txt"
+      ],
+      "since": "e99"
+    },
+    {
+      "id": "group-provider-inproc",
+      "label": "进程内生成",
+      "detail": "配置取行星包里的 config.tsv、种子取世界的；生成岛群进 PlanetJobs（瞬移要的排在一切前面、焦点 60 km 内的排在 20 km 内的地面块之后、预取在 200 km 内的活之后）；补粗版那条活与备行星层各开一条线程（进任务池会饿住）；有存档目录的场景在岛群流就绪 5 s 后先备好行星层。can_generate 只看有没有 config.tsv。",
+      "tag": "场景角色",
+      "evidence": "Python 与生成器的路径设成无效的：planet_jump_e2e、planet_world_e2e PASS",
+      "sources": [
+        "src/group_provider.cpp"
+      ],
+      "since": "e101",
+      "parent": "group-provider"
+    },
+    {
+      "id": "gen-job",
+      "label": "GenJob 生成的活",
+      "detail": "换下 GenProcess 这一层：交一件活、读进度（阶段 / 进度 / 说明，好了 / 出错）、拿结果文件；进程内的活放进任务池（新种类 GENERATE）或自己开线程，进度经线程安全的 GenStatus 交回主线程，粗版一群一条 lod_done / lod_failed（同状态行）；backend = python 时包着 GenProcess。",
+      "tag": "引擎构件",
+      "sources": [
+        "src/gen_job.h",
+        "src/gen_job.cpp",
+        "src/job_pool.h"
+      ],
+      "since": "e101"
+    },
+    {
+      "id": "gen-core",
+      "label": "进程内生成的编排",
+      "detail": "一个世界的行星层（planet::run → run_society，⑧ 跳过 → planet_view）按配置与种子缓存两份（约 50 MB）；make_group：拆开 island::generate 的几步、水系之后顺带取粗版，写五份 + stamp.json（先 .tmp 再改名）；make_lod；make_world：planet/ 四份 → 出生群（⑨ 开局候选 A）→ world.json。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测 gen_seed42：拆开来生成与 island::generate、顺带的粗版与单跑粗版逐字节相同；一群中位 0.80 s、最长 2.43 s（Release、4 线程），新建世界 2 s",
+      "sources": [
+        "src/gen_core.h",
+        "src/gen_core.cpp",
+        "cmake/zhouzhu_gen/CMakeLists.txt"
+      ],
+      "since": "e101"
+    },
+    {
+      "id": "gen-export",
+      "label": "生成器产物 → 游戏文件（C++）",
+      "detail": "export_skyisle.py、export_planet.py 连同生成器前端的拼装与译码移成 C++：terrain.bin（按汇流反推流向、虚空格取最近陆地）、world.json、sites.tsv、resources.tsv、weather.tsv、lods.bin、weather.bin / .wx（zlib 1.3.1 level 9）、planet.bin（as_column 的收窄照抄）；与 Python 那条路逐字节相同。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "97 群 × 7 份、3 个新世界、游戏里生成的 42 份与 Python 那条路比，0 份不同；Debug 与 Release 相同",
+      "sources": [
+        "src/gen_export.h",
+        "src/gen_export.cpp",
+        "extern/zlib"
+      ],
+      "since": "e101"
+    },
+    {
+      "id": "zhouzhu-gen-cli",
+      "label": "命令行 zhouzhu_gen",
+      "detail": "与游戏同一份代码（group / lods / world / planet），不要 Godot、不要 Python：逐字节对照、量速度、离线补包。",
+      "tag": "工具",
+      "sources": [
+        "tools/zhouzhu_gen.cpp"
+      ],
+      "since": "e101"
+    },
+    {
+      "id": "gen-export-py-format",
+      "label": "Python 的写法",
+      "detail": "repr(float)、format g / .Nf、round、json.dumps(indent=1, ensure_ascii=False)（Windows 上 \\r\\n）、SHA-1。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "与 Python 逐字对过 90 万个数",
+      "sources": [
+        "src/py_format.h",
+        "src/py_format.cpp"
+      ],
+      "since": "e102",
+      "parent": "gen-export"
+    },
+    {
+      "id": "gen-export-scipy",
+      "label": "scipy 的距离变换",
+      "detail": "ni_morphology.c 的 Maurer 特征变换（先逐列、再逐行），并列时挑哪一格与 scipy 相同；binary_erosion。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "与 scipy 1.18 逐格对过 400 张随机图",
+      "sources": [
+        "src/scipy_edt.h",
+        "src/scipy_edt.cpp"
+      ],
+      "since": "e102",
+      "parent": "gen-export"
+    },
+    {
+      "id": "gen-export-shape",
+      "label": "赋存区的长度与走向",
+      "detail": "np.cov + np.linalg.eigh 照原样：均值成对求和、dsyrk 在 2 × n 上按 k 顺序 FMA、LAPACK DSTEQR 的 2 × 2 路（DLAEV2、一次平面旋转、升序换列）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "97 群里没有一处与 numpy 不同",
+      "sources": [
+        "src/gen_export.cpp"
+      ],
+      "since": "e102",
+      "parent": "gen-export"
+    },
+    {
+      "id": "world-session-maker",
+      "label": "新建世界（进程内）",
+      "detail": "行星层 → planet/（planet.bin、0 条的 lods.bin 与 weather.bin、config.tsv）→ 出生群与它的粗版 → world.json（没有 run、多 config）；Release 约 2 s，游戏里（Debug）建世界 3.5 s、4.9 s 能走。",
+      "tag": "引擎构件",
+      "evidence": "planet_world_e2e PASS（Python 路径无效）；种子 2027 / 7 / 31337 与 Python 那条路逐字节相同",
+      "sources": [
+        "src/world_session.cpp"
+      ],
+      "since": "e103",
+      "parent": "world-session"
     }
   ],
   "edges": [
@@ -6296,6 +6433,86 @@
       "from": "planet-shots-sea",
       "to": "atmosphere-under-band",
       "label": "覆盖天气"
+    },
+    {
+      "from": "group-provider-inproc",
+      "to": "gen-job",
+      "label": "一件生成的活",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "gen-job",
+      "to": "planet-jobs",
+      "label": "生成岛群进任务池",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "gen-job",
+      "to": "gen-core",
+      "label": "make_group / make_lod / make_world",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "gen-job",
+      "to": "gen-process",
+      "label": "backend = python 时",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "gen-core",
+      "to": "skyisle-core",
+      "label": "行星层、第三层",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "gen-core",
+      "to": "gen-export",
+      "label": "Group → 文件",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "gen-core",
+      "to": "export-planet-config",
+      "label": "config.tsv",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "gen-export",
+      "to": "skyisle-core",
+      "label": "Group / World 的数",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "zhouzhu-gen-cli",
+      "to": "gen-core",
+      "label": "同一份代码",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "world-session-maker",
+      "to": "gen-job",
+      "label": "make_world",
+      "chains": [
+        "planet"
+      ]
     }
   ],
   "chains": [
@@ -7767,11 +7984,11 @@
     },
     {
       "id": "planet",
-      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外、P2 上到轨道、P3 多岛群与换锚、P4 按需生成、P5 全球天气与风、P7 降到海面）",
-      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。开发者按 F7 从村口一路升到两万公里：天慢慢变暗、地平线弯成一道镶着蓝边的弧，整颗海洋星球盖着云带、缝里露出海，赤道一条永暴带、西北方一个漩涡，岛群像撒在云上的碎点，夜里亮着灯；再一路落回村口，画面和起飞前一样。玩家在 2051 的主码头上船往西南开，114 km 外的 2050 群越飞越近、越近越细：先是低模，再铺出地面，再有村子码头和林子；飞过两群之间的云海时脚下的锚悄悄换到 2050，画面一点不跳；在 2050 的主码头靠泊下船，天与光已经换成那边的，村子按它自己的地方时过日子；一天多后飞回 2051，离开这些时候村子的账补回来了。开发者在 F2 里打开地球仪，8000 个岛群哪一群都能点：没去过的当场生成，两三秒后人就站在那一群的主码头上，脚下、天上、钟点都是那边的；再去一次只要半秒。开发者还能新建一颗随机种子的行星，六七秒后站在出生的岛群上，远处的岛群先是替身、一会儿换成真的样子，退出再进一切都还在。从轨道上往下看，每个岛群上空的云就是它今天的天气：晴着的群只有零星几团，下雨刮风暴的群盖着一大片白；两群之间云、雨、气温、风一路渐变过去，开船从 2051 飞到 2050，天气读数一帧一帧地连着。飞到开阔的云海上，信风带里船往西北漂、西风带里往东漂；闯进赤道永暴带，风暴把船往外推，HUD 报禁航。开船往下穿过云带：云里浓雾、船在颠，云底下是阴天的海，浪一道道推过来、远处躺着惨白的礁，最低停在海面之上 15 m，再升回云带顶以上。",
+      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外、P2 上到轨道、P3 多岛群与换锚、P4 按需生成、P5 全球天气与风、P6e 游戏接入生成器的 C++ 核心、P7 降到海面）",
+      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。开发者按 F7 从村口一路升到两万公里：天慢慢变暗、地平线弯成一道镶着蓝边的弧，整颗海洋星球盖着云带、缝里露出海，赤道一条永暴带、西北方一个漩涡，岛群像撒在云上的碎点，夜里亮着灯；再一路落回村口，画面和起飞前一样。玩家在 2051 的主码头上船往西南开，114 km 外的 2050 群越飞越近、越近越细：先是低模，再铺出地面，再有村子码头和林子；飞过两群之间的云海时脚下的锚悄悄换到 2050，画面一点不跳；在 2050 的主码头靠泊下船，天与光已经换成那边的，村子按它自己的地方时过日子；一天多后飞回 2051，离开这些时候村子的账补回来了。开发者在 F2 里打开地球仪，8000 个岛群哪一群都能点：没去过的当场生成，两三秒后人就站在那一群的主码头上，脚下、天上、钟点都是那边的；再去一次只要半秒。开发者还能新建一颗随机种子的行星，几秒后站在出生的岛群上，远处的岛群先是替身、一会儿换成真的样子，退出再进一切都还在。从轨道上往下看，每个岛群上空的云就是它今天的天气：晴着的群只有零星几团，下雨刮风暴的群盖着一大片白；两群之间云、雨、气温、风一路渐变过去，开船从 2051 飞到 2050，天气读数一帧一帧地连着。飞到开阔的云海上，信风带里船往西北漂、西风带里往东漂；闯进赤道永暴带，风暴把船往外推，HUD 报禁航。开船往下穿过云带：云里浓雾、船在颠，云底下是阴天的海，浪一道道推过来、远处躺着惨白的礁，最低停在海面之上 15 m，再升回云带顶以上。这一切都在游戏进程里算：生成器的核心库编进了游戏，没有 Python 的机器上照样新建世界、去任何一个岛群，写出来的与原先调生成器的那条路一个字节都不差。",
       "date": "2026-09-27",
       "color": "#e5536b",
-      "commits": "a769ef7..0e1d6be",
+      "commits": "a769ef7..ba1ea0d",
       "steps": [
         {
           "text": "生成器第三层：邻群按等效半径分界、各退半道缝，越界的群才重摆",
@@ -7989,13 +8206,23 @@
           ]
         },
         {
-          "text": "选中一群按 T：GroupProvider 找包——仓库里的、世界存档目录里生成过的，都没有就在后台调生成器（一群两三秒），HUD 报进度",
+          "text": "生成器以子模块编进游戏（只编 C++ 核心库）；它展平后的配置 config.tsv 随行星包带着",
+          "nodes": [
+            "skyisle-core",
+            "export-planet-config",
+            "export-planet"
+          ]
+        },
+        {
+          "text": "选中一群按 T：GroupProvider 找包——仓库里的、世界存档目录里生成过的，都没有就在游戏进程里生成（生成器的 C++ 核心库，一群一秒上下），HUD 报进度",
           "nodes": [
             "expedition-jump",
             "group-provider",
-            "gen-process",
-            "zhouzhu-gen",
-            "skyisle-lod"
+            "group-provider-inproc",
+            "gen-job",
+            "gen-core",
+            "skyisle-core",
+            "gen-export"
           ]
         },
         {
@@ -8028,13 +8255,15 @@
           ]
         },
         {
-          "text": "F2「新建世界」：生成器算一颗新行星的行星层、出生的岛群，存进 user://worlds/<世界>/，换进去就能走",
+          "text": "F2「新建世界」：游戏进程里算一颗新行星的行星层、出生的岛群，存进 user://worlds/<世界>/，两三秒后换进去就能走",
           "nodes": [
             "dev-tools-planet",
             "world-session",
-            "zhouzhu-gen",
-            "gen-process",
-            "export-planet",
+            "world-session-maker",
+            "gen-job",
+            "gen-core",
+            "skyisle-core",
+            "gen-export",
             "group-provider"
           ]
         },
@@ -8046,7 +8275,9 @@
             "planet-data-add-lods",
             "planet-globe",
             "planet-view",
-            "group-provider"
+            "group-provider",
+            "group-provider-inproc",
+            "gen-core"
           ]
         },
         {
@@ -8061,7 +8292,8 @@
           "nodes": [
             "planet-weather-pack",
             "export-planet",
-            "zhouzhu-gen"
+            "zhouzhu-gen",
+            "gen-export"
           ]
         },
         {
@@ -8165,6 +8397,27 @@
             "planet-shots-sea",
             "stream-perf"
           ]
+        },
+        {
+          "text": "进程内写出的岛群包、粗版、逐日天气、行星包与 Python 那条路逐字节相同：Python 的写法、scipy 的距离变换、numpy 的协方差与特征分解、zlib 都照原样；命令行 zhouzhu_gen 拿来对照",
+          "nodes": [
+            "gen-export",
+            "gen-export-py-format",
+            "gen-export-scipy",
+            "gen-export-shape",
+            "zhouzhu-gen-cli",
+            "zhouzhu-gen"
+          ]
+        },
+        {
+          "text": "Python 与生成器的路径设成无效的，按需生成与新建世界照样过；Python 那条路（GenProcess → zhouzhu_gen.py）留作开发时的对照",
+          "nodes": [
+            "gen-job",
+            "gen-process",
+            "zhouzhu-gen",
+            "planet-jump-e2e",
+            "planet-world-e2e"
+          ]
         }
       ],
       "nodes": [
@@ -8257,7 +8510,18 @@
         "helm-no-footing",
         "dev-tools-weather",
         "sea-descent-e2e",
-        "planet-shots-sea"
+        "planet-shots-sea",
+        "group-provider-inproc",
+        "gen-job",
+        "gen-core",
+        "skyisle-core",
+        "gen-export",
+        "export-planet-config",
+        "zhouzhu-gen-cli",
+        "world-session-maker",
+        "gen-export-py-format",
+        "gen-export-scipy",
+        "gen-export-shape"
       ]
     }
   ],
@@ -10908,6 +11172,124 @@
         "node": "planet-shots",
         "children": [
           "planet-shots-sea"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e99",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P6e：生成器的 C++ 核心库以子模块进来，行星包导出长出 config.tsv",
+      "summary": "借生成器自己的展平函数把 run 的配置导成 C++ 核心库的扁平键值表，随行星包带着；--config-only 只写它。",
+      "commits": "5329f33, dded17c",
+      "nodes": [
+        "export-planet",
+        "export-planet-config",
+        "skyisle-core"
+      ],
+      "info": {
+        "node": "export-planet",
+        "children": [
+          "export-planet-config"
+        ],
+        "adopted": [],
+        "peers": [
+          "skyisle-core"
+        ]
+      }
+    },
+    {
+      "id": "e100",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P6e：势力范围与粗版如今在生成器的 C++ 核心库里",
+      "summary": "extern/skyisle-gen 只编 core/（静态库 skyisle_core），按它自己的浮点设置编；势力范围与粗版这两样生成器算法如今都在它里面。",
+      "commits": "dded17c",
+      "nodes": [
+        "skyisle-core",
+        "skyisle-territory",
+        "skyisle-lod"
+      ],
+      "info": {
+        "node": "skyisle-core",
+        "children": [],
+        "adopted": [
+          "skyisle-territory",
+          "skyisle-lod"
+        ],
+        "peers": []
+      }
+    },
+    {
+      "id": "e101",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P6e：GroupProvider 长出进程内生成",
+      "summary": "「调 Python」换成进程内 C++：生成岛群进任务池，补粗版、备行星层各开一条线程；Python 那条路留作开发时的对照（项目设置 backend）。",
+      "commits": "fb7d2de, 96082a3",
+      "nodes": [
+        "group-provider",
+        "group-provider-inproc",
+        "gen-job",
+        "gen-core",
+        "gen-export",
+        "zhouzhu-gen-cli"
+      ],
+      "info": {
+        "node": "group-provider",
+        "children": [
+          "group-provider-inproc"
+        ],
+        "adopted": [],
+        "peers": [
+          "gen-job",
+          "gen-core",
+          "gen-export",
+          "zhouzhu-gen-cli"
+        ]
+      }
+    },
+    {
+      "id": "e102",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P6e：转换层照 Python 那边的库一笔一笔来",
+      "summary": "逐字节相同靠这几处：Python 的写法、scipy 的距离变换、numpy 的协方差与特征分解。",
+      "commits": "453a584",
+      "nodes": [
+        "gen-export",
+        "gen-export-py-format",
+        "gen-export-scipy",
+        "gen-export-shape"
+      ],
+      "info": {
+        "node": "gen-export",
+        "children": [
+          "gen-export-py-format",
+          "gen-export-scipy",
+          "gen-export-shape"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e103",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P6e：新建世界在进程内",
+      "summary": "WorldMaker 自己开一条线程跑 make_world，配置取仓库里 seed42 行星包的 config.tsv、照抄进新世界。",
+      "commits": "fb7d2de",
+      "nodes": [
+        "world-session",
+        "world-session-maker"
+      ],
+      "info": {
+        "node": "world-session",
+        "children": [
+          "world-session-maker"
         ],
         "adopted": [],
         "peers": []
