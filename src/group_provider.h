@@ -24,7 +24,8 @@ class PlanetView;
 //   项目设置 zhouzhu/generator/backend = "python" 时照旧起 Python 子进程 tools/zhouzhu_gen.py，留作开发时的对照），有进度、出错报得清楚；
 //   生成好了发 group_ready，GroupStream 接着载入。生成器的配置是行星包里的 config.tsv（剧情 res://planet/seed42，生存世界 <世界>/planet）。
 //   这个世界的行星层（①–⑨，C++ 约 1 s）第一回要生成时在后台算一次、进程里留着；有存档目录的场景一开就先在后台备好。
-// 同时只做一件生成岛群的活：瞬移要的（急用）插到最前，其次是焦点 60 km 内的（快到了），再次是船头方向 150 km 内的（预取，走得快时才预取）。
+// 同时只做一件生成岛群的活：瞬移要的（急用）插到最前，其次是焦点 60 km 内的（快到了），再次是船头方向 150 km 内的（预取，走得快时才预取）；
+// 同一档里离此刻的焦点近的先做，排着的离焦点远过 1000 km 就撤掉（高空飞过去时顺路排上的一长串不挡着落地那一处）。
 // 缓存键（4.7）：包里的 stamp.json 记着生成器的提交号、run 的配置哈希、[island] 段哈希、导出版本；已经生成过的不因换版本重生成，只读出来给地图看。
 // 生存模式（行星包里没有粗版，full_lods = false）：另有一条粗版的活——相机 600 km 内还没有粗版的群由近及远一批批生成（进程内 make_lod / zhouzhu_gen.py lods），
 //   存进存档目录的 lods/<节点>.bin，加进行星包（PlanetView::add_lod_file），远处的替身陆续换成粗版。
@@ -102,9 +103,10 @@ private:
         double t = 0.0;
         godot::Vector3 p;
         int anchor = -1;
+        int shifts = 0; // 换锚、规范化了几次（平面坐标会跳）
     };
     std::vector<Trace> trace; // 焦点近几秒的轨迹：船头往哪
-    int generated = 0, failed = 0, lods_added = 0, prefetched = 0;
+    int generated = 0, failed = 0, lods_added = 0, prefetched = 0, dropped = 0;
     double busy_s = 0.0; // 生成进程一共跑了多久
 
     PlanetView *view() const;
@@ -152,7 +154,7 @@ public:
     // 离开的岛群的账（存档目录的 memory/<节点>.txt）：读 / 写（空的删掉）；没有存档目录时什么都不做
     bool load_memory(int p_node, GroupMemory &r_memory) const;
     void save_memory(int p_node, const GroupMemory &p_memory) const;
-    // { generated, failed, queued, running（在生成的群号，−1 = 没有）, lods_added, lod_running, busy_s, world_dir, story, full_lods, can_generate, backend（cpp / python）}
+    // { generated, failed, queued, prefetched, dropped（离焦点远了撤掉的）, running（在生成的群号，−1 = 没有）, lods_added, lod_running, busy_s, world_dir, story, full_lods, can_generate, backend（cpp / python）}
     godot::Dictionary get_stats();
     godot::Dictionary get_world() const; // { name, mode, world_dir, seed, spawn, story, full_lods }
 

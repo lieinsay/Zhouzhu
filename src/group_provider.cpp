@@ -31,6 +31,8 @@ namespace {
 constexpr double PREFETCH_EVERY_S = 1.0;
 constexpr double LODS_EVERY_S = 2.0;
 constexpr double TRACE_S = 3.0; // 船头方向按焦点近 3 秒的挪动算
+// 排着的（瞬移要的除外）离焦点远过这么多就撤掉：高空飞过去时顺路排上的一长串，落地那一处要的不用排在它们后面（撤掉的走近了照样再要）
+constexpr double STALE_M = 1000000.0;
 
 // 进程内生成岛群的活在任务池里的优先级（任务池按离焦点的米数排）：瞬移要的排在一切前面；焦点 60 km 内的排在 20 km 内的地面块之后；
 // 预取的排在 200 km 内的活之后。粗版那条活与备行星层不进任务池、各开一条线程（同 P4 的第二个进程）：排在远处的活后面，开局那几十秒轮不到它们
@@ -438,6 +440,7 @@ Dictionary GroupProvider::get_stats() {
     d["failed"] = failed;
     d["queued"] = queued;
     d["prefetched"] = prefetched;
+    d["dropped"] = dropped;
     d["running"] = group_job.is_running() ? group_job_node : -1;
     d["lods_added"] = lods_added;
     d["lod_running"] = lod_job.is_running();
@@ -524,14 +527,32 @@ void GroupProvider::_process(double p_delta) {
 }
 
 void GroupProvider::start_next_group() {
+    // 同一档里先做离焦点近的（此刻的焦点：飞过去顺路排上的，不比落地那一处先做）；量不了焦点就按先来后到
+    GroupStream *gs = stream();
+    PlanetView *pv = view();
+    const bool located = gs && gs->is_ready() && pv && pv->is_active();
+    const Vector2 ll = located ? pv->latlon_at(gs->get_focus()) : Vector2();
+    const auto dist = [&](const Request &r) {
+        if (!located) {
+            return 0.0;
+        }
+        if (r.node < 0 || r.node >= pv->get_planet()->node_count()) {
+            return 0.0;
+        }
+        const PlanetNode &n = pv->get_planet()->node(r.node);
+        return great_circle_m(ll.x, ll.y, n.lat, n.lon, pv->get_radius());
+    };
     Request *best = nullptr;
+    double best_d = 0.0;
     for (auto &kv : requests) {
         Request &r = kv.second;
         if (r.state != QUEUED) {
             continue;
         }
-        if (!best || r.priority < best->priority || (r.priority == best->priority && r.queued_at < best->queued_at)) {
+        const double d = dist(r);
+        if (!best || r.priority < best->priority || (r.priority == best->priority && (d < best_d || (d == best_d && r.queued_at < best->queued_at)))) {
             best = &r;
+            best_d = d;
         }
     }
     if (!best) {
@@ -675,15 +696,29 @@ void GroupProvider::update_prefetch(double p_delta) {
     const Vector3 f = gs->get_focus();
     const int anchor = gs->get_anchor_node();
     const double t = now_s();
-    // 焦点的轨迹（换了锚就从头记）：近 3 秒挪了多远、往哪
-    if (!trace.empty() && trace.back().anchor != anchor) {
+    // 焦点的轨迹（换了锚、平面坐标规范化了就从头记）：近 3 秒挪了多远、往哪
+    const int shifts = gs->get_shift_count() + gs->get_rebase_count();
+    if (!trace.empty() && (trace.back().anchor != anchor || trace.back().shifts != shifts)) {
         trace.clear();
     }
-    trace.push_back(Trace{ t, f, anchor });
+    trace.push_back(Trace{ t, f, anchor, shifts });
     while (trace.size() > 2 && t - trace.front().t > TRACE_S) {
         trace.erase(trace.begin());
     }
     const Vector2 ll = pv->latlon_at(f);
+    // 排着的离焦点远了（高空飞过去时顺路排上的）：撤掉，走近了再要
+    for (auto &kv : requests) {
+        Request &r = kv.second;
+        if (r.state != QUEUED || r.priority == URGENT || r.node < 0 || r.node >= pd->node_count()) {
+            continue;
+        }
+        const PlanetNode &n = pd->node(r.node);
+        if (great_circle_m(ll.x, ll.y, n.lat, n.lon, pv->get_radius()) > STALE_M) {
+            r.state = NONE;
+            r.text = String(U"离得远了，撤了");
+            dropped++;
+        }
+    }
     const double dt = trace.back().t - trace.front().t;
     const Vector3 d = trace.back().p - trace.front().p;
     const double speed = dt > 0.5 ? std::hypot(d.x, d.z) / dt : 0.0;
