@@ -4869,7 +4869,7 @@ void test_planet_frame() {
     std::printf("[planet_frame]\n");
     const PlanetShape shape;
     const double R = shape.radius();
-    check_near(R, 6376600.0, 1e-6, "R = 海面 6371 km + 5.6 km（D13）");
+    check_near(R, 6377800.0, 1e-6, "R = 海面 6371 km + 6.8 km（D13，浮高计划 F4）");
     // 经纬度 ↔ 单位向量（同 sphere.py：x 指 (0,0)、y 指 (0,90)、z 指北极）
     {
         const PlanetVec u = planet_unit(0.0, 90.0);
@@ -5334,14 +5334,14 @@ void test_planet_sky() {
     check(lut[0] > 0.9 && lut[0] < 0.97 && lut[2] > 0.7 && lut[2] < 0.8 && lut[2] < lut[1] && lut[1] < lut[0], "天顶透过率：红 0.9–0.97、蓝 0.7–0.8，蓝最少（Rayleigh）");
     double worst_lut = 0.0;
     for (int k = 0; k < 40; k++) {
-        const double r = atmo.bottom_km + 5.6 + k * 2.3;
+        const double r = atmo.bottom_km + 6.8 + k * 2.3; // 从游戏 y = 0（海面之上 6.8 km，D13）往上
         const double mu = 1.0 - k * 0.024;
         atmo_transmittance(atmo, trans, r, mu, lut);
         atmo_transmittance_direct(atmo, r, mu, 200, direct);
         worst_lut = std::max(worst_lut, std::abs(lut[1] - direct[1]));
     }
     check(worst_lut < 0.01, "高处各方向查表与直接积分差 < 0.01（得到 " + std::to_string(worst_lut) + "）");
-    atmo_transmittance(atmo, trans, atmo.bottom_km + 5.6, -0.2, lut);
+    atmo_transmittance(atmo, trans, atmo.bottom_km + 6.8, -0.2, lut);
     check(lut[0] == 0.0 && lut[1] == 0.0, "地平线以下（打到海面）透过率 0");
     atmo_transmittance(atmo, trans, atmo.bottom_km + 400.0, 0.2, lut);
     check(lut[0] > 0.99, "400 km 高往上几乎全透");
@@ -5350,11 +5350,11 @@ void test_planet_sky() {
         finite = finite && std::isfinite(f) && f >= 0.0f;
     }
     double noon[3], dusk[3], night[3], high[3];
-    ms.sample(1.0, 0.056, noon);
-    ms.sample(0.5, 0.056, dusk);
-    ms.sample(0.2, 0.056, night);
+    ms.sample(1.0, 0.068, noon);
+    ms.sample(0.5, 0.068, dusk);
+    ms.sample(0.2, 0.068, night);
     ms.sample(1.0, 0.9, high);
-    std::printf("  多次散射（5.6 km）：正午 %.5f %.5f %.5f、日落 %.5f、夜 %.6f、90 km 正午 %.6f\n", noon[0], noon[1], noon[2], dusk[2], night[2], high[2]);
+    std::printf("  多次散射（6.8 km）：正午 %.5f %.5f %.5f、日落 %.5f、夜 %.6f、90 km 正午 %.6f\n", noon[0], noon[1], noon[2], dusk[2], night[2], high[2]);
     check(finite, "多次散射表处处有限、不为负");
     check(noon[2] > dusk[2] && dusk[2] > night[2] && noon[2] > noon[0], "多次散射：太阳越高越亮，蓝多于红");
     // Ψ_ms 是照到那一点的多次散射光（大半是下面的云带与低层大气反上来的），90 km 处比近地面暗；乘上那里的散射系数就几乎没有了
@@ -5456,7 +5456,7 @@ void test_planet_float_orbit() {
         }
     }
     // 行星的边：相机在两万公里高，扫过边缘的视线在哪一条上开始打到海面（单精度 vs 双精度）
-    const double R = 6376600.0, sea = R - 5600.0;
+    const double R = PLANET_DEFAULT_R, sea = R + VerticalDatum::SEA_Y;
     double worst_limb = 0.0;
     for (double h : { 2.0e5, 2.0e6, 2.0e7 }) {
         const double r0 = R + h;
@@ -5977,29 +5977,34 @@ void test_planet_weather() {
 void test_sea_descent() {
     std::printf("[sea_descent]\n");
     const CloudBandRules rules;
+    // 按垂直结构取高（浮高计划 F4 起整体下移 1200 m：云带 −5000…−6200、海面 −6800）
+    constexpr double TOP = VerticalDatum::CLOUD_TOP_Y, BASE = VerticalDatum::CLOUD_BASE_Y, SEA = VerticalDatum::SEA_Y;
+    constexpr double ABOVE = TOP + 800.0, MID = 0.5 * (TOP + BASE), UNDER = BASE - 300.0, FLOOR = SEA + 15.0;
+    check(TOP - BASE == 1200.0 && BASE - SEA == 600.0, "云带厚 1.2 km、云底以下 600 m 净空（相对海面不变）");
+    check_near(PlanetShape().radius() - PlanetShape().sea_radius_m, -SEA, 1e-9, "基准球 R = 海面半径 + 6800 m");
     {
-        const CloudBandState a = cloud_band_at(-3000.0, 0.9);
+        const CloudBandState a = cloud_band_at(ABOVE, 0.9);
         check(a.inside == 0.0 && a.under == 0.0 && a.below == 0.0 && a.depth == 0.0, "云带顶上：不在云里、天空照旧");
         check_near(a.sun, 1.0, 1e-12, "云带顶上：直射全在");
         check_near(a.diffuse, 1.0, 1e-12, "云带顶上：漫射光全在");
         check_near(a.turbulence, 0.0, 1e-12, "云带顶上：不颠");
-        const CloudBandState m = cloud_band_at(-4400.0, 0.9);
+        const CloudBandState m = cloud_band_at(MID, 0.9);
         check_near(m.inside, 1.0, 1e-12, "云带当中：雾最浓");
         check_near(m.turbulence, rules.turbulence_in, 1e-12, "云带当中：颠");
         check(m.sun < 0.1 && m.sun > 0.0, "云带当中：直射只剩一点（" + std::to_string(m.sun) + "）");
         check(m.diffuse < 1.0 && m.diffuse > rules.under_diffuse, "云带当中：漫射光在顶上与云底下之间（" + std::to_string(m.diffuse) + "）");
-        const CloudBandState u = cloud_band_at(-5300.0, 0.9);
+        const CloudBandState u = cloud_band_at(UNDER, 0.9);
         check(u.inside == 0.0 && u.under == 1.0 && u.below == 1.0, "云底下：出了云、天空从下往上看");
         check(u.sun < 0.01, "云底下：日面看不见（直射 " + std::to_string(u.sun) + "）");
         check_near(u.diffuse, rules.under_diffuse, 1e-9, "云底下：阴天式的漫射光");
         check_near(u.turbulence, rules.turbulence_under, 1e-12, "云底下：只剩一点颠");
-        check_near(cloud_band_at(-5585.0, 0.9).sea_height, 15.0, 1e-9, "离海面多高：船的最低处离海面 15 m");
+        check_near(cloud_band_at(FLOOR, 0.9).sea_height, 15.0, 1e-9, "离海面多高：船的最低处离海面 15 m");
         // 太阳低时云里暗得快
-        check(cloud_band_at(-4400.0, 0.15).sun < m.sun && cloud_band_at(-4400.0, 0.15).diffuse < m.diffuse, "太阳低：直射与漫射都更暗");
+        check(cloud_band_at(MID, 0.15).sun < m.sun && cloud_band_at(MID, 0.15).diffuse < m.diffuse, "太阳低：直射与漫射都更暗");
         // 连续：每 0.25 m 一步从 +200 m 走到海面，各读数变得不多（两处软边各几十米）
         double worst = 0.0;
         CloudBandState prev = cloud_band_at(200.0, 0.8);
-        for (double y = 199.75; y >= -5600.0; y -= 0.25) {
+        for (double y = 199.75; y >= SEA; y -= 0.25) {
             const CloudBandState s = cloud_band_at(y, 0.8);
             worst = std::max({ worst, std::abs(s.inside - prev.inside), std::abs(s.under - prev.under), std::abs(s.below - prev.below), std::abs(s.sun - prev.sun),
                     std::abs(s.diffuse - prev.diffuse), std::abs(s.turbulence - prev.turbulence) });
@@ -6007,7 +6012,7 @@ void test_sea_descent() {
         }
         std::printf("  剖面：每 0.25 m 最多变 %.4f；云带当中直射 %.3f、漫射 %.2f；云底下漫射 %.2f\n", worst, m.sun, m.diffuse, u.diffuse);
         check(worst < 0.02, "升降一趟读数连续（每 0.25 m 最多变 " + std::to_string(worst) + "）");
-        check_near(ship_floor_y(true, 15.0), -5585.0, 1e-9, "船的最低高度：海上是海面之上 15 m");
+        check_near(ship_floor_y(true, 15.0), FLOOR, 1e-9, "船的最低高度：海上是海面之上 15 m");
         check_near(ship_floor_y(false, 15.0), 15.0, 1e-9, "船的最低高度：没有行星数据的地图照旧世界 y = 15 m");
     }
     {
@@ -6094,13 +6099,13 @@ void test_sea_descent() {
             const WeatherModel wx(c, 0.0, 2050.0);
             const double x = 12000.0, z = -8000.0, day = 3.5;
             const double t0 = wx.sample(day, x, z, 0.0).temp_c;
-            check_near(wx.sample(day, x, z, -3000.0).temp_c, t0, 1e-12, "y = −3000（云带顶上）的气温同 y = 0");
-            check_near(wx.sample(day, x, z, -5585.0).temp_c, t0, 1e-12, "海面上 15 m 的气温同 y = 0（生成器的海面温度）");
+            check_near(wx.sample(day, x, z, ABOVE).temp_c, t0, 1e-12, "y = −4200（云带顶上）的气温同 y = 0");
+            check_near(wx.sample(day, x, z, FLOOR).temp_c, t0, 1e-12, "海面上 15 m 的气温同 y = 0（生成器的海面温度）");
             check(wx.sample(day, x, z, 1000.0).temp_c < t0 - 3.0, "y > 0 照直减率往上减");
-            check_near(wx.mean_temperature(day, -4400.0), wx.mean_temperature(day, 0.0), 1e-12, "日均气温：y < 0 同 y = 0");
-            check_near(wx.elevation(day, -4400.0).temp_mean, wx.elevation(day, 0.0).temp_mean, 1e-12, "海拔表：y < 0 同 y = 0");
-            check(wx.sample(day, x, z, -5300.0).fog <= wx.sample(day, x, z, -4400.0).fog, "云底下不在云海漫顶的雾里");
-            std::printf("  气温：y = 0 %.1f °C、−3000 %.1f、−5585 %.1f、+1000 %.1f\n", t0, wx.sample(day, x, z, -3000.0).temp_c, wx.sample(day, x, z, -5585.0).temp_c,
+            check_near(wx.mean_temperature(day, MID), wx.mean_temperature(day, 0.0), 1e-12, "日均气温：y < 0 同 y = 0");
+            check_near(wx.elevation(day, MID).temp_mean, wx.elevation(day, 0.0).temp_mean, 1e-12, "海拔表：y < 0 同 y = 0");
+            check(wx.sample(day, x, z, UNDER).fog <= wx.sample(day, x, z, MID).fog, "云底下不在云海漫顶的雾里");
+            std::printf("  气温：y = 0 %.1f °C、−4200 %.1f、−6785 %.1f、+1000 %.1f\n", t0, wx.sample(day, x, z, ABOVE).temp_c, wx.sample(day, x, z, FLOOR).temp_c,
                     wx.sample(day, x, z, 1000.0).temp_c);
         }
     }

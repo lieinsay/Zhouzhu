@@ -3,7 +3,7 @@
 #include "planet_frame.h"
 
 // 云带之下（行星计划 P7，docs/PLAN-PLANET.md D13、D14）：垂直剖面上的雾、光、颠簸，与船的最低高度。不含 Godot 头。
-// 云带在 −3800…−5000 m（VerticalDatum），厚 1.2 km；云底以下 600 m 净空，再往下是海（−5600 m）。
+// 云带在 −5000…−6200 m（VerticalDatum），厚 1.2 km；云底以下 600 m 净空，再往下是海（−6800 m）。
 // 不做体积云：
 //   - 云带里是一层浓雾（引擎的指数雾，能见度几十米），光随走进的深度变暗——直射按云带的光学厚度与太阳高度（太阳越低走的路越长），
 //     漫射光从云带顶上的全亮渐渐暗到云底下的「阴天」那一份；
@@ -42,7 +42,7 @@ struct CloudBandState {
 // 高 p_y（游戏 y）、太阳高度的正弦 p_sun_sin（夜里是负的，按 min_sun_sin 算路径）
 CloudBandState cloud_band_at(double p_y, double p_sun_sin, const CloudBandRules &p_rules = CloudBandRules());
 
-// 船的最低高度（D14）：海面之上 15 m——下面是海（有行星数据的地图）时 −5585 m；没有行星数据的地图照旧 p_flat_floor（世界 y = 15 m）。
+// 船的最低高度（D14）：海面之上 15 m——下面是海（有行星数据的地图）时 −6785 m；没有行星数据的地图照旧 p_flat_floor（世界 y = 15 m）。
 // 岛上下面是地面：船与地面、崖壁、岛底本来就有碰撞（move_and_slide），不另设
 constexpr double SHIP_SEA_CLEARANCE_M = 15.0;
 inline double ship_floor_y(bool p_over_sea, double p_flat_floor) {

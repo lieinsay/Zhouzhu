@@ -3,8 +3,8 @@ extends Node
 ## 2051 主码头出生（钟停在一月初四 10 点、天气覆盖成晴：光与雾只随高度变）→ 走上船、掌舵、升空、换疾档
 ## → 背着主峰往外飞到一片开阔的云海上空（2.5 km 内没有地）
 ## → 按住下降一路降到海面：每一帧录光与雾的读数（日光、环境光、雾的浓淡与颜色、天空蒙雾的份、云带的剖面、颠簸）——
-##   云带顶上：天与光照旧；云带里（−4.4 km 上下）：浓雾（能见度几十米）、天被雾盖满、日光只剩一点、船在颠、HUD 报「云带里」；
-##   穿过云底（−5.3 km 上下）：日光熄了、阴天的漫射光、霾、HUD 报「云底下」；
+##   云带顶上：天与光照旧；云带里（−5.6 km 上下）：浓雾（能见度几十米）、天被雾盖满、日光只剩一点、船在颠、HUD 报「云带里」；
+##   穿过云底（−6.5 km 上下）：日光熄了、阴天的漫射光、霾、HUD 报「云底下」；
 ## → 海面上空：最低高度挡得住（再按下降也停在海面之上 15 m）、HUD 报离海面 15 m、F6 报离海面、气温与 y = 0 一样（D13）、
 ##   提示「海上无处落脚」、按 E 离不了舵；覆盖成风暴：浪高、暴雨、霾浓、颠得厉害、打闪；恢复晴
 ## → 按住上升回到云带顶以上：读数恢复成降下去之前的样子；一路上（降、升）相邻两帧的读数都没有跳变
@@ -20,9 +20,13 @@ const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend"
 const DAY := 3
 const HOUR := 10.0
 const CRUISE_Y := 420.0
-const TOP_Y := -3800.0
-const BASE_Y := -5000.0
-const SEA_Y := -5600.0
+const TOP_Y := -5000.0  # 云带顶、云底、海面：同 src/planet_frame.h 的 VerticalDatum（浮高计划 F4 起整体下移 1200 m）
+const BASE_Y := -6200.0
+const SEA_Y := -6800.0
+const DECK_Y := TOP_Y + 200.0  # 云带顶上 200 m：降下去之前、升回来之后在这里比读数
+const MID_Y := 0.5 * (TOP_Y + BASE_Y)  # 云带当中
+const UNDER_Y := BASE_Y - 300.0  # 云底下 300 m
+const BAND_MARKS := [TOP_Y - 200.0, MID_Y, BASE_Y + 100.0]  # 顶下 200 m、当中、云底上 100 m
 # 相邻两帧最多变多少（船升降二三十米每秒，一帧半米；云带顶、云底的软边各几十米）
 const MAX_STEP := {"sun_energy": 0.03, "ambient_energy": 0.03, "fog_density": 0.003, "fog_r": 0.02, "fog_g": 0.02, "fog_b": 0.02, "fog_sky_affect": 0.03,
 	"band_inside": 0.03, "band_under": 0.03, "band_below": 0.05, "band_light": 0.02}
@@ -54,7 +58,7 @@ var sea_point := Vector3.ZERO
 var rows: Array = []  # 每帧一个 Dictionary
 var worst := {}
 var worst_at := {}
-var before := {}  # 降下去之前（云带顶上 −3600 m 附近）的读数
+var before := {}  # 降下去之前（云带顶上 200 m 附近）的读数
 var seen := {}  # 各层查过了没有
 var hover_min_y := 1e9
 var storm_flash := 0.0
@@ -366,7 +370,7 @@ func _descend() -> void:
 	var cam_y: float = rows.back()["cam_y"]
 	var look: Dictionary = rows.back()
 	var status := main.get_status_text()
-	if not seen.has("before") and cam_y < -3600.0:
+	if not seen.has("before") and cam_y < DECK_Y:
 		seen["before"] = true
 		before = look.duplicate()
 		_log("云带顶上（相机 %.0f）：日光 %.3f、环境光 %.3f、雾 %.7f、天空蒙雾 %.2f、颠 %.2f；HUD「%s」" % [cam_y, float(look["sun_energy"]), float(look["ambient_energy"]),
@@ -375,7 +379,7 @@ func _descend() -> void:
 			_finish(false, "云带顶上 200 m 不该有云带的雾、不该颠：%s" % [look])
 			return
 		_shot("descent_deck_top")
-	if not seen.has("band") and cam_y < -4400.0:
+	if not seen.has("band") and cam_y < MID_Y:
 		seen["band"] = true
 		_log("云带里（相机 %.0f）：日光 %.3f、环境光 %.3f、雾 %.4f（能见度 %.0f m）、天空蒙雾 %.2f、雾色 %.2f、颠 %.2f；HUD「%s」；提示「%s」" % [cam_y,
 			float(look["sun_energy"]), float(look["ambient_energy"]), float(look["fog_density"]), 3.0 / maxf(1e-9, float(look["fog_density"])),
@@ -401,15 +405,15 @@ func _descend() -> void:
 			return
 		_shot("descent_in_band")
 	# 云带里越深越暗：顶下 200 m、当中、云底上 100 m 三处的雾色（透进来的光）一处比一处暗
-	for mark in [-4000.0, -4400.0, -4900.0]:
+	for mark in BAND_MARKS:
 		if not seen.has(mark) and cam_y < mark:
 			seen[mark] = float(look["band_light"])
-			if mark == -4900.0:
-				_log("云带里雾色的亮（透进来的光）：顶下 200 m %.3f → 当中 %.3f → 云底上 100 m %.3f" % [float(seen[-4000.0]), float(seen[-4400.0]), float(seen[-4900.0])])
-				if not (float(seen[-4000.0]) > float(seen[-4400.0]) and float(seen[-4400.0]) > float(seen[-4900.0])):
-					_finish(false, "云带里该越深越暗：%.3f / %.3f / %.3f" % [float(seen[-4000.0]), float(seen[-4400.0]), float(seen[-4900.0])])
+			if mark == BAND_MARKS[2]:
+				_log("云带里雾色的亮（透进来的光）：顶下 200 m %.3f → 当中 %.3f → 云底上 100 m %.3f" % [float(seen[BAND_MARKS[0]]), float(seen[BAND_MARKS[1]]), float(seen[BAND_MARKS[2]])])
+				if not (float(seen[BAND_MARKS[0]]) > float(seen[BAND_MARKS[1]]) and float(seen[BAND_MARKS[1]]) > float(seen[BAND_MARKS[2]])):
+					_finish(false, "云带里该越深越暗：%.3f / %.3f / %.3f" % [float(seen[BAND_MARKS[0]]), float(seen[BAND_MARKS[1]]), float(seen[BAND_MARKS[2]])])
 					return
-	if not seen.has("under") and cam_y < -5300.0:
+	if not seen.has("under") and cam_y < UNDER_Y:
 		seen["under"] = true
 		var w: Dictionary = atmosphere.get_weather()
 		_log("云底下（相机 %.0f）：日光 %.4f、环境光 %.3f、雾 %.6f、雾色 %.3f %.3f %.3f、颠 %.2f、层 %d；HUD「%s」" % [cam_y, float(look["sun_energy"]),
@@ -533,10 +537,10 @@ func _ascend() -> void:
 	_hold("ascend", true)
 	_record()
 	var cam_y: float = rows.back()["cam_y"]
-	if not seen.has("band_up") and cam_y > -4400.0:
+	if not seen.has("band_up") and cam_y > MID_Y:
 		seen["band_up"] = true
 		_shot("ascent_in_band")
-	if cam_y > -3600.0:
+	if cam_y > DECK_Y:
 		_hold("ascend", false)
 		var look: Dictionary = rows.back()
 		var diffs := []

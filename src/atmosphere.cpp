@@ -798,7 +798,7 @@ Dictionary Atmosphere::get_weather() const {
     }
     d["altitude_band"] = layer;
     d["above_clouds"] = above_clouds;
-    // 离海面多高（有行星数据时，D13：海面 −5600 m）
+    // 离海面多高（有行星数据时，D13：海面 −6800 m）
     d["sea_height"] = on_planet ? double(last_eye.y) - VerticalDatum::SEA_Y : NAN;
     return d;
 }

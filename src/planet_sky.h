@@ -18,7 +18,7 @@
 // 表的取样按「格心对齐」：unit ∈ [0,1] ↔ 纹理坐标 0.5/N + unit·(N − 1)/N（着色器 atmo_sub_uv 同式）。
 
 struct AtmosphereModel {
-    double bottom_km = 6371.0; // 海面（生成器的行星半径；游戏 y = 0 在它之上 5.6 km，D13）
+    double bottom_km = 6371.0; // 海面（生成器的行星半径；游戏 y = 0 在它之上 6.8 km，D13）
     double top_km = 6471.0;
     double rayleigh[3] = { 5.802e-3, 13.558e-3, 33.1e-3 };
     double rayleigh_h_km = 8.0;

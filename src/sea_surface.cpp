@@ -31,7 +31,7 @@ constexpr int SEA_SEGMENTS = 160;
 constexpr double SEA_RADIUS = 300000.0;
 constexpr int BASE_SEGMENTS = 96;
 constexpr double BASE_RADIUS = 1000000.0;
-constexpr double PLANET_R = 6376600.0; // 包围盒往下放多少用（弯曲下沉 d² / 2R）
+constexpr double PLANET_R = PLANET_DEFAULT_R; // 包围盒往下放多少用（弯曲下沉 d² / 2R）
 // 四道 Gerstner 波的波长（相对主浪）：与 sea.gdshader 的 WAVE_LENGTH 同
 constexpr double WAVE_LENGTH[4] = { 1.0, 0.63, 0.41, 0.27 };
 constexpr int NORMAL_SIZE = 256;

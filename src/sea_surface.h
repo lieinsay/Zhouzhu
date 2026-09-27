@@ -13,8 +13,8 @@ class Atmosphere;
 class PlanetView;
 
 // 云带之下的两张面（行星计划 P7，docs/PLAN-PLANET.md D13、D14、第五节 P7）：PlanetGlobe 建、每帧推一下——
-//   - 云底（y = −5000 m）：朝下的同心环网格（半径 1,000 km），game/shaders/cloud_base.gdshader——一层压着的灰，只受环境光，晨昏朝太阳那一侧染暖；
-//   - 海面（y = −5600 m）：近密远疏的同心环网格（半径 300 km，最里一圈 1 m），game/shaders/sea.gdshader——
+//   - 云底（y = −6200 m）：朝下的同心环网格（半径 1,000 km），game/shaders/cloud_base.gdshader——一层压着的灰，只受环境光，晨昏朝太阳那一侧染暖；
+//   - 海面（y = −6800 m）：近密远疏的同心环网格（半径 300 km，最里一圈 1 m），game/shaders/sea.gdshader——
 //     浪按天与光在相机处取的风（src/sea_state.* 的 sea_waves：行星天气场的风，风暴另加），Gerstner 的相位按帧累加（风变了浪长跟着变也不乱跳），
 //     两层法线贴图（bake_wave_normals）顺风平移，白礁按行星包（PlanetGlobe 烘的 planet_reefs）。
 // 两张都跟着相机的平面坐标走（海面按 2 m 取整，免得浪「游」），顶点走 planet_curve 弯曲；相机在云带顶以上 60 m 起藏起来（上面有不透明的云带顶挡着）。

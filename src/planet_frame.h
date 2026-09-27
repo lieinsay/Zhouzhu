@@ -6,7 +6,7 @@
 // 行星系（P）：原点星心，轴同 skyisle-gen 的 sphere.py——x 指 (0°N, 0°E)、y 指 (0°N, 90°E)、z 指北极；经度东正；米。
 // 岛群平面系（G）：就是游戏坐标——x 东、y 上（云带顶以上的米）、z 南；原点 = 节点经纬度在基准球上的点。
 // 平面 → 球面用以群心为中心的方位等距投影（AEQD）：平面上离群心 s、方位 α 的点 → 球面上离群心大圆距离 s、方位 α 的点，高度沿径向。
-// 基准球半径 R = 海面半径 + 5,600 m（游戏 y = 0 在海面之上 5.6 km，见 VerticalDatum）。
+// 基准球半径 R = 海面半径 + 6,800 m（游戏 y = 0 在海面之上 6.8 km，见 VerticalDatum）。
 //
 // 画面弯曲：一个群（锚）的平面坐标 p 在「相机局部的真球面」里的位置
 //     visual(p) = c + R_cᵀ · ((p − c) + (δ(p) − δ(c)))
@@ -36,11 +36,15 @@ struct CurveSqueeze {
 void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float r_out[3]);
 void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float p_keep, float p_limit, float r_out[3]);
 
-// 垂直结构（D13）：游戏 y（云带顶以上的米，生成器的高度零点）
+// 垂直结构（D13；浮高计划 F4 起整体下移 1200 m，原来是 −3800 / −5000 / −5600）：游戏 y（生成器的高度零点之上的米）。
+// 云带相对海面的高度不变（海面之上 600–1800 m），等于把岛抬高 1.2 km。气温照旧：y < 0 取 y = 0 处（云带是逆温层）
 struct VerticalDatum {
-    static constexpr double CLOUD_TOP_Y = -3800.0; // 云带顶（看得见的云海面）
-    static constexpr double CLOUD_BASE_Y = -5000.0; // 云带底
-    static constexpr double SEA_Y = -5600.0; // 海面
+    static constexpr double CLOUD_TOP_Y = -5000.0; // 云带顶（看得见的云海面）
+    static constexpr double CLOUD_BASE_Y = -6200.0; // 云带底
+    static constexpr double SEA_Y = -6800.0; // 海面
+    // 岛底（含岩棱的最深处）至少高出云带顶这么多（浮高计划 F3：超了就把龙骨收短，见 world_terrain 的 island_body）
+    static constexpr double ISLAND_CLEARANCE_M = 1000.0;
+    static constexpr double ISLAND_BOTTOM_MIN_Y = CLOUD_TOP_Y + ISLAND_CLEARANCE_M;
 };
 
 struct PlanetVec {
@@ -76,8 +80,10 @@ struct PlanetShape {
     double sea_radius_m = 6371000.0; // 生成器的行星半径 = 海面
     double datum_above_sea_m = -VerticalDatum::SEA_Y; // 游戏 y = 0 在海面之上多少
 
-    double radius() const { return sea_radius_m + datum_above_sea_m; } // 弯曲与投影统一用的 R
+    constexpr double radius() const { return sea_radius_m + datum_above_sea_m; } // 弯曲与投影统一用的 R
 };
+// 缺省行星（生成器的 6371 km）的 R：没有行星包时的缺省值、着色器全局参数的初值（project.godot 的 planet_curve_radius、planet_datum_r）
+constexpr double PLANET_DEFAULT_R = PlanetShape().radius(); // 6,377,800 m
 
 // 经纬度（度）↔ 单位向量（同 sphere.py）
 PlanetVec planet_unit(double p_lat_deg, double p_lon_deg);
@@ -89,7 +95,7 @@ double bearing_deg(double p_lat1, double p_lon1, double p_lat2, double p_lon2);
 // 一个岛群的平面系
 struct GroupFrame {
     double lat_deg = 0.0, lon_deg = 0.0;
-    double radius = 6376600.0; // R
+    double radius = PLANET_DEFAULT_R; // R
     PlanetVec up, east, north; // 群心处（行星系）
 
     GroupFrame() = default;
@@ -123,7 +129,7 @@ struct CurveView {
     PlanetVec cam; // c
     PlanetBasis local; // R_c：列 = 相机处的东、上、南（锚切平面坐标）；visual 里乘它的转置
     PlanetVec delta_cam; // δ(c)（展开式，与着色器一致）
-    double radius = 6376600.0;
+    double radius = PLANET_DEFAULT_R;
 
     static CurveView at(const GroupFrame &p_frame, const PlanetVec &p_cam);
     // 双精度：用精确的 δ

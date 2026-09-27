@@ -135,7 +135,7 @@ public:
 private:
     std::shared_ptr<const PlanetData> planet;
     PlanetWeatherRules rules;
-    double radius_m = 6376600.0;
+    double radius_m = PLANET_DEFAULT_R;
     int year_days = 336;
     double solstice_n = 126.0;
     double tilt_deg = 34.0;

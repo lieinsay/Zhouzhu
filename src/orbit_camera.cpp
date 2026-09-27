@@ -164,7 +164,7 @@ void OrbitCamera::_process(double p_delta) {
             const double dist = get_move_speed() * boost * p_delta * std::min(1.0, double(stick.length()));
             const double bearing = heading + std::atan2(double(stick.x), -double(stick.y)) / DEG;
             const PlanetView *pv = view();
-            const double R = pv ? pv->get_radius() : 6376600.0;
+            const double R = pv ? pv->get_radius() : PLANET_DEFAULT_R;
             const double d = dist / R, b = bearing * DEG, f1 = lat * DEG, l1 = lon * DEG;
             const double f2 = std::asin(std::sin(f1) * std::cos(d) + std::cos(f1) * std::sin(d) * std::cos(b));
             const double l2 = l1 + std::atan2(std::sin(b) * std::sin(d) * std::cos(f1), std::cos(d) - std::sin(f1) * std::sin(f2));

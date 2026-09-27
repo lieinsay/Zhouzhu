@@ -11,10 +11,12 @@ extends Node
 const SCENE := preload("res://world_2051.tscn")
 const TIMEOUT := 600.0  # 模拟秒
 const SETTLE_TIMEOUT := 150.0  # 墙钟秒
-const SEA_Y := -5600.0
+const TOP_Y := -5000.0  # 云带顶、云底、海面：同 src/planet_frame.h 的 VerticalDatum（浮高计划 F4 起整体下移 1200 m）
+const BASE_Y := -6200.0
+const SEA_Y := -6800.0
 const GOD_FLOOR_Y := SEA_Y + 2.0
 const DESCEND_MAX_S := 60.0
-const SHOT_YS := [-3700.0, -4400.0, -5300.0]
+const SHOT_YS := [TOP_Y + 100.0, 0.5 * (TOP_Y + BASE_Y), BASE_Y - 300.0]  # 云带顶上 100 m、云带当中、云底下 300 m
 
 enum Phase { SETTLE, GOD_ON, MOVE_OUT, DESCEND, HOLD_AT_SEA, GOD_OFF, DONE }
 

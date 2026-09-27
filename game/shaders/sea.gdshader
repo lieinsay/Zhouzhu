@@ -1,4 +1,4 @@
-// 海面（行星计划 P7，D13：y = −5600 m）：SeaSurface 建的一张同心环网格，跟着相机走、半径 300 km，顶点走 planet_curve 弯曲。
+// 海面（行星计划 P7，D13：y = −6800 m）：SeaSurface 建的一张同心环网格，跟着相机走、半径 300 km，顶点走 planet_curve 弯曲。
 // 浪（src/sea_state.* 的 sea_waves，按天与光在相机处取的风——行星天气场）：
 //   近处四道 Gerstner 顶点波（主浪按风向、另三道错开几十度，相位由 C++ 按帧累加：风变了浪长跟着变也不乱跳），几百米外渐平；
 //   两层可平铺的法线贴图（src/sea_state.* 的 bake_wave_normals）顺风错开平移，远处按 mipmap 自己平下去；

@@ -10,7 +10,7 @@ extends Node
 ##   外加整颗星正对赤道、G 定点永暴（北纬 37.5°、西经 10°，那里的正午）、晨昏线、夜里的灯（2051 上空 1,500 km）、一群密的岛群（白天）。
 ##   行星贴图与大气表在后台做好了才拍（PlanetGlobe.is_ready），远处的岛群建好了才拍。
 ## 行星计划 P7 · 云带之下（`--only=sea`；不加 --only 时也拍）：主码头往外（背着主峰）找一片开阔的云海，相机从云带顶上一路往下——
-##   云带顶上 150 m、云带里（−4.4 km）、刚出云底（−5.05 km）、云底下（−5.3 km）、海面上 20 m（平视、仰看云底）、黄昏的云底下、风暴里的海面、
+##   云带顶上 150 m、云带里（−5.6 km）、刚出云底（−6.25 km）、云底下（−6.5 km）、海面上 20 m（平视、仰看云底）、黄昏的云底下、风暴里的海面、
 ##   白礁（行星包里老岛群附近多的一片）；人留在码头上（相机在海上，人下不了海）。
 ##
 ##   Godot --path game --fixed-fps 60 res://tools/planet_shots.tscn -- --shots=<目录> [--only=near|far|orbit|sea]
@@ -204,16 +204,16 @@ func _plan_sea(dock: Vector2, peak: Vector2, stand: Vector3) -> void:
 		var a := deg_to_rad(pitch_deg)
 		var d := Vector3(side.x, 0.0, side.y) * cos(a) + Vector3(0, sin(a), 0)
 		return Vector3(sea.x, h, sea.y) + d * 1000.0
-	views.append(["sea_deck_top", at.call(-3650.0), look.call(-3650.0, -8.0), 10.0, false, DAY, 60.0, person, "clear"])
-	views.append(["sea_in_band", at.call(-4400.0), look.call(-4400.0, -5.0), 10.0, false, DAY, 60.0, person, "clear"])
-	views.append(["sea_base_exit", at.call(-5050.0), look.call(-5050.0, -6.0), 10.0, false, DAY, 60.0, person, "clear"])
-	views.append(["sea_under_base", at.call(-5300.0), look.call(-5300.0, -8.0), 10.0, false, DAY, 60.0, person, "clear"])
-	views.append(["sea_surface", at.call(-5580.0), look.call(-5580.0, -3.0), 10.0, false, DAY, 60.0, person, "clear"])
-	views.append(["sea_surface_up", at.call(-5580.0), look.call(-5580.0, 30.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_deck_top", at.call(-4850.0), look.call(-4850.0, -8.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_in_band", at.call(-5600.0), look.call(-5600.0, -5.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_base_exit", at.call(-6250.0), look.call(-6250.0, -6.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_under_base", at.call(-6500.0), look.call(-6500.0, -8.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_surface", at.call(-6780.0), look.call(-6780.0, -3.0), 10.0, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_surface_up", at.call(-6780.0), look.call(-6780.0, 30.0), 10.0, false, DAY, 60.0, person, "clear"])
 	# 黄昏朝太阳（方位约 248°）望：云底那一侧染暖
 	var west := Vector3(sin(deg_to_rad(248.0)), 0.0, -cos(deg_to_rad(248.0)))
-	views.append(["sea_dusk", at.call(-5500.0), at.call(-5500.0) + (west * cos(deg_to_rad(4.0)) + Vector3(0, sin(deg_to_rad(4.0)), 0)) * 1000.0, 18.4, false, DAY, 60.0, person, "clear"])
-	views.append(["sea_storm", at.call(-5580.0), look.call(-5580.0, -4.0), 14.0, false, DAY, 60.0, person, "storm"])
+	views.append(["sea_dusk", at.call(-6700.0), at.call(-6700.0) + (west * cos(deg_to_rad(4.0)) + Vector3(0, sin(deg_to_rad(4.0)), 0)) * 1000.0, 18.4, false, DAY, 60.0, person, "clear"])
+	views.append(["sea_storm", at.call(-6780.0), look.call(-6780.0, -4.0), 14.0, false, DAY, 60.0, person, "storm"])
 	print("planet_shots: 云带之下 — 开阔云海 %s（离主码头 %.1f km，背着主峰）" % [sea, (sea - dock).length() / 1000.0])
 
 

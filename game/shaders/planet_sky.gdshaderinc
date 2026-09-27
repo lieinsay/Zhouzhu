@@ -2,7 +2,7 @@
 //
 // 画法（docs/PLAN-PLANET.md P2；为什么这样定见 README「行星计划 P2」）：
 //   行星本身（海洋球、云带壳、烘进立方体贴图的岛群、夜里的灯）与大气不建网格，逐像素按视线与同心球面求交来画——
-//   相机的局部系（画面的世界轴 = 相机处的东、上、南，星心在相机正下方 R + 相机高处）里，视线与海面（−5.6 km）、云带顶（−3.8 km）、
+//   相机的局部系（画面的世界轴 = 相机处的东、上、南，星心在相机正下方 R + 相机高处）里，视线与海面（−6.8 km）、云带顶（−5 km）、
 //   贴图岛群那一层（0 m）、天气云层（+2.8 km）几个球面求交，交点经 planet_axes 换到行星系取贴图与气候场。
 //   没有深度、没有远近平面，两万公里高也是同一套式子，单精度只用相对相机的量。
 //   岛群自己的地面、远处岛群的低模仍是网格，画在前面；高过 30 km 起 P1 的云带顶网格淡出、这里的行星淡入。
@@ -17,7 +17,7 @@
 uniform float planet_on = 0.0;
 uniform mat3 planet_axes = mat3(1.0); // 列 = 相机处的东、上、南（行星系）：行星系方向 = planet_axes * 局部方向
 uniform float planet_cam_h = 0.0; // 相机的游戏 y（米，云带顶以上的零点之上）
-uniform float planet_datum_r = 6376600.0; // 游戏 y = 0 那一层的半径（米）
+uniform float planet_datum_r = 6377800.0; // 游戏 y = 0 那一层的半径（米）：海面 6371 km + 6.8 km（D13，src/planet_frame.h 的 PLANET_DEFAULT_R）
 uniform vec3 planet_sun = vec3(0.0, 0.0, 1.0); // 行星系
 uniform vec3 planet_moon = vec3(0.0, 0.0, -1.0);
 uniform float planet_moon_lit = 0.5;
@@ -56,8 +56,8 @@ const float ATMO_MIE_E = 4.40e-3;
 const float ATMO_MIE_H = 1.2;
 const float ATMO_MIE_G = 0.8;
 const vec3 ATMO_OZONE = vec3(0.650e-3, 1.881e-3, 0.085e-3);
-const float PS_SEA_Y = -5600.0; // D13
-const float PS_BAND_Y = -3800.0;
+const float PS_SEA_Y = -6800.0; // D13（浮高计划 F4 起整体下移 1200 m），同 src/planet_frame.h 的 VerticalDatum
+const float PS_BAND_Y = -5000.0;
 const float PS_CLOUD_Y = 2800.0;
 
 // ---- 求交：相机在局部系 (0, r0, 0)（离星心 r0），沿单位方向 d 到半径 rs 的球面
@@ -296,8 +296,8 @@ float planet_cloud(vec3 p, float foot, out float thick, out float storm) {
 	float cyc0 = floor(hours / period_h);
 	float cyc1 = floor(hours / period_h + 0.5);
 	// 与岛群的云团同一个漂法：每游戏钟头漂 风速 × 360 m
-	vec3 d0 = wind * (ph0 * period_h * 360.0 / 6376600.0);
-	vec3 d1 = wind * (ph1 * period_h * 360.0 / 6376600.0);
+	vec3 d0 = wind * (ph0 * period_h * 360.0 / planet_datum_r);
+	vec3 d1 = wind * (ph1 * period_h * 360.0 / planet_datum_r);
 	vec3 o0 = vec3(fract(cyc0 * 0.6180339) * 97.0, fract(cyc0 * 0.4142136) * 89.0, 0.0);
 	vec3 o1 = vec3(fract(cyc1 * 0.6180339) * 97.0 + 41.0, fract(cyc1 * 0.4142136) * 89.0 + 13.0, 7.0);
 	float w0 = 1.0 - abs(ph0 * 2.0 - 1.0);
@@ -309,7 +309,7 @@ float planet_cloud(vec3 p, float foot, out float thick, out float storm) {
 	if (w_west > 0.01) {
 		float lon = (uv.x - 0.5) * 2.0 * PS_PI;
 		float latr = lat * PS_PI / 180.0;
-		float west_drift = hours * 360.0 * 12.0 / 6376600.0; // 西风整体往东
+		float west_drift = hours * 360.0 * 12.0 / planet_datum_r; // 西风整体往东
 		vec3 cyl = vec3(cos(lon - west_drift) * 5.0, sin(lon - west_drift) * 5.0, latr * 38.0);
 		float streak = pn_fbm3(cyl + vec3(3.1, 0.0, 0.0), 4);
 		n = mix(n, (streak - 0.5) * 1.5 + 0.5, w_west * 0.65);
@@ -364,7 +364,7 @@ float planet_cloud(vec3 p, float foot, out float thick, out float storm) {
 	return dens;
 }
 
-// ---- 云带壳（−3.8 km）：稳定的一层，有疏有密；缝多在风暴带、少在副热带无风带。返回 1 = 云、0 = 缝
+// ---- 云带壳（−5 km）：稳定的一层，有疏有密；缝多在风暴带、少在副热带无风带。返回 1 = 云、0 = 缝
 float planet_band_cover(vec3 p, out float shade) {
 	vec2 uv = planet_field_uv(p);
 	vec4 f = texture(planet_fields, uv);
@@ -428,7 +428,7 @@ bool planet_surface(float r0, vec3 d, vec3 sun_l, out vec3 color, out float t_hi
 			isl_light = x.g * mask;
 		}
 	}
-	// 云带壳（−3.8 km）与缝里的海
+	// 云带壳（−5 km）与缝里的海
 	vec3 band_col = vec3(0.0);
 	vec3 bn = vec3(0.0, 0.0, 1.0);
 	if (t_band > 0.0) {

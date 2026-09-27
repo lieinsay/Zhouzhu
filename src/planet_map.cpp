@@ -18,7 +18,7 @@ namespace {
 
 constexpr double PI = 3.14159265358979323846;
 constexpr double DEG = PI / 180.0;
-constexpr double EARTH_R = 6376600.0;
+constexpr double EARTH_R = PLANET_DEFAULT_R;
 const Color OUTLINE(0.0f, 0.0f, 0.0f, 0.8f);
 const char *const CLASS_NAMES[4] = { "密接", "中疏", "稀疏", "孤悬" };
 

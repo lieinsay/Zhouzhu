@@ -29,7 +29,7 @@ class MapHost;
 //   相机的经纬度（AEQD 逆算）→ 天与光按它算日月、钟按参考经度的地方时（D10：clock_node 的经度，2051 = 152.15°E）；
 //   远处岛群的刚体摆放（group_transform：群心相对相机的位置与朝向，FarGroups 用）；
 //   当前相机的远近平面：远平面至少 camera_far（60 km：着色器把 10 km 外沿视线压到 26 km 以内，见 CurveSqueeze），近平面随离地高度放大（高空时到 1 m）。
-// 云带顶：把场景里的平板云海（cloud_sea_path）藏起来，换成一张跟着相机走的同心环网格（y = −3800，D13），半径 cloud_deck_radius，按真球面弯。
+// 云带顶：把场景里的平板云海（cloud_sea_path）藏起来，换成一张跟着相机走的同心环网格（y = −5000，D13），半径 cloud_deck_radius，按真球面弯。
 // 没有行星数据（读不了包、地图没有经纬度）就什么都不做：planet_curve_on = 0，一切照旧。离开场景时把 planet_curve_on 设回 0（全局参数跨场景留着）。
 // 给拾取、HUD、地图的 CPU 版：to_visual / to_flat、latlon_at、bearing / distance 到某群，见 _bind_methods。
 class PlanetView : public godot::Node3D {

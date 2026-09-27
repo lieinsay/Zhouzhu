@@ -157,7 +157,7 @@ public:
 
     void set_min_altitude(double p_value) { min_altitude = p_value; }
     double get_min_altitude() const { return min_altitude; }
-    // 此刻的最低高度（全局 y）：有行星数据时是海面之上 15 m（−5585），否则 min_altitude（行星计划 P7）
+    // 此刻的最低高度（全局 y）：有行星数据时是海面之上 15 m（−6785），否则 min_altitude（行星计划 P7）
     double get_floor_y() const;
     double get_turbulence() const { return turbulence; } // 此刻颠得多厉害（0..1.5）
     double get_max_speed() const { return apply_gear(params, gear).max_speed; } // 当前档位下

@@ -370,7 +370,7 @@ void DevTools::refresh_weather_panel() {
         if (bool(w.get("planet", false))) {
             // 行星计划 P1：日月按相机的经纬度，钟点是 2051（152.15°E）的地方时（D10）
             const double lat = w["sun_latitude"], lon = w["sun_longitude"], off = w["local_offset_h"];
-            // 行星计划 P7：离海面多高（海面 −5600 m，D13）；在云带里、云底下另说一声
+            // 行星计划 P7：离海面多高（海面 −6800 m，D13）；在云带里、云底下另说一声
             const double sea = w.get("sea_height", NAN);
             const int layer = w.get("altitude_band", 0);
             const String where = layer == 3 ? String(U"（云带里）") : (layer == 4 ? String(U"（云底下）") : String());
