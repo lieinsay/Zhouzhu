@@ -11,6 +11,7 @@
 #include <godot_cpp/variant/vector3.hpp>
 
 #include "gen_job.h"
+#include "ground_works.h"
 #include "group_memory.h"
 #include "world_session.h"
 
@@ -154,6 +155,9 @@ public:
     // 离开的岛群的账（存档目录的 memory/<节点>.txt）：读 / 写（空的删掉）；没有存档目录时什么都不做
     bool load_memory(int p_node, GroupMemory &r_memory) const;
     void save_memory(int p_node, const GroupMemory &p_memory) const;
+    // 玩家营造的账（切片十一，存档目录的 works/<节点>.txt）：读（读到了返回 true）/ 写（空串删掉）；没有存档目录时什么都不做
+    bool load_works(int p_node, GroundWorks &r_works) const;
+    void save_works(int p_node, const std::string &p_text) const;
     // { generated, failed, queued, prefetched, dropped（离焦点远了撤掉的）, running（在生成的群号，−1 = 没有）, lods_added, lod_running, busy_s, world_dir, story, full_lods, can_generate, backend（cpp / python）}
     godot::Dictionary get_stats();
     godot::Dictionary get_world() const; // { name, mode, world_dir, seed, spawn, story, full_lods }

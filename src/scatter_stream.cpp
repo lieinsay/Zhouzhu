@@ -14,6 +14,7 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include "buildings.h"
+#include "ground_works.h"
 #include "scatter_meshes.h"
 #include "settlement.h"
 #include "site_stream.h"
@@ -232,6 +233,12 @@ void ScatterStream::_process(double p_delta) {
         return;
     }
     update_eye();
+    // 玩家营造的账变了（改地形、搭建件、摆件）：当场重查压着的（不等下一回 refresh）
+    if (world->get_works_revision() != works_revision) {
+        StreamTimer timer(world, StreamChannel::SCATTER_FILTER);
+        works_revision = world->get_works_revision();
+        refilter_works();
+    }
     since_check += p_delta;
     since_regrow += p_delta;
     if (since_check >= check_interval) {
@@ -346,6 +353,7 @@ void ScatterStream::refilter_villages() {
         }
         const std::vector<char> before = chunk.hidden;
         filter_houses(chunk);
+        filter_works(chunk);
         if (chunk.hidden != before) {
             build_visuals(chunk);
             if (chunk.body) {
@@ -531,6 +539,7 @@ void ScatterStream::adopt(std::unique_ptr<ScatterChunkJob> p_job) {
     chunk.items = std::move(p_job->items);
     chunk.instances = std::move(p_job->instances);
     filter_houses(chunk);
+    filter_works(chunk);
     snapshot_standing(chunk);
     build_visuals(chunk);
     if (chunk_distance(key, focus) <= collision_radius) {
@@ -540,6 +549,7 @@ void ScatterStream::adopt(std::unique_ptr<ScatterChunkJob> p_job) {
 
 void ScatterStream::filter_houses(Chunk &r_chunk) const {
     r_chunk.hidden.assign(r_chunk.items.size(), 0);
+    r_chunk.house_hidden.assign(r_chunk.items.size(), 0);
     SiteStream *sites = world->get_site_stream();
     if (!sites || r_chunk.items.empty()) {
         return;
@@ -569,6 +579,7 @@ void ScatterStream::filter_houses(Chunk &r_chunk) const {
                 const BuildingDef *def = buildings::by_id(b.kind);
                 if (def && footprint_contains(*def, b, item.x - site.x, item.z - site.z, tree ? HOUSE_MARGIN_TREE_M : HOUSE_MARGIN_M)) {
                     r_chunk.hidden[k] = 1;
+                    r_chunk.house_hidden[k] = 1;
                     break;
                 }
             }
@@ -851,6 +862,172 @@ bool ScatterStream::is_standing(int64_t p_key) const {
         }
     }
     return true;
+}
+
+bool ScatterStream::solid_standing_near(double p_x, double p_z, double p_radius) const {
+    const ScatterChunkKey lo = world->get_scatter().chunk_at(p_x - p_radius - 2.0, p_z - p_radius - 2.0);
+    const ScatterChunkKey hi = world->get_scatter().chunk_at(p_x + p_radius + 2.0, p_z + p_radius + 2.0);
+    for (int iz = lo.iz; iz <= hi.iz; iz++) {
+        for (int ix = lo.ix; ix <= hi.ix; ix++) {
+            const auto found = chunks.find(ScatterChunkKey{ ix, iz }.packed());
+            if (found == chunks.end()) {
+                continue;
+            }
+            const Chunk &chunk = found->second;
+            for (size_t k = 0; k < chunk.items.size(); k++) {
+                const ScatterItem &item = chunk.items[k];
+                if (chunk.hidden[k] || !chunk.standing[k] || !deposits::scatter(item.kind()).solid) {
+                    continue;
+                }
+                if (std::hypot(item.x - p_x, item.z - p_z) < p_radius + scatter_solid_radius(item)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool ScatterStream::works_bounds(double &r_x0, double &r_z0, double &r_x1, double &r_z1) const {
+    const std::shared_ptr<GroundWorks> works = world->get_player_works();
+    r_x0 = r_z0 = 1e18;
+    r_x1 = r_z1 = -1e18;
+    if (!works) {
+        return false;
+    }
+    auto grow = [&](double x, double z, double r) {
+        r_x0 = std::min(r_x0, x - r), r_z0 = std::min(r_z0, z - r), r_x1 = std::max(r_x1, x + r), r_z1 = std::max(r_z1, z + r);
+    };
+    if (works->edits) {
+        for (int64_t key : works->edits->chunk_keys()) {
+            int ci = 0, cj = 0;
+            EditGrid::chunk_unkey(key, ci, cj);
+            const EditGrid &g = works->edits->get_grid();
+            grow(g.cell_x(cj * EditGrid::CHUNK), g.cell_z(ci * EditGrid::CHUNK), 1.0);
+            grow(g.cell_x((cj + 1) * EditGrid::CHUNK), g.cell_z((ci + 1) * EditGrid::CHUNK), 1.0);
+        }
+    }
+    for (const Structure &s : works->structures.get()) {
+        for (const Piece &p : s.pieces) {
+            double x, y, z;
+            s.to_host((p.spot.x + 0.5) * piece_dims::GRID_M, 0.0, (p.spot.z + 0.5) * piece_dims::GRID_M, x, y, z);
+            grow(x, z, piece_dims::GRID_M);
+        }
+    }
+    for (const PlacedProp &p : works->props.get_props()) {
+        grow(p.x, p.z, 2.0);
+    }
+    return r_x0 <= r_x1;
+}
+
+void ScatterStream::filter_works(Chunk &r_chunk) const {
+    // 从压着房子的那一份重来（filter_houses 算过的），再加上压着营造的
+    if (r_chunk.house_hidden.size() == r_chunk.items.size()) {
+        r_chunk.hidden = r_chunk.house_hidden;
+    }
+    const std::shared_ptr<GroundWorks> works = world->get_player_works();
+    if (!works || r_chunk.items.empty() || works->empty()) {
+        return;
+    }
+    double bx0, bz0, bx1, bz1;
+    if (!works_bounds(bx0, bz0, bx1, bz1)) {
+        return;
+    }
+    double x0 = 0.0, z0 = 0.0;
+    world->get_scatter().chunk_corner(r_chunk.key, x0, z0);
+    const double size = world->get_scatter().get_rules().chunk_m;
+    if (x0 > bx1 || x0 + size < bx0 || z0 > bz1 || z0 + size < bz0) {
+        return;
+    }
+    const std::shared_ptr<const TerrainEdits> edits = works->edits;
+    // 地基格的中心（宿主坐标）与半对角：先按圆粗筛
+    struct Foot {
+        const Structure *s;
+        double x, z;
+    };
+    std::vector<Foot> feet;
+    for (const Structure &s : works->structures.get()) {
+        for (const Piece &p : s.pieces) {
+            const PieceDef *def = pieces::find(p.item);
+            if (def && def->role == PieceRole::FOUNDATION) {
+                double x, y, z;
+                s.to_host((p.spot.x + 0.5) * piece_dims::GRID_M, 0.0, (p.spot.z + 0.5) * piece_dims::GRID_M, x, y, z);
+                feet.push_back({ &s, x, z });
+            }
+        }
+    }
+    constexpr double FOOT_MARGIN_M = 0.4; // 地基外这么远的也藏（灌丛不从台基边上戳出来）
+    for (size_t k = 0; k < r_chunk.items.size(); k++) {
+        if (r_chunk.hidden[k]) {
+            continue;
+        }
+        const ScatterItem &item = r_chunk.items[k];
+        bool hide = edits && edits->delta_at(item.x, item.z) != 0.0;
+        for (size_t f = 0; f < feet.size() && !hide; f++) {
+            if (std::hypot(item.x - feet[f].x, item.z - feet[f].z) > piece_dims::GRID_M) {
+                continue;
+            }
+            double lx, ly, lz;
+            feet[f].s->to_local(item.x, item.y, item.z, lx, ly, lz);
+            const double cx = std::floor(lx / piece_dims::GRID_M), cz = std::floor(lz / piece_dims::GRID_M);
+            for (int dx = -1; dx <= 1 && !hide; dx++) {
+                for (int dz = -1; dz <= 1 && !hide; dz++) {
+                    const int x = int(cx) + dx, z = int(cz) + dz;
+                    if (!feet[f].s->has_floor(x, z, 0)) {
+                        continue;
+                    }
+                    const double ex = std::max({ x * piece_dims::GRID_M - lx, 0.0, lx - (x + 1) * piece_dims::GRID_M });
+                    const double ez = std::max({ z * piece_dims::GRID_M - lz, 0.0, lz - (z + 1) * piece_dims::GRID_M });
+                    hide = std::hypot(ex, ez) < FOOT_MARGIN_M;
+                }
+            }
+        }
+        for (const PlacedProp &p : works->props.get_props()) {
+            if (hide) {
+                break;
+            }
+            hide = prop_distance(p, item.x, item.z) < 0.3;
+        }
+        if (hide) {
+            r_chunk.hidden[k] = 1;
+        }
+    }
+}
+
+void ScatterStream::refilter_works() {
+    double x0, z0, x1, z1;
+    const bool any = works_bounds(x0, z0, x1, z1);
+    // 这回的框并上回的框：撤掉的东西底下要重新露出来
+    if (works_x0 <= works_x1) {
+        if (!any) {
+            x0 = works_x0, z0 = works_z0, x1 = works_x1, z1 = works_z1;
+        } else {
+            x0 = std::min(x0, works_x0), z0 = std::min(z0, works_z0), x1 = std::max(x1, works_x1), z1 = std::max(z1, works_z1);
+        }
+    } else if (!any) {
+        return;
+    }
+    if (any) {
+        works_bounds(works_x0, works_z0, works_x1, works_z1);
+    } else {
+        works_x0 = works_z0 = 0.0, works_x1 = works_z1 = -1.0;
+    }
+    const double size = world->get_scatter().get_rules().chunk_m;
+    for (auto &[packed, chunk] : chunks) {
+        double cx = 0.0, cz = 0.0;
+        world->get_scatter().chunk_corner(chunk.key, cx, cz);
+        if (cx > x1 || cx + size < x0 || cz > z1 || cz + size < z0) {
+            continue;
+        }
+        const std::vector<char> before = chunk.hidden;
+        filter_works(chunk); // 压着房子的那一份不变（村子铺了 / 拆了由 refilter_villages 管）
+        if (chunk.hidden != before) {
+            build_visuals(chunk);
+            if (chunk.body) {
+                build_body(chunk);
+            }
+        }
+    }
 }
 
 bool ScatterStream::path_clear(const Vector3 &p_from, const Vector3 &p_to, double p_clearance) const {

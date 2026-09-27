@@ -29,6 +29,8 @@ using namespace godot;
 
 namespace {
 
+constexpr double WORKS_SAVE_S = 3.0; // 营造的账隔这么久看一回、变了就存
+
 Vector3 v3(const PlanetVec &p_v) {
     return Vector3(real_t(p_v.x), real_t(p_v.y), real_t(p_v.z));
 }
@@ -249,6 +251,7 @@ bool GroupStream::setup() {
             Group *g = add_group(node, home->get_data_dir());
             g->parent = home->get_parent();
             g->world = home;
+            home->set_player_works(g->works); // 存档里的营造账换上（场景里的 World 开局自己建了一份空的）
             g->site_stream = home->get_site_stream();
             g->scatter_stream = home->get_scatter_stream();
             g->hinterland = g->site_stream ? g->site_stream->get_hinterland() : nullptr;
@@ -322,7 +325,26 @@ std::unique_ptr<GroupStream::Group> GroupStream::make_group(int p_node, const St
     if (provider && !g->home) {
         provider->load_memory(p_node, g->memory);
     }
+    // 玩家营造的账（切片十一）：场景里那一群也从存档读
+    g->works = std::make_shared<GroundWorks>();
+    if (provider && provider->load_works(p_node, *g->works)) {
+        g->works_saved = save_ground_works(*g->works);
+    }
     return g;
+}
+
+void GroupStream::save_works(Group &r_group, bool p_force) {
+    if (!provider || !r_group.works) {
+        return;
+    }
+    const std::string text = r_group.works->empty() ? std::string() : save_ground_works(*r_group.works);
+    if (text == r_group.works_saved && !p_force) {
+        return;
+    }
+    if (text != r_group.works_saved) {
+        provider->save_works(r_group.node, text);
+        r_group.works_saved = text;
+    }
 }
 
 GroupStream::Group *GroupStream::adopt_group(std::unique_ptr<Group> p_group) {
@@ -383,6 +405,7 @@ void GroupStream::save_world() {
         return;
     }
     for (auto &gp : groups) {
+        save_works(*gp, false);
         finish_ledgers(*gp, true);
         const Group &g = *gp;
         GroupMemory m = g.memory; // 离开时存下、还没补回去的照留
@@ -542,6 +565,16 @@ void GroupStream::_process(double p_delta) {
     for (auto &gp : groups) {
         finish_ledgers(*gp, false);
     }
+    // 营造的账（改地形、搭建件、摆件、木箱里的东西）：隔几秒看一回，变了就存（只看载入着的群，拆了的在拆的时候存过）
+    works_save_timer += p_delta;
+    if (works_save_timer >= WORKS_SAVE_S) {
+        works_save_timer = 0.0;
+        for (auto &gp : groups) {
+            if (gp->world) {
+                save_works(*gp, false);
+            }
+        }
+    }
     update_jump();
     update_placements(false);
     feed_focus();
@@ -685,6 +718,7 @@ void GroupStream::load_world(Group &r_group, bool p_sync) {
     w->set_terrain_seed(r_group.node);
     w->set_async_load(!p_sync);
     w->set_physics_on(false);
+    w->set_player_works(r_group.works); // 这一群的营造账（拆了又载入照旧是同一份）
     if (const std::shared_ptr<PlanetWeather> pw = planet->get_planet_weather()) {
         w->set_planet_weather(pw, r_group.node, r_group.frame); // 行星天气场：载入时挂到它的天气模型上
     }
@@ -724,6 +758,7 @@ void GroupStream::unload_world(Group &r_group) {
         m.scatter = w->get_scatter_ledger();
         save_memory(r_group);
     }
+    save_works(r_group, true); // 营造的账留在内存（下回载入交回去），也存进存档
     set_far_hidden(r_group, false);
     // World 交给坟地（它的地面块、水面、农田、船坞一帧拆一点；村子那些已经先埋了，先拆）；别的群的容器随它一起埋
     if (r_group.container) {

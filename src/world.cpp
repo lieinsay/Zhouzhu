@@ -24,9 +24,13 @@
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "buildings.h"
 #include "dock_builder.h"
 #include "planet_jobs.h"
 #include "farm.h"
+#include "settlement.h"
+#include "world_village.h"
+#include "works_view.h"
 #include "shipyard.h"
 #include "hinterland.h"
 #include "planet_view.h"
@@ -146,6 +150,13 @@ void GroupWorld::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_river_radius"), &GroupWorld::get_river_radius);
     ClassDB::bind_method(D_METHOD("set_runoff_override", "value"), &GroupWorld::set_runoff_override);
     ClassDB::bind_method(D_METHOD("get_runoff_override"), &GroupWorld::get_runoff_override);
+    ClassDB::bind_method(D_METHOD("get_edit_step_at", "x", "z"), &GroupWorld::get_edit_step_at);
+    ClassDB::bind_method(D_METHOD("set_edit_step_at", "x", "z", "step"), &GroupWorld::set_edit_step_at);
+    ClassDB::bind_method(D_METHOD("get_patch_count"), &GroupWorld::get_patch_count);
+    ClassDB::bind_method(D_METHOD("get_edit_cell_count"), &GroupWorld::get_edit_cell_count);
+    ClassDB::bind_method(D_METHOD("get_edit_cell_center", "i", "j"), &GroupWorld::get_edit_cell_center);
+    ClassDB::bind_method(D_METHOD("get_earth_facts_at", "x", "z", "player"), &GroupWorld::get_earth_facts_at);
+    ClassDB::bind_method(D_METHOD("get_works_revision"), &GroupWorld::get_works_revision);
     ClassDB::bind_method(D_METHOD("get_stream_frame", "frame"), &GroupWorld::get_stream_frame);
     ClassDB::bind_method(D_METHOD("get_stream_totals"), &GroupWorld::get_stream_totals);
     ClassDB::bind_method(D_METHOD("reset_stream_meter"), &GroupWorld::reset_stream_meter);
@@ -366,6 +377,10 @@ void GroupWorld::install() {
     track_shading(ground_material);
     track_shading(river_material);
     update_runoff();
+    if (!player_works) {
+        player_works = std::make_shared<GroundWorks>(); // 场景里单独摆的 World（没有 GroupStream 交账）：自己一份，只在这一局
+    }
+    adopt_player_works();
 }
 
 void GroupWorld::track_shading(const Ref<Material> &p_material) {
@@ -749,10 +764,12 @@ Dictionary GroupWorld::find_river_near(double p_x, double p_z, double p_radius, 
 JobPool::Work GroupWorld::tile_job(const TileKey &p_key) const {
     const WorldTerrain *t = &terrain;
     const TileLayout *l = &layout;
-    return [t, l, p_key]() -> std::unique_ptr<JobResult> {
-        const TileMesh m = build_tile_mesh(*t, *l, p_key);
+    const std::vector<int64_t> holes = wanted_holes(p_key); // 交活时的账：改过的块留洞
+    return [t, l, p_key, holes]() -> std::unique_ptr<JobResult> {
+        const TileMesh m = build_tile_mesh(*t, *l, p_key, holes);
         std::unique_ptr<TileArrays> out = std::make_unique<TileArrays>();
         out->key = p_key;
+        out->holes = holes;
         out->origin_x = m.origin_x;
         out->origin_z = m.origin_z;
         if (m.empty()) {
@@ -807,12 +824,27 @@ void GroupWorld::retarget() {
 void GroupWorld::adopt(std::unique_ptr<TileArrays> p_tile) {
     const TileArrays &m = *p_tile;
     const TileKey key = m.key;
-    if (!target_has(key) || tiles.find(key.packed()) != tiles.end()) {
+    if (!target_has(key)) {
         return;
+    }
+    // 叶块的洞要与此刻的账对得上：挂着的对得上（或交来的这份是旧账的）就不换；挂着的是旧的、交来的是新的，就换掉
+    const bool leaf = key.level == layout.get_max_level();
+    const std::vector<int64_t> want = leaf ? wanted_holes(key) : std::vector<int64_t>();
+    const auto existing = tiles.find(key.packed());
+    if (existing != tiles.end()) {
+        if (existing->second.holes == want || m.holes != want) {
+            return;
+        }
+        if (existing->second.node) {
+            remove_child(existing->second.node);
+            existing->second.node->queue_free();
+        }
+        tiles.erase(existing);
     }
     Tile tile;
     tile.key = key;
     tile.serial = ++tile_serial;
+    tile.holes = m.holes;
     if (!m.empty()) {
         Array arrays;
         arrays.resize(Mesh::ARRAY_MAX);
@@ -847,6 +879,15 @@ void GroupWorld::adopt(std::unique_ptr<TileArrays> p_tile) {
         }
         add_child(root);
         tile.node = root;
+        // 改过的块的补丁（主线程当场建：一块 16 m 不到一毫秒）
+        if (leaf) {
+            for (int64_t chunk : want) {
+                mount_patch(tile, chunk);
+            }
+        }
+    }
+    if (leaf && m.holes != want) {
+        edit_stale.push_back(key.packed()); // 交活以后又改了地：下一帧按新账当场重建
     }
     tiles[key.packed()] = tile;
 }
@@ -987,6 +1028,17 @@ void GroupWorld::_process(double /* p_delta */) {
     if (!has_target || Vector2(focus.x - targeted_focus.x, focus.z - targeted_focus.z).length() > retarget_distance) {
         retarget();
     }
+    // 挂上时洞与账对不上的叶块：当场按新账重建
+    if (!edit_stale.empty()) {
+        std::vector<uint64_t> stale;
+        stale.swap(edit_stale);
+        for (uint64_t packed : stale) {
+            const auto found = tiles.find(packed);
+            if (found != tiles.end() && found->second.holes != wanted_holes(found->second.key)) {
+                rebuild_tile_now(packed);
+            }
+        }
+    }
     adopt_ready_tiles();
     prune();
     update_cull_margins();
@@ -999,6 +1051,12 @@ void GroupWorld::set_physics_on(bool p_on) {
         if (it.second.body) {
             it.second.body->set_process_mode(mode);
         }
+        for (auto &patch : it.second.patches) {
+            patch.second->set_process_mode(mode);
+        }
+    }
+    if (works_view) {
+        works_view->set_physics_on(physics_on);
     }
     // 船坞（主码头旁的坪、坞墩、门架）也是碰撞体：邻群的撤出物理
     const TypedArray<Node> children = get_children();
@@ -1435,6 +1493,415 @@ void GroupWorld::map_resource_taken(const ResourceSpot &p_spot) {
 
 bool GroupWorld::map_water_at(double p_x, double p_z) const {
     return WorldLandingGround(terrain).water(p_x, p_z);
+}
+
+// ---------------------------------------------------------------- 玩家营造（切片十一）
+
+void GroupWorld::set_player_works(const std::shared_ptr<GroundWorks> &p_works) {
+    player_works = p_works;
+    if (loaded) {
+        if (!player_works) {
+            player_works = std::make_shared<GroundWorks>();
+        }
+        adopt_player_works();
+    }
+}
+
+void GroupWorld::adopt_player_works() {
+    const EditGrid grid_now = layout.edit_grid();
+    if (!player_works->edits) {
+        player_works->edits = std::make_shared<const TerrainEdits>(grid_now);
+    } else if (player_works->edits->get_grid().x0 != grid_now.x0 || player_works->edits->get_grid().z0 != grid_now.z0) {
+        // 地形包换了（格子原点对不上）：改过的格落不到原来的地方，作废
+        ERR_PRINT(vformat(String(U"World：群 #%d 存下的改地形格子原点与地形对不上（%d 块作废）"), node_id, player_works->edits->chunk_count()));
+        player_works->edits = std::make_shared<const TerrainEdits>(grid_now);
+    }
+    terrain.set_edits(player_works->edits);
+    if (!works_view) {
+        works_view = memnew(WorksView);
+        works_view->set_name("Works");
+        add_child(works_view);
+    }
+    works_view->setup(player_works.get(), &looks);
+    works_view->set_physics_on(physics_on);
+    works_touched++;
+    // 已挂的叶块按这份账重挂（留洞、补丁）
+    std::vector<uint64_t> retile;
+    for (auto &it : tiles) {
+        if (it.second.key.level == layout.get_max_level() && it.second.holes != wanted_holes(it.second.key)) {
+            retile.push_back(it.first);
+        }
+    }
+    for (uint64_t packed : retile) {
+        rebuild_tile_now(packed);
+    }
+}
+
+int GroupWorld::get_works_revision() const {
+    if (!player_works) {
+        return 0;
+    }
+    return works_touched + player_works->structures.get_revision() * 7 + player_works->props.get_revision() * 13;
+}
+
+std::vector<int64_t> GroupWorld::wanted_holes(const TileKey &p_key) const {
+    const std::shared_ptr<const TerrainEdits> edits = terrain.get_edits();
+    return edits ? tile_edit_chunks(layout, *edits, p_key) : std::vector<int64_t>();
+}
+
+void GroupWorld::mount_patch(Tile &r_tile, int64_t p_chunk) {
+    const std::shared_ptr<const TerrainEdits> edits = terrain.get_edits();
+    if (!r_tile.node || !edits) {
+        return;
+    }
+    int ci = 0, cj = 0;
+    EditGrid::chunk_unkey(p_chunk, ci, cj);
+    const TileMesh m = build_edit_patch(terrain, layout, *edits, ci, cj);
+    if (m.empty()) {
+        return;
+    }
+    Array arrays;
+    arrays.resize(Mesh::ARRAY_MAX);
+    arrays[Mesh::ARRAY_VERTEX] = vec3s(m.positions);
+    arrays[Mesh::ARRAY_NORMAL] = vec3s(m.normals);
+    PackedColorArray colors;
+    colors.resize(int64_t(m.colors.size() / 4));
+    Color *c = colors.ptrw();
+    for (int64_t k = 0; k < colors.size(); k++) {
+        c[k] = Color(m.colors[size_t(k) * 4], m.colors[size_t(k) * 4 + 1], m.colors[size_t(k) * 4 + 2], m.colors[size_t(k) * 4 + 3]);
+    }
+    arrays[Mesh::ARRAY_COLOR] = colors;
+    PackedByteArray season;
+    season.resize(int64_t(m.season.size()));
+    std::copy(m.season.begin(), m.season.end(), season.ptrw());
+    arrays[Mesh::ARRAY_CUSTOM0] = season;
+    arrays[Mesh::ARRAY_INDEX] = int32s(m.indices);
+    Ref<ArrayMesh> mesh;
+    mesh.instantiate();
+    const uint64_t format = uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT;
+    mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
+    mesh->surface_set_material(0, ground_material);
+    StaticBody3D *root = memnew(StaticBody3D);
+    root->set_name(vformat("Patch_%d_%d", ci, cj));
+    root->set_process_mode(physics_on ? PROCESS_MODE_INHERIT : PROCESS_MODE_DISABLED);
+    MeshInstance3D *view = memnew(MeshInstance3D);
+    view->set_mesh(mesh);
+    root->add_child(view);
+    if (!m.collision.empty()) {
+        Ref<ConcavePolygonShape3D> shape;
+        shape.instantiate();
+        shape->set_faces(vec3s(m.collision));
+        CollisionShape3D *collider = memnew(CollisionShape3D);
+        collider->set_shape(shape);
+        root->add_child(collider);
+    }
+    r_tile.node->add_child(root);
+    r_tile.patches[p_chunk] = root;
+}
+
+void GroupWorld::unmount_patch(Tile &r_tile, int64_t p_chunk) {
+    const auto found = r_tile.patches.find(p_chunk);
+    if (found == r_tile.patches.end()) {
+        return;
+    }
+    if (found->second->get_parent()) {
+        found->second->get_parent()->remove_child(found->second);
+    }
+    found->second->queue_free();
+    r_tile.patches.erase(found);
+}
+
+void GroupWorld::rebuild_tile_now(uint64_t p_packed) {
+    const auto found = tiles.find(p_packed);
+    if (found == tiles.end()) {
+        return;
+    }
+    const TileKey key = found->second.key;
+    std::unique_ptr<JobResult> result = tile_job(key)();
+    // 旧块当场撤出场景（这一帧物理就看不到它了），新块挂上、碰撞一次挂齐
+    if (found->second.node) {
+        remove_child(found->second.node);
+        found->second.node->queue_free();
+    }
+    tiles.erase(found);
+    adopt(std::unique_ptr<TileArrays>(static_cast<TileArrays *>(result.release())));
+    for (auto it = collision_ready.begin(); it != collision_ready.end();) {
+        if (it->key == key) {
+            mount_collision(*it);
+            it = collision_ready.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void GroupWorld::refresh_edit_chunks(const std::vector<int64_t> &p_chunks) {
+    std::vector<uint64_t> retile;
+    for (int64_t chunk : p_chunks) {
+        int ci = 0, cj = 0;
+        EditGrid::chunk_unkey(chunk, ci, cj);
+        const TileKey key = layout.leaf_of_chunk(ci, cj);
+        const auto found = tiles.find(key.packed());
+        if (found == tiles.end() || !found->second.node) {
+            continue; // 这一片此刻不是叶块（远了）：走近了按新账建
+        }
+        if (found->second.holes != wanted_holes(key)) {
+            if (std::find(retile.begin(), retile.end(), key.packed()) == retile.end()) {
+                retile.push_back(key.packed());
+            }
+            continue;
+        }
+        unmount_patch(found->second, chunk);
+        if (terrain.get_edits() && terrain.get_edits()->chunk_active(ci, cj)) {
+            mount_patch(found->second, chunk);
+        }
+    }
+    for (uint64_t packed : retile) {
+        rebuild_tile_now(packed);
+    }
+}
+
+bool GroupWorld::edit_cell_at(double p_x, double p_z, int &r_i, int &r_j) const {
+    if (!loaded || !player_works || !player_works->edits) {
+        return false;
+    }
+    const EditGrid &g = player_works->edits->get_grid();
+    r_i = g.cell_i(p_z);
+    r_j = g.cell_j(p_x);
+    return true;
+}
+
+int GroupWorld::get_edit_step(int p_i, int p_j) const {
+    return player_works && player_works->edits ? player_works->edits->step_at(p_i, p_j) : 0;
+}
+
+bool GroupWorld::set_edit_step(int p_i, int p_j, int p_step) {
+    if (!loaded || !player_works || !player_works->edits) {
+        return false;
+    }
+    const std::shared_ptr<const TerrainEdits> old = player_works->edits;
+    TerrainEdits next = old->with_step(p_i, p_j, p_step);
+    if (next.get_revision() == old->get_revision()) {
+        return false;
+    }
+    player_works->edits = std::make_shared<const TerrainEdits>(std::move(next));
+    terrain.set_edits(player_works->edits);
+    works_touched++;
+    // 要重画的块：这一块；格在块边上时连隔壁块（块边上的坎归谁出跟着变）
+    const int ci = EditGrid::chunk_of(p_i), cj = EditGrid::chunk_of(p_j);
+    const int di = p_i - ci * EditGrid::CHUNK, dj = p_j - cj * EditGrid::CHUNK;
+    std::vector<int64_t> chunks{ EditGrid::chunk_key(ci, cj) };
+    if (di == 0) {
+        chunks.push_back(EditGrid::chunk_key(ci - 1, cj));
+    } else if (di == EditGrid::CHUNK - 1) {
+        chunks.push_back(EditGrid::chunk_key(ci + 1, cj));
+    }
+    if (dj == 0) {
+        chunks.push_back(EditGrid::chunk_key(ci, cj - 1));
+    } else if (dj == EditGrid::CHUNK - 1) {
+        chunks.push_back(EditGrid::chunk_key(ci, cj + 1));
+    }
+    refresh_edit_chunks(chunks);
+    return true;
+}
+
+std::string GroupWorld::edit_blocker(int p_i, int p_j) {
+    const EditGrid &g = player_works->edits->get_grid();
+    const double x0 = g.cell_x(p_j), z0 = g.cell_z(p_i), cx = x0 + 0.5, cz = z0 + 0.5;
+    const WorldGround ground(terrain, 0.0, 0.0);
+    const double probes[5][2] = { { cx, cz }, { x0 + 0.05, z0 + 0.05 }, { x0 + 0.95, z0 + 0.05 }, { x0 + 0.05, z0 + 0.95 }, { x0 + 0.95, z0 + 0.95 } };
+    for (const auto &p : probes) {
+        if (ground.water_at(p[0], p[1]) != WaterKind::NONE) {
+            return "水里动不了土";
+        }
+    }
+    if (terrain.near_pad(cx, cz, 1.0)) {
+        return "这是码头的坪";
+    }
+    for (const YardPlan &yard : terrain.get_yards()) {
+        if (yard.contains(cx, cz, 1.0)) {
+            return "这是船坞的坪";
+        }
+    }
+    if (Farm *farm = host_farm()) {
+        const PlotLattice &lat = farm->get_model().get_lattice();
+        for (const auto &p : probes) {
+            int i = 0, j = 0;
+            if (lat.cell_of(p[0], p[1], i, j) && farm->get_model().plot_at(i, j).state != PlotState::WILD) {
+                return "这是田";
+            }
+        }
+    }
+    if (site_stream) {
+        for (WorldVillage *village : site_stream->built_villages()) {
+            Settlement *settlement = village->get_settlement();
+            const SiteSettlement &site = village->get_site();
+            if (!settlement || std::hypot(cx - site.x, cz - site.z) > village->get_radius() + 40.0) {
+                continue;
+            }
+            for (const Building &b : settlement->get_model().get_items()) {
+                const BuildingDef *def = buildings::by_id(b.kind);
+                if (def && footprint_contains(*def, b, cx - site.x, cz - site.z, 1.0 + 0.71)) {
+                    return "房子挡着";
+                }
+            }
+        }
+    }
+    const ResourceSpot spot = map_resource_near(Vector3(real_t(cx), 0, real_t(cz)), 4.0);
+    if (spot.site >= 0) {
+        const bool pile = Vector2(real_t(cx) - spot.pile.x, real_t(cz) - spot.pile.z).length() <= 3.7f;
+        const bool face = Vector2(real_t(cx) - spot.face.x, real_t(cz) - spot.face.z).length() <= 3.7f;
+        if (pile || face) {
+            return pile ? "这是资源点的堆场" : "这是资源点的采掘面";
+        }
+    }
+    if (scatter_stream && scatter_stream->solid_standing_near(cx, cz, 0.75)) {
+        return "树根底下挖不得：先把树伐了";
+    }
+    for (const Structure &s : player_works->structures.get()) {
+        double lx, ly, lz;
+        s.to_local(cx, s.y, cz, lx, ly, lz);
+        for (const Piece &p : s.pieces) {
+            const PieceDef *def = pieces::find(p.item);
+            if (!def || (def->role != PieceRole::FOUNDATION && def->role != PieceRole::PILLAR && !(p.spot.level == 0 && def->role == PieceRole::LADDER))) {
+                continue;
+            }
+            double bx, by, bz, hx, hy, hz;
+            piece_bounds(s, p, bx, by, bz, hx, hy, hz);
+            // 这一格（1 m 见方，半对角 0.71）碰着那件的占地
+            if (std::abs(lx - bx) < hx + 0.71 && std::abs(lz - bz) < hz + 0.71) {
+                return "搭建件压着";
+            }
+        }
+        // 0 层门外的台阶
+        for (const Piece &p : s.pieces) {
+            const PieceDef *def = pieces::find(p.item);
+            const int out = def && def->role == PieceRole::DOOR && p.spot.level == 0 && p.bottom < -0.05 ? door_outside(s, p.spot) : 0;
+            if (out == 0) {
+                continue;
+            }
+            const double along = p.spot.dir == 0 ? lx - (p.spot.x + 0.5) * piece_dims::GRID_M : lz - (p.spot.z + 0.5) * piece_dims::GRID_M;
+            const double normal = (p.spot.dir == 0 ? lz - p.spot.z * piece_dims::GRID_M : lx - p.spot.x * piece_dims::GRID_M) * out;
+            if (std::abs(along) < 0.7 + 0.71 && normal > -0.71 && normal < 2.6 + 0.71) {
+                return "门外的台阶压着";
+            }
+        }
+    }
+    for (const PlacedProp &p : player_works->props.get_props()) {
+        if (prop_distance(p, cx, cz) < 0.71) {
+            return "摆着的东西压着";
+        }
+    }
+    return std::string();
+}
+
+EarthFacts GroupWorld::earth_facts(int p_i, int p_j, const Vector3 &p_player) {
+    EarthFacts f;
+    if (!loaded || !player_works || !player_works->edits) {
+        f.blocked = "这里改不了地形";
+        return f;
+    }
+    const EditGrid &g = player_works->edits->get_grid();
+    const double cx = g.cell_x(p_j) + 0.5, cz = g.cell_z(p_i) + 0.5;
+    // 这格所在的粗格（两格一个）四角都得是地
+    const int qi = p_i >= 0 ? p_i / 2 * 2 : -((-p_i + 1) / 2) * 2, qj = p_j >= 0 ? p_j / 2 * 2 : -((-p_j + 1) / 2) * 2;
+    f.solid = true;
+    for (int k = 0; k < 4 && f.solid; k++) {
+        f.solid = terrain.sample(g.cell_x(qj + 2 * (k & 1)), g.cell_z(qi + 2 * (k >> 1))).land;
+    }
+    f.shore = terrain.sample(cx, cz).shore;
+    f.soil_depth = soil_depth_at(terrain, cx, cz);
+    f.blocked = edit_blocker(p_i, p_j);
+    double top = 0.0;
+    terrain.surface(cx, cz, top);
+    constexpr double PLAYER_R = 0.35;
+    f.under_feet = std::abs(p_player.x - cx) < 0.5 + PLAYER_R && std::abs(p_player.z - cz) < 0.5 + PLAYER_R && std::abs(p_player.y - top) < 2.0;
+    return f;
+}
+
+int GroupWorld::get_edit_step_at(double p_x, double p_z) const {
+    int i = 0, j = 0;
+    return edit_cell_at(p_x, p_z, i, j) ? get_edit_step(i, j) : 0;
+}
+
+bool GroupWorld::set_edit_step_at(double p_x, double p_z, int p_step) {
+    int i = 0, j = 0;
+    return edit_cell_at(p_x, p_z, i, j) && set_edit_step(i, j, p_step);
+}
+
+int GroupWorld::get_patch_count() const {
+    int n = 0;
+    for (const auto &it : tiles) {
+        n += int(it.second.patches.size());
+    }
+    return n;
+}
+
+Vector3 GroupWorld::get_edit_cell_center(int p_i, int p_j) const {
+    Vector3 out;
+    map_earth_cell_center(p_i, p_j, out);
+    return out;
+}
+
+int GroupWorld::get_edit_cell_count() const {
+    return player_works && player_works->edits ? player_works->edits->cell_count() : 0;
+}
+
+Dictionary GroupWorld::get_earth_facts_at(double p_x, double p_z, const Vector3 &p_player) {
+    Dictionary d;
+    int i = 0, j = 0;
+    if (!edit_cell_at(p_x, p_z, i, j)) {
+        return d;
+    }
+    const EarthFacts f = earth_facts(i, j, p_player);
+    d["i"] = i;
+    d["j"] = j;
+    d["step"] = get_edit_step(i, j);
+    d["solid"] = f.solid;
+    d["shore"] = f.shore;
+    d["soil_depth"] = f.soil_depth;
+    d["blocked"] = String::utf8(f.blocked.c_str());
+    d["under_feet"] = f.under_feet;
+    return d;
+}
+
+WorksSite GroupWorld::map_works_at(const Vector3 & /* p_global */) {
+    WorksSite s;
+    if (!loaded || !player_works) {
+        return s;
+    }
+    s.works = player_works.get();
+    s.frame = this;
+    s.terrain = true;
+    s.view = works_view ? works_view->get_instance_id() : ObjectID();
+    return s;
+}
+
+bool GroupWorld::map_earth_cell(const Vector3 &p_global, int &r_i, int &r_j) const {
+    const Vector3 local = to_local(p_global);
+    return edit_cell_at(local.x, local.z, r_i, r_j);
+}
+
+bool GroupWorld::map_earth_cell_center(int p_i, int p_j, Vector3 &r_global) const {
+    if (!loaded || !player_works || !player_works->edits) {
+        return false;
+    }
+    const EditGrid &g = player_works->edits->get_grid();
+    const double x = g.cell_x(p_j) + 0.5, z = g.cell_z(p_i) + 0.5;
+    double y = 0.0;
+    if (!terrain.surface(x, z, y)) {
+        return false;
+    }
+    r_global = to_global(Vector3(real_t(x), real_t(y), real_t(z)));
+    return true;
+}
+
+bool GroupWorld::map_earth_facts(int p_i, int p_j, const Vector3 &p_player, EarthFacts &r_facts) {
+    if (!loaded || !player_works) {
+        return false;
+    }
+    r_facts = earth_facts(p_i, p_j, to_local(p_player));
+    return true;
 }
 
 Dictionary GroupWorld::get_resource_site(int p_working_id) const {

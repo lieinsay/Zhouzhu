@@ -91,6 +91,12 @@ public:
     void map_resource_taken(const ResourceSpot &p_spot) override;
     bool map_landing_height(double p_x, double p_z, double &r_y) const override;
     bool map_water_at(double p_x, double p_z) const override;
+    WorksSite map_works_at(const godot::Vector3 &p_global) override;
+    bool map_earth_cell(const godot::Vector3 &p_global, int &r_i, int &r_j) const override;
+    bool map_earth_cell_center(int p_i, int p_j, godot::Vector3 &r_global) const override;
+    bool map_earth_facts(int p_i, int p_j, const godot::Vector3 &p_player, EarthFacts &r_facts) override;
+    int map_earth_step(int p_i, int p_j) const override;
+    bool map_set_earth_step(int p_i, int p_j, int p_step) override;
     WeatherModel *map_weather() override;
     void map_weather_models(std::vector<WeatherModel *> &r_out) override;
     bool map_shift_pending() const override;

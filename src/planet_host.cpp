@@ -421,6 +421,37 @@ bool PlanetHost::map_water_at(double p_x, double p_z) const {
     return a && a->map_water_at(p_x, p_z);
 }
 
+// 营造（切片十一）：人与船都在锚群的平面里，营造的账、改地形都问锚群
+WorksSite PlanetHost::map_works_at(const Vector3 &p_global) {
+    GroupWorld *a = anchor_world();
+    return a ? a->map_works_at(p_global) : WorksSite();
+}
+
+bool PlanetHost::map_earth_cell(const Vector3 &p_global, int &r_i, int &r_j) const {
+    const GroupWorld *a = anchor_world();
+    return a && a->map_earth_cell(p_global, r_i, r_j);
+}
+
+bool PlanetHost::map_earth_cell_center(int p_i, int p_j, Vector3 &r_global) const {
+    const GroupWorld *a = anchor_world();
+    return a && a->map_earth_cell_center(p_i, p_j, r_global);
+}
+
+bool PlanetHost::map_earth_facts(int p_i, int p_j, const Vector3 &p_player, EarthFacts &r_facts) {
+    GroupWorld *a = anchor_world();
+    return a && a->map_earth_facts(p_i, p_j, p_player, r_facts);
+}
+
+int PlanetHost::map_earth_step(int p_i, int p_j) const {
+    const GroupWorld *a = anchor_world();
+    return a ? a->map_earth_step(p_i, p_j) : 0;
+}
+
+bool PlanetHost::map_set_earth_step(int p_i, int p_j, int p_step) {
+    GroupWorld *a = anchor_world();
+    return a && a->map_set_earth_step(p_i, p_j, p_step);
+}
+
 bool PlanetHost::map_shift_pending() const {
     return stream && stream->is_shift_pending();
 }

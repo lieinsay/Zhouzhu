@@ -513,6 +513,52 @@ void GroupProvider::save_memory(int p_node, const GroupMemory &p_memory) const {
     DirAccess::rename_absolute(abs_path(path + String(".tmp")), abs_path(path));
 }
 
+// ---------------------------------------------------------------- 玩家营造的账（切片十一）
+
+bool GroupProvider::load_works(int p_node, GroundWorks &r_works) const {
+    if (world_dir.is_empty()) {
+        return false;
+    }
+    const String path = world_dir.path_join("works").path_join(itos(p_node) + ".txt");
+    if (!FileAccess::file_exists(path)) {
+        return false;
+    }
+    const PackedByteArray bytes = FileAccess::get_file_as_bytes(path);
+    std::string error;
+    if (!load_ground_works(std::string(reinterpret_cast<const char *>(bytes.ptr()), size_t(bytes.size())), r_works, error)) {
+        ERR_PRINT(vformat(String(U"GroupProvider：%s 读不回来（%s），这一群的营造从头来"), path, String::utf8(error.c_str())));
+        r_works = GroundWorks();
+        return false;
+    }
+    return true;
+}
+
+void GroupProvider::save_works(int p_node, const std::string &p_text) const {
+    if (world_dir.is_empty()) {
+        return;
+    }
+    const String dir = world_dir.path_join("works");
+    const String path = dir.path_join(itos(p_node) + ".txt");
+    if (p_text.empty()) {
+        if (FileAccess::file_exists(path)) {
+            DirAccess::remove_absolute(abs_path(path));
+        }
+        return;
+    }
+    DirAccess::make_dir_recursive_absolute(abs_path(dir));
+    Ref<FileAccess> f = FileAccess::open(path + String(".tmp"), FileAccess::WRITE);
+    if (f.is_null()) {
+        ERR_PRINT(vformat(String(U"GroupProvider：写不了 %s"), path));
+        return;
+    }
+    PackedByteArray bytes;
+    bytes.resize(int64_t(p_text.size()));
+    std::copy(p_text.begin(), p_text.end(), bytes.ptrw());
+    f->store_buffer(bytes);
+    f->close();
+    DirAccess::rename_absolute(abs_path(path + String(".tmp")), abs_path(path));
+}
+
 // ---------------------------------------------------------------- 生成
 
 void GroupProvider::_process(double p_delta) {

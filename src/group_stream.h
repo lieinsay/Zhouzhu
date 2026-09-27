@@ -15,6 +15,7 @@
 #include <godot_cpp/variant/transform3d.hpp>
 
 #include "farm_model.h"
+#include "ground_works.h"
 #include "group_memory.h"
 #include "weather.h"
 #include "planet_frame.h"
@@ -100,6 +101,10 @@ public:
         bool pinned = false; // 瞬移要去的：不管多远都载入、升到细版
         GroupMemory memory;
         std::shared_future<std::map<int, std::string>> ledgers_saving; // 细版 → 近景时各村的账在后台存成文本；好了并进 memory.ledgers、存进存档目录
+        // 玩家营造的账（切片十一：改地形、搭建件、摆件）：登记时从世界存档目录读（works/<节点>.txt），载入时交给这一群的 GroupWorld，
+        // 拆了也留着（飞走再回来还在）；改了隔几秒存一回（works_saved 是上回存下的文本）
+        std::shared_ptr<GroundWorks> works;
+        std::string works_saved;
     };
     enum JumpPhase {
         JUMP_NONE,
@@ -175,6 +180,8 @@ private:
     void poll_adding();
     void on_group_ready(int p_node, const godot::String &p_dir);
     void save_memory(const Group &p_group) const;
+    double works_save_timer = 0.0;
+    void save_works(Group &r_group, bool p_force); // 营造账变了就存（p_force：不看隔多久）
     void finish_ledgers(Group &r_group, bool p_wait); // 后台存账做完了（或 p_wait 等它做完）：并进 memory.ledgers、存进存档目录
     // 拆一群（降档）不在一帧里拆完（行星计划 P4 量出来的：2051 的村子、地面块一下子拆掉主线程要两三百毫秒）：
     // 节点先停下、改名（同名的新节点照旧叫 World / SiteStream……）、交给「坟地」，每帧按 reap_budget_ms 从叶子往上拆一点

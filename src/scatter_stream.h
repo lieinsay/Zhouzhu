@@ -76,6 +76,8 @@ private:
     bool has_focus = false;
     double since_check = 0.0, since_regrow = 0.0;
     int64_t village_version = -1;
+    int64_t works_revision = -1; // 玩家营造的账（切片十一）上回按哪一版藏的
+    double works_x0 = 0.0, works_z0 = 0.0, works_x1 = -1.0, works_z1 = -1.0; // 上回营造账的外包框（撤掉的东西底下要重新露出来）
     struct VillageMark {
         const WorldVillage *village = nullptr;
         double x = 0.0, z = 0.0, reach = 0.0;
@@ -86,7 +88,8 @@ private:
         ScatterChunkKey key;
         std::vector<ScatterItem> items;
         std::vector<float> instances; // 每株 16 个数（ScatterChunkJob::instances）
-        std::vector<char> hidden; // 压着铺出来的房子
+        std::vector<char> hidden; // 藏着的：压着铺出来的房子，或压着玩家的营造（改过的格、地基、摆件）
+        std::vector<char> house_hidden; // 其中压着房子的（改地形时只重查营造那一半）
         std::vector<char> standing; // 上回摆的时候立着没有
         godot::Node3D *node = nullptr;
         godot::StaticBody3D *body = nullptr;
@@ -108,6 +111,10 @@ private:
     void adopt(std::unique_ptr<ScatterChunkJob> p_job);
     void adopt_far(std::unique_ptr<FarTreesJob> p_job);
     void filter_houses(Chunk &r_chunk) const;
+    // 玩家改过的格（级数不是 0）、地基底下、摆件底下的也藏掉（清单照旧确定，存量账的键不变）
+    void filter_works(Chunk &r_chunk) const;
+    void refilter_works();
+    bool works_bounds(double &r_x0, double &r_z0, double &r_x1, double &r_z1) const;
     void snapshot_standing(Chunk &r_chunk) const;
     void build_visuals(Chunk &r_chunk);
     void build_body(Chunk &r_chunk);
@@ -133,6 +140,8 @@ public:
     bool nearest_item(const godot::Vector3 &p_point, double p_facing_yaw, Hit &r_hit) const;
     // 物理查到的东西是不是树干
     static bool is_trunk(godot::Object *p_collider);
+    // (x, z) 周围 p_radius 以内（到树干边）有没有立着的树干（摆着的块里查；改地形时树根底下挖不得）
+    bool solid_standing_near(double p_x, double p_z, double p_radius) const;
 
     // 查询（给测试、调试）
     int get_chunk_count() const { return int(chunks.size()); }

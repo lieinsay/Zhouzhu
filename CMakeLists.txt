@@ -326,6 +326,8 @@ target_sources(
         src/villagers.h
         src/weather_view.cpp
         src/weather_view.h
+        src/works_view.cpp
+        src/works_view.h
         src/world.cpp
         src/world.h
         src/world_clock.cpp

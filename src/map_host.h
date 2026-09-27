@@ -8,10 +8,12 @@
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
+#include "earthworks.h"
 #include "freight.h"
 #include "resource_sites.h"
 #include "wild_landing.h"
 
+struct GroundWorks;
 class Farm;
 class GroundHost;
 class Shipyard;
@@ -42,6 +44,14 @@ struct ResourceSpot {
     int cap = 0; // 存量上限
     double refill_hours = 0.0; // 从空到满几个钟头
     ResourceStock *stock = nullptr; // 存量账（地图持有）
+};
+
+// 一处地面的营造账（切片十一，ground_works.h）归谁：账、账用的坐标系（宿主节点；nullptr = 全局坐标）、能不能改地形、画它的 WorksView
+struct WorksSite {
+    GroundWorks *works = nullptr;
+    godot::Node3D *frame = nullptr;
+    bool terrain = false;
+    godot::ObjectID view;
 };
 
 // 换锚（行星计划 P3，docs/PLAN-PLANET.md 第 4.2 节）：旧锚群的平面 → 新锚群的平面。
@@ -125,6 +135,16 @@ public:
     // 这张图上所有的天气模型（开发者覆盖改在每一份上）：默认就是 map_weather 一份
     virtual void map_weather_models(std::vector<WeatherModel *> &r_out);
 
+    // 营造（切片十一，可选）：这一点的地面归哪一份营造账（搭建件、摆件、改地形都记在它上面）；默认没有——编排用自带的一份（全局坐标、不能改地形）
+    virtual WorksSite map_works_at(const godot::Vector3 &p_global) { return WorksSite(); }
+    // 改地形（map_works_at 说 terrain 的地图才有）：这一点落在哪一格（营造账的格号，terrain_edits.h）；这一格的事实（压着什么、土层多厚、压不压着人）；
+    // 此刻几级；改成几级（账、地形取样、地面块、碰撞一起改，当场就站得上去；没改成返回 false）
+    virtual bool map_earth_cell(const godot::Vector3 &p_global, int &r_i, int &r_j) const { return false; }
+    virtual bool map_earth_cell_center(int p_i, int p_j, godot::Vector3 &r_global) const { return false; } // 格心（y = 此刻的地面）
+    virtual bool map_earth_facts(int p_i, int p_j, const godot::Vector3 &p_player, EarthFacts &r_facts) { return false; }
+    virtual int map_earth_step(int p_i, int p_j) const { return 0; }
+    virtual bool map_set_earth_step(int p_i, int p_j, int p_step) { return false; }
+
     // 换锚（可选，只有行星上的宿主 PlanetHost 有）：宿主定下要换（map_shift_pending），编排在下一个物理帧开头
     // map_shift_begin 拿到换法、把人、船、相机、摆出来的东西、自己记的位置都换过去，再 map_shift_commit 让宿主收尾（新锚归位、挂碰撞……）。
     // map_shift_toward：瞬移、回位要落到别的群的地上——宿主把那一群同步载入、定下换锚（返回 true），编排接着照上面换
@@ -143,6 +163,29 @@ public:
     virtual void map_jump_end() {}
 
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
+};
+
+// 营造账的局部坐标里问地面（切片十一）：点经宿主节点的变换换到全局问地图（岛群的锚群是单位变换；宿主只平移、绕竖直轴转）
+class MapFrameGround : public LandingGround {
+    const MapHost *map;
+    godot::Transform3D xf;
+
+public:
+    MapFrameGround(const MapHost *p_map, const godot::Transform3D &p_xf) :
+            map(p_map), xf(p_xf) {}
+    bool height(double p_x, double p_z, double &r_y) const override {
+        const godot::Vector3 g = xf.xform(godot::Vector3(real_t(p_x), 0, real_t(p_z)));
+        double y = 0.0;
+        if (!map->map_landing_height(g.x, g.z, y)) {
+            return false;
+        }
+        r_y = y - xf.origin.y;
+        return true;
+    }
+    bool water(double p_x, double p_z) const override {
+        const godot::Vector3 g = xf.xform(godot::Vector3(real_t(p_x), 0, real_t(p_z)));
+        return map->map_water_at(g.x, g.z);
+    }
 };
 
 // 野泊、摆放问的地面：地图宿主的地面高与水（全局 xz）

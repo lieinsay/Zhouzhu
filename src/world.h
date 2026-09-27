@@ -19,7 +19,9 @@
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 
+#include "earthworks.h"
 #include "ground_host.h"
+#include "ground_works.h"
 #include "job_pool.h"
 #include "map_host.h"
 #include "resource_scatter.h"
@@ -35,10 +37,12 @@
 
 class ScatterStream;
 class SiteStream;
+class WorksView;
 
 // 后台备好的一块地面：网格与碰撞面都已转成引擎的数组（主线程只建节点、挂上）
 struct TileArrays : JobResult {
     TileKey key;
+    std::vector<int64_t> holes; // 叶块按哪几块改过的地留的洞（交活时的账，terrain_tile.h）
     double origin_x = 0.0, origin_z = 0.0;
     godot::PackedVector3Array vertices, normals;
     godot::PackedColorArray colors;
@@ -138,6 +142,8 @@ class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
         godot::StaticBody3D *body = nullptr; // 叶块的碰撞体（碰撞一段段往上挂）
         int parts_left = 0; // 还有几段碰撞没挂
         uint64_t serial = 0; // 第几回挂上的（同一格拆了又挂，旧的碰撞段不能挂到新的块上）
+        std::vector<int64_t> holes; // 叶块：按哪几块改过的地留了洞（切片十一）
+        std::map<int64_t, godot::Node3D *> patches; // 叶块：改过的块的补丁（网格 + 碰撞，挂在块的节点下）
     };
     std::map<uint64_t, Tile> tiles; // 已挂进场景的
     struct CollisionPart {
@@ -185,6 +191,22 @@ class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
     godot::ObjectID jobs_id; // 领通道的 PlanetJobs（拆的时候还回去）
     std::vector<std::unique_ptr<TileArrays>> tile_ready;
     std::vector<std::unique_ptr<RiverArrays>> river_ready;
+
+    // 玩家营造（切片十一，ground_works.h）：这一群的营造账（GroupStream 在载入前交过来，飞走再回来、退出再进都在；场景里单独摆的 World 自己建一份）。
+    // 改地形：账换一份新的、交给 WorldTerrain（后台线程量高都看得到）；已挂的叶块按改过的块留洞、挂补丁（主线程当场建：一块 16 m 不到一毫秒），
+    // 洞变了（头一回改到某一块、或改回原样）当场重建那一个叶块、碰撞一次挂齐——改完这一帧就站得上去、掉得下去。
+    // 搭建件、摆件由 WorksView（子节点）画。
+    std::shared_ptr<GroundWorks> player_works;
+    WorksView *works_view = nullptr;
+    int works_touched = 0; // 改地形每改一格加一（散布据此重查压着的）
+    std::vector<uint64_t> edit_stale; // 挂上时洞与账对不上的叶块（交活以后又改了地）：下一帧当场重建
+    void adopt_player_works();
+    std::vector<int64_t> wanted_holes(const TileKey &p_key) const;
+    void mount_patch(Tile &r_tile, int64_t p_chunk);
+    void unmount_patch(Tile &r_tile, int64_t p_chunk);
+    void rebuild_tile_now(uint64_t p_packed);
+    void refresh_edit_chunks(const std::vector<int64_t> &p_chunks);
+    std::string edit_blocker(int p_i, int p_j);
 
     void attach_pool();
     // 读包、建地形与规划：只碰文件与纯 C++ 的数据，可以在后台线程里做（这时主线程不碰这些成员）
@@ -308,6 +330,25 @@ public:
     bool is_physics_on() const { return physics_on; }
     // 这一群的着色器参数设到一份材质上（地皮、水面在这里设；散布的材质 ScatterStream 交过来）；以后每帧跟着这一群的海拔表与摆放
     void track_shading(const godot::Ref<godot::Material> &p_material);
+
+    // 玩家营造（切片十一）：换上这一群的营造账（载入前后都行：载入了就当场按新账重挂叶块、重画实物）
+    void set_player_works(const std::shared_ptr<GroundWorks> &p_works);
+    std::shared_ptr<GroundWorks> get_player_works() const { return player_works; }
+    WorksView *get_works_view() const { return works_view; }
+    // 账的版本（改地形 + 搭建件 + 摆件）：散布据此重查压着的
+    int get_works_revision() const;
+    // 改地形：一点落在哪一格（营造账的格号）；一格此刻几级；改成几级（当场重挂地面块、挂齐碰撞）；这一格的事实（给挖与垒的规矩）
+    bool edit_cell_at(double p_x, double p_z, int &r_i, int &r_j) const;
+    int get_edit_step(int p_i, int p_j) const;
+    bool set_edit_step(int p_i, int p_j, int p_step);
+    EarthFacts earth_facts(int p_i, int p_j, const godot::Vector3 &p_player);
+    // 给脚本（测试）：一点所在那格的级数 / 改成几级；某叶块挂着几个补丁；这一群一共改过几格
+    int get_edit_step_at(double p_x, double p_z) const;
+    bool set_edit_step_at(double p_x, double p_z, int p_step);
+    int get_patch_count() const;
+    int get_edit_cell_count() const;
+    godot::Vector3 get_edit_cell_center(int p_i, int p_j) const; // 格心（全局，y = 此刻的地面）；没有返回 (0, 0, 0)
+    godot::Dictionary get_earth_facts_at(double p_x, double p_z, const godot::Vector3 &p_player);
     godot::Ref<godot::Texture2D> get_elev_texture() const { return elev_texture; }
     SharedLooks &get_looks() { return looks; } // 岛群里各村共用的材质与网格
     static double clock_hours(); // 全局钟：从第 0 天子夜起的游戏钟头
@@ -369,6 +410,12 @@ public:
     bool map_landing_height(double p_x, double p_z, double &r_y) const override { return terrain.surface(p_x, p_z, r_y); }
     bool map_water_at(double p_x, double p_z) const override;
     WeatherModel *map_weather() override { return loaded ? &weather : nullptr; }
+    WorksSite map_works_at(const godot::Vector3 &p_global) override;
+    bool map_earth_cell(const godot::Vector3 &p_global, int &r_i, int &r_j) const override;
+    bool map_earth_cell_center(int p_i, int p_j, godot::Vector3 &r_global) const override;
+    bool map_earth_facts(int p_i, int p_j, const godot::Vector3 &p_player, EarthFacts &r_facts) override;
+    int map_earth_step(int p_i, int p_j) const override { return get_edit_step(p_i, p_j); }
+    bool map_set_earth_step(int p_i, int p_j, int p_step) override { return set_edit_step(p_i, p_j, p_step); }
 
     void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
     godot::NodePath get_sites_path() const { return sites_path; }
