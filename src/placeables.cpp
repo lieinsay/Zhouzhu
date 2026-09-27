@@ -107,6 +107,15 @@ int Placements::add(const std::string &p_item, const PlaceCheck &p_check) {
     return p.id;
 }
 
+void Placements::shift(const std::function<void(double &, double &, double &, double &)> &p_move) {
+    for (PlacedProp &p : props) {
+        p_move(p.x, p.y, p.z, p.yaw_extra);
+    }
+    if (!props.empty()) {
+        revision++;
+    }
+}
+
 bool Placements::remove(int p_id) {
     for (size_t k = 0; k < props.size(); k++) {
         if (props[k].id == p_id) {

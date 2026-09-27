@@ -113,6 +113,9 @@ public:
     // 相机处的地方时比钟点早多少钟头（东边早，15° 一小时）
     double get_local_hour_offset() const;
     double get_ground_clearance() const { return ground_clearance; }
+    // 相机处的地理方向（x 东、y 上、z 南：历法算的日月就是这么给的）→ 画面的世界轴（锚群平面轴在相机处的像）。
+    // 两者只差锚群投影在相机处的子午线收敛角（离群心几十公里时零点几度）；换锚前后这个角不一样，所以日月按它转，画面才不跳（行星计划 P3）
+    godot::Vector3 enu_to_visual(const godot::Vector3 &p_enu) const;
     godot::Vector2 latlon_at(const godot::Vector3 &p_flat) const;
     godot::Vector3 to_visual(const godot::Vector3 &p_flat) const;
     godot::Vector3 to_flat(const godot::Vector3 &p_visual) const;

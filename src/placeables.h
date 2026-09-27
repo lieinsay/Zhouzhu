@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -73,6 +74,7 @@ struct PlacedProp {
     std::string item;
     double x = 0.0, y = 0.0, z = 0.0, low = 0.0;
     int quarter = 0;
+    double yaw_extra = 0.0; // 换锚（行星计划 P3）累下来的转角：画出来的朝向 = quarter × 90° + 它；占地照 quarter 算
     ItemSlots contents; // 容器里的东西（不是容器为空）
 };
 
@@ -99,6 +101,8 @@ public:
     // 记下一件（按 check 摆），返回它的 id
     int add(const std::string &p_item, const PlaceCheck &p_check);
     bool remove(int p_id);
+    // 换锚（行星计划 P3）：每件的位置按 p_point 换、朝向多转 p_yaw（按它所在处）；账变了（场景重摆）
+    void shift(const std::function<void(double &, double &, double &, double &)> &p_move);
     // 人在 (p_x, p_y, p_z) 朝 p_look_yaw 看：够得着、在身前扇面里、离得最近的那件；没有 −1
     int facing(double p_x, double p_y, double p_z, double p_look_yaw, const PlaceRules &p_rules) const;
     // 身边 p_range 以内有哪些设施（station_bit 的或）

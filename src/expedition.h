@@ -139,6 +139,11 @@ private:
     int course_target() const; // 航行目标（码头下标）：没到过对岸是目的码头，到过了是回程（接了托运另说，见 freight_target）
     bool freight_target(godot::Transform3D &r_target, godot::String &r_name) const; // 接了托运：目的村的船台（还远就是村心）
     void respawn();
+    // 换锚（行星计划 P3）：地图宿主定下了（或瞬移、回位落到别的群要它定），人、船、摆出来的东西、自己记的位置（落脚点、出生点，
+    // p_extra 里的点）都换到新锚群的平面，再让宿主收尾。宿主没有挂起的换锚返回 false
+    bool apply_shift(const std::vector<godot::Vector3 *> &p_extra = {});
+    int shifts = 0; // 换了几次锚
+    double last_shift_ms = 0.0; // 上回换锚这一步花了多久（主线程，毫秒）
     int nearest_open_dock(const godot::Vector3 &p_point) const;
     bool nearest_land(const godot::Vector3 &p_point, godot::Vector3 &r_point) const;
     godot::String clock_text() const;
@@ -169,6 +174,8 @@ public:
     godot::String get_notice() const { return notice_time > 0.0 ? notice : godot::String(); }
     godot::String get_prompt() const { return prompt_label ? prompt_label->get_text() : godot::String(); }
     godot::Vector3 get_spawn_point() const { return spawn_point; }
+    int get_shift_count() const { return shifts; }
+    double get_last_shift_ms() const { return last_shift_ms; }
     godot::Transform3D get_origin_berth() const;
     godot::Transform3D get_destination_berth() const;
     bool is_map_open() const { return map_open; }
@@ -241,7 +248,8 @@ public:
     godot::NodePath get_player_path() const { return player_path; }
     void set_origin_dock(int p_value) { origin_dock = p_value; }
     int get_origin_dock() const { return origin_dock; }
-    void set_destination_dock(int p_value) { destination_dock = p_value; }
+    // 运行中改目的码头：重新找下标、没到过（测试与开发者用；地图宿主的码头号，跨群的带群号）
+    void set_destination_dock(int p_value);
     int get_destination_dock() const { return destination_dock; }
     void set_helm_range(double p_value) {
         helm_range = p_value;

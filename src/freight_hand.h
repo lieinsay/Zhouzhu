@@ -39,6 +39,7 @@ public:
     godot::String held_item() const { return godot::String::utf8(book.get_hand().item.c_str()); }
     int cargo_aboard() const { return book.aboard(); }
     bool is_active() const { return book.is_active(); }
+    void void_order() { book.void_order(); } // 换了岛群：这单作废，箱子算自家的货
     const CargoBook &get_book() const { return book; }
     // 这单要送去的村（map_freight_ports 的下标）；没接单为 −1
     int destination_port() const { return book.is_active() ? book.get_order().to : -1; }

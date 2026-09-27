@@ -169,6 +169,15 @@ public:
     // 这一点（锚群平面）在哪一群的陆地上 / 离哪一群的陆地最近（p_within 以内）；没有返回 nullptr
     Group *group_near(const godot::Vector3 &p_anchor_point, double p_within) const;
 
+    // 行星云层（PlanetGlobe）：载入了的群的群心（行星系单位向量）、那一带的云量（它自己的天气模型在群心、台面高处取）、
+    // 权（刚载入的 20 s 里从 0 渐到 1，锚群是 1）；≤ 4 群，锚群在前
+    struct CloudGroup {
+        PlanetVec dir;
+        double cover = 0.0;
+        double fade = 1.0;
+    };
+    void cloud_groups(std::vector<CloudGroup> &r_out) const;
+
     // 换锚
     bool is_shift_pending() const { return pending >= 0; }
     bool begin_shift(GroupShift &r_shift) const;

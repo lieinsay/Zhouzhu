@@ -118,6 +118,15 @@ bool offer_freight(const std::vector<FreightPort> &p_ports, int p_from, const In
 
 // ---------------------------------------------------------------- 货箱账
 
+void CargoBook::void_order() {
+    active = false;
+    order = FreightOrder();
+    hand.consigned = false;
+    for (Crate &c : slots) {
+        c.consigned = false;
+    }
+}
+
 int CargoBook::aboard() const {
     int n = 0;
     for (const Crate &c : slots) {

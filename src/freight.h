@@ -115,4 +115,6 @@ public:
     std::string pack_goods(const std::string &p_item, int p_per_crate, ItemBag &r_pack);
     // 手上那箱自家的货拆开，放回背包（放不下就不拆）
     std::string unpack_goods(ItemBag &r_pack);
+    // 这单作废（行星计划 P3：村仓与航线只在一个岛群里，换了锚接着的单子送不到）：没交的箱子都算自家的货
+    void void_order();
 };

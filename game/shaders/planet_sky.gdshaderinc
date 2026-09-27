@@ -25,7 +25,15 @@ uniform vec3 planet_anchor = vec3(0.0, 0.0, 1.0); // 锚群的群心（行星系
 uniform vec4 planet_g = vec4(0.0, 0.0, 1.0, 0.07); // G 定点永暴的中心（行星系）与半径（弧度）
 uniform float planet_surface_ready = 0.0; // 行星贴图烘好了
 uniform float planet_mask_cos = 2.0; // 相机地面点这个角（余弦）以内的贴图岛群淡掉（那一圈由远处岛群的网格画）
-uniform float planet_local_cover = 0.2; // 锚群那一带的云量（天与光按岛群的天气给的）
+uniform float planet_local_cover = 0.2; // 锚群那一带的云量（天与光按岛群的天气给的；没有 planet_group* 时用）
+// 行星计划 P3：载入了的岛群（≤ 4 群，含锚群）各自那一带的云量——xyz = 群心（行星系），w = 云量（按它自己的天气模型在群心取），w < 0 = 空槽；
+// planet_group_fade 是各槽的权（刚载入的群慢慢接过来）。四个槽一个都没设时退回锚群 + planet_local_cover（P2 的画法）。
+// 权只看离群心多远，与哪一群是锚无关，所以换锚那一帧天上的云不跳
+uniform vec4 planet_group0 = vec4(0.0, 0.0, 1.0, -1.0);
+uniform vec4 planet_group1 = vec4(0.0, 0.0, 1.0, -1.0);
+uniform vec4 planet_group2 = vec4(0.0, 0.0, 1.0, -1.0);
+uniform vec4 planet_group3 = vec4(0.0, 0.0, 1.0, -1.0);
+uniform vec4 planet_group_fade = vec4(0.0);
 uniform float planet_pixel = 0.001; // 一个像素多少弧度（取贴图的 mip 用）
 uniform float planet_sun_power = 1.0; // 地面、云受的直射（与场景里的方向光同一个量）
 uniform float planet_sky_power = 3.14159; // 散射进来的天光乘多少：地面、云按「反照率 × 直射」算（没有 1/π），天光就乘 π 才对得上
@@ -253,6 +261,32 @@ vec2 planet_field_uv(vec3 p) {
 	return vec2(lon / (2.0 * PS_PI) + 0.5, clamp(lat / PS_PI + 0.5, 0.5 / 180.0, 1.0 - 0.5 / 180.0));
 }
 
+// 离载入了的岛群多近（p 是行星系的单位向量）：返回岛群自己的云占多少（离群心 r0 → r1 公里渐变、乘各槽的权，取最大），
+// r_cover 是那一带的云量（按权平均）。四个槽都空时退回锚群 + planet_local_cover
+float planet_group_weight(vec3 p, float r0, float r1, out float r_cover) {
+	vec4 g[4] = vec4[](planet_group0, planet_group1, planet_group2, planet_group3);
+	float wsum = 0.0;
+	float csum = 0.0;
+	float wmax = 0.0;
+	bool any = false;
+	for (int k = 0; k < 4; k++) {
+		if (g[k].w < 0.0) {
+			continue;
+		}
+		any = true;
+		float w = (1.0 - smoothstep(r0, r1, length(p - g[k].xyz) * 6376.6)) * planet_group_fade[k];
+		wsum += w;
+		csum += w * g[k].w;
+		wmax = max(wmax, w);
+	}
+	if (!any) {
+		r_cover = planet_local_cover;
+		return 1.0 - smoothstep(r0, r1, length(p - planet_anchor) * 6376.6);
+	}
+	r_cover = wsum > 1e-5 ? csum / wsum : planet_local_cover;
+	return wmax;
+}
+
 // ---- 行星云层（+2.8 km）：p 是行星系单位向量；thick = 云厚（越厚越白越高），storm = 这里的风暴（夜里打闪）
 float planet_cloud(vec3 p, out float thick, out float storm) {
 	vec2 uv = planet_field_uv(p);
@@ -329,9 +363,10 @@ float planet_cloud(vec3 p, out float thick, out float storm) {
 		n = mix(n, spiral * 0.75 + n * 0.35, g_mask);
 		cov = mix(cov, 0.62, g_mask) * mix(1.0, eye, g_mask);
 	}
-	// 锚群附近：云量从岛群天气给的渐渐换到气候场的（100 → 400 km）
-	float da = length(p - planet_anchor) * 6376.6;
-	cov = mix(planet_local_cover, cov, smoothstep(100.0, 400.0, da));
+	// 载入了的岛群附近：云量从各群天气给的渐渐换到气候场的（100 → 400 km）
+	float local_cov;
+	float local_w = planet_group_weight(p, 100.0, 400.0, local_cov);
+	cov = mix(cov, local_cov, local_w);
 	cov = clamp(cov, 0.0, 0.95);
 	float thr = wx_threshold(cov);
 	float dens = smoothstep(thr - 0.06, thr + 0.06, n);

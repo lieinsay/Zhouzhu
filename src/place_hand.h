@@ -59,6 +59,7 @@ public:
     godot::String prompt(const PackHand &p_pack) const;
 
     const Placements &get_placed() const { return placed; }
+    Placements &edit_placed() { return placed; } // 换锚时编排把账里的位置换过去
     int get_facing() const { return facing_id; }
     bool is_ghost_on() const { return ghost_on; }
     const PlaceCheck &get_ghost() const { return ghost; }

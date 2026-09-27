@@ -616,6 +616,34 @@ void GroupStream::update_anchor_choice() {
     pending = index_of(best);
 }
 
+void GroupStream::cloud_groups(std::vector<CloudGroup> &r_out) const {
+    r_out.clear();
+    const WorldClock *clock = WorldClock::get_singleton();
+    const double day = clock ? clock->get_calendar_day() : 0.0;
+    const double t = now_s();
+    const Group *a = anchor_group();
+    std::vector<const Group *> order;
+    if (a) {
+        order.push_back(a);
+    }
+    for (const auto &g : groups) {
+        if (g.get() != a) {
+            order.push_back(g.get());
+        }
+    }
+    for (const Group *g : order) {
+        if (!g->world || !g->world->is_loaded() || r_out.size() >= 4) {
+            continue;
+        }
+        const WeatherModel &wx = g->world->get_weather();
+        CloudGroup c;
+        c.dir = g->frame.up;
+        c.cover = wx.sample(day, 0.0, 0.0, wx.get_climate().ref_m).cloud_cover;
+        c.fade = g == a ? 1.0 : std::clamp((t - g->loaded_at) / 20.0, 0.0, 1.0);
+        r_out.push_back(c);
+    }
+}
+
 bool GroupStream::begin_shift(GroupShift &r_shift) const {
     const Group *a = anchor_group(), *b = group_at(pending);
     if (!a || !b) {

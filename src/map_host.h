@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <vector>
 
 #include <godot_cpp/classes/node3d.hpp>
@@ -41,6 +42,14 @@ struct ResourceSpot {
     int cap = 0; // 存量上限
     double refill_hours = 0.0; // 从空到满几个钟头
     ResourceStock *stock = nullptr; // 存量账（地图持有）
+};
+
+// 换锚（行星计划 P3，docs/PLAN-PLANET.md 第 4.2 节）：旧锚群的平面 → 新锚群的平面。
+// 点经真球面换过去；朝向与速度乘该点处的转动（两边的平面轴在真空间里对齐：绕竖直轴的一个小角度，yaw 是它的转角）
+struct MapShift {
+    std::function<godot::Vector3(const godot::Vector3 &)> point;
+    std::function<godot::Basis(const godot::Vector3 &)> rotation;
+    std::function<double(const godot::Vector3 &)> yaw;
 };
 
 // 地图宿主：玩家编排（Expedition）只认它。一张地图要让所有玩法跑起来，最少回答这些：
@@ -111,6 +120,14 @@ public:
     // 天气（weather.h）：有气候数据的地图给它的天气模型（天与光、HUD、开发者面板读它，开发者覆盖也改在它上面）；
     // 没有返回 nullptr——天与光用一份没有数据的（常年晴、纬度 30°）
     virtual WeatherModel *map_weather() { return nullptr; }
+
+    // 换锚（可选，只有行星上的宿主 PlanetHost 有）：宿主定下要换（map_shift_pending），编排在下一个物理帧开头
+    // map_shift_begin 拿到换法、把人、船、相机、摆出来的东西、自己记的位置都换过去，再 map_shift_commit 让宿主收尾（新锚归位、挂碰撞……）。
+    // map_shift_toward：瞬移、回位要落到别的群的地上——宿主把那一群同步载入、定下换锚（返回 true），编排接着照上面换
+    virtual bool map_shift_pending() const { return false; }
+    virtual bool map_shift_begin(MapShift &r_shift) { return false; }
+    virtual void map_shift_commit() {}
+    virtual bool map_shift_toward(const godot::Vector3 &p_global) { return false; }
 
     static MapHost *of(godot::Node *p_node) { return dynamic_cast<MapHost *>(p_node); }
 };

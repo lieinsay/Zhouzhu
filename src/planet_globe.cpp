@@ -9,6 +9,7 @@
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/light3d.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/quad_mesh.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/shader.hpp>
@@ -21,6 +22,7 @@
 #include "atmosphere.h"
 #include "far_groups.h"
 #include "job_pool.h"
+#include "group_stream.h"
 #include "planet_jobs.h"
 #include "planet_sky.h"
 #include "planet_surface.h"
@@ -451,6 +453,24 @@ void PlanetGlobe::_process(double /* p_delta */) {
     both("planet_g", Vector4(real_t(g_dir.x), real_t(g_dir.y), real_t(g_dir.z), real_t(pd->g_radius_deg * PI / 180.0)));
     both("planet_mask_cos", mask_cos);
     both("planet_local_cover", local_cover);
+    // 行星计划 P3：载入了的岛群各自那一带的云量（GroupStream 给，≤ 4 群）；场景里没有 GroupStream 时四个槽都空，着色器退回锚群 + 上面的 local_cover
+    {
+        std::vector<GroupStream::CloudGroup> cg;
+        if (const GroupStream *gs = Object::cast_to<GroupStream>(get_tree()->get_first_node_in_group(GroupStream::GROUP)); gs && gs->is_ready()) {
+            gs->cloud_groups(cg);
+        }
+        static const char *const SLOTS[4] = { "planet_group0", "planet_group1", "planet_group2", "planet_group3" };
+        Vector4 fade;
+        for (int k = 0; k < 4; k++) {
+            if (k < int(cg.size())) {
+                both(SLOTS[k], Vector4(real_t(cg[size_t(k)].dir.x), real_t(cg[size_t(k)].dir.y), real_t(cg[size_t(k)].dir.z), real_t(cg[size_t(k)].cover)));
+                fade[k] = real_t(cg[size_t(k)].fade);
+            } else {
+                both(SLOTS[k], Vector4(0.0f, 0.0f, 1.0f, -1.0f));
+            }
+        }
+        both("planet_group_fade", fade);
+    }
     both("planet_pixel", pixel);
     both("planet_sun_power", sun_power);
     both("planet_sky_power", sky_power);

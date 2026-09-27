@@ -303,6 +303,16 @@ void Player::set_look_yaw(double p_yaw) {
     apply_look();
 }
 
+void Player::shift(const Vector3 &p_position, double p_dyaw, const Basis &p_rotation) {
+    set_global_position(p_position);
+    set_velocity(p_rotation.xform(get_velocity()));
+    look_yaw += p_dyaw;
+    apply_look();
+    if (body) {
+        body->set_rotation(body->get_rotation() + Vector3(0, real_t(p_dyaw), 0));
+    }
+}
+
 void Player::set_facing_yaw(double p_yaw) {
     if (body) {
         body->set_rotation(Vector3(0, real_t(p_yaw), 0));

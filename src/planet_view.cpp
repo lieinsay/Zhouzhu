@@ -345,6 +345,21 @@ double PlanetView::group_distance(int p_node) const {
     return great_circle_m(cam_lat, cam_lon, n.lat, n.lon, anchor.radius);
 }
 
+Vector3 PlanetView::enu_to_visual(const Vector3 &p_enu) const {
+    if (!is_active()) {
+        return p_enu;
+    }
+    const PlanetVec up = cam_planet.normalized();
+    PlanetVec east = PlanetVec(0.0, 0.0, 1.0).cross(up); // 北极 × 上 = 东
+    if (east.length() < 1e-9) {
+        east = anchor.east; // 正在极点上：随便挑一个
+    }
+    east = east.normalized();
+    const PlanetVec north = up.cross(east);
+    const PlanetVec w = east * p_enu.x + up * p_enu.y - north * p_enu.z;
+    return Vector3(real_t(cam_axes.cols[0].dot(w)), real_t(cam_axes.cols[1].dot(w)), real_t(cam_axes.cols[2].dot(w)));
+}
+
 double PlanetView::get_local_hour_offset() const {
     double d = std::fmod(cam_lon - clock_lon, 360.0);
     if (d > 180.0) {

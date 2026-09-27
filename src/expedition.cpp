@@ -3,6 +3,8 @@
 #include <cmath>
 #include <limits>
 
+#include <godot_cpp/classes/time.hpp>
+
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/canvas_layer.hpp>
 #include <godot_cpp/classes/display_server.hpp>
@@ -90,6 +92,8 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_prompt"), &Expedition::get_prompt);
     ClassDB::bind_method(D_METHOD("get_status_text"), &Expedition::get_status_text);
     ClassDB::bind_method(D_METHOD("get_spawn_point"), &Expedition::get_spawn_point);
+    ClassDB::bind_method(D_METHOD("get_shift_count"), &Expedition::get_shift_count);
+    ClassDB::bind_method(D_METHOD("get_last_shift_ms"), &Expedition::get_last_shift_ms);
     ClassDB::bind_method(D_METHOD("get_origin_berth"), &Expedition::get_origin_berth);
     ClassDB::bind_method(D_METHOD("get_destination_berth"), &Expedition::get_destination_berth);
     ClassDB::bind_method(D_METHOD("teleport_to", "position"), &Expedition::teleport_to);
@@ -322,6 +326,17 @@ void Expedition::build_hud() {
         map_panel->set_destination_dock(destination_dock);
         map_panel->set_teleport_enabled(dev_tools);
         map_panel->connect("teleport_requested", Callable(this, "on_teleport_requested"));
+    }
+}
+
+void Expedition::set_destination_dock(int p_value) {
+    destination_dock = p_value;
+    if (map && map->map_ready()) {
+        destination_index = map->map_find_dock(destination_dock);
+        arrived = false;
+        if (map_panel) {
+            map_panel->set_destination_dock(destination_dock);
+        }
     }
 }
 
@@ -604,7 +619,56 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
     }
 }
 
+bool Expedition::apply_shift(const std::vector<Vector3 *> &p_extra) {
+    MapShift s;
+    if (!map || !map->map_shift_begin(s)) {
+        return false;
+    }
+    const uint64_t t0 = Time::get_singleton()->get_ticks_usec();
+    // 人与船：位置经真球面换过去，朝向、速度、视线转该点处的那一点点角度（绕竖直轴）；相机挂在它们下面，跟着走
+    const Vector3 at = player->get_global_position();
+    player->shift(s.point(at), s.yaw(at), s.rotation(at));
+    if (ship) {
+        const Vector3 o = ship->get_global_position();
+        ship->shift(s.point(o), s.yaw(o), s.rotation(o));
+    }
+    // 摆出来的东西（全局坐标的账）
+    place.edit_placed().shift([&s](double &x, double &y, double &z, double &yaw) {
+        const Vector3 p = Vector3(real_t(x), real_t(y), real_t(z));
+        yaw += s.yaw(p);
+        const Vector3 q = s.point(p);
+        x = q.x;
+        y = q.y;
+        z = q.z;
+    });
+    // 自己记的位置
+    if (has_safe_footing) {
+        safe_footing = s.point(safe_footing);
+    }
+    spawn_point = s.point(spawn_point);
+    for (Vector3 *p : p_extra) {
+        if (p) {
+            *p = s.point(*p);
+        }
+    }
+    wild_frame = ~uint64_t(0);
+    wild_ok = false;
+    // 跑货的村仓与航线只在一个岛群里：接着的单子送不到了，箱子算自家的货
+    if (freight.is_active()) {
+        freight.void_order();
+        say(String(U"换了岛群：这单托运作废，船上的箱子算自家的货"));
+    }
+    map->map_shift_commit();
+    shifts++;
+    last_shift_ms = double(Time::get_singleton()->get_ticks_usec() - t0) / 1000.0;
+    return true;
+}
+
 void Expedition::_physics_process(double p_delta) {
+    // 行星计划 P3：地图宿主定下换锚了——这一帧的移动之前把人、船都换到新锚群的平面
+    if (map->map_shift_pending()) {
+        apply_shift();
+    }
     const bool interact = !map_open && Input::get_singleton()->is_action_just_pressed(input_actions::INTERACT);
     notice_time = Math::max(0.0, notice_time - p_delta);
     if (notice_time <= 0.0 && notice_label) {
@@ -925,8 +989,12 @@ void Expedition::track_footing() {
 }
 
 void Expedition::respawn() {
-    const Vector3 target = has_safe_footing ? safe_footing : spawn_point;
+    Vector3 target = has_safe_footing ? safe_footing : spawn_point;
     farm_hand.stand_down();
+    // 上一处落脚点在别的群的地上（换锚以后掉下去的）：先换回那一群（落脚点跟着换过去）
+    if (map->map_shift_toward(target) && apply_shift()) {
+        target = has_safe_footing ? safe_footing : spawn_point;
+    }
     map->map_prepare(target);
     player->set_velocity(Vector3());
     player->set_global_position(target + Vector3(0, 0.5f, 0));
@@ -990,6 +1058,10 @@ bool Expedition::teleport_to(const Vector3 &p_position) {
     Vector3 target;
     if (!map || !player || !nearest_land(p_position, target)) {
         return false;
+    }
+    // 落点在别的群的地上：先换锚（落点跟着换过去）
+    if (map->map_shift_toward(target)) {
+        apply_shift({ &target });
     }
     map->map_prepare(target);
     player->set_global_position(target + Vector3(0, 0.3f, 0));

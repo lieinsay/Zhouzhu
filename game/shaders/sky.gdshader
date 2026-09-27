@@ -163,8 +163,8 @@ void sky() {
 			if (planet_on > 0.5) {
 				vec3 X = vec3(0.0, planet_datum_r + POSITION.y, 0.0) + dir * t;
 				vec3 pn = normalize(planet_axes * X);
-				float da = length(pn - planet_anchor) * 6376.6;
-				local_w *= 1.0 - smoothstep(70.0, 130.0, da);
+				float cover_unused;
+				local_w *= planet_group_weight(pn, 70.0, 130.0, cover_unused); // 载入了的岛群附近是它们自己的云团（行星计划 P3：各群一样，换锚不跳）
 				local_w *= 1.0 - smoothstep(cell_m * 0.06, cell_m * 0.25, t * planet_pixel); // 一像素盖过一团云（高空）：换成行星云层
 				if (local_w < 0.999) {
 					float storm_unused;

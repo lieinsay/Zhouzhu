@@ -180,7 +180,9 @@ void PlacedProps::sync(const Placements &p_placed) {
         StaticBody3D *body = memnew(StaticBody3D);
         body->set_name(vformat("Prop%d", p.id));
         body->set_meta(PROP_META, p.id);
-        body->set_transform(pose_of(p.x, p.y, p.z, p.quarter));
+        Transform3D pose = pose_of(p.x, p.y, p.z, p.quarter);
+        pose.basis = Basis(Vector3(0, 1, 0), real_t(p.yaw_extra)) * pose.basis; // 换锚累下来的转角
+        body->set_transform(pose);
         build_model(body, *def, p.y - p.low, Ref<Material>());
         CollisionShape3D *shape = memnew(CollisionShape3D);
         Ref<BoxShape3D> box;

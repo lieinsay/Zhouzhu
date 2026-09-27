@@ -404,8 +404,11 @@ void Atmosphere::update_lights() {
     const double s = sun_state.dir_y;
     const double day = smooth01(-0.12, 0.2, s);
     const double cloud_dim = std::clamp(1.0 - (0.7 * look.cloud * (0.4 + 0.6 * look.cover) + 0.25 * look.overcast) * (1.0 - above_clouds), 0.12, 1.0);
+    const PlanetView *pv = PlanetView::active_view();
     if (sun) {
-        const Vector3 d(real_t(sun_state.dir_x), real_t(sun_state.dir_y), real_t(sun_state.dir_z));
+        // 有行星数据时：历法给的是相机处的地理方向，换到画面的世界轴（锚群平面轴的像，与地理的东南差一个收敛角）
+        const Vector3 enu(real_t(sun_state.dir_x), real_t(sun_state.dir_y), real_t(sun_state.dir_z));
+        const Vector3 d = pv ? pv->enu_to_visual(enu) : enu;
         const Vector3 up = std::abs(d.y) > 0.99f ? Vector3(0, 0, 1) : Vector3(0, 1, 0);
         sun->set_global_basis(Basis::looking_at(-d, up));
         const double energy = base_sun * smooth01(-0.04, 0.18, s) * cloud_dim;
@@ -414,7 +417,8 @@ void Atmosphere::update_lights() {
         sun->set_shadow(energy > 0.05);
     }
     if (moon) {
-        const Vector3 d(real_t(moon_state.dir_x), real_t(moon_state.dir_y), real_t(moon_state.dir_z));
+        const Vector3 enu(real_t(moon_state.dir_x), real_t(moon_state.dir_y), real_t(moon_state.dir_z));
+        const Vector3 d = pv ? pv->enu_to_visual(enu) : enu;
         const Vector3 up = std::abs(d.y) > 0.99f ? Vector3(0, 0, 1) : Vector3(0, 1, 0);
         moon->set_global_basis(Basis::looking_at(-d, up));
         const double energy = 0.2 * (0.25 + 0.75 * moon_state.illuminated) * smooth01(-0.02, 0.15, moon_state.dir_y) * (1.0 - day) * (1.0 - 0.8 * look.cloud);
@@ -457,8 +461,11 @@ void Atmosphere::update_environment() {
         wx->cloud_drift(calendar_day(), dx, dz);
         const double cell = wx->get_rules().cell_m;
         const double px = std::fmod(dx / cell, double(WX_PERIOD)), pz = std::fmod(dz / cell, double(WX_PERIOD));
-        sky_material->set_shader_parameter("sun_dir", Vector3(real_t(sun_state.dir_x), real_t(sun_state.dir_y), real_t(sun_state.dir_z)));
-        sky_material->set_shader_parameter("moon_dir", Vector3(real_t(moon_state.dir_x), real_t(moon_state.dir_y), real_t(moon_state.dir_z)));
+        const PlanetView *pv = PlanetView::active_view();
+        const Vector3 sun_enu(real_t(sun_state.dir_x), real_t(sun_state.dir_y), real_t(sun_state.dir_z));
+        const Vector3 moon_enu(real_t(moon_state.dir_x), real_t(moon_state.dir_y), real_t(moon_state.dir_z));
+        sky_material->set_shader_parameter("sun_dir", pv ? pv->enu_to_visual(sun_enu) : sun_enu);
+        sky_material->set_shader_parameter("moon_dir", pv ? pv->enu_to_visual(moon_enu) : moon_enu);
         sky_material->set_shader_parameter("moon_lit", moon_state.illuminated);
         sky_material->set_shader_parameter("cloud_cover", look.cover);
         sky_material->set_shader_parameter("cover_grad", Vector2(real_t(look.grad_x), real_t(look.grad_z)));

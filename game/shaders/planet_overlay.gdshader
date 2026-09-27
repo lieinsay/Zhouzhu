@@ -58,8 +58,8 @@ void fragment() {
 		vec3 X = vec3(0.0, r0, 0.0) + dir * tc;
 		vec3 up_l = X / length(X);
 		vec3 pn = normalize(planet_axes * X);
-		float da = length(pn - planet_anchor) * 6376.6;
-		float local_w = 1.0 - smoothstep(70.0, 130.0, da);
+		float cover_unused;
+		float local_w = planet_group_weight(pn, 70.0, 130.0, cover_unused);
 		// 岛群的云团一团 2.6 km、最细一层三百来米：一像素盖过一两百米（高空）就只剩一片灰噪点，换成行星云层（锚群附近的云量与它一样）
 		local_w *= 1.0 - smoothstep(cell_m * 0.06, cell_m * 0.25, tc * planet_pixel);
 		float dens = 0.0;

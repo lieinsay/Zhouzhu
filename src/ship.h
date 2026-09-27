@@ -83,6 +83,8 @@ public:
     void _unhandled_input(const godot::Ref<godot::InputEvent> &p_event) override;
 
     void set_controlled(bool p_controlled);
+    // 换锚（行星计划 P3）：船原点搬到 p_origin、船头转 p_dyaw（弧度，绕 y）、速度乘 p_rotation；飞行模型的状态跟着
+    void shift(const godot::Vector3 &p_origin, double p_dyaw, const godot::Basis &p_rotation);
     bool is_controlled() const { return controlled; }
 
     // 立刻贴到接触线上并清零速度（开局、读档、召回、改完船重新坐定）。

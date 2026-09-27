@@ -764,6 +764,18 @@ void Ship::_physics_process(double p_delta) {
     }
 }
 
+void Ship::shift(const Vector3 &p_origin, double p_dyaw, const Basis &p_rotation) {
+    const Vector3 v = p_rotation.xform(Vector3(real_t(state.vx), real_t(state.vy), real_t(state.vz)));
+    state.vx = v.x;
+    state.vy = v.y;
+    state.vz = v.z;
+    state.yaw += p_dyaw;
+    berth_yaw += p_dyaw;
+    set_global_position(p_origin);
+    set_rotation(Vector3(0, real_t(state.yaw), 0));
+    set_velocity(v);
+}
+
 void Ship::step_flight(double p_delta) {
     FlightInput in;
     if (controlled) {

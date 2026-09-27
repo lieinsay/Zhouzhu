@@ -88,6 +88,8 @@ public:
     void set_look_yaw(double p_yaw);
     double get_look_yaw() const { return look_yaw; }
     void set_facing_yaw(double p_yaw); // 身体模型朝向
+    // 换锚（行星计划 P3）：视线与身体模型一起转 p_dyaw（弧度），速度乘 p_rotation
+    void shift(const godot::Vector3 &p_position, double p_dyaw, const godot::Basis &p_rotation);
     godot::Camera3D *get_camera() const { return camera; }
 
     void set_walk_speed(double p_value) { walk_speed = p_value; }
