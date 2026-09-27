@@ -8,6 +8,7 @@
 
 #include "farm.h"
 #include "group_stream.h"
+#include "planet_frame.h"
 #include "world.h"
 #include "world_map.h"
 
@@ -341,7 +342,14 @@ String PlanetHost::map_location_text(const Vector3 &p_global) const {
         }
     }
     std::sort(near.begin(), near.end(), [](const Near &x, const Near &y) { return x.d < y.d; });
-    String text = group + String(U" · 云海上空");
+    // 在哪一层（D13）：云带顶以上是云海上空；往下是云带里、云底下（报离海面多高）
+    String layer = String(U"云海上空");
+    if (p_global.y < VerticalDatum::CLOUD_BASE_Y) {
+        layer = vformat(String(U"云底下 · 离海面 %d m"), int(std::lround(p_global.y - VerticalDatum::SEA_Y)));
+    } else if (p_global.y < VerticalDatum::CLOUD_TOP_Y) {
+        layer = String(U"云带里");
+    }
+    String text = group + String(U" · ") + layer;
     for (size_t k = 0; k < near.size() && k < 3; k++) {
         text += vformat(String(U"%s群 #%d 陆地 %s km"), k == 0 ? String(U" · 离") : String(U"、"), near[k].node, String::num(near[k].d / 1000.0, 1));
     }
