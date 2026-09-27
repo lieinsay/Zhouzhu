@@ -1,7 +1,11 @@
 """把 skyisle-gen 的一个行星（十步管线的 run 目录 + 第三层粗版）转成游戏的行星包（docs/PLAN-PLANET.md P0）。
 
-    python tools/export_planet.py <run 目录> <输出目录> [--lod-res 2000] [--near 2051 --near-res 500 --near-radius 600]
+    python tools/export_planet.py <run 目录> <输出目录> [--lod-res 2000] [--near 2051 --near-res 500 --near-radius 600] [--generator <skyisle-gen 根>]
     python tools/export_planet.py D:/Project/skyisle-gen/out/seed42 game/planet/seed42
+
+--generator：记生成器提交号用（缺省按 run 目录的上上级，即 skyisle-gen/out/<run>；新建世界的 run 在游戏的存档目录里，要给）。
+run 目录里没有粗版（新建世界：只算了行星层）照样导：lods.bin 是 0 条，lod.* 列是 NaN，游戏里远处先画替身（计划 4.8）。
+单群的粗版（游戏按需生成的，tools/zhouzhu_gen.py 调 write_lods）写成同格式、只有一条的 lods/<节点>.bin。
 
 粗版先用生成器批跑：skyisle island lod --run out/seed42 --lod-res 2000,1000（全行星），
                    skyisle island lod --run out/seed42 --lod-res 500 --near 2051 --radius 600（近邻）。
@@ -65,15 +69,18 @@ def name_bytes(s):
     return struct.pack("<B", len(b)) + b
 
 
-def generator_commit(run: Path) -> str:
+def generator_commit(run: Path, generator: Path | None = None) -> str:
     try:
-        return subprocess.check_output(["git", "-C", str(run.parent.parent), "rev-parse", "--short", "HEAD"], text=True).strip()
+        root = generator if generator is not None else run.parent.parent
+        return subprocess.check_output(["git", "-C", str(root), "rev-parse", "--short", "HEAD"], text=True, stderr=subprocess.DEVNULL).strip()
     except Exception:
         return "?"
 
 
 def lod_entries(run: Path, res: float, nodes=None):
     d = run / "islands_lod" / str(int(round(res)))
+    if not d.is_dir():
+        return
     files = sorted(d.glob("*.npz"), key=lambda p: int(p.stem))
     for p in files:
         node = int(p.stem)
@@ -115,15 +122,38 @@ def encode_lod(meta, arr) -> bytes:
     return bytes(out)
 
 
+def write_lods(path: Path, entries) -> int:
+    """entries：[(节点, meta, arr)] → lods.bin 格式写到 path（先写 .tmp 再改名）；返回字节数。"""
+    blobs = [encode_lod(meta, arr) for _node, meta, arr in entries]
+    index_size = 12 + len(entries) * (4 + 4 * 3 + 2 * 4 + 8 + 4)
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "wb") as f:
+        f.write(b"ZZLD" + struct.pack("<II", VERSION, len(entries)))
+        off = index_size
+        for (node, meta, arr), blob in zip(entries, blobs):
+            r = meta["raster"]
+            f.write(struct.pack("<I3f4HQI", node, r["res_m"], r["origin_km"][0], r["origin_km"][1], r["rows"], r["cols"],
+                                len(meta["islands"]), 0, off, len(blob)))
+            off += len(blob)
+        for blob in blobs:
+            f.write(blob)
+    tmp.replace(path)
+    return path.stat().st_size
+
+
 def main():
     args = sys.argv[1:]
     if len(args) < 2:
         print(__doc__)
         return 2
-    run, dst = Path(args[0]), Path(args[1])
-    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600"}
+    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None}
     for i in range(2, len(args), 2):
         opt[args[i]] = args[i + 1]
+    return export_planet(Path(args[0]), Path(args[1]), opt)
+
+
+def export_planet(run: Path, dst: Path, opt: dict) -> int:
+    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None, **opt}
     dst.mkdir(parents=True, exist_ok=True)
 
     planet = json.loads((run / "s01_planet" / "planet.json").read_text(encoding="utf-8"))
@@ -182,7 +212,7 @@ def main():
                 continue
             grids.append((f"{stage[:3]}.{name}.{k}", as_column(a), geo))
 
-    commit = generator_commit(run)
+    commit = generator_commit(run, Path(opt["--generator"]) if opt["--generator"] else None)
     cal = planet.get("calendar", {})
     dps = float(cal.get("days_per_season", 84.0))
     mps = int(cal.get("months_per_season", 3))
@@ -220,18 +250,7 @@ def main():
         near_set = set(int(k) for k in np.where(d <= float(opt["--near-radius"]))[0])
         for res in [float(x) for x in opt["--near-res"].split(",")]:
             entries += [(node, meta, arr) for node, meta, arr in lod_entries(run, res, near_set)]
-    blobs = [encode_lod(meta, arr) for _node, meta, arr in entries]
-    index_size = 12 + len(entries) * (4 + 4 * 3 + 2 * 4 + 8 + 4)
-    with open(dst / "lods.bin", "wb") as f:
-        f.write(b"ZZLD" + struct.pack("<II", VERSION, len(entries)))
-        off = index_size
-        for (node, meta, arr), blob in zip(entries, blobs):
-            r = meta["raster"]
-            f.write(struct.pack("<I3f4HQI", node, r["res_m"], r["origin_km"][0], r["origin_km"][1], r["rows"], r["cols"],
-                                len(meta["islands"]), 0, off, len(blob)))
-            off += len(blob)
-        for blob in blobs:
-            f.write(blob)
+    write_lods(dst / "lods.bin", entries)
 
     missing = int(np.isnan(peak).sum())
     mb = lambda p: (dst / p).stat().st_size / 1e6
