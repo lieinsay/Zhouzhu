@@ -79,6 +79,13 @@
 #include "inflate.h"
 #include "cloud_band.h"
 #include "sea_state.h"
+#include "gen_config.h"
+#include "gen_core.h"
+#include "gen_export.h"
+#include "py_format.h"
+#include "scipy_edt.h"
+#include "skyisle/island/generate.hpp"
+#include "skyisle/planet/view.hpp"
 
 namespace {
 
@@ -6153,11 +6160,169 @@ void test_sea_descent() {
     }
 }
 
+namespace isl = skyisle::island;
+
+// ---------------------------------------------------------------- 进程内生成（行星计划 P6e）
+
+std::string read_bytes(const std::string &p_path) {
+    std::string s;
+    gen_core::read_file(p_path, s);
+    return s;
+}
+
+std::string lf(const std::string &p_s) {
+    std::string out;
+    out.reserve(p_s.size());
+    for (size_t k = 0; k < p_s.size(); k++) {
+        if (p_s[k] == '\r' && k + 1 < p_s.size() && p_s[k + 1] == '\n') {
+            continue;
+        }
+        out.push_back(p_s[k]);
+    }
+    return out;
+}
+
+void test_gen_format() {
+    std::printf("[gen_format]\n");
+    // Python 的 repr / format(x, "g") / round（与 Python 逐字对过 90 万个值，这里留几个边界）
+    const std::pair<double, const char *> reprs[] = { { 0.0, "0.0" }, { -0.0, "-0.0" }, { 1.0, "1.0" }, { 0.1, "0.1" }, { 1e16, "1e+16" },
+        { 1e15, "1000000000000000.0" }, { 1e-4, "0.0001" }, { 1e-5, "1e-05" }, { 1.0 / 3.0, "0.3333333333333333" }, { 123456.789, "123456.789" },
+        { -9.143091999999999e+17, "-9.143091999999999e+17" }, { 5e-324, "5e-324" }, { 2.5e-7, "2.5e-07" } };
+    for (const auto &r : reprs) {
+        check(pyfmt::repr(r.first) == r.second, std::string("repr ") + r.second + "（得到 " + pyfmt::repr(r.first) + "）");
+    }
+    check(pyfmt::fmt_g(126.0) == "126" && pyfmt::fmt_g(1234567.0) == "1.23457e+06" && pyfmt::fmt_g(0.5) == "0.5" && pyfmt::fmt_g(1.3) == "1.3", "format(x, 'g')");
+    check(pyfmt::fmt_f(-31.65234, 4) == "-31.6523" && pyfmt::fmt_f(224.45, 1) == "224.4", "format(x, '.Nf')（二进制值的精确舍入）");
+    check(pyfmt::sha1_hex("abc") == "a9993e364706816aba3e25717850c26c9cd0d89d", "SHA-1(abc)");
+    check(pyfmt::sha1_hex("") == "da39a3ee5e6b4b0d3255bfef95601890afd80709", "SHA-1(空)");
+    {
+        skyisle::Json o = skyisle::Json::obj();
+        o.set("名", "村001");
+        o.set("n", 3);
+        o.set("x", 2.0);
+        skyisle::Json a = skyisle::Json::arr();
+        a.push(skyisle::Json());
+        a.push(true);
+        a.push("a\"b\\c\n");
+        o.set("a", a);
+        o.set("e", skyisle::Json::arr());
+        o.set("o", skyisle::Json::obj());
+        const std::string want = "{\n \"名\": \"村001\",\n \"n\": 3,\n \"x\": 2.0,\n \"a\": [\n  null,\n  true,\n  \"a\\\"b\\\\c\\n\"\n ],\n \"e\": [],\n \"o\": {}\n}";
+        check(pyfmt::json_dumps(o, 1) == want, "json.dumps(ensure_ascii=False, indent=1)（得到 " + pyfmt::json_dumps(o, 1) + "）");
+        check(pyfmt::json_dumps(o, 1, true) == [&] {
+            std::string c;
+            for (char ch : want) {
+                if (ch == '\n') {
+                    c += '\r';
+                }
+                c += ch;
+            }
+            return c;
+        }(),
+                "json.dumps 的换行写成 \\r\\n");
+    }
+    // scipy 的特征变换：并列时挑哪个（十字形的背景；与 scipy 1.18 逐格对过 400 张随机图）
+    {
+        const uint8_t m[5 * 5] = { 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1 };
+        std::vector<int32_t> fr, fc;
+        scipy_nd::feature_transform(m, 5, 5, fr, fc);
+        check(fr[0] == 2 && fc[0] == 0, "特征变换：(0,0) 离 (0,2)、(2,0) 一样远，scipy 取 (2,0)（得到 (" + std::to_string(fr[0]) + "," + std::to_string(fc[0]) + ")）");
+        check(fr[6] == 2 && fc[6] == 1, "特征变换：(1,1) 离 (1,2)、(2,1) 一样远，scipy 取 (2,1)（得到 (" + std::to_string(fr[6]) + "," + std::to_string(fc[6]) + ")）");
+        const std::vector<double> d = scipy_nd::distance_edt(m, 5, 5);
+        check(d[0] == 2.0 && d[6] == 1.0 && d[12] == 0.0, "距离变换");
+    }
+    // config.tsv：\r\n 与 \n 读成同一份（原文按 \n 存、哈希一样）
+    {
+        GenConfig a, b;
+        std::string e1, e2;
+        const std::string t = "# x\nplanet\tnum\ts01.a\t1.5\nplanet\tvec\ts01.v\t1.0,2.0\nplanet\tstr\ts01.s\ta\\tb\nisland\tnum\tlayout.n0\t30.0\nisland\tvec\tempty\t\nengine\tnum\tthreads\t4.0\n";
+        std::string crlf;
+        for (char c : t) {
+            if (c == '\n') {
+                crlf += '\r';
+            }
+            crlf += c;
+        }
+        check(parse_gen_config(t, a, e1) && parse_gen_config(crlf, b, e2), "config.tsv 读得出来（" + e1 + e2 + "）");
+        check(a.sha1 == b.sha1 && a.text == b.text, "config.tsv：换行不同、哈希一样");
+        check(a.planet.get("s01.a") == 1.5 && a.planet.list("s01.v").size() == 2 && a.planet.gets("s01.s") == "a\tb" && a.island.list("empty").empty() &&
+                        a.threads() == 4,
+                "config.tsv 的三种值");
+    }
+}
+
+// seed42：进程内生成的行星包与岛群包，与仓库里 Python 那条路导出的（game/planet/seed42、game/worlds/2051、2050）逐字节相同
+void test_gen_seed42() {
+    std::printf("[gen_seed42]\n");
+    const std::string root = ZHOUZHU_SOURCE_DIR;
+    GenConfig cfg;
+    std::string error;
+    check(parse_gen_config(read_bytes(root + "/game/planet/seed42/config.tsv"), cfg, error), "读 seed42 的 config.tsv（" + error + "）");
+    const auto t0 = std::chrono::steady_clock::now();
+    const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(cfg, 42);
+    const double planet_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
+    // planet.bin：除了粗版量的 lod.* 五列（新建世界时没有粗版；仓库里的包是全行星粗版量的）逐字节相同，头里 source 行的提交号是子模块的
+    {
+        const std::string mine = gen_export::planet_bin(ps->world, ps->society, 42, "seed42 " + std::string(gen_core::generator_commit()));
+        const std::string repo = read_bytes(root + "/game/planet/seed42/planet.bin");
+        auto split = [](const std::string &b, size_t &r_lod_begin, size_t &r_lod_end) {
+            uint32_t n = 0, ncol = 0, hb = 0;
+            std::memcpy(&n, b.data() + 12, 4);
+            std::memcpy(&ncol, b.data() + 16, 4);
+            std::memcpy(&hb, b.data() + 24, 4);
+            size_t off = 28 + hb;
+            r_lod_begin = r_lod_end = 0;
+            const int sz[4] = { 4, 4, 2, 1 };
+            for (uint32_t k = 0; k < ncol; k++) {
+                const uint8_t len = uint8_t(b[off]);
+                const std::string name = b.substr(off + 1, len);
+                const size_t start = off;
+                off += 1 + len;
+                const uint8_t t = uint8_t(b[off]);
+                off += 1 + size_t(n) * size_t(sz[t]);
+                if (name.rfind("lod.", 0) == 0 && !r_lod_begin) {
+                    r_lod_begin = start;
+                }
+            }
+            r_lod_end = off;
+        };
+        size_t a0 = 0, a1 = 0, b0 = 0, b1 = 0;
+        split(mine, a0, a1);
+        split(repo, b0, b1);
+        check(a0 > 0 && a0 == b0 && mine.compare(0, a0, repo, 0, b0) == 0, "planet.bin：头与 lod.* 之前的 36 列逐字节相同");
+        check(mine.size() - a1 == repo.size() - b1 && mine.compare(a1, std::string::npos, repo, b1, std::string::npos) == 0, "planet.bin：30 张场逐字节相同");
+    }
+    for (int node : { 2050, 2051 }) {
+        const auto t1 = std::chrono::steady_clock::now();
+        isl::NodeInputs x = skyisle::planet::node_inputs(ps->world.islands, ps->world.climate, node, 42, cfg.planet);
+        skyisle::planet::apply_polity(ps->society.polity, node, cfg.planet, x);
+        const isl::Group g = isl::generate(x, ps->view, cfg.island, 0, 5, 0.0, cfg.threads());
+        gen_export::GroupMeta m;
+        m.node = node;
+        m.seed = 42;
+        m.run = "seed42";
+        m.cls = int(ps->world.islands.cls[size_t(node)]);
+        m.tilt_deg = ps->world.planet.axial_tilt_deg;
+        const gen_export::GroupFiles f = gen_export::group_files(g, m);
+        const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t1).count();
+        const std::string dir = root + "/game/worlds/" + std::to_string(node);
+        const std::string n = "#" + std::to_string(node) + " ";
+        check(f.terrain_bin == read_bytes(dir + "/terrain.bin"), n + "terrain.bin 逐字节相同");
+        check(lf(f.world_json) == lf(read_bytes(dir + "/world.json")), n + "world.json 逐字节相同（换行一律按 \\n 比：git 检出时会换）");
+        check(f.sites_tsv == lf(read_bytes(dir + "/sites.tsv")), n + "sites.tsv 逐字节相同");
+        check(f.resources_tsv == lf(read_bytes(dir + "/resources.tsv")), n + "resources.tsv 逐字节相同");
+        check(f.weather_tsv == lf(read_bytes(dir + "/weather.tsv")), n + "weather.tsv 逐字节相同");
+        std::printf("  #%d：生成 + 转换 %.2f s\n", node, s);
+    }
+    std::printf("  行星层 ①–⑨（⑧ 跳过）%.2f s\n", planet_s);
+}
+
 int main(int argc, char **argv) {
     // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
     if (argc > 1) {
         const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
-            { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent } };
+            { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent },
+            { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 } };
         for (int k = 1; k < argc; k++) {
             const auto it = only.find(argv[k]);
             if (it != only.end()) {
@@ -6238,6 +6403,8 @@ int main(int argc, char **argv) {
     test_weather_pack();
     test_planet_weather();
     test_sea_descent();
+    test_gen_format();
+    test_gen_seed42();
     std::printf("%d 项检查，%d 项失败\n", checks, failures);
     return failures == 0 ? 0 : 1;
 }

@@ -48,8 +48,9 @@ endif()
 # 生成器的 C++ 核心库（行星计划 P6e，D16）：skyisle-gen 作子模块（extern/skyisle-gen），只编它的 core/——静态库 skyisle_core，
 # 不要 Python 扩展、不要它的自检。浮点照它自己的 CMakeLists（MSVC 默认 /fp:precise、不开 /arch:AVX2：乘加不合并成 FMA，与 numpy 逐位对得上），
 # 这边不给它加任何会改浮点结果的选项。
-# Debug 配置下它也开 /O2（/fp:precise 不变）——/Od 下生成一群要慢几倍，e2e（跑的是 Debug 的扩展）等不起。
-# 运行库照全工程的 CMAKE_MSVC_RUNTIME_LIBRARY（/MD），与别的目标一致。
+# 进程内生成的转换与编排（静态库 zhouzhu_gen，cmake/zhouzhu_gen：生成器的结果 → 游戏文件，与 tools/export_skyisle.py、export_planet.py 逐字节相同）
+# 同它放在一块：Debug 配置下这两样也开 /O2（/fp:precise 不变，Debug 与 Release 写出的文件逐字节相同，验过）——
+# /Od 下生成一群要慢几倍，e2e（跑的是 Debug 的扩展）等不起。运行库照全工程的 CMAKE_MSVC_RUNTIME_LIBRARY（/MD），与别的目标一致。
 set(SKYISLE_PYTHON OFF CACHE BOOL "skyisle-gen：不编 Python 扩展" FORCE)
 set(SKYISLE_TESTS OFF CACHE BOOL "skyisle-gen：不编自检" FORCE)
 set(ZHOUZHU_SAVED_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
@@ -57,6 +58,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "/Zi /O2 /Ob2")
 endif()
 add_subdirectory(extern/skyisle-gen/core EXCLUDE_FROM_ALL)
+add_subdirectory(cmake/zhouzhu_gen)
 set(CMAKE_CXX_FLAGS_DEBUG "${ZHOUZHU_SAVED_CXX_FLAGS_DEBUG}")
 # 核心库的编译选项（/permissive- /W3 …）是 PUBLIC 的：只留给它自己，别传到游戏的代码上
 set_target_properties(skyisle_core PROPERTIES INTERFACE_COMPILE_OPTIONS "")
@@ -328,7 +330,7 @@ target_include_directories(zhouzhu PRIVATE src)
 if(MSVC)
     target_compile_options(zhouzhu PRIVATE /utf-8)
 endif()
-target_link_libraries(zhouzhu PRIVATE godot-cpp)
+target_link_libraries(zhouzhu PRIVATE godot-cpp zhouzhu_gen)
 
 # godot-cpp 算好的平台后缀，例如 .windows.template_debug.x86_64
 get_target_property(GODOTCPP_SUFFIX godot-cpp GODOTCPP_SUFFIX)
@@ -364,10 +366,19 @@ target_include_directories(zhouzhu_core_tests PRIVATE src)
 # 有的测试读仓库里的真资产（game/worlds/…）
 target_compile_definitions(zhouzhu_core_tests PRIVATE ZHOUZHU_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 set_target_properties(zhouzhu_core_tests PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
+target_link_libraries(zhouzhu_core_tests PRIVATE zhouzhu_gen)
 if(MSVC)
     target_compile_options(zhouzhu_core_tests PRIVATE /utf-8)
 endif()
 add_test(NAME core COMMAND zhouzhu_core_tests)
+
+# 进程内生成的命令行版（行星计划 P6e）：与游戏同一份代码，不要 Godot、不要 Python——逐字节对照、量速度、离线补包（见 tools/zhouzhu_gen.cpp）
+add_executable(zhouzhu_gen_cli tools/zhouzhu_gen.cpp)
+target_link_libraries(zhouzhu_gen_cli PRIVATE zhouzhu_gen)
+set_target_properties(zhouzhu_gen_cli PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF OUTPUT_NAME zhouzhu_gen)
+if(MSVC)
+    target_compile_options(zhouzhu_gen_cli PRIVATE /utf-8)
+endif()
 
 # 岛群体检：把 2051 的全部码头与村落离线铺一遍（见 tools/site_survey.cpp）
 add_executable(zhouzhu_site_survey ${ZHOUZHU_CORE_SOURCES} tools/site_survey.cpp)
