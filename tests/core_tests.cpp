@@ -22,7 +22,13 @@
 #include <thread>
 #include <vector>
 
+#include "build_pieces.h"
 #include "cover_blend.h"
+#include "earthworks.h"
+#include "ground_works.h"
+#include "piece_mesh.h"
+#include "structure_styles.h"
+#include "terrain_edits.h"
 #include "group_memory.h"
 #include "crops.h"
 #include "deposit_kinds.h"
@@ -6546,12 +6552,521 @@ void test_gen_seed42() {
     std::printf("  行星层 ①–⑨（⑧ 跳过）%.2f s\n", planet_s);
 }
 
+// ---------------------------------------------------------------- 切片十一：改地形与搭建
+
+void test_terrain_edits() {
+    std::printf("terrain_edits\n");
+    EditGrid g;
+    g.x0 = -100.0;
+    g.z0 = -50.0;
+    check(g.cell_j(-100.0) == 0 && g.cell_j(-99.01) == 0 && g.cell_j(-100.01) == -1 && g.cell_i(-50.0) == 0, "格号向下取整（负的也对）");
+    check(EditGrid::chunk_of(15) == 0 && EditGrid::chunk_of(16) == 1 && EditGrid::chunk_of(-1) == -1 && EditGrid::chunk_of(-16) == -1 && EditGrid::chunk_of(-17) == -2,
+            "块号向下取整");
+    int ci = 0, cj = 0;
+    EditGrid::chunk_unkey(EditGrid::chunk_key(-3, 7), ci, cj);
+    check(ci == -3 && cj == 7, "块键往返（负的块号）");
+
+    const TerrainEdits empty(g);
+    const TerrainEdits a = empty.with_step(5, 6, -3);
+    check(empty.empty() && empty.step_at(5, 6) == 0, "改一格不动原来那份");
+    check(a.step_at(5, 6) == -3 && a.chunk_count() == 1 && a.cell_count() == 1 && a.get_revision() == 1, "改了一格：一块、一格、版本加一");
+    check_near(a.delta_at(g.cell_x(6) + 0.5, g.cell_z(5) + 0.5), -1.5, 1e-12, "点所在那格低 1.5 m");
+    check_near(a.delta_at(g.cell_x(7) + 0.5, g.cell_z(5) + 0.5), 0.0, 1e-12, "隔壁格没改");
+    const TerrainEdits b = a.with_step(-1, -20, 4).with_step(5, 6, 0);
+    check(b.step_at(5, 6) == 0 && b.step_at(-1, -20) == 4 && b.chunk_count() == 1, "改回 0 的块删掉；负格号的块另记");
+    check(!b.near_edits(g.cell_x(6), g.cell_z(5)) && b.near_edits(g.cell_x(-20) + 0.5, g.cell_z(-1) + 0.5), "外包框只罩着改过的块");
+    const std::vector<int64_t> in = b.chunks_in(g.cell_x(-30), g.cell_z(-5), g.cell_x(-10), g.cell_z(3));
+    check(in.size() == 1 && in[0] == EditGrid::chunk_key(-1, -2), "框里的块");
+    check(b.with_step(-1, -20, 4).get_revision() == b.get_revision(), "改成一样的级数不算改");
+
+    TerrainEdits c = empty;
+    for (int i = 0; i < 40; i++) {
+        c = c.with_step(i, 3 * i - 20, (i % 7) - 3);
+    }
+    c = c.with_step(100, 100, 127).with_step(101, 100, -127);
+    TerrainEdits back;
+    std::string err;
+    const std::string text = save_terrain_edits(c);
+    check(load_terrain_edits(text, back, err), "改地形的文本读得回：" + err);
+    bool same = back.get_grid().x0 == c.get_grid().x0 && back.get_grid().z0 == c.get_grid().z0 && back.chunk_count() == c.chunk_count() && back.cell_count() == c.cell_count();
+    for (int i = -5; i < 130 && same; i++) {
+        for (int j = -30; j < 130 && same; j++) {
+            same = back.step_at(i, j) == c.step_at(i, j);
+        }
+    }
+    check(same, "读回逐格一样（格子原点、每一格）");
+    check(save_terrain_edits(back) == text, "再存一遍一字不差");
+    check(!load_terrain_edits("chunk\t0\t0\t1*300\n", back, err), "一块多于 256 格拒收");
+}
+
+void test_edit_patch() {
+    std::printf("edit_patch\n");
+    const WorldGrid g = synthetic_grid();
+    const WorldTerrain t(g, { synthetic_island() }, 7);
+    const TileLayout layout(g);
+    const TileKey here = layout.leaf_at(100.0, 50.0);
+    const EditGrid eg = layout.edit_grid();
+    double ox = 0.0, oz = 0.0;
+    layout.corner(here, ox, oz);
+    // 叶块里第 (2, 3) 块：挖一个 2 × 2 格、2 m 深的坑，另垒一格 1 m 的土台
+    const int ci = here.iz * 8 + 2, cj = here.ix * 8 + 3;
+    const int gi = ci * 16 + 5, gj = cj * 16 + 6;
+    TerrainEdits e(eg);
+    for (int di = 0; di < 2; di++) {
+        for (int dj = 0; dj < 2; dj++) {
+            e = e.with_step(gi + di, gj + dj, -4);
+        }
+    }
+    e = e.with_step(gi + 6, gj + 6, 2);
+    const std::vector<int64_t> holes = tile_edit_chunks(layout, e, here);
+    check(holes.size() == 1 && holes[0] == EditGrid::chunk_key(ci, cj), "叶块里改过的块");
+    check(layout.leaf_of_chunk(ci, cj) == here, "块落在哪个叶块");
+    const TileMesh plain = build_tile_mesh(t, layout, here);
+    const TileMesh holed = build_tile_mesh(t, layout, here, holes);
+    check(plain.indices.size() - holed.indices.size() == size_t(8 * 8 * 2 * 3), "留洞：块里 64 个粗格的顶面不出（" + std::to_string(plain.indices.size() - holed.indices.size()) + " 个下标）");
+    check(holed.land_quads == plain.land_quads, "留洞不改陆地格数");
+
+    const TileMesh patch = build_edit_patch(t, layout, e, ci, cj);
+    check(patch.origin_x == ox && patch.origin_z == oz, "补丁与叶块同一个原点");
+    check(patch.land_quads == 256, "补丁：块里 256 格都出顶面");
+    // 没改过的格在粗格节点上的顶点与叶块逐位相同
+    std::map<std::pair<float, float>, float> tile_tops;
+    for (size_t k = 0; k < plain.positions.size() / 3; k++) {
+        if (plain.normals[k * 3 + 1] > 0.5f) {
+            tile_tops[{ plain.positions[k * 3], plain.positions[k * 3 + 2] }] = plain.positions[k * 3 + 1];
+        }
+    }
+    int node_hits = 0, node_same = 0, walls = 0;
+    const float pit_x = float(eg.cell_x(gj) - ox), pit_z = float(eg.cell_z(gi) - oz);
+    for (size_t k = 0; k < patch.positions.size() / 3; k++) {
+        const float x = patch.positions[k * 3], y = patch.positions[k * 3 + 1], z = patch.positions[k * 3 + 2];
+        if (patch.normals[k * 3 + 1] == 0.0f) {
+            walls++;
+            continue;
+        }
+        const bool in_pit = x >= pit_x - 1e-4f && x <= pit_x + 2.0001f && z >= pit_z - 1e-4f && z <= pit_z + 2.0001f;
+        const bool in_mound = x >= pit_x + 6.0f - 1e-4f && x <= pit_x + 7.0001f && z >= pit_z + 6.0f - 1e-4f && z <= pit_z + 7.0001f;
+        const auto found = tile_tops.find({ x, z });
+        // 裙边的下沿（原地形往下 0.3 m）不算
+        if (found == tile_tops.end() || in_pit || in_mound || patch.normals[k * 3 + 1] < 0.5f || y < found->second - 0.2f) {
+            continue;
+        }
+        node_hits++;
+        node_same += y == found->second ? 1 : 0;
+    }
+    check(node_hits > 50 && node_same == node_hits, "没改过的格在粗格节点上与叶块逐位相同（" + std::to_string(node_same) + " / " + std::to_string(node_hits) + "）");
+    // 坎：坑一圈 8 条边 × 4 级 + 土台 4 条边 × 2 级 = 40 块竖面，每块 4 个顶点
+    check(walls == 40 * 4, "坎的竖面：坑 8 边 × 4 级、土台 4 边 × 2 级（" + std::to_string(walls / 4) + " 块）");
+    check(patch.collision.size() / 9 == size_t(256 * 2 + 40 * 2), "补丁的碰撞：顶面 + 坎（" + std::to_string(patch.collision.size() / 9) + " 个面）");
+    // 坑底比原地形低 2 m
+    double natural = 0.0;
+    t.surface_natural(eg.cell_x(gj) + 0.5, eg.cell_z(gi) + 0.5, natural);
+    float pit_floor = 1e9f;
+    for (size_t k = 0; k < patch.positions.size() / 3; k++) {
+        const float x = patch.positions[k * 3], z = patch.positions[k * 3 + 2];
+        if (std::abs(x - (pit_x + 0.5f)) < 0.6f && std::abs(z - (pit_z + 0.5f)) < 0.6f && patch.normals[k * 3 + 1] > 0.5f) {
+            pit_floor = std::min(pit_floor, patch.positions[k * 3 + 1]);
+        }
+    }
+    check_near(pit_floor, natural - 2.0, 0.1, "坑底 = 原地形 − 2 m");
+
+    // 叶块边上的坎往低的那格让 1 cm（邻块的裙边在那条线上）
+    {
+        const int ci2 = here.iz * 8 + 4, cj2 = here.ix * 8; // 叶块西边那一列块
+        const TerrainEdits e2 = TerrainEdits(eg).with_step(ci2 * 16 + 3, cj2 * 16, -2);
+        const TileMesh edge = build_edit_patch(t, layout, e2, ci2, cj2);
+        int inset = 0;
+        for (size_t k = 0; k < edge.positions.size() / 3; k++) {
+            inset += edge.normals[k * 3 + 1] == 0.0f && std::abs(edge.positions[k * 3] - 0.01f) < 1e-4f ? 1 : 0;
+        }
+        check(inset == 2 * 4, "叶块边上的坎往坑里让 1 cm（" + std::to_string(inset) + " 个顶点）");
+    }
+    // 两块都有改动：块边上的坎只出一次（归高的那格）
+    {
+        const int gi3 = ci * 16 + 8, gj3 = cj * 16 + 15; // 块东边那一列
+        const TerrainEdits e3 = TerrainEdits(eg).with_step(gi3, gj3, 2).with_step(gi3, gj3 + 1, -2);
+        const TileMesh left = build_edit_patch(t, layout, e3, ci, cj), right = build_edit_patch(t, layout, e3, ci, cj + 1);
+        // 立在块边那条线上的竖面（法线沿 x；与块边垂直的坎有一头也在这条线上，不算）
+        auto walls_on = [&](const TileMesh &m, float p_x) {
+            int n = 0;
+            for (size_t k = 0; k < m.positions.size() / 3; k++) {
+                n += m.normals[k * 3 + 1] == 0.0f && m.normals[k * 3] != 0.0f && std::abs(m.positions[k * 3] - p_x) < 1e-3f ? 1 : 0;
+            }
+            return n;
+        };
+        const float border = float(eg.cell_x(gj3 + 1) - ox);
+        check(walls_on(left, border) == 4 * 4 && walls_on(right, border) == 0, "块边上高 +2、低 −2：四级的坎全归高的那块（" + std::to_string(walls_on(left, border) / 4) + " / " +
+                std::to_string(walls_on(right, border) / 4) + "）");
+    }
+    // 土层：可耕地两米、林地两米
+    check_near(soil_depth_at(t, 0.0, 0.0), 2.0, 1e-9, "可耕地的土层 2 m");
+
+    // 地形取样叠上改动（玩法问 surface），原地形不变（散布、规划问 surface_natural）
+    WorldTerrain t2(g, { synthetic_island() }, 7);
+    const std::shared_ptr<const TerrainEdits> shared = std::make_shared<const TerrainEdits>(e);
+    t2.set_edits(shared);
+    const double px = eg.cell_x(gj) + 0.4, pz = eg.cell_z(gi) + 0.7;
+    double y_edit = 0.0, y_nat = 0.0, y_far = 0.0, y_far_nat = 0.0;
+    t2.surface(px, pz, y_edit);
+    t2.surface_natural(px, pz, y_nat);
+    t2.surface(px + 300.0, pz, y_far);
+    t2.surface_natural(px + 300.0, pz, y_far_nat);
+    check_near(y_edit - y_nat, -2.0, 1e-9, "surface 叠上改动：坑里低 2 m");
+    check(y_far == y_far_nat, "框外的点不受影响");
+    t2.set_edits(nullptr);
+    t2.surface(px, pz, y_edit);
+    check(y_edit == y_nat && !t2.get_edits(), "换成没有改动：回到原地形");
+    // 线程安全：后台线程一直量、主线程一直换
+    {
+        t2.set_edits(shared);
+        std::atomic<bool> stop{ false };
+        std::atomic<int> bad{ 0 };
+        std::thread reader([&]() {
+            while (!stop.load()) {
+                double y = 0.0;
+                t2.surface(px, pz, y);
+                const double d = y - y_nat;
+                if (std::abs(d) > 1e-9 && std::abs(d + 2.0) > 1e-9 && std::abs(d + 1.5) > 1e-9) {
+                    bad++;
+                }
+            }
+        });
+        const std::shared_ptr<const TerrainEdits> other = std::make_shared<const TerrainEdits>(e.with_step(gi, gj, -3));
+        for (int k = 0; k < 2000; k++) {
+            t2.set_edits(k % 3 == 0 ? nullptr : k % 3 == 1 ? shared : other);
+        }
+        stop = true;
+        reader.join();
+        check(bad == 0, "边换边量：只看得到完整的某一份");
+    }
+}
+
+void test_earthworks() {
+    std::printf("earthworks\n");
+    EarthFacts f;
+    f.solid = true;
+    f.shore = 50.0;
+    f.soil_depth = 1.0;
+    EarthCheck c = plan_earthwork(f, 0, EarthAction::DIG, "wood_shovel", false);
+    check(c.ok && c.after == -1 && c.item == "earth" && !c.stone && c.seconds == EarthRules().shovel_s, "木锹挖土层：出土");
+    c = plan_earthwork(f, -2, EarthAction::DIG, "wood_shovel", false);
+    check(!c.ok && c.why.find("石镐") != std::string::npos, "挖到土层以下：木锹挖不动");
+    c = plan_earthwork(f, -2, EarthAction::DIG, "stone_pick", false);
+    check(c.ok && c.stone && c.item == "stone" && c.seconds == EarthRules().pick_stone_s, "石镐凿石：出石料");
+    c = plan_earthwork(f, 3, EarthAction::DIG, "wood_shovel", false);
+    check(c.ok && c.item == "earth" && !c.stone, "垒上来的土挖回去出土");
+    c = plan_earthwork(f, 0, EarthAction::DIG, "", false);
+    check(!c.ok, "空手挖不动");
+    c = plan_earthwork(f, -2, EarthAction::DIG, "", true);
+    check(c.ok && c.seconds == EarthRules().free_s, "god 模式不要家伙");
+    c = plan_earthwork(f, -16, EarthAction::DIG, "stone_pick", false);
+    check(!c.ok && c.why.find("8") != std::string::npos, "最深 8 m");
+    c = plan_earthwork(f, 0, EarthAction::RAISE, "earth", false);
+    check(c.ok && c.after == 1 && c.item == "earth" && c.seconds == 0.0, "拿着土垒一级");
+    c = plan_earthwork(f, 0, EarthAction::RAISE, "wood_shovel", false);
+    check(!c.ok, "手上没土垒不了");
+    c = plan_earthwork(f, 8, EarthAction::RAISE, "earth", false);
+    check(!c.ok, "最高 4 m");
+    f.under_feet = true;
+    check(!plan_earthwork(f, 0, EarthAction::RAISE, "earth", false).ok && plan_earthwork(f, 0, EarthAction::DIG, "wood_shovel", false).ok, "脚下垒不了、挖得了");
+    f.under_feet = false;
+    f.blocked = "这是田";
+    c = plan_earthwork(f, 0, EarthAction::DIG, "wood_shovel", false);
+    check(!c.ok && c.why == "这是田", "压着东西：说压着什么");
+    f.blocked.clear();
+    f.shore = 2.0;
+    check(!plan_earthwork(f, 0, EarthAction::DIG, "wood_shovel", false).ok, "离岸太近");
+    f.shore = 50.0;
+    f.solid = false;
+    check(!plan_earthwork(f, 0, EarthAction::DIG, "wood_shovel", false).ok, "崖边");
+    check(earth_digs_with("wood_shovel") && earth_digs_with("stone_pick") && !earth_digs_with("stone_axe") && earth_raises_with("earth"), "挖的家伙、垒的土");
+}
+
+namespace {
+
+// 搭建件测试用的地面：斜坡 y = 10 + 0.05·x，x > 40 是水，x < −40 没有地
+class SlopeGround : public LandingGround {
+public:
+    double tilt = 0.05;
+    bool height(double p_x, double p_z, double &r_y) const override {
+        r_y = 10.0 + tilt * p_x;
+        return p_x > -40.0;
+    }
+    bool water(double p_x, double p_z) const override { return p_x > 40.0; }
+};
+
+// 准星对准一座里某格（局部）的某一点
+PieceAim aim_local(const Structure &p_s, double p_lx, double p_ly, double p_lz, int p_turns = 0) {
+    PieceAim a;
+    p_s.to_host(p_lx, p_ly, p_lz, a.x, a.y, a.z);
+    a.from_x = a.x + 1.5;
+    a.from_z = a.z + 1.5;
+    a.from_y = a.y;
+    a.look_yaw = 0.3;
+    a.turns = p_turns;
+    return a;
+}
+
+bool place(Structures &r_list, const std::string &p_item, const PieceAim &p_aim, const LandingGround &p_ground, PiecePlan *r_plan = nullptr) {
+    const PiecePlan plan = plan_piece(r_list, *pieces::find(p_item), p_aim, p_ground);
+    if (r_plan) {
+        *r_plan = plan;
+    }
+    if (plan.ok) {
+        r_list.add(p_item, plan);
+    }
+    return plan.ok;
+}
+
+} // namespace
+
+void test_build_pieces() {
+    std::printf("build_pieces\n");
+    const SlopeGround ground;
+    Structures list;
+    check(pieces::COUNT == 11 && pieces::find("earth_wall") && pieces::find("tile_roof")->role == PieceRole::ROOF && !pieces::find("plank"), "搭建件表");
+    for (int k = 0; k < pieces::COUNT; k++) {
+        check(catalog::item(pieces::DEFS[k].item) != nullptr, std::string("搭建件是物品：") + pieces::DEFS[k].item);
+        bool craftable = false;
+        for (int r = 0; r < recipes::RECIPE_COUNT; r++) {
+            craftable = craftable || std::string(recipes::RECIPES[r].product) == pieces::DEFS[k].item;
+        }
+        check(craftable, std::string("搭建件有配方：") + pieces::DEFS[k].item);
+    }
+
+    // 新开一座：地坪 = 格里最高的地面 + 0.2 m，朝向按视线取整到 15°
+    PieceAim first;
+    first.x = 5.0, first.y = 10.25, first.z = 3.0;
+    first.from_x = 7.0, first.from_z = 6.0;
+    first.look_yaw = 0.3; // 17° → 15°
+    PiecePlan plan;
+    check(place(list, "foundation", first, ground, &plan) && plan.structure == -1, "对准地面摆地基：新开一座");
+    const Structure *s = list.find(list.get()[0].id);
+    check_near(s->yaw, 15.0 * 3.14159265358979323846 / 180.0, 1e-9, "朝向取整到 15°");
+    double hi = -1e9, lo = 1e9;
+    for (double u : { 0.05, 1.0, 1.95 }) {
+        for (double v : { 0.05, 1.0, 1.95 }) {
+            double hx, hy, hz;
+            s->to_host(u, 0.0, v, hx, hy, hz);
+            hi = std::max(hi, 10.0 + 0.05 * hx);
+            lo = std::min(lo, 10.0 + 0.05 * hx);
+        }
+    }
+    check_near(s->y, hi + PieceRules().min_plinth_m, 1e-9, "地坪 = 最高的地面 + 露出的一截");
+    check_near(s->pieces[0].bottom, lo - s->y - 0.3, 1e-9, "台基垫到最低处再埋 0.3 m");
+    double cx, cy, cz;
+    s->to_host(1.0, 0.0, 1.0, cx, cy, cz);
+    check_near(cx, 5.0, 1e-9, "格 (0, 0) 的中心落在准星上");
+    // 局部 ↔ 宿主往返
+    double lx, ly, lz, hx, hy, hz;
+    s->to_host(3.3, 1.2, -0.7, hx, hy, hz);
+    s->to_local(hx, hy, hz, lx, ly, lz);
+    check_near(lx, 3.3, 1e-9, "局部 ↔ 宿主往返 x");
+    check_near(lz, -0.7, 1e-9, "局部 ↔ 宿主往返 z");
+
+    // 接着铺成 2 × 2：对准旁边那格的地面
+    Structure frame = *s;
+    check(place(list, "foundation", aim_local(frame, 3.0, -0.3, 1.0), ground), "对准旁边的地面：接上一块地基");
+    check(place(list, "foundation", aim_local(frame, 1.0, -0.3, 3.0), ground) && place(list, "foundation", aim_local(frame, 3.0, -0.3, 3.0), ground), "铺满 2 × 2");
+    check(list.size() == 1 && list.get()[0].pieces.size() == 4, "还是同一座、四块地基");
+    // 准星落在隔一格的地上：吸到挨着这一座的那一格（只看计划，不摆）
+    plan = plan_piece(list, *pieces::find("foundation"), aim_local(frame, 7.0, -0.3, 1.0), ground);
+    check(plan.ok && plan.structure == 0 && plan.spot.x == 2 && plan.spot.z == 0, "准星隔一格：吸到挨着的 (2, 0)");
+    // 离这一座太近、又接不上：不另开一座
+    {
+        PieceAim a = aim_local(frame, -1.2, -0.3, 5.1);
+        plan = plan_piece(list, *pieces::find("foundation"), a, ground);
+        check(!plan.ok || plan.structure == 0, "挨着已有的一座不另开（" + plan.why + "）");
+    }
+    // 高处：地面高过地坪
+    {
+        SlopeGround steep;
+        steep.tilt = 2.0;
+        Structures other;
+        PieceAim a = first;
+        const bool ok = place(other, "foundation", a, steep, &plan);
+        check(!ok && plan.why.find("陡") != std::string::npos, "太陡：开不了（" + plan.why + "）");
+    }
+
+    // 墙：准星在地基面上离哪条边近就是哪条边
+    frame = list.get()[0];
+    check(place(list, "earth_wall", aim_local(frame, 1.0, 0.0, 0.15), ground, &plan) && plan.spot.slot == PieceSlot::EDGE && plan.spot.dir == 0 && plan.spot.x == 0 &&
+                    plan.spot.z == 0 && plan.spot.level == 0,
+            "准星靠北边：墙在格 (0, 0) 北边");
+    plan = plan_piece(list, *pieces::find("earth_wall"), aim_local(list.get()[0], 1.0, 0.0, 0.15), ground);
+    check(!(plan.ok && plan.spot.dir == 0 && plan.spot.x == 0 && plan.spot.z == 0), "同一条边不再摆第二面（换到别的边或不让摆）");
+    // 围一圈：北 2、南 2、西 2、东 2（南边中间一扇门）
+    const struct {
+        const char *item;
+        double x, z;
+    } ring[] = { { "earth_wall", 3.0, 0.15 }, { "earth_wall", 0.15, 1.0 }, { "earth_wall", 0.15, 3.0 }, { "earth_wall", 3.85, 1.0 }, { "window_wall", 3.85, 3.0 },
+        { "earth_wall", 1.0, 3.85 }, { "door_wall", 3.0, 3.85 } };
+    for (const auto &w : ring) {
+        check(place(list, w.item, aim_local(list.get()[0], w.x, 0.3, w.z), ground), std::string("围墙：") + w.item);
+    }
+    HouseReport house = check_house(list.get()[0]);
+    check(!house.complete && house.rooms.size() >= 1 && house.rooms[0].enclosed && house.rooms[0].doors == 1 && house.rooms[0].missing_roof == 4,
+            "围好了还没顶：不完整（缺 " + house.missing + "）");
+    // 顶：对准墙顶，默认往外低：北两格往北低、南两格往南低
+    frame = list.get()[0];
+    const struct {
+        double x, z;
+        int dir;
+    } roofs[] = { { 1.0, 0.1, 2 }, { 3.0, 0.1, 2 }, { 1.0, 3.9, 0 }, { 3.0, 3.9, 0 } };
+    for (const auto &r : roofs) {
+        const bool ok = place(list, "thatch_roof", aim_local(frame, r.x, 3.0, r.z), ground, &plan);
+        check(ok && plan.spot.tier == 0 && plan.spot.dir == r.dir, "坡顶：对准墙顶放在里面那格、往外低（dir " + std::to_string(plan.spot.dir) + "）");
+    }
+    house = check_house(list.get()[0]);
+    check(!house.complete && house.rooms[0].missing_roof == 0 && house.rooms[0].missing_gables == 4 && house.rooms[0].roof_gaps == 0,
+            "两坡顶在屋脊接上；两头山面各缺两片山墙（缺 " + house.missing + "）");
+    // 山墙：对准两山墙顶上
+    const double gables[4][2] = { { 0.1, 1.0 }, { 0.1, 3.0 }, { 3.9, 1.0 }, { 3.9, 3.0 } };
+    for (const auto &g : gables) {
+        const bool ok = place(list, "gable", aim_local(list.get()[0], g[0], 3.4, g[1]), ground, &plan);
+        check(ok, "山墙（" + plan.why + "）");
+    }
+    house = check_house(list.get()[0]);
+    check(house.complete && house.complete_rooms == 1 && house.missing.empty(), "四面墙、门、顶、山墙：一座完整的屋");
+    check(inside_complete_room(list.get()[0], house, 2.0, 0.9, 2.0) && !inside_complete_room(list.get()[0], house, 5.0, 0.9, 2.0), "屋里算、屋外不算");
+
+    // 拆：山墙靠着墙，墙拆不了；先拆山墙再拆墙，屋就不完整了
+    const Structure &built = list.get()[0];
+    int west_wall = -1, west_gable = -1, door = -1;
+    for (const Piece &p : built.pieces) {
+        const PieceDef *def = pieces::find(p.item);
+        if (p.spot.slot == PieceSlot::EDGE && p.spot.dir == 1 && p.spot.x == 0 && p.spot.z == 0) {
+            (def->role == PieceRole::GABLE ? west_gable : west_wall) = p.id;
+        }
+        door = def->role == PieceRole::DOOR ? p.id : door;
+    }
+    std::string why;
+    const int sid = built.id;
+    check(!list.remove(sid, west_wall, why) && why.find("山墙") != std::string::npos, "山墙靠着的墙拆不了（" + why + "）");
+    check(list.remove(sid, west_gable, why) && list.remove(sid, west_wall, why), "先拆山墙再拆墙");
+    house = check_house(*list.find(sid));
+    check(!house.complete && house.rooms[0].missing_walls == 1, "少一面墙：不完整（缺 " + house.missing + "）");
+    // 墙装回去、山墙装回去：又完整了
+    check(place(list, "earth_wall", aim_local(*list.find(sid), 0.15, 0.3, 1.0), ground) && place(list, "gable", aim_local(*list.find(sid), 0.1, 3.4, 1.0), ground), "装回去");
+    check(check_house(*list.find(sid)).complete, "又是一座完整的屋");
+
+    // 门开关：碰撞跟着变
+    const StructureMesh closed = build_structure_mesh(*list.find(sid));
+    check(list.set_open(sid, door, 1), "开门");
+    const StructureMesh opened = build_structure_mesh(*list.find(sid));
+    check(closed.triangle_count() > 200 && !closed.collision.empty() && closed.collision != opened.collision, "门扇开着关着碰撞不一样");
+    // 点选：墙面上的一点落在那面墙上
+    {
+        const Structure &cur = *list.find(sid);
+        const int hit = piece_at(cur, 2.0 + 1.0, 1.5, 0.12);
+        const Piece *p = cur.find(hit);
+        check(p && pieces::find(p->item)->role == PieceRole::WALL && p->spot.dir == 0 && p->spot.z == 0, "点选：北墙外皮上的一点是北墙");
+    }
+
+    // 二层：楼板搭在墙上；梯子在一格里，那一格楼上留梯口
+    {
+        Structures two = list;
+        Structure &cur = *two.edit(sid);
+        cur.pieces.erase(std::remove_if(cur.pieces.begin(), cur.pieces.end(), [](const Piece &p) { return pieces::find(p.item)->role == PieceRole::ROOF || pieces::find(p.item)->role == PieceRole::GABLE; }), cur.pieces.end());
+        two.touch();
+        const bool ladder_ok = place(two, "ladder", aim_local(*two.find(sid), 1.0, 0.1, 0.4), ground, &plan);
+        check(ladder_ok && plan.spot.level == 0 && plan.spot.dir == 2, "梯子靠着北墙（dir " + std::to_string(plan.spot.dir) + "）");
+        Piece hatch;
+        hatch.item = "floorboard";
+        hatch.spot.slot = PieceSlot::CELL;
+        hatch.spot.x = 0, hatch.spot.z = 0, hatch.spot.level = 1;
+        check(!piece_supported(*two.find(sid), hatch), "梯子上面那格不许铺楼板（梯口）");
+        plan = plan_piece(two, *pieces::find("floorboard"), aim_local(*two.find(sid), 1.0, 3.0, 1.0), two.find(sid) ? ground : ground);
+        check(!(plan.ok && plan.spot.x == 0 && plan.spot.z == 0), "对准梯口铺楼板：不铺在梯口上");
+        check(place(two, "floorboard", aim_local(*two.find(sid), 3.0, 3.0, 1.0), ground, &plan) && plan.spot.level == 1 && plan.spot.x == 1, "楼板搭在墙上");
+        const StructureMesh m = build_structure_mesh(*two.find(sid));
+        check(m.ladders.size() == 1 && m.ladders[0].top_y - m.ladders[0].foot_y == piece_dims::STOREY_M, "梯子一个爬梯区域、爬一层");
+    }
+
+    // 整座样式：存成样式、再摆一座，一样完整
+    const StructureStyle style = style_from_structure(*list.find(sid), "test", "测试屋");
+    StructureStyle back;
+    back.id = "test";
+    std::string err;
+    check(parse_structure_style(save_structure_style(style), back, err) && back.pieces.size() == style.pieces.size() && back.name == "测试屋", "样式的文本往返：" + err);
+    const auto bill = style_bill(style);
+    int walls = 0;
+    for (const auto &b : bill) {
+        walls += b.first == "earth_wall" ? b.second : 0;
+    }
+    check(walls == 6, "样式要几件：夯土墙 6（" + std::to_string(walls) + "）");
+    PieceAim far = first;
+    far.x += 20.0;
+    far.from_x += 20.0;
+    const StylePlan sp = plan_structure_style(list, back, far, ground);
+    const bool style_complete = sp.ok && check_house(sp.structure).complete;
+    check(style_complete, "照样式再摆一座：完整（" + sp.why + "）");
+    PieceAim near = first;
+    check(!plan_structure_style(list, back, near, ground).ok, "压着已有的一座：摆不了");
+    const int second = list.add_structure(sp.structure);
+    check(list.size() == 2 && list.find(second)->pieces.size() == style.pieces.size(), "摆下一整座：座与件重新编号");
+
+    // 营造账的文本往返：改地形、两座搭建件、一只装了东西的木箱
+    GroundWorks works;
+    EditGrid eg;
+    eg.x0 = -512.0, eg.z0 = 256.5;
+    works.edits = std::make_shared<const TerrainEdits>(TerrainEdits(eg).with_step(3, -4, -5).with_step(40, 40, 2));
+    works.structures = list;
+    PlaceCheck pc;
+    pc.ok = true;
+    pc.x = 1.25, pc.y = 10.5, pc.z = -3.5, pc.low = 10.25, pc.quarter = 3;
+    const int chest = works.props.add("chest", pc);
+    works.props.find(chest)->contents.set(4, "stone", 12);
+    works.props.find(chest)->contents.set(17, "earth", 3);
+    const std::string text = save_ground_works(works);
+    GroundWorks read;
+    const bool read_ok = load_ground_works(text, read, err);
+    check(read_ok, "营造账读得回：" + err);
+    if (!read_ok) {
+        return;
+    }
+    check(save_ground_works(read) == text, "再存一遍一字不差");
+    check(read.edits && read.edits->step_at(3, -4) == -5 && read.structures.piece_count() == list.piece_count() && read.props.size() == 1 &&
+                    read.props.get_props()[0].contents.count("stone") == 12 && read.props.get_props()[0].quarter == 3,
+            "改地形、搭建件、木箱里的东西都在");
+    check(check_house(*read.structures.find(sid)).complete, "读回来的那座还是完整的屋");
+    check(!load_ground_works("piece\t9\t1\tearth_wall\t0\t0\t0\t0\t0\t0\t0\n", read, err), "件的座没出现：拒收");
+}
+
+void test_structure_styles_repo() {
+    std::printf("structure_styles（仓库里的样式）\n");
+    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/structures";
+    int n = 0;
+    const SlopeGround ground;
+    for (const auto &entry : std::filesystem::directory_iterator(dir)) {
+        if (entry.path().extension() != ".txt") {
+            continue;
+        }
+        std::ifstream f(entry.path(), std::ios::binary);
+        const std::string text((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        StructureStyle style;
+        style.id = entry.path().stem().string();
+        std::string err;
+        check(parse_structure_style(text, style, err), "样式读得了：" + style.id + " " + err);
+        PieceAim a;
+        a.x = 0.0, a.y = 10.0, a.z = 0.0, a.from_x = 2.0, a.from_z = 2.0;
+        const StylePlan plan = plan_structure_style(Structures(), style, a, ground);
+        check(plan.ok, "样式摆得下：" + style.id + " " + plan.why);
+        const HouseReport house = check_house(plan.structure);
+        check(house.complete, "样式是一座完整的屋：" + style.id + "（缺 " + house.missing + "）");
+        n++;
+    }
+    check(n >= 2, "仓库里至少两套样式（" + std::to_string(n) + "）");
+}
+
 int main(int argc, char **argv) {
     // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
     if (argc > 1) {
         const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
             { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent },
-            { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor } };
+            { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
+            { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
+            { "structure_styles", test_structure_styles_repo } };
         for (int k = 1; k < argc; k++) {
             const auto it = only.find(argv[k]);
             if (it != only.end()) {
@@ -6618,6 +7133,11 @@ int main(int argc, char **argv) {
     test_recipes();
     test_placeables();
     test_ship_bay();
+    test_terrain_edits();
+    test_edit_patch();
+    test_earthworks();
+    test_build_pieces();
+    test_structure_styles_repo();
     test_goldens();
     test_planet_data();
     test_planet_add_lods();
