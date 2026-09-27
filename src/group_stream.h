@@ -57,7 +57,6 @@ struct GroupShift {
 //   岛群包从 GroupProvider 来（仓库 / 世界存档目录 / 按需生成）：开局认得的是已有包的群，生成好一群（group_ready）就加进来——群只往后加，下标不变；
 //   离开的群的账另存进世界存档目录（GroupProvider::save_memory），退出再进还在；换场景、关窗前 save_world 把载入着的群的账也存下；
 //   跨群瞬移（jump_*）：要去的群先要到包（按需生成）、在后台载入、升到细版、把落点周围的地面块先建好，好了再定下换锚（编排接着换人船、摆到落点）；
-//     去得远（离云团的公共平面那一群 1,500 km 以上）时云团的公共平面改成它；
 //   换锚的规矩补上「挨着的群」：脚下是别的群的地、不是锚群的地，就换过去（不等云海上空、不看回滞）；两群的地叠着的地方不换。
 class GroupStream : public godot::Node3D {
     GDCLASS(GroupStream, godot::Node3D)
@@ -113,7 +112,6 @@ private:
     double detail_in = 30000.0, detail_out = 40000.0;
     double near_in = 55000.0, near_out = 70000.0;
     double shift_margin = 2000.0;
-    double blend_m = 9100.0; // 天气的过渡：离两群陆地的距离差 20 km 时九成对一成
     double check_interval = 0.25;
     double place_step = 200.0;
     int max_detail = 2;
@@ -132,10 +130,8 @@ private:
     double since_check = 1e9;
     int shifts = 0;
     int loads = 0, unloads = 0;
-    const Group *cloud_ref = nullptr; // 云团的公共平面：钟的那一群（PlanetView 的 clock_node；没有就是锚群）
-    std::shared_ptr<const Climate> cloud_climate; // 它的气候（云团按它的风漂）
-    void apply_cloud_reference(const Group &p_group, GroupWorld *p_world) const;
-    void set_cloud_group(const Group &p_group); // 云团的公共平面换成这一群（瞬移得远）：载入着的群都跟着换
+    // 行星天气场（行星计划 P5）：PlanetView 读好了逐日天气包，就挂到载入了的各群的天气模型上（群与群之间的天气、云团从场里取）
+    void attach_weather();
     // 跨群瞬移
     int jump_node = -1;
     JumpPhase jump_phase = JUMP_NONE;
@@ -214,18 +210,6 @@ public:
     godot::Transform3D transform_from_group(const Group &p_group, const godot::Transform3D &p_group_xform) const;
     // 这一点（锚群平面）在哪一群的陆地上 / 离哪一群的陆地最近（p_within 以内）；没有返回 nullptr
     Group *group_near(const godot::Vector3 &p_anchor_point, double p_within) const;
-
-    // 某群离锚群多近（按缓存的焦点到各群陆地的距离）：天气在群与群之间按它加权过渡（权 ∝ exp(−距离 / blend_m)，过渡带约 20 km）
-    double get_blend_m() const { return blend_m; }
-
-    // 行星云层（PlanetGlobe）：载入了的群的群心（行星系单位向量）、那一带的云量（它自己的天气模型在群心、台面高处取）、
-    // 权（刚载入的 20 s 里从 0 渐到 1，锚群是 1）；≤ 4 群，锚群在前
-    struct CloudGroup {
-        PlanetVec dir;
-        double cover = 0.0;
-        double fade = 1.0;
-    };
-    void cloud_groups(std::vector<CloudGroup> &r_out) const;
 
     // 换锚
     bool is_shift_pending() const { return pending >= 0; }

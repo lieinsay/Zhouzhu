@@ -359,9 +359,9 @@ PlanetWeather::PlanetWeather(std::shared_ptr<const PlanetData> p_planet, const P
         const int c = std::clamp(int(lon / BUCKET_DEG), 0, bucket_cols - 1);
         buckets[size_t(r) * size_t(bucket_cols) + size_t(c)].push_back(k);
     }
-    // 一群管多大：陆地铺多远（粗版量的），不过到最近邻群心距离的一半
-    const std::vector<double> *extent = planet->column("lod.extent_km");
-    reach.assign(size_t(n), rules.reach_min_km);
+    // 一群管多远：粗版的陆地往各个方位铺多远（八个扇区）；没有粗版按陆地面积估、不过到最近邻群心距离的一半
+    reach.reset(new std::atomic<float>[size_t(n) * SECTORS]);
+    nn_km.assign(size_t(n), 1e9);
     wind2_center.assign(size_t(n), PlanetVec());
     for (int k = 0; k < n; k++) {
         const PlanetNode &nd = planet->node(k);
@@ -376,12 +376,8 @@ PlanetWeather::PlanetWeather(std::shared_ptr<const PlanetData> p_planet, const P
                 break;
             }
         }
-        double ext = extent && size_t(k) < extent->size() ? (*extent)[size_t(k)] : std::nan("");
-        if (!std::isfinite(ext)) {
-            ext = 1.5 * std::sqrt(std::max(0.0, nd.area_km2) / PI); // 还没有粗版（生存世界）：按陆地面积估
-        }
-        reach[size_t(k)] = std::clamp(std::min(ext, rules.reach_cap * nn), rules.reach_min_km, rules.reach_max_km);
-        reach_max = std::max(reach_max, reach[size_t(k)]);
+        nn_km[size_t(k)] = nn;
+        compute_reach(k);
         double e = 0.0, nn2 = 0.0;
         wind2_at(nd.lat, nd.lon, e, nn2);
         wind2_center[size_t(k)] = PlanetVec(e, nn2, 0.0);
@@ -391,6 +387,95 @@ PlanetWeather::PlanetWeather(std::shared_ptr<const PlanetData> p_planet, const P
 }
 
 PlanetWeather::~PlanetWeather() = default;
+
+void PlanetWeather::compute_reach(int p_node) {
+    float r[SECTORS];
+    for (int s = 0; s < SECTORS; s++) {
+        r[s] = 0.0f;
+    }
+    const PlanetLod lod = planet->lod(p_node);
+    bool any = false;
+    if (!lod.empty()) {
+        const double pad = rules.reach_pad_km;
+        for (int row = 0; row < lod.rows; row++) {
+            for (int col = 0; col < lod.cols; col++) {
+                if (lod.land[lod.index(row, col)] == 0) {
+                    continue;
+                }
+                double x = 0.0, z = 0.0;
+                lod.cell_center(row, col, x, z);
+                const double d = std::sqrt(x * x + z * z) / 1000.0 + pad;
+                const double b = std::atan2(x, -z); // 北起顺时针
+                const int s = int(std::floor(b / (2.0 * PI / SECTORS) + 0.5 + SECTORS)) % SECTORS;
+                r[s] = std::max(r[s], float(d));
+                any = true;
+            }
+        }
+    }
+    if (any) {
+        // 扇区之间没陆地时别一下子缩回群心：至少是相邻扇区的 reach_neighbor
+        float out[SECTORS];
+        float top = 0.0f;
+        for (int s = 0; s < SECTORS; s++) {
+            const float a = r[(s + SECTORS - 1) % SECTORS], b = r[(s + 1) % SECTORS];
+            out[s] = std::max(r[s], float(rules.reach_neighbor) * std::max(a, b));
+            top = std::max(top, out[s]);
+        }
+        for (int s = 0; s < SECTORS; s++) {
+            r[s] = std::clamp(out[s], float(rules.reach_min_km), float(rules.reach_max_km));
+        }
+    } else {
+        // 还没有粗版（生存世界）：按陆地面积估一个圆，不过到最近邻群心距离的一半
+        const double ext = 1.5 * std::sqrt(std::max(0.0, planet->node(p_node).area_km2) / PI);
+        const float v = float(std::clamp(std::min(ext, rules.reach_cap * nn_km[size_t(p_node)]), rules.reach_min_km, rules.reach_max_km));
+        for (int s = 0; s < SECTORS; s++) {
+            r[s] = v;
+        }
+    }
+    float top = 0.0f;
+    for (int s = 0; s < SECTORS; s++) {
+        reach[size_t(p_node) * SECTORS + size_t(s)].store(r[s], std::memory_order_relaxed);
+        top = std::max(top, r[s]);
+    }
+    float cur = reach_max.load();
+    while (top > cur && !reach_max.compare_exchange_weak(cur, top)) {
+    }
+}
+
+void PlanetWeather::refresh_reach(int p_node) {
+    if (p_node < 0 || p_node >= int(frames.size())) {
+        return;
+    }
+    compute_reach(p_node);
+    reach_rev++;
+}
+
+double PlanetWeather::reach_at(int p_node, double p_bearing) const {
+    const double u = p_bearing / (2.0 * PI / SECTORS);
+    const double f = std::floor(u);
+    const int s0 = (int(f) % SECTORS + SECTORS) % SECTORS, s1 = (s0 + 1) % SECTORS;
+    const double t = u - f;
+    const float a = reach[size_t(p_node) * SECTORS + size_t(s0)].load(std::memory_order_relaxed);
+    const float b = reach[size_t(p_node) * SECTORS + size_t(s1)].load(std::memory_order_relaxed);
+    return double(a) + (double(b) - double(a)) * t;
+}
+
+double PlanetWeather::reach_km(int p_node) const {
+    if (p_node < 0 || p_node >= int(frames.size())) {
+        return 0.0;
+    }
+    double top = 0.0;
+    for (int s = 0; s < SECTORS; s++) {
+        top = std::max(top, double(reach[size_t(p_node) * SECTORS + size_t(s)].load(std::memory_order_relaxed)));
+    }
+    return top;
+}
+
+void PlanetWeather::reach_sectors(int p_node, float r_out[SECTORS]) const {
+    for (int s = 0; s < SECTORS; s++) {
+        r_out[s] = p_node >= 0 && p_node < int(frames.size()) ? reach[size_t(p_node) * SECTORS + size_t(s)].load(std::memory_order_relaxed) : 0.0f;
+    }
+}
 
 template <typename F>
 void PlanetWeather::for_nodes_within(double p_lat, double p_lon, double p_radius_km, F &&p_fn) const {
@@ -512,6 +597,7 @@ WeatherState PlanetWeather::climate_state(double p_day, double p_lat, double p_l
     s.cloud = climate_cloud(p_lat, p_lon);
     s.coverage = std::clamp(0.6 * s.cloud - 0.08, 0.03, 0.6);
     s.mm = climate_precip_mm(p_lat, p_lon) / double(year_days);
+    s.precip = s.mm;
     // 气温：零点处的年均温 + 半个年温差 × 余弦（最暖 = 该半球夏至 + 45 天，同 P2 的行星贴图）；往上按 6 °C/km
     const double t0 = g_temp ? g_temp->sample(p_lat, p_lon) : 12.0;
     const double range = g_range ? g_range->sample(p_lat, p_lon) : 20.0;
@@ -535,7 +621,7 @@ WeatherState PlanetWeather::climate_state(double p_day, double p_lat, double p_l
         WeatherState st = s;
         st.cloud = 1.0;
         st.coverage = 0.9;
-        st.mm = std::max(s.mm, 30.0);
+        st.mm = s.mm; // 雨量照 ④ 的（永暴带本来就多雨）：年降水与气候场对得上
         st.storm = 1.0;
         const double sp = std::hypot(e, n);
         const double want = std::max(sp, rules.storm_wind_ms);
@@ -707,7 +793,10 @@ void PlanetWeather::weights_at(const PlanetVec &p_unit, double p_lat, double p_l
                 across = p_d_km * (de * un - dn * ue);
             }
             const double d_eff = std::sqrt((along / squeeze) * (along / squeeze) + across * across);
-            const double s = d_eff - reach[size_t(p_k)];
+            // 从那一群看这一点的方位（它的平面里，北起顺时针）
+            const GroupFrame &gf = frames[size_t(p_k)];
+            const PlanetVec q = p_unit - gf.up * gf.up.dot(p_unit);
+            const double s = d_eff - reach_at(p_k, std::atan2(q.dot(gf.east), q.dot(gf.north)));
             s_min = std::min(s_min, s);
             // 留管辖差最小的 16 个
             if (nb < 16) {
@@ -727,7 +816,7 @@ void PlanetWeather::weights_at(const PlanetVec &p_unit, double p_lat, double p_l
         }
         const double blend = rules.blend_km + rules.blend_grow * std::max(0.0, s_min);
         const double need = std::min(s_min, s_bg) + blend * lncut;
-        if (radius / rules.along_squeeze - reach_max >= need || radius >= 21000.0) {
+        if (radius / rules.along_squeeze - double(reach_max.load()) >= need || radius >= 21000.0) {
             break;
         }
     }
@@ -837,6 +926,7 @@ struct PlanetWeather::Mix {
     int day_index = 0;
     double fog_top = -1e9;
     double field = 0.5;
+    double ref_m = 0.0;
 };
 
 void PlanetWeather::mix(const Weights &p_w, const PlanetVec &p_unit, double p_lat, double p_lon, double p_day, double p_h_ref, int p_caller,
@@ -897,7 +987,8 @@ void PlanetWeather::mix(const Weights &p_w, const PlanetVec &p_unit, double p_la
                 turn_en(s.wind_x, -s.wind_z, gamma, s.wind_x, s.wind_z);
             }
             // 离这一群的陆地远了：它的风换成「此地 ② 的风 + 它当天比群心 ② 的风多出的那份」
-            const double lam = smooth01(reach[size_t(node)] + rules.anomaly_from_km, reach[size_t(node)] + rules.anomaly_to_km, p_w.d_km[i]);
+            const double reach_i = reach_km(node); // 离它的陆地多远：按最远的扇区（保守）
+            const double lam = smooth01(reach_i + rules.anomaly_from_km, reach_i + rules.anomaly_to_km, p_w.d_km[i]);
             if (lam > 0.0) {
                 const PlanetVec &c2 = wind2_center[size_t(node)];
                 double ax = 0.0, az = 0.0;
@@ -945,6 +1036,12 @@ void PlanetWeather::mix(const Weights &p_w, const PlanetVec &p_unit, double p_la
     if (fog_den > 1e-12) {
         r_mix.fog_top = p_w.n == 1 ? fog_single : fog_num / fog_den;
     }
+    // 台面按群的权混（没有逐日表的群按它的台面 ③ height_m；背景不算）
+    double ref_num = 0.0;
+    for (int i = 0; i < p_w.n; i++) {
+        ref_num += p_w.w[i] * (tabs[i] ? tabs[i]->ref_m : planet->node(p_w.nodes[i]).height_m);
+    }
+    r_mix.ref_m = wsum > 0.0 ? ref_num / wsum : p_h_ref;
     if (p_field && wsum > 0.0) {
         // 云团：各群自己平面上的 fbm（随它自己的风漂），只按群的权（背景没有云团）归一，混起来方差不变
         double num = 0.0, sq = 0.0;
@@ -1018,6 +1115,7 @@ PlanetGroupSample PlanetWeather::sample_group(int p_node, const GroupFrame &p_fr
     out.day_index = m.day_index;
     out.fog_top = m.fog_top;
     out.field = m.field;
+    out.ref_m = m.ref_m;
     return out;
 }
 
@@ -1047,8 +1145,10 @@ void PlanetWeather::cloud_candidates(double p_lat, double p_lon, int p_max, doub
             }
             PlanetCloudCandidate c;
             c.node = p_k;
-            c.s_km = std::sqrt((along / r_squeeze) * (along / r_squeeze) + across * across) - reach[size_t(p_k)];
-            c.reach_km = reach[size_t(p_k)];
+            const GroupFrame &gf = frames[size_t(p_k)];
+            const PlanetVec q = p - gf.up * gf.up.dot(p);
+            c.reach_km = reach_at(p_k, std::atan2(q.dot(gf.east), q.dot(gf.north)));
+            c.s_km = std::sqrt((along / r_squeeze) * (along / r_squeeze) + across * across) - c.reach_km;
             all.push_back(c);
         });
         if (int(all.size()) >= p_max || radius >= 21000.0) {
@@ -1092,12 +1192,24 @@ int PlanetWeather::bake_height(const BakeGrid &p_grid) {
     return p_grid.height;
 }
 
-std::shared_ptr<const PlanetWeather::BakeGrid> PlanetWeather::prepare_bake(int p_width, int p_height) const {
+std::shared_ptr<PlanetWeather::BakeGrid> PlanetWeather::new_bake_grid(int p_width, int p_height) const {
     auto g = std::make_shared<BakeGrid>();
     g->width = p_width;
     g->height = p_height;
     g->cells.resize(size_t(p_width) * size_t(p_height));
-    for (int r = 0; r < p_height; r++) {
+    return g;
+}
+
+std::shared_ptr<const PlanetWeather::BakeGrid> PlanetWeather::prepare_bake(int p_width, int p_height) const {
+    std::shared_ptr<BakeGrid> g = new_bake_grid(p_width, p_height);
+    prepare_bake_rows(*g, 0, p_height);
+    return g;
+}
+
+void PlanetWeather::prepare_bake_rows(BakeGrid &r_grid, int p_row_from, int p_row_to) const {
+    const int p_width = r_grid.width, p_height = r_grid.height;
+    BakeGrid *g = &r_grid;
+    for (int r = std::max(0, p_row_from); r < std::min(p_height, p_row_to); r++) {
         const double lat = -90.0 + (r + 0.5) * 180.0 / p_height;
         for (int c = 0; c < p_width; c++) {
             const double lon = -180.0 + (c + 0.5) * 360.0 / p_width;
@@ -1122,7 +1234,6 @@ std::shared_ptr<const PlanetWeather::BakeGrid> PlanetWeather::prepare_bake(int p
             cell.n = uint8_t(n);
         }
     }
-    return g;
 }
 
 void PlanetWeather::bake(const BakeGrid &p_grid, double p_day, std::vector<float> &r_rgba) const {

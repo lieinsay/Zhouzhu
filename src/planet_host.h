@@ -92,7 +92,6 @@ public:
     bool map_landing_height(double p_x, double p_z, double &r_y) const override;
     bool map_water_at(double p_x, double p_z) const override;
     WeatherModel *map_weather() override;
-    void map_weather_mix(const godot::Vector3 &p_global, std::vector<WeatherMix> &r_out) override;
     void map_weather_models(std::vector<WeatherModel *> &r_out) override;
     bool map_shift_pending() const override;
     bool map_shift_begin(MapShift &r_shift) override;

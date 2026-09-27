@@ -52,13 +52,6 @@ struct MapShift {
     std::function<double(const godot::Vector3 &)> yaw;
 };
 
-// 一处的天气由哪几份混成（行星计划 P3）：模型、那一点在它的平面里的位置、权（和为 1）
-struct WeatherMix {
-    WeatherModel *model = nullptr;
-    godot::Vector3 local;
-    double weight = 1.0;
-};
-
 // 地图宿主：玩家编排（Expedition）只认它。一张地图要让所有玩法跑起来，最少回答这些：
 //   地面（全局坐标）——多高、属于哪座岛、站在这儿稳不稳（地面块铺好了没有）；
 //   码头——几个、各自的泊位接触线、出生位姿、岸缘点、在哪座岛、叫什么、此刻能不能靠；
@@ -127,8 +120,7 @@ public:
     // 天气（weather.h）：有气候数据的地图给它的天气模型（天与光、HUD、开发者面板读它，开发者覆盖也改在它上面）；
     // 没有返回 nullptr——天与光用一份没有数据的（常年晴、纬度 30°）
     virtual WeatherModel *map_weather() { return nullptr; }
-    // 某一点（全局）的天气由哪几份混成：默认就是 map_weather 一份。行星上（PlanetHost）是载入了的各群，按离各群陆地的距离加权（过渡带约 20 km）
-    virtual void map_weather_mix(const godot::Vector3 &p_global, std::vector<WeatherMix> &r_out);
+    // 行星上（PlanetHost）map_weather 是锚群的模型：它挂着行星天气场（行星计划 P5），群与群之间的天气由场按距离与风向过渡，不用另混
     // 这张图上所有的天气模型（开发者覆盖改在每一份上）：默认就是 map_weather 一份
     virtual void map_weather_models(std::vector<WeatherModel *> &r_out);
 

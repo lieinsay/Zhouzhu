@@ -1,7 +1,8 @@
 // 行星计划 P2：相机在天气云层（+2.8 km）以上时，往下看的云与高空的空气透视——PlanetGlobe 建的一张盖满屏幕的片，最后画（透明、不写深度）。
 // 天空着色器画在一切的后面，飞到云层以上往下看的云要盖在地面、远处岛群、行星上面，所以另画一层：
 //   逐像素读场景的深度（压近过的距离按 planet_curve_squeeze 还原成真的距离），视线与 +2.8 km 的球壳求交，交点比场景近就画云——
-//   离锚群 100 km 以内是岛群自己的云团（同天空着色器，交点换回锚群的平面坐标取 weather.gdshaderinc 的场），以外是行星云层（planet_cloud）；
+//   相机地面点 60–120 km 以内是岛群的云团（同天空着色器，交点换回锚群的平面坐标取 weather.gdshaderinc 的场；P5 起是几群各自的按权混），
+//   以外是行星云层（planet_cloud，P5 起读行星天气场的贴图）；
 //   相机高过 20 km 起（atmo_blend）再按大气步进一段：云与地面、远处岛群蒙上一层蓝（天空着色器画的行星自己已经算过，这里只管网格）。
 // 混合用普通的 alpha：结果 = 进来的光 + 透过率 × (云 · α + 场景 · (1 − α))，透过率取三色的平均当 alpha（差一点颜色，省一次读屏）。
 shader_type spatial;
@@ -58,26 +59,27 @@ void fragment() {
 		vec3 X = vec3(0.0, r0, 0.0) + dir * tc;
 		vec3 up_l = X / length(X);
 		vec3 pn = normalize(planet_axes * X);
-		float cover_unused;
-		float local_w = planet_group_weight(pn, 70.0, 130.0, cover_unused);
-		// 岛群的云团一团 2.6 km、最细一层三百来米：一像素盖过一两百米（高空）就只剩一片灰噪点，换成行星云层（锚群附近的云量与它一样）
+		// 交点换回锚群的平面坐标：flat ≈ c + δ(c) + R_c · (画面上相对相机的位移)
+		vec3 flat_p = planet_curve_cam + planet_curve_dcam + planet_curve_basis * (dir * tc);
+		float horiz = length(flat_p.xz - planet_curve_cam.xz);
+		// 近处的云团按相机处管得着的几群取（在相机处线性化），相机地面点 60–120 km 外换成行星云层
+		float local_w = 1.0 - smoothstep(60000.0, 120000.0, horiz);
+		// 岛群的云团一团 2.6 km、最细一层三百来米：一像素盖过一两百米（高空）就只剩一片灰噪点，换成行星云层（云量同一个场）
 		local_w *= 1.0 - smoothstep(cell_m * 0.06, cell_m * 0.25, tc * planet_pixel);
 		float dens = 0.0;
 		float thick = 0.0;
 		float storm = 0.0;
 		if (local_w > 0.001) {
-			// 交点换回锚群的平面坐标：flat ≈ c + δ(c) + R_c · (画面上相对相机的位移)
-			vec3 flat_p = planet_curve_cam + planet_curve_dcam + planet_curve_basis * (dir * tc);
-			vec2 q = wx_cloud_pos(flat_p.xz) / cell_m - drift;
-			float field = wx_fbm(q);
+			float field = wx_cloud_field(flat_p.xz, drift, cell_m);
 			float cov = clamp(cloud_cover + dot(cover_grad, (flat_p.xz - planet_curve_cam.xz) / 1000.0), 0.0, 1.0);
+			cov = mix(cov, planet_weather_cover(pn, cov), smoothstep(20000.0, 60000.0, horiz));
 			float thr = wx_threshold(cov);
 			dens = smoothstep(thr - cloud_edge, thr + cloud_edge, field);
 			thick = smoothstep(thr, thr + 0.25, field);
 		}
 		if (local_w < 0.999) {
 			float pt;
-			float pd = planet_cloud(pn, pt, storm);
+			float pd = planet_cloud(pn, tc * planet_pixel, pt, storm);
 			dens = mix(pd, dens, local_w);
 			thick = mix(pt, thick, local_w);
 		}

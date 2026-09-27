@@ -15,6 +15,7 @@
 
 #include "almanac.h"
 #include "map_host.h"
+#include "planet_weather.h"
 #include "weather.h"
 
 class MapHost;
@@ -96,12 +97,23 @@ class Atmosphere : public godot::Node3D {
     double random01();
 
     WeatherModel *model();
-    // 某一点的天气：地图宿主给的几份按权混（行星上在群与群之间过渡）；p_h 是高
+    // 某一点的天气：地图宿主的天气模型（行星上是锚群的，它挂着行星天气场：群与群之间由场按距离与风向过渡，行星计划 P5）；p_h 是高
     WeatherSample sample_mix(double p_day, const godot::Vector3 &p_global, double p_h);
-    std::vector<WeatherMix> mix_buf;
-    std::vector<WeatherSample> mix_samples;
-    std::vector<double> mix_weights;
     std::vector<WeatherModel *> models_buf;
+    std::vector<int> override_nodes;
+    // 近处的云团（行星计划 P5）：相机附近管得着的几群（≤ 4）各自平面上的 fbm，天空、云层叠画、云带顶按它们的权混（全局参数 wx_cloud_g0..3）；
+    // 候选变了渐入渐出（cloud_slot_fade 秒），瞬移、拨钟直接跟上
+    struct CloudSlot {
+        int node = -1;
+        double fade = 0.0;
+        bool want = false;
+    };
+    CloudSlot cloud_slots[4];
+    std::vector<PlanetCloudCandidate> cloud_cands;
+    double cloud_slot_fade = 2.0;
+    bool cloud_slots_on = false;
+    bool last_jump = false;
+    void update_cloud_slots(double p_day, double p_delta);
     double calendar_day() const;
     void build();
     void update_override(double p_delta);
@@ -134,6 +146,13 @@ public:
     godot::Vector2 wind_at(const godot::Vector3 &p_global);
     // 掌舵时的提醒：风大（船往下风漂）、这一天禁航；平常是空的
     godot::String sailing_text(const godot::Vector3 &p_global);
+    // 行星天气场在某一点（全局）：{ ready, nodes, weights, bg, group_share, zone, zone_kind（0 没有 1 赤道永暴带 2 G）, push_x, push_z,
+    //   cloud_cover, coverage, temp_c, wind_x, wind_z, storm, day_kind, front, lat, lon }；没有行星数据 ready 为假
+    godot::Dictionary planet_weather_at(const godot::Vector3 &p_global);
+    // 同上，按经纬度问（风是那一点的东、南）
+    godot::Dictionary planet_weather_latlon(double p_lat, double p_lon);
+    // 近处云团的几个槽：[{ node, fade }]
+    godot::Array get_cloud_slots() const;
     // 画面此刻跟到哪（平滑后）：{ cloud, cover, precip, snow, fog, storm, wet, wind_x, wind_z, overcast, indoor, flash, rain_ratio, snow_ratio }
     godot::Dictionary get_look() const;
     double get_sun_altitude() const { return sun_state.altitude_deg; }

@@ -13,6 +13,8 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/node_path.hpp>
 
+#include "planet_weather.h"
+
 class Atmosphere;
 class PlanetView;
 class GroupWorld;
@@ -28,7 +30,9 @@ class JobPool;
 //   - 每帧按相机（PlanetView 的双精度位置）设两份材质的参数：相机的局部系到行星系、高、日月（按全局钟在行星系里算，D10）、
 //     带界的季节北移、G 定点永暴、锚群的群心、近处由远处岛群网格画的那一圈（贴图岛群在那里淡掉）；
 //   - 按高度交叉淡化：20–60 km 天上从原来的天色换成大气散射，30–60 km P1 的云带顶网格淡出、行星淡入；
-//   - 相机的地面点离锚群超过 geometry_radius（轨道相机飞远了）：锚群的地面、村子、船、人都藏起来，由行星贴图画它（再飞回来就放回去）。
+//   - 相机的地面点离锚群超过 geometry_radius（轨道相机飞远了）：锚群的地面、村子、船、人都藏起来，由行星贴图画它（再飞回来就放回去）；
+//   - 行星计划 P5：行星天气场（PlanetView 的 PlanetWeather）的全行星贴图——等经纬 weather_width × weather_height（云量、雨、群的份、风暴），
+//     各格的群与权先在后台算一回（静的），之后游戏钟每走 weather_every_h（或拨钟、开发者覆盖变了）后台重烘一回，天空与云层叠画的行星云层读它。
 // 没有行星数据（PlanetView 没锚定）就什么都不做，天空着色器的 planet_on 是 0，一切照旧。
 class PlanetGlobe : public godot::Node3D {
     GDCLASS(PlanetGlobe, godot::Node3D)
@@ -53,6 +57,22 @@ class PlanetGlobe : public godot::Node3D {
     godot::MeshInstance3D *overlay = nullptr;
     godot::Ref<godot::Texture2DArray> surface_color, surface_extra;
     godot::Ref<godot::ImageTexture> trans_tex, ms_tex, fields_tex, fields2_tex, bands_tex;
+    // 行星天气场的贴图（行星计划 P5）
+    int weather_width = 1024, weather_height = 512;
+    double weather_every_h = 0.25; // 游戏钟走这么多钟头重烘一回
+    std::shared_ptr<const PlanetWeather::BakeGrid> wx_grid;
+    std::shared_ptr<PlanetWeather::BakeGrid> wx_grid_building; // 分几段在几条线程上备
+    int wx_grid_bands_left = 0;
+    uint64_t wx_grid_reach_rev = 0; // 按哪一回的「一群管多远」备的（生存世界粗版来了要重备）
+    double wx_grid_started = 0.0;
+    bool wx_grid_submitted = false, wx_bake_inflight = false;
+    double wx_baked_day = -1e18, wx_bake_day = 0.0;
+    uint64_t wx_baked_rev = ~uint64_t(0), wx_bake_rev = 0;
+    godot::Ref<godot::ImageTexture> weather_tex;
+    std::vector<float> wx_last; // 上回烘的（CPU 这边留一份：测试、工具读某一格）
+    double wx_grid_ms = 0.0, wx_bake_ms = 0.0;
+    int wx_bakes = 0;
+    void update_weather_bake(double p_day);
 
     struct Bake {
         bool started = false;
@@ -95,8 +115,11 @@ public:
 
     bool is_surface_ready() const { return bake.uploaded; }
     bool is_ready() const { return bake.uploaded && luts_ready; }
-    // { surface_ready, luts_ready, bake_wall_ms, bake_cpu_ms, upload_ms, lut_ms, groups, stand_ins, land_km2, blend_planet, blend_atmo, deck_alpha, overlay, anchor_hidden, lateral_km, band_shift }
+    // { surface_ready, luts_ready, bake_wall_ms, bake_cpu_ms, upload_ms, lut_ms, groups, stand_ins, land_km2, blend_planet, blend_atmo, deck_alpha, overlay, anchor_hidden, lateral_km, band_shift,
+    //   weather_ready, weather_bakes, weather_grid_ms, weather_bake_ms, weather_day }
     godot::Dictionary get_state() const;
+    // 行星天气场的贴图在某经纬度那一格：(云量, 雨, 群的份, 风暴)；还没烘好是 (−1, −1, −1, −1)
+    godot::Color weather_texel(double p_lat, double p_lon) const;
 
     void set_planet_path(const godot::NodePath &p_value) { planet_path = p_value; }
     godot::NodePath get_planet_path() const { return planet_path; }

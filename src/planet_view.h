@@ -1,7 +1,10 @@
 #pragma once
 
+#include <future>
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
@@ -14,6 +17,7 @@
 
 #include "planet_data.h"
 #include "planet_frame.h"
+#include "planet_weather.h"
 
 class GroupWorld;
 class MapHost;
@@ -44,6 +48,16 @@ class PlanetView : public godot::Node3D {
     double near_rise_from = 1000.0, near_rise_to = 6000.0;
 
     std::shared_ptr<PlanetData> planet; // 远处岛群的后台活也拿着一份（场景拆的时候活可能还在做）
+    // 行星天气场（行星计划 P5）：逐日天气包（weather.bin，解开要几百毫秒）在后台读、建场，好了才有
+    std::shared_ptr<PlanetWeather> weather;
+    std::future<std::shared_ptr<PlanetWeather>> weather_loading;
+    std::vector<godot::String> weather_pending; // 场还没好时要加的单群天气（按需生成的 <节点>.wx）
+    std::vector<int> reach_pending; // 场还没好时加了粗版的群：好了按粗版重量它管多远
+    double weather_ms = 0.0;
+    uint64_t weather_started = 0;
+    void start_weather(const godot::PackedByteArray &p_pack, const std::vector<godot::String> &p_extra);
+    void poll_weather();
+    bool add_weather_file(const godot::String &p_path);
     MapHost *map = nullptr;
     bool loaded = false; // 行星包读到了
     bool anchored = false; // 锚定到了地图的岛群
@@ -88,6 +102,11 @@ public:
     // 按需生成的一群粗版（lods.bin 同格式）加进行星包（行星计划 P4）：远处的岛群、行星贴图按 lod_generation 自己跟上。读不了返回 false
     bool add_lod_file(const godot::String &p_path);
     std::shared_ptr<const PlanetData> share_planet() const { return planet; }
+    // 行星天气场（行星计划 P5）：后台建好之前是空的
+    std::shared_ptr<PlanetWeather> get_planet_weather() const { return weather; }
+    bool is_weather_ready() const { return weather != nullptr; }
+    // { ready, tables, ms }
+    godot::Dictionary get_weather_state() const;
     int get_anchor_node() const { return anchor_node; }
     const GroupFrame &get_anchor() const { return anchor; }
     const CurveView &get_view() const { return view; }
@@ -123,6 +142,9 @@ public:
     // 两者只差锚群投影在相机处的子午线收敛角（离群心几十公里时零点几度）；换锚前后这个角不一样，所以日月按它转，画面才不跳（行星计划 P3）
     godot::Vector3 enu_to_visual(const godot::Vector3 &p_enu) const;
     godot::Vector2 latlon_at(const godot::Vector3 &p_flat) const;
+    // 经纬度 → 锚群平面上的点（y = 0；测试、工具摆东西用）；某群的群心经纬度（行星包的）
+    godot::Vector3 flat_of_latlon(double p_lat, double p_lon) const;
+    godot::Vector2 node_latlon(int p_node) const;
     godot::Vector3 to_visual(const godot::Vector3 &p_flat) const;
     godot::Vector3 to_flat(const godot::Vector3 &p_visual) const;
     // 群 p_node 的粗版最高点在画面上的位置（截图工具瞄准用）；没有返回 (0,0,0)

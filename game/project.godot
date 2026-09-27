@@ -58,13 +58,65 @@ wx_misc={
 "type": "vec4",
 "value": Vector4(1, 0, 0, 0)
 }
-wx_cloud_frame={
-"type": "vec4",
-"value": Vector4(1, 0, 0, 1)
+wx_cloud_on={
+"type": "float",
+"value": 0.0
 }
-wx_cloud_origin={
-"type": "vec2",
-"value": Vector2(0, 0)
+wx_cloud_g0={
+"type": "mat4",
+"value": Projection(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+wx_cloud_g1={
+"type": "mat4",
+"value": Projection(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+wx_cloud_g2={
+"type": "mat4",
+"value": Projection(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+wx_cloud_g3={
+"type": "mat4",
+"value": Projection(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+}
+wx_cloud_r0a={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_r0b={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_r1a={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_r1b={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_r2a={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_r2b={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_r3a={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_r3b={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+wx_cloud_shape={
+"type": "vec4",
+"value": Vector4(1, 0, 1, 10000)
+}
+wx_cloud_shape2={
+"type": "vec4",
+"value": Vector4(0.25, 0.01, 0, 0)
 }
 
 [zhouzhu]

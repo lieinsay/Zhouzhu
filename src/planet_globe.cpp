@@ -22,7 +22,6 @@
 #include "atmosphere.h"
 #include "far_groups.h"
 #include "job_pool.h"
-#include "group_stream.h"
 #include "planet_jobs.h"
 #include "planet_sky.h"
 #include "planet_surface.h"
@@ -64,6 +63,24 @@ struct LutResult : JobResult {
     SkyLut trans, ms;
     double ms_time = 0.0;
 };
+
+// 行星天气场的贴图（行星计划 P5）：各格的群与权（静的，分几段备）/ 某一刻的四个通道
+struct WeatherGridResult : JobResult {
+    double ms = 0.0;
+};
+
+struct WeatherBakeResult : JobResult {
+    std::vector<float> rgba;
+    double day = 0.0;
+    uint64_t rev = 0;
+    double ms = 0.0;
+};
+
+constexpr uint64_t WX_GRID_ID = 200; // 200 + 段号（分 WX_GRID_BANDS 段）
+constexpr int WX_GRID_BANDS = 8;
+constexpr uint64_t WX_BAKE_ID = 300;
+// 排在近处的地面块、600 km 内远处的岛群之后（生存世界刚进来时，远处的替身先画出来）
+constexpr double WX_PRIORITY = FACE_PRIORITY - 1000.0;
 
 uint64_t face_key(int p_face) {
     return JobPool::key(JobKind::PLANET, uint64_t(p_face));
@@ -160,6 +177,7 @@ void PlanetGlobe::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_surface_ready"), &PlanetGlobe::is_surface_ready);
     ClassDB::bind_method(D_METHOD("is_ready"), &PlanetGlobe::is_ready);
     ClassDB::bind_method(D_METHOD("get_state"), &PlanetGlobe::get_state);
+    ClassDB::bind_method(D_METHOD("weather_texel", "lat", "lon"), &PlanetGlobe::weather_texel);
     ClassDB::bind_method(D_METHOD("set_planet_path", "value"), &PlanetGlobe::set_planet_path);
     ClassDB::bind_method(D_METHOD("get_planet_path"), &PlanetGlobe::get_planet_path);
     ClassDB::bind_method(D_METHOD("set_atmosphere_path", "value"), &PlanetGlobe::set_atmosphere_path);
@@ -190,6 +208,10 @@ void PlanetGlobe::_notification(int p_what) {
                 pool->cancel(face_key(f));
             }
             pool->cancel(lut_key());
+            for (int b = 0; b < WX_GRID_BANDS; b++) {
+                pool->cancel(JobPool::key(JobKind::PLANET, WX_GRID_ID + uint64_t(b)));
+            }
+            pool->cancel(JobPool::key(JobKind::PLANET, WX_BAKE_ID));
         }
     }
 }
@@ -319,6 +341,40 @@ void PlanetGlobe::collect_jobs() {
     std::vector<JobPool::Done> done;
     pool->collect(JobKind::PLANET, done);
     for (JobPool::Done &d : done) {
+        if (JobPool::id_of(d.key) >= WX_GRID_ID && JobPool::id_of(d.key) < WX_GRID_ID + WX_GRID_BANDS) {
+            // 各格的群与权备好一段；段都齐了才换上（生存世界重备时旧的照用）
+            if (--wx_grid_bands_left == 0 && wx_grid_building) {
+                wx_grid = wx_grid_building;
+                wx_grid_building.reset();
+                wx_grid_ms = double(Time::get_singleton()->get_ticks_usec()) / 1000.0 - wx_grid_started;
+                wx_baked_rev = ~uint64_t(0); // 权换了：下一回重烘
+            }
+            continue;
+        }
+        if (JobPool::id_of(d.key) == WX_BAKE_ID) {
+            WeatherBakeResult *r = static_cast<WeatherBakeResult *>(d.result.get());
+            wx_bake_inflight = false;
+            wx_last = r->rgba;
+            PackedByteArray bytes;
+            bytes.resize(int64_t(r->rgba.size() * sizeof(float)));
+            std::memcpy(bytes.ptrw(), r->rgba.data(), r->rgba.size() * sizeof(float));
+            Ref<Image> image = Image::create_from_data(weather_width, weather_height, false, Image::FORMAT_RGBAF, bytes);
+            image->convert(Image::FORMAT_RGBAH);
+            if (weather_tex.is_valid() && weather_tex->get_width() == weather_width && weather_tex->get_height() == weather_height) {
+                weather_tex->update(image);
+            } else {
+                weather_tex = ImageTexture::create_from_image(image);
+                textures_pushed = false;
+            }
+            wx_baked_day = r->day;
+            wx_baked_rev = r->rev;
+            wx_bake_ms = r->ms;
+            if (wx_bakes++ == 0) {
+                print_line(vformat(String(U"PlanetGlobe：行星天气场的贴图 %d × %d 好了——各格的群与权 %.0f ms（一回）、烘一回 %.0f ms（后台）"), weather_width, weather_height, wx_grid_ms,
+                        wx_bake_ms));
+            }
+            continue;
+        }
         if (JobPool::id_of(d.key) == 100) {
             const LutResult *r = static_cast<const LutResult *>(d.result.get());
             trans_tex = lut_texture(r->trans);
@@ -387,7 +443,61 @@ void PlanetGlobe::push_textures() {
         both("planet_surface_extra", surface_extra);
     }
     both("planet_surface_ready", bake.uploaded ? 1.0 : 0.0);
+    if (weather_tex.is_valid()) {
+        both("planet_weather", weather_tex);
+    }
+    both("planet_weather_on", weather_tex.is_valid() ? 1.0 : 0.0);
     textures_pushed = true;
+}
+
+void PlanetGlobe::update_weather_bake(double p_day) {
+    const std::shared_ptr<PlanetWeather> pw = view->get_planet_weather();
+    if (!pw || !pool) {
+        return;
+    }
+    // 各格的群与权：只跟位置（与「一群管多远」）有关，分 WX_GRID_BANDS 段交给任务池的几条线程（Debug 下合起来十秒上下）；
+    // 生存世界的粗版来了、一群管多远变了（reach_revision）就重备一回
+    if (!wx_grid_submitted || (!wx_grid_building && wx_grid && pw->reach_revision() != wx_grid_reach_rev)) {
+        wx_grid_submitted = true;
+        wx_grid_reach_rev = pw->reach_revision();
+        const std::shared_ptr<const PlanetWeather> w = pw;
+        wx_grid_building = w->new_bake_grid(weather_width, weather_height);
+        wx_grid_bands_left = WX_GRID_BANDS;
+        wx_grid_started = double(Time::get_singleton()->get_ticks_usec()) / 1000.0;
+        const std::shared_ptr<PlanetWeather::BakeGrid> grid = wx_grid_building;
+        const int H = weather_height;
+        for (int b = 0; b < WX_GRID_BANDS; b++) {
+            const int r0 = H * b / WX_GRID_BANDS, r1 = H * (b + 1) / WX_GRID_BANDS;
+            pool->submit(JobPool::key(JobKind::PLANET, WX_GRID_ID + uint64_t(b)), WX_PRIORITY + b, [w, grid, r0, r1]() -> std::unique_ptr<JobResult> {
+                std::unique_ptr<WeatherGridResult> out = std::make_unique<WeatherGridResult>();
+                const auto t0 = std::chrono::steady_clock::now();
+                w->prepare_bake_rows(*grid, r0, r1);
+                out->ms = ms_since(t0);
+                return out;
+            });
+        }
+        return;
+    }
+    if (!wx_grid || wx_bake_inflight) {
+        return;
+    }
+    // 重烘：游戏钟走了一刻钟、拨了钟，或逐日表 / 开发者覆盖变了
+    const uint64_t rev = pw->revision();
+    if (std::abs(p_day - wx_baked_day) * 24.0 < weather_every_h && rev == wx_baked_rev) {
+        return;
+    }
+    wx_bake_inflight = true;
+    const std::shared_ptr<const PlanetWeather> w = pw;
+    const std::shared_ptr<const PlanetWeather::BakeGrid> grid = wx_grid;
+    pool->submit(JobPool::key(JobKind::PLANET, WX_BAKE_ID), WX_PRIORITY, [w, grid, p_day, rev]() -> std::unique_ptr<JobResult> {
+        std::unique_ptr<WeatherBakeResult> out = std::make_unique<WeatherBakeResult>();
+        const auto t0 = std::chrono::steady_clock::now();
+        w->bake(*grid, p_day, out->rgba);
+        out->day = p_day;
+        out->rev = rev;
+        out->ms = ms_since(t0);
+        return out;
+    });
 }
 
 void PlanetGlobe::_process(double /* p_delta */) {
@@ -448,7 +558,7 @@ void PlanetGlobe::_process(double /* p_delta */) {
     const double vh = get_viewport() ? std::max(1.0f, get_viewport()->get_visible_rect().size.y) : 900.0;
     const double pixel = (camera ? camera->get_fov() : 60.0) * PI / 180.0 / vh;
     const double moon_lit = atmosphere->get_moon_lit();
-    const double local_cover = sky_mat.is_valid() ? double(sky_mat->get_shader_parameter("cloud_cover")) : 0.2;
+    update_weather_bake(day);
 
     auto both = [&](const char *p_name, const Variant &p_value) {
         if (sky_mat.is_valid()) {
@@ -469,25 +579,6 @@ void PlanetGlobe::_process(double /* p_delta */) {
     both("planet_anchor", v3(anchor_dir));
     both("planet_g", Vector4(real_t(g_dir.x), real_t(g_dir.y), real_t(g_dir.z), real_t(pd->g_radius_deg * PI / 180.0)));
     both("planet_mask_cos", mask_cos);
-    both("planet_local_cover", local_cover);
-    // 行星计划 P3：载入了的岛群各自那一带的云量（GroupStream 给，≤ 4 群）；场景里没有 GroupStream 时四个槽都空，着色器退回锚群 + 上面的 local_cover
-    {
-        std::vector<GroupStream::CloudGroup> cg;
-        if (const GroupStream *gs = Object::cast_to<GroupStream>(get_tree()->get_first_node_in_group(GroupStream::GROUP)); gs && gs->is_ready()) {
-            gs->cloud_groups(cg);
-        }
-        static const char *const SLOTS[4] = { "planet_group0", "planet_group1", "planet_group2", "planet_group3" };
-        Vector4 fade;
-        for (int k = 0; k < 4; k++) {
-            if (k < int(cg.size())) {
-                both(SLOTS[k], Vector4(real_t(cg[size_t(k)].dir.x), real_t(cg[size_t(k)].dir.y), real_t(cg[size_t(k)].dir.z), real_t(cg[size_t(k)].cover)));
-                fade[k] = real_t(cg[size_t(k)].fade);
-            } else {
-                both(SLOTS[k], Vector4(0.0f, 0.0f, 1.0f, -1.0f));
-            }
-        }
-        both("planet_group_fade", fade);
-    }
     both("planet_pixel", pixel);
     both("planet_sun_power", sun_power);
     both("planet_sky_power", sky_power);
@@ -575,6 +666,18 @@ void PlanetGlobe::update_anchor_visibility() {
     }
 }
 
+Color PlanetGlobe::weather_texel(double p_lat, double p_lon) const {
+    if (wx_last.size() != size_t(weather_width) * size_t(weather_height) * 4) {
+        return Color(-1, -1, -1, -1);
+    }
+    double lon = std::fmod(p_lon + 180.0, 360.0);
+    lon += lon < 0.0 ? 360.0 : 0.0;
+    const int r = std::clamp(int((p_lat + 90.0) / 180.0 * weather_height), 0, weather_height - 1);
+    const int c = std::clamp(int(lon / 360.0 * weather_width), 0, weather_width - 1);
+    const float *t = &wx_last[(size_t(r) * size_t(weather_width) + size_t(c)) * 4];
+    return Color(t[0], t[1], t[2], t[3]);
+}
+
 Dictionary PlanetGlobe::get_state() const {
     Dictionary d;
     d["surface_ready"] = bake.uploaded;
@@ -595,5 +698,10 @@ Dictionary PlanetGlobe::get_state() const {
     d["anchor_hidden"] = anchor_hidden;
     d["lateral_km"] = lateral_m / 1000.0;
     d["band_shift"] = band_shift;
+    d["weather_ready"] = weather_tex.is_valid();
+    d["weather_bakes"] = wx_bakes;
+    d["weather_grid_ms"] = wx_grid_ms;
+    d["weather_bake_ms"] = wx_bake_ms;
+    d["weather_day"] = wx_baked_day;
     return d;
 }

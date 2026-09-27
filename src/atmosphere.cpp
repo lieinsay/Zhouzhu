@@ -20,7 +20,10 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/packed_color_array.hpp>
+#include <godot_cpp/variant/packed_float64_array.hpp>
+#include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
+#include <godot_cpp/variant/projection.hpp>
 
 #include "map_host.h"
 #include "planet_view.h"
@@ -129,6 +132,11 @@ void Atmosphere::_bind_methods() {
     ClassDB::bind_method(D_METHOD("weather_at", "global"), &Atmosphere::weather_at);
     ClassDB::bind_method(D_METHOD("hud_text", "global"), &Atmosphere::hud_text);
     ClassDB::bind_method(D_METHOD("get_look"), &Atmosphere::get_look);
+    ClassDB::bind_method(D_METHOD("planet_weather_at", "global"), &Atmosphere::planet_weather_at);
+    ClassDB::bind_method(D_METHOD("planet_weather_latlon", "lat", "lon"), &Atmosphere::planet_weather_latlon);
+    ClassDB::bind_method(D_METHOD("get_cloud_slots"), &Atmosphere::get_cloud_slots);
+    ClassDB::bind_method(D_METHOD("wind_at", "global"), &Atmosphere::wind_at);
+    ClassDB::bind_method(D_METHOD("sailing_text", "global"), &Atmosphere::sailing_text);
     ClassDB::bind_method(D_METHOD("get_sun_altitude"), &Atmosphere::get_sun_altitude);
     ClassDB::bind_method(D_METHOD("is_night"), &Atmosphere::is_night);
     ClassDB::bind_method(D_METHOD("set_weather_override", "kind", "temp_offset"), &Atmosphere::set_weather_override);
@@ -175,22 +183,8 @@ WeatherModel *Atmosphere::model() {
 }
 
 WeatherSample Atmosphere::sample_mix(double p_day, const Vector3 &p_global, double p_h) {
-    if (!map) {
-        return model()->sample(p_day, p_global.x, p_global.z, p_h);
-    }
-    map->map_weather_mix(p_global, mix_buf);
-    if (mix_buf.size() <= 1) {
-        WeatherModel *wx = mix_buf.empty() ? model() : mix_buf[0].model;
-        const Vector3 at = mix_buf.empty() ? p_global : mix_buf[0].local;
-        return wx->sample(p_day, at.x, at.z, p_h);
-    }
-    mix_samples.clear();
-    mix_weights.clear();
-    for (const WeatherMix &m : mix_buf) {
-        mix_samples.push_back(m.model->sample(p_day, m.local.x, m.local.z, p_h));
-        mix_weights.push_back(m.weight);
-    }
-    return blend_weather(mix_samples, mix_weights);
+    // 行星上：锚群的模型挂着行星天气场，群与群之间由场按距离与风向过渡（行星计划 P5，替掉了 P3 按到各群陆地的距离加权混）
+    return model()->sample(p_day, p_global.x, p_global.z, p_h);
 }
 
 const WeatherModel *Atmosphere::get_model_const() {
@@ -325,6 +319,7 @@ void Atmosphere::_process(double p_delta) {
     update_lights();
     update_environment();
     update_globals(day);
+    update_cloud_slots(day, p_delta);
     update_particles(eye, p_delta);
     gust_phase += p_delta * (0.6 + 2.0 * look.storm);
     last_eye = eye;
@@ -375,12 +370,22 @@ void Atmosphere::update_override(double p_delta) {
     } else if (o.fresh_snow_mm > 0.0 && now.temp_c > model()->get_climate().snow_temp) {
         o.fresh_snow_mm = std::max(0.0, o.fresh_snow_mm - p_delta * 1.5);
     }
-    // 行星上几群各有一个模型：覆盖（渐入渐出、新雪）以锚群的为准，推完抄给别的群（行星计划 P3）
+    // 行星上几群各有一个模型：覆盖（渐入渐出、新雪）以锚群的为准，推完抄给别的群（行星计划 P3）；
+    // 行星天气场也抄一份、记下是哪几群（行星贴图上这几群按覆盖画，P5）
     if (map) {
         map->map_weather_models(models_buf);
+        override_nodes.clear();
         for (WeatherModel *m : models_buf) {
             if (&m->edit_override() != &o) {
                 m->set_override(o);
+            }
+            if (m->get_planet_node() >= 0) {
+                override_nodes.push_back(m->get_planet_node());
+            }
+        }
+        if (const PlanetView *pv = PlanetView::active_view()) {
+            if (const std::shared_ptr<PlanetWeather> pw = pv->get_planet_weather()) {
+                pw->set_override(o, o.blend > 0.0 ? override_nodes : std::vector<int>());
             }
         }
     }
@@ -405,6 +410,7 @@ void Atmosphere::update_look(const Vector3 &p_eye, double p_delta) {
     }
     last_day = today;
     have_day = true;
+    last_jump = jump;
     const double k = jump ? 1.0 : 1.0 - std::exp(-p_delta / std::max(0.01, smoothing));
     const double k_drops = jump ? 1.0 : 1.0 - std::exp(-p_delta / std::max(0.01, drop_smoothing));
     look.drops += (now.precip - look.drops) * k_drops;
@@ -558,10 +564,124 @@ void Atmosphere::update_globals(double p_day) {
     rs->global_shader_parameter_set("wx_wind", Vector4(real_t(look.wind_x), real_t(look.wind_z), real_t(gust), real_t(look.storm)));
     const double night = 1.0 - smooth01(-0.12, 0.2, sun_state.dir_y);
     rs->global_shader_parameter_set("wx_misc", Vector4(wx->calendar().latitude_deg < 0.0 ? 1.0f : -1.0f, real_t(night), 0.0f, 0.0f));
-    // 云团的公共平面（行星计划 P3）：锚群平面 → 钟的那一群的平面；天空、云层叠画、云带顶的云团花样按它取，换锚不跳
-    const CloudFrame &cf = wx->get_cloud_frame();
-    rs->global_shader_parameter_set("wx_cloud_frame", Vector4(real_t(cf.m00), real_t(cf.m02), real_t(cf.m20), real_t(cf.m22)));
-    rs->global_shader_parameter_set("wx_cloud_origin", Vector2(real_t(cf.ox), real_t(cf.oz)));
+}
+
+void Atmosphere::update_cloud_slots(double p_day, double p_delta) {
+    RenderingServer *rs = RenderingServer::get_singleton();
+    const PlanetView *pv = PlanetView::active_view();
+    const std::shared_ptr<PlanetWeather> pw = pv ? pv->get_planet_weather() : nullptr;
+    if (!pw) {
+        if (cloud_slots_on) {
+            rs->global_shader_parameter_set("wx_cloud_on", 0.0f);
+            cloud_slots_on = false;
+        }
+        return;
+    }
+    // 相机处管得着的几群（按管辖差排，差得多的不要）：已经在槽里的留着渐到 1，没有的占空槽从 0 渐入，不要了的渐出再腾出来
+    double dir_e = 1.0, dir_n = 0.0, squeeze = 1.0;
+    pw->cloud_candidates(pv->get_camera_lat(), pv->get_camera_lon(), 4, 60.0, cloud_cands, dir_e, dir_n, squeeze);
+    for (CloudSlot &s : cloud_slots) {
+        s.want = false;
+    }
+    for (const PlanetCloudCandidate &c : cloud_cands) {
+        CloudSlot *slot = nullptr;
+        for (CloudSlot &s : cloud_slots) {
+            slot = s.node == c.node ? &s : slot;
+        }
+        if (!slot) {
+            for (CloudSlot &s : cloud_slots) {
+                if (!slot && s.node < 0) {
+                    slot = &s;
+                }
+            }
+        }
+        if (!slot) {
+            // 没有空槽：挤掉渐得最淡、又不要了的
+            for (CloudSlot &s : cloud_slots) {
+                bool wanted = false;
+                for (const PlanetCloudCandidate &o : cloud_cands) {
+                    wanted = wanted || o.node == s.node;
+                }
+                if (!wanted && (!slot || s.fade < slot->fade)) {
+                    slot = &s;
+                }
+            }
+            if (slot) {
+                slot->node = -1;
+            }
+        }
+        if (slot) {
+            if (slot->node != c.node) {
+                slot->node = c.node;
+                slot->fade = last_jump || !cloud_slots_on ? 1.0 : 0.0;
+            }
+            slot->want = true;
+        }
+    }
+    const double step = last_jump || !cloud_slots_on ? 1.0 : p_delta / std::max(0.01, cloud_slot_fade);
+    for (CloudSlot &s : cloud_slots) {
+        s.fade = s.want ? std::min(1.0, s.fade + step) : std::max(0.0, s.fade - step);
+        if (!s.want && s.fade <= 0.0) {
+            s.node = -1;
+        }
+    }
+    // 各槽的参数：锚群平面 p → 那一群的平面 ≈ M·p + o（在相机处线性化），减去它的云团漂移、除以一格、对 1024 格取模（噪声按 1024 格循环）
+    const GroupFrame &anchor = pv->get_anchor();
+    PlanetVec cam = pv->camera_flat();
+    cam.y = 0.0;
+    const PlanetVec cam_unit = anchor.to_planet(cam).normalized();
+    const double gamma = planet_plane_turn(anchor, cam_unit, cam.x, cam.z);
+    const double cg = std::cos(gamma), sg = std::sin(gamma);
+    const double dir_x = dir_e * cg + dir_n * sg, dir_z = -(dir_n * cg - dir_e * sg); // 相机处 ② 的风向，换到锚群的平面轴
+    const PlanetWeatherRules &pr = pw->get_rules();
+    const double cell = pr.weather.cell_m;
+    static const char *const NAMES[4] = { "wx_cloud_g0", "wx_cloud_g1", "wx_cloud_g2", "wx_cloud_g3" };
+    static const char *const REACH_A[4] = { "wx_cloud_r0a", "wx_cloud_r1a", "wx_cloud_r2a", "wx_cloud_r3a" };
+    static const char *const REACH_B[4] = { "wx_cloud_r0b", "wx_cloud_r1b", "wx_cloud_r2b", "wx_cloud_r3b" };
+    for (int k = 0; k < 4; k++) {
+        const CloudSlot &s = cloud_slots[k];
+        Projection m;
+        if (s.node >= 0 && s.fade > 0.0) {
+            const GroupFrame &g = pw->frame(s.node);
+            const PlanetVec q = rebase_point(anchor, g, cam);
+            const PlanetBasis r = rebase_rotation(anchor, g, cam);
+            // q_x ≈ a·p_x + b·p_z + o_x，q_z ≈ c·p_x + d·p_z + o_z（r 的列 = 锚群平面的 x、y、z 轴在那一群平面里的像）
+            const double a = r.cols[0].x, b = r.cols[2].x, c = r.cols[0].z, d = r.cols[2].z;
+            const double ox = q.x - (a * cam.x + b * cam.z), oz = q.z - (c * cam.x + d * cam.z);
+            double dx = 0.0, dz = 0.0;
+            pw->drift(s.node, p_day, dx, dz);
+            const double offx = std::fmod((ox - dx) / cell, double(WX_PERIOD)), offz = std::fmod((oz - dz) / cell, double(WX_PERIOD));
+            const PlanetVec center = rebase_point(g, anchor, PlanetVec());
+            m.columns[0] = Vector4(real_t(a / cell), real_t(b / cell), real_t(c / cell), real_t(d / cell));
+            m.columns[1] = Vector4(real_t(offx), real_t(offz), real_t(center.x), real_t(center.z));
+            m.columns[2] = Vector4(real_t(s.fade), real_t(ox), real_t(oz), 0.0f);
+            m.columns[3] = Vector4(0, 0, 0, 0);
+            float rr[PlanetWeather::SECTORS];
+            pw->reach_sectors(s.node, rr);
+            rs->global_shader_parameter_set(REACH_A[k], Vector4(rr[0] * 1000.0f, rr[1] * 1000.0f, rr[2] * 1000.0f, rr[3] * 1000.0f));
+            rs->global_shader_parameter_set(REACH_B[k], Vector4(rr[4] * 1000.0f, rr[5] * 1000.0f, rr[6] * 1000.0f, rr[7] * 1000.0f));
+        } else {
+            m.columns[0] = m.columns[1] = m.columns[2] = m.columns[3] = Vector4(0, 0, 0, 0); // fade 0：这一槽不用
+        }
+        rs->global_shader_parameter_set(NAMES[k], m);
+    }
+    rs->global_shader_parameter_set("wx_cloud_shape", Vector4(real_t(dir_x), real_t(dir_z), real_t(squeeze), real_t(pr.blend_km * 1000.0)));
+    rs->global_shader_parameter_set("wx_cloud_shape2", Vector4(real_t(pr.blend_grow), real_t(pr.cutoff), 0.0f, 0.0f));
+    if (!cloud_slots_on) {
+        rs->global_shader_parameter_set("wx_cloud_on", 1.0f);
+        cloud_slots_on = true;
+    }
+}
+
+Array Atmosphere::get_cloud_slots() const {
+    Array a;
+    for (const CloudSlot &s : cloud_slots) {
+        Dictionary d;
+        d["node"] = s.node;
+        d["fade"] = s.fade;
+        a.push_back(d);
+    }
+    return a;
 }
 
 void Atmosphere::update_particles(const Vector3 &p_eye, double p_delta) {
@@ -662,6 +782,74 @@ String Atmosphere::sailing_text(const Vector3 &p_global) {
         text = (s.storm > 0.5 ? String(U"风暴，禁航") : String(U"今天禁航（风大浪急）")) + (text.is_empty() ? String() : String(U" · ") + text);
     }
     return text;
+}
+
+Dictionary Atmosphere::planet_weather_at(const Vector3 &p_global) {
+    Dictionary d;
+    const PlanetView *pv = PlanetView::active_view();
+    const std::shared_ptr<PlanetWeather> pw = pv ? pv->get_planet_weather() : nullptr;
+    d["ready"] = pw != nullptr;
+    if (!pw || !p_global.is_finite()) {
+        return d;
+    }
+    const GroupFrame &anchor = pv->get_anchor();
+    const PlanetVec unit = anchor.to_planet(PlanetVec(p_global.x, 0.0, p_global.z)).normalized();
+    double lat = 0.0, lon = 0.0;
+    planet_latlon(unit, lat, lon);
+    d = planet_weather_latlon(lat, lon);
+    // 风换到锚群的平面轴（那一点的地理轴转 γ）：场的风、② 的风
+    const double gamma = planet_plane_turn(anchor, unit, p_global.x, p_global.z), cg = std::cos(gamma), sg = std::sin(gamma);
+    auto to_plane = [&](double p_x, double p_z, const char *p_kx, const char *p_kz) {
+        const double e = p_x, n = -p_z;
+        d[p_kx] = e * cg + n * sg;
+        d[p_kz] = -(n * cg - e * sg);
+    };
+    to_plane(double(d["wind_x"]), double(d["wind_z"]), "wind_plane_x", "wind_plane_z");
+    to_plane(double(d["wind2_x"]), double(d["wind2_z"]), "wind2_plane_x", "wind2_plane_z");
+    to_plane(double(d["push_x"]), double(d["push_z"]), "push_plane_x", "push_plane_z");
+    return d;
+}
+
+Dictionary Atmosphere::planet_weather_latlon(double p_lat, double p_lon) {
+    Dictionary d;
+    const PlanetView *pv = PlanetView::active_view();
+    const std::shared_ptr<PlanetWeather> pw = pv ? pv->get_planet_weather() : nullptr;
+    d["ready"] = pw != nullptr;
+    if (!pw) {
+        return d;
+    }
+    const double lat = p_lat, lon = p_lon;
+    const PlanetRegional r = pw->sample(calendar_day(), lat, lon, 0.0, true);
+    PackedInt32Array nodes;
+    PackedFloat64Array weights;
+    for (int k = 0; k < r.n; k++) {
+        nodes.push_back(r.nodes[k]);
+        weights.push_back(r.weights[k]);
+    }
+    d["nodes"] = nodes;
+    d["weights"] = weights;
+    d["bg"] = r.bg_weight;
+    d["group_share"] = r.group_share;
+    d["zone"] = r.zone;
+    d["zone_kind"] = r.zone_kind;
+    d["push_x"] = r.push_x;
+    d["push_z"] = r.push_z;
+    d["cloud_cover"] = r.state.cloud;
+    d["coverage"] = r.state.coverage;
+    d["temp_c"] = r.state.temp;
+    d["wind_x"] = r.state.wind_x; // 此地的东、南
+    d["wind_z"] = r.state.wind_z;
+    d["storm"] = r.state.storm;
+    d["sailable"] = r.state.sailable;
+    d["day_kind"] = String(weather_kinds::at(r.state.dominant()).id);
+    d["front"] = r.front;
+    d["lat"] = lat;
+    d["lon"] = lon;
+    double w2e = 0.0, w2n = 0.0;
+    pw->wind2_at(lat, lon, w2e, w2n);
+    d["wind2_x"] = w2e; // ② 的风（东、南）
+    d["wind2_z"] = -w2n;
+    return d;
 }
 
 Dictionary Atmosphere::get_look() const {

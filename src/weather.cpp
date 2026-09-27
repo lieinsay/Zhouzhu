@@ -112,6 +112,7 @@ void WeatherState::mix_toward(const WeatherState &p_other, double p_t) {
     lerp(storm, p_other.storm);
     lerp(fog, p_other.fog);
     lerp(sailable, p_other.sailable);
+    lerp(precip, p_other.precip);
     for (int k = 0; k < KIND_COUNT; k++) {
         lerp(w[k], p_other.w[k]);
     }
@@ -127,13 +128,14 @@ void WeatherState::add(const WeatherState &p_other, double p_w) {
     storm += p_other.storm * p_w;
     fog += p_other.fog * p_w;
     sailable += p_other.sailable * p_w;
+    precip += p_other.precip * p_w;
     for (int k = 0; k < KIND_COUNT; k++) {
         w[k] += p_other.w[k] * p_w;
     }
 }
 
 void WeatherState::clear() {
-    cloud = coverage = mm = temp = wind_x = wind_z = storm = fog = sailable = 0.0;
+    cloud = coverage = mm = temp = wind_x = wind_z = storm = fog = sailable = precip = 0.0;
     std::fill(w, w + KIND_COUNT, 0.0);
 }
 
@@ -147,6 +149,7 @@ WeatherState weather_day_state(const ClimateDay &p_day) {
     s.cloud = def.cloud;
     s.coverage = def.coverage;
     s.mm = def.coverage > 0.0 ? std::max(p_day.precip_mm, def.min_mm) : 0.0;
+    s.precip = p_day.precip_mm;
     s.temp = p_day.temp_c;
     double tx = 0.0, tz = 0.0;
     wind_to(p_day.wind_from_deg, tx, tz);
@@ -169,6 +172,7 @@ WeatherState weather_override_state(const WeatherState &p_base, const ClimateDay
     s.cloud = wet ? 1.0 : (p_over.kind == WeatherKind::CLOUDY ? 0.85 : def.cloud);
     s.coverage = wet ? 1.0 : 0.0;
     s.mm = wet ? 2.0 * def.min_mm : 0.0;
+    s.precip = s.mm;
     if (def.snowy) {
         s.temp = std::min(s.temp, p_rules.snow_override_c);
     }
@@ -519,6 +523,7 @@ WeatherState WeatherModel::blended(double p_day, double p_x, double p_z, double 
                 r_planet->used = true;
                 r_planet->field = g.field;
                 r_planet->fog_top = g.fog_top;
+                r_planet->ref_m = g.ref_m;
             }
         }
     }
@@ -542,39 +547,7 @@ WeatherState WeatherModel::blended(double p_day, double p_x, double p_z, double 
     return s;
 }
 
-void WeatherModel::share_cloud_drift(const Climate &p_ref) {
-    if (p_ref.days.empty()) {
-        shared_drift = false;
-        return;
-    }
-    ref_year = int(p_ref.days.size());
-    ref_drift_x.assign(size_t(ref_year) + 1, 0.0);
-    ref_drift_z.assign(size_t(ref_year) + 1, 0.0);
-    ref_step_x.assign(size_t(ref_year), 0.0);
-    ref_step_z.assign(size_t(ref_year), 0.0);
-    const double per_day = 24.0 * 3600.0 * rules.drift_scale;
-    for (int d = 0; d < ref_year; d++) {
-        double tx = 0.0, tz = 0.0;
-        wind_to(p_ref.days[size_t(d)].wind_from_deg, tx, tz);
-        ref_step_x[size_t(d)] = tx * p_ref.days[size_t(d)].wind_ms * per_day;
-        ref_step_z[size_t(d)] = tz * p_ref.days[size_t(d)].wind_ms * per_day;
-        ref_drift_x[size_t(d) + 1] = ref_drift_x[size_t(d)] + ref_step_x[size_t(d)];
-        ref_drift_z[size_t(d) + 1] = ref_drift_z[size_t(d)] + ref_step_z[size_t(d)];
-    }
-    shared_drift = true;
-}
-
 void WeatherModel::cloud_drift(double p_day, double &r_x, double &r_z) const {
-    if (shared_drift) {
-        // 参考群的风：与参考群自己的 cloud_drift 同一式
-        const double whole = std::floor(p_day);
-        const double years = std::floor(whole / ref_year);
-        const long long doy = (long long)(whole - years * ref_year);
-        const double frac = p_day - whole;
-        r_x = years * ref_drift_x[size_t(ref_year)] + ref_drift_x[size_t(doy)] + ref_step_x[size_t(doy)] * frac;
-        r_z = years * ref_drift_z[size_t(ref_year)] + ref_drift_z[size_t(doy)] + ref_step_z[size_t(doy)] * frac;
-        return;
-    }
     const double whole = std::floor(p_day);
     const double years = std::floor(whole / year);
     const long long doy = (long long)(whole - years * year);
@@ -689,15 +662,13 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
     out.day_kind = s.dominant();
 
     double field = part.field;
+    // 地形抬升、高处的阵风按哪个台面算：群与群之间是几群的按权混（换锚那一刻调用的模型换了，这个不跳）
+    const double ref_h = part.used ? part.ref_m : climate.ref_m;
     if (!part.used) {
         // 云团：这一群的平面上一张随风漂的 fbm（挂了行星天气场时由场给：这一群的陆地上就是这一张，群与群之间几群的按权混）
         double dx = 0.0, dz = 0.0;
         cloud_drift(p_day, dx, dz);
-        double cx = p_x, cz = p_z; // 云团噪声在公共平面上取（单位变换时就是原样）
-        if (!cloud_frame.identity()) {
-            cloud_frame.apply(p_x, p_z, cx, cz);
-        }
-        field = wx_fbm((cx - dx) / rules.cell_m, (cz - dz) / rules.cell_m);
+        field = wx_fbm((p_x - dx) / rules.cell_m, (p_z - dz) / rules.cell_m);
     }
     out.cloud_cover = std::clamp(s.cloud, 0.0, 1.0);
     out.coverage = std::clamp(s.coverage, 0.0, 1.0);
@@ -708,7 +679,7 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
         const double rthr = wx_threshold(out.coverage);
         const double inside = smoothstep(rthr - rules.rain_edge, rthr + rules.rain_edge, field);
         const double core = smoothstep(rthr, rthr + 0.2, field);
-        const double oro = 1.0 + rules.orographic_per_km * std::clamp((p_h - climate.ref_m) / 1000.0, -0.3, 1.5);
+        const double oro = 1.0 + rules.orographic_per_km * std::clamp((p_h - ref_h) / 1000.0, -0.3, 1.5);
         rate = s.mm / 24.0 / std::max(0.05, out.coverage) * (0.5 + core) * inside * oro;
     }
     out.precip_mm_h = rate;
@@ -720,7 +691,7 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
     out.temp_c = s.temp + climate.lapse * (climate.ref_m - p_h) / 1000.0 + diurnal - 1.5 * std::min(1.0, rate / 4.0);
     out.snow_frac = snow_fraction(out.temp_c, climate.snow_temp, rules.snow_band_c);
 
-    const double gust = 1.0 + 0.15 * std::clamp((p_h - climate.ref_m) / 1000.0, 0.0, 2.0);
+    const double gust = 1.0 + 0.15 * std::clamp((p_h - ref_h) / 1000.0, 0.0, 2.0);
     out.wind_x = s.wind_x * gust;
     out.wind_z = s.wind_z * gust;
     out.wind_ms = std::hypot(out.wind_x, out.wind_z);
@@ -764,47 +735,5 @@ WeatherSample WeatherModel::sample(double p_day_in, double p_x_in, double p_z_in
         out.kind = WeatherKind::CLEAR;
     }
     out.sailable = s.sailable > 0.5 && out.storm < 0.5 && out.wind_ms < 10.0;
-    return out;
-}
-
-WeatherSample blend_weather(const std::vector<WeatherSample> &p_samples, const std::vector<double> &p_weights) {
-    if (p_samples.empty()) {
-        return WeatherSample();
-    }
-    double total = 0.0;
-    size_t top = 0;
-    for (size_t k = 0; k < p_samples.size(); k++) {
-        const double w = k < p_weights.size() ? std::max(0.0, p_weights[k]) : 0.0;
-        total += w;
-        if (w > (top < p_weights.size() ? p_weights[top] : 0.0)) {
-            top = k;
-        }
-    }
-    if (p_samples.size() == 1 || total <= 0.0) {
-        return p_samples[top];
-    }
-    WeatherSample out = p_samples[top]; // 类型、大势、能不能出航照权最大的
-    double *fields[] = { &out.cloud, &out.cloud_cover, &out.coverage, &out.precip, &out.precip_mm_h, &out.snow_frac, &out.temp_c, &out.wind_x, &out.wind_z,
-        &out.storm, &out.fog, &out.sea_fog, &out.wet, &out.front, &out.snow_mm, &out.ice, &out.green, &out.leaf, &out.autumn, &out.spring, &out.crop };
-    const size_t n = sizeof(fields) / sizeof(fields[0]);
-    for (size_t f = 0; f < n; f++) {
-        *fields[f] = 0.0;
-    }
-    double fog_sum = 0.0, fog_w = 0.0;
-    for (size_t k = 0; k < p_samples.size(); k++) {
-        const double w = (k < p_weights.size() ? std::max(0.0, p_weights[k]) : 0.0) / total;
-        const WeatherSample &s = p_samples[k];
-        const double values[] = { s.cloud, s.cloud_cover, s.coverage, s.precip, s.precip_mm_h, s.snow_frac, s.temp_c, s.wind_x, s.wind_z, s.storm, s.fog, s.sea_fog, s.wet,
-            s.front, s.snow_mm, s.ice, s.green, s.leaf, s.autumn, s.spring, s.crop };
-        for (size_t f = 0; f < n; f++) {
-            *fields[f] += w * values[f];
-        }
-        if (s.fog_top > -1e8) {
-            fog_sum += w * s.fog_top;
-            fog_w += w;
-        }
-    }
-    out.wind_ms = std::hypot(out.wind_x, out.wind_z);
-    out.fog_top = fog_w > 0.0 ? fog_sum / fog_w : -1e9;
     return out;
 }

@@ -70,7 +70,6 @@ struct TraceStep {
     }
 };
 
-constexpr double FAR_JUMP_M = 1500000.0; // 瞬移离云团的公共平面那一群这么远：公共平面改成要去的那一群（在群心线性化，几百公里外就歪了）
 constexpr double JUMP_REMEASURE_M = 2000.0; // 焦点一下挪了这么远：到各群陆地的距离当场重量
 constexpr double JUMP_LOAD_TIMEOUT_S = 120.0;
 
@@ -255,21 +254,8 @@ bool GroupStream::setup() {
     if (anchor < 0) {
         return false;
     }
-    // 云团的公共平面：钟的那一群（2051）；它的气候读一份（云团按它的风漂）
-    cloud_ref = find(planet->get_clock_node());
-    if (!cloud_ref) {
-        cloud_ref = groups[size_t(anchor)].get();
-    }
-    const PackedByteArray wb = FileAccess::get_file_as_bytes(cloud_ref->data_dir.path_join("weather.tsv"));
-    if (!wb.is_empty()) {
-        std::shared_ptr<Climate> c = std::make_shared<Climate>();
-        std::string error;
-        if (parse_climate(std::string(reinterpret_cast<const char *>(wb.ptr()), size_t(wb.size())), *c, error)) {
-            cloud_climate = c;
-        }
-    }
-    // 场景里摆的那一群已经载入：不是参考群的话现在设
-    apply_cloud_reference(*groups[size_t(anchor)], groups[size_t(anchor)]->world);
+    // 行星天气场（行星计划 P5）：PlanetView 在后台读逐日天气包，好了就挂到各群的天气模型上（attach_weather，每帧看一眼）
+    attach_weather();
     if (provider) {
         provider->connect("group_ready", Callable(this, "_on_group_ready"));
     }
@@ -409,45 +395,14 @@ void GroupStream::save_world() {
     }
 }
 
-void GroupStream::apply_cloud_reference(const Group &p_group, GroupWorld *p_world) const {
-    if (!p_world || !cloud_ref || &p_group == cloud_ref) {
-        return; // 参考群自己：单位变换、自己的风
-    }
-    // 这一群的平面 → 参考群的平面：在群心线性化（群心 0，高度不管）
-    const PlanetBasis r = rebase_rotation(p_group.frame, cloud_ref->frame, PlanetVec());
-    const PlanetVec o = rebase_point(p_group.frame, cloud_ref->frame, PlanetVec());
-    CloudFrame f;
-    f.m00 = r.cols[0].x;
-    f.m02 = r.cols[2].x;
-    f.m20 = r.cols[0].z;
-    f.m22 = r.cols[2].z;
-    f.ox = o.x;
-    f.oz = o.z;
-    p_world->set_cloud_reference(f, cloud_climate);
-}
-
-void GroupStream::set_cloud_group(const Group &p_group) {
-    if (&p_group == cloud_ref) {
+void GroupStream::attach_weather() {
+    const std::shared_ptr<PlanetWeather> pw = planet ? planet->get_planet_weather() : nullptr;
+    if (!pw) {
         return;
     }
-    cloud_ref = &p_group;
-    cloud_climate.reset();
-    const PackedByteArray wb = FileAccess::get_file_as_bytes(p_group.data_dir.path_join("weather.tsv"));
-    if (!wb.is_empty()) {
-        std::shared_ptr<Climate> c = std::make_shared<Climate>();
-        std::string error;
-        if (parse_climate(std::string(reinterpret_cast<const char *>(wb.ptr()), size_t(wb.size())), *c, error)) {
-            cloud_climate = c;
-        }
-    }
     for (auto &gp : groups) {
-        if (!gp->world) {
-            continue;
-        }
-        if (gp.get() == cloud_ref) {
-            gp->world->set_cloud_reference(CloudFrame(), cloud_climate); // 自己：单位变换、自己的风
-        } else {
-            apply_cloud_reference(*gp, gp->world);
+        if (gp->world && !gp->world->has_planet_weather()) {
+            gp->world->set_planet_weather(pw, gp->node, gp->frame);
         }
     }
 }
@@ -568,6 +523,7 @@ void GroupStream::_process(double p_delta) {
     }
     poll_loading();
     poll_adding();
+    attach_weather();
     for (auto &gp : groups) {
         finish_ledgers(*gp, false);
     }
@@ -714,7 +670,9 @@ void GroupStream::load_world(Group &r_group, bool p_sync) {
     w->set_terrain_seed(r_group.node);
     w->set_async_load(!p_sync);
     w->set_physics_on(false);
-    apply_cloud_reference(r_group, w); // 云团的公共平面：载入时装进它的天气模型
+    if (const std::shared_ptr<PlanetWeather> pw = planet->get_planet_weather()) {
+        w->set_planet_weather(pw, r_group.node, r_group.frame); // 行星天气场：载入时挂到它的天气模型上
+    }
     Farm *farm = memnew(Farm);
     farm->set_name("Farm");
     w->add_child(farm);
@@ -960,34 +918,6 @@ void GroupStream::update_anchor_choice() {
         return;
     }
     pending = index_of(best);
-}
-
-void GroupStream::cloud_groups(std::vector<CloudGroup> &r_out) const {
-    r_out.clear();
-    const WorldClock *clock = WorldClock::get_singleton();
-    const double day = clock ? clock->get_calendar_day() : 0.0;
-    const double t = now_s();
-    const Group *a = anchor_group();
-    std::vector<const Group *> order;
-    if (a) {
-        order.push_back(a);
-    }
-    for (const auto &g : groups) {
-        if (g.get() != a) {
-            order.push_back(g.get());
-        }
-    }
-    for (const Group *g : order) {
-        if (!g->world || !g->world->is_loaded() || r_out.size() >= 4) {
-            continue;
-        }
-        const WeatherModel &wx = g->world->get_weather();
-        CloudGroup c;
-        c.dir = g->frame.up;
-        c.cover = wx.sample(day, 0.0, 0.0, wx.get_climate().ref_m).cloud_cover;
-        c.fade = g == a ? 1.0 : std::clamp((t - g->loaded_at) / 20.0, 0.0, 1.0);
-        r_out.push_back(c);
-    }
 }
 
 bool GroupStream::begin_shift(GroupShift &r_shift) const {
@@ -1282,10 +1212,6 @@ bool GroupStream::jump_commit() {
     Group *g = find(jump_node);
     if (jump_phase != JUMP_READY || !g || !g->world || !g->world->is_loaded()) {
         return false;
-    }
-    // 去得远：云团的公共平面改成要去的那一群（线性化在群心，离得远了会歪；瞬移本来就不连续，天上的云跳一下无妨）
-    if (cloud_ref && great_circle_m(cloud_ref->frame.lat_deg, cloud_ref->frame.lon_deg, g->frame.lat_deg, g->frame.lon_deg, g->frame.radius) > FAR_JUMP_M) {
-        set_cloud_group(*g);
     }
     pending = index_of(g);
     return true;

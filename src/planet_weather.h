@@ -17,8 +17,9 @@
 //
 // 真值是各岛群当天的天气：它自己的逐日表（行星包的 weather.bin，生成器粗版顺带出的第 0 年；有细版的群以细版的 weather.tsv 为准）
 // 加上锋面到达时刻（锋面在子夜前后经过群心、顺着那天的风以 25 km/游戏钟头扫过，同 WeatherModel）。任意经纬度、任意时刻：
-//   1. 权（按距离与风向）：一群管多大一片 = 它的陆地铺多远（lod.extent_km，不过到最近邻群心距离的一半）；某点离第 k 群的「管辖差」
-//      s_k = 顺风压过的距离 − 它管的半径（顺着 ② 的风，距离按 along_squeeze 压：一群的天气顺着风管得更远）。
+//   1. 权（按距离与风向）：一群管多大一片 = 它的陆地往各个方向铺多远（粗版的陆地格按群心的方位分八个扇区量最远的，相邻扇区拉平一点；
+//      没有粗版的群按陆地面积估、不过到最近邻群心距离的一半）；某点离第 k 群的「管辖差」
+//      s_k = 顺风压过的距离 − 它往这一点的方向管多远（顺着 ② 的风，距离按 along_squeeze 压：一群的天气顺着风管得更远）。
 //      权 ∝ exp(−(s_k − s_min) / B)，B = blend_km + blend_grow × max(0, s_min)——陆地上差 blend_km 就是 1 : e，离群越远过渡越宽；
 //      背景（④ 的气候场）也算一份，它的管辖差是 background_km（永暴带、G 圈里提前接手），离所有群都远了才轮到它；权不到最大的 cutoff 的丢掉。
 //   2. 大势：各群各天的大势（WeatherState）按权混成「这一点的第 j 天」；锋面到达时刻也按权插值（各群按自己那天的风量顺风量），
@@ -69,8 +70,10 @@ struct PlanetWeatherRules {
     double blend_km = 10.0;
     double blend_grow = 0.25;
     double along_squeeze = 1.5;
-    double reach_cap = 0.5; // 一群管的半径 ≤ 到最近邻群心的这么多
-    double reach_min_km = 3.0, reach_max_km = 90.0;
+    double reach_cap = 0.5; // 没有粗版的群：管的半径 ≤ 到最近邻群心的这么多
+    double reach_min_km = 3.0, reach_max_km = 150.0;
+    double reach_pad_km = 1.0; // 陆地格心往外再算这么多（半格）
+    double reach_neighbor = 0.8; // 一个扇区至少是相邻扇区的这么多（扇区之间没陆地时别一下子缩回群心）
     double background_km = 300.0;
     double zone_background_km = 250.0;
     double cutoff = 0.01;
@@ -109,6 +112,7 @@ struct PlanetGroupSample {
     int day_index = 0;
     double field = 0.5; // 云团场
     double fog_top = -1e9;
+    double ref_m = 0.0; // 几群的台面按权混（地形抬升、高处的阵风按它算：换锚那一刻调用者换了，这个不跳）
     bool own = true; // 只有这一群自己（与它自己的 WeatherModel 逐位一样）
 };
 
@@ -120,7 +124,7 @@ double planet_plane_turn(const GroupFrame &p_frame, const PlanetVec &p_unit, dou
 struct PlanetCloudCandidate {
     int node = -1;
     double s_km = 0.0; // 相机处的管辖差
-    double reach_km = 0.0;
+    double reach_km = 0.0; // 往相机的方向管多远
 };
 
 class PlanetWeather {
@@ -137,8 +141,14 @@ private:
     double tilt_deg = 34.0;
     double precip_min = 150.0, precip_max = 4000.0, precip_exp = 1.3;
     std::vector<GroupFrame> frames; // 各群的平面系（行星包的群心）
-    std::vector<double> reach; // 各群管多大（km）
-    double reach_max = 0.0;
+public:
+    static constexpr int SECTORS = 8; // 管多远按群心的方位分几个扇区（北起顺时针，扇区心在 0°、45°……）
+private:
+    std::unique_ptr<std::atomic<float>[]> reach; // [群 × SECTORS] 各群往各方位管多远（km）；生存世界的粗版来了会更新
+    std::atomic<float> reach_max{ 0.0f };
+    std::atomic<uint64_t> reach_rev{ 0 };
+    std::vector<double> nn_km; // 各群到最近邻群心（km）
+    void compute_reach(int p_node);
     std::vector<PlanetVec> wind2_center; // 各群群心处 ② 的风（东、北，m/s）
     // 找附近的群：2° 经纬格
     static constexpr double BUCKET_DEG = 2.0;
@@ -168,7 +178,6 @@ private:
     void weights_at(const PlanetVec &p_unit, double p_lat, double p_lon, Weights &r_out) const;
     template <typename F>
     void for_nodes_within(double p_lat, double p_lon, double p_radius_km, F &&p_fn) const;
-    void wind2_at(double p_lat, double p_lon, double &r_e, double &r_n) const;
     double zone_static(const PlanetVec &p_unit, double p_lat, double p_lon) const;
     std::shared_ptr<const Table> table(int p_node) const; // 拿着读锁时用
     WeatherState group_day(const Table *p_table, int p_node, long long p_day, double p_h_ref) const;
@@ -195,7 +204,14 @@ public:
     const PlanetWeatherRules &get_rules() const { return rules; }
     const PlanetData &get_planet() const { return *planet; }
     double get_radius() const { return radius_m; }
-    double reach_km(int p_node) const { return p_node >= 0 && p_node < int(reach.size()) ? reach[size_t(p_node)] : 0.0; }
+    // 第 p_node 群往方位 p_bearing（弧度，北起顺时针，在它的平面里）管多远（km）；reach_km 是最远的那个扇区
+    double reach_at(int p_node, double p_bearing) const;
+    double reach_km(int p_node) const;
+    // 八个扇区（km）
+    void reach_sectors(int p_node, float r_out[SECTORS]) const;
+    // 生存世界：这一群的粗版刚加进来（PlanetData::add_lods），按它重量管多远；reach_revision 加一（行星贴图的格据此重备）
+    void refresh_reach(int p_node);
+    uint64_t reach_revision() const { return reach_rev.load(); }
     const GroupFrame &frame(int p_node) const { return frames[size_t(p_node)]; }
 
     // 某经纬度、某历日：大势（p_h_ref：气温按这个高给；p_override：载入了的群按开发者覆盖）
@@ -211,6 +227,8 @@ public:
     double band_shift(double p_day) const;
     // 永暴带 / G 圈（当季）：0..1，r_kind 1 赤道 2 G；r_out_e / r_out_n 往外的方向（此地的东、北，单位向量）
     double zone_at(double p_day, double p_lat, double p_lon, int &r_kind, double &r_out_e, double &r_out_n) const;
+    // ② 的 1° 风场在这一点（东、北，m/s）
+    void wind2_at(double p_lat, double p_lon, double &r_e, double &r_n) const;
     // 背景（④ 的气候场）：这一点的云量、年降水（mm）、这一天的大势
     double climate_cloud(double p_lat, double p_lon) const;
     double climate_precip_mm(double p_lat, double p_lon) const;
@@ -226,8 +244,11 @@ public:
     void cloud_candidates(double p_lat, double p_lon, int p_max, double p_margin_km, std::vector<PlanetCloudCandidate> &r_out, double &r_dir_e, double &r_dir_n,
             double &r_squeeze) const;
 
-    // 全行星的天气贴图（等经纬，W × H，第 0 行在南、格心对齐）：先 prepare_bake（静的，几百毫秒），每回 bake 按历日填
+    // 全行星的天气贴图（等经纬，W × H，第 0 行在南、格心对齐）：先备各格的群与权（静的；Debug 下 1024 × 512 一条线程十秒上下，
+    // 所以能分行交给几条线程：new_bake_grid 之后 prepare_bake_rows 各备一段），每回 bake 按历日填
     // RGBA：云量、雨（雨区 × 雨量折成 0..1）、群的份、风暴
+    std::shared_ptr<BakeGrid> new_bake_grid(int p_width, int p_height) const;
+    void prepare_bake_rows(BakeGrid &r_grid, int p_row_from, int p_row_to) const;
     std::shared_ptr<const BakeGrid> prepare_bake(int p_width, int p_height) const;
     void bake(const BakeGrid &p_grid, double p_day, std::vector<float> &r_rgba) const;
     static int bake_width(const BakeGrid &p_grid);

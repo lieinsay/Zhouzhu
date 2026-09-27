@@ -12,6 +12,7 @@
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
+#include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
@@ -68,6 +69,10 @@ void PlanetView::_bind_methods() {
     ClassDB::bind_method(D_METHOD("drop_at", "distance"), &PlanetView::drop_at);
 
     ClassDB::bind_method(D_METHOD("add_lod_file", "path"), &PlanetView::add_lod_file);
+    ClassDB::bind_method(D_METHOD("is_weather_ready"), &PlanetView::is_weather_ready);
+    ClassDB::bind_method(D_METHOD("flat_of_latlon", "lat", "lon"), &PlanetView::flat_of_latlon);
+    ClassDB::bind_method(D_METHOD("node_latlon", "node"), &PlanetView::node_latlon);
+    ClassDB::bind_method(D_METHOD("get_weather_state"), &PlanetView::get_weather_state);
     ClassDB::bind_method(D_METHOD("set_extra_lods_dir", "value"), &PlanetView::set_extra_lods_dir);
     ClassDB::bind_method(D_METHOD("get_extra_lods_dir"), &PlanetView::get_extra_lods_dir);
     ClassDB::bind_method(D_METHOD("set_planet_dir", "value"), &PlanetView::set_planet_dir);
@@ -137,7 +142,8 @@ bool PlanetView::load_planet() {
     if (lb.is_empty() || !planet->parse_lods(lb.ptr(), size_t(lb.size()), error)) {
         ERR_PRINT(String(U"PlanetView：读不了粗版 ") + planet_dir + String(U"/lods.bin：") + String::utf8(error.c_str()) + String(U"——远处的岛群画不出来"));
     }
-    // 按需生成过的粗版（生存模式的世界存档目录 lods/<节点>.bin）：退出再进不重生成
+    // 按需生成过的粗版（生存模式的世界存档目录 lods/<节点>.bin）：退出再进不重生成；它们的逐日天气（<节点>.wx）交给天气场
+    std::vector<String> extra_weather;
     if (!extra_lods_dir.is_empty() && DirAccess::dir_exists_absolute(ProjectSettings::get_singleton()->globalize_path(extra_lods_dir))) {
         const PackedStringArray files = DirAccess::get_files_at(extra_lods_dir);
         int added = 0;
@@ -149,8 +155,102 @@ bool PlanetView::load_planet() {
         if (added > 0) {
             print_line(vformat(String(U"PlanetView：存档目录里按需生成过的粗版 %d 份"), added));
         }
+        weather_pending.clear(); // add_lod_file 排进来的 .wx 一起交给后台
+        for (int64_t k = 0; k < files.size(); k++) {
+            if (files[k].get_extension() == "wx" && files[k].get_basename().is_valid_int()) {
+                extra_weather.push_back(extra_lods_dir.path_join(files[k]));
+            }
+        }
     }
+    // 行星天气场（行星计划 P5）：逐日天气包在后台解开、建场（Debug 下几百毫秒），开局不等它；好了 GroupStream、天与光、行星贴图才挂上
+    start_weather(FileAccess::get_file_as_bytes(planet_dir.path_join("weather.bin")), extra_weather);
     return true;
+}
+
+void PlanetView::start_weather(const PackedByteArray &p_pack, const std::vector<String> &p_extra) {
+    std::vector<uint8_t> pack(p_pack.ptr(), p_pack.ptr() + p_pack.size());
+    std::vector<std::vector<uint8_t>> extra;
+    for (const String &path : p_extra) {
+        const PackedByteArray b = FileAccess::get_file_as_bytes(path);
+        extra.emplace_back(b.ptr(), b.ptr() + b.size());
+    }
+    const std::shared_ptr<const PlanetData> data = planet;
+    weather_started = Time::get_singleton()->get_ticks_usec();
+    weather_loading = std::async(std::launch::async, [data, pack = std::move(pack), extra = std::move(extra)]() -> std::shared_ptr<PlanetWeather> {
+        auto pw = std::make_shared<PlanetWeather>(data);
+        std::string error;
+        if (!pack.empty()) {
+            WeatherPack wp;
+            if (wp.parse(pack.data(), pack.size(), error)) {
+                pw->add_pack(wp);
+            } else {
+                ERR_PRINT(String(U"PlanetView：逐日天气包读不了（") + String::utf8(error.c_str()) + String(U"）——各群的天气只有载入了的细版，别处按气候场"));
+            }
+        }
+        for (const std::vector<uint8_t> &b : extra) {
+            WeatherPack wp;
+            if (!b.empty() && wp.parse(b.data(), b.size(), error)) {
+                pw->add_pack(wp);
+            }
+        }
+        return pw;
+    });
+}
+
+void PlanetView::poll_weather() {
+    if (weather || !weather_loading.valid()) {
+        return;
+    }
+    if (weather_loading.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        return;
+    }
+    weather = weather_loading.get();
+    weather_ms = double(Time::get_singleton()->get_ticks_usec() - weather_started) / 1000.0;
+    for (const String &path : weather_pending) {
+        add_weather_file(path);
+    }
+    weather_pending.clear();
+    for (int n : reach_pending) {
+        weather->refresh_reach(n);
+    }
+    reach_pending.clear();
+    print_line(vformat(String(U"PlanetView：行星天气场好了——%d 群有逐日天气，后台 %.0f ms"), weather ? weather->table_count() : 0, weather_ms));
+}
+
+bool PlanetView::add_weather_file(const String &p_path) {
+    if (!weather) {
+        weather_pending.push_back(p_path);
+        return true;
+    }
+    const PackedByteArray bytes = FileAccess::get_file_as_bytes(p_path);
+    WeatherPack wp;
+    std::string error;
+    if (bytes.is_empty() || !wp.parse(bytes.ptr(), size_t(bytes.size()), error)) {
+        ERR_PRINT(String(U"PlanetView：逐日天气 ") + p_path + String(U" 读不了：") + String::utf8(error.c_str()));
+        return false;
+    }
+    weather->add_pack(wp);
+    return true;
+}
+
+Vector3 PlanetView::flat_of_latlon(double p_lat, double p_lon) const {
+    const PlanetVec f = anchor.latlon_flat(p_lat, p_lon);
+    return Vector3(real_t(f.x), 0.0f, real_t(f.z));
+}
+
+Vector2 PlanetView::node_latlon(int p_node) const {
+    if (!planet || p_node < 0 || p_node >= planet->node_count()) {
+        return Vector2();
+    }
+    return Vector2(real_t(planet->node(p_node).lat), real_t(planet->node(p_node).lon));
+}
+
+Dictionary PlanetView::get_weather_state() const {
+    Dictionary d;
+    d["ready"] = weather != nullptr;
+    d["tables"] = weather ? weather->table_count() : 0;
+    d["ms"] = weather_ms;
+    return d;
 }
 
 bool PlanetView::add_lod_file(const String &p_path) {
@@ -159,9 +259,23 @@ bool PlanetView::add_lod_file(const String &p_path) {
     }
     const PackedByteArray bytes = FileAccess::get_file_as_bytes(p_path);
     std::string error;
-    if (bytes.is_empty() || !planet->add_lods(bytes.ptr(), size_t(bytes.size()), error)) {
+    std::vector<int> nodes;
+    if (bytes.is_empty() || !planet->add_lods(bytes.ptr(), size_t(bytes.size()), error, &nodes)) {
         ERR_PRINT(String(U"PlanetView：粗版 ") + p_path + String(U" 读不了：") + String::utf8(error.c_str()));
         return false;
+    }
+    // 行星天气场：这一群管多远按粗版重量（生存世界；场还在后台建的话等它好了再量）
+    for (int n : nodes) {
+        if (weather) {
+            weather->refresh_reach(n);
+        } else {
+            reach_pending.push_back(n);
+        }
+    }
+    // 同一群的逐日天气（按需生成时一起写的 <节点>.wx，行星计划 P5）
+    const String wx = p_path.get_basename() + ".wx";
+    if (FileAccess::file_exists(wx)) {
+        add_weather_file(wx);
     }
     return true;
 }
@@ -287,6 +401,7 @@ double PlanetView::drop_at(double p_distance) const {
 }
 
 void PlanetView::_process(double /* p_delta */) {
+    poll_weather();
     if (!anchored && !try_anchor()) {
         return;
     }

@@ -464,44 +464,6 @@ void PlanetHost::map_jump_end() {
     }
 }
 
-void PlanetHost::map_weather_mix(const Vector3 &p_global, std::vector<WeatherMix> &r_out) {
-    r_out.clear();
-    GroupWorld *a = anchor_world();
-    if (!stream || !stream->is_ready()) {
-        if (a && a->map_weather()) {
-            r_out.push_back(WeatherMix{ a->map_weather(), p_global, 1.0 });
-        }
-        return;
-    }
-    // 载入了的群按焦点到它们陆地的距离加权：权 ∝ exp(−(距离 − 最近的距离) / blend_m)——离两群的距离差 20 km 时九成对一成；
-    // 焦点就是人或船（相机在它旁边），距离每 0.25 s 量一次（GroupStream 缓存的）
-    double nearest = 1e18;
-    for (int g = 0; g < stream->get_group_count(); g++) {
-        const GroupStream::Group *grp = stream->group_at(g);
-        if (grp->world && grp->world->is_loaded()) {
-            nearest = std::min(nearest, grp->land_distance);
-        }
-    }
-    double total = 0.0;
-    for (int g = 0; g < stream->get_group_count(); g++) {
-        GroupStream::Group *grp = stream->group_at(g);
-        if (!grp->world || !grp->world->is_loaded() || !grp->world->map_weather()) {
-            continue;
-        }
-        const double w = grp->world == a ? std::max(0.02, std::exp(-(grp->land_distance - nearest) / stream->get_blend_m()))
-                                         : std::exp(-(grp->land_distance - nearest) / stream->get_blend_m());
-        if (w < 0.01) {
-            continue;
-        }
-        const PlanetVec q = stream->to_group(*grp, p_global);
-        r_out.push_back(WeatherMix{ grp->world->map_weather(), Vector3(real_t(q.x), p_global.y, real_t(q.z)), w });
-        total += w;
-    }
-    for (WeatherMix &m : r_out) {
-        m.weight /= std::max(1e-9, total);
-    }
-}
-
 void PlanetHost::map_weather_models(std::vector<WeatherModel *> &r_out) {
     r_out.clear();
     if (!stream || !stream->is_ready()) {

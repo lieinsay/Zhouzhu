@@ -272,15 +272,25 @@ double GroupWorld::get_local_offset_hours() const {
     return d / 15.0;
 }
 
-void GroupWorld::set_cloud_reference(const CloudFrame &p_frame, const std::shared_ptr<const Climate> &p_ref_climate) {
-    cloud_frame = p_frame;
-    cloud_ref = p_ref_climate;
+void GroupWorld::set_planet_weather(const std::shared_ptr<PlanetWeather> &p_weather, int p_node, const GroupFrame &p_frame) {
+    planet_weather = p_weather;
+    planet_node = p_node;
+    planet_frame = p_frame;
     if (loaded) {
-        weather.set_cloud_frame(cloud_frame);
-        if (cloud_ref) {
-            weather.share_cloud_drift(*cloud_ref);
-        }
+        attach_planet_weather();
     }
+}
+
+void GroupWorld::attach_planet_weather() {
+    if (!planet_weather || planet_node < 0) {
+        weather.attach_planet(nullptr, -1, GroupFrame());
+        return;
+    }
+    // 细版为准：这一群的 weather.tsv 登记进场（与行星包里的那一条本来就逐位相同）；再把模型挂上场
+    if (weather.has_data()) {
+        planet_weather->set_group_climate(planet_node, weather.get_climate());
+    }
+    weather.attach_planet(planet_weather, planet_node, planet_frame);
 }
 
 void GroupWorld::finish_loading_now() {
@@ -471,11 +481,8 @@ bool GroupWorld::load_data(std::string &r_error) {
         }
     }
     weather = climate.days.empty() || low > high ? WeatherModel() : WeatherModel(climate, low, high);
-    // 行星计划 P3：云团在公共平面上取、按参考群的风漂（GroupStream 载入前设的；场景里摆的那一群就是参考群，单位变换）
-    weather.set_cloud_frame(cloud_frame);
-    if (cloud_ref) {
-        weather.share_cloud_drift(*cloud_ref);
-    }
+    // 行星计划 P5：挂上行星天气场（GroupStream 载入前设的；群与群之间的天气、云团从场里取）
+    attach_planet_weather();
 
     // 码头：在原地形上量好，再把停机坪压进地形里——都在第一块地面开建之前
     const String sites_path = data_dir.path_join("sites.tsv");

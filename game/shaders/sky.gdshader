@@ -6,7 +6,9 @@
 // 有行星数据的地图（planet_curve_on，行星计划 P1）：云层是 cloud_height 高的一层球壳（半径 R + cloud_height，球心在相机正下方 R + 相机高处），
 // 视线与球壳求交（数值稳的写法）；远处的云随地平线一起弯下去，飞到云层以上往下看，云壳到它自己的地平线为止。
 // 行星计划 P2（planet_on，PlanetGlobe 设）：
-//   云层离锚群 100 km 以外换成行星云层（planet_sky.gdshaderinc 的 planet_cloud：气候场 × 顺风的噪声 × 带界），近处照旧是岛群自己的云团；
+//   云层远处（30–90 km 起、或一像素盖过一团云）换成行星云层（planet_sky.gdshaderinc 的 planet_cloud：P5 起读行星天气场的贴图），近处是岛群的云团；
+// 行星计划 P5：近处的云团是相机附近管得着的几群各自的（weather.gdshaderinc 的 wx_cloud_field，与地上判雨的同一张场），
+//   云量近处按相机那一带的（天与光给的）往外外推，20–60 km 渐渐换成行星天气场的贴图；
 //   相机高过 20 km 起天上交叉淡化成大气散射（Hillaire 的两张表逐像素步进，atmo_blend），高过 30 km 起地平线以下画整颗行星
 //   （海、云带壳、贴图岛群、夜里的灯，planet_blend，与 P1 的云带顶网格交叉淡化）；太空里的星星按行星系转、日面与月亮（月相按日月的方向亮）。
 //   地面上（两个 blend 都是 0）天色、晨昏、日月星与原来一样。
@@ -156,19 +158,18 @@ void sky() {
 			t = (cloud_height - POSITION.y) / dir.y;
 		}
 		if (t > 0.0) {
-			// 岛群自己的云团（近处）与行星云层（离锚群 100 km 外，P2）
+			// 近处是岛群的云团，远处（30–90 km 起）是行星云层（P2）
 			float local_w = 1.0 - smoothstep(30000.0, 90000.0, t);
 			float planet_dens = 0.0;
 			float planet_thick = 0.0;
+			vec3 pn = vec3(0.0, 0.0, 1.0);
 			if (planet_on > 0.5) {
 				vec3 X = vec3(0.0, planet_datum_r + POSITION.y, 0.0) + dir * t;
-				vec3 pn = normalize(planet_axes * X);
-				float cover_unused;
-				local_w *= planet_group_weight(pn, 70.0, 130.0, cover_unused); // 载入了的岛群附近是它们自己的云团（行星计划 P3：各群一样，换锚不跳）
+				pn = normalize(planet_axes * X);
 				local_w *= 1.0 - smoothstep(cell_m * 0.06, cell_m * 0.25, t * planet_pixel); // 一像素盖过一团云（高空）：换成行星云层
 				if (local_w < 0.999) {
 					float storm_unused;
-					planet_dens = planet_cloud(pn, planet_thick, storm_unused);
+					planet_dens = planet_cloud(pn, t * planet_pixel, planet_thick, storm_unused);
 				}
 			}
 			if (local_w > 0.001 || planet_on > 0.5) {
@@ -176,12 +177,14 @@ void sky() {
 				float thick = 0.0;
 				if (local_w > 0.001) {
 					vec2 p = POSITION.xz + dir.xz * t;
-					vec2 q = wx_cloud_pos(p) / cell_m - drift; // 云团在公共平面上取（行星计划 P3）
-					float field = wx_fbm(q);
+					float field = wx_cloud_field(p, drift, cell_m); // 几群各自的云团按权混（行星计划 P5；没有行星数据就是这张图自己的）
 					float cov = clamp(cloud_cover + dot(cover_grad, (p - POSITION.xz) / 1000.0), 0.0, 1.0);
+					if (planet_on > 0.5) {
+						cov = mix(cov, planet_weather_cover(pn, cov), smoothstep(20000.0, 60000.0, t)); // 远一点的云量照行星天气场
+					}
 					float thr = wx_threshold(cov);
 					dens = smoothstep(thr - cloud_edge, thr + cloud_edge, field);
-					dens *= 0.8 + 0.4 * wx_value(q * 7.0 + vec2(TIME * 0.004, 0.0));
+					dens *= 0.8 + 0.4 * wx_cloud_shimmer(p, drift, cell_m, TIME);
 					dens = clamp(dens, 0.0, 1.0);
 					thick = smoothstep(thr, thr + 0.25, field);
 				}

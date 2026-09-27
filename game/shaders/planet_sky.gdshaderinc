@@ -7,9 +7,10 @@
 //   没有深度、没有远近平面，两万公里高也是同一套式子，单精度只用相对相机的量。
 //   岛群自己的地面、远处岛群的低模仍是网格，画在前面；高过 30 km 起 P1 的云带顶网格淡出、这里的行星淡入。
 // 大气：Hillaire 2020 的两张表（src/planet_sky.* 在 CPU 上算好：透过率、多次散射），沿视线步进单次散射；单位 km。
-// 行星云层：+2.8 km 的球壳，图案 = ④ 的降水、风暴、q、uplift × 顺风平移的噪声（两相交替，免得越拉越长）× 带界
-//   （赤道永暴带、信风的碎积云、副热带无风带少云、西风带顺风拉长的锋面云、G 定点永暴的漩涡），跟着全局钟动；
-//   离锚群 100 km 以内交给岛群自己的云团（weather.gdshaderinc，天与光给的云量），100–400 km 云量渐渐从岛群的换到气候场的。
+// 行星云层：+2.8 km 的球壳。行星计划 P5 起云量读行星天气场的贴图（planet_weather：PlanetGlobe 在后台按 src/planet_weather.* 烘，
+//   各群当天的天气、锋面在群与群之间插值，离群远了是 ④ 的气候场，赤道永暴带、G 圈里是风暴）；
+//   花样：群管着的地方是一两团云团大小的噪声（远了按像素平均成云量：晴天零星、雨天连片），离群远的地方照 P2——顺风平移的大块噪声（两相交替）× 带界
+//   （赤道永暴带的对流云团、信风的碎积云、西风带顺风拉长的锋面云、G 定点永暴的漩涡）；跟着全局钟动。近处（30–90 km 内）交给岛群的云团（weather.gdshaderinc）。
 // 立方体面映射与 src/planet_surface.cpp 的 planet_cube::face_of 逐式相同（改一处要改两处）。
 
 // ---- 参数（PlanetGlobe 每帧设）
@@ -25,15 +26,6 @@ uniform vec3 planet_anchor = vec3(0.0, 0.0, 1.0); // 锚群的群心（行星系
 uniform vec4 planet_g = vec4(0.0, 0.0, 1.0, 0.07); // G 定点永暴的中心（行星系）与半径（弧度）
 uniform float planet_surface_ready = 0.0; // 行星贴图烘好了
 uniform float planet_mask_cos = 2.0; // 相机地面点这个角（余弦）以内的贴图岛群淡掉（那一圈由远处岛群的网格画）
-uniform float planet_local_cover = 0.2; // 锚群那一带的云量（天与光按岛群的天气给的；没有 planet_group* 时用）
-// 行星计划 P3：载入了的岛群（≤ 4 群，含锚群）各自那一带的云量——xyz = 群心（行星系），w = 云量（按它自己的天气模型在群心取），w < 0 = 空槽；
-// planet_group_fade 是各槽的权（刚载入的群慢慢接过来）。四个槽一个都没设时退回锚群 + planet_local_cover（P2 的画法）。
-// 权只看离群心多远，与哪一群是锚无关，所以换锚那一帧天上的云不跳
-uniform vec4 planet_group0 = vec4(0.0, 0.0, 1.0, -1.0);
-uniform vec4 planet_group1 = vec4(0.0, 0.0, 1.0, -1.0);
-uniform vec4 planet_group2 = vec4(0.0, 0.0, 1.0, -1.0);
-uniform vec4 planet_group3 = vec4(0.0, 0.0, 1.0, -1.0);
-uniform vec4 planet_group_fade = vec4(0.0);
 uniform float planet_pixel = 0.001; // 一个像素多少弧度（取贴图的 mip 用）
 uniform float planet_sun_power = 1.0; // 地面、云受的直射（与场景里的方向光同一个量）
 uniform float planet_sky_power = 3.14159; // 散射进来的天光乘多少：地面、云按「反照率 × 直射」算（没有 1/π），天光就乘 π 才对得上
@@ -47,6 +39,9 @@ uniform sampler2D atmo_ms_lut : filter_linear, repeat_disable;
 uniform sampler2D planet_fields : filter_linear, repeat_enable; // 1° 场：降水、风暴、q、uplift
 uniform sampler2D planet_fields2 : filter_linear, repeat_enable; // 1° 场：风往东、风往北（m/s）、零点处年均温、年温差（°C）
 uniform sampler2D planet_bands : filter_linear, repeat_enable; // 360 × 2：北半球四条带界（赤道永暴、信风、无风、西风的顶）、南半球四条（度，取绝对值）
+// 行星天气场的贴图（行星计划 P5，PlanetGlobe 在后台烘、隔一刻钟游戏时重烘）：等经纬、第 0 行在南；云量、雨（雨区 × 雨量折成 0..1）、群的份、风暴
+uniform sampler2D planet_weather : filter_linear, repeat_enable;
+uniform float planet_weather_on = 0.0;
 
 const float PS_PI = 3.14159265358979;
 const float ATMO_BOTTOM = 6371.0; // km：海面
@@ -222,6 +217,29 @@ float pn_fbm3(vec3 p, int octaves) {
 	return sum / norm;
 }
 
+// 按像素滤过的 fbm：一层的波长不到三四个像素就换成它的均值（0.5，免得闪成一片噪点）；r_kept 是留下的方差份额（全留 1）
+float pn_fbm3_lod(vec3 p, int octaves, float base_m, float foot, out float r_kept) {
+	float sum = 0.0;
+	float amp = 0.5;
+	float norm = 0.0;
+	float var_all = 0.0;
+	float var_kept = 0.0;
+	float wave = base_m;
+	for (int k = 0; k < octaves; k++) {
+		float keep = 1.0 - smoothstep(0.15, 0.35, foot / wave);
+		float v = keep > 0.001 ? pn_value3(p + vec3(19.1, 7.3, 3.7) * float(k)) : 0.5;
+		sum += amp * mix(0.5, v, keep);
+		norm += amp;
+		var_all += amp * amp;
+		var_kept += amp * amp * keep * keep;
+		p = p * 2.03;
+		amp *= 0.5;
+		wave /= 2.03;
+	}
+	r_kept = var_kept / max(1e-9, var_all);
+	return sum / norm;
+}
+
 // ---- 立方体面映射（同 planet_cube::face_of）：返回 (u, v, 面)
 vec3 planet_cube_uv(vec3 d) {
 	vec3 a = abs(d);
@@ -261,34 +279,16 @@ vec2 planet_field_uv(vec3 p) {
 	return vec2(lon / (2.0 * PS_PI) + 0.5, clamp(lat / PS_PI + 0.5, 0.5 / 180.0, 1.0 - 0.5 / 180.0));
 }
 
-// 离载入了的岛群多近（p 是行星系的单位向量）：返回岛群自己的云占多少（离群心 r0 → r1 公里渐变、乘各槽的权，取最大），
-// r_cover 是那一带的云量（按权平均）。四个槽都空时退回锚群 + planet_local_cover
-float planet_group_weight(vec3 p, float r0, float r1, out float r_cover) {
-	vec4 g[4] = vec4[](planet_group0, planet_group1, planet_group2, planet_group3);
-	float wsum = 0.0;
-	float csum = 0.0;
-	float wmax = 0.0;
-	bool any = false;
-	for (int k = 0; k < 4; k++) {
-		if (g[k].w < 0.0) {
-			continue;
-		}
-		any = true;
-		float w = (1.0 - smoothstep(r0, r1, length(p - g[k].xyz) * 6376.6)) * planet_group_fade[k];
-		wsum += w;
-		csum += w * g[k].w;
-		wmax = max(wmax, w);
+// 行星天气场在某一点的云量（贴图还没烘好给 p_fallback）
+float planet_weather_cover(vec3 p, float p_fallback) {
+	if (planet_weather_on < 0.5) {
+		return p_fallback;
 	}
-	if (!any) {
-		r_cover = planet_local_cover;
-		return 1.0 - smoothstep(r0, r1, length(p - planet_anchor) * 6376.6);
-	}
-	r_cover = wsum > 1e-5 ? csum / wsum : planet_local_cover;
-	return wmax;
+	return texture(planet_weather, planet_field_uv(p)).r;
 }
 
-// ---- 行星云层（+2.8 km）：p 是行星系单位向量；thick = 云厚（越厚越白越高），storm = 这里的风暴（夜里打闪）
-float planet_cloud(vec3 p, out float thick, out float storm) {
+// ---- 行星云层（+2.8 km）：p 是行星系单位向量，foot 是一像素在那儿多大（米）；thick = 云厚（越厚越白越高），storm = 这里的风暴（夜里打闪）
+float planet_cloud(vec3 p, float foot, out float thick, out float storm) {
 	vec2 uv = planet_field_uv(p);
 	vec4 f = texture(planet_fields, uv); // 降水、风暴、q、uplift
 	vec4 f2 = texture(planet_fields2, uv); // 风往东、往北、年均温、年温差
@@ -302,11 +302,26 @@ float planet_cloud(vec3 p, out float thick, out float storm) {
 	float w_trade = smoothstep(e.x - 1.5, e.x + 1.5, a) * (1.0 - smoothstep(e.y - 2.0, e.y + 2.0, a));
 	float w_polar = smoothstep(e.w - 3.0, e.w + 3.0, a);
 
-	float cov = 0.10 + 0.50 * f.r + 0.35 * f.a + 0.30 * f.g + 0.25 * (f.b - 0.55);
-	cov = mix(cov, 0.9, w_eq * 0.95); // 赤道永暴带：几乎连成一条白带
-	cov *= 1.0 - 0.75 * w_calm; // 副热带无风带：下沉、干，天气云少，露出底下的云带
-	cov *= 1.0 - 0.2 * w_trade;
-	cov += 0.12 * w_polar;
+	float cov;
+	float share = 0.0;
+	float rain = 0.0;
+	float wstorm = 0.0;
+	if (planet_weather_on > 0.5) {
+		// 行星天气场（P5）：各群当天的天气、锋面，离群远了是 ④ 的气候场；赤道永暴带留一点缝，看得出一团团的对流云
+		vec4 wx = texture(planet_weather, uv);
+		cov = wx.r;
+		rain = wx.g;
+		share = wx.b;
+		wstorm = wx.a;
+		cov = mix(cov, min(cov, 0.9), w_eq);
+	} else {
+		// 贴图还没烘好：P2 的气候云量
+		cov = 0.10 + 0.50 * f.r + 0.35 * f.a + 0.30 * f.g + 0.25 * (f.b - 0.55);
+		cov = mix(cov, 0.9, w_eq * 0.95); // 赤道永暴带：几乎连成一条白带
+		cov *= 1.0 - 0.75 * w_calm; // 副热带无风带：下沉、干，天气云少，露出底下的云带
+		cov *= 1.0 - 0.2 * w_trade;
+		cov += 0.12 * w_polar;
+	}
 
 	// 顺风平移：两相交替（周期 3 天），各拿一份随周期换的偏移，免得图案越拉越长、一个周期后又回到原处
 	vec3 east = normalize(vec3(-p.y, p.x, 0.0) + vec3(1e-6, 0.0, 0.0));
@@ -363,15 +378,27 @@ float planet_cloud(vec3 p, out float thick, out float storm) {
 		n = mix(n, spiral * 0.75 + n * 0.35, g_mask);
 		cov = mix(cov, 0.62, g_mask) * mix(1.0, eye, g_mask);
 	}
-	// 载入了的岛群附近：云量从各群天气给的渐渐换到气候场的（100 → 400 km）
-	float local_cov;
-	float local_w = planet_group_weight(p, 100.0, 400.0, local_cov);
-	cov = mix(cov, local_cov, local_w);
 	cov = clamp(cov, 0.0, 0.95);
 	float thr = wx_threshold(cov);
 	float dens = smoothstep(thr - 0.06, thr + 0.06, n);
 	thick = smoothstep(thr, thr + 0.22, n) * (0.6 + 0.4 * max(w_eq, g_mask));
-	storm = clamp(max(max(w_eq, g_mask), f.g) * dens, 0.0, 1.0);
+	// 群管着的地方（行星计划 P5）：云量就是各群当天的天气；花样换成比一群小的噪声（48 km 起、细到 3 km），跟着风漂——
+	// 一群的地盘里有好几团，所以晴天只有零星几团、雨天连成一片（大块的气候噪声不压上来，不会一整团罩在晴天的群上）
+	if (share > 0.001) {
+		// 一像素盖过的细层换成均值、留下的粗层拉开对比（方差补回来，门槛照样按云量取）；连 48 km 那层都看不清了就是云量本身
+		float kept;
+		float ng = w0 * pn_fbm3_lod((p - d0) * 132.8 + o0, 5, 48000.0, foot, kept) + (1.0 - w0) * pn_fbm3_lod((p - d1) * 132.8 + o1, 5, 48000.0, foot, kept);
+		ng = (ng - 0.5) * 1.35 / sqrt(max(kept, 0.05)) + 0.5;
+		float detail = smoothstep(0.02, 0.2, kept);
+		// 看不清一团团的时候：平均就是云量，另按大块的噪声起伏一点（晴的仍是晴的、阴的仍是阴的）
+		float cov_mod = clamp(cov + (n - 0.5) * 2.4 * cov * (1.0 - cov), 0.0, 1.0);
+		float dg = mix(cov_mod, smoothstep(thr - 0.06, thr + 0.06, ng), detail);
+		float tg = mix(cov_mod * 0.7, smoothstep(thr, thr + 0.22, ng), detail);
+		dens = mix(dens, dg, share);
+		thick = mix(thick, tg, share);
+	}
+	thick = max(thick, rain * 0.9); // 下着雨的厚、暗
+	storm = clamp(mix(max(max(w_eq, g_mask), f.g), wstorm, share) * dens, 0.0, 1.0);
 	return dens;
 }
 
@@ -460,7 +487,7 @@ bool planet_surface(float r0, vec3 d, vec3 sun_l, out vec3 color, out float t_hi
 			float along = (PS_CLOUD_Y - PS_BAND_Y) / R * sqrt(max(0.0, 1.0 - mu_s * mu_s)) / max(0.08, mu_s);
 			float th;
 			float st;
-			shadow = planet_cloud(normalize(bn + toward * along), th, st) * 0.55;
+			shadow = planet_cloud(normalize(bn + toward * along), 1.0e5, th, st) * 0.55;
 		}
 		vec3 lit = sun_t * max(mu_s, 0.0) * (1.0 - shadow) + amb;
 		vec3 cloud = vec3(0.52, 0.56, 0.62) * shade * lit; // 云带比天气云暗、偏灰蓝：从上往下看分得出两层

@@ -5739,7 +5739,7 @@ void test_planet_weather() {
     const double build_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_build).count();
     std::printf("  建场 %.0f ms（%d 群有逐日表）；2051 管 %.1f km、2050 管 %.1f km\n", build_ms, added, pw->reach_km(2051), pw->reach_km(2050));
     check(added == 8000 && pw->table_count() == 8000, "八千群都有逐日表");
-    check(pw->reach_km(2051) > 40.0 && pw->reach_km(2051) <= 57.5 && pw->reach_km(2050) > 10.0 && pw->reach_km(2050) <= 57.5, "一群管多大：陆地铺多远、不过邻群一半");
+    check(pw->reach_km(2051) > 40.0 && pw->reach_km(2051) < 90.0 && pw->reach_km(2050) > 10.0 && pw->reach_km(2050) < 60.0, "一群管多远：按陆地往各方位铺多远");
 
     const PlanetNode &n51 = pd.node(2051), &n50 = pd.node(2050);
     PlanetShape shape;
@@ -5762,6 +5762,48 @@ void test_planet_weather() {
         }
     }
     check(same == total, "2051 自己的陆地上：挂上行星天气场与不挂逐位一样（" + std::to_string(same) + " / " + std::to_string(total) + "）");
+    // 2051 的村落：几处在过渡带里（场说「别的群、背景也有份」）——那几处的天气与没挂场时不一样
+    {
+        std::ifstream sin(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/sites.tsv", std::ios::binary);
+        std::string line;
+        int villages = 0, mixed = 0;
+        double worst = 1.0;
+        while (std::getline(sin, line)) {
+            if (line.rfind("village\t", 0) != 0 && line.rfind("hamlet\t", 0) != 0) {
+                continue;
+            }
+            std::vector<std::string> cols;
+            std::string cur;
+            for (char ch : line) {
+                if (ch == '\t') {
+                    cols.push_back(cur);
+                    cur.clear();
+                } else if (ch != '\r') {
+                    cur += ch;
+                }
+            }
+            cols.push_back(cur);
+            if (cols.size() < 5) {
+                continue;
+            }
+            const double x = std::atof(cols[3].c_str()), z = std::atof(cols[4].c_str());
+            villages++;
+            const PlanetGroupSample g = pw->sample_group(2051, f51, c51.ref_m, 3.5, x, z, false);
+            if (!g.own) {
+                mixed++;
+                double lat = 0.0, lon = 0.0;
+                f51.flat_latlon(PlanetVec(x, 0.0, z), lat, lon);
+                const PlanetRegional r = pw->sample(3.5, lat, lon, 0.0);
+                for (int k = 0; k < r.n; k++) {
+                    if (r.nodes[k] == 2051) {
+                        worst = std::min(worst, r.weights[k]);
+                    }
+                }
+            }
+        }
+        std::printf("  2051 的 %d 处村落：%d 处在过渡带里（别的群或背景也有份，2051 的权最少 %.2f）\n", villages, mixed, worst);
+        check(villages > 1000 && mixed < villages / 10, "2051 的村落九成以上在它自己管的地方（天气与没挂场时逐位一样）");
+    }
     // 2. 2051 → 2050 一路：每公里变得不多（大势连着、锋面连着），两头是各自的天气
     const double day0 = 9.37;
     double worst_cover = 0.0, worst_temp = 0.0, worst_wind = 0.0, worst_cov = 0.0;
