@@ -7,7 +7,8 @@ extends Node
 ##   F2 的清单里有「行星」「新建世界」；打开行星地图（F2「行星」）：读数说得出你在哪一群、别的群没生成过；选中 600 km 内的一群、点瞬移（T）——
 ##     地图合上、当场生成、落到那一群的主码头；
 ##   站着等一阵，600 km 内的替身陆续换成粗版（GroupProvider 的粗版那条活，一批批生成、存进存档目录的 lods/）、行星贴图跟着重烘；
-## 然后「退出再进」：拆掉场景、再进一回——行星层、出生群、粗版都不重生成（存档目录里有的都认，文件一个没重写），替身比第一回少。
+## 然后「退出再进」：拆掉场景、再进一回——行星层、出生群、粗版都不重生成（存档目录里有的都认，文件一个没重写），替身比第一回少；
+##   出生群离开时存进存档目录的账（memory/）补回到它的账房。
 ## 没有 Python / 生成器时报 SKIP、退出码 77（不算 PASS）。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/planet_world_e2e.tscn [-- --seed=2027 --shots=<目录>]
@@ -329,6 +330,12 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "粗版 %s 重生成了（改动时刻变了）" % f)
 					return
 			var info: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(WORLD_DIR.path_join("world.json")))
+			# 离开的群的账（瞬移走时存进了存档目录 memory/）：退出再进，出生群的账房照文本补回
+			var hs: Dictionary = (main.get_node("Hinterland") as Hinterland).get_stats()
+			if int(hs["restored"]) + int(hs["waiting_restore"]) == 0:
+				_finish(false, "再进时出生群 #%d 的账该从存档目录补回（离开时存了）：%s" % [spawn_node, hs])
+				return
+			_log("再进：出生群的账从存档目录补回 %d 本（还有 %d 本等开账时补）" % [int(hs["restored"]), int(hs["waiting_restore"])])
 			var stand_now: int = far.get_stand_in_count()
 			_log("再进：%.1f s 站稳，没重生成（生成 0 群；已有的 %d 份粗版一个没重写）；远处替身 %d 群（第一回 %d 群）；出生群 #%d" % [again_s, lod_mtimes.size(), stand_now, first_stand_ins, int(info["spawn"])])
 			if stand_now >= first_stand_ins:
