@@ -51,6 +51,14 @@ weather.bin —— 各岛群一年的逐日天气（行星计划 P5：行星天�
         风暴日（type 风暴 / 暴风雪）的风暴号：u8
         N·D 个 u16 的 zigzag(当天 − 前一天)：气温（0.1 °C）、风从哪来（度，整数、0–360 原样）、风速（0.1 m/s）——各一列，每列先低字节再高字节；每条第 0 天减 0
     单群的（游戏按需生成的，tools/zhouzhu_gen.py 调 write_weather）写成同格式、只有一条的 lods/<节点>.wx。
+
+config.tsv —— 生成器展平后的配置（行星计划 P6e：游戏进程内的 C++ 生成器新建世界、生成岛群都读它，不经 Python）：
+    run 的 config.resolved.toml 经生成器自己的展平函数（engine.planet_config、island/engine.flat_config——C++ 核心库的 Config 就是这张扁平键值表）
+    UTF-8，# 开头是注释，一行一条：表<TAB>类型<TAB>键<TAB>值
+        表：planet（行星层 ①–⑨ 读的 shared / skeleton / s01–s09 / 槽位表 / 手工特征表）、island（第三层的 [island] 段）、engine（[engine]）
+        类型：num（数；布尔写 1.0 / 0.0）、vec（逗号分隔的数，可空）、str（字符串；反斜杠、制表符、换行按 C 的写法转义）
+        数写成 Python 的 repr（读回与 Python 的浮点逐位相同），次序照展平时的次序
+    --config-only：只写这一份（仓库里的 seed42 行星包就这么补上，别的文件不动）。需要能 import 生成器（--generator 或 run 的上上级）。
 """
 
 import json
@@ -263,14 +271,52 @@ def write_weather(path: Path, entries, precip_formula=(150.0, 4000.0, 1.3), sour
 
 
 def precip_formula_of(run: Path):
-    """run 的 [island] precip_mm_min / max / exp（④ 的相对降水折成年降水 mm，生成器 hydro.precip_mm）。"""
+    """run 的 [island.climate] precip_mm_min / max / exp（④ 的相对降水折成年降水 mm，生成器 hydro.precip_mm）。
+    （P6e 前读的是 [island] 顶层的同名键——那里没有，一直落到默认值；默认值与 [island.climate] 的一样，写出来的不变。）"""
     try:
         import tomllib
         cfg = tomllib.loads((run / "config.resolved.toml").read_text(encoding="utf-8"))
         isl = cfg.get("island", {})
-        return (float(isl.get("precip_mm_min", 150.0)), float(isl.get("precip_mm_max", 4000.0)), float(isl.get("precip_mm_exp", 1.3)))
+        cl = isl.get("climate", {}) if isinstance(isl.get("climate"), dict) else {}
+        pick = lambda k, d: float(cl.get(k, isl.get(k, d)))
+        return (pick("precip_mm_min", 150.0), pick("precip_mm_max", 4000.0), pick("precip_mm_exp", 1.3))
     except Exception:
         return (150.0, 4000.0, 1.3)
+
+
+def config_tables(run: Path, generator: Path | None = None) -> dict:
+    """run 的配置按生成器自己的展平函数展开：{"planet": …, "island": …, "engine": …}，各是 {"num": {}, "vec": {}, "str": {}}（config.tsv 的内容）。"""
+    root = generator if generator is not None else run.parent.parent
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+    from skyisle_gen import engine as E
+    from skyisle_gen import island as isl
+    from skyisle_gen.cli import _ctx_from_run
+    from skyisle_gen.island.engine import flat_config
+    ctx = _ctx_from_run(str(run))
+    c = isl.island_config(ctx, [])      # default.toml ← run 的快照（同 island 生成时读的）；顺带把 [engine] 也合好
+    return {"planet": E.planet_config(ctx.cfg), "island": {**flat_config(c), "str": {}}, "engine": E.flatten(ctx.cfg.get("engine", {}))}
+
+
+def _esc(s: str) -> str:
+    return s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+
+
+def write_config(path: Path, tables: dict) -> int:
+    """config.tsv（格式见文件头）；先写 .tmp 再改名。返回字节数。"""
+    lines = ["# 生成器展平后的配置（行星计划 P6e；tools/export_planet.py 导出，格式见那个脚本开头），游戏进程内生成读它，别手改。",
+             "# 表\t类型\t键\t值"]
+    for t, d in tables.items():
+        for k, v in d.get("num", {}).items():
+            lines.append(f"{t}\tnum\t{_esc(k)}\t{float(v)!r}")
+        for k, v in d.get("vec", {}).items():
+            lines.append(f"{t}\tvec\t{_esc(k)}\t{','.join(repr(float(x)) for x in v)}")
+        for k, v in d.get("str", {}).items():
+            lines.append(f"{t}\tstr\t{_esc(k)}\t{_esc(str(v))}")
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    tmp.replace(path)
+    return path.stat().st_size
 
 
 def compare_fine(entries, fine_dir: Path) -> None:
@@ -296,15 +342,32 @@ def main():
     if len(args) < 2:
         print(__doc__)
         return 2
-    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None, "--fine": None}
-    for i in range(2, len(args), 2):
+    opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None, "--fine": None, "--config-only": None}
+    i = 2
+    while i < len(args):
+        if args[i] == "--config-only":
+            opt["--config-only"] = True
+            i += 1
+            continue
         opt[args[i]] = args[i + 1]
+        i += 2
+    if opt["--config-only"]:
+        dst = Path(args[1])
+        dst.mkdir(parents=True, exist_ok=True)
+        n = write_config(dst / "config.tsv", config_tables(Path(args[0]), Path(opt["--generator"]) if opt["--generator"] else None))
+        print(f"{dst / 'config.tsv'}: {n / 1e3:.1f} kB")
+        return 0
     return export_planet(Path(args[0]), Path(args[1]), opt)
 
 
 def export_planet(run: Path, dst: Path, opt: dict) -> int:
     opt = {"--lod-res": "2000", "--near": None, "--near-res": "500", "--near-radius": "600", "--generator": None, "--fine": None, **opt}
     dst.mkdir(parents=True, exist_ok=True)
+    # 生成器展平后的配置（P6e：游戏进程内生成读它）；import 不了生成器（只装了 numpy）就不写，照旧能导其余的
+    try:
+        write_config(dst / "config.tsv", config_tables(run, Path(opt["--generator"]) if opt["--generator"] else None))
+    except ImportError as e:
+        print(f"没写 config.tsv（import 不了生成器：{e}）")
 
     planet = json.loads((run / "s01_planet" / "planet.json").read_text(encoding="utf-8"))
     bands = json.loads((run / "s02_wind" / "bands.json").read_text(encoding="utf-8"))
