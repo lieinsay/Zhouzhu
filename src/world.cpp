@@ -22,6 +22,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "dock_builder.h"
+#include "planet_jobs.h"
 #include "farm.h"
 #include "shipyard.h"
 #include "hinterland.h"
@@ -59,15 +60,22 @@ double tile_distance(const TileLayout &p_layout, const TileKey &p_key, double p_
     return std::hypot(dx, dz);
 }
 
-// 任务池的号：地面块用 TileKey::packed（层号在 48 位以上，放得下）；水面块的格号各取 28 位
+// 任务池的号（52 位，高 12 位是种类与通道，见 job_pool.h）：地面块用 TileKey::packed（层号 4 位在 48 位以上、格号各 24 位，
+// 叶块 128 m × 2²⁴ ≈ 2,100 km）；水面块的格号各取 26 位（块 × 6,700 万）。都是按群分表的（每群自己的通道），岛群最大也就两三百公里，溢不出
 uint64_t river_id(const RiverChunkKey &p_key) {
-    return (uint64_t(uint32_t(p_key.ix) & 0xFFFFFFFu) << 28) | uint64_t(uint32_t(p_key.iz) & 0xFFFFFFFu);
+    return (uint64_t(uint32_t(p_key.ix) & 0x3FFFFFFu) << 26) | uint64_t(uint32_t(p_key.iz) & 0x3FFFFFFu);
 }
 
 RiverChunkKey river_key_of(uint64_t p_id) {
-    const auto signed28 = [](uint64_t v) { return int(int32_t(uint32_t(v << 4)) >> 4); };
-    return RiverChunkKey{ signed28((p_id >> 28) & 0xFFFFFFFu), signed28(p_id & 0xFFFFFFFu) };
+    const auto signed26 = [](uint64_t v) { return int(int32_t(uint32_t(v << 6)) >> 6); };
+    return RiverChunkKey{ signed26((p_id >> 26) & 0x3FFFFFFu), signed26(p_id & 0x3FFFFFFu) };
 }
+
+// 在后台读一个岛群的包（GROUP_LOAD 活的结果）
+struct GroupLoadDone : JobResult {
+    bool ok = false;
+    std::string error;
+};
 
 // 平铺的 float（每点 N 个）→ 引擎的数组：直接写内存，不逐个 set（Debug 下逐个 set 一块地面要好几毫秒）
 PackedVector3Array vec3s(const std::vector<float> &p_flat) {
@@ -96,61 +104,68 @@ PackedFloat32Array float32s(const std::vector<float> &p_values) {
 
 } // namespace
 
-void World::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("set_focus", "focus"), &World::set_focus);
-    ClassDB::bind_method(D_METHOD("get_focus"), &World::get_focus);
-    ClassDB::bind_method(D_METHOD("prepare_at", "point", "radius"), &World::prepare_at, DEFVAL(160.0));
-    ClassDB::bind_method(D_METHOD("is_ready_at", "point"), &World::is_ready_at);
-    ClassDB::bind_method(D_METHOD("get_surface_height", "x", "z"), &World::get_surface_height);
-    ClassDB::bind_method(D_METHOD("get_island_at", "x", "z"), &World::get_island_at);
-    ClassDB::bind_method(D_METHOD("get_cover_at", "x", "z"), &World::get_cover_at);
-    ClassDB::bind_method(D_METHOD("get_info"), &World::get_info);
-    ClassDB::bind_method(D_METHOD("is_loaded"), &World::is_loaded);
-    ClassDB::bind_method(D_METHOD("get_tile_count"), &World::get_tile_count);
-    ClassDB::bind_method(D_METHOD("get_pending_count"), &World::get_pending_count);
-    ClassDB::bind_method(D_METHOD("get_dock_count"), &World::get_dock_count);
-    ClassDB::bind_method(D_METHOD("find_dock", "id"), &World::find_dock);
-    ClassDB::bind_method(D_METHOD("get_freight_post", "village_id"), &World::get_freight_post);
-    ClassDB::bind_method(D_METHOD("get_freight_port_ids"), &World::get_freight_port_ids);
-    ClassDB::bind_method(D_METHOD("get_resource_site", "working_id"), &World::get_resource_site);
-    ClassDB::bind_method(D_METHOD("get_resource_ids"), &World::get_resource_ids);
-    ClassDB::bind_method(D_METHOD("find_resource_near", "x", "z", "radius", "kind"), &World::find_resource_near, DEFVAL(String()));
-    ClassDB::bind_method(D_METHOD("get_landmark", "id"), &World::get_landmark);
-    ClassDB::bind_method(D_METHOD("find_landmark_near", "x", "z", "radius", "kind"), &World::find_landmark_near, DEFVAL(String()));
-    ClassDB::bind_method(D_METHOD("find_scatter_near", "x", "z", "radius", "kind"), &World::find_scatter_near, DEFVAL(String()));
-    ClassDB::bind_method(D_METHOD("get_scatter_count_near", "x", "z", "radius", "solid_only"), &World::get_scatter_count_near);
-    ClassDB::bind_method(D_METHOD("get_dock_id", "index"), &World::get_dock_id);
-    ClassDB::bind_method(D_METHOD("is_dock_berthable", "index"), &World::is_dock_berthable);
-    ClassDB::bind_method(D_METHOD("get_dock_berth", "index"), &World::get_dock_berth);
-    ClassDB::bind_method(D_METHOD("get_dock_spawn", "index"), &World::get_dock_spawn);
-    ClassDB::bind_method(D_METHOD("get_dock_position", "index"), &World::get_dock_position);
-    ClassDB::bind_method(D_METHOD("get_runoff"), &World::get_runoff);
-    ClassDB::bind_method(D_METHOD("get_river_at", "x", "z"), &World::get_river_at);
-    ClassDB::bind_method(D_METHOD("get_river_chunk_count"), &World::get_river_chunk_count);
-    ClassDB::bind_method(D_METHOD("get_weather_at", "x", "z", "y"), &World::get_weather_at, DEFVAL(NAN));
-    ClassDB::bind_method(D_METHOD("get_snow_line"), &World::get_snow_line);
-    ClassDB::bind_method(D_METHOD("find_river_near", "x", "z", "radius", "min_acc_km2"), &World::find_river_near);
-    ClassDB::bind_method(D_METHOD("set_river_radius", "value"), &World::set_river_radius);
-    ClassDB::bind_method(D_METHOD("get_river_radius"), &World::get_river_radius);
-    ClassDB::bind_method(D_METHOD("set_runoff_override", "value"), &World::set_runoff_override);
-    ClassDB::bind_method(D_METHOD("get_runoff_override"), &World::get_runoff_override);
-    ClassDB::bind_method(D_METHOD("get_stream_frame", "frame"), &World::get_stream_frame);
-    ClassDB::bind_method(D_METHOD("get_stream_totals"), &World::get_stream_totals);
-    ClassDB::bind_method(D_METHOD("reset_stream_meter"), &World::reset_stream_meter);
+void GroupWorld::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("set_focus", "focus"), &GroupWorld::set_focus);
+    ClassDB::bind_method(D_METHOD("get_focus"), &GroupWorld::get_focus);
+    ClassDB::bind_method(D_METHOD("prepare_at", "point", "radius"), &GroupWorld::prepare_at, DEFVAL(160.0));
+    ClassDB::bind_method(D_METHOD("is_ready_at", "point"), &GroupWorld::is_ready_at);
+    ClassDB::bind_method(D_METHOD("get_surface_height", "x", "z"), &GroupWorld::get_surface_height);
+    ClassDB::bind_method(D_METHOD("get_island_at", "x", "z"), &GroupWorld::get_island_at);
+    ClassDB::bind_method(D_METHOD("get_cover_at", "x", "z"), &GroupWorld::get_cover_at);
+    ClassDB::bind_method(D_METHOD("get_info"), &GroupWorld::get_info);
+    ClassDB::bind_method(D_METHOD("is_loaded"), &GroupWorld::is_loaded);
+    ClassDB::bind_method(D_METHOD("get_tile_count"), &GroupWorld::get_tile_count);
+    ClassDB::bind_method(D_METHOD("get_pending_count"), &GroupWorld::get_pending_count);
+    ClassDB::bind_method(D_METHOD("get_dock_count"), &GroupWorld::get_dock_count);
+    ClassDB::bind_method(D_METHOD("find_dock", "id"), &GroupWorld::find_dock);
+    ClassDB::bind_method(D_METHOD("get_freight_post", "village_id"), &GroupWorld::get_freight_post);
+    ClassDB::bind_method(D_METHOD("get_freight_port_ids"), &GroupWorld::get_freight_port_ids);
+    ClassDB::bind_method(D_METHOD("get_resource_site", "working_id"), &GroupWorld::get_resource_site);
+    ClassDB::bind_method(D_METHOD("get_resource_ids"), &GroupWorld::get_resource_ids);
+    ClassDB::bind_method(D_METHOD("find_resource_near", "x", "z", "radius", "kind"), &GroupWorld::find_resource_near, DEFVAL(String()));
+    ClassDB::bind_method(D_METHOD("get_landmark", "id"), &GroupWorld::get_landmark);
+    ClassDB::bind_method(D_METHOD("find_landmark_near", "x", "z", "radius", "kind"), &GroupWorld::find_landmark_near, DEFVAL(String()));
+    ClassDB::bind_method(D_METHOD("find_scatter_near", "x", "z", "radius", "kind"), &GroupWorld::find_scatter_near, DEFVAL(String()));
+    ClassDB::bind_method(D_METHOD("get_scatter_count_near", "x", "z", "radius", "solid_only"), &GroupWorld::get_scatter_count_near);
+    ClassDB::bind_method(D_METHOD("get_dock_id", "index"), &GroupWorld::get_dock_id);
+    ClassDB::bind_method(D_METHOD("is_dock_berthable", "index"), &GroupWorld::is_dock_berthable);
+    ClassDB::bind_method(D_METHOD("get_dock_berth", "index"), &GroupWorld::get_dock_berth);
+    ClassDB::bind_method(D_METHOD("get_dock_spawn", "index"), &GroupWorld::get_dock_spawn);
+    ClassDB::bind_method(D_METHOD("get_dock_position", "index"), &GroupWorld::get_dock_position);
+    ClassDB::bind_method(D_METHOD("get_runoff"), &GroupWorld::get_runoff);
+    ClassDB::bind_method(D_METHOD("get_river_at", "x", "z"), &GroupWorld::get_river_at);
+    ClassDB::bind_method(D_METHOD("get_river_chunk_count"), &GroupWorld::get_river_chunk_count);
+    ClassDB::bind_method(D_METHOD("get_weather_at", "x", "z", "y"), &GroupWorld::get_weather_at, DEFVAL(NAN));
+    ClassDB::bind_method(D_METHOD("get_snow_line"), &GroupWorld::get_snow_line);
+    ClassDB::bind_method(D_METHOD("find_river_near", "x", "z", "radius", "min_acc_km2"), &GroupWorld::find_river_near);
+    ClassDB::bind_method(D_METHOD("set_river_radius", "value"), &GroupWorld::set_river_radius);
+    ClassDB::bind_method(D_METHOD("get_river_radius"), &GroupWorld::get_river_radius);
+    ClassDB::bind_method(D_METHOD("set_runoff_override", "value"), &GroupWorld::set_runoff_override);
+    ClassDB::bind_method(D_METHOD("get_runoff_override"), &GroupWorld::get_runoff_override);
+    ClassDB::bind_method(D_METHOD("get_stream_frame", "frame"), &GroupWorld::get_stream_frame);
+    ClassDB::bind_method(D_METHOD("get_stream_totals"), &GroupWorld::get_stream_totals);
+    ClassDB::bind_method(D_METHOD("reset_stream_meter"), &GroupWorld::reset_stream_meter);
 
-    ClassDB::bind_method(D_METHOD("set_data_dir", "value"), &World::set_data_dir);
-    ClassDB::bind_method(D_METHOD("get_data_dir"), &World::get_data_dir);
-    ClassDB::bind_method(D_METHOD("set_terrain_seed", "value"), &World::set_terrain_seed);
-    ClassDB::bind_method(D_METHOD("get_terrain_seed"), &World::get_terrain_seed);
-    ClassDB::bind_method(D_METHOD("set_split", "value"), &World::set_split);
-    ClassDB::bind_method(D_METHOD("get_split"), &World::get_split);
-    ClassDB::bind_method(D_METHOD("set_build_threads", "value"), &World::set_build_threads);
-    ClassDB::bind_method(D_METHOD("get_build_threads"), &World::get_build_threads);
+    ClassDB::bind_method(D_METHOD("set_data_dir", "value"), &GroupWorld::set_data_dir);
+    ClassDB::bind_method(D_METHOD("get_data_dir"), &GroupWorld::get_data_dir);
+    ClassDB::bind_method(D_METHOD("set_terrain_seed", "value"), &GroupWorld::set_terrain_seed);
+    ClassDB::bind_method(D_METHOD("get_terrain_seed"), &GroupWorld::get_terrain_seed);
+    ClassDB::bind_method(D_METHOD("set_split", "value"), &GroupWorld::set_split);
+    ClassDB::bind_method(D_METHOD("get_split"), &GroupWorld::get_split);
+    ClassDB::bind_method(D_METHOD("set_build_threads", "value"), &GroupWorld::set_build_threads);
+    ClassDB::bind_method(D_METHOD("get_build_threads"), &GroupWorld::get_build_threads);
+    ClassDB::bind_method(D_METHOD("set_async_load", "value"), &GroupWorld::set_async_load);
+    ClassDB::bind_method(D_METHOD("get_async_load"), &GroupWorld::get_async_load);
+    ClassDB::bind_method(D_METHOD("is_loading"), &GroupWorld::is_loading);
+    ClassDB::bind_method(D_METHOD("get_node_id"), &GroupWorld::get_node_id);
+    ClassDB::bind_method(D_METHOD("get_lane"), &GroupWorld::get_lane);
+    ClassDB::bind_method(D_METHOD("set_physics_on", "on"), &GroupWorld::set_physics_on);
+    ClassDB::bind_method(D_METHOD("is_physics_on"), &GroupWorld::is_physics_on);
 
-    ClassDB::bind_method(D_METHOD("set_sites_path", "value"), &World::set_sites_path);
-    ClassDB::bind_method(D_METHOD("get_sites_path"), &World::get_sites_path);
-    ClassDB::bind_method(D_METHOD("set_scatter_path", "value"), &World::set_scatter_path);
-    ClassDB::bind_method(D_METHOD("get_scatter_path"), &World::get_scatter_path);
+    ClassDB::bind_method(D_METHOD("set_sites_path", "value"), &GroupWorld::set_sites_path);
+    ClassDB::bind_method(D_METHOD("get_sites_path"), &GroupWorld::get_sites_path);
+    ClassDB::bind_method(D_METHOD("set_scatter_path", "value"), &GroupWorld::set_scatter_path);
+    ClassDB::bind_method(D_METHOD("get_scatter_path"), &GroupWorld::get_scatter_path);
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "data_dir", PROPERTY_HINT_DIR), "set_data_dir", "get_data_dir");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "sites_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "SiteStream"), "set_sites_path", "get_sites_path");
     ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "scatter_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "ScatterStream"), "set_scatter_path", "get_scatter_path");
@@ -158,44 +173,123 @@ void World::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::INT, "terrain_seed"), "set_terrain_seed", "get_terrain_seed");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "split", PROPERTY_HINT_RANGE, "0.5,4,0.05"), "set_split", "get_split");
     ADD_PROPERTY(PropertyInfo(Variant::INT, "build_threads", PROPERTY_HINT_RANGE, "1,16,1"), "set_build_threads", "get_build_threads");
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "async_load"), "set_async_load", "get_async_load");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "river_radius", PROPERTY_HINT_RANGE, "500,20000,100"), "set_river_radius", "get_river_radius");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "runoff_override", PROPERTY_HINT_RANGE, "-1,8,0.05"), "set_runoff_override", "get_runoff_override");
 }
 
-World::~World() {
-    pool.stop(); // 线程读着 terrain / layout / scatter：先收线程，成员再析构
+GroupWorld::~GroupWorld() {
+    // 线程读着 terrain / layout / scatter（这一群的通道上的活：地面块、水面块、散布、村子……）：先等它们做完，成员再析构
+    if (pool) {
+        pool->drain_lane(lane);
+    }
+    if (PlanetJobs *jobs = Object::cast_to<PlanetJobs>(ObjectDB::get_instance(jobs_id))) {
+        jobs->release_lane(lane);
+    }
 }
 
-void World::_ready() {
+void GroupWorld::attach_pool() {
+    if (pool) {
+        return;
+    }
+    if (PlanetJobs *jobs = PlanetJobs::find(this)) {
+        const int l = jobs->acquire_lane();
+        if (l > 0) {
+            pool = jobs->share_pool();
+            lane = l;
+            jobs_id = jobs->get_instance_id();
+            return;
+        }
+        ERR_PRINT(String(U"GroupWorld：共用任务池的通道领完了，自己开一个池"));
+    }
+    // 场景里没有共用的池（甲乙两岛以外只有一个群的图、单独的工具）：自己开一个，照旧用 1 号通道
+    pool = std::make_shared<JobPool>();
+    pool->start(build_threads);
+    lane = 1;
+}
+
+void GroupWorld::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) {
         set_process(false);
         return;
     }
     site_stream = Object::cast_to<SiteStream>(get_node_or_null(sites_path));
     scatter_stream = Object::cast_to<ScatterStream>(get_node_or_null(scatter_path));
-    loaded = load();
-    if (!loaded) {
+    attach_pool();
+    if (async_load) {
+        // 后台读（Debug 下 2051 约 1 s）：这期间主线程不碰地形这些成员；_process 里等它做完再装
+        loading = true;
+        pool->submit(job_key(JobKind::GROUP_LOAD, 0), 0.0, [this]() -> std::unique_ptr<JobResult> {
+            std::unique_ptr<GroupLoadDone> out = std::make_unique<GroupLoadDone>();
+            out->ok = load_data(out->error);
+            return out;
+        });
+        set_process(true);
+        return;
+    }
+    std::string error;
+    if (!load_data(error)) {
+        ERR_PRINT(String("World: ") + String::utf8(error.c_str()));
         set_process(false);
         return;
     }
-    pool.start(build_threads);
+    install();
     set_process(true);
     emit_signal("rebuilt"); // 挂在下面的 Farm、Shipyard 先于这里 _ready，此刻才等到地面
 }
 
-bool World::load() {
+void GroupWorld::install() {
+    const Ref<Shader> ground_shader = ResourceLoader::get_singleton()->load(GROUND_SHADER);
+    if (ground_shader.is_valid()) {
+        Ref<ShaderMaterial> m;
+        m.instantiate();
+        m->set_shader(ground_shader);
+        ground_material = m;
+    } else {
+        ERR_PRINT(String("World: 读不了地皮着色器 ") + GROUND_SHADER + String(U"，地皮不换季、不盖雪"));
+        Ref<StandardMaterial3D> m;
+        m.instantiate();
+        m->set_roughness(1.0);
+        m->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+        // 顶点色是按 sRGB 调的；不声明的话引擎当线性值用，整片地会发白
+        m->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
+        ground_material = m;
+    }
+    if (terrain.has_rivers()) {
+        const Ref<Shader> shader = ResourceLoader::get_singleton()->load(RIVER_SHADER);
+        if (shader.is_valid()) {
+            const RiverRules &rr = terrain.get_rivers().get_rules();
+            river_material.instantiate();
+            river_material->set_shader(shader);
+            river_material->set_shader_parameter("bankfull_ratio", rr.bankfull_ratio);
+            river_material->set_shader_parameter("stage_exp", rr.stage_exp);
+            river_material->set_shader_parameter("flood_max", rr.flood_max);
+            river_material->set_shader_parameter("floodplain_slope", rr.floodplain_slope);
+            river_material->set_shader_parameter("bed_flat", rr.bed_flat);
+            river_material->set_shader_parameter("wet_depth", rr.wet_depth_m);
+            river_material->set_shader_parameter("fall_length", river_mesh_rules.fall_m);
+        } else {
+            ERR_PRINT(String("World: 读不了水面着色器 ") + RIVER_SHADER + String(U"，河只凿河道、不画水"));
+        }
+    }
+    loaded = true;
+    update_runoff();
+}
+
+bool GroupWorld::load_data(std::string &r_error) {
     const PackedByteArray bytes = FileAccess::get_file_as_bytes(data_dir.path_join("terrain.bin"));
     std::string error;
     if (bytes.is_empty() || !parse_world_grid(bytes.ptr(), size_t(bytes.size()), grid, error)) {
-        ERR_PRINT(String("World: 读不了 ") + data_dir.path_join("terrain.bin") + "：" + String::utf8(error.c_str()));
+        r_error = std::string("读不了 ") + data_dir.path_join("terrain.bin").utf8().get_data() + "：" + error;
         return false;
     }
     const Variant parsed = JSON::parse_string(FileAccess::get_file_as_string(data_dir.path_join("world.json")));
     if (parsed.get_type() != Variant::DICTIONARY) {
-        ERR_PRINT(String("World: 读不了 ") + data_dir.path_join("world.json"));
+        r_error = std::string("读不了 ") + data_dir.path_join("world.json").utf8().get_data();
         return false;
     }
     info = parsed;
+    node_id = int(Dictionary(info.get("source", Dictionary())).get("node", -1));
     std::vector<WorldIsland> islands;
     const Array rows = info.get("islands", Array());
     for (int64_t k = 0; k < rows.size(); k++) {
@@ -266,54 +360,20 @@ bool World::load() {
             resource_data = ResourceData();
         }
     }
-
-    const Ref<Shader> ground_shader = ResourceLoader::get_singleton()->load(GROUND_SHADER);
-    if (ground_shader.is_valid()) {
-        Ref<ShaderMaterial> m;
-        m.instantiate();
-        m->set_shader(ground_shader);
-        ground_material = m;
-    } else {
-        ERR_PRINT(String("World: 读不了地皮着色器 ") + GROUND_SHADER + String(U"，地皮不换季、不盖雪"));
-        Ref<StandardMaterial3D> m;
-        m.instantiate();
-        m->set_roughness(1.0);
-        m->set_flag(BaseMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-        // 顶点色是按 sRGB 调的；不声明的话引擎当线性值用，整片地会发白
-        m->set_flag(BaseMaterial3D::FLAG_SRGB_VERTEX_COLOR, true);
-        ground_material = m;
-    }
-
     if (terrain.has_rivers()) {
         river_chunk_keys = river_chunks(terrain, river_mesh_rules);
-        const Ref<Shader> shader = ResourceLoader::get_singleton()->load(RIVER_SHADER);
-        if (shader.is_valid()) {
-            const RiverRules &rr = terrain.get_rivers().get_rules();
-            river_material.instantiate();
-            river_material->set_shader(shader);
-            river_material->set_shader_parameter("bankfull_ratio", rr.bankfull_ratio);
-            river_material->set_shader_parameter("stage_exp", rr.stage_exp);
-            river_material->set_shader_parameter("flood_max", rr.flood_max);
-            river_material->set_shader_parameter("floodplain_slope", rr.floodplain_slope);
-            river_material->set_shader_parameter("bed_flat", rr.bed_flat);
-            river_material->set_shader_parameter("wet_depth", rr.wet_depth_m);
-            river_material->set_shader_parameter("fall_length", river_mesh_rules.fall_m);
-        } else {
-            ERR_PRINT(String("World: 读不了水面着色器 ") + RIVER_SHADER + String(U"，河只凿河道、不画水"));
-        }
     }
-    update_runoff();
     return true;
 }
 
-void World::set_runoff_override(double p_value) {
+void GroupWorld::set_runoff_override(double p_value) {
     runoff_override = p_value;
     if (loaded) {
         update_runoff();
     }
 }
 
-void World::update_runoff() {
+void GroupWorld::update_runoff() {
     if (runoff_override >= 0.0) {
         runoff = runoff_override;
     } else {
@@ -325,7 +385,7 @@ void World::update_runoff() {
     }
 }
 
-JobPool::Work World::river_job(const RiverChunkKey &p_key) const {
+JobPool::Work GroupWorld::river_job(const RiverChunkKey &p_key) const {
     const WorldTerrain *t = &terrain;
     const RiverMeshRules rules = river_mesh_rules;
     return [t, rules, p_key]() -> std::unique_ptr<JobResult> {
@@ -353,7 +413,7 @@ JobPool::Work World::river_job(const RiverChunkKey &p_key) const {
     };
 }
 
-double World::river_distance(const RiverChunkKey &p_key) const {
+double GroupWorld::river_distance(const RiverChunkKey &p_key) const {
     const double chunk = river_mesh_rules.chunk_m;
     const double x0 = p_key.ix * chunk, z0 = p_key.iz * chunk;
     const double dx = std::max({ x0 - focus.x, 0.0, double(focus.x) - (x0 + chunk) });
@@ -361,7 +421,7 @@ double World::river_distance(const RiverChunkKey &p_key) const {
     return std::hypot(dx, dz);
 }
 
-void World::adopt_river(std::unique_ptr<RiverArrays> p_river) {
+void GroupWorld::adopt_river(std::unique_ptr<RiverArrays> p_river) {
     const RiverArrays &m = *p_river;
     if (river_nodes.count(m.key.packed()) || river_distance(m.key) > river_radius * 1.25) {
         return; // 已经有了，或者焦点走远了
@@ -397,7 +457,7 @@ void World::adopt_river(std::unique_ptr<RiverArrays> p_river) {
     river_nodes[m.key.packed()] = view;
 }
 
-void World::stream_rivers(bool p_all) {
+void GroupWorld::stream_rivers(bool p_all) {
     if (river_chunk_keys.empty()) {
         return;
     }
@@ -413,22 +473,24 @@ void World::stream_rivers(bool p_all) {
             ++it;
         }
     }
-    pool.reprioritize(JobKind::RIVER, [this](uint64_t p_key) {
-        const double d = river_distance(river_key_of(JobPool::id_of(p_key)));
-        return d > river_radius * 1.25 ? -1.0 : d;
-    });
+    pool->reprioritize(
+            JobKind::RIVER, [this](uint64_t p_key) {
+                const double d = river_distance(river_key_of(JobPool::id_of(p_key)));
+                return d > river_radius * 1.25 ? -1.0 : d;
+            },
+            lane);
     // 缺的交给后台（近的先）；瞬移时 RIVER_SYNC_M 以内的当场做完挂上
     for (const RiverChunkKey &key : river_chunk_keys) {
         const double d = river_distance(key);
         if (d > river_radius || river_nodes.count(key.packed())) {
             continue;
         }
-        const uint64_t job = JobPool::key(JobKind::RIVER, river_id(key));
+        const uint64_t job = job_key(JobKind::RIVER, river_id(key));
         if (!p_all || d > RIVER_SYNC_M) {
-            pool.submit(job, d, river_job(key));
+            pool->submit(job, d, river_job(key));
             continue;
         }
-        std::unique_ptr<JobResult> done = pool.run_now(job);
+        std::unique_ptr<JobResult> done = pool->run_now(job);
         if (!done) {
             done = river_job(key)();
         }
@@ -436,9 +498,9 @@ void World::stream_rivers(bool p_all) {
     }
 }
 
-void World::adopt_ready_rivers() {
+void GroupWorld::adopt_ready_rivers() {
     std::vector<JobPool::Done> done;
-    pool.collect(JobKind::RIVER, done);
+    pool->collect(JobKind::RIVER, done, lane);
     for (JobPool::Done &d : done) {
         river_ready.emplace_back(static_cast<RiverArrays *>(d.result.release()));
     }
@@ -454,7 +516,7 @@ void World::adopt_ready_rivers() {
     river_ready.erase(river_ready.begin(), river_ready.begin() + int64_t(k));
 }
 
-int World::get_river_chunk_count() const {
+int GroupWorld::get_river_chunk_count() const {
     int n = 0;
     for (const auto &[key, node] : river_nodes) {
         n += node != nullptr;
@@ -462,7 +524,7 @@ int World::get_river_chunk_count() const {
     return n;
 }
 
-Dictionary World::get_weather_at(double p_x, double p_z, double p_y) const {
+Dictionary GroupWorld::get_weather_at(double p_x, double p_z, double p_y) const {
     if (!loaded) {
         return Dictionary();
     }
@@ -475,12 +537,12 @@ Dictionary World::get_weather_at(double p_x, double p_z, double p_y) const {
     return weather_view::to_dictionary(weather.sample(clock ? clock->get_calendar_day() : 0.0, p_x, p_z, y));
 }
 
-double World::get_snow_line() const {
+double GroupWorld::get_snow_line() const {
     const WorldClock *clock = WorldClock::get_singleton();
     return loaded ? weather.snow_line(clock ? clock->get_calendar_day() : 0.0) : 1e9;
 }
 
-Dictionary World::get_river_at(double p_x, double p_z) const {
+Dictionary GroupWorld::get_river_at(double p_x, double p_z) const {
     Dictionary out;
     RiverHit hit;
     if (!loaded || !terrain.has_rivers() || !terrain.get_rivers().nearest(p_x, p_z, 1e9, hit) || hit.distance > hit.at.core()) {
@@ -501,7 +563,7 @@ Dictionary World::get_river_at(double p_x, double p_z) const {
     return out;
 }
 
-Dictionary World::find_river_near(double p_x, double p_z, double p_radius, double p_min_acc_km2) const {
+Dictionary GroupWorld::find_river_near(double p_x, double p_z, double p_radius, double p_min_acc_km2) const {
     Dictionary out;
     if (!loaded || !terrain.has_rivers()) {
         return out;
@@ -534,7 +596,7 @@ Dictionary World::find_river_near(double p_x, double p_z, double p_radius, doubl
     return out;
 }
 
-JobPool::Work World::tile_job(const TileKey &p_key) const {
+JobPool::Work GroupWorld::tile_job(const TileKey &p_key) const {
     const WorldTerrain *t = &terrain;
     const TileLayout *l = &layout;
     return [t, l, p_key]() -> std::unique_ptr<JobResult> {
@@ -573,26 +635,26 @@ JobPool::Work World::tile_job(const TileKey &p_key) const {
     };
 }
 
-bool World::target_has(const TileKey &p_key) const {
+bool GroupWorld::target_has(const TileKey &p_key) const {
     return std::binary_search(target.begin(), target.end(), p_key);
 }
 
-void World::retarget() {
+void GroupWorld::retarget() {
     targeted_focus = focus;
     has_target = true;
     target = layout.select(focus.x, focus.z, split);
     std::sort(target.begin(), target.end());
     // 还没开建的旧活全撤（正在建的建完再说：挂的时候不在目标里就丢），缺的按离焦点的远近重排；一样近时细的先建
-    pool.cancel_kind(JobKind::TILE);
+    pool->cancel_kind(JobKind::TILE, lane);
     const double fx = focus.x, fz = focus.z;
     for (const TileKey &key : target) {
         if (tiles.find(key.packed()) == tiles.end()) {
-            pool.submit(JobPool::key(JobKind::TILE, key.packed()), tile_distance(layout, key, fx, fz) - 1e-3 * key.level, tile_job(key));
+            pool->submit(job_key(JobKind::TILE, key.packed()), tile_distance(layout, key, fx, fz) - 1e-3 * key.level, tile_job(key));
         }
     }
 }
 
-void World::adopt(std::unique_ptr<TileArrays> p_tile) {
+void GroupWorld::adopt(std::unique_ptr<TileArrays> p_tile) {
     const TileArrays &m = *p_tile;
     const TileKey key = m.key;
     if (!target_has(key) || tiles.find(key.packed()) != tiles.end()) {
@@ -624,6 +686,8 @@ void World::adopt(std::unique_ptr<TileArrays> p_tile) {
         margins_dirty = true;
         if (!m.face_parts.empty()) {
             tile.body = memnew(StaticBody3D);
+            // 邻群的地面块照样建碰撞体，只是撤出物理（DISABLE_MODE_REMOVE）：换锚成了锚群时不用重建
+            tile.body->set_process_mode(physics_on ? PROCESS_MODE_INHERIT : PROCESS_MODE_DISABLED);
             root->add_child(tile.body);
             tile.parts_left = int(m.face_parts.size());
             for (const PackedVector3Array &faces : m.face_parts) {
@@ -636,7 +700,7 @@ void World::adopt(std::unique_ptr<TileArrays> p_tile) {
     tiles[key.packed()] = tile;
 }
 
-void World::mount_collision(const CollisionPart &p_part) {
+void GroupWorld::mount_collision(const CollisionPart &p_part) {
     const auto found = tiles.find(p_part.key.packed());
     if (found == tiles.end() || !found->second.body) {
         return; // 块已经拆了
@@ -650,9 +714,9 @@ void World::mount_collision(const CollisionPart &p_part) {
     found->second.parts_left--;
 }
 
-void World::adopt_ready_tiles() {
+void GroupWorld::adopt_ready_tiles() {
     std::vector<JobPool::Done> done;
-    pool.collect(JobKind::TILE, done);
+    pool->collect(JobKind::TILE, done, lane);
     for (JobPool::Done &d : done) {
         tile_ready.emplace_back(static_cast<TileArrays *>(d.result.release()));
     }
@@ -685,7 +749,7 @@ void World::adopt_ready_tiles() {
     collision_ready.erase(collision_ready.begin(), collision_ready.begin() + int64_t(c));
 }
 
-void World::prune() {
+void GroupWorld::prune() {
     for (auto it = tiles.begin(); it != tiles.end();) {
         const TileKey key = it->second.key;
         if (target_has(key)) {
@@ -711,7 +775,28 @@ void World::prune() {
     }
 }
 
-void World::_process(double /* p_delta */) {
+void GroupWorld::_process(double /* p_delta */) {
+    if (loading) {
+        // 后台载入：做完了在主线程装上材质、发 rebuilt（Farm、Shipyard 等着它）
+        std::vector<JobPool::Done> done;
+        pool->collect(JobKind::GROUP_LOAD, done, lane);
+        if (done.empty()) {
+            return;
+        }
+        loading = false;
+        const GroupLoadDone *r = static_cast<const GroupLoadDone *>(done.front().result.get());
+        if (!r || !r->ok) {
+            ERR_PRINT(String("World: ") + (r ? String::utf8(r->error.c_str()) : String(U"后台载入没有结果")));
+            set_process(false);
+            return;
+        }
+        install();
+        emit_signal("rebuilt");
+        return;
+    }
+    if (!loaded) {
+        return;
+    }
     update_runoff();
     {
         StreamTimer timer(this, StreamChannel::RIVERS);
@@ -731,7 +816,19 @@ void World::_process(double /* p_delta */) {
     update_cull_margins();
 }
 
-void World::update_cull_margins() {
+void GroupWorld::set_physics_on(bool p_on) {
+    if (physics_on == p_on) {
+        return;
+    }
+    physics_on = p_on;
+    for (auto &it : tiles) {
+        if (it.second.body) {
+            it.second.body->set_process_mode(physics_on ? PROCESS_MODE_INHERIT : PROCESS_MODE_DISABLED);
+        }
+    }
+}
+
+void GroupWorld::update_cull_margins() {
     const PlanetView *pv = PlanetView::active_view();
     if (!pv) {
         if (margins_on) {
@@ -749,8 +846,11 @@ void World::update_cull_margins() {
         }
         return;
     }
-    const PlanetVec c = pv->camera_flat();
-    const Vector3 cam(real_t(c.x), real_t(c.y), real_t(c.z));
+    // 相机在这一群的局部坐标里（锚群是原点、不转；邻群有 GroupStream 摆的刚体变换）
+    const Transform3D xf = get_global_transform();
+    const PlanetVec cg = pv->camera_flat();
+    const Vector3 cam = xf.affine_inverse().xform(Vector3(real_t(cg.x), real_t(cg.y), real_t(cg.z)));
+    const PlanetVec c(cam.x, cam.y, cam.z);
     const bool moved = !margins_on || Vector2(cam.x - margin_cam.x, cam.z - margin_cam.z).length() > MARGIN_RETARGET_M;
     if (moved || margins_dirty) {
         margins_on = true;
@@ -774,7 +874,7 @@ void World::update_cull_margins() {
                 // 远块：着色器把它沿视线压到 26 km 以内（CurveSqueeze），按平面位置的包围盒会被远平面剪掉、侧面放宽了又白画——
                 // 引擎不剔（余量放到极大），每帧按视锥的四个侧面自己剔（侧面过相机，压近不改方向）；也不投影（阴影只画 500 m 内，压过的位置投出来是错的）
                 const AABB box = t.view->get_aabb();
-                t.sphere_center = t.node->get_position() + box.get_center();
+                t.sphere_center = t.node->get_position() + box.get_center(); // 局部坐标：剔的时候换到全局（邻群的变换每帧会动）
                 t.sphere_radius = 0.5 * box.size.length() + pv->drop_at(far) + MARGIN_SLACK_M;
                 if (!t.far_mode) {
                     t.view->set_extra_cull_margin(FAR_MODE_MARGIN_M);
@@ -811,9 +911,10 @@ void World::update_cull_margins() {
         if (!t.view || !t.far_mode) {
             continue;
         }
+        const Vector3 center = xf.xform(t.sphere_center);
         bool inside = true;
         for (const Plane &p : sides) {
-            if (p.distance_to(t.sphere_center) > t.sphere_radius) {
+            if (p.distance_to(center) > t.sphere_radius) {
                 inside = false;
                 break;
             }
@@ -825,7 +926,7 @@ void World::update_cull_margins() {
     }
 }
 
-void World::prepare_at(const Vector3 &p_point, double p_radius) {
+void GroupWorld::prepare_at(const Vector3 &p_point, double p_radius) {
     if (!loaded) {
         return;
     }
@@ -836,7 +937,7 @@ void World::prepare_at(const Vector3 &p_point, double p_radius) {
     stream_rivers(true);
     // 落点周围的叶块：做好了没挂的先挂，排着的当场做
     std::vector<JobPool::Done> done;
-    pool.collect(JobKind::TILE, done);
+    pool->collect(JobKind::TILE, done, lane);
     for (JobPool::Done &d : done) {
         tile_ready.emplace_back(static_cast<TileArrays *>(d.result.release()));
     }
@@ -851,7 +952,7 @@ void World::prepare_at(const Vector3 &p_point, double p_radius) {
             adopt(std::move(tile));
             continue;
         }
-        std::unique_ptr<JobResult> result = pool.run_now(JobPool::key(JobKind::TILE, key.packed()));
+        std::unique_ptr<JobResult> result = pool->run_now(job_key(JobKind::TILE, key.packed()));
         if (!result) {
             result = tile_job(key)();
         }
@@ -867,7 +968,7 @@ void World::prepare_at(const Vector3 &p_point, double p_radius) {
     }
 }
 
-bool World::is_ready_at(const Vector3 &p_point) const {
+bool GroupWorld::is_ready_at(const Vector3 &p_point) const {
     if (!loaded) {
         return false;
     }
@@ -875,7 +976,7 @@ bool World::is_ready_at(const Vector3 &p_point) const {
     return found != tiles.end() && found->second.parts_left == 0;
 }
 
-double World::get_surface_height(double p_x, double p_z) const {
+double GroupWorld::get_surface_height(double p_x, double p_z) const {
     double y = 0.0;
     if (!loaded || !terrain.surface(p_x, p_z, y)) {
         return std::numeric_limits<double>::quiet_NaN();
@@ -883,11 +984,11 @@ double World::get_surface_height(double p_x, double p_z) const {
     return y;
 }
 
-int World::get_island_at(double p_x, double p_z) const {
+int GroupWorld::get_island_at(double p_x, double p_z) const {
     return loaded ? int(grid.island[grid.nearest_cell(p_x, p_z)]) : -1;
 }
 
-Dictionary World::get_cover_at(double p_x, double p_z) const {
+Dictionary GroupWorld::get_cover_at(double p_x, double p_z) const {
     Dictionary out;
     if (!loaded) {
         return out;
@@ -906,7 +1007,7 @@ Dictionary World::get_cover_at(double p_x, double p_z) const {
     return out;
 }
 
-Dictionary World::get_stream_frame(int64_t p_frame) const {
+Dictionary GroupWorld::get_stream_frame(int64_t p_frame) const {
     Dictionary out;
     const StreamMeter::Frame *f = meter.frame(uint64_t(p_frame));
     if (!f) {
@@ -920,7 +1021,7 @@ Dictionary World::get_stream_frame(int64_t p_frame) const {
     return out;
 }
 
-Dictionary World::get_stream_totals() const {
+Dictionary GroupWorld::get_stream_totals() const {
     Dictionary out;
     for (int c = 0; c < STREAM_CHANNELS; c++) {
         const StreamMeter::Totals &t = meter.get_totals(StreamChannel(c));
@@ -933,7 +1034,7 @@ Dictionary World::get_stream_totals() const {
     return out;
 }
 
-StreamTimer::StreamTimer(World *p_world, StreamChannel p_channel) :
+StreamTimer::StreamTimer(GroupWorld *p_world, StreamChannel p_channel) :
         meter(p_world ? &p_world->get_meter() : nullptr), channel(p_channel), started(Time::get_singleton()->get_ticks_usec()) {}
 
 StreamTimer::~StreamTimer() {
@@ -942,7 +1043,7 @@ StreamTimer::~StreamTimer() {
     }
 }
 
-int World::get_pending_count() const {
+int GroupWorld::get_pending_count() const {
     int missing = 0;
     for (const TileKey &key : target) {
         const auto found = tiles.find(key.packed());
@@ -951,7 +1052,7 @@ int World::get_pending_count() const {
     return missing;
 }
 
-int World::find_dock(int p_id) const {
+int GroupWorld::find_dock(int p_id) const {
     for (size_t k = 0; k < sites.docks.size(); k++) {
         if (sites.docks[k].id == p_id) {
             return int(k);
@@ -960,21 +1061,21 @@ int World::find_dock(int p_id) const {
     return -1;
 }
 
-int World::get_dock_id(int p_index) const {
+int GroupWorld::get_dock_id(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(sites.docks.size()), -1);
     return sites.docks[size_t(p_index)].id;
 }
 
-bool World::is_dock_berthable(int p_index) const {
+bool GroupWorld::is_dock_berthable(int p_index) const {
     return p_index >= 0 && p_index < int(works.docks.size()) && works.docks[size_t(p_index)].ok;
 }
 
-Transform3D World::get_dock_berth(int p_index) const {
+Transform3D GroupWorld::get_dock_berth(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(works.docks.size()), Transform3D());
     return dock_builder::berth_contact(works.docks[size_t(p_index)]);
 }
 
-Transform3D World::get_dock_spawn(int p_index) const {
+Transform3D GroupWorld::get_dock_spawn(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(works.docks.size()), Transform3D());
     Transform3D xf = dock_builder::spawn(works.docks[size_t(p_index)]);
     double y = 0.0;
@@ -984,16 +1085,16 @@ Transform3D World::get_dock_spawn(int p_index) const {
     return xf;
 }
 
-Vector3 World::get_dock_position(int p_index) const {
+Vector3 GroupWorld::get_dock_position(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(works.docks.size()), Vector3());
     return dock_builder::point(works.docks[size_t(p_index)], 0.0, 0.0);
 }
 
-std::unique_ptr<MapGround> World::host_ground() const {
+std::unique_ptr<MapGround> GroupWorld::host_ground() const {
     return std::make_unique<WorldGround>(terrain, 0.0, 0.0);
 }
 
-Farm *World::host_farm() const {
+Farm *GroupWorld::host_farm() const {
     const TypedArray<Node> children = get_children();
     for (int64_t k = 0; k < children.size(); k++) {
         if (Farm *farm = Object::cast_to<Farm>(children[k])) {
@@ -1003,7 +1104,7 @@ Farm *World::host_farm() const {
     return nullptr;
 }
 
-YardPlan World::host_yard() const {
+YardPlan GroupWorld::host_yard() const {
     for (const YardPlan &yard : works.yards) {
         if (yard.present) {
             return yard;
@@ -1012,30 +1113,30 @@ YardPlan World::host_yard() const {
     return YardPlan();
 }
 
-int World::map_island_at(const Vector3 &p_global) const {
+int GroupWorld::map_island_at(const Vector3 &p_global) const {
     return std::isnan(get_surface_height(p_global.x, p_global.z)) ? -1 : get_island_at(p_global.x, p_global.z);
 }
 
-bool World::map_footing(const Vector3 &p_global) const {
+bool GroupWorld::map_footing(const Vector3 &p_global) const {
     return is_ready_at(p_global) && !std::isnan(get_surface_height(p_global.x, p_global.z));
 }
 
-bool World::map_dock_open(int p_index) const {
+bool GroupWorld::map_dock_open(int p_index) const {
     return is_dock_berthable(p_index) && site_stream && site_stream->get_dock(get_dock_id(p_index));
 }
 
-int World::map_dock_island(int p_index) const {
+int GroupWorld::map_dock_island(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(sites.docks.size()), -1);
     return sites.docks[size_t(p_index)].island;
 }
 
-String World::map_dock_label(int p_index) const {
+String GroupWorld::map_dock_label(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(sites.docks.size()), String());
     const SiteDock &dock = sites.docks[size_t(p_index)];
     return vformat(String(U"岛 #%d 码头 #%d"), dock.island, dock.id);
 }
 
-std::vector<Shipyard *> World::map_shipyards() const {
+std::vector<Shipyard *> GroupWorld::map_shipyards() const {
     std::vector<Shipyard *> out;
     const TypedArray<Node> children = get_children();
     for (int64_t k = 0; k < children.size(); k++) {
@@ -1046,7 +1147,7 @@ std::vector<Shipyard *> World::map_shipyards() const {
     return out;
 }
 
-FreightPost World::map_freight_post_near(const Vector3 &p_global, double p_range) {
+FreightPost GroupWorld::map_freight_post_near(const Vector3 &p_global, double p_range) {
     FreightPost post;
     WorldVillage *village = site_stream ? site_stream->village_at(p_global) : nullptr;
     const int port = village ? find_freight_port(village->get_site_index()) : -1;
@@ -1065,7 +1166,7 @@ FreightPost World::map_freight_post_near(const Vector3 &p_global, double p_range
     return post;
 }
 
-bool World::map_freight_target(int p_port, Transform3D &r_target) const {
+bool GroupWorld::map_freight_target(int p_port, Transform3D &r_target) const {
     if (p_port < 0 || p_port >= int(freight_ports.size())) {
         return false;
     }
@@ -1083,16 +1184,16 @@ bool World::map_freight_target(int p_port, Transform3D &r_target) const {
     return true;
 }
 
-ResourceStock *World::resource_stock(int p_index) {
+ResourceStock *GroupWorld::resource_stock(int p_index) {
     return p_index >= 0 && p_index < int(resource_stocks.size()) ? &resource_stocks[size_t(p_index)] : nullptr;
 }
 
-double World::clock_hours() {
+double GroupWorld::clock_hours() {
     const WorldClock *clock = WorldClock::get_singleton();
     return clock ? clock->get_total_hours() : 0.0;
 }
 
-ResourceSpot World::map_resource_near(const Vector3 &p_global, double p_range) {
+ResourceSpot GroupWorld::map_resource_near(const Vector3 &p_global, double p_range) {
     ResourceSpot spot;
     WorldResource *node = site_stream ? site_stream->resource_near(p_global, p_range) : nullptr;
     if (!node) {
@@ -1113,7 +1214,7 @@ ResourceSpot World::map_resource_near(const Vector3 &p_global, double p_range) {
     return spot;
 }
 
-ResourceSpot World::map_gather_near(const Vector3 &p_global, double p_face_range, double p_facing_yaw) {
+ResourceSpot GroupWorld::map_gather_near(const Vector3 &p_global, double p_face_range, double p_facing_yaw) {
     ResourceSpot spot = MapHost::map_gather_near(p_global, p_face_range, p_facing_yaw);
     ScatterStream::Hit hit;
     if (!scatter_stream || !scatter_stream->nearest_item(p_global, p_facing_yaw, hit)) {
@@ -1142,7 +1243,7 @@ ResourceSpot World::map_gather_near(const Vector3 &p_global, double p_face_range
     return out;
 }
 
-void World::map_resource_taken(const ResourceSpot &p_spot) {
+void GroupWorld::map_resource_taken(const ResourceSpot &p_spot) {
     if (!p_spot.scatter) {
         return;
     }
@@ -1151,11 +1252,11 @@ void World::map_resource_taken(const ResourceSpot &p_spot) {
     }
 }
 
-bool World::map_water_at(double p_x, double p_z) const {
+bool GroupWorld::map_water_at(double p_x, double p_z) const {
     return WorldLandingGround(terrain).water(p_x, p_z);
 }
 
-Dictionary World::get_resource_site(int p_working_id) const {
+Dictionary GroupWorld::get_resource_site(int p_working_id) const {
     Dictionary d;
     for (size_t k = 0; k < resource_plan.sites.size(); k++) {
         const ResourceSite &s = resource_plan.sites[k];
@@ -1181,7 +1282,7 @@ Dictionary World::get_resource_site(int p_working_id) const {
     return d;
 }
 
-Dictionary World::get_landmark(int p_id) const {
+Dictionary GroupWorld::get_landmark(int p_id) const {
     Dictionary d;
     for (const ResourceLandmark &m : resource_plan.landmarks) {
         if (m.id != p_id) {
@@ -1202,7 +1303,7 @@ Dictionary World::get_landmark(int p_id) const {
     return d;
 }
 
-int World::find_landmark_near(double p_x, double p_z, double p_radius, const String &p_kind) const {
+int GroupWorld::find_landmark_near(double p_x, double p_z, double p_radius, const String &p_kind) const {
     int best = -1;
     double best_d = p_radius;
     const std::string kind = p_kind.utf8().get_data();
@@ -1216,7 +1317,7 @@ int World::find_landmark_near(double p_x, double p_z, double p_radius, const Str
     return best;
 }
 
-Dictionary World::find_scatter_near(double p_x, double p_z, double p_radius, const String &p_kind) const {
+Dictionary GroupWorld::find_scatter_near(double p_x, double p_z, double p_radius, const String &p_kind) const {
     Dictionary out;
     if (!scatter.valid()) {
         return out;
@@ -1247,7 +1348,7 @@ Dictionary World::find_scatter_near(double p_x, double p_z, double p_radius, con
     return out;
 }
 
-int World::get_scatter_count_near(double p_x, double p_z, double p_radius, bool p_solid_only) const {
+int GroupWorld::get_scatter_count_near(double p_x, double p_z, double p_radius, bool p_solid_only) const {
     if (!scatter.valid()) {
         return 0;
     }
@@ -1268,7 +1369,7 @@ int World::get_scatter_count_near(double p_x, double p_z, double p_radius, bool 
     return n;
 }
 
-PackedInt32Array World::get_resource_ids() const {
+PackedInt32Array GroupWorld::get_resource_ids() const {
     PackedInt32Array ids;
     for (const ResourceSite &s : resource_plan.sites) {
         ids.push_back(s.id);
@@ -1276,7 +1377,7 @@ PackedInt32Array World::get_resource_ids() const {
     return ids;
 }
 
-int World::find_resource_near(double p_x, double p_z, double p_radius, const String &p_kind) const {
+int GroupWorld::find_resource_near(double p_x, double p_z, double p_radius, const String &p_kind) const {
     int best = -1;
     double best_d = p_radius;
     const std::string kind = p_kind.utf8().get_data();
@@ -1290,13 +1391,13 @@ int World::find_resource_near(double p_x, double p_z, double p_radius, const Str
     return best;
 }
 
-Vector3 World::get_freight_post(int p_village_id) const {
+Vector3 GroupWorld::get_freight_post(int p_village_id) const {
     WorldVillage *village = site_stream ? site_stream->get_village(p_village_id) : nullptr;
     Vector3 at;
     return village && village->get_freight_post(at) ? at : Vector3();
 }
 
-PackedInt32Array World::get_freight_port_ids() const {
+PackedInt32Array GroupWorld::get_freight_port_ids() const {
     PackedInt32Array ids;
     for (const FreightPort &p : freight_ports) {
         ids.push_back(p.site_id);
@@ -1304,11 +1405,11 @@ PackedInt32Array World::get_freight_port_ids() const {
     return ids;
 }
 
-GroundHost *World::map_settlement_at(const Vector3 &p_global) const {
+GroundHost *GroupWorld::map_settlement_at(const Vector3 &p_global) const {
     return site_stream ? site_stream->village_at(p_global) : nullptr;
 }
 
-void World::map_focus(const Vector3 &p_global) {
+void GroupWorld::map_focus(const Vector3 &p_global) {
     set_focus(p_global);
     if (site_stream) {
         site_stream->set_focus(p_global);
@@ -1318,7 +1419,7 @@ void World::map_focus(const Vector3 &p_global) {
     }
 }
 
-void World::map_prepare(const Vector3 &p_global) {
+void GroupWorld::map_prepare(const Vector3 &p_global) {
     prepare_at(p_global, PREPARE_RADIUS_M); // 脚下与周围一圈的叶块（带碰撞）当场建好，更远的照常排队
     if (site_stream) {
         site_stream->ensure_near(p_global); // 码头的栈桥、落点跟前的村子（细模带碰撞），人落地前就在
@@ -1328,11 +1429,11 @@ void World::map_prepare(const Vector3 &p_global) {
     }
 }
 
-int World::map_pending() const {
+int GroupWorld::map_pending() const {
     return get_pending_count();
 }
 
-String World::map_location_text(const Vector3 &p_global) const {
+String GroupWorld::map_location_text(const Vector3 &p_global) const {
     String text = vformat(String(U"岛 #%d · 东 %s km  南 %s km · 高 %d m"), get_island_at(p_global.x, p_global.z),
             String::num(p_global.x / 1000.0, 2), String::num(p_global.z / 1000.0, 2), int(std::lround(p_global.y)));
     // 走到采场跟前：报它的名字与存量
@@ -1357,7 +1458,7 @@ String World::map_location_text(const Vector3 &p_global) const {
     return text;
 }
 
-WorldMap *World::map_make_panel() {
+WorldMap *GroupWorld::map_make_panel() {
     WorldMap *panel = memnew(WorldMap);
     panel->setup(grid, info);
     for (int k = 0; k < get_dock_count(); k++) {
@@ -1398,7 +1499,7 @@ WorldMap *World::map_make_panel() {
     return panel;
 }
 
-void World::map_refresh_panel(WorldMap *p_panel) const {
+void GroupWorld::map_refresh_panel(WorldMap *p_panel) const {
     if (site_stream) {
         p_panel->set_built_sites(site_stream->get_built_docks(), site_stream->get_built_villages());
         p_panel->set_built_resources(site_stream->get_built_resources());

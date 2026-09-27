@@ -61,7 +61,7 @@ void Hinterland::_ready() {
         set_physics_process(false);
         return;
     }
-    world = Object::cast_to<World>(get_node_or_null(world_path));
+    world = Object::cast_to<GroupWorld>(get_node_or_null(world_path));
     stream = Object::cast_to<SiteStream>(get_node_or_null(sites_path));
     ERR_FAIL_NULL_MSG(world, "Hinterland 找不到 World（world_path）");
     ERR_FAIL_NULL_MSG(stream, "Hinterland 找不到 SiteStream（sites_path）");

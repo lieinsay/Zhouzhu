@@ -13,10 +13,10 @@
 #include "job_pool.h"
 
 class PlanetView;
-class World;
+class GroupWorld;
 
 // 远处的岛群（行星计划 P1，docs/PLAN-PLANET.md 第 4.3 节「60–600 km」）：相机 radius 以内的岛群（锚群除外）按行星包的粗版画低模。
-//   - 网格在后台建（World 的任务池，JobKind::FAR_GROUP，优先级 = 离相机多远）：far_group_mesh 的顶面、崖壁、倒锥的岛底，顶点已按真球面弯过；
+//   - 网格在后台建（共用的任务池 PlanetJobs 的 0 号通道，JobKind::FAR_GROUP，优先级 = 离相机多远）：far_group_mesh 的顶面、崖壁、倒锥的岛底，顶点已按真球面弯过；
 //   - 粗版按距离两档：fine_distance 以内 500 m、以外 2 km（回滞 fine_hysteresis）；换档时旧的留着，新的建好再换；
 //   - 每帧按 PlanetView 给的「群心相对相机」的刚体变换（双精度算）摆上去，所以远处的群落在真球面上、从地平线上冒出来；
 //   - 着色器 game/shaders/far_group.gdshader：地表色（与岛群地皮同一份调色）、季相与积雪按各群自己的纬度与气候（行星包的年均温、温差、台面）
@@ -46,7 +46,7 @@ class FarGroups : public godot::Node3D {
         bool shown = true;
     };
     std::map<int, Group> groups;
-    godot::ObjectID world_id;
+    std::shared_ptr<JobPool> pool; // 场景里共用的（PlanetJobs）；没有就借 map_path 那个岛群的
     PlanetView *planet = nullptr;
     godot::Ref<godot::ShaderMaterial> material;
     bool selected = false;
@@ -55,7 +55,6 @@ class FarGroups : public godot::Node3D {
     int adopted = 0; // 挂上过几份网格（统计）
     std::vector<std::unique_ptr<JobResult>> ready; // 做好了等挂的（一帧挂一份：一份上传要几毫秒）
 
-    World *world() const;
     void select();
     void submit(Group &p_group);
     void adopt_ready();

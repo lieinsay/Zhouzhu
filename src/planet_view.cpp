@@ -136,7 +136,7 @@ bool PlanetView::load_planet() {
 bool PlanetView::try_anchor() {
     Node *node = get_node_or_null(map_path);
     map = MapHost::of(node);
-    World *world = Object::cast_to<World>(node);
+    GroupWorld *world = Object::cast_to<GroupWorld>(node);
     if (!world || !world->is_loaded()) {
         return false;
     }

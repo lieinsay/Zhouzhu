@@ -15,7 +15,7 @@
 #include "resource_scatter.h"
 #include "scatter_meshes.h"
 
-class World;
+class GroupWorld;
 class WorldVillage;
 
 // 后台生成好的一块散布：清单 + 每一株的 MultiMesh 数据（16 个数：变换 3×4、块的西北角为原点，实例色）
@@ -70,7 +70,8 @@ private:
     double regrow_interval = 4.0;
     int adopt_budget_usec = 4000; // 每帧最多花这么久挂块
 
-    World *world = nullptr;
+    GroupWorld *world = nullptr;
+    godot::ObjectID world_id; // 拆的时候撤掉自己在它通道上排着的活（它可能先走）
     godot::Vector3 focus;
     bool has_focus = false;
     double since_check = 0.0, since_regrow = 0.0;
@@ -116,6 +117,7 @@ private:
 
 protected:
     static void _bind_methods();
+    void _notification(int p_what);
 
 public:
     void _ready() override;

@@ -177,8 +177,26 @@ void ScatterStream::_ready() {
         set_process(false);
         return;
     }
-    world = Object::cast_to<World>(get_node_or_null(world_path));
+    world = Object::cast_to<GroupWorld>(get_node_or_null(world_path));
     ERR_FAIL_NULL_MSG(world, "ScatterStream 找不到 World（world_path）");
+    world_id = world->get_instance_id();
+}
+
+void ScatterStream::_notification(int p_what) {
+    if (p_what != NOTIFICATION_EXIT_TREE) {
+        return;
+    }
+    // 拆了：自己在共用池里排着的活撤掉、做完没取的丢掉（见 SiteStream::_notification）
+    GroupWorld *w = Object::cast_to<GroupWorld>(ObjectDB::get_instance(world_id));
+    if (!w || !w->share_pool()) {
+        return;
+    }
+    JobPool &pool = w->get_pool();
+    for (JobKind kind : { JobKind::SCATTER, JobKind::FAR_TREES }) {
+        pool.cancel_kind(kind, w->get_lane());
+        std::vector<JobPool::Done> done;
+        pool.collect(kind, done, w->get_lane());
+    }
 }
 
 void ScatterStream::set_focus(const Vector3 &p_focus) {
@@ -221,12 +239,12 @@ void ScatterStream::_process(double p_delta) {
     }
     // 生成好的块：近的先挂，时间用完了下帧再挂；远处的林子排在后面
     std::vector<JobPool::Done> done;
-    world->get_pool().collect(JobKind::SCATTER, done);
+    world->get_pool().collect(JobKind::SCATTER, done, world->get_lane());
     for (JobPool::Done &d : done) {
         waiting.emplace_back(static_cast<ScatterChunkJob *>(d.result.release()));
     }
     done.clear();
-    world->get_pool().collect(JobKind::FAR_TREES, done);
+    world->get_pool().collect(JobKind::FAR_TREES, done, world->get_lane());
     for (JobPool::Done &d : done) {
         far_waiting.emplace_back(static_cast<FarTreesJob *>(d.result.release()));
     }
@@ -385,17 +403,17 @@ void ScatterStream::refresh(bool p_all) {
     std::sort(wanted.begin(), wanted.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
     // 还没开工的旧活全撤，按新的远近重排（正在生成的做完照样交回来，挂不挂由距离定）；瞬移时碰撞半径内的同步生成
     JobPool &pool = world->get_pool();
-    pool.cancel_kind(JobKind::SCATTER);
+    pool.cancel_kind(JobKind::SCATTER, world->get_lane());
     for (const auto &[d, key] : wanted) {
         if (p_all && d <= collision_radius) {
-            std::unique_ptr<JobResult> ready = pool.run_now(JobPool::key(JobKind::SCATTER, key.packed()));
+            std::unique_ptr<JobResult> ready = pool.run_now(world->job_key(JobKind::SCATTER, key.packed()));
             if (!ready) {
                 ready = chunk_job(key)();
             }
             adopt(std::unique_ptr<ScatterChunkJob>(static_cast<ScatterChunkJob *>(ready.release())));
             continue;
         }
-        pool.submit(JobPool::key(JobKind::SCATTER, key.packed()), d, chunk_job(key));
+        pool.submit(world->job_key(JobKind::SCATTER, key.packed()), d, chunk_job(key));
     }
     refresh_far();
 }
@@ -420,7 +438,7 @@ void ScatterStream::refresh_far() {
         }
     }
     JobPool &pool = world->get_pool();
-    pool.cancel_kind(JobKind::FAR_TREES);
+    pool.cancel_kind(JobKind::FAR_TREES, world->get_lane());
     const ResourceScatter *source = &world->get_scatter();
     const int lo_x = int(std::floor((focus.x - far_radius) / FAR_CHUNK_M)), hi_x = int(std::floor((focus.x + far_radius) / FAR_CHUNK_M));
     const int lo_z = int(std::floor((focus.z - far_radius) / FAR_CHUNK_M)), hi_z = int(std::floor((focus.z + far_radius) / FAR_CHUNK_M));
@@ -433,7 +451,7 @@ void ScatterStream::refresh_far() {
                     std::any_of(far_waiting.begin(), far_waiting.end(), [&](const auto &w) { return w->ix == ix && w->iz == iz; })) {
                 continue;
             }
-            pool.submit(JobPool::key(JobKind::FAR_TREES, packed), d + FAR_PRIORITY_M, [source, ix, iz]() -> std::unique_ptr<JobResult> {
+            pool.submit(world->job_key(JobKind::FAR_TREES, packed), d + FAR_PRIORITY_M, [source, ix, iz]() -> std::unique_ptr<JobResult> {
                 std::unique_ptr<FarTreesJob> out = std::make_unique<FarTreesJob>();
                 out->ix = ix;
                 out->iz = iz;
@@ -559,7 +577,7 @@ void ScatterStream::filter_houses(Chunk &r_chunk) const {
 
 bool ScatterStream::item_standing(const ScatterChunkKey &p_key, const ScatterItem &p_item) const {
     return world->get_scatter_ledger().standing(scatter_key(p_key, p_item.index), item_cap(p_item), deposits::scatter(p_item.kind()).refill_hours,
-            World::clock_hours());
+            GroupWorld::clock_hours());
 }
 
 void ScatterStream::snapshot_standing(Chunk &r_chunk) const {
@@ -812,7 +830,7 @@ Dictionary ScatterStream::find_item_near(const Vector3 &p_point, double p_range,
             out["radius"] = sk.radius * item.scale;
             out["solid"] = sk.solid;
             out["cap"] = cap;
-            out["stock"] = stock ? stock_amount(*stock, cap, sk.refill_hours, World::clock_hours()) : double(cap);
+            out["stock"] = stock ? stock_amount(*stock, cap, sk.refill_hours, GroupWorld::clock_hours()) : double(cap);
             out["standing"] = true;
         }
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include <godot_cpp/classes/image.hpp>
@@ -14,7 +15,8 @@
 
 class Atmosphere;
 class PlanetView;
-class World;
+class GroupWorld;
+class JobPool;
 
 // 整颗行星（行星计划 P2，docs/PLAN-PLANET.md 第 4.3 节「600 km 到轨道」）：挂在有行星数据的地图里（world_2051.tscn），与 PlanetView、Atmosphere、FarGroups 并列。
 // 画法见 game/shaders/planet_sky.gdshaderinc 开头：行星与大气逐像素按视线与同心球面求交来画，不建网格——
@@ -43,7 +45,7 @@ class PlanetGlobe : public godot::Node3D {
 
     PlanetView *view = nullptr;
     Atmosphere *atmosphere = nullptr;
-    godot::ObjectID world_id;
+    std::shared_ptr<JobPool> pool; // 场景里共用的（PlanetJobs）；没有就借 map_path 那个岛群的
     godot::ObjectID far_groups_id;
     godot::Ref<godot::ShaderMaterial> sky_mat;
     godot::Ref<godot::ShaderMaterial> overlay_mat;
@@ -69,7 +71,6 @@ class PlanetGlobe : public godot::Node3D {
     double blend_planet = 0.0, blend_atmo = 0.0, deck_alpha = 1.0, lateral_m = 0.0, band_shift = 0.0;
     bool overlay_on = false;
 
-    World *world() const;
     bool setup();
     void build_fields();
     void start_jobs();

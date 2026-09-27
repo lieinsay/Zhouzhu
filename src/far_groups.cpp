@@ -20,6 +20,7 @@
 #include "almanac.h"
 #include "far_group_mesh.h"
 #include "job_pool.h"
+#include "planet_jobs.h"
 #include "planet_view.h"
 #include "world.h"
 #include "world_clock.h"
@@ -89,10 +90,12 @@ void FarGroups::_ready() {
         return;
     }
     planet = Object::cast_to<PlanetView>(get_node_or_null(planet_path));
-    if (World *w = Object::cast_to<World>(get_node_or_null(map_path))) {
-        world_id = w->get_instance_id();
+    if (PlanetJobs *jobs = PlanetJobs::find(this)) {
+        pool = jobs->share_pool();
+    } else if (GroupWorld *w = Object::cast_to<GroupWorld>(get_node_or_null(map_path))) {
+        pool = w->share_pool();
     }
-    if (!planet || world_id.is_null()) {
+    if (!planet || !pool) {
         ERR_PRINT(String(U"FarGroups：planet_path（PlanetView）/ map_path（World）没接上，远处的岛群不画"));
         set_process(false);
         return;
@@ -107,24 +110,19 @@ void FarGroups::_ready() {
     set_process_priority(110); // PlanetView（100）算好这一帧的相机之后
 }
 
-World *FarGroups::world() const {
-    return Object::cast_to<World>(ObjectDB::get_instance(world_id));
-}
-
 void FarGroups::cancel_all() {
-    World *w = world();
-    if (!w) {
+    if (!pool) {
         return;
     }
     for (const auto &it : groups) {
         for (int tier = 0; tier < 2; tier++) {
-            w->get_pool().cancel(job_key(it.first, tier));
+            pool->cancel(job_key(it.first, tier));
         }
     }
 }
 
 void FarGroups::_process(double /* p_delta */) {
-    if (!planet || !planet->is_active() || !world()) {
+    if (!planet || !planet->is_active() || !pool) {
         return;
     }
     const Vector2 ll = planet->get_camera_latlon();
@@ -159,7 +157,7 @@ void FarGroups::select() {
                 g.mesh->queue_free();
             }
             for (int tier = 0; tier < 2; tier++) {
-                world()->get_pool().cancel(job_key(g.node, tier));
+                pool->cancel(job_key(g.node, tier));
             }
             it = groups.erase(it);
             continue;
@@ -168,7 +166,7 @@ void FarGroups::select() {
         const bool fine_now = g.want_res == fine_res ? g.distance < fine_distance + fine_hysteresis
                 : (g.want_res == 0.0 ? g.distance < fine_distance : g.distance < fine_distance - fine_hysteresis);
         const double want = fine_now ? fine_res : coarse_res;
-        if (want != g.want_res || (g.built_res != want && !world()->get_pool().busy(job_key(g.node, fine_now ? 0 : 1)))) {
+        if (want != g.want_res || (g.built_res != want && !pool->busy(job_key(g.node, fine_now ? 0 : 1)))) {
             g.want_res = want;
             submit(g);
         }
@@ -177,9 +175,8 @@ void FarGroups::select() {
 }
 
 void FarGroups::submit(Group &p_group) {
-    World *w = world();
     const int tier = p_group.want_res == fine_res ? 0 : 1;
-    w->get_pool().cancel(job_key(p_group.node, 1 - tier));
+    pool->cancel(job_key(p_group.node, 1 - tier));
     if (p_group.built_res == p_group.want_res) {
         return;
     }
@@ -187,7 +184,7 @@ void FarGroups::submit(Group &p_group) {
     const int node = p_group.node;
     const double max_res = tier == 0 ? fine_res * 1.2 : 1e9;
     const double radius_m = planet->get_radius();
-    w->get_pool().submit(job_key(node, tier), p_group.distance, [data, node, tier, max_res, radius_m]() -> std::unique_ptr<JobResult> {
+    pool->submit(job_key(node, tier), p_group.distance, [data, node, tier, max_res, radius_m]() -> std::unique_ptr<JobResult> {
         std::unique_ptr<FarGroupArrays> out = std::make_unique<FarGroupArrays>();
         out->node = node;
         out->tier = tier;
@@ -223,7 +220,7 @@ void FarGroups::submit(Group &p_group) {
 
 void FarGroups::adopt_ready() {
     std::vector<JobPool::Done> done;
-    world()->get_pool().collect(JobKind::FAR_GROUP, done);
+    pool->collect(JobKind::FAR_GROUP, done);
     for (JobPool::Done &d : done) {
         ready.push_back(std::move(d.result));
     }

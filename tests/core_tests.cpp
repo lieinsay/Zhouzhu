@@ -4072,6 +4072,60 @@ void test_job_pool() {
         pool.stop();
         check(pool.thread_count() == 0 && pool.state(key(600)) == JobPool::State::NONE, "停：排着的撤掉、线程收了");
     }
+    {
+        // 行星计划 P3：通道——几个岛群共用一个池，同一种活同一个号分开排、分开取、分开撤；拆一个群只等它自己的
+        const auto lane_key = [](uint64_t id, int lane) { return JobPool::key(JobKind::TEST, id, lane); };
+        check(JobPool::lane_of(lane_key(5, 3)) == 3 && JobPool::id_of(lane_key(5, 3)) == 5 && JobPool::kind_of(lane_key(5, 3)) == JobKind::TEST &&
+                        lane_key(5, 3) != lane_key(5, 4),
+                "键：种类、通道、号拆得回来，同号不同通道是两个键");
+        JobPool pool;
+        pool.submit(lane_key(1, 1), 1.0, []() { return std::unique_ptr<JobResult>(new TestResult(11)); });
+        pool.submit(lane_key(1, 2), 1.0, []() { return std::unique_ptr<JobResult>(new TestResult(21)); });
+        pool.submit(lane_key(2, 2), 1.0, []() { return std::unique_ptr<JobResult>(new TestResult(22)); });
+        check(pool.queued_count(JobKind::TEST, 1) == 1 && pool.queued_count(JobKind::TEST, 2) == 2 && pool.queued_count(JobKind::TEST) == 0,
+                "按通道数：1 号一件、2 号两件、0 号没有");
+        pool.reprioritize(JobKind::TEST, [](uint64_t) { return -1.0; }, 1);
+        check(pool.queued_count(JobKind::TEST, 1) == 0 && pool.queued_count(JobKind::TEST, 2) == 2, "重排只动自己的通道");
+        pool.start(2);
+        std::vector<JobPool::Done> done1, done2;
+        for (int spin = 0; spin < 5000 && done2.size() < 2; spin++) {
+            pool.collect(JobKind::TEST, done1, 1);
+            pool.collect(JobKind::TEST, done2, 2);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        check(done1.empty() && done2.size() == 2, "按通道取：2 号的两件在 2 号");
+        std::atomic<bool> finished{ false };
+        pool.submit(lane_key(7, 3), 1.0, [&finished]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(40));
+            finished = true;
+            return std::unique_ptr<JobResult>(new TestResult(7));
+        });
+        for (int k = 0; k < 20; k++) {
+            pool.submit(lane_key(uint64_t(100 + k), 3), 5.0 + k, []() { return std::unique_ptr<JobResult>(new TestResult(0)); });
+        }
+        pool.submit(lane_key(9, 4), 100.0, []() { return std::unique_ptr<JobResult>(new TestResult(9)); });
+        for (int spin = 0; spin < 2000 && pool.state(lane_key(7, 3)) == JobPool::State::QUEUED; spin++) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        pool.drain_lane(3);
+        check(finished && pool.queued_in_lane(3) == 0 && pool.state(lane_key(7, 3)) == JobPool::State::NONE, "拆 3 号：等正在做的做完、排着的撤、做完的丢");
+        std::vector<JobPool::Done> done4;
+        for (int spin = 0; spin < 2000 && done4.empty(); spin++) {
+            pool.collect(JobKind::TEST, done4, 4);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        check(done4.size() == 1, "拆 3 号不碰 4 号");
+    }
+    {
+        // 键的位数（计划 P3 第 9 条）：地面块（层 4 位、格号各 24 位）、散布块（24 + 24）、水面块（26 + 26）都在 52 位的号里，拆得回来
+        const TileKey far{ 12, (1 << 23) - 1, -(1 << 23) };
+        const uint64_t tk = JobPool::key(JobKind::TILE, far.packed(), 15);
+        check(JobPool::id_of(tk) == far.packed() && JobPool::lane_of(tk) == 15 && JobPool::kind_of(tk) == JobKind::TILE, "地面块的键：层 12、格号 ±2²³ 放得下");
+        const ScatterChunkKey sc{ -(1 << 23), (1 << 23) - 1 };
+        check(ScatterChunkKey::unpack(JobPool::id_of(JobPool::key(JobKind::SCATTER, sc.packed(), 9))) == sc, "散布块的键：±2²³ 拆得回来");
+        // 岛群最大 38,000 km²（400 m 格）约 200 km 见方：叶块 128 m 的格号不到 1,600，远在 2²³ 以内
+        check(200000.0 / TileLayout::LEAF_M < double(1 << 23) && 200000.0 / RiverMeshRules().chunk_m < double(1 << 25), "最大的岛群也溢不出");
+    }
 }
 
 // 每个三角面的几何法线（Godot：正面顺时针，n = (v0 − v2) × (v0 − v1)）与记下的顶点法线同向

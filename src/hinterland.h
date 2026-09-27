@@ -10,7 +10,7 @@
 
 #include "world_ledger.h"
 
-class World;
+class GroupWorld;
 class SiteStream;
 
 // 远处账房：岛群里每一处村落与散户（2051 是 371 处）一本账，节点拆了账还在，在这里按粗粒度接着记。
@@ -31,7 +31,7 @@ class Hinterland : public godot::Node {
     double slice_hours = 1.0 / 12.0; // 结一片补几个钟头（五分钟）：一片的花费就是预算的粒度
     int max_openings = 2; // 同时在后台开几本账
 
-    World *world = nullptr;
+    GroupWorld *world = nullptr;
     SiteStream *stream = nullptr;
     SimRules rules;
     std::shared_ptr<ClaimRegistry> taken;

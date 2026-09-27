@@ -61,7 +61,7 @@ void JobPool::loop() {
             running.erase(key);
             ran++;
             if (!stopping) {
-                done[uint8_t(kind_of(key))].push_back({ key, std::move(result) });
+                done[bucket_of(key)].push_back({ key, std::move(result) });
                 done_keys.insert(key);
             }
         }
@@ -106,10 +106,11 @@ bool JobPool::cancel(uint64_t p_key) {
     return had;
 }
 
-void JobPool::cancel_kind(JobKind p_kind) {
+void JobPool::cancel_kind(JobKind p_kind, int p_lane) {
     std::lock_guard<std::mutex> lock(mutex);
+    const uint16_t b = bucket(p_kind, p_lane);
     for (auto it = queued.begin(); it != queued.end();) {
-        if (kind_of(it->first) == p_kind) {
+        if (bucket_of(it->first) == b) {
             order.erase({ it->second.priority, it->second.seq, it->first });
             it = queued.erase(it);
         } else {
@@ -118,11 +119,12 @@ void JobPool::cancel_kind(JobKind p_kind) {
     }
 }
 
-void JobPool::reprioritize(JobKind p_kind, const std::function<double(uint64_t)> &p_priority) {
+void JobPool::reprioritize(JobKind p_kind, const std::function<double(uint64_t)> &p_priority, int p_lane) {
     std::lock_guard<std::mutex> lock(mutex);
+    const uint16_t b = bucket(p_kind, p_lane);
     std::vector<uint64_t> keys;
     for (const auto &entry : queued) {
-        if (kind_of(entry.first) == p_kind) {
+        if (bucket_of(entry.first) == b) {
             keys.push_back(entry.first);
         }
     }
@@ -150,13 +152,57 @@ JobPool::State JobPool::state(uint64_t p_key) const {
     return done_keys.count(p_key) ? State::DONE : State::NONE;
 }
 
-size_t JobPool::queued_count(JobKind p_kind) const {
+size_t JobPool::queued_count(JobKind p_kind, int p_lane) const {
+    std::lock_guard<std::mutex> lock(mutex);
+    const uint16_t b = bucket(p_kind, p_lane);
+    size_t n = 0;
+    for (const auto &entry : queued) {
+        n += bucket_of(entry.first) == b ? 1 : 0;
+    }
+    return n;
+}
+
+size_t JobPool::queued_in_lane(int p_lane) const {
     std::lock_guard<std::mutex> lock(mutex);
     size_t n = 0;
     for (const auto &entry : queued) {
-        n += kind_of(entry.first) == p_kind ? 1 : 0;
+        n += lane_of(entry.first) == (p_lane & 0xF) ? 1 : 0;
     }
     return n;
+}
+
+void JobPool::drain_lane(int p_lane) {
+    const int lane = p_lane & 0xF;
+    std::unique_lock<std::mutex> lock(mutex);
+    for (auto it = queued.begin(); it != queued.end();) {
+        if (lane_of(it->first) == lane) {
+            order.erase({ it->second.priority, it->second.seq, it->first });
+            it = queued.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    // 正在做的做法里拿着这一群的地形：等它们做完
+    finished.wait(lock, [&]() {
+        if (stopping) {
+            return true;
+        }
+        for (uint64_t k : running) {
+            if (lane_of(k) == lane) {
+                return false;
+            }
+        }
+        return true;
+    });
+    for (auto &entry : done) {
+        if ((entry.first & 0xFu) != uint16_t(lane)) {
+            continue;
+        }
+        for (Done &d : entry.second) {
+            done_keys.erase(d.key);
+        }
+        entry.second.clear();
+    }
 }
 
 size_t JobPool::running_count() const {
@@ -182,7 +228,7 @@ std::unique_ptr<JobResult> JobPool::run_now(uint64_t p_key) {
             if (!done_keys.count(p_key)) {
                 return nullptr;
             }
-            std::vector<Done> &list = done[uint8_t(kind_of(p_key))];
+            std::vector<Done> &list = done[bucket_of(p_key)];
             for (auto d = list.begin(); d != list.end(); ++d) {
                 if (d->key == p_key) {
                     std::unique_ptr<JobResult> result = std::move(d->result);
@@ -197,9 +243,9 @@ std::unique_ptr<JobResult> JobPool::run_now(uint64_t p_key) {
     return work ? work() : nullptr;
 }
 
-void JobPool::collect(JobKind p_kind, std::vector<Done> &r_out) {
+void JobPool::collect(JobKind p_kind, std::vector<Done> &r_out, int p_lane) {
     std::lock_guard<std::mutex> lock(mutex);
-    auto it = done.find(uint8_t(p_kind));
+    auto it = done.find(bucket(p_kind, p_lane));
     if (it == done.end()) {
         return;
     }

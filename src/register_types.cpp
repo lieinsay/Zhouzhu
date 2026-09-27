@@ -19,6 +19,7 @@
 #include "placed_props.h"
 #include "orbit_camera.h"
 #include "planet_globe.h"
+#include "planet_jobs.h"
 #include "planet_view.h"
 #include "player.h"
 #include "refit_overlay.h"
@@ -64,6 +65,8 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(BuildOverlay);
     GDREGISTER_CLASS(InteriorPanel);
     GDREGISTER_CLASS(InteriorOverlay);
+    GDREGISTER_CLASS(PlanetJobs);
+    GDREGISTER_CLASS(GroupWorld);
     GDREGISTER_CLASS(World);
     GDREGISTER_CLASS(WorldMap);
     GDREGISTER_CLASS(WorldVillage);

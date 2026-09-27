@@ -39,6 +39,8 @@ kill_altitude = -40.0
 recall_distance = 200.0
 notice_seconds = 4.0
 
+[node name="PlanetJobs" type="PlanetJobs" parent="."]
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("environment")
 

@@ -96,9 +96,27 @@ void SiteStream::_ready() {
         set_process(false);
         return;
     }
-    world = Object::cast_to<World>(get_node_or_null(world_path));
+    world = Object::cast_to<GroupWorld>(get_node_or_null(world_path));
     ERR_FAIL_NULL_MSG(world, "SiteStream 找不到 World（world_path）");
+    world_id = world->get_instance_id();
     hinterland = Object::cast_to<Hinterland>(get_node_or_null(hinterland_path));
+}
+
+void SiteStream::_notification(int p_what) {
+    if (p_what != NOTIFICATION_EXIT_TREE) {
+        return;
+    }
+    // 拆了（GroupStream 把这一群降到近景、换场景）：自己在共用池里排着的活撤掉、做完没取的丢掉（岛群还在，别人还用这个池）
+    GroupWorld *w = Object::cast_to<GroupWorld>(ObjectDB::get_instance(world_id));
+    if (!w || !w->share_pool()) {
+        return;
+    }
+    JobPool &pool = w->get_pool();
+    for (JobKind kind : { JobKind::VILLAGE, JobKind::CELL, JobKind::NAV }) {
+        pool.cancel_kind(kind, w->get_lane());
+        std::vector<JobPool::Done> done;
+        pool.collect(kind, done, w->get_lane());
+    }
 }
 
 void SiteStream::set_focus(const Vector3 &p_focus) {
@@ -167,7 +185,7 @@ std::shared_ptr<VillagePrepared> SiteStream::prepare_now(int p_index) {
         prepared.erase(found);
         return out;
     }
-    std::unique_ptr<JobResult> done = world->get_pool().run_now(JobPool::key(JobKind::VILLAGE, uint64_t(p_index)));
+    std::unique_ptr<JobResult> done = world->get_pool().run_now(world->job_key(JobKind::VILLAGE, uint64_t(p_index)));
     if (!done) {
         done = village_job(p_index)();
     }
@@ -244,7 +262,7 @@ WorldVillage *SiteStream::build_village(int p_index, std::shared_ptr<VillagePrep
 void SiteStream::collect_jobs() {
     JobPool &pool = world->get_pool();
     std::vector<JobPool::Done> done;
-    pool.collect(JobKind::VILLAGE, done);
+    pool.collect(JobKind::VILLAGE, done, world->get_lane());
     for (JobPool::Done &d : done) {
         VillagePrepared *p = static_cast<VillagePrepared *>(d.result.release());
         if (!villages.count(p->site_index)) {
@@ -254,7 +272,7 @@ void SiteStream::collect_jobs() {
         }
     }
     done.clear();
-    pool.collect(JobKind::CELL, done);
+    pool.collect(JobKind::CELL, done, world->get_lane());
     for (JobPool::Done &d : done) {
         CellPrepared *c = static_cast<CellPrepared *>(d.result.get());
         const auto found = villages.find(c->site_index);
@@ -263,7 +281,7 @@ void SiteStream::collect_jobs() {
         }
     }
     done.clear();
-    pool.collect(JobKind::NAV, done);
+    pool.collect(JobKind::NAV, done, world->get_lane());
     for (JobPool::Done &d : done) {
         NavPrepared *n = static_cast<NavPrepared *>(d.result.get());
         if (villages.count(n->site_index)) {
@@ -278,7 +296,7 @@ void SiteStream::refresh_cells(WorldVillage *p_village) {
     for (int c = 0; c < p_village->get_cell_count(); c++) {
         const double d = p_village->cell_distance_to(c, focus);
         const WorldVillage::CellState state = p_village->get_cell_state(c);
-        const uint64_t key = JobPool::key(JobKind::CELL, cell_id(index, c));
+        const uint64_t key = world->job_key(JobKind::CELL, cell_id(index, c));
         if (state == WorldVillage::CELL_PROXY && d <= detail_radius) {
             if (pool.submit(key, d, cell_job(p_village, c))) {
                 p_village->mark_preparing(c);
@@ -311,7 +329,7 @@ void SiteStream::refresh_folk(int p_index, WorldVillage *p_village, double p_dis
     }
     const auto nav = navs.find(p_index);
     if (nav == navs.end() || nav->second.layout_sig != layout_signature(p_village->get_settlement()->get_model())) {
-        world->get_pool().submit(JobPool::key(JobKind::NAV, uint64_t(p_index)), p_distance, nav_job(p_village));
+        world->get_pool().submit(world->job_key(JobKind::NAV, uint64_t(p_index)), p_distance, nav_job(p_village));
     }
 }
 
@@ -334,22 +352,26 @@ void SiteStream::refresh_villages() {
             refresh_folk(k, found->second, d);
         } else if (d <= village_radius) {
             if (!prepared.count(k)) {
-                pool.submit(JobPool::key(JobKind::VILLAGE, uint64_t(k)), d, village_job(k));
+                pool.submit(world->job_key(JobKind::VILLAGE, uint64_t(k)), d, village_job(k));
             }
         } else if (d > village_radius * hysteresis) {
             prepared.erase(k);
         }
     }
     // 排着的：走远了撤掉，近的往前排
-    pool.reprioritize(JobKind::VILLAGE, [this](uint64_t p_key) {
-        const double d = edge_distance(int(JobPool::id_of(p_key)));
-        return d > village_radius * hysteresis ? -1.0 : d;
-    });
-    pool.reprioritize(JobKind::CELL, [this](uint64_t p_key) {
-        const int index = int(JobPool::id_of(p_key) / 65536ull), cell = int(JobPool::id_of(p_key) % 65536ull);
-        const auto found = villages.find(index);
-        return found == villages.end() || cell >= found->second->get_cell_count() ? -1.0 : found->second->cell_distance_to(cell, focus);
-    });
+    pool.reprioritize(
+            JobKind::VILLAGE, [this](uint64_t p_key) {
+                const double d = edge_distance(int(JobPool::id_of(p_key)));
+                return d > village_radius * hysteresis ? -1.0 : d;
+            },
+            world->get_lane());
+    pool.reprioritize(
+            JobKind::CELL, [this](uint64_t p_key) {
+                const int index = int(JobPool::id_of(p_key) / 65536ull), cell = int(JobPool::id_of(p_key) % 65536ull);
+                const auto found = villages.find(index);
+                return found == villages.end() || cell >= found->second->get_cell_count() ? -1.0 : found->second->cell_distance_to(cell, focus);
+            },
+            world->get_lane());
 }
 
 void SiteStream::step(uint64_t p_deadline_usec) {
@@ -424,7 +446,7 @@ void SiteStream::ensure_near(const Vector3 &p_point) {
         WorldVillage *village = villages.count(k) ? villages[k] : build_village(k, prepare_now(k));
         for (int c = 0; c < village->get_cell_count(); c++) {
             if (village->cell_distance_to(c, focus) <= ENSURE_DETAIL_M) {
-                world->get_pool().cancel(JobPool::key(JobKind::CELL, cell_id(k, c)));
+                world->get_pool().cancel(world->job_key(JobKind::CELL, cell_id(k, c)));
                 village->mount_cell_now(c);
             }
         }

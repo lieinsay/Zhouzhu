@@ -59,7 +59,7 @@ void WorldVillage::_bind_methods() {
     ADD_SIGNAL(MethodInfo("rebuilt"));
 }
 
-void WorldVillage::setup(World *p_world, const SiteSettlement &p_site, uint64_t p_seed, const String &p_layout_path, Hinterland *p_hinterland, int p_index,
+void WorldVillage::setup(GroupWorld *p_world, const SiteSettlement &p_site, uint64_t p_seed, const String &p_layout_path, Hinterland *p_hinterland, int p_index,
         std::shared_ptr<VillagePrepared> p_prepared) {
     world = p_world;
     hinterland = p_hinterland;

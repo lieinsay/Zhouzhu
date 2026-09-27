@@ -79,17 +79,28 @@ struct RiverArrays : JobResult {
 // 摆放、碰撞在 ScatterStream 节点；散布物采空、长回的账（ScatterLedger）也在这里。
 // 后台任务池（job_pool.h）：地面块、水面块、散布块、村子与村民的备料都交给这一个池，按离焦点的远近先后做；
 // 做好的在主线程按每帧的时间预算由近及远挂上（挂一块只建节点：引擎的数组在后台就备好了）。
-// 加载完发 rebuilt（只一次）。节点须放在场景原点、不旋转不缩放：世界坐标即 World 的局部坐标。
-class World : public godot::Node3D, public GroundHost, public MapHost {
-    GDCLASS(World, godot::Node3D)
+// 加载完发 rebuilt（只一次）。
+//
+// 行星计划 P3：一个场景里可以有好几个岛群（GroupWorld 可以多实例，GroupStream 按距离建 / 拆）：
+//   任务池是场景里共用的那一个（PlanetJobs），这一群领一条通道（lane）；场景里没有 PlanetJobs 就自己开一个池（兼容原来的 World）。
+//   async_load：包在后台读、地形在后台建（GroupWorld 在任务池里一件 GROUP_LOAD 活），做完在主线程装上材质再发 rebuilt；否则 _ready 里同步读完。
+//   锚群（D7）放在场景原点、不转，世界坐标即局部坐标，带碰撞；邻群由 GroupStream 摆一个刚体变换（绕 y 转 + 水平平移：它的平面坐标换到锚群的平面坐标，
+//   在相机处取线性近似），地面块照样建碰撞体但撤出物理（physics_on = false）。剔除、自己按视锥剔都按全局变换算。
+// World（下面）是它的兼容名：场景里摆的、只有一个群的那种。
+class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
+    GDCLASS(GroupWorld, godot::Node3D)
 
     godot::String data_dir = "res://worlds/2051";
     godot::NodePath sites_path = "../SiteStream"; // 可以不接：那就没有码头与村落的实物，也靠不了岸
     godot::NodePath scatter_path = "../ScatterStream"; // 可以不接：那就没有地上的树、灌丛、石块
     int64_t terrain_seed = 2051;
     double split = 1.25; // 焦点到块的距离 < 块边长 × split 就细分
-    int build_threads = 4; // 后台任务池几条线程
+    int build_threads = 4; // 场景里没有 PlanetJobs 时，自己的任务池几条线程
     double retarget_distance = 12.0; // 焦点挪了这么远才重新选块
+    bool async_load = false; // 在后台载入（GroupStream 建的邻群）
+    bool loading = false; // 后台正在读
+    bool physics_on = true; // 锚群才有碰撞
+    int node_id = -1; // world.json 的 source.node（生成器的节点号）
 
     WorldGrid grid;
     WorldTerrain terrain;
@@ -149,12 +160,18 @@ class World : public godot::Node3D, public GroundHost, public MapHost {
     godot::Vector3 river_focus;
     bool river_targeted = false;
 
-    // 后台任务池；线程只读 terrain / layout / scatter（建好后不再变）。做好的地面块、水面块在这里排着等挂
-    JobPool pool;
+    // 后台任务池（共用的，这一群一条通道）；线程只读 terrain / layout / scatter（建好后不再变）。做好的地面块、水面块在这里排着等挂
+    std::shared_ptr<JobPool> pool;
+    int lane = 1;
+    godot::ObjectID jobs_id; // 领通道的 PlanetJobs（拆的时候还回去）
     std::vector<std::unique_ptr<TileArrays>> tile_ready;
     std::vector<std::unique_ptr<RiverArrays>> river_ready;
 
-    bool load();
+    void attach_pool();
+    // 读包、建地形与规划：只碰文件与纯 C++ 的数据，可以在后台线程里做（这时主线程不碰这些成员）
+    bool load_data(std::string &r_error);
+    // 主线程：材质、径流，然后 loaded
+    void install();
     JobPool::Work tile_job(const TileKey &p_key) const;
     JobPool::Work river_job(const RiverChunkKey &p_key) const;
     void retarget();
@@ -174,7 +191,7 @@ protected:
     static void _bind_methods();
 
 public:
-    ~World();
+    ~GroupWorld();
     void _ready() override;
     void _process(double p_delta) override;
 
@@ -245,8 +262,17 @@ public:
     const ResourceScatter &get_scatter() const { return scatter; }
     ScatterLedger &get_scatter_ledger() { return scatter_ledger; }
     const ScatterLedger &get_scatter_ledger() const { return scatter_ledger; }
-    // 后台任务池（散布、村子、村民的备料也交给它；优先级填离焦点多远，米）
-    JobPool &get_pool() { return pool; }
+    // 后台任务池（散布、村子、村民的备料也交给它；优先级填离焦点多远，米）。这一群的活都走自己的通道：键用 job_key，
+    // collect / cancel_kind / reprioritize 带 get_lane()
+    JobPool &get_pool() { return *pool; }
+    std::shared_ptr<JobPool> share_pool() const { return pool; }
+    int get_lane() const { return lane; }
+    uint64_t job_key(JobKind p_kind, uint64_t p_id) const { return JobPool::key(p_kind, p_id, lane); }
+    bool is_loading() const { return loading; }
+    int get_node_id() const { return node_id; }
+    // 锚群才有碰撞：关了地面块的碰撞体撤出物理（节点、形状都留着，开了立刻回来）
+    void set_physics_on(bool p_on);
+    bool is_physics_on() const { return physics_on; }
     SharedLooks &get_looks() { return looks; } // 岛群里各村共用的材质与网格
     static double clock_hours(); // 全局钟：从第 0 天子夜起的游戏钟头
     // 测试与调试：按采场号查一处采场 { index, kind, face, pile, item, name, grade, cap, stock（此刻）, island, reach, landing, built }；没落地返回空字典
@@ -319,10 +345,20 @@ public:
     double get_split() const { return split; }
     void set_build_threads(int p_value) { build_threads = p_value; }
     int get_build_threads() const { return build_threads; }
+    void set_async_load(bool p_value) { async_load = p_value; }
+    bool get_async_load() const { return async_load; }
     void set_river_radius(double p_value) { river_radius = p_value; }
     double get_river_radius() const { return river_radius; }
     void set_runoff_override(double p_value);
     double get_runoff_override() const { return runoff_override; }
+};
+
+// 兼容名：只有一个群的 GroupWorld（world_2051.tscn 里摆的那个、脚本里的 `as World`）。什么都不加。
+class World : public GroupWorld {
+    GDCLASS(World, GroupWorld)
+
+protected:
+    static void _bind_methods() {}
 };
 
 // 主线程计一段：构造时记下时刻，析构时把这段耗时记到 World 的分项计时上（p_world 为 nullptr 就不记）
@@ -332,7 +368,7 @@ class StreamTimer {
     uint64_t started;
 
 public:
-    StreamTimer(World *p_world, StreamChannel p_channel);
+    StreamTimer(GroupWorld *p_world, StreamChannel p_channel);
     ~StreamTimer();
     StreamTimer(const StreamTimer &) = delete;
     StreamTimer &operator=(const StreamTimer &) = delete;

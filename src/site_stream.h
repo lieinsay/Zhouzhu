@@ -43,7 +43,8 @@ class SiteStream : public godot::Node3D {
     double check_interval = 0.25;
     int mount_budget_usec = 3000; // 每帧最多花这么久挂村子、挂 / 拆细模、招村民
 
-    World *world = nullptr;
+    GroupWorld *world = nullptr;
+    godot::ObjectID world_id; // 拆的时候撤掉自己在它通道上排着的活（它可能先走）
     Hinterland *hinterland = nullptr;
     godot::Vector3 focus;
     bool has_focus = false;
@@ -81,6 +82,7 @@ class SiteStream : public godot::Node3D {
 
 protected:
     static void _bind_methods();
+    void _notification(int p_what);
 
 public:
     void _ready() override;

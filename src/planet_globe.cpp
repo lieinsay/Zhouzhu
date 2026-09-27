@@ -21,6 +21,7 @@
 #include "atmosphere.h"
 #include "far_groups.h"
 #include "job_pool.h"
+#include "planet_jobs.h"
 #include "planet_sky.h"
 #include "planet_surface.h"
 #include "planet_view.h"
@@ -182,11 +183,11 @@ void PlanetGlobe::_bind_methods() {
 
 void PlanetGlobe::_notification(int p_what) {
     if (p_what == NOTIFICATION_EXIT_TREE) {
-        if (World *w = world()) {
+        if (pool) {
             for (int f = 0; f < 6; f++) {
-                w->get_pool().cancel(face_key(f));
+                pool->cancel(face_key(f));
             }
-            w->get_pool().cancel(lut_key());
+            pool->cancel(lut_key());
         }
     }
 }
@@ -199,20 +200,18 @@ void PlanetGlobe::_ready() {
     set_process_priority(120); // PlanetView（100）、FarGroups（110）、Atmosphere 之后
 }
 
-World *PlanetGlobe::world() const {
-    return Object::cast_to<World>(ObjectDB::get_instance(world_id));
-}
-
 bool PlanetGlobe::setup() {
     view = Object::cast_to<PlanetView>(get_node_or_null(planet_path));
     atmosphere = Object::cast_to<Atmosphere>(get_node_or_null(atmosphere_path));
-    if (World *w = Object::cast_to<World>(get_node_or_null(map_path))) {
-        world_id = w->get_instance_id();
+    if (PlanetJobs *jobs = PlanetJobs::find(this)) {
+        pool = jobs->share_pool();
+    } else if (GroupWorld *w = Object::cast_to<GroupWorld>(get_node_or_null(map_path))) {
+        pool = w->share_pool();
     }
     if (FarGroups *fg = Object::cast_to<FarGroups>(get_node_or_null(far_groups_path))) {
         far_groups_id = fg->get_instance_id();
     }
-    if (!view || !view->is_active() || !atmosphere || !world()) {
+    if (!view || !view->is_active() || !atmosphere || !pool) {
         return false;
     }
     sky_mat = atmosphere->get_sky_material();
@@ -287,8 +286,7 @@ void PlanetGlobe::build_overlay() {
 }
 
 void PlanetGlobe::start_jobs() {
-    World *w = world();
-    if (!w || bake.started) {
+    if (!pool || bake.started) {
         return;
     }
     bake.started = true;
@@ -296,7 +294,7 @@ void PlanetGlobe::start_jobs() {
     bake.color.resize(6);
     bake.extra.resize(6);
     // 大气的两张表（几百毫秒，只算一次）
-    w->get_pool().submit(lut_key(), 0.0, []() -> std::unique_ptr<JobResult> {
+    pool->submit(lut_key(), 0.0, []() -> std::unique_ptr<JobResult> {
         std::unique_ptr<LutResult> out = std::make_unique<LutResult>();
         const auto t0 = std::chrono::steady_clock::now();
         const AtmosphereModel atmo;
@@ -306,16 +304,15 @@ void PlanetGlobe::start_jobs() {
         return out;
     });
     // 行星贴图：一次只交一面（一面要几百毫秒到一秒多，别把四条线程都占了，近处的地面块照样先做）；做完一面再交下一面（collect_jobs）
-    submit_face(w->get_pool(), view->share_planet(), surface_size, 0);
+    submit_face(*pool, view->share_planet(), surface_size, 0);
 }
 
 void PlanetGlobe::collect_jobs() {
-    World *w = world();
-    if (!w) {
+    if (!pool) {
         return;
     }
     std::vector<JobPool::Done> done;
-    w->get_pool().collect(JobKind::PLANET, done);
+    pool->collect(JobKind::PLANET, done);
     for (JobPool::Done &d : done) {
         if (JobPool::id_of(d.key) == 100) {
             const LutResult *r = static_cast<const LutResult *>(d.result.get());
@@ -335,7 +332,7 @@ void PlanetGlobe::collect_jobs() {
         bake.land_km2 += r->stats.land_km2;
         bake.faces_done++;
         if (r->face + 1 < 6) {
-            submit_face(w->get_pool(), view->share_planet(), surface_size, r->face + 1);
+            submit_face(*pool, view->share_planet(), surface_size, r->face + 1);
         }
     }
     if (bake.faces_done == 6 && !bake.uploaded) {
@@ -386,7 +383,7 @@ void PlanetGlobe::push_textures() {
 }
 
 void PlanetGlobe::_process(double /* p_delta */) {
-    if (!view || !view->is_active() || !world()) {
+    if (!view || !view->is_active() || !pool) {
         if (!setup()) {
             return;
         }

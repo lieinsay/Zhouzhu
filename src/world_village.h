@@ -64,7 +64,7 @@ public:
     };
 
 private:
-    World *world = nullptr;
+    GroupWorld *world = nullptr;
     SiteSettlement site;
     uint64_t seed = 1;
     godot::String layout_path; // 布置模式的改动存在哪
@@ -102,7 +102,7 @@ public:
 
     // 进树之前调；p_layout_path 是布置模式改动的文件（可以还不存在）；p_hinterland 是远处账房（可以为 nullptr），p_index 是账号；
     // p_prepared 是后台备好的料（nullptr 就在进树时当场备）
-    void setup(World *p_world, const SiteSettlement &p_site, uint64_t p_seed, const godot::String &p_layout_path, Hinterland *p_hinterland = nullptr, int p_index = -1,
+    void setup(GroupWorld *p_world, const SiteSettlement &p_site, uint64_t p_seed, const godot::String &p_layout_path, Hinterland *p_hinterland = nullptr, int p_index = -1,
             std::shared_ptr<VillagePrepared> p_prepared = nullptr);
     void _ready() override;
 
