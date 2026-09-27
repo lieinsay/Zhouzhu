@@ -2193,7 +2193,7 @@
     {
       "id": "planet-view",
       "label": "PlanetView 行星的画面",
-      "detail": "一个场景一个（world_2051）：读行星包、锚定地图的岛群，每帧按相机双精度算 c、R_c、δ(c) 设全局参数，算相机的经纬度、远处各群的刚体摆放（群心相对相机），设远近平面；离场景时关弯曲。给脚本的画面 ↔ 平面、经纬度、方位、某群主峰在画面上的位置。",
+      "detail": "每帧按相机（轨道相机给双精度的位置）用双精度算 c、R_c、δ(c)、相机的经纬度与行星系的局部系，设 planet_curve_* 全局参数；远处的群按双精度摆刚体变换；远近平面与压法随相机的高（P2）。",
       "tag": "场景角色",
       "evidence": "dev_tools_e2e 在 50 km 高空锚定、经纬度对；planet_shots 全组",
       "sources": [
@@ -2251,6 +2251,115 @@
         "game/tools/planet_shots.tscn"
       ],
       "since": "e68"
+    },
+    {
+      "id": "planet-view-near-far",
+      "label": "远近平面随高度",
+      "detail": "CurveSqueeze::at_height：30 km 以下 10 km / 26 km（P1），往上 keep = 10 km + 2 ×（高 − 30 km）、limit = 2.6 × keep；远平面 ≥ 1.1 × limit，近平面 ≥ 远平面 / 1.2e6。两万公里高时看得见的都不压，几百米的起伏单精度分得开。",
+      "tag": "场景角色",
+      "evidence": "单测：两万公里处相隔 100 m 压过后差 50 m 以上；锚群网格单精度方向误差 1.2e-7 rad",
+      "sources": [
+        "src/planet_view.cpp",
+        "src/planet_frame.cpp",
+        "game/shaders/planet_curve.gdshaderinc"
+      ],
+      "since": "e69",
+      "parent": "planet-view"
+    },
+    {
+      "id": "planet-sky-luts",
+      "label": "大气的两张表",
+      "detail": "Hillaire 2020：透过率表 256×64（Bruneton 参数化）与多次散射表 32×32，CPU 算一次；行星系里的日月（钟点按参考经度）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测：参数化往返 < 1e-6、查表与直接积分差 < 0.01、地平线以下 0、日月与 almanac 各地一致；Release 两表 70 ms",
+      "sources": [
+        "src/planet_sky.h",
+        "src/planet_sky.cpp"
+      ],
+      "since": "e69"
+    },
+    {
+      "id": "planet-surface-bake",
+      "label": "行星贴图",
+      "detail": "立方体六面（atan 拉匀）从粗版按双线性的权撒陆地面积：预乘份额的地表色、高、按地表类撒的人口灯、林与会枯黄的份额；没有粗版的群画替身；自己压 BC3。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "单测：映射往返 1e-12、立体角加起来 4π、陆地 2.51e7 km²、2051 那格是陆地、替身面积、BC3 往返；Release 一面 2048² 446 ms",
+      "sources": [
+        "src/planet_surface.h",
+        "src/planet_surface.cpp"
+      ],
+      "since": "e69"
+    },
+    {
+      "id": "planet-globe",
+      "label": "PlanetGlobe 整颗行星",
+      "detail": "后台一面一面烘行星贴图（颜色 2048²、缓变 1024²，BC3）、算大气表，1° 场与带界做成纹理；每帧设相机局部系到行星系、日月、带界北移、G 定点永暴、锚群；20–60 km 天上换成大气散射、30–60 km 云带顶网格淡出；地面点离锚群 600 km 外把锚群的网格藏起来。",
+      "tag": "场景角色",
+      "evidence": "dev_tools_e2e：三千公里高行星 1.00、云带顶网格 0、叠画开着；Debug 后台 7.5 s 烘完",
+      "sources": [
+        "src/planet_globe.h",
+        "src/planet_globe.cpp"
+      ],
+      "since": "e69"
+    },
+    {
+      "id": "planet-sky-shader",
+      "label": "整颗行星与大气（着色器）",
+      "detail": "逐像素按视线与同心球面求交：海面 −5.6 km、云带壳 −3.8 km（缝与白礁）、贴图岛群（季相、积雪、夜里的灯）；沿视线步进单次散射 + 多次散射表；+2.8 km 的行星云层（气候场 × 顺风两相噪声 × 带界、G 的漩涡）；星空、日面、月相。",
+      "tag": "着色器",
+      "evidence": "planet_shots 轨道 28 张自己看过：赤道永暴带、G 漩涡、晨昏线、夜里的灯",
+      "sources": [
+        "game/shaders/planet_sky.gdshaderinc",
+        "game/shaders/sky.gdshader"
+      ],
+      "since": "e69"
+    },
+    {
+      "id": "planet-cloud-overlay",
+      "label": "云层叠画",
+      "detail": "相机升过 +2.8 km 后一张盖满屏幕的透明片：读场景深度（压过的距离还原），画在网格前面的云；高空的空气透视；给锚群与远处岛群的网格补夜里的灯。",
+      "tag": "着色器",
+      "evidence": "planet_shots 20 km–2 万公里",
+      "sources": [
+        "game/shaders/planet_overlay.gdshader"
+      ],
+      "since": "e69"
+    },
+    {
+      "id": "orbit-camera",
+      "label": "轨道相机（F7）",
+      "detail": "从当前相机起飞，经纬度、高、航向俯仰双精度；WASD 沿大圆、空格 / Ctrl / 滚轮按离地高成倍升降，Esc 落回人身上；脚本能直接摆。",
+      "tag": "场景角色",
+      "evidence": "dev_tools_e2e：F7 接过相机、滚轮十格 ×13.8、空格 3 s 到三千公里、Esc 落回",
+      "sources": [
+        "src/orbit_camera.h",
+        "src/orbit_camera.cpp",
+        "src/dev_tools.cpp"
+      ],
+      "since": "e69"
+    },
+    {
+      "id": "atmosphere-high-altitude",
+      "label": "高空的天与光",
+      "detail": "above_clouds：相机升过 2.8 km 的云层后阴沉、雨雾、闪电、云遮日、雨雪粒子都按它退掉；space_blend（PlanetGlobe 给）淡掉 fog_sky_affect；天气按对流层顶（11 km）以下取，HUD 11 km 以上「高空 −38°C」、100 km 以上「太空，没有天气」。",
+      "tag": "场景角色",
+      "evidence": "dev_tools_e2e：50 km 高 HUD「暖季一 · 高空 -38°C」",
+      "sources": [
+        "src/atmosphere.cpp"
+      ],
+      "since": "e70",
+      "parent": "atmosphere"
+    },
+    {
+      "id": "planet-shots-orbit",
+      "label": "轨道序列",
+      "detail": "OrbitCamera 摆在邑治的村口上空：2 m、200 m、2 km、20 km、200 km、2,000 km、20,000 km × 10 点 / 日落 / 23 点，外加 45 km 的交叉淡化、正对赤道、G 定点永暴、晨昏线、夜里的灯、白天的岛群、清早的地平线。",
+      "tag": "工具",
+      "sources": [
+        "game/tools/planet_shots.gd"
+      ],
+      "since": "e71",
+      "parent": "planet-shots"
     }
   ],
   "edges": [
@@ -4876,6 +4985,150 @@
       "chains": [
         "planet"
       ]
+    },
+    {
+      "from": "planet-view-near-far",
+      "to": "planet-frame-squeeze",
+      "label": "keep / limit",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-surface-bake",
+      "to": "planet-data",
+      "label": "粗版、人口",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "planet-surface-bake",
+      "label": "六面",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "planet-sky-luts",
+      "label": "两张表、日月",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "job-pool",
+      "label": "后台烘",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "planet-view",
+      "label": "相机的局部系",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "planet-sky-shader",
+      "label": "参数、贴图",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "planet-cloud-overlay",
+      "label": "参数",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "cloud-deck",
+      "label": "淡出",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-globe",
+      "to": "atmosphere",
+      "label": "天上换成散射多少",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-cloud-overlay",
+      "to": "planet-sky-shader",
+      "label": "共用的式子",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-sky-shader",
+      "to": "weather-shaders",
+      "label": "云团噪声、门槛",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "orbit-camera",
+      "to": "planet-view",
+      "label": "双精度的位置",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "dev-tools-node",
+      "to": "orbit-camera",
+      "label": "F7 / Esc",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "atmosphere-high-altitude",
+      "to": "planet-view",
+      "label": "相机的高",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-shots-orbit",
+      "to": "orbit-camera",
+      "label": "摆相机",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-shots-orbit",
+      "to": "planet-globe",
+      "label": "等贴图烘好",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "stream-perf",
+      "to": "orbit-camera",
+      "label": "--orbit 升降",
+      "chains": [
+        "planet"
+      ]
     }
   ],
   "chains": [
@@ -6347,11 +6600,11 @@
     },
     {
       "id": "planet",
-      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外）",
-      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。",
+      "title": "行星计划：生成器出数据、游戏实时生成，渲染整颗行星（P0 行星数据与坐标地基、P1 地平线外、P2 上到轨道）",
+      "story": "开发者把生成器的整颗行星导进游戏：8000 个岛群的属性、风与气候的场、每个岛群远处看的粗版都在一个包里，一套坐标把每个岛群的平面放上真球面。玩家站在岛群 2051 里，地平线是弯的，远处的山沉下去，两百公里外邻群的山从云海上冒出来；升到几十公里高，看得见周围一圈岛群浮在弯弯的云带上，晨昏时它们朝着太阳的一面被照亮，冬天山头积雪；近处的一切与原来一样。开发者按 F7 从村口一路升到两万公里：天慢慢变暗、地平线弯成一道镶着蓝边的弧，整颗海洋星球盖着云带、缝里露出海，赤道一条永暴带、西北方一个漩涡，岛群像撒在云上的碎点，夜里亮着灯；再一路落回村口，画面和起飞前一样。",
       "date": "2026-09-27",
       "color": "#e5536b",
-      "commits": "a769ef7..db3b0c8",
+      "commits": "a769ef7..98896ca",
       "steps": [
         {
           "text": "生成器第三层：邻群按等效半径分界、各退半道缝，越界的群才重摆",
@@ -6439,6 +6692,66 @@
             "planet-data",
             "planet-frame"
           ]
+        },
+        {
+          "text": "按 F7 从村口起飞：轨道相机接过相机，经纬度与高都用双精度记着，按离地多高成倍地升降、沿大圆平飞",
+          "nodes": [
+            "orbit-camera",
+            "dev-tools-node",
+            "planet-view"
+          ]
+        },
+        {
+          "text": "越往上远近平面与压法跟着放大，两万公里高时起伏照样分得开",
+          "nodes": [
+            "planet-view-near-far",
+            "planet-frame-squeeze",
+            "planet-view"
+          ]
+        },
+        {
+          "text": "开局后台一面一面烘好行星贴图（地表色、灯、季相份额，压 BC3）、算好大气的两张表",
+          "nodes": [
+            "planet-globe",
+            "planet-surface-bake",
+            "planet-sky-luts",
+            "job-pool",
+            "planet-data"
+          ]
+        },
+        {
+          "text": "升过云层：云画在地面前面、天不再阴不下雨，HUD 报高空；20–60 km 天上换成大气散射、云带顶网格淡出，地平线以下是整颗星",
+          "nodes": [
+            "planet-cloud-overlay",
+            "atmosphere-high-altitude",
+            "planet-globe",
+            "cloud-deck",
+            "planet-sky-shader",
+            "atmosphere"
+          ]
+        },
+        {
+          "text": "轨道上看：海与云带壳的缝、贴图里的岛群与夜里的灯、行星云层的赤道永暴带与 G 漩涡、晨昏线与蓝晕、星空日月",
+          "nodes": [
+            "planet-sky-shader",
+            "planet-globe",
+            "weather-shaders",
+            "far-groups"
+          ]
+        },
+        {
+          "text": "飞远了锚群的网格藏起来由贴图接手；Esc 落回人身上，村口与起飞前一样",
+          "nodes": [
+            "planet-globe",
+            "orbit-camera"
+          ]
+        },
+        {
+          "text": "planet_shots 拍 2 m 到两万公里的轨道序列，stream_perf 量升落的帧时",
+          "nodes": [
+            "planet-shots-orbit",
+            "stream-perf"
+          ]
         }
       ],
       "nodes": [
@@ -6463,7 +6776,19 @@
         "planet-shots",
         "planet-frame-squeeze",
         "atmosphere",
-        "player-god-altitude"
+        "player-god-altitude",
+        "planet-view-near-far",
+        "planet-surface-bake",
+        "planet-globe",
+        "planet-sky-luts",
+        "planet-sky-shader",
+        "planet-cloud-overlay",
+        "weather-shaders",
+        "orbit-camera",
+        "dev-tools-node",
+        "atmosphere-high-altitude",
+        "planet-shots-orbit",
+        "stream-perf"
       ]
     }
   ],
@@ -8460,6 +8785,78 @@
           "far-groups",
           "planet-shots"
         ]
+      }
+    },
+    {
+      "id": "e69",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P2：上到轨道——远近平面与压法随相机的高",
+      "summary": "相机高过 30 km 起「不压」的一段按 2 ×（高 − 30 km）放大、远平面跟着放大、近平面按远平面的 1/1.2e6；轨道相机给双精度的位置。",
+      "commits": "90db0b0..c34eb50",
+      "nodes": [
+        "planet-view",
+        "planet-view-near-far",
+        "planet-sky-luts",
+        "planet-surface-bake",
+        "planet-globe",
+        "planet-sky-shader",
+        "planet-cloud-overlay",
+        "orbit-camera"
+      ],
+      "info": {
+        "node": "planet-view",
+        "children": [
+          "planet-view-near-far"
+        ],
+        "adopted": [],
+        "peers": [
+          "planet-sky-luts",
+          "planet-surface-bake",
+          "planet-globe",
+          "planet-sky-shader",
+          "planet-cloud-overlay",
+          "orbit-camera"
+        ]
+      }
+    },
+    {
+      "id": "e70",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P2：高空的天与光",
+      "summary": "升过天气云层不阴、不被云遮、不下雨雪；引擎蒙在天空上的雾高空淡掉；对流层顶以上 HUD 报「高空」，100 km 以上报太空。",
+      "commits": "1b164f2",
+      "nodes": [
+        "atmosphere",
+        "atmosphere-high-altitude"
+      ],
+      "info": {
+        "node": "atmosphere",
+        "children": [
+          "atmosphere-high-altitude"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e71",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：行星计划 P2：轨道序列与升降实测",
+      "summary": "planet_shots 加轨道相机的 2 m → 2 万公里 × 白天 / 晨昏 / 夜里，外加赤道、G 漩涡、晨昏线、夜里的灯；stream_perf --orbit 升降各 60 s 量帧时、落回前后各拍一张。",
+      "nodes": [
+        "planet-shots",
+        "planet-shots-orbit"
+      ],
+      "info": {
+        "node": "planet-shots",
+        "children": [
+          "planet-shots-orbit"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
