@@ -82,7 +82,7 @@ vec3 planet_sky_physical(vec3 dir, float r0, float jitter, out float hit) {
 	col += vec3(0.9, 0.93, 1.0) * star * T * (1.0 - smoothstep(0.01, 0.12, sky_lum)) * (1.0 - glare);
 	float sd = dot(dir, sun_l);
 	col += vec3(1.0, 0.96, 0.9) * smoothstep(0.999986, 0.999992, sd) * 40.0 * T;
-	col += vec3(1.0, 0.92, 0.8) * pow(max(sd, 0.0), 800.0) * 1.5 * T;
+	col += vec3(1.0, 0.92, 0.8) * (pow(max(sd, 0.0), 6000.0) * 3.0 + pow(max(sd, 0.0), 300.0) * 0.08) * T;
 	// 月亮：按日月的方向算哪半边亮（月相），暗的那半边有一点地照
 	float md = dot(dir, moon_l);
 	float rho = 0.0095; // 月面的角半径（比真的大一点，看得清月相）

@@ -454,7 +454,7 @@ bool planet_surface(float r0, vec3 d, vec3 sun_l, out vec3 color, out float t_hi
 		// 夜里的灯：按人口的密度，撒成一点一点（村、镇）；远处一像素盖几公里时取平均
 		vec3 qn = normalize(planet_axes * (vec3(0.0, r0, 0.0) + d * t_isl));
 		float foot = t_isl * planet_pixel;
-		float sparkle = mix(smoothstep(0.58, 0.82, pn_value3(qn * 2600.0)) * 2.2, 0.55, smoothstep(800.0, 4000.0, foot));
+		float sparkle = mix(smoothstep(0.5, 0.8, pn_value3(qn * 2600.0)) * smoothstep(0.72, 0.9, pn_value3(qn * 21000.0)) * 6.0, 0.55, smoothstep(300.0, 3000.0, foot));
 		isl_col = island * lit + vec3(1.0, 0.7, 0.36) * isl_light * isl_light * sparkle * night * 2.6;
 	}
 	if (t_band > 0.0) {
@@ -478,7 +478,7 @@ vec3 planet_night_lights(vec3 pn, vec3 up_l, vec3 sun_l, float foot) {
 	vec3 cu = planet_cube_uv(pn);
 	float lod = log2(max(1.0, foot * float(textureSize(planet_surface_extra, 0).x) / (4890.0 * 2048.0)));
 	float light = textureLod(planet_surface_extra, cu, lod).g;
-	float sparkle = mix(smoothstep(0.58, 0.82, pn_value3(pn * 2600.0)) * 2.2, 0.55, smoothstep(800.0, 4000.0, foot));
+	float sparkle = mix(smoothstep(0.5, 0.8, pn_value3(pn * 2600.0)) * smoothstep(0.72, 0.9, pn_value3(pn * 21000.0)) * 6.0, 0.55, smoothstep(300.0, 3000.0, foot));
 	return vec3(1.0, 0.7, 0.36) * light * light * sparkle * night * 2.6;
 }
 

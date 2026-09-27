@@ -109,7 +109,7 @@ void fragment() {
 	if (!sky_pixel && planet_cam_h > 3000.0) {
 		vec3 Xs = vec3(0.0, r0, 0.0) + dir * t_scene;
 		vec3 up_s = Xs / length(Xs);
-		lights = planet_night_lights(normalize(planet_axes * Xs), up_s, sun_l, t_scene * planet_pixel) * smoothstep(3000.0, 20000.0, planet_cam_h);
+		lights = planet_night_lights(normalize(planet_axes * Xs), up_s, sun_l, t_scene * planet_pixel) * smoothstep(30000.0, 120000.0, planet_cam_h); // 近看贴图的人口对不上真的村子：高过一百公里才补
 	}
 	if (sky_pixel) {
 		// 天空的像素（背后是天空着色器画的行星）：云带着它自己那一段空气盖上去
