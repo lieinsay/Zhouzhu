@@ -185,6 +185,8 @@ FarGroupMesh build_far_group_mesh(const PlanetLod &p_lod, double p_radius, const
         b.shore = std::max(1.0, max_shore[size_t(i)]);
         b.keel = std::max(li.keel_m, p_rules.keel_k * std::pow(b.shore, p_rules.keel_exp));
         b.wall = std::max(p_rules.cliff_m, std::clamp(p_rules.wall_share * b.keel, p_rules.wall_min_m, p_rules.wall_max_m));
+        // 浮高计划 F3（同 island_body）：岛底连岩棱不低于 bottom_min_y，超了收短龙骨、崖壁不动
+        b.keel = std::min(b.keel, std::max(0.0, (b.rim - b.wall - p_rules.underside_amp_m - p_rules.bottom_min_y) / (1.0 + p_rules.rib_share)));
     }
     auto body_of = [&](size_t k) -> const Body & { return bodies[size_t(std::clamp(isl[k], 0, std::max(0, n_isl - 1)))]; };
     std::vector<double> bottom(NC, 0.0);

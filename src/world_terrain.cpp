@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "planet_frame.h"
+
 namespace {
 
 // 地表类（world.json landcover.classes 的下标）→ 细节噪声幅度（米）
@@ -41,7 +43,8 @@ constexpr int ZONE_CLASSES = int(sizeof(ZONE_GAIN) / sizeof(ZONE_GAIN[0]));
 constexpr double RIDGE_FEATURE_M = 700.0;
 constexpr double UNDERSIDE_AMP_M = 8.0;
 constexpr double UNDERSIDE_FEATURE_M = 160.0;
-// 岛体：龙骨深 = KEEL_K · R^KEEL_EXP（R = 最深岸距，米）；崖壁 = 龙骨的 WALL_SHARE，夹在 WALL_MIN..WALL_MAX
+// 岛体：龙骨深 = KEEL_K · R^KEEL_EXP（R = 最深岸距，米）；崖壁 = 龙骨的 WALL_SHARE，夹在 WALL_MIN..WALL_MAX；
+// 龙骨再按岛底最低 VerticalDatum::ISLAND_BOTTOM_MIN_Y 收短（浮高计划 F3）
 constexpr double KEEL_K = 25.0, KEEL_EXP = 0.5;
 constexpr double WALL_SHARE = 0.12, WALL_MIN_M = 30.0, WALL_MAX_M = 160.0;
 // 岛底的岩棱：幅度 = 龙骨深 × 这个份额（崖脚处收到零），几百米一道
@@ -66,7 +69,14 @@ IslandBody island_body(const WorldIsland &p_island) {
     IslandBody b;
     b.keel_m = std::max(p_island.keel_m, KEEL_K * std::pow(std::max(1.0, p_island.max_shore_m), KEEL_EXP));
     b.wall_m = std::max(p_island.cliff_m, std::clamp(WALL_SHARE * b.keel_m, WALL_MIN_M, WALL_MAX_M));
+    // 浮高计划 F3：岛底连岩棱（龙骨的 RIB_SHARE）与起伏（UNDERSIDE_AMP_M）的最深处不低于云带顶之上 1000 m——超了收短龙骨，崖壁照未收短的龙骨定（不变）
+    const double room = p_island.rim_m - b.wall_m - UNDERSIDE_AMP_M - VerticalDatum::ISLAND_BOTTOM_MIN_Y;
+    b.keel_m = std::min(b.keel_m, std::max(0.0, room / (1.0 + RIB_SHARE)));
     return b;
+}
+
+double island_lowest(const WorldIsland &p_island, const IslandBody &p_body) {
+    return p_island.rim_m - p_body.wall_m - p_body.keel_m * (1.0 + RIB_SHARE) - UNDERSIDE_AMP_M;
 }
 
 WorldTerrain::WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIsland> &p_islands, uint64_t p_seed, const RiverRules &p_river_rules) :
@@ -107,8 +117,7 @@ const IslandBody &WorldTerrain::island_body_of(int p_id) const {
 double WorldTerrain::lowest_bottom() const {
     double low = 1e18;
     for (size_t k = 0; k < islands.size(); k++) {
-        const IslandBody &b = bodies[k];
-        low = std::min(low, islands[k].rim_m - b.wall_m - b.keel_m * (1.0 + RIB_SHARE) - UNDERSIDE_AMP_M);
+        low = std::min(low, island_lowest(islands[k], bodies[k]));
     }
     return islands.empty() ? 0.0 : low;
 }

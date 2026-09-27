@@ -29,7 +29,7 @@ struct WorldIsland {
     int id = 0;
     double rim_m = 0.0; // 岸缘高
     double cliff_m = 20.0; // 生成器的崖高（岸缘到岛底边）
-    double keel_m = 100.0; // 生成器的龙骨：岛底最深处在崖脚之下多少（2051 的数恰好让最深处落在云带顶上）
+    double keel_m = 100.0; // 生成器的龙骨：岛底最深处在崖脚之下多少（生成器那一层是薄片，游戏的岛体只拿它作下限）
     double max_shore_m = 1000.0; // 岛上最深的岸距
 };
 
@@ -37,12 +37,16 @@ struct WorldIsland {
 // 游戏按「浮山」画——岸缘下先是一段竖直的崖壁，再往下收成倒锥，龙骨深随岛的尺度长（最深岸距 R 米：25·√R，
 // 主岛 R 17 km → 约 3.3 km；15 km² 的岛 R 1.9 km → 约 1.1 km；0.3 km² 的小礁 R 250 m → 约 400 m，小岛看着像一块倒悬的山石）。
 // 生成器的崖高 / 龙骨只作下限。
-// 岛底最深处落到云带顶（y = 0）以下，所以云海要放在所有岛底之下（world_2051.tscn 的 CloudSea）。
+// 岛底最深处落到 y = 0 以下几千米；浮高计划 F3：岛底（连岩棱与起伏的最深处，island_lowest）至少高出云带顶 1000 m
+// （VerticalDatum::ISLAND_BOTTOM_MIN_Y = −4000 m），超了就把龙骨收短、崖壁不动——大岛（最深岸距三四十公里）的龙骨照 25·√R 要垂到云带里。
+// 远处岛群的低模（far_group_mesh）照抄这几条式子。
 struct IslandBody {
     double wall_m = 0.0; // 岸缘下竖直崖壁的高
-    double keel_m = 0.0; // 崖脚之下倒锥还垂多深（最深处 = 岸缘 − wall − keel）
+    double keel_m = 0.0; // 崖脚之下倒锥还垂多深（岛心 = 岸缘 − wall − keel，岩棱再垂 7%）
 };
 IslandBody island_body(const WorldIsland &p_island);
+// 这座岛的岛底最深能到哪（岩棱、起伏都取最坏的一面）：夹过龙骨之后不低于 VerticalDatum::ISLAND_BOTTOM_MIN_Y
+double island_lowest(const WorldIsland &p_island, const IslandBody &p_body);
 
 struct TerrainSample {
     bool land = false;
