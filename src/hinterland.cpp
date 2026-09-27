@@ -125,6 +125,14 @@ void Hinterland::install(int p_index, WorldLedger &&p_ledger) {
             for (const HeldPlot &h : p_ledger.state->held) {
                 taken->add(h.i, h.j);
             }
+            // 离开超过一天：只补最后一天，前面的视为按汇总过了（钟直接挪到一天前）
+            if (const WorldClock *clock = WorldClock::get_singleton()) {
+                const double resume = resume_clock(p_ledger.state->clock, clock->get_seconds(), clock->get_rules().day_seconds);
+                if (resume > p_ledger.state->clock) {
+                    skipped_hours += game_hours(resume - p_ledger.state->clock, clock->get_rules());
+                    p_ledger.state->clock = resume;
+                }
+            }
             restored++;
         } else {
             ERR_PRINT(String(U"Hinterland：存下的账读不回来（") + String::utf8(error.c_str()) + String(U"），这一处重新开账"));

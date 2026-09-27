@@ -4128,6 +4128,15 @@ void test_job_pool() {
     }
 }
 
+// 模拟分级（行星计划 P3）：离开了一阵的账从哪一刻接着结
+void test_resume_clock() {
+    const double day = 2400.0;
+    check(resume_clock(1000.0, 1500.0, day) == 1000.0, "离开半个钟头：从存下的那一刻接着结");
+    check(resume_clock(1000.0, 1000.0 + day, day) == 1000.0, "离开正好一天：整天都补");
+    check(resume_clock(1000.0, 1000.0 + 26.0 / 24.0 * day, day) == 1000.0 + 2.0 / 24.0 * day, "离开 26 个钟头：只补最后 24 个钟头（跳过两个钟头）");
+    check(resume_clock(5000.0, 4000.0, day) == 5000.0, "账比钟还新（不该有）：不往回挪");
+}
+
 // 每个三角面的几何法线（Godot：正面顺时针，n = (v0 − v2) × (v0 − v1)）与记下的顶点法线同向
 bool winding_ok(const MeshPart &p_part) {
     for (size_t t = 0; t + 2 < p_part.indices.size(); t += 3) {
@@ -5402,6 +5411,7 @@ int main() {
     test_weather_model();
     test_local_season();
     test_job_pool();
+    test_resume_clock();
     test_stream_meter();
     test_building_mesh();
     test_noise();

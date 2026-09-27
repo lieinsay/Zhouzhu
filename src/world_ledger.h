@@ -47,3 +47,7 @@ void settle_world_ledger(WorldLedger &r_ledger, const FarmModel &p_land, ClaimRe
         const SeasonView *p_season = nullptr);
 // 村心的地面高（时令按它取气温）
 double world_ledger_height(const WorldLedger &p_ledger);
+
+// 模拟分级（行星计划 P3，docs/PLAN-PLANET.md 第 4.6 节）：岛群降回近景时村子的账存成文本留在内存，回来时照文本补回、从这一刻接着结——
+// 离开超过 p_max_seconds（1 个游戏日）的只补最后那一段，前面的视为按汇总过了（钟直接挪过去）。农田里的地同一个规矩
+double resume_clock(double p_saved_clock, double p_now, double p_max_seconds);

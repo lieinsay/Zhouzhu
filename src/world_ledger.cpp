@@ -1,5 +1,6 @@
 #include "world_ledger.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "freight.h"
@@ -44,6 +45,10 @@ WorldLedger open_world_ledger(const WorldTerrain &p_terrain, const WorldLedgerSp
             store, p_spec.now);
     out.state->arable = std::move(arable);
     return out;
+}
+
+double resume_clock(double p_saved_clock, double p_now, double p_max_seconds) {
+    return std::max(p_saved_clock, p_now - std::max(0.0, p_max_seconds));
 }
 
 double world_ledger_height(const WorldLedger &p_ledger) {

@@ -1,5 +1,7 @@
 #include "farm.h"
 
+#include "world_ledger.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -341,7 +343,7 @@ void Farm::restore_plots(const std::vector<std::pair<uint64_t, Plot>> &p_entries
     // 下一个物理帧按「存下时 → 此刻」长（Farm::_physics_process 按 clock_seen 算走过的钟头）
     const WorldClock *clock = WorldClock::get_singleton();
     if (clock && p_saved_at >= 0.0) {
-        clock_seen = p_saved_at;
+        clock_seen = resume_clock(p_saved_at, clock->get_seconds(), clock->get_rules().day_seconds); // 离开超过一天的只补最后一天（同村子的账）
     }
 }
 

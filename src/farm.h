@@ -102,7 +102,7 @@ public:
 
     // 给同在 C++ 里的上层读（村民据此挑地；动地仍走 perform，好让地块重画）
     const FarmModel &get_model() const { return model; }
-    // 岛群远了拆掉前存下的地块表放回来（行星计划 P3）：画出来，从 p_saved_at（钟的秒）起接着长
+    // 岛群远了拆掉前存下的地块表放回来（行星计划 P3）：画出来，从 p_saved_at（钟的秒）起接着长——离开超过一天的只补最后一天
     void restore_plots(const std::vector<std::pair<uint64_t, Plot>> &p_entries, double p_saved_at);
     // 村子走远 / 走近时整块搬地（收回、展开）：直接改模型，改完调 refresh_cells 重画那些格
     FarmModel &edit_model() { return model; }
