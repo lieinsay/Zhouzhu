@@ -38,6 +38,10 @@ constexpr double INDOOR_REACH_M = 30.0; // 头顶这么高以内有东西就算�
 constexpr double INDOOR_CHECK_S = 0.25;
 constexpr double FOG_THIN_FROM_M = 2500.0; // 有行星数据时：相机高过这里，雾按 exp(−(高 − 2500) / 7000) 减淡（空气变稀）
 constexpr double FOG_THIN_SCALE_M = 7000.0;
+// 行星计划 P2：高空的气温。天气模型按直减率一路往上减（20 km 处 −90 °C 的量级）；对流层顶（零点以上 11 km）往上当平流层、气温不再降，
+// 100 km 往上是太空（HUD 不报天气）
+constexpr double TROPOPAUSE_M = 11000.0;
+constexpr double SPACE_M = 100000.0;
 
 double smooth01(double p_e0, double p_e1, double p_x) {
     const double t = std::clamp((p_x - p_e0) / (p_e1 - p_e0), 0.0, 1.0);
@@ -202,6 +206,7 @@ void Atmosphere::_ready() {
         base_fog = env->get_fog_density();
         base_fog_color = env->get_fog_light_color();
         base_ambient = env->get_ambient_light_energy();
+        base_fog_sky = env->get_fog_sky_affect();
     }
     if (sun) {
         base_sun = sun->get_param(Light3D::PARAM_ENERGY);
@@ -277,7 +282,7 @@ void Atmosphere::_process(double p_delta) {
         eye = last_eye; // 相机的位置坏了（NaN）：照上一帧的
     }
     update_override(p_delta);
-    now = wx->sample(day, eye.x, eye.z, eye.y);
+    now = wx->sample(day, eye.x, eye.z, std::min(double(eye.y), TROPOPAUSE_M));
     // 日月：有行星数据时按相机的经纬度（钟点是参考经度的地方时，D10），否则按这张图的纬度、钟点就是当地时
     CalendarRules rules = wx->calendar();
     const PlanetView *pv = PlanetView::active_view();
@@ -293,6 +298,8 @@ void Atmosphere::_process(double p_delta) {
     sun_state = sun_at(sun_day, rules);
     moon_state = moon_at(sun_day, rules);
     fog_thin = pv ? std::exp(-std::max(0.0, double(eye.y) - FOG_THIN_FROM_M) / FOG_THIN_SCALE_M) : 1.0;
+    // 行星计划 P2：相机升过天气云层，头顶就没有云了——天不再阴、日光不被云遮、不下雨雪（云在脚下，由 PlanetGlobe 的云层叠画画出来）
+    above_clouds = pv ? smooth01(cloud_height - 300.0, cloud_height + 300.0, double(eye.y)) : 0.0;
     update_look(eye, p_delta);
     update_lightning(p_delta);
     update_lights();
@@ -396,7 +403,7 @@ void Atmosphere::update_lightning(double p_delta) {
 void Atmosphere::update_lights() {
     const double s = sun_state.dir_y;
     const double day = smooth01(-0.12, 0.2, s);
-    const double cloud_dim = std::clamp(1.0 - 0.7 * look.cloud * (0.4 + 0.6 * look.cover) - 0.25 * look.overcast, 0.12, 1.0);
+    const double cloud_dim = std::clamp(1.0 - (0.7 * look.cloud * (0.4 + 0.6 * look.cover) + 0.25 * look.overcast) * (1.0 - above_clouds), 0.12, 1.0);
     if (sun) {
         const Vector3 d(real_t(sun_state.dir_x), real_t(sun_state.dir_y), real_t(sun_state.dir_z));
         const Vector3 up = std::abs(d.y) > 0.99f ? Vector3(0, 0, 1) : Vector3(0, 1, 0);
@@ -420,19 +427,23 @@ void Atmosphere::update_environment() {
     const double s = sun_state.dir_y;
     const double day = smooth01(-0.12, 0.2, s);
     const double dusk = smooth01(-0.22, -0.02, s) * (1.0 - smooth01(0.02, 0.32, s));
+    const double below = 1.0 - above_clouds;
+    const double overcast = look.overcast * below, haze = look.haze * below;
     if (env.is_valid()) {
         // 环境光：白天偏天蓝、夜里是暗蓝（看得见路）、晨昏带暖；阴天压暗；闪电一亮
         Color ambient = mix_color(Color(0.2f, 0.25f, 0.4f), Color(0.62f, 0.7f, 0.84f), day);
         ambient = mix_color(ambient, Color(0.85f, 0.62f, 0.5f), dusk * 0.35);
-        const double energy = base_ambient * (0.5 + 0.5 * day + 0.25 * dusk) * (1.0 - 0.3 * look.overcast) + flash * 1.2;
+        const double energy = base_ambient * (0.5 + 0.5 * day + 0.25 * dusk) * (1.0 - 0.3 * overcast) + flash * 1.2 * below;
         env->set_ambient_light_color(ambient);
         env->set_ambient_light_energy(real_t(energy));
         // 雾：晴天照场景原来的，雨雪天、雾里加浓；云海漫顶按雾顶起高度雾
         Color fog = mix_color(Color(0.05f, 0.07f, 0.11f), base_fog_color, day);
         fog = mix_color(fog, Color(0.9f, 0.62f, 0.45f), dusk * 0.4);
-        fog = mix_color(fog, Color(0.56f, 0.6f, 0.65f) * float(0.2 + 0.8 * day), look.overcast * 0.7);
+        fog = mix_color(fog, Color(0.56f, 0.6f, 0.65f) * float(0.2 + 0.8 * day), overcast * 0.7);
         env->set_fog_light_color(fog);
-        env->set_fog_density(real_t((base_fog + 0.0011 * look.haze + 0.012 * look.fog) * fog_thin));
+        // 引擎的雾按 fog_sky_affect 蒙在天空上（与雾的浓淡无关）：高空天上换成大气散射时跟着淡掉，太空是黑的
+        env->set_fog_sky_affect(real_t(base_fog_sky * (1.0 - space_blend)));
+        env->set_fog_density(real_t((base_fog + 0.0011 * haze + 0.012 * look.fog * below) * fog_thin));
         if (look.fog_height > 0.02 && now.fog_top > -1e8) {
             env->set_fog_height(real_t(now.fog_top));
             env->set_fog_height_density(real_t(0.02 * look.fog_height));
@@ -451,10 +462,10 @@ void Atmosphere::update_environment() {
         sky_material->set_shader_parameter("moon_lit", moon_state.illuminated);
         sky_material->set_shader_parameter("cloud_cover", look.cover);
         sky_material->set_shader_parameter("cover_grad", Vector2(real_t(look.grad_x), real_t(look.grad_z)));
-        sky_material->set_shader_parameter("overcast", look.overcast);
-        sky_material->set_shader_parameter("rain_haze", look.haze);
+        sky_material->set_shader_parameter("overcast", overcast);
+        sky_material->set_shader_parameter("rain_haze", haze);
         sky_material->set_shader_parameter("drift", Vector2(real_t(px), real_t(pz)));
-        sky_material->set_shader_parameter("flash", flash);
+        sky_material->set_shader_parameter("flash", flash * below);
     }
 }
 
@@ -494,7 +505,7 @@ void Atmosphere::update_globals(double p_day) {
 }
 
 void Atmosphere::update_particles(const Vector3 &p_eye, double p_delta) {
-    const double shelter = 1.0 - indoor;
+    const double shelter = (1.0 - indoor) * (1.0 - above_clouds); // 屋里、云层以上不下
     rain_ratio = precipitation ? std::clamp(look.precip * 1.5, 0.0, 1.0) * (1.0 - look.snow) * shelter : 0.0;
     snow_ratio = precipitation ? std::clamp(look.precip * 1.8, 0.0, 1.0) * look.snow * shelter : 0.0;
     const double bright = 0.15 + 0.85 * smooth01(-0.12, 0.2, sun_state.dir_y);
@@ -548,6 +559,9 @@ Dictionary Atmosphere::get_weather() const {
     d["has_data"] = wx->has_data();
     d["latitude"] = wx->calendar().latitude_deg;
     d["override"] = get_override();
+    // 相机在哪一层：0 对流层、1 高空（对流层顶以上，气温照对流层顶）、2 太空（100 km 以上）；云层以上多少（0..1）
+    d["altitude_band"] = last_eye.y >= SPACE_M ? 2 : (last_eye.y >= TROPOPAUSE_M ? 1 : 0);
+    d["above_clouds"] = above_clouds;
     return d;
 }
 
@@ -558,9 +572,18 @@ Dictionary Atmosphere::weather_at(const Vector3 &p_global) {
 String Atmosphere::hud_text(const Vector3 &p_global) {
     const WeatherModel *wx = model();
     const double day = calendar_day();
-    const WeatherSample s = wx->sample(day, p_global.x, p_global.z, p_global.y);
     const CalendarDate date = calendar_date(day, wx->calendar());
-    return String::utf8(wx->season_name(date.season).c_str()) + String(U" · ") + weather_view::short_text(s);
+    const String season = String::utf8(wx->season_name(date.season).c_str());
+    if (double(p_global.y) >= SPACE_M) {
+        return season + String(U" · 太空，没有天气");
+    }
+    if (double(p_global.y) >= TROPOPAUSE_M) {
+        // 对流层顶以上：气温照对流层顶的（平流层下部近乎不变），没有晴雨
+        const WeatherSample s = wx->sample(day, p_global.x, p_global.z, TROPOPAUSE_M);
+        return season + vformat(String(U" · 高空 %d°C"), int(std::lround(s.temp_c)));
+    }
+    const WeatherSample s = wx->sample(day, p_global.x, p_global.z, p_global.y);
+    return season + String(U" · ") + weather_view::short_text(s);
 }
 
 Vector2 Atmosphere::wind_at(const Vector3 &p_global) {

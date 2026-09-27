@@ -153,6 +153,8 @@ target_sources(
         src/far_groups.h
         src/planet_view.cpp
         src/planet_view.h
+        src/planet_globe.cpp
+        src/planet_globe.h
         src/dev_tools.cpp
         src/dev_tools.h
         src/dock_builder.cpp

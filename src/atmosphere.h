@@ -65,6 +65,9 @@ class Atmosphere : public godot::Node3D {
     double sun_latitude = 30.0, sun_longitude = 0.0, local_offset_h = 0.0;
     bool on_planet = false;
     double fog_thin = 1.0; // 高处的雾按空气变稀的倍数
+    double above_clouds = 0.0; // 相机升过天气云层多少（0..1，有行星数据时）：天不阴、日光不被遮、不下雨雪
+    double space_blend = 0.0; // 天上换成大气散射多少（PlanetGlobe 设）：引擎给天空蒙的雾跟着淡掉
+    double base_fog_sky = 0.2;
     SunState sun_state;
     MoonState moon_state;
     bool have_look = false;
@@ -129,6 +132,12 @@ public:
     void snap();
 
     const WeatherModel *get_model_const();
+    // 天空着色器的材质（PlanetGlobe 往上面设行星的参数；没有天空时是空的）
+    godot::Ref<godot::ShaderMaterial> get_sky_material() const { return sky_material; }
+    // 月亮亮着的份额、相机升过云层多少（行星计划 P2 的行星画法用）
+    double get_moon_lit() const { return moon_state.illuminated; }
+    double get_above_clouds() const { return above_clouds; }
+    void set_space_blend(double p_value) { space_blend = p_value; }
 
     void set_sun_path(const godot::NodePath &p_value) { sun_path = p_value; }
     godot::NodePath get_sun_path() const { return sun_path; }

@@ -36,6 +36,10 @@ void vertex() {
 }
 
 void fragment() {
+	// 岛底的倒锥最深到云带顶上下：云带顶（−3800）以下的一截剪掉——P2 起高空看到的云带是天空着色器画的，网格在它前面，不剪会从云里戳出来
+	if (v_alt < -3800.0) {
+		discard;
+	}
 	vec3 base = COLOR.rgb;
 	float herb = v_season.r;
 	float field = v_season.g;

@@ -55,8 +55,9 @@ class PlanetView : public godot::Node3D {
     double ground_clearance = 0.0;
     godot::MeshInstance3D *deck = nullptr;
     godot::Node3D *cloud_sea = nullptr;
-    std::map<uint64_t, double> base_near; // 相机实例号 → 场景里配的近平面
+    std::map<uint64_t, std::pair<double, double>> base_near; // 相机实例号 → 场景里配的近平面、远平面
     bool globals_on = false;
+    double squeeze_keep = CurveSqueeze::KEEP_M, squeeze_limit = CurveSqueeze::LIMIT_M;
 
     bool load_planet();
     bool try_anchor();
@@ -84,6 +85,14 @@ public:
     const GroupFrame &get_anchor() const { return anchor; }
     const CurveView &get_view() const { return view; }
     PlanetVec camera_flat() const { return cam; }
+    // 相机处的东、上、南（行星系；列）与相机的真位置（行星系，米）
+    const PlanetBasis &camera_axes() const { return cam_axes; }
+    PlanetVec camera_planet() const { return cam_planet; }
+    double get_squeeze_keep() const { return squeeze_keep; }
+    double get_squeeze_limit() const { return squeeze_limit; }
+    godot::MeshInstance3D *get_deck() const { return deck; } // P1 的云带顶网格（P2 高空淡出）
+    // 锚群平面坐标 p_flat 处的地面高（地图宿主问的；不在地图里 NaN）
+    double surface_at(const PlanetVec &p_flat) const;
     double get_radius() const { return anchor.radius; }
     // 画面上离相机 p_distance（水平）处下弯多少（米，按真球面，剔除的余量用）
     double drop_at(double p_distance) const;

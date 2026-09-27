@@ -78,3 +78,5 @@ map_path = NodePath("../World")
 [node name="PlanetView" type="PlanetView" parent="."]
 
 [node name="FarGroups" type="FarGroups" parent="."]
+
+[node name="PlanetGlobe" type="PlanetGlobe" parent="."]

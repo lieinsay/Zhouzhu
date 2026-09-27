@@ -36,6 +36,7 @@ enum class JobKind : uint8_t {
     NAV = 6, // 村民的导航格
     FAR_TREES = 7, // 远处的林子
     FAR_GROUP = 8, // 远处的岛群（行星计划 P1 的低模）
+    PLANET = 9, // 整颗行星：行星贴图的六个面、大气的两张表（行星计划 P2）
     TEST = 200, // 单元测试用
 };
 

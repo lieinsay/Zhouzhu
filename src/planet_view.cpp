@@ -27,6 +27,7 @@ constexpr const char *DECK_SHADER = "res://shaders/cloud_deck.gdshader";
 constexpr int DECK_SEGMENTS = 96;
 constexpr double DECK_FIRST_RING_M = 60.0; // 最里一圈；往外每圈放大 DECK_GROWTH
 constexpr double DECK_GROWTH = 1.16;
+constexpr double NEAR_FAR_RATIO = 1.2e6; // 远平面 / 近平面最多这么多（地面上 60 km / 0.05 m，P1 验过不退化）
 
 Vector3 v3(const PlanetVec &p_v) {
     return Vector3(real_t(p_v.x), real_t(p_v.y), real_t(p_v.z));
@@ -226,6 +227,10 @@ void PlanetView::build_deck() {
     add_child(deck);
 }
 
+double PlanetView::surface_at(const PlanetVec &p_flat) const {
+    return map ? double(map->map_surface(v3(p_flat))) : NAN;
+}
+
 double PlanetView::drop_at(double p_distance) const {
     return p_distance * p_distance / (2.0 * anchor.radius);
 }
@@ -268,6 +273,9 @@ void PlanetView::push_globals() {
     rs->global_shader_parameter_set("planet_curve_basis", basis);
     rs->global_shader_parameter_set("planet_curve_dcam", v3(view.delta_cam));
     rs->global_shader_parameter_set("planet_curve_radius", view.radius);
+    // 远处往相机压：30 km 以下 10 km / 26 km（P1），相机再高按高度放大（P2，CurveSqueeze::at_height）
+    CurveSqueeze::at_height(cam.y, squeeze_keep, squeeze_limit);
+    rs->global_shader_parameter_set("planet_curve_squeeze", Vector2(real_t(squeeze_keep), real_t(squeeze_limit)));
     globals_on = true;
 }
 
@@ -275,14 +283,16 @@ void PlanetView::update_camera(Camera3D *p_camera) {
     const uint64_t id = uint64_t(p_camera->get_instance_id());
     auto found = base_near.find(id);
     if (found == base_near.end()) {
-        found = base_near.emplace(id, std::max(near_min, double(p_camera->get_near()))).first;
+        found = base_near.emplace(id, std::pair<double, double>(std::max(near_min, double(p_camera->get_near())), double(p_camera->get_far()))).first;
     }
-    const double near = found->second + (std::max(found->second, near_max) - found->second) * smooth01(near_rise_from, near_rise_to, ground_clearance);
-    if (std::abs(p_camera->get_near() - near) > 1e-4) {
+    const double base = found->second.first;
+    // 远平面：盖过压到的上限；近平面：离地高了放大（P1），再不小于远平面的百万分之一（投影矩阵单精度：比值过 1e6 远平面就退化）
+    const double far = std::max({ camera_far, found->second.second, squeeze_limit * 1.1 + 5000.0 });
+    const double near = std::max(base + (std::max(base, near_max) - base) * smooth01(near_rise_from, near_rise_to, ground_clearance), far / NEAR_FAR_RATIO);
+    if (std::abs(p_camera->get_near() - near) > 1e-4 * std::max(1.0, near)) {
         p_camera->set_near(real_t(near));
     }
-    const double far = std::max(camera_far, CurveSqueeze::LIMIT_M + 5000.0);
-    if (p_camera->get_far() < far) {
+    if (std::abs(p_camera->get_far() - far) > 1e-3 * far) {
         p_camera->set_far(real_t(far));
     }
 }

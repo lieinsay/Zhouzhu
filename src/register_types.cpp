@@ -17,6 +17,7 @@
 #include "island.h"
 #include "island_map.h"
 #include "placed_props.h"
+#include "planet_globe.h"
 #include "planet_view.h"
 #include "player.h"
 #include "refit_overlay.h"
@@ -75,6 +76,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(Atmosphere);
     GDREGISTER_CLASS(PlanetView);
     GDREGISTER_CLASS(FarGroups);
+    GDREGISTER_CLASS(PlanetGlobe);
 }
 
 void uninitialize_zhouzhu_module(ModuleInitializationLevel p_level) {
