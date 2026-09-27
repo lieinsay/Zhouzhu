@@ -1,6 +1,16 @@
 #include "job_pool.h"
 
 #include <algorithm>
+#include <limits>
+
+namespace {
+// 优先级按离玩家多远给；玩家位置成了 NaN（river_e2e 里掉出世界时就会）时优先级也是 NaN，
+// NaN 跟谁比都「不小于」，std::set 的次序就乱了：按值删删不掉、同一个键在 order 里留两份，
+// 工人拿到一份在 queued 里已经没有的键，调一个不存在的做法就崩。NaN 一律排到最后。
+double sane_priority(double p_priority) {
+    return p_priority == p_priority ? p_priority : std::numeric_limits<double>::max();
+}
+} // namespace
 
 JobPool::~JobPool() {
     stop();
@@ -51,6 +61,9 @@ void JobPool::loop() {
             key = std::get<2>(*order.begin());
             order.erase(order.begin());
             auto it = queued.find(key);
+            if (it == queued.end()) {
+                continue;
+            }
             work = std::move(it->second.work);
             queued.erase(it);
             running.insert(key);
@@ -71,7 +84,7 @@ void JobPool::loop() {
 
 void JobPool::enqueue_locked(uint64_t p_key, double p_priority, Work &&p_work) {
     Queued &q = queued[p_key];
-    q.priority = p_priority;
+    q.priority = sane_priority(p_priority);
     q.seq = next_seq++;
     q.work = std::move(p_work);
     order.insert({ q.priority, q.seq, p_key });
@@ -131,7 +144,7 @@ void JobPool::reprioritize(JobKind p_kind, const std::function<double(uint64_t)>
     for (uint64_t key : keys) {
         Queued &q = queued[key];
         order.erase({ q.priority, q.seq, key });
-        const double priority = p_priority(key);
+        const double priority = sane_priority(p_priority(key));
         if (priority < 0.0) {
             queued.erase(key);
             continue;
