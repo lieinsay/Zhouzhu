@@ -1257,9 +1257,9 @@
     {
       "id": "world-terrain-body",
       "label": "厚岛体（浮山）",
-      "detail": "island_body：崖壁 = 龙骨的 12%（30–160 m），龙骨 = 25·√最深岸距（主岛 3.3 km），岛底 = 岸缘 − 崖壁 − 龙骨·√向内 + 岩棱；lowest_bottom 给云海定下限。生成器的崖高 / 龙骨只作下限。",
+      "detail": "island_body：崖壁 = 龙骨的 12%（30–160 m），龙骨 = 25·√最深岸距（主岛 3.3 km），岛底 = 岸缘 − 崖壁 − 龙骨·√向内 + 岩棱；lowest_bottom 给云海定下限；岛底（连岩棱）不低于云带顶之上 1000 m，超了收短龙骨（world-terrain-body-floor）。生成器的崖高 / 龙骨只作下限。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest terrain v3：主岛岛心厚 3.6 km，全群最低 −3484 m 在云海 −3800 m 之上",
+      "evidence": "ctest terrain v3：主岛岛心厚 3.6 km，全群最低 −3465 m，离云带顶 −5000 一千五百多米，2051 一座不收",
       "sources": [
         "src/world_terrain.h",
         "src/world_terrain.cpp"
@@ -2087,7 +2087,7 @@
     {
       "id": "planet-frame",
       "label": "行星与岛群的坐标",
-      "detail": "planet_unit / planet_latlon（同 sphere.py）；GroupFrame：to_planet / to_flat（AEQD）、tangent、delta 与 delta_series、local_basis；CurveView：visual(p) = c + R_cᵀ((p − c) + (δ(p) − δ(c)))，CurveViewF 是着色器同式的单精度版；rebase_point / rebase_rotation 换锚；VerticalDatum（云带 −3800…−5000、海面 −5600）、R = 6,376,600 m。",
+      "detail": "planet_unit / planet_latlon（同 sphere.py）；GroupFrame：to_planet / to_flat（AEQD）、tangent、delta 与 delta_series、local_basis；CurveView：visual(p) = c + R_cᵀ((p − c) + (δ(p) − δ(c)))，CurveViewF 是着色器同式的单精度版；rebase_point / rebase_rotation 换锚；垂直结构见 planet-frame-datum。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "core：AEQD 往返 2e-6 mm、δ 展开式 600 km 差 0.29 mm、单精度弯曲 ±100 km 1.24 cm / 600 km 9 cm、换锚画面不变",
       "sources": [
@@ -2210,7 +2210,7 @@
     {
       "id": "cloud-deck",
       "label": "弯曲的云带顶",
-      "detail": "PlanetView 建的同心环网格（y = −3800，D13），跟着相机走、半径 1,000 km，按真球面弯、压近；颜色同原来的平板云海，另加两层很淡的大斑。场景里的平板云海藏起来。P2 换成行星球的云带壳。",
+      "detail": "PlanetView 建的同心环网格（y = −5000，D13；浮高计划前是 −3800），跟着相机走、半径 1,000 km，按真球面弯、压近；颜色同原来的平板云海，另加两层很淡的大斑。场景里的平板云海藏起来。P2 换成行星球的云带壳。",
       "tag": "着色器",
       "evidence": "planet_shots：20 / 50 km 高空的弧形地平线",
       "sources": [
@@ -2222,9 +2222,9 @@
     {
       "id": "far-group-mesh",
       "label": "远处岛群的低模",
-      "detail": "按一份粗版建顶面（角上的高 = 相邻实地格块内最高点的平均，岸上取岸缘）、崖壁、倒锥的岛底（与游戏里的岛体同一式）；顶点按真球面精确弯好、法线按局部系转，带海拔与季相份额。",
+      "detail": "按一份粗版建顶面（角上的高 = 相邻实地格块内最高点的平均，岸上取岸缘）、崖壁、倒锥的岛底（与游戏里的岛体同一式，连夹龙骨：岛底不低于云带顶之上 1000 m）；顶点按真球面精确弯好、法线按局部系转，带海拔与季相份额。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "core：2049 500 m 7.4 万顶点 12.4 万面、朝外、岛底最深在云带顶上下、按真球面下弯",
+      "evidence": "core：2049 500 m 7.4 万顶点 12.4 万面、朝外、岛底最深 −2500 以下且在 −4000 以上、按真球面下弯；粗版 4684 岛底 −5172 → −3732",
       "sources": [
         "src/far_group_mesh.h",
         "src/far_group_mesh.cpp"
@@ -2850,7 +2850,7 @@
     {
       "id": "sea-surface",
       "label": "SeaSurface 云底与海面",
-      "detail": "PlanetGlobe 建：云底（−5000 m，朝下，当光源画）与海面（−5600 m，近密远疏的同心环，300 km）两张跟着相机的网格，相机在云带顶以上藏起来；每帧按天与光的风推浪（Gerstner 相位按帧累加）、给云底此刻的光。",
+      "detail": "PlanetGlobe 建：云底（−6200 m，朝下，当光源画）与海面（−6800 m，近密远疏的同心环，300 km）两张跟着相机的网格，相机在云带顶以上藏起来；每帧按天与光的风推浪（Gerstner 相位按帧累加）、给云底此刻的光。",
       "tag": "场景角色",
       "evidence": "sea_descent_e2e 海面上空网格画出来、风暴浪 9 m；stream_perf --sea 海面上 0.7 ms",
       "sources": [
@@ -2878,7 +2878,7 @@
       "label": "降到海面端到端测试",
       "detail": "2051 主码头上船 → 开阔云海上空一路降到海面（每帧录光与雾、存 CSV）→ 悬停（最低高度、HUD 与 F6、气温、按 E）→ 风暴 → 升回云带顶以上，读数恢复、升降不跳。",
       "tag": "验收",
-      "evidence": "PASS（无头与窗口）",
+      "evidence": "PASS（无头与窗口）；浮高计划 Z1 后从 420 m 降到海面 567 s、读数与下移前一样",
       "sources": [
         "game/tests/sea_descent_e2e.gd"
       ],
@@ -2899,9 +2899,9 @@
     {
       "id": "ship-sea-floor",
       "label": "海面之上 15 m 与颠簸",
-      "detail": "get_floor_y：有行星数据时海面之上 15 m（−5585），岛上靠地面、崖壁、岛底的碰撞，没有行星数据照旧世界 y = 15 m；掌舵时 turbulence_at × 2.6 m/s × flight_bump 上下颠，船身晃一点。",
+      "detail": "get_floor_y：有行星数据时海面之上 15 m（−6785），岛上靠地面、崖壁、岛底的碰撞，没有行星数据照旧世界 y = 15 m；掌舵时 turbulence_at × 2.6 m/s × flight_bump 上下颠，船身晃一点。",
       "tag": "场景角色",
-      "evidence": "sea_descent_e2e：按住下降 5 s 最低 −5585.19；云带里颠 1.00、风暴 1.05",
+      "evidence": "sea_descent_e2e：按住下降 5 s 最低 −6785.07；云带里颠 1.00、风暴 1.05",
       "sources": [
         "src/ship.cpp",
         "src/ship.h"
@@ -3082,6 +3082,35 @@
       ],
       "since": "e103",
       "parent": "world-session"
+    },
+    {
+      "id": "planet-frame-datum",
+      "label": "垂直结构（云带、海面、R）",
+      "detail": "VerticalDatum：云带顶 −5000、云带底 −6200、海面 −6800（游戏 y；浮高计划 F4 起整体下移 1200 m，原来 −3800 / −5000 / −5600），岛底最低线 ISLAND_BOTTOM_MIN_Y = 云带顶 + 1000；PLANET_DEFAULT_R = 海面 6371 km + 6.8 km = 6,377,800 m。着色器 planet_sky / planet_sea 的 PS_* 与 project.godot 的 planet_curve_radius 初值各抄一份。气温照旧 y < 0 取 y = 0。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest：云带厚 1.2 km、云底下 600 m、R = 海面 + 6800 m；sea_descent_e2e 停在 −6785.07、各层读数与下移前一样；god_sea_e2e 37.7 s 到海面之上 2 m",
+      "sources": [
+        "src/planet_frame.h",
+        "game/shaders/planet_sky.gdshaderinc",
+        "game/shaders/planet_sea.gdshaderinc",
+        "game/project.godot"
+      ],
+      "since": "e104",
+      "parent": "planet-frame"
+    },
+    {
+      "id": "world-terrain-body-floor",
+      "label": "岛底离云带顶一千米（夹龙骨）",
+      "detail": "island_body 末尾：岸缘 − 崖壁 − 龙骨 × 1.07（岩棱）− 8 m（起伏）≥ ISLAND_BOTTOM_MIN_Y，超了收短龙骨；崖壁照未收短的龙骨定。island_lowest 给出一座岛岛底最深能到哪，lowest_bottom 用它。far_group_mesh 照抄（远处不画岩棱，龙骨照样收）。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest island_floor：4684 主岛岛心底 −5152 → −3732、4981 −4947 → −3734、4855 −4705 → −3738，连岩棱都停在 −4000；粗版低模同样；本机生成过的群逐座查",
+      "sources": [
+        "src/world_terrain.h",
+        "src/world_terrain.cpp",
+        "src/far_group_mesh.cpp"
+      ],
+      "since": "e105",
+      "parent": "world-terrain-body"
     }
   ],
   "edges": [
@@ -6513,6 +6542,54 @@
       "chains": [
         "planet"
       ]
+    },
+    {
+      "from": "cloud-band",
+      "to": "planet-frame-datum",
+      "label": "云带顶、云底、海面",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "sea-surface",
+      "to": "planet-frame-datum",
+      "label": "云底、海面的高",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-view",
+      "to": "planet-frame-datum",
+      "label": "云带顶的高",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "planet-sky-shader",
+      "to": "planet-frame-datum",
+      "label": "PS_SEA_Y / PS_BAND_Y 同数",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "world-terrain-body-floor",
+      "to": "planet-frame-datum",
+      "label": "岛底最低线",
+      "chains": [
+        "planet"
+      ]
+    },
+    {
+      "from": "far-group-mesh",
+      "to": "planet-frame-datum",
+      "label": "岛底最低线",
+      "chains": [
+        "planet"
+      ]
     }
   ],
   "chains": [
@@ -8055,6 +8132,15 @@
           ]
         },
         {
+          "text": "每座岛都悬在云带顶之上一千米以外：云带顶、云底、海面在 −5000 / −6200 / −6800 m，几座大岛（最深岸距三四十公里）的倒锥照这条收短，远处的低模同一条（浮高计划 Z1）",
+          "nodes": [
+            "planet-frame-datum",
+            "world-terrain-body-floor",
+            "far-group-mesh",
+            "cloud-deck"
+          ]
+        },
+        {
           "text": "太阳月亮按相机的经纬度升落，钟是 2051 的地方时，远处岛群的受光对得上",
           "nodes": [
             "atmosphere-planet-sun",
@@ -8521,7 +8607,9 @@
         "world-session-maker",
         "gen-export-py-format",
         "gen-export-scipy",
-        "gen-export-shape"
+        "gen-export-shape",
+        "planet-frame-datum",
+        "world-terrain-body-floor"
       ]
     }
   ],
@@ -11290,6 +11378,46 @@
         "node": "world-session",
         "children": [
           "world-session-maker"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e104",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：浮高计划 Z1：垂直结构整体下移 1200 m",
+      "summary": "云带顶 −3800 → −5000、云带底 −5000 → −6200、海面 −5600 → −6800，R = 海面 + 6800 m：云带相对海面不变，等于把岛抬高 1.2 km；着色器、全局参数、场景、测试、工具里写死的数都跟上。",
+      "commits": "da7fd8c",
+      "nodes": [
+        "planet-frame",
+        "planet-frame-datum"
+      ],
+      "info": {
+        "node": "planet-frame",
+        "children": [
+          "planet-frame-datum"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e105",
+      "type": "extend",
+      "date": "2026-09-27",
+      "title": "拓展：浮高计划 Z1：岛体夹龙骨",
+      "summary": "岛底连岩棱与起伏的最深处不低于云带顶之上 1000 m（−4000），超了收短龙骨、崖壁不动；远处岛群的低模照抄同一条。",
+      "commits": "037b5ff",
+      "nodes": [
+        "world-terrain-body",
+        "world-terrain-body-floor"
+      ],
+      "info": {
+        "node": "world-terrain-body",
+        "children": [
+          "world-terrain-body-floor"
         ],
         "adopted": [],
         "peers": []
