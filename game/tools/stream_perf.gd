@@ -5,6 +5,9 @@ extends Node
 ## 以及各子系统的累计与单帧最多。改前改后走同一条路线对比。
 ## 站定分两段：先等 15 s（载入、村子挂齐），再量 20 s 的稳态；每段末尾报进程内存（工作集、私有提交）与显存。
 ## `--high=<秒>`：飞完再升到主码头上空 50 km（god），相机斜着往下看、慢慢转一圈，量高空的帧时（行星计划 P1）。
+## `--orbit=<秒>`（行星计划 P2，单独跑，不走上面几段）：邑治的村口站定、等行星贴图烘好，拍一张「起飞前」；开发者的轨道相机（OrbitCamera）
+##   从离地 2 m 按对数匀速升到 2 万公里（<秒> 秒，默认 60），相机从平视渐渐转到正对着星；顶上停 2 s，再同样落回村口；
+##   升、落两段各报帧时，落回来站 3 s 再拍一张「落回后」（--shots=<目录>，两张的差由外面比）。
 ##
 ##   Godot --path game res://tools/stream_perf.tscn               # 带窗口：帧时含渲染
 ##   Godot --headless --path game res://tools/stream_perf.tscn    # 无头：只有主线程的活
@@ -28,6 +31,15 @@ var slow_s := 30.0
 var stand_s := 20.0
 var high_s := 0.0
 var high_m := 50000.0
+var orbit_s := 0.0
+var shots_dir := ""
+var orbit = null  # OrbitCamera
+var globe = null  # PlanetGlobe
+var gate := Vector3.ZERO
+var gate_ll := Vector2.ZERO
+var gate_heading := 0.0
+const ORBIT_TOP_M := 2.0e7
+const SEAT := Vector2(10350, -21850)  # 邑治
 var dock := Vector3.ZERO
 
 var elapsed := 0.0
@@ -49,6 +61,10 @@ func _ready() -> void:
 			stand_s = float(arg.trim_prefix("--stand="))
 		elif arg.begins_with("--high="):
 			high_s = float(arg.trim_prefix("--high="))
+		elif arg.begins_with("--orbit="):
+			orbit_s = float(arg.trim_prefix("--orbit="))
+		elif arg.begins_with("--shots="):
+			shots_dir = arg.trim_prefix("--shots=")
 	get_tree().root.size = Vector2i(1280, 720)
 	main = SCENE.instantiate()
 	add_child(main)
@@ -56,6 +72,10 @@ func _ready() -> void:
 	player = main.get_node("Player")
 	scatter = main.get_node("ScatterStream")
 	sites = main.get_node("SiteStream")
+	globe = main.get_node_or_null("PlanetGlobe")
+	if orbit_s > 0.0:
+		GameClock.restart(10.0)
+		GameClock.paused = true
 	last = Time.get_ticks_usec()
 
 
@@ -149,6 +169,9 @@ func _process(delta: float) -> void:
 	elapsed += delta
 	if not world.is_loaded():
 		return
+	if orbit_s > 0.0:
+		_orbit_process(delta, ms)
+		return
 	frames.append(ms)
 	if ms > SLOW_MS:
 		slow.append([elapsed, ms, _breakdown(Engine.get_process_frames() - 1)])
@@ -193,4 +216,88 @@ func _process(delta: float) -> void:
 			frames.clear()
 		if elapsed - phase_started > high_s + 5.0:
 			_report("主码头上空 %.0f km %d s" % [high_m / 1000.0, int(high_s)])
+			get_tree().quit(0)
+
+
+# ---- 行星计划 P2：从村口升到两万公里、再落回村口
+func _orbit_place(t: float) -> void:
+	# t ∈ [0, 1]：离地高按对数匀速（2 m → 2 万公里），俯角跟着高度从平视（−3°）转到正对着星（−90°）
+	var lg := lerpf(log(2.0), log(ORBIT_TOP_M), t)
+	var clearance := exp(lg)
+	var k := clampf((lg - log(2000.0)) / (log(2.0e6) - log(2000.0)), 0.0, 1.0)
+	var pitch := lerpf(-3.0, -90.0, k * k * (3.0 - 2.0 * k))
+	orbit.set_orbit_state(gate_ll.x, gate_ll.y, gate.y - 1.0 + clearance, gate_heading, pitch)
+
+
+func _orbit_shot(name: String) -> void:
+	if shots_dir.is_empty():
+		return
+	DirAccess.make_dir_recursive_absolute(shots_dir)
+	var path := shots_dir.path_join(name + ".png")
+	get_viewport().get_texture().get_image().save_png(path)
+	print("stream_perf: %s（离地 %.1f m）" % [path, orbit.get_clearance()])
+
+
+func _orbit_process(delta: float, ms: float) -> void:
+	var planet = main.get_node_or_null("PlanetView")
+	if phase == 0:
+		if planet == null or not planet.is_active():
+			return
+		if orbit == null:
+			var g := SEAT + Vector2(0.35, 1.0).normalized() * 350.0
+			var h := world.get_surface_height(g.x, g.y)
+			gate = Vector3(g.x, h + 1.0, g.y)
+			gate_ll = planet.latlon_at(Vector3(g.x, 0.0, g.y))
+			var to_seat := SEAT - g
+			gate_heading = rad_to_deg(atan2(to_seat.x, -to_seat.y))
+			var behind := g - to_seat.normalized() * 25.0
+			player.global_position = Vector3(behind.x, world.get_surface_height(behind.x, behind.y) + 1.0, behind.y)
+			world.prepare_at(player.global_position)
+			orbit = ClassDB.instantiate("OrbitCamera")
+			main.add_child(orbit)
+			orbit.fov = 70.0
+			_orbit_place(0.0)
+			orbit.current = true
+			main.get_node("Atmosphere").set_weather_override("clear", 0.0)
+		_orbit_place(0.0)
+		if elapsed > SETTLE_S and (globe == null or globe.is_ready()):
+			if globe != null:
+				var gs: Dictionary = globe.get_state()
+				print("stream_perf: 行星贴图 %s（后台 %.0f ms、墙钟 %.0f ms、建纹理 %.0f ms、大气表 %.0f ms），等到 %.1f s" % [globe.is_ready(), gs["bake_cpu_ms"], gs["bake_wall_ms"],
+					gs["upload_ms"], gs["lut_ms"], elapsed])
+			_orbit_shot("orbit_before")
+			_memory()  # 存图与量内存要几百毫秒：量完把帧计时重新起头
+			phase = 1
+			phase_started = elapsed
+			frames.clear()
+			slow.clear()
+			world.reset_stream_meter()
+		return
+	frames.append(ms)
+	if ms > SLOW_MS:
+		slow.append([elapsed, ms, _breakdown(Engine.get_process_frames() - 1)])
+	var t := (elapsed - phase_started) / orbit_s
+	if phase == 1:
+		_orbit_place(minf(t, 1.0))
+		if t >= 1.0:
+			_report("升到两万公里 %d s" % int(orbit_s))
+			phase = 2
+			phase_started = elapsed
+	elif phase == 2:
+		_orbit_place(1.0)
+		if elapsed - phase_started > 2.0:
+			frames.clear()
+			slow.clear()
+			phase = 3
+			phase_started = elapsed
+	elif phase == 3:
+		_orbit_place(maxf(0.0, 1.0 - t))
+		if t >= 1.0:
+			_report("落回村口 %d s" % int(orbit_s))
+			phase = 4
+			phase_started = elapsed
+	elif phase == 4:
+		_orbit_place(0.0)
+		if elapsed - phase_started > 3.0:
+			_orbit_shot("orbit_after")
 			get_tree().quit(0)

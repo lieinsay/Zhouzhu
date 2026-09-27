@@ -5,8 +5,12 @@ extends Node
 ##   近：主码头站着（望栈桥、望岸上）、邑治 350 m 与 1.8 km、八百米的林子——2 km 以内，改前改后对照（画面弯曲在 2 km 处只降 0.3 m）。
 ## 钟停在开局那天（暖季一 · 一月初四）、天气覆盖成晴，每张一样的条件。人跟着相机挪（流式焦点就是人），人开 god。
 ## `--view=<名字>` 只拍那一张。没有 PlanetView 的场景（改前）也能跑：远处那几张照固定的方位拍（改前远平面 60 km，看不见邻群）。
+## 行星计划 P2 · 轨道（`--only=orbit`；不加 --only 时排在最后）：开发者的轨道相机（OrbitCamera，F7 的那一个）从邑治的村口起飞——
+##   2 m、200 m、2 km、20 km、200 km、2,000 km、20,000 km × 白天（10 点）、晨昏（日落前后）、夜里（23 点），相机越高越往下看；
+##   外加整颗星正对赤道、G 定点永暴（北纬 37.5°、西经 10°，那里的正午）、晨昏线、夜里的灯（2051 上空 1,500 km）、一群密的岛群（白天）。
+##   行星贴图与大气表在后台做好了才拍（PlanetGlobe.is_ready），远处的岛群建好了才拍。
 ##
-##   Godot --path game --fixed-fps 60 res://tools/planet_shots.tscn -- --shots=<目录> [--only=near|far]
+##   Godot --path game --fixed-fps 60 res://tools/planet_shots.tscn -- --shots=<目录> [--only=near|far|orbit]
 
 const SCENE := preload("res://world_2051.tscn")
 const WAIT_S := 9.0
@@ -20,6 +24,12 @@ var player: Player
 var atmosphere: Atmosphere
 var planet = null  # PlanetView（改前没有）
 var far_groups = null  # FarGroups（改前没有）
+var globe = null  # PlanetGlobe（P2）
+var orbit = null  # OrbitCamera（P2）
+const ORBIT_KM := [0.002, 0.2, 2.0, 20.0, 200.0, 2000.0, 20000.0]
+const ORBIT_PITCH := [-3.0, -22.0, -30.0, -20.0, -42.0, -78.0, -90.0]
+const ORBIT_TIMES := [["day", 10.0], ["dusk", 18.55], ["night", 23.0]]
+const SEAT := Vector2(10350, -21850)  # 邑治
 var camera: Camera3D
 var shots_dir := ""
 var only := ""
@@ -52,6 +62,7 @@ func _ready() -> void:
 	atmosphere.override_fade = 0.05
 	planet = main.get_node_or_null("PlanetView")
 	far_groups = main.get_node_or_null("FarGroups")
+	globe = main.get_node_or_null("PlanetGlobe")
 	camera = Camera3D.new()
 	camera.far = 60000.0
 	camera.fov = 60.0
@@ -94,7 +105,7 @@ func _plan() -> void:
 	var dock_eye := Vector3(dock.x, _ground(dock) + 40.0, dock.y)
 	var peak_eye := Vector3(peak.x, peak_h + 30.0, peak.y)
 	print("planet_shots: 主码头 %s（地面 %.0f m）；主峰 %.0f m %s" % [dock, _ground(dock), peak_h, peak])
-	if only != "near":
+	if only.is_empty() or only == "far":
 		views.append(["far_dock_2049", dock_eye, [2049, -0.3], 10.0, true])
 		views.append(["far_dock_2278", dock_eye, [2278, -0.3], 10.0, true])  # 主码头在北岸：往西望 2049 被本群的主岛挡着，往北北西也擦着岸
 		views.append(["far_dock_high_2278", dock_eye + Vector3(0, 400, 0), [2278, -0.3], 10.0, true])  # 船刚升空：码头上空 400 m
@@ -116,7 +127,7 @@ func _plan() -> void:
 		# 深冬（第 180 天）：各群按自己的纬度与气候积雪（2049 的主峰 2.2 km）
 		views.append(["far_winter_20km", high, [2049, -12.0], 12.0, true, 180])
 		views.append(["far_winter_west_zoom", high, [2049, 0.0], 12.0, true, 180, 8.0])
-	if only != "far":
+	if only.is_empty() or only == "near":
 		# 近：2 km 以内，改前改后对照
 		var fwd := -spawn.basis.z
 		var eye := spawn.origin + Vector3(0, 1.7, 0)
@@ -129,8 +140,37 @@ func _plan() -> void:
 		var toward_peak := (peak - dock).normalized()
 		var ground_look := dock + toward_peak * 1500.0
 		views.append(["near_dock_1500m", dock_eye, Vector3(ground_look.x, _ground(ground_look), ground_look.y), 10.0, false])
+	if (only.is_empty() or only == "orbit") and globe != null and planet != null and planet.is_active():
+		_plan_orbit()
 	if not pick.is_empty():
 		views = views.filter(func(v): return v[0] == pick)
+
+
+# 轨道：[名字, {lat, lon, height, heading, pitch}, 钟点, 远处的要不要等, 日子, 视角, 人站在哪]
+func _plan_orbit() -> void:
+	var gate := SEAT + Vector2(0.35, 1.0).normalized() * 350.0  # 村口：邑治东南 350 m
+	var ground := _ground(gate)
+	var ll: Vector2 = planet.latlon_at(Vector3(gate.x, 0.0, gate.y))
+	var to_seat := SEAT - gate
+	var heading := rad_to_deg(atan2(to_seat.x, -to_seat.y))
+	var behind := gate - to_seat.normalized() * 25.0  # 人站在相机后头 25 m（2 m 那张别拍到人）
+	var stand := Vector3(behind.x, _ground(behind) + 1.0, behind.y)
+	for t in ORBIT_TIMES:
+		for k in ORBIT_KM.size():
+			var km: float = ORBIT_KM[k]
+			var h := ground + km * 1000.0 if km < 10.0 else km * 1000.0
+			var name := "orbit_%s_%s" % [t[0], ("%dm" % int(km * 1000.0)) if km < 1.0 else ("%dkm" % int(km))]
+			views.append([name, {"lat": ll.x, "lon": ll.y, "height": h, "heading": heading, "pitch": ORBIT_PITCH[k]}, t[1], true, DAY, 60.0, stand])
+	var home: Vector2 = planet.get_camera_latlon()
+	# 整颗星正对赤道（2051 的经度，那里的正午）；G 定点永暴（那里的正午：钟点 = 12 + 经度差 / 15）；晨昏线（太阳直射 2051 的经度，往东 90°）
+	views.append(["orbit_globe_equator", {"lat": -5.0, "lon": 152.15, "height": 2.0e7, "heading": 0.0, "pitch": -90.0}, 12.0, true, DAY, 60.0, stand])
+	views.append(["orbit_g_storm", {"lat": 30.0, "lon": -10.0, "height": 5.0e6, "heading": 0.0, "pitch": -90.0}, 22.8, true, DAY, 60.0, stand])
+	views.append(["orbit_terminator", {"lat": -15.0, "lon": -118.0, "height": 2.0e7, "heading": 0.0, "pitch": -90.0}, 12.0, true, DAY, 60.0, stand])
+	views.append(["orbit_night_lights", {"lat": ll.x - 8.0, "lon": ll.y, "height": 1.5e6, "heading": 0.0, "pitch": -62.0}, 23.5, true, DAY, 60.0, stand])
+	views.append(["orbit_islands_day", {"lat": ll.x, "lon": ll.y, "height": 1.2e6, "heading": 0.0, "pitch": -90.0}, 12.0, true, DAY, 60.0, stand])
+	views.append(["orbit_blend_45km", {"lat": ll.x, "lon": ll.y, "height": 45000.0, "heading": heading, "pitch": -25.0}, 10.0, true, DAY, 60.0, stand])  # 交叉淡化的中间（30–60 km）
+	views.append(["orbit_limb_dawn", {"lat": ll.x, "lon": ll.y, "height": 4.0e5, "heading": 90.0, "pitch": -12.0}, 5.6, true, DAY, 60.0, stand])
+	print("planet_shots: 轨道 — 村口 %s（地面 %.0f m，%.3f°, %.3f°），朝邑治 %.0f°" % [gate, ground, ll.x, ll.y, heading])
 
 
 # 看向的点：Vector3 照原样；[节点, 俯角°] 朝那一群的主峰（有 PlanetView 时按画面上的位置），俯角另加
@@ -153,6 +193,9 @@ func _look_point(eye: Vector3, look) -> Vector3:
 
 
 func _apply(v: Array) -> void:
+	if v[1] is Dictionary:
+		_apply_orbit(v)
+		return
 	GameClock.set_date(int(v[5]) if v.size() > 5 else DAY, float(v[3]))
 	camera.fov = float(v[6]) if v.size() > 6 else 60.0
 	atmosphere.set_weather_override("clear", 0.0)
@@ -161,6 +204,23 @@ func _apply(v: Array) -> void:
 	camera.global_position = v[1]
 	camera.look_at(_look_point(v[1], v[2]))
 	camera.current = true
+	atmosphere.snap()
+
+
+func _apply_orbit(v: Array) -> void:
+	# v: [名字, 状态, 钟点, 等远处, 日子, 视角, 人站在哪]
+	GameClock.set_date(int(v[4]), float(v[2]))
+	atmosphere.set_weather_override("clear", 0.0)
+	var stand: Vector3 = v[6]
+	player.global_position = stand
+	world.prepare_at(stand)
+	if orbit == null:
+		orbit = ClassDB.instantiate("OrbitCamera")
+		main.add_child(orbit)
+	orbit.fov = float(v[5])
+	var st: Dictionary = v[1]
+	orbit.set_orbit_state(st["lat"], st["lon"], st["height"], st["heading"], st["pitch"])
+	orbit.current = true
 	atmosphere.snap()
 
 
@@ -184,17 +244,27 @@ func _far_ready() -> bool:
 func _process(delta: float) -> void:
 	if not world.is_loaded():
 		return
+	if planet != null and not planet.is_active() and index < 0:
+		return  # PlanetView 锚定了（晚一帧）才排
 	if views.is_empty():
 		_plan()
 		player.set_god_mode(true)
 	wait -= delta
 	if index >= 0:
 		var v: Array = views[index]
-		player.global_position = v[1] - Vector3(0, 6, 0)
-		camera.global_position = v[1]
-		camera.look_at(_look_point(v[1], v[2]))
+		var is_orbit: bool = v[1] is Dictionary
+		if is_orbit:
+			var st: Dictionary = v[1]
+			orbit.set_orbit_state(st["lat"], st["lon"], st["height"], st["heading"], st["pitch"])
+			player.global_position = v[6]
+		else:
+			player.global_position = v[1] - Vector3(0, 6, 0)
+			camera.global_position = v[1]
+			camera.look_at(_look_point(v[1], v[2]))
 		waited += delta
-		var far_wait: bool = v[4] and not _far_ready() and waited < FAR_WAIT_MAX_S
+		var far_wait: bool = (v[3] if is_orbit else v[4]) and not _far_ready() and waited < FAR_WAIT_MAX_S
+		if is_orbit and globe != null and not globe.is_ready() and waited < 120.0:
+			far_wait = true
 		if wait > 0.0 or far_wait:
 			return
 		var path := shots_dir.path_join(v[0] + ".png")
@@ -210,7 +280,11 @@ func _process(delta: float) -> void:
 			extra += "，2 km 内画面位移最多 %.3f m" % _near_shift(v[1])
 		var env: Environment = main.get_node("WorldEnvironment").environment
 		extra += "，雾 %.7f（天空 %.2f）" % [env.fog_density, env.fog_sky_affect]
-		print("planet_shots: %s（%.1f 点，太阳高 %.1f° 方位 %.0f°%s）" % [path, float(v[3]), w["sun_altitude"], w["sun_azimuth"], extra])
+		if is_orbit:
+			var gs: Dictionary = globe.get_state()
+			extra += "，离地 %.0f m，行星 %.2f 大气 %.2f 云带顶网格 %.2f 云层叠画 %s 锚群藏着 %s，近 %.2f m 远 %.0f km" % [orbit.get_clearance(), gs["blend_planet"], gs["blend_atmo"],
+				gs["deck_alpha"], gs["overlay"], gs["anchor_hidden"], orbit.near, orbit.far / 1000.0]
+		print("planet_shots: %s（%.1f 点，太阳高 %.1f° 方位 %.0f°%s）" % [path, float(v[2] if is_orbit else v[3]), w["sun_altitude"], w["sun_azimuth"], extra])
 	index += 1
 	if index >= views.size():
 		get_tree().quit(0)

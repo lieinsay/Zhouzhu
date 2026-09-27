@@ -5282,6 +5282,19 @@ void test_planet_surface() {
     const PlanetLod s = surface_stand_in(pd, 2049, 2000.0);
     check(!s.empty() && std::abs(s.land_km2() - pd.node(2049).area_km2) < 0.3 * pd.node(2049).area_km2,
             "替身的陆地与行星包差不到三成（" + std::to_string(s.land_km2()) + " / " + std::to_string(pd.node(2049).area_km2) + " km²）");
+    // 游戏里的面宽：2051 那一面 2048²，烘一面、压成 BC3 各要多久（游戏里六面在后台一面一面做）
+    {
+        SurfaceBakeRules full;
+        SurfaceFace face;
+        SurfaceBakeStats st;
+        bake_surface_face(pd, home_face, full, face, &st);
+        const auto t0 = std::chrono::steady_clock::now();
+        std::vector<uint8_t> blocks(size_t(full.size / 4) * size_t(full.size / 4) * 16);
+        bc3_encode_image(face.color.data(), full.size, full.size, blocks.data());
+        const double bc_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        std::printf("  2048² 一面（2051 那面，%d 群）：烘 %.0f ms、压 BC3 %.0f ms\n", st.groups, st.ms, bc_ms);
+        check(st.land_texels > 1000, "2048² 那一面烘得出陆地");
+    }
     // BC3：压过再解开，平滑的渐变与贴图里的海岸都差得不多
     {
         const int W = 64;
