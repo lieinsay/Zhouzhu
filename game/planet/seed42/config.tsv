@@ -369,8 +369,8 @@ island	num	layout.surface_lo	0.6
 island	num	layout.surface_hi	1.0
 island	num	layout.layered_spread_m	400.0
 island	num	layout.age_jitter	0.08
-island	num	layout.bridge_max_km	2.0
-island	num	layout.bridge_max_dh_m	250.0
+island	num	layout.bridge_max_km	0.1
+island	num	layout.bridge_max_dh_m	30.0
 island	num	layout.ferry_max_km	20.0
 island	num	territory.enabled	1.0
 island	num	territory.gap_km	3.0
@@ -419,6 +419,15 @@ island	num	terrain.diffusion_k	0.04
 island	num	terrain.fill_iters	40.0
 island	num	terrain.pit_keep_m	2.0
 island	num	terrain.cliff_cells	2.0
+island	num	float.enabled	1.0
+island	num	float.age_scale	0.08
+island	num	float.age_gain	0.75
+island	num	float.bias	0.65
+island	num	float.up_max_m	1500.0
+island	num	float.up_scale_m	550.0
+island	num	float.down_max_m	500.0
+island	num	float.down_scale_m	450.0
+island	num	float.rim_floor_m	20.0
 island	num	hydro.fill_eps_m	0.001
 island	num	hydro.lake_min_km2	1.0
 island	num	hydro.lake_min_depth_m	5.0
