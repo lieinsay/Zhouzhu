@@ -1763,7 +1763,7 @@ void test_terrain_v3_2051() {
             "所有岛底都在云带顶之上一千米以外（" + std::to_string(t.lowest_bottom()) + "，云带顶 " + std::to_string(VerticalDatum::CLOUD_TOP_Y) + "）");
     int clamped = 0;
     for (const WorldIsland &isl : sites.terrain_islands()) {
-        clamped += island_body(isl).keel_m < std::max(isl.keel_m, 25.0 * std::sqrt(std::max(1.0, isl.max_shore_m))) - 1e-9 ? 1 : 0;
+        clamped += island_body(isl).keel_m < 25.0 * std::sqrt(std::max(1.0, isl.max_shore_m)) - 1e-9 ? 1 : 0;
     }
     check(clamped == 0, "2051 的岛龙骨一座也不收短（" + std::to_string(clamped) + "）");
     // 崖脚：离岸线二十米处岛底还贴着崖壁下沿

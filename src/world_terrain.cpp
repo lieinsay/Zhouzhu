@@ -67,7 +67,9 @@ double smooth01(double t) {
 
 IslandBody island_body(const WorldIsland &p_island) {
     IslandBody b;
-    b.keel_m = std::max(p_island.keel_m, KEEL_K * std::pow(std::max(1.0, p_island.max_shore_m), KEEL_EXP));
+    // 龙骨只按岛的尺度（浮高计划 Z2）：生成器的 keel_m 是崖脚的高程（岸缘 − 崖高），不是深度——原先拿它与 25·√R 取大，
+    // 浮高以前它只有一两百米、从来赢不了；岛整座往上浮 δ 以后它跟着涨，高岛的龙骨会随浮高变长。岛体厚度不该随浮高变（F3），所以不再用它
+    b.keel_m = KEEL_K * std::pow(std::max(1.0, p_island.max_shore_m), KEEL_EXP);
     b.wall_m = std::max(p_island.cliff_m, std::clamp(WALL_SHARE * b.keel_m, WALL_MIN_M, WALL_MAX_M));
     // 浮高计划 F3：岛底连岩棱（龙骨的 RIB_SHARE）与起伏（UNDERSIDE_AMP_M）的最深处不低于云带顶之上 1000 m——超了收短龙骨，崖壁照未收短的龙骨定（不变）
     const double room = p_island.rim_m - b.wall_m - UNDERSIDE_AMP_M - VerticalDatum::ISLAND_BOTTOM_MIN_Y;
