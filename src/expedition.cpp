@@ -682,6 +682,9 @@ void Expedition::_physics_process(double p_delta) {
         notice_label->set_text(String());
     }
     sync_hold();
+    // 行星计划 P7：船降到坠落线以下（云海上空、云带里、海面上）——人下去就掉下去，靠泊、野泊也都没有：「海上无处落脚」
+    helm.no_footing = ship && ship->get_global_position().y < kill_altitude ? String(U"海上无处落脚——升回云海以上再靠岸、离舵") : String();
+    helm.sea_y = PlanetView::active_view() ? VerticalDatum::SEA_Y : NAN;
     switch (helm.get_state()) {
         case Helm::ON_FOOT:
             on_foot(p_delta, interact);

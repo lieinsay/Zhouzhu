@@ -74,6 +74,11 @@ Helm::Event Helm::step(bool p_interact, const std::vector<Berth> &p_berths) {
     if (!p_interact) {
         return NONE;
     }
+    // 行星计划 P7：降到云海以下（海上）——没有码头、野泊不了、人也下不去
+    if (!no_footing.is_empty()) {
+        refusal = no_footing;
+        return REFUSED;
+    }
     Berth target;
     if (moor_target(p_berths, target) && !target.refusal.is_empty() && !ship->is_at(target.contact, 0.5)) {
         refusal = target.refusal;
@@ -134,8 +139,10 @@ String Helm::course_text(const Transform3D &p_target, const String &p_target_nam
         bearing = vformat(String(U"左舷 %d°"), -relative_deg);
     }
     const String range = distance >= 2000.0 ? vformat(String(U"%.1f km"), distance / 1000.0) : vformat(String(U"%d m"), int(std::lround(distance)));
-    return vformat(String(U"航速 %d m/s（%s档）    高度 %d m\n%s %s    %s    高差 %+d m"),
-            int(std::lround(ship->get_speed())), ship->get_gear_name(), int(std::lround(ship_position.y)),
+    // 有行星数据：高度后面报离海面多高（行星计划 P7）
+    const String sea = std::isfinite(sea_y) ? vformat(String(U" · 离海面 %d m"), int(std::lround(ship_position.y - sea_y))) : String();
+    return vformat(String(U"航速 %d m/s（%s档）    高度 %d m%s\n%s %s    %s    高差 %+d m"),
+            int(std::lround(ship->get_speed())), ship->get_gear_name(), int(std::lround(ship_position.y)), sea,
             p_target_name, range, bearing, int(std::lround(to_target.y)));
 }
 
@@ -154,6 +161,9 @@ String Helm::piloting_prompt(const std::vector<Berth> &p_berths) const {
         return target.yard ? String(U"按 E 入坞") : (target.land ? String(U"按 E 落上船台") : String(U"按 E 靠泊"));
     }
     String keys = String(U"W/S 进退 · A/D 转舵 · 空格 升 · Shift 降 · R/F 换档");
+    if (!no_footing.is_empty()) {
+        return keys + String(U"\n") + no_footing; // 海上：离不了舵、没处靠
+    }
     if (ship->get_speed() <= leave_helm_speed) {
         keys += String(U" · E 离舵");
     }

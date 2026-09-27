@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <vector>
 
 #include <godot_cpp/variant/string.hpp>
@@ -45,6 +46,10 @@ public:
     double dock_range = 45.0; // 离泊位多近能叫靠泊
     double leave_helm_speed = 3.0; // 半空中离舵：船速须低于此
     godot::String wild_note; // 编排每帧写：此刻为什么野泊不了（空 = 没什么可说）
+    // 编排每帧写（行星计划 P7）：此刻离不了舵的原因（空 = 离得了）——船降到云海以下，人下去就掉进云里 / 海里：
+    // 「海上无处落脚」。这时按 E 不离舵、不靠泊（近处也没有码头），只说这一句
+    godot::String no_footing;
+    double sea_y = NAN; // 有行星数据时海面的 y（航行 HUD 报离海面多高）；没有是 NaN
 
 private:
     Ship *ship = nullptr;

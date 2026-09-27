@@ -61,7 +61,7 @@ PlanetView *OrbitCamera::view() const {
 double OrbitCamera::ground_at(const PlanetVec &p_flat) const {
     const PlanetView *pv = view();
     const double g = pv && std::hypot(p_flat.x, p_flat.z) < 400000.0 ? pv->surface_at(p_flat) : NAN;
-    return std::isfinite(g) ? g : VerticalDatum::CLOUD_TOP_Y + 10.0;
+    return std::isfinite(g) ? g : VerticalDatum::SEA_Y; // 锚群外是海面（行星计划 P7：云带穿得过去，P2 时是云带顶）
 }
 
 void OrbitCamera::begin_from(Camera3D *p_from, PlanetView *p_view) {

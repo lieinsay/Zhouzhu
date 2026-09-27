@@ -35,8 +35,10 @@ class Ship : public godot::CharacterBody3D {
     FlightState state;
     ShipLayout layout = default_layout();
     ShipStats stats;
-    double min_altitude = 15.0; // 云海之上的最低飞行高度（全局 y）
+    double min_altitude = 15.0; // 没有行星数据的地图：云海之上的最低飞行高度（全局 y）；有行星数据时是海面之上 15 m（cloud_band.h 的 ship_floor_y）
     double mouse_sensitivity = 0.0025;
+    double turbulence = 0.0; // 此刻颠得多厉害（行星计划 P7，天与光按云带与风暴给）
+    double flight_time = 0.0; // 颠簸的噪声按它走
 
     bool controlled = false;
     int gear = 0; // 速度档位（flight_gears）；靠泊、放到泊位上时回到头一档
@@ -155,6 +157,9 @@ public:
 
     void set_min_altitude(double p_value) { min_altitude = p_value; }
     double get_min_altitude() const { return min_altitude; }
+    // 此刻的最低高度（全局 y）：有行星数据时是海面之上 15 m（−5585），否则 min_altitude（行星计划 P7）
+    double get_floor_y() const;
+    double get_turbulence() const { return turbulence; } // 此刻颠得多厉害（0..1.5）
     double get_max_speed() const { return apply_gear(params, gear).max_speed; } // 当前档位下
     void set_gear(int p_gear);
     int get_gear() const { return gear; }

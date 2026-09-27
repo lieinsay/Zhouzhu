@@ -14,7 +14,7 @@ class PlanetView;
 // PlanetView 从这里拿双精度的位置（has_true_position / get_true_flat），所以离锚群几千公里、两万公里高时画面也不抖。
 // 朝向就在相机的局部系里（画面的世界轴 = 相机处的东、上、南）。
 // 操作：鼠标（或方向键）转视角；WASD 沿大圆平着飞、空格 / Ctrl 升降、滚轮升降一档（×1.3），都按离地多高放大（对数地快：
-// 平飞每秒走 (离地高 + 50 m) × move_rate，升降每秒高度乘 e^climb_rate），Shift ×4；不低于脚下的地面（锚群外是云带顶）2 m。
+// 平飞每秒走 (离地高 + 50 m) × move_rate，升降每秒高度乘 e^climb_rate），Shift ×4；不低于脚下的地面（锚群外是海面，行星计划 P7 起穿得过云带）2 m。
 // Esc 或 F7 发 leave 信号，DevTools 把人的相机换回来。
 class OrbitCamera : public godot::Camera3D {
     GDCLASS(OrbitCamera, godot::Camera3D)

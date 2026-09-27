@@ -24,10 +24,12 @@
 #include <godot_cpp/core/math.hpp>
 
 #include "atmosphere.h"
+#include "cloud_band.h"
 #include "curved_material.h"
 #include "flight_model.h"
 #include "freight.h"
 #include "input_actions.h"
+#include "planet_view.h"
 
 using namespace godot;
 
@@ -41,6 +43,8 @@ constexpr double BANK_PER_YAW_RATE = 0.3; // 侧倾角 / 偏航角速度
 constexpr double TRIM_PER_CLIMB = 0.012; // 纵倾角 / 垂直速度
 constexpr double CAMERA_PITCH_MIN = -1.2;
 constexpr double CAMERA_PITCH_MAX = 0.5;
+constexpr double BUMP_MS = 2.6; // 颠簸（行星计划 P7）：强度 1 时上下乱推最多这么快（m/s）——一两秒一下，起落一米上下
+constexpr double BUMP_ROLL = 0.05; // 颠簸时船身跟着晃（弧度，强度 1）
 
 const char *GENERATED_META = "ship_generated";
 const char *CARGO_META = "ship_cargo"; // 货箱：换货时只重画它们
@@ -193,6 +197,8 @@ void Ship::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_layout"), &Ship::get_layout);
     ClassDB::bind_method(D_METHOD("set_min_altitude", "value"), &Ship::set_min_altitude);
     ClassDB::bind_method(D_METHOD("get_min_altitude"), &Ship::get_min_altitude);
+    ClassDB::bind_method(D_METHOD("get_floor_y"), &Ship::get_floor_y);
+    ClassDB::bind_method(D_METHOD("get_turbulence"), &Ship::get_turbulence);
 
     ADD_PROPERTY(PropertyInfo(Variant::PACKED_STRING_ARRAY, "layout"), "set_layout", "get_layout");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "min_altitude", PROPERTY_HINT_RANGE, "-100,1000,1,suffix:m"), "set_min_altitude", "get_min_altitude");
@@ -759,7 +765,9 @@ void Ship::_physics_process(double p_delta) {
     if (visual) {
         const real_t blend = real_t(1.0 - std::exp(-4.0 * p_delta));
         Vector3 tilt = visual->get_rotation();
-        tilt.z += (real_t(state.yaw_rate * BANK_PER_YAW_RATE) - tilt.z) * blend; // 左转（角速度为正）向左倾
+        // 颠簸时船身另晃一点（按另一段颠簸的噪声，与上下的不同步）
+        const double wobble = turbulence * BUMP_ROLL * flight_bump(flight_time * 1.3 + 41.0, get_instance_id());
+        tilt.z += (real_t(state.yaw_rate * BANK_PER_YAW_RATE + wobble) - tilt.z) * blend; // 左转（角速度为正）向左倾
         tilt.x += (real_t(state.vy * TRIM_PER_CLIMB) - tilt.x) * blend;
         visual->set_rotation(tilt);
     }
@@ -777,8 +785,12 @@ void Ship::shift(const Vector3 &p_origin, double p_dyaw, const Basis &p_rotation
     set_velocity(v);
 }
 
+double Ship::get_floor_y() const {
+    return ship_floor_y(PlanetView::active_view() != nullptr, min_altitude);
+}
+
 void Ship::set_pose(const Vector3 &p_origin, double p_yaw) {
-    state.vx = state.vy = state.vz = state.yaw_rate = 0.0;
+    state.vx = state.vy = state.vz = state.yaw_rate = state.bump = 0.0;
     state.yaw = p_yaw;
     set_global_position(p_origin);
     set_rotation(Vector3(0, real_t(p_yaw), 0));
@@ -800,14 +812,21 @@ void Ship::step_flight(double p_delta) {
             const Vector2 push = atmosphere->sail_push_at(get_global_position());
             in.drift_x += push.x;
             in.drift_z += push.y;
+            // 行星计划 P7：云带里（风暴里）颠——一股随机的上下扰动
+            turbulence = atmosphere->turbulence_at(get_global_position());
+            in.bump = turbulence * BUMP_MS * flight_bump(flight_time, get_instance_id());
         }
+    } else {
+        turbulence = 0.0;
     }
+    flight_time += p_delta;
     state = flight_step(state, in, apply_gear(params, gear), p_delta);
 
-    // 别沉进云海
+    // 最低高度：有行星数据的地图下面是海，离海面 15 m（D14）；没有的照旧 min_altitude（世界 y）。岛上有地面、崖壁、岛底的碰撞
+    const double floor_y = get_floor_y();
     const double altitude = get_global_position().y;
-    if (altitude < min_altitude) {
-        state.vy = std::max(state.vy, 2.0 * (min_altitude - altitude));
+    if (altitude < floor_y) {
+        state.vy = std::max(state.vy, 2.0 * (floor_y - altitude));
     }
 
     // 没人掌舵又已停稳：彻底不动，甲板上的人脚下才是死的

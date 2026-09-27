@@ -370,8 +370,13 @@ void DevTools::refresh_weather_panel() {
         if (bool(w.get("planet", false))) {
             // 行星计划 P1：日月按相机的经纬度，钟点是 2051（152.15°E）的地方时（D10）
             const double lat = w["sun_latitude"], lon = w["sun_longitude"], off = w["local_offset_h"];
-            lines.push_back(vformat(String(U"相机：%s %s° %s %s° · 地方时 %s（比钟点%s %d 分）"), lat < 0.0 ? String(U"南纬") : String(U"北纬"),
-                    String::num(std::abs(lat), 2), lon < 0.0 ? String(U"西经") : String(U"东经"), String::num(std::abs(lon), 2), hour_text(w["local_hour"]),
+            // 行星计划 P7：离海面多高（海面 −5600 m，D13）；在云带里、云底下另说一声
+            const double sea = w.get("sea_height", NAN);
+            const int layer = w.get("altitude_band", 0);
+            const String where = layer == 3 ? String(U"（云带里）") : (layer == 4 ? String(U"（云底下）") : String());
+            lines.push_back(vformat(String(U"相机：%s %s° %s %s° · 离海面 %s%s · 地方时 %s（比钟点%s %d 分）"), lat < 0.0 ? String(U"南纬") : String(U"北纬"),
+                    String::num(std::abs(lat), 2), lon < 0.0 ? String(U"西经") : String(U"东经"), String::num(std::abs(lon), 2),
+                    std::isfinite(sea) ? vformat(String(U"%d m"), int(std::lround(sea))) : String(U"—"), where, hour_text(w["local_hour"]),
                     off < 0.0 ? String(U"晚") : String(U"早"), int(std::lround(std::abs(off) * 60.0))));
         }
         lines.push_back(vformat(String(U"此地：%s %s°C · %s %s m/s · 云 %d%% · 降水 %s mm/h（雪 %d%%）· 雾 %d%%"), w["kind_name"],
