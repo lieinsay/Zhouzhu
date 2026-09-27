@@ -39,8 +39,10 @@ void PlanetHost::_ready() {
         return;
     }
     stream = Object::cast_to<GroupStream>(get_node_or_null(stream_path));
-    home = Object::cast_to<GroupWorld>(get_node_or_null(home_path));
+    GroupWorld *home = Object::cast_to<GroupWorld>(get_node_or_null(home_path));
     ERR_FAIL_NULL_MSG(home, "PlanetHost 找不到场景里的岛群（home_path）");
+    home_id = home->get_instance_id();
+    home_node = home->get_node_id();
     build_docks();
 }
 
@@ -51,6 +53,14 @@ void PlanetHost::_process(double /* p_delta */) {
     }
 }
 
+GroupWorld *PlanetHost::home_world() const {
+    if (stream && stream->is_ready()) {
+        const GroupStream::Group *g = stream->group_of(home_node);
+        return g ? g->world : nullptr;
+    }
+    return Object::cast_to<GroupWorld>(ObjectDB::get_instance(home_id));
+}
+
 GroupWorld *PlanetHost::anchor_world() const {
     if (stream && stream->is_ready()) {
         if (const GroupStream::Group *a = stream->anchor_group()) {
@@ -59,7 +69,7 @@ GroupWorld *PlanetHost::anchor_world() const {
             }
         }
     }
-    return home;
+    return home_world();
 }
 
 int PlanetHost::get_anchor_node() const {
@@ -69,10 +79,11 @@ int PlanetHost::get_anchor_node() const {
 
 void PlanetHost::build_docks() {
     docks.clear();
-    // 场景里那一群的码头在前：下标、号与它自己的一样
+    // 场景里那一群的码头在前：下标、号与它自己的一样（World 的码头下标就是 sites.tsv 的行序）
+    const GroupWorld *home = Object::cast_to<GroupWorld>(ObjectDB::get_instance(home_id));
     if (home && home->is_loaded()) {
         for (int k = 0; k < home->get_dock_count(); k++) {
-            docks.push_back(DockRef{ home->get_node_id(), k, home->get_dock_id(k), true });
+            docks.push_back(DockRef{ home_node, k, home->get_dock_id(k), true });
         }
     }
     if (!stream || !stream->is_ready()) {
@@ -103,7 +114,7 @@ int PlanetHost::group_index_of(int p_node) const {
 }
 
 int PlanetHost::code_island(int p_node, int p_island) const {
-    if (p_island < 0 || (home && p_node == home->get_node_id())) {
+    if (p_island < 0 || p_node == home_node) {
         return p_island;
     }
     return p_node * NODE_CODE + p_island;
@@ -112,7 +123,7 @@ int PlanetHost::code_island(int p_node, int p_island) const {
 int PlanetHost::find_dock_id(int p_node, int p_local_id) const {
     for (const DockRef &d : docks) {
         if (d.node == p_node) {
-            const GroupStream::Group *g = stream ? stream->group_of(p_node) : nullptr;
+            const GroupStream::Group *g = stream && stream->is_ready() ? stream->group_of(p_node) : nullptr;
             const int local_id = d.home ? d.id : (g ? g->sites.docks[size_t(d.local)].id : -1);
             if (local_id == p_local_id) {
                 return d.id;
@@ -139,7 +150,8 @@ Node3D *PlanetHost::map_node() {
 }
 
 bool PlanetHost::map_ready() const {
-    return home && home->is_loaded();
+    const GroupWorld *a = anchor_world();
+    return a && a->is_loaded();
 }
 
 double PlanetHost::map_surface(const Vector3 &p_global) const {
@@ -197,7 +209,8 @@ Transform3D PlanetHost::map_dock_berth(int p_index) const {
     const DockRef &d = docks[size_t(p_index)];
     const GroupStream::Group *g = stream && stream->is_ready() ? stream->group_of(d.node) : nullptr;
     if (!g) {
-        return home->get_dock_berth(d.local);
+        const GroupWorld *home = home_world();
+        return home ? home->get_dock_berth(d.local) : Transform3D();
     }
     if (g->world && g->world->is_loaded()) {
         return stream->transform_from_group(*g, g->world->get_dock_berth(d.local));
@@ -212,7 +225,8 @@ Transform3D PlanetHost::map_dock_spawn(int p_index) const {
     const DockRef &d = docks[size_t(p_index)];
     const GroupStream::Group *g = stream && stream->is_ready() ? stream->group_of(d.node) : nullptr;
     if (!g) {
-        return home->get_dock_spawn(d.local);
+        const GroupWorld *home = home_world();
+        return home ? home->get_dock_spawn(d.local) : Transform3D();
     }
     if (g->world && g->world->is_loaded()) {
         return stream->transform_from_group(*g, g->world->get_dock_spawn(d.local));
@@ -226,7 +240,8 @@ Vector3 PlanetHost::map_dock_position(int p_index) const {
     const DockRef &d = docks[size_t(p_index)];
     const GroupStream::Group *g = stream && stream->is_ready() ? stream->group_of(d.node) : nullptr;
     if (!g) {
-        return home->get_dock_position(d.local);
+        const GroupWorld *home = home_world();
+        return home ? home->get_dock_position(d.local) : Vector3();
     }
     if (g->world && g->world->is_loaded()) {
         const Vector3 p = g->world->get_dock_position(d.local);
@@ -239,25 +254,25 @@ Vector3 PlanetHost::map_dock_position(int p_index) const {
 int PlanetHost::map_dock_island(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(docks.size()), -1);
     const DockRef &d = docks[size_t(p_index)];
-    if (d.home) {
-        return home->map_dock_island(d.local);
+    const GroupStream::Group *g = stream && stream->is_ready() ? stream->group_of(d.node) : nullptr;
+    if (!g) {
+        GroupWorld *home = home_world();
+        return home ? home->map_dock_island(d.local) : -1;
     }
-    const GroupStream::Group *g = stream ? stream->group_of(d.node) : nullptr;
-    return g ? code_island(d.node, g->sites.docks[size_t(d.local)].island) : -1;
+    return code_island(d.node, g->sites.docks[size_t(d.local)].island);
 }
 
 String PlanetHost::map_dock_label(int p_index) const {
     ERR_FAIL_INDEX_V(p_index, int(docks.size()), String());
     const DockRef &d = docks[size_t(p_index)];
-    if (d.home) {
-        return home->map_dock_label(d.local);
-    }
-    const GroupStream::Group *g = stream ? stream->group_of(d.node) : nullptr;
+    const GroupStream::Group *g = stream && stream->is_ready() ? stream->group_of(d.node) : nullptr;
     if (!g) {
-        return String();
+        GroupWorld *home = home_world();
+        return home ? home->map_dock_label(d.local) : String();
     }
     const SiteDock &sd = g->sites.docks[size_t(d.local)];
-    return vformat(String(U"群 #%d 岛 #%d 码头 #%d"), d.node, sd.island, sd.id);
+    // 场景里那一群照旧「岛 #2 码头 #26」，别的群带群号
+    return d.home ? vformat(String(U"岛 #%d 码头 #%d"), sd.island, sd.id) : vformat(String(U"群 #%d 岛 #%d 码头 #%d"), d.node, sd.island, sd.id);
 }
 
 // ---------------------------------------------------------------- 玩法的落脚处、流式

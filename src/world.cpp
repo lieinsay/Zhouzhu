@@ -160,6 +160,7 @@ void GroupWorld::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_async_load"), &GroupWorld::get_async_load);
     ClassDB::bind_method(D_METHOD("is_loading"), &GroupWorld::is_loading);
     ClassDB::bind_method(D_METHOD("get_node_id"), &GroupWorld::get_node_id);
+    ClassDB::bind_method(D_METHOD("get_local_offset_hours"), &GroupWorld::get_local_offset_hours);
     ClassDB::bind_method(D_METHOD("get_lane"), &GroupWorld::get_lane);
     ClassDB::bind_method(D_METHOD("set_physics_on", "on"), &GroupWorld::set_physics_on);
     ClassDB::bind_method(D_METHOD("is_physics_on"), &GroupWorld::is_physics_on);

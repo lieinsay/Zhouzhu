@@ -29,7 +29,10 @@ class PlanetHost : public godot::Node3D, public MapHost {
     godot::NodePath home_path = "../World";
 
     GroupStream *stream = nullptr;
-    GroupWorld *home = nullptr;
+    // 场景里摆的那一群：它离开近景时 World 会被拆掉、回来时重建（GroupStream 管），所以不留指针——就绪前按 ObjectID 找原来那个，就绪后问 GroupStream
+    godot::ObjectID home_id;
+    int home_node = -1;
+    GroupWorld *home_world() const;
 
     struct DockRef {
         int node = -1; // 群号

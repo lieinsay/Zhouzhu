@@ -7,6 +7,7 @@
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/variant/node_path.hpp>
+#include <godot_cpp/variant/packed_float64_array.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
@@ -107,6 +108,8 @@ public:
 
     // 给脚本的 CPU 版
     godot::Vector2 get_camera_latlon() const { return godot::Vector2(real_t(cam_lat), real_t(cam_lon)); }
+    // 相机在真球面上的位置（行星系，米，双精度）：换锚前后比它（经纬度的单精度只准到一两米）
+    godot::PackedFloat64Array get_camera_planet_position() const;
     double get_camera_lat() const { return cam_lat; }
     double get_camera_lon() const { return cam_lon; }
     double get_clock_longitude() const { return clock_lon; }

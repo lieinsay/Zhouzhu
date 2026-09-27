@@ -148,6 +148,7 @@ std::vector<std::pair<real_t, real_t>> cut_gaps(real_t a, real_t b, const std::v
 
 void Ship::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_controlled", "controlled"), &Ship::set_controlled);
+    ClassDB::bind_method(D_METHOD("set_pose", "origin", "yaw"), &Ship::set_pose);
     ClassDB::bind_method(D_METHOD("is_controlled"), &Ship::is_controlled);
     ClassDB::bind_method(D_METHOD("place_at", "contact", "keep_heading"), &Ship::place_at, DEFVAL(false));
     ClassDB::bind_method(D_METHOD("moor_at", "contact"), &Ship::moor_at);
@@ -774,6 +775,14 @@ void Ship::shift(const Vector3 &p_origin, double p_dyaw, const Basis &p_rotation
     set_global_position(p_origin);
     set_rotation(Vector3(0, real_t(state.yaw), 0));
     set_velocity(v);
+}
+
+void Ship::set_pose(const Vector3 &p_origin, double p_yaw) {
+    state.vx = state.vy = state.vz = state.yaw_rate = 0.0;
+    state.yaw = p_yaw;
+    set_global_position(p_origin);
+    set_rotation(Vector3(0, real_t(p_yaw), 0));
+    set_velocity(Vector3());
 }
 
 void Ship::step_flight(double p_delta) {

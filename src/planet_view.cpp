@@ -51,6 +51,7 @@ void PlanetView::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_active"), &PlanetView::is_active);
     ClassDB::bind_method(D_METHOD("get_anchor_node"), &PlanetView::get_anchor_node);
     ClassDB::bind_method(D_METHOD("get_camera_latlon"), &PlanetView::get_camera_latlon);
+    ClassDB::bind_method(D_METHOD("get_camera_planet_position"), &PlanetView::get_camera_planet_position);
     ClassDB::bind_method(D_METHOD("get_clock_longitude"), &PlanetView::get_clock_longitude);
     ClassDB::bind_method(D_METHOD("get_local_hour_offset"), &PlanetView::get_local_hour_offset);
     ClassDB::bind_method(D_METHOD("get_ground_clearance"), &PlanetView::get_ground_clearance);
@@ -358,6 +359,14 @@ Vector3 PlanetView::enu_to_visual(const Vector3 &p_enu) const {
     const PlanetVec north = up.cross(east);
     const PlanetVec w = east * p_enu.x + up * p_enu.y - north * p_enu.z;
     return Vector3(real_t(cam_axes.cols[0].dot(w)), real_t(cam_axes.cols[1].dot(w)), real_t(cam_axes.cols[2].dot(w)));
+}
+
+PackedFloat64Array PlanetView::get_camera_planet_position() const {
+    PackedFloat64Array out;
+    out.push_back(cam_planet.x);
+    out.push_back(cam_planet.y);
+    out.push_back(cam_planet.z);
+    return out;
 }
 
 double PlanetView::get_local_hour_offset() const {
