@@ -796,6 +796,10 @@ void Ship::step_flight(double p_delta) {
         if (Atmosphere *atmosphere = Object::cast_to<Atmosphere>(get_tree()->get_first_node_in_group(Atmosphere::GROUP))) {
             const Vector2 wind = atmosphere->wind_at(get_global_position());
             wind_drift(wind.x, wind.y, in.drift_x, in.drift_z);
+            // 行星计划 P5：赤道永暴带、G 定点永暴圈里风暴禁航——风把船往外推（背景接手的地方才有，岛群附近是 0）
+            const Vector2 push = atmosphere->sail_push_at(get_global_position());
+            in.drift_x += push.x;
+            in.drift_z += push.y;
         }
     }
     state = flight_step(state, in, apply_gear(params, gear), p_delta);

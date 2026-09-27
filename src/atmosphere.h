@@ -144,8 +144,10 @@ public:
     godot::String hud_text(const godot::Vector3 &p_global);
     // 某一点此刻的风（m/s，往 x / z 吹）：掌舵时船按它往下风漂（flight_model 的 wind_drift）
     godot::Vector2 wind_at(const godot::Vector3 &p_global);
-    // 掌舵时的提醒：风大（船往下风漂）、这一天禁航；平常是空的
+    // 掌舵时的提醒：风大（船往下风漂）、这一天禁航、赤道永暴带 / G 圈里风暴禁航；平常是空的
     godot::String sailing_text(const godot::Vector3 &p_global);
+    // 行星计划 P5：赤道永暴带、G 定点永暴圈里（背景接手的地方）把船往外推多快（m/s，全局 x / z）；别处是 0
+    godot::Vector2 sail_push_at(const godot::Vector3 &p_global);
     // 行星天气场在某一点（全局）：{ ready, nodes, weights, bg, group_share, zone, zone_kind（0 没有 1 赤道永暴带 2 G）, push_x, push_z,
     //   cloud_cover, coverage, temp_c, wind_x, wind_z, storm, day_kind, front, lat, lon }；没有行星数据 ready 为假
     godot::Dictionary planet_weather_at(const godot::Vector3 &p_global);

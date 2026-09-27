@@ -132,6 +132,7 @@ void Atmosphere::_bind_methods() {
     ClassDB::bind_method(D_METHOD("weather_at", "global"), &Atmosphere::weather_at);
     ClassDB::bind_method(D_METHOD("hud_text", "global"), &Atmosphere::hud_text);
     ClassDB::bind_method(D_METHOD("get_look"), &Atmosphere::get_look);
+    ClassDB::bind_method(D_METHOD("sail_push_at", "global"), &Atmosphere::sail_push_at);
     ClassDB::bind_method(D_METHOD("planet_weather_at", "global"), &Atmosphere::planet_weather_at);
     ClassDB::bind_method(D_METHOD("planet_weather_latlon", "lat", "lon"), &Atmosphere::planet_weather_latlon);
     ClassDB::bind_method(D_METHOD("get_cloud_slots"), &Atmosphere::get_cloud_slots);
@@ -778,10 +779,38 @@ String Atmosphere::sailing_text(const Vector3 &p_global) {
     if (s.wind_ms >= 5.0) {
         text = vformat(String(U"%s %d m/s，船往下风漂"), String::utf8(wind_name(s.wind_x, s.wind_z).c_str()), int(std::lround(s.wind_ms)));
     }
+    // 行星计划 P5：赤道永暴带、G 定点永暴圈（背景接手的地方）——风暴、禁航，船被往外推
+    const Vector2 push = sail_push_at(p_global);
+    if (push.length() > 1.0) {
+        const Dictionary pw = planet_weather_at(p_global);
+        const String zone = int(pw.get("zone_kind", 0)) == 2 ? String(U"G 定点永暴") : String(U"赤道永暴带");
+        return zone + String(U"：风暴，禁航——风把船往外推") + (text.is_empty() ? String() : String(U" · ") + text);
+    }
     if (!s.sailable) {
         text = (s.storm > 0.5 ? String(U"风暴，禁航") : String(U"今天禁航（风大浪急）")) + (text.is_empty() ? String() : String(U" · ") + text);
     }
     return text;
+}
+
+Vector2 Atmosphere::sail_push_at(const Vector3 &p_global) {
+    const PlanetView *pv = PlanetView::active_view();
+    const std::shared_ptr<PlanetWeather> pw = pv ? pv->get_planet_weather() : nullptr;
+    if (!pw || !p_global.is_finite()) {
+        return Vector2();
+    }
+    const GroupFrame &anchor = pv->get_anchor();
+    const PlanetVec flat(p_global.x, 0.0, p_global.z);
+    const PlanetVec unit = anchor.to_planet(flat).normalized();
+    double lat = 0.0, lon = 0.0;
+    planet_latlon(unit, lat, lon);
+    const PlanetRegional r = pw->sample(calendar_day(), lat, lon, 0.0, false);
+    if (r.push_x == 0.0 && r.push_z == 0.0) {
+        return Vector2();
+    }
+    // 此地的东、南 → 锚群的平面轴
+    const double gamma = planet_plane_turn(anchor, unit, flat.x, flat.z);
+    const double e = r.push_x, n = -r.push_z, cg = std::cos(gamma), sg = std::sin(gamma);
+    return Vector2(real_t(e * cg + n * sg), real_t(-(n * cg - e * sg)));
 }
 
 Dictionary Atmosphere::planet_weather_at(const Vector3 &p_global) {
