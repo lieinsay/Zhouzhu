@@ -13,6 +13,7 @@
 #include "flat_map.h"
 #include "group_provider.h"
 #include "group_stream.h"
+#include "planet_map.h"
 #include "hinterland.h"
 #include "hotbar_bar.h"
 #include "inventory_panel.h"
@@ -73,6 +74,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(World);
     GDREGISTER_CLASS(GroupStream);
     GDREGISTER_CLASS(GroupProvider);
+    GDREGISTER_CLASS(PlanetMap);
     GDREGISTER_CLASS(PlanetHost);
     GDREGISTER_CLASS(WorldMap);
     GDREGISTER_CLASS(WorldVillage);

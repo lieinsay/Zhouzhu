@@ -11,8 +11,11 @@
 #include <godot_cpp/core/object_id.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 
+#include "world_session.h"
+
 class Atmosphere;
 class Player;
+class PlanetMap;
 
 // 全局开发者工具（autoload，见 game/dev_tools.tscn），哪张地图里都在：
 //   F2 开合「换地图」清单（maps：场景路径 → 名字），点一项或按数字键就换过去；
@@ -23,6 +26,12 @@ class Player;
 //      按它的 override_fade 渐入渐出，村子、庄稼跟着变；换了地图照样生效；
 //   F7 开关轨道相机（行星计划 P2）——有行星数据的地图里，从当前相机的位姿起飞（OrbitCamera），一路升到轨道看整颗星；Esc / F7 落回人身上；
 //   没有岛群地图的场景里按 M，提示去 F2 换一张有地图的。
+// 行星计划 P4：F2 的清单里另有——
+//   「行星」：地球仪面板（PlanetMap），8000 个岛群，悬停读数，点一下开发者瞬移（没生成过的当场生成，HUD 报进度）或设为航向；有行星数据的场景才能开；
+//   「新建世界（随机种子）」：调生成器（WorldMaker → tools/zhouzhu_gen.py world）算行星层、出生的岛群，好了换进这个世界（生存模式，计划 4.8）；
+//   「继续：世界 seedN」：user://worlds 下建过的生存世界，已生成的岛群、粗版不重生成；
+//   「岛群 #2051」照旧（剧情模式 seed42，存档目录 user://worlds/seed42）。
+//   换场景、关窗前让场景里的 GroupStream 把载入着的群的账存进世界存档目录。
 // 当前场景的根节点有 dev_tools 属性且为假时，这些键都不理。
 // 「god 开没开」「清单开没开」只在这里；它不认识各场景的编排，只找场景里的 Player。
 class DevTools : public godot::Node {
@@ -56,6 +65,34 @@ class DevTools : public godot::Node {
     std::vector<godot::Button *> menu_buttons;
     double notice_time = 0.0;
 
+    enum EntryKind {
+        ENTRY_MAP, // 换到 maps 里的场景
+        ENTRY_PLANET, // 行星地图
+        ENTRY_NEW_WORLD, // 新建世界（随机种子）
+        ENTRY_WORLD, // 继续一个生存世界
+    };
+    struct MenuEntry {
+        godot::String text;
+        EntryKind kind = ENTRY_MAP;
+        godot::String arg;
+        bool enabled = true;
+    };
+    std::vector<MenuEntry> entries;
+    godot::String planet_scene = "res://world_2051.tscn"; // 行星场景（剧情、生存都用它）
+    PlanetMap *planet_map = nullptr;
+    bool planet_open = false;
+    bool blocked_before_planet = false;
+    WorldMaker maker;
+    bool making = false;
+    bool maker_enter = true;
+    void build_entries();
+    void set_planet_open(bool p_open);
+    void feed_planet_map();
+    void on_planet_jump(int p_node);
+    void on_planet_course(int p_node);
+    void poll_maker();
+    void save_scene_world();
+
     void build_ui();
     void build_weather_panel(godot::Node *p_layer);
     void refresh_menu();
@@ -74,6 +111,7 @@ public:
     void _ready() override;
     void _process(double p_delta) override;
     void _unhandled_input(const godot::Ref<godot::InputEvent> &p_event) override;
+    void _notification(int p_what);
 
     void set_time_lapse(bool p_enabled); // 开关快进（改的是 WorldClock）
     bool is_time_lapse() const;
@@ -88,6 +126,23 @@ public:
     void switch_to_index(int p_index);
     void switch_to(const godot::String &p_path);
     bool is_menu_open() const { return menu_open; }
+    void set_menu_open_for_tests(bool p_open) { set_menu_open(p_open); }
+    // F2 清单的第 p_index 项（地图、行星、新建世界、继续某个世界）
+    void menu_pick(int p_index);
+    godot::PackedStringArray get_menu_entries(); // 清单每一项的字（给测试看）
+    // 行星地图（F2「行星」）
+    void open_planet_map();
+    void close_planet_map() { set_planet_open(false); }
+    bool is_planet_open() const { return planet_open; }
+    PlanetMap *get_planet_map() const { return planet_map; }
+    // 新建世界（生存模式）：p_seed ≤ 0 随机；开始了返回 true。p_enter：好了自动换进去（测试给假，自己实例化场景）；p_name 空 = seed<N>
+    bool new_world(int p_seed, bool p_enter = true, const godot::String &p_name = godot::String());
+    // 下一个实例化的行星场景用这个世界（不换场景；测试用）
+    bool prepare_world(const godot::String &p_world_dir);
+    // { making, seed, world_dir, progress, text, error, elapsed_s }
+    godot::Dictionary get_new_world_state() const;
+    // 换进一个世界（存档目录；剧情的也行）
+    bool enter_world(const godot::String &p_world_dir);
 
     // 时间与天气（F6 面板上的按钮与键也走这些；测试直接调）
     void set_weather_open(bool p_open);

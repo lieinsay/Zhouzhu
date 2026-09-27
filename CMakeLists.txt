@@ -182,6 +182,8 @@ target_sources(
         src/group_provider.cpp
         src/group_provider.h
         src/group_stream.cpp
+        src/planet_map.cpp
+        src/planet_map.h
         src/world_session.cpp
         src/world_session.h
         src/group_stream.h

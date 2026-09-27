@@ -12,7 +12,10 @@
 #include <godot_cpp/variant/typed_array.hpp>
 
 #include "atmosphere.h"
+#include "group_provider.h"
+#include "group_stream.h"
 #include "input_actions.h"
+#include "planet_map.h"
 #include "orbit_camera.h"
 #include "planet_view.h"
 #include "player.h"
@@ -67,6 +70,19 @@ void DevTools::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_weather_temp", "offset"), &DevTools::set_weather_temp);
     ClassDB::bind_method(D_METHOD("get_weather_temp"), &DevTools::get_weather_temp);
     ClassDB::bind_method(D_METHOD("get_weather_text"), &DevTools::get_weather_text);
+    ClassDB::bind_method(D_METHOD("menu_pick", "index"), &DevTools::menu_pick);
+    ClassDB::bind_method(D_METHOD("get_menu_entries"), &DevTools::get_menu_entries);
+    ClassDB::bind_method(D_METHOD("set_menu_open_for_tests", "open"), &DevTools::set_menu_open_for_tests);
+    ClassDB::bind_method(D_METHOD("open_planet_map"), &DevTools::open_planet_map);
+    ClassDB::bind_method(D_METHOD("close_planet_map"), &DevTools::close_planet_map);
+    ClassDB::bind_method(D_METHOD("is_planet_open"), &DevTools::is_planet_open);
+    ClassDB::bind_method(D_METHOD("get_planet_map"), &DevTools::get_planet_map);
+    ClassDB::bind_method(D_METHOD("new_world", "seed", "enter", "name"), &DevTools::new_world, DEFVAL(true), DEFVAL(String()));
+    ClassDB::bind_method(D_METHOD("prepare_world", "world_dir"), &DevTools::prepare_world);
+    ClassDB::bind_method(D_METHOD("get_new_world_state"), &DevTools::get_new_world_state);
+    ClassDB::bind_method(D_METHOD("enter_world", "world_dir"), &DevTools::enter_world);
+    ClassDB::bind_method(D_METHOD("_on_planet_jump", "node"), &DevTools::on_planet_jump);
+    ClassDB::bind_method(D_METHOD("_on_planet_course", "node"), &DevTools::on_planet_course);
     ClassDB::bind_method(D_METHOD("set_maps", "value"), &DevTools::set_maps);
     ClassDB::bind_method(D_METHOD("get_maps"), &DevTools::get_maps);
     ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "maps"), "set_maps", "get_maps");
@@ -133,6 +149,15 @@ void DevTools::build_ui() {
     menu_rows->add_child(hint);
 
     build_weather_panel(layer);
+
+    planet_map = memnew(PlanetMap);
+    planet_map->set_name("PlanetMap");
+    planet_map->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
+    planet_map->set_visible(false);
+    planet_map->connect("jump_requested", Callable(this, "_on_planet_jump"));
+    planet_map->connect("course_requested", Callable(this, "_on_planet_course"));
+    layer->add_child(planet_map);
+    layer->move_child(planet_map, 0); // 在提示、清单下面
 }
 
 void DevTools::build_weather_panel(Node *p_layer) {
@@ -369,28 +394,92 @@ void DevTools::refresh_weather_panel() {
     weather_text->set_text(String("\n").join(lines));
 }
 
-void DevTools::refresh_menu() {
-    for (Button *b : menu_buttons) {
-        b->queue_free();
-    }
-    menu_buttons.clear();
+void DevTools::build_entries() {
+    entries.clear();
     const Node *scene = get_tree()->get_current_scene();
     const String current = scene ? scene->get_scene_file_path() : String();
     const Array paths = maps.keys();
     for (int64_t k = 0; k < paths.size(); k++) {
         const String path = paths[k];
-        Button *button = memnew(Button);
-        String text = vformat("%d   %s", k + 1, maps[path]);
+        MenuEntry e;
+        e.kind = ENTRY_MAP;
+        e.arg = path;
+        e.text = maps[path];
         if (path == current) {
-            text += String(U"   · 当前");
-            button->set_disabled(true);
+            e.text += String(U"   · 当前");
+            e.enabled = false;
         }
-        button->set_text(text);
+        entries.push_back(e);
+    }
+    MenuEntry planet;
+    planet.kind = ENTRY_PLANET;
+    planet.enabled = PlanetView::active_view() != nullptr;
+    planet.text = planet.enabled ? String(U"行星（地球仪：点一下瞬移或设航向）") : String(U"行星（这张地图没有行星数据）");
+    entries.push_back(planet);
+    MenuEntry fresh;
+    fresh.kind = ENTRY_NEW_WORLD;
+    fresh.enabled = !making;
+    fresh.text = making ? vformat(String(U"新建世界（在建 seed%d……）"), maker.get_seed()) : String(U"新建世界（随机种子，生存模式）");
+    entries.push_back(fresh);
+    const Array worlds = WorldSession::list_survival();
+    for (int64_t k = 0; k < worlds.size() && k < 5; k++) {
+        const Dictionary w = worlds[k];
+        MenuEntry e;
+        e.kind = ENTRY_WORLD;
+        e.arg = w["dir"];
+        e.text = vformat(String(U"继续：世界 %s（生存，种子 %d，出生群 #%d，生成过 %d 群、%d 份粗版）"), String(w["name"]), int(w["seed"]), int(w["spawn"]), int(w["groups"]), int(w["lods"]));
+        entries.push_back(e);
+    }
+}
+
+void DevTools::refresh_menu() {
+    for (Button *b : menu_buttons) {
+        b->queue_free();
+    }
+    menu_buttons.clear();
+    build_entries();
+    for (size_t k = 0; k < entries.size(); k++) {
+        Button *button = memnew(Button);
+        button->set_text(vformat("%d   %s", int(k) + 1, entries[k].text));
+        button->set_disabled(!entries[k].enabled);
         button->set_text_alignment(HORIZONTAL_ALIGNMENT_LEFT);
         button->add_theme_font_size_override("font_size", 19);
-        button->connect("pressed", Callable(this, "switch_to_index").bind(k));
+        button->connect("pressed", Callable(this, "menu_pick").bind(int(k)));
         menu_rows->add_child(button);
         menu_buttons.push_back(button);
+    }
+}
+
+PackedStringArray DevTools::get_menu_entries() {
+    build_entries();
+    PackedStringArray out;
+    for (const MenuEntry &e : entries) {
+        out.push_back(e.text);
+    }
+    return out;
+}
+
+void DevTools::menu_pick(int p_index) {
+    if (entries.empty()) {
+        build_entries();
+    }
+    if (p_index < 0 || p_index >= int(entries.size()) || !entries[size_t(p_index)].enabled) {
+        return;
+    }
+    const MenuEntry e = entries[size_t(p_index)];
+    switch (e.kind) {
+        case ENTRY_MAP:
+            switch_to(e.arg);
+            break;
+        case ENTRY_PLANET:
+            open_planet_map();
+            break;
+        case ENTRY_NEW_WORLD:
+            new_world(0);
+            break;
+        case ENTRY_WORLD:
+            enter_world(e.arg);
+            break;
     }
 }
 
@@ -537,8 +626,18 @@ void DevTools::switch_to_index(int p_index) {
     }
 }
 
+void DevTools::save_scene_world() {
+    // 场景里的岛群：载入着的群的账存进世界存档目录（行星计划 P4；没有存档目录的场景什么都不做）
+    get_tree()->call_group(GroupStream::GROUP, "save_world");
+}
+
 void DevTools::switch_to(const String &p_path) {
     set_menu_open(false);
+    set_planet_open(false);
+    save_scene_world();
+    if (p_path == planet_scene) {
+        WorldSession::set_pending(WorldSession::story_config()); // 剧情模式：seed42，存档目录 user://worlds/seed42
+    }
     const Error err = get_tree()->change_scene_to_file(p_path);
     if (err != OK) {
         show_notice(vformat(String(U"换不过去：%s（错误 %d）"), p_path, int(err)));
@@ -547,8 +646,172 @@ void DevTools::switch_to(const String &p_path) {
     show_notice(vformat(String(U"换到「%s」"), maps.get(p_path, p_path)));
 }
 
+void DevTools::open_planet_map() {
+    if (!PlanetView::active_view()) {
+        show_notice(String(U"这张地图没有行星数据（F2 换到「岛群 #2051」或新建一个世界）"));
+        return;
+    }
+    set_menu_open(false);
+    set_planet_open(true);
+}
+
+void DevTools::set_planet_open(bool p_open) {
+    if (!planet_map || planet_open == p_open) {
+        return;
+    }
+    planet_open = p_open;
+    planet_map->set_visible(p_open);
+    Player *player = find_player();
+    if (p_open) {
+        const PlanetView *pv = PlanetView::active_view();
+        planet_map->set_planet(pv ? pv->share_planet() : std::shared_ptr<const PlanetData>());
+        planet_map->set_provider(get_tree()->get_first_node_in_group(GroupProvider::GROUP));
+        if (pv) {
+            planet_map->look_at_latlon(pv->get_camera_lat(), pv->get_camera_lon());
+            planet_map->select(-1);
+        }
+        feed_planet_map();
+        planet_map->grab_focus();
+        blocked_before_planet = player && player->is_input_blocked();
+        if (player) {
+            player->set_input_blocked(true);
+        }
+        Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
+    } else {
+        if (player) {
+            player->set_input_blocked(blocked_before_planet);
+        }
+        Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_CAPTURED);
+    }
+}
+
+void DevTools::feed_planet_map() {
+    const PlanetView *pv = PlanetView::active_view();
+    if (!planet_open || !pv) {
+        return;
+    }
+    planet_map->set_player(pv->get_camera_lat(), pv->get_camera_lon(), pv->get_anchor_node());
+    if (const Expedition *e = Object::cast_to<Expedition>(get_tree()->get_first_node_in_group(Expedition::MAP_GROUP))) {
+        const Dictionary j = e->get_jump_state();
+        planet_map->set_jump(int(j["node"]), double(j["progress"]), j["text"]);
+        planet_map->set_course(e->get_planet_course());
+        planet_map->set_teleport_enabled(e->get_dev_tools());
+    }
+}
+
+void DevTools::on_planet_jump(int p_node) {
+    Expedition *e = Object::cast_to<Expedition>(get_tree()->get_first_node_in_group(Expedition::MAP_GROUP));
+    if (!e) {
+        show_notice(String(U"这张地图瞬移不了"));
+        return;
+    }
+    if (e->request_planet_jump(p_node)) {
+        set_planet_open(false); // 合上看进度（HUD 第二行）
+        show_notice(vformat(String(U"瞬移去群 #%d……"), p_node));
+    }
+}
+
+void DevTools::on_planet_course(int p_node) {
+    if (Expedition *e = Object::cast_to<Expedition>(get_tree()->get_first_node_in_group(Expedition::MAP_GROUP))) {
+        e->set_planet_course(p_node);
+        planet_map->set_course(p_node);
+    }
+}
+
+bool DevTools::new_world(int p_seed, bool p_enter, const String &p_name) {
+    String error;
+    maker_enter = p_enter;
+    if (!maker.start(p_seed, error, p_name)) {
+        show_notice(String(U"新建不了世界：") + error);
+        return false;
+    }
+    making = true;
+    set_menu_open(false);
+    set_planet_open(false);
+    show_notice(vformat(String(U"新建世界 seed%d：行星层 → 行星包 → 出生的岛群，好了自动换过去"), maker.get_seed()));
+    return true;
+}
+
+Dictionary DevTools::get_new_world_state() const {
+    Dictionary d;
+    d["making"] = making;
+    d["seed"] = maker.get_seed();
+    d["world_dir"] = maker.get_world_dir();
+    d["progress"] = maker.get_progress();
+    d["text"] = maker.get_text();
+    d["error"] = maker.get_error();
+    d["failed"] = maker.is_failed();
+    d["done"] = maker.is_done();
+    d["elapsed_s"] = maker.elapsed_s();
+    return d;
+}
+
+void DevTools::poll_maker() {
+    if (!making) {
+        return;
+    }
+    maker.poll();
+    if (maker.is_running()) {
+        return;
+    }
+    making = false;
+    if (maker.is_failed()) {
+        show_notice(String(U"新建世界失败：") + maker.get_error());
+        return;
+    }
+    if (maker_enter) {
+        enter_world(maker.get_world_dir());
+    } else {
+        show_notice(vformat(String(U"世界 %s 建好了"), maker.get_world_dir()));
+    }
+}
+
+bool DevTools::prepare_world(const String &p_world_dir) {
+    WorldConfig config;
+    String error;
+    if (!WorldSession::load(p_world_dir, config, error)) {
+        show_notice(String(U"进不了这个世界：") + error);
+        return false;
+    }
+    WorldSession::set_pending(config);
+    return true;
+}
+
+bool DevTools::enter_world(const String &p_world_dir) {
+    WorldConfig config;
+    String error;
+    if (!WorldSession::load(p_world_dir, config, error)) {
+        show_notice(String(U"进不了这个世界：") + error);
+        return false;
+    }
+    set_menu_open(false);
+    set_planet_open(false);
+    save_scene_world();
+    WorldSession::set_pending(config);
+    const Error err = get_tree()->change_scene_to_file(planet_scene);
+    if (err != OK) {
+        WorldConfig dropped;
+        WorldSession::take_pending(dropped);
+        show_notice(vformat(String(U"换不过去：%s（错误 %d）"), planet_scene, int(err)));
+        return false;
+    }
+    show_notice(vformat(String(U"进入世界 %s（%s，种子 %d，出生在群 #%d）"), config.name, config.mode == "story" ? String(U"剧情") : String(U"生存"), config.seed, config.spawn_node));
+    return true;
+}
+
+void DevTools::_notification(int p_what) {
+    if (p_what == NOTIFICATION_WM_CLOSE_REQUEST && get_tree()) {
+        save_scene_world();
+    }
+}
+
 void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
     if (!allowed()) {
+        return;
+    }
+    if (planet_open && (p_event->is_action_pressed(input_actions::SWITCH_MAP) || p_event->is_action_pressed("ui_cancel"))) {
+        set_planet_open(false);
+        get_viewport()->set_input_as_handled();
         return;
     }
     if (p_event->is_action_pressed(input_actions::SWITCH_MAP)) {
@@ -611,7 +874,7 @@ void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
         if (key.is_valid() && key->is_pressed() && !key->is_echo()) {
             const int64_t code = int64_t(key->get_physical_keycode());
             if (code >= KEY_1 && code <= KEY_9) {
-                switch_to_index(int(code - KEY_1));
+                menu_pick(int(code - KEY_1));
                 get_viewport()->set_input_as_handled();
             }
         }
@@ -639,6 +902,8 @@ void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
 }
 
 void DevTools::_process(double p_delta) {
+    poll_maker();
+    feed_planet_map();
     Player *player = find_player();
     // 换了地图：新场景里的人也接着飞
     if (player && player->is_god_mode() != god) {
@@ -660,6 +925,9 @@ void DevTools::_process(double p_delta) {
                 clearance >= 10000.0 ? vformat(String(U"%s km"), String::num(clearance / 1000.0, clearance >= 1e6 ? 0 : 1)) : vformat(String(U"%d m"), int(clearance)),
                 ll.x < 0.0 ? String(U"南纬") : String(U"北纬"), String::num(std::abs(ll.x), 2), ll.y < 0.0 ? String(U"西经") : String(U"东经"), String::num(std::abs(ll.y), 2),
                 orbit->get_move_speed() >= 1000.0 ? vformat(String(U"%s km/s"), String::num(orbit->get_move_speed() / 1000.0, 1)) : vformat(String(U"%d m/s"), int(orbit->get_move_speed()))));
+    }
+    if (making) {
+        lines.push_back(vformat(String(U"新建世界 seed%d：%s · %d%% · %d s"), maker.get_seed(), maker.get_text(), int(std::lround(maker.get_progress() * 100.0)), int(maker.elapsed_s())));
     }
     if (WorldClock::get_singleton() && WorldClock::get_singleton()->is_paused()) {
         lines.push_back(String(U"时间停着 · F6 面板里 P 继续"));
