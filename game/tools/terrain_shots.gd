@@ -72,6 +72,13 @@ func _plan() -> void:
 	# 6 小岛：12 号岛（14.7 km²，岛心 (-21920, 16486)），离岛心 4 km 平视，整座岛悬在云海上
 	var islet := Vector3(-21920.0, 0.0, 16486.0)
 	views.append(["6_islet", islet + Vector3(0, 400, -2600), islet + Vector3(-2800, 120, -2800), islet + Vector3(0, -80, 0)])
+	# 浮高计划 Z1：云带顶在 −5000 m，岛底（连岩棱）至少高出它 1000 m
+	# 8 岛边往下看：岸外 120 m、岸缘上 30 m，朝外往下约 50° 望——脚下几千米是云带顶
+	views.append(["8_edge_down", dock + out * 60.0, dock + out * 120.0 + Vector3(0, 30.0, 0), dock + out * 2200.0 + Vector3(0, -2600.0, 0)])
+	# 9 岛底与云带顶之间的空：岸外 8 km、云带顶上 400 m（y = −4600），朝岛心略往上看——倒锥的岛底悬在头顶，底下是云带顶，中间一千多米是天
+	views.append(["9_gap_side", dock + out * 600.0, Vector3(dock.x, -4600.0, dock.z) + out * 8000.0 + side * 1500.0, Vector3(dock.x, -3300.0, dock.z) - out * 6000.0])
+	# 10 远看整座主岛：岸外 25 km、y = −4500，平看——一整座浮山悬在云带顶上
+	views.append(["10_gap_far", dock + out * 600.0, Vector3(dock.x, -4500.0, dock.z) + out * 25000.0, Vector3(dock.x, -3900.0, dock.z) - out * 8000.0])
 
 
 func _physics_process(delta: float) -> void:
