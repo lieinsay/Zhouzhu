@@ -37,16 +37,16 @@ std::string fmt(const char *p_format, double p_value) {
 
 namespace modules {
 
-//  种类              id            名字        占格 x y z  质量  推力  船舱 货位   最上 最下  最多 少不了                   拆得   样子
+//  种类              id            名字        占格 x y z  质量  推力  船舱 货位   最上 最下  最多 少不了                   拆得   能进   能摆   样子
 const ModuleDef DEFS[] = {
-    { ModuleKind::BRIDGE, "bridge", "驾驶区", 1, 1, 1, 1.0, 0.0, 0, false, true, false, 1, "没有驾驶区，没处掌舵", false, ModuleLook::HELM },
-    { ModuleKind::STORAGE, "storage", "储存区", 1, 1, 1, 1.2, 0.0, 12, true, false, false, 0, nullptr, true, ModuleLook::CARGO },
-    { ModuleKind::SAIL, "sail", "帆", 1, 1, 1, 1.1, 1.0, 0, false, true, false, 0, nullptr, true, ModuleLook::SAIL },
-    { ModuleKind::FLOATSTONE, "floatstone", "浮石舱", 1, 1, 1, 1.4, 0.7, 0, false, false, true, 0, nullptr, true, ModuleLook::FLOATSTONE },
-    { ModuleKind::DECK, "deck", "空节", 1, 1, 1, 0.6, 0.0, 0, false, false, false, 0, nullptr, true, ModuleLook::BARE },
-    { ModuleKind::LONG_SAIL, "long_sail", "双桅帆", 1, 1, 2, 2.0, 2.4, 0, false, true, false, 0, nullptr, true, ModuleLook::SAIL },
-    { ModuleKind::TALL_HOLD, "tall_hold", "双层货舱", 1, 2, 1, 2.2, 0.0, 30, true, false, false, 0, nullptr, true, ModuleLook::CARGO },
-    { ModuleKind::WIDE_DECK, "wide_deck", "宽空节", 2, 1, 1, 1.1, 0.0, 0, false, false, false, 0, nullptr, true, ModuleLook::BARE },
+    { ModuleKind::BRIDGE, "bridge", "驾驶区", 1, 1, 1, 1.0, 0.0, 0, false, true, false, 1, "没有驾驶区，没处掌舵", false, false, false, ModuleLook::HELM },
+    { ModuleKind::STORAGE, "storage", "储存区", 1, 1, 1, 1.2, 0.0, 12, true, false, false, 0, nullptr, true, true, false, ModuleLook::CARGO },
+    { ModuleKind::SAIL, "sail", "帆", 1, 1, 1, 1.1, 1.0, 0, false, true, false, 0, nullptr, true, false, false, ModuleLook::SAIL },
+    { ModuleKind::FLOATSTONE, "floatstone", "浮石舱", 1, 1, 1, 1.4, 0.7, 0, false, false, true, 0, nullptr, true, false, false, ModuleLook::FLOATSTONE },
+    { ModuleKind::DECK, "deck", "空节", 1, 1, 1, 0.6, 0.0, 0, false, false, false, 0, nullptr, true, true, true, ModuleLook::BARE },
+    { ModuleKind::LONG_SAIL, "long_sail", "双桅帆", 1, 1, 2, 2.0, 2.4, 0, false, true, false, 0, nullptr, true, false, false, ModuleLook::SAIL },
+    { ModuleKind::TALL_HOLD, "tall_hold", "双层货舱", 1, 2, 1, 2.2, 0.0, 30, true, false, false, 0, nullptr, true, true, false, ModuleLook::CARGO },
+    { ModuleKind::WIDE_DECK, "wide_deck", "宽空节", 2, 1, 1, 1.1, 0.0, 0, false, false, false, 0, nullptr, true, true, true, ModuleLook::BARE },
 };
 static_assert(sizeof(DEFS) / sizeof(DEFS[0]) == size_t(ModuleKind::COUNT), "节点表与 ModuleKind 一一对应");
 
@@ -120,7 +120,10 @@ std::string function_text(const ModuleDef &p_def) {
         add("货位 " + std::to_string(4 * cells_of(p_def)));
     }
     if (text.empty()) {
-        text = "没有功能：空着留给摆东西";
+        text = p_def.furnish ? "没有功能：能摆东西" : "没有功能";
+    }
+    if (p_def.enterable) {
+        add(p_def.size_y > 1 ? "下层能进" : "盖住了能进");
     }
     return text;
 }
@@ -353,8 +356,9 @@ std::vector<HoldSlot> hold_slots(const ShipLayout &p_layout) {
         if (!modules::def(m.kind).cargo_deck) {
             continue;
         }
+        const bool enterable = modules::def(m.kind).enterable;
         for (const Cell &c : module_cells(m)) {
-            const bool open = !p_layout.has({ c.x, c.y + 1, c.z });
+            const bool open = enterable || !p_layout.has({ c.x, c.y + 1, c.z }); // 能进的舱里也够得着
             for (int side = -1; side <= 1; side += 2) {
                 for (int end = -1; end <= 1; end += 2) {
                     HoldSlot slot;

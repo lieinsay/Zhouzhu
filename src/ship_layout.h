@@ -14,6 +14,8 @@
 //   驾驶区（单节，舵在这儿，恰好一个、只能在最上面、拆不得）、储存区（单节，货位 + 船舱）、帆（单节，只能在最上面，出推力）、
 //   浮石舱（单节，只能在最下面一层，推力小些但能压在别的节下面）、空节（单节，没有功能，空着留给玩家摆东西）、
 //   双桅帆（前后双节，只能在最上面）、双层货舱（上下双节）、宽空节（左右双节，没有功能）。
+// 被上面盖住的节：储存区、双层货舱、空节、宽空节是能进的舱（墙、门洞、窗由 ship_cabins.h 定），浮石舱是封死的舱体；
+// 空节、宽空节的甲板上、舱里能摆工作台、木箱这些（摆放的规矩也在 ship_cabins.h）。
 // 舷门固定在格 (0, 0, 0) 那一排（z = 0、第 0 层）的两头；泊位、坞位、跳板都接舷门，所以船怎么改都不用挪码头。
 //
 // 规矩（layout_problem 一一说明原因）：在范围内、不超 12 节；节点不重叠；舷门格 (0,0,0) 不能空；
@@ -58,6 +60,8 @@ struct ModuleDef {
     int max_count; // 最多几个；0 = 不限
     const char *required; // 少不了时缺了的原因；nullptr = 可以没有
     bool removable;
+    bool enterable; // 被上面盖住的那几节是能进的舱（有门、有窗、舱里算屋里）；否则是封死的舱体
+    bool furnish; // 甲板上、舱里能摆工作台、木箱这些（摆放的规矩见 ship_cabins.h）
     ModuleLook look;
 };
 
@@ -71,7 +75,7 @@ int cells_of(const ModuleDef &p_def); // 占几节
 // 面板上的说法（UTF-8）
 std::string shape_name(const ModuleDef &p_def); // 单节 / 前后双节 / 上下双节 / 左右双节
 std::vector<std::string> rule_tags(const ModuleDef &p_def); // 只能在最上面 / 只能在最下面一层 / 只能有一个 / 拆不得
-std::string function_text(const ModuleDef &p_def); // 舵在这儿 / 推力 1.0 / 船舱 12 格 · 货位 4 / 没有功能：空着留给摆东西
+std::string function_text(const ModuleDef &p_def); // 舵在这儿 / 推力 1.0 / 船舱 12 格 · 货位 4 · 盖住了能进 / 没有功能：能摆东西 · 盖住了能进
 
 } // namespace modules
 
@@ -181,7 +185,7 @@ bool layout_contains(const ShipLayout &p_layout, double p_x, double p_y, double 
 
 // 货位：货舱类节点的每一节 4 个（两舷各前后两个，中间留走道），货箱就放在这些位置上；总数 = 船况的 hold。
 // 按布局里节点的顺序排、节点内按节 (y, z, x)、每节内 左前 / 左后 / 右前 / 右后，所以改船不动的节点，货位编号不变。
-// 坐标是船的局部坐标，y 是那一节的甲板面。open：这一节是顶层的开放甲板，人够得着；被上面盖住的舱体里的货位眼下还装卸不了。
+// 坐标是船的局部坐标，y 是那一节的甲板面。open：人够得着——这一节是顶层的开放甲板，或被盖住但是能进的舱（节点表 enterable）。
 constexpr double HOLD_SLOT_SIDE_M = 2.2; // 货位中心离节中线
 constexpr double HOLD_SLOT_ALONG_M = 1.6; // 货位中心离节中心（前后）
 struct HoldSlot {

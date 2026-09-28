@@ -166,6 +166,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/sea_state.h
     src/settlement_model.cpp
     src/settlement_model.h
+    src/ship_cabins.cpp
+    src/ship_cabins.h
     src/ship_layout.cpp
     src/ship_layout.h
     src/stream_meter.cpp

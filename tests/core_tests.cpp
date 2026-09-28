@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "build_pieces.h"
+#include "ship_cabins.h"
 #include "cover_blend.h"
 #include "earthworks.h"
 #include "ground_works.h"
@@ -685,11 +686,19 @@ void test_ship_layout() {
                     modules::rule_tags(modules::def(ModuleKind::FLOATSTONE)) == std::vector<std::string>({ "只能在最下面一层" }) &&
                     modules::rule_tags(modules::def(ModuleKind::STORAGE)).empty(),
             "帆只能在最上面、浮石舱只能在最下面一层、储存区没有规矩");
-    check(modules::function_text(modules::def(ModuleKind::DECK)) == "没有功能：空着留给摆东西" && modules::function_text(modules::def(ModuleKind::WIDE_DECK)) == "没有功能：空着留给摆东西",
-            "空节、宽空节没有功能");
-    check(modules::function_text(modules::def(ModuleKind::STORAGE)) == "船舱 12 格 · 货位 4" && modules::function_text(modules::def(ModuleKind::SAIL)) == "推力 1.0" &&
-                    modules::function_text(modules::def(ModuleKind::BRIDGE)) == "舵在这儿",
+    check(modules::function_text(modules::def(ModuleKind::DECK)) == "没有功能：能摆东西 · 盖住了能进" &&
+                    modules::function_text(modules::def(ModuleKind::WIDE_DECK)) == "没有功能：能摆东西 · 盖住了能进",
+            "空节、宽空节没有功能、能摆东西、盖住了能进");
+    check(modules::function_text(modules::def(ModuleKind::STORAGE)) == "船舱 12 格 · 货位 4 · 盖住了能进" && modules::function_text(modules::def(ModuleKind::SAIL)) == "推力 1.0" &&
+                    modules::function_text(modules::def(ModuleKind::BRIDGE)) == "舵在这儿" && modules::function_text(modules::def(ModuleKind::TALL_HOLD)) == "船舱 30 格 · 货位 8 · 下层能进" &&
+                    modules::function_text(modules::def(ModuleKind::FLOATSTONE)) == "推力 0.7",
             "功能说法");
+    check(modules::def(ModuleKind::STORAGE).enterable && modules::def(ModuleKind::TALL_HOLD).enterable && modules::def(ModuleKind::DECK).enterable &&
+                    modules::def(ModuleKind::WIDE_DECK).enterable && !modules::def(ModuleKind::FLOATSTONE).enterable,
+            "货舱类与空节盖住了能进，浮石舱封死");
+    check(modules::def(ModuleKind::DECK).furnish && modules::def(ModuleKind::WIDE_DECK).furnish && !modules::def(ModuleKind::STORAGE).furnish &&
+                    !modules::def(ModuleKind::BRIDGE).furnish && !modules::def(ModuleKind::SAIL).furnish,
+            "只有空节、宽空节能摆东西");
     check(footprint({ 0, 0, 2 }, ModuleKind::TALL_HOLD) == std::vector<Cell>({ { 0, 0, 2 }, { 0, 1, 2 } }) &&
                     footprint({ 0, 1, -1 }, ModuleKind::LONG_SAIL) == std::vector<Cell>({ { 0, 1, -1 }, { 0, 1, 0 } }) &&
                     footprint({ -1, 0, 1 }, ModuleKind::WIDE_DECK) == std::vector<Cell>({ { -1, 0, 1 }, { 0, 0, 1 } }),
@@ -762,8 +771,8 @@ void test_ship_layout() {
     const ShipStats sc = layout_stats(combo);
     check(sc.bay == 42 && sc.hold == 12 && sc.sections == 5, "双层货舱：船舱 30 格、货位 8（加储存区一共 42 格、12 个）");
     const std::vector<HoldSlot> combo_slots = hold_slots(combo);
-    check(combo_slots.size() == 12 && combo_slots[4].cell == Cell{ 0, 0, 2 } && !combo_slots[4].open && combo_slots[8].cell == Cell{ 0, 1, 2 } && combo_slots[8].open,
-            "双层货舱下层的货位被盖着、上层的开着");
+    check(combo_slots.size() == 12 && combo_slots[4].cell == Cell{ 0, 0, 2 } && combo_slots[4].open && combo_slots[8].cell == Cell{ 0, 1, 2 } && combo_slots[8].open,
+            "双层货舱下层是能进的舱，货位也够得着");
     check(layout_place(combo, { 0, 1, -1 }, ModuleKind::LONG_SAIL) == "悬空了：下面没有节撑着" || layout_place(combo, { 0, 1, -1 }, ModuleKind::LONG_SAIL) == "帆只能在最上面：顶上不能再搭",
             "双桅帆搭在帆与驾驶区顶上：不行");
     check(layout_place(combo, { 0, 0, -3 }, ModuleKind::LONG_SAIL).empty() && combo.cell_count() == 7 && combo.min_z() == -3, "双桅帆放在帆前面，占两排");
@@ -841,6 +850,90 @@ void test_ship_layout() {
             "解析条目");
     const ShipLayout back = layout_from_ids(layout_ids(gate_wide), &ok);
     check(ok && back == gate_wide && back.cell_count() == gate_wide.cell_count(), "带复合节的布局 id 往返");
+}
+
+void test_ship_cabins() {
+    std::printf("ship_cabins\n");
+    // 舷门那一排三节宽；后一排：宽空节（左、中）+ 浮石舱（右），上面再搭一排：空节、空节、储存区
+    ShipLayout ship = default_layout();
+    bool built = layout_place(ship, { -1, 0, 0 }, ModuleKind::DECK).empty() && layout_place(ship, { 1, 0, 0 }, ModuleKind::DECK).empty() &&
+            layout_place(ship, { -1, 0, 1 }, ModuleKind::WIDE_DECK).empty() && layout_place(ship, { 1, 0, 1 }, ModuleKind::FLOATSTONE).empty() &&
+            layout_place(ship, { -1, 1, 1 }, ModuleKind::DECK).empty() && layout_place(ship, { 0, 1, 1 }, ModuleKind::DECK).empty() &&
+            layout_place(ship, { 1, 1, 1 }, ModuleKind::STORAGE).empty();
+    check(built && layout_problem(ship).empty() && ship.cell_count() == 10, "搭出带舱的船：10 节两层");
+
+    // 每一节是什么地方
+    check(cell_space(ship, { -1, 0, 1 }) == CellSpace::ROOM && cell_space(ship, { 0, 0, 1 }) == CellSpace::ROOM, "被盖住的宽空节是一间能进的舱");
+    check(cell_space(ship, { 1, 0, 1 }) == CellSpace::SOLID, "被盖住的浮石舱封死");
+    check(cell_space(ship, { 0, 0, 0 }) == CellSpace::DECK && cell_space(ship, { -1, 1, 1 }) == CellSpace::DECK && cell_space(ship, { 0, 0, 3 }) == CellSpace::NONE,
+            "顶上是开放甲板，没有的节是 NONE");
+
+    // 舱的四面
+    check(cell_side(ship, { -1, 0, 1 }, 1, 0) == SideKind::OPEN, "宽空节的两节之间不砌墙");
+    check(cell_side(ship, { -1, 0, 1 }, -1, 0) == SideKind::WINDOW && cell_side(ship, { -1, 0, 1 }, 0, 1) == SideKind::WINDOW, "朝船外是带窗的墙");
+    check(cell_side(ship, { -1, 0, 1 }, 0, -1) == SideKind::DOOR && cell_side(ship, { 0, 0, 1 }, 0, -1) == SideKind::DOOR, "朝甲板开门洞");
+    check(cell_side(ship, { 0, 0, 1 }, 1, 0) == SideKind::WALL, "挨着封死的浮石舱是实墙");
+    check(cell_side(ship, { -1, 0, 0 }, 0, 1) == SideKind::DOOR && cell_side(ship, { -1, 0, 0 }, 1, 0) == SideKind::OPEN && cell_side(ship, { -1, 0, 0 }, -1, 0) == SideKind::RAIL,
+            "甲板：朝舱是门、朝甲板通着、朝船外是舷栏");
+    check(cell_side(ship, { 1, 0, 0 }, 0, 1) == SideKind::WALL, "甲板挨着封死的舱：墙");
+    ShipLayout two_rooms = ship;
+    check(layout_remove(two_rooms, { 1, 1, 1 }).empty() && layout_place(two_rooms, { 1, 1, 1 }, ModuleKind::DECK).empty(), "浮石舱上换一节空节");
+    check(cell_side(two_rooms, { 0, 0, 1 }, 1, 0) == SideKind::WALL, "浮石舱照样封死");
+
+    // 人在不在舱里
+    check(in_cabin(ship, -7.0, 0.0, 7.0) && in_cabin(ship, -3.0, 0.05, 6.0), "宽空节的舱里算舱里");
+    check(!in_cabin(ship, -7.0, 3.8, 7.0) && !in_cabin(ship, 0.0, 0.0, 0.0) && !in_cabin(ship, 7.0, 0.0, 7.0), "舱顶上、甲板上、封死的舱不算");
+    check(ship_level_at(0.0) == 0 && ship_level_at(3.8) == 1 && ship_level_at(3.75) == 1 && ship_level_at(-0.5) == 0 && ship_level_at(7.6) == 2 && ship_level_at(40.0) == 2,
+            "脚底高 → 第几层");
+
+    // 船上的地面
+    double y = -1.0;
+    const ShipFloor floor0(ship, 0), floor1(ship, 1);
+    check(floor0.height(-7.0, 7.0, y) && y == 0.0 && floor1.height(-7.0, 7.0, y) && std::abs(y - CELL_HEIGHT_M) < 1e-9, "舱里、舱顶的甲板都有地");
+    check(!floor0.height(7.0, 7.0, y) && !floor0.height(0.0, -20.0, y), "封死的舱、船外没有地");
+
+    // 摆东西：工作台 1.4 × 0.8
+    const PropDef &bench = *props::find("workbench");
+    check(ship_prop_problem(ship, bench, -7.0, 0.0, 0, 0).empty(), "舷门排左边的空节上能摆");
+    check(ship_prop_problem(ship, bench, -9.5, 0.0, 0, 0) == "挡着舷门了", "舷门口不让摆");
+    check(ship_prop_problem(ship, bench, -10.0, -2.5, 0, 0) == "贴着舷栏了", "压着舷栏不让摆");
+    check(ship_prop_problem(ship, bench, -7.0, 3.0, 0, 0) == "挡着舱门了", "甲板上的舱门口不让摆");
+    check(ship_prop_problem(ship, bench, -4.5, 2.5, 0, 0) == "挡着梯子了", "梯脚不让摆");
+    check(ship_prop_problem(ship, bench, -7.0, 7.0, 0, 0).empty(), "舱里能摆");
+    check(ship_prop_problem(ship, bench, -3.5, 7.0, 0, 0).empty(), "宽空节的舱里跨两节也行（中间不隔墙）");
+    check(ship_prop_problem(ship, bench, 2.8, 7.0, 0, 0) == "贴着舱壁了", "贴着舱壁不让摆");
+    check(ship_prop_problem(ship, bench, -7.0, 4.2, 0, 0) == "挡着舱门了", "舱里的门口不让摆");
+    check(ship_prop_problem(ship, bench, 0.0, -1.0, 0, 0) == "驾驶区上摆不了东西：摆在空节上", "驾驶区上不让摆");
+    check(ship_prop_problem(ship, bench, 0.0, -20.0, 0, 0) == "船外头摆不了", "船外头");
+    check(ship_prop_problem(ship, bench, 7.0, 7.0, 0, 0) == "封死的舱里摆不了", "封死的舱");
+    check(ship_prop_problem(ship, bench, -7.0, 7.0, 0, 1).empty(), "第二层的空节上能摆");
+    check(ship_prop_problem(ship, bench, 7.0, 7.0, 0, 1) == "储存区上摆不了东西：摆在空节上", "储存区上不让摆（留给货位）");
+    check(ship_prop_problem(ship, bench, 3.4, 7.0, 0, 1) == "占到储存区上了", "伸到储存区上不行");
+    check(ship_prop_problem(ship, bench, -4.8, 4.5, 0, 1) == "挡着梯子了", "梯顶不让摆");
+    check(ship_prop_problem(ship, bench, -7.0, 7.0, 1, 0).empty() && ship_prop_problem(ship, bench, -9.8, 7.0, 1, 0).empty() &&
+                    ship_prop_problem(ship, bench, -9.8, 7.0, 0, 0) == "贴着舱壁了",
+            "转 90° 占地跟着转");
+
+    // 改船：摆着的东西放不下就说
+    Placements aboard;
+    PlaceCheck at;
+    at.ok = true;
+    at.x = -3.5, at.y = 0.0, at.z = 7.0;
+    aboard.add("workbench", at);
+    check(ship_props_problem(ship, aboard).empty(), "工作台跨在宽空节的舱里：放得下");
+    ShipLayout opened = ship;
+    check(layout_remove(opened, { -1, 1, 1 }).empty() && cell_space(opened, { -1, 0, 1 }) == CellSpace::DECK && cell_side(opened, { -1, 0, 1 }, 1, 0) == SideKind::DOOR,
+            "拆掉左上那节空节：宽空节一半露天、一半还是舱，中间砌墙开门");
+    check(ship_props_problem(opened, aboard) == "工作台放不下了（贴着舱壁了）", "工作台会被新砌的墙压住：不改");
+    Placements side;
+    at.x = -7.0;
+    side.add("chest", at);
+    check(ship_props_problem(opened, side).empty(), "木箱在露天那一半的中间：放得下");
+    ShipLayout bare = ship;
+    check(layout_remove(bare, { -1, 1, 1 }).empty() && layout_remove(bare, { 0, 1, 1 }).empty() && layout_remove(bare, { 1, 1, 1 }).empty() &&
+                    layout_remove(bare, { -1, 0, 1 }).empty(),
+            "拆掉上面一排和宽空节");
+    check(ship_props_problem(bare, side) == "木箱放不下了（脚下的节没了）", "木箱脚下的节拆了：放不下");
 }
 
 void test_refit_pick() {
@@ -3194,7 +3287,7 @@ void test_freight() {
     for (const HoldSlot &s : slots) {
         open += s.open ? 1 : 0;
     }
-    check(slots.size() == 8 && open == 4, "被盖住的那节货位够不着，顶上那节够得着");
+    check(slots.size() == 8 && open == 8, "被盖住的那节是能进的货舱，货位也够得着");
 
     // 土产：确定、在表里、不是粮
     const char *sp = freight::specialty_of(2051, 152, false);
@@ -7382,6 +7475,7 @@ int main(int argc, char **argv) {
     test_yard("新岛 · 火山锥", 0.1);
     test_ship_layout();
     test_refit_pick();
+    test_ship_cabins();
     test_inventory();
     test_crops();
     test_farm();
