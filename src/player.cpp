@@ -34,6 +34,7 @@ constexpr double PITCH_MIN = -1.3;
 constexpr double PITCH_MAX = 0.6;
 constexpr double ROOF_PROBE = 6.0; // 头顶这么高以内有东西挡着，就算在屋里（屋檐下、舱房里）
 constexpr double ARM_RATE = 6.0; // 弹簧臂长度逼近目标的速率（1/s）
+constexpr uint32_t SHIP_LAYER_BIT = 2; // 船身的碰撞层（ship.tscn 的 collision_layer）：舱顶也算屋顶
 
 } // namespace
 
@@ -148,7 +149,7 @@ void Player::update_arm(double p_delta) {
         return;
     }
     const Vector3 head = camera_pivot->get_global_position();
-    Ref<PhysicsRayQueryParameters3D> query = PhysicsRayQueryParameters3D::create(head, head + Vector3(0, real_t(ROOF_PROBE), 0), arm->get_collision_mask());
+    Ref<PhysicsRayQueryParameters3D> query = PhysicsRayQueryParameters3D::create(head, head + Vector3(0, real_t(ROOF_PROBE), 0), arm->get_collision_mask() | SHIP_LAYER_BIT);
     query->set_exclude(TypedArray<RID>::make(get_rid()));
     indoors = !get_world_3d()->get_direct_space_state()->intersect_ray(query).is_empty();
     const double target = indoors ? indoor_arm : outdoor_arm;
