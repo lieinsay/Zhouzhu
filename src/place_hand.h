@@ -11,6 +11,7 @@
 #include "placed_props.h"
 #include "play_notice.h"
 #include "player.h"
+#include "ship_layout.h"
 
 // 摆放：手上拿着（快捷栏选中）能摆的东西时，身前出一个虚影（摆得下绿、摆不下红），Q/R 转 90°，按 E 摆下去（从选中那格扣一份）；
 // 看着摆出来的东西（虚影没亮绿时）：木箱、工作台、窑按 E 打开背包（木箱的格子列在背包上面，工作台 / 窑的配方亮起来），X 收回背包（木箱要先搬空）。
@@ -19,6 +20,8 @@
 // 摆出来的账（Placements：每件在哪、朝哪、木箱里装着什么）不在这里：切片十一起记在脚下那处地面的营造账里（GroundWorks，map_works_at 给，
 // 宿主的局部坐标；岛群的每一群一份、存进世界存档），实物由那份账的 WorksView 画；这里只画虚影（全局坐标）。
 // 地面按营造账的局部坐标问地图宿主（MapFrameGround），房子、船、石头挡不挡问虚影那个 PlacedProps 的碰撞查询。
+// 船上（编排给的是船上那份账、框架是船）：地面是人所在那一层的甲板与舱的地板（ShipFloor），能不能摆按 ship_cabins 的规矩
+// （只在空节、宽空节上，离墙和舷栏留边，不挡门口、梯子、舷门）；船上的 E 只在虚影绿着时归它（不然还是货位、舵的事）。
 class PlaceHand {
     WorksSite site; // 这一帧脚下那处地面的营造账
     PlaceRules rules;
@@ -28,10 +31,11 @@ class PlaceHand {
     std::string ghost_item;
     int facing_id = -1; // 看着的那件
     PlacedProps *view = nullptr; // 只画虚影（全局坐标）
+    const ShipLayout *deck = nullptr; // 这一帧在船上：船的布局；不在船上 nullptr
 
     Placements *placed() const;
     godot::Transform3D frame_xform() const;
-    void update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_def, bool p_on_ship);
+    void update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_def);
 
 public:
     struct Step {
@@ -40,8 +44,9 @@ public:
     };
 
     void setup(PlacedProps *p_view);
-    // 每个物理帧（步行、没开面板、没抱货箱时）先看一眼：看着哪件、手上拿着能摆的就出虚影（Q/R 转）。p_site：脚下那处地面的营造账；p_on_ship：人在船上（船上不让摆）
-    void look(const WorksSite &p_site, MapHost *p_map, Player *p_player, PackHand &p_pack, bool p_on_ship);
+    // 每个物理帧（步行、没开面板、没抱货箱时）先看一眼：看着哪件、手上拿着能摆的就出虚影（Q/R 转）。p_site：脚下那处营造账；
+    // p_deck：人在船上时是船的布局（p_site 是船上那份账、框架是船），不在船上 nullptr
+    void look(const WorksSite &p_site, MapHost *p_map, Player *p_player, PackHand &p_pack, const ShipLayout *p_deck);
     // 这一下 E（p_interact）/ X（p_remove）归不归它：看着摆出来的东西按 X、看着木箱 / 工作台 / 窑按 E、手上拿着能摆的按 E
     bool claims(const PackHand &p_pack, bool p_interact, bool p_remove) const;
     // 做：收回、打开、摆下

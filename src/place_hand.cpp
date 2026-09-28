@@ -9,6 +9,7 @@
 #include "input_actions.h"
 #include "settlement.h"
 #include "ship.h"
+#include "ship_cabins.h"
 
 using namespace godot;
 
@@ -56,19 +57,30 @@ void PlaceHand::stand_down() {
     }
 }
 
-void PlaceHand::update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_def, bool p_on_ship) {
-    // 在营造账的局部坐标里摆（岛群的锚群就是全局坐标）；虚影、物理查挡、资源点按全局
+void PlaceHand::update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_def) {
+    // 在营造账的局部坐标里摆（岛群的锚群就是全局坐标；船上是船的局部坐标）；虚影、物理查挡、资源点按全局
     const Transform3D xf = frame_xform();
+    const double frame_yaw = xf.basis.get_euler().y;
     const Vector3 at = xf.affine_inverse().xform(p_player->get_global_position());
-    ghost = plan_placement(MapFrameGround(p_map, xf), p_def, at.x, at.z, p_player->get_look_yaw() - xf.basis.get_euler().y, turns, *placed(), rules);
-    if (ghost.ok && p_on_ship) {
-        ghost.ok = false;
-        ghost.why = "船上摆不了：下船摆在地上";
-    } else if (ghost.ok && std::abs(ghost.y - at.y) > MAX_STEP_M) {
+    if (deck) {
+        // 船上：地面是人所在那一层的甲板与舱的地板，能不能摆按船上的规矩（挤不挤还是 plan_placement 查）
+        const int level = ship_level_at(at.y);
+        ghost = plan_placement(ShipFloor(*deck, level), p_def, at.x, at.z, p_player->get_look_yaw() - frame_yaw, turns, *placed(), rules);
+        ghost.y = ghost.low = cell_deck_y(level);
+        const std::string why = ship_prop_problem(*deck, p_def, ghost.x, ghost.z, ghost.quarter, level);
+        if (!why.empty()) {
+            ghost.ok = false;
+            ghost.why = why;
+        }
+    } else {
+        ghost = plan_placement(MapFrameGround(p_map, xf), p_def, at.x, at.z, p_player->get_look_yaw() - frame_yaw, turns, *placed(), rules);
+    }
+    // 船上不查够不着的地、资源点与物理挡不挡：船上的实物（墙、栏、梯子、舵、货位）都在规矩里了，船自己在碰撞层 2 也查不到
+    if (!deck && ghost.ok && std::abs(ghost.y - at.y) > MAX_STEP_M) {
         ghost.ok = false;
         ghost.why = "够不着那儿的地";
     }
-    if (ghost.ok) {
+    if (ghost.ok && !deck) {
         double hx = 0.0, hz = 0.0;
         prop_half_extent(p_def, ghost.quarter, hx, hz);
         const double reach = SITE_CLEAR_M + std::max(hx, hz);
@@ -84,10 +96,10 @@ void PlaceHand::update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_
     const Vector3 g = xf.xform(Vector3(real_t(ghost.x), real_t(ghost.y), real_t(ghost.z)));
     global.x = g.x, global.y = g.y, global.z = g.z;
     global.low = ghost.low + (g.y - ghost.y);
-    if (ghost.ok) {
+    if (ghost.ok && !deck) {
         TypedArray<RID> exclude;
         exclude.push_back(p_player->get_rid());
-        if (Object *hit = view->obstacle(p_def, global, exclude)) {
+        if (Object *hit = view->obstacle(p_def, global, exclude, frame_yaw)) {
             ghost.ok = false;
             ghost.why = play::to_std(obstacle_name(hit));
             global.ok = false;
@@ -95,11 +107,12 @@ void PlaceHand::update_ghost(MapHost *p_map, Player *p_player, const PropDef &p_
     }
     ghost_on = true;
     ghost_item = p_def.item;
-    view->show_ghost(ghost_item, global);
+    view->show_ghost(ghost_item, global, frame_yaw);
 }
 
-void PlaceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, PackHand &p_pack, bool p_on_ship) {
+void PlaceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, PackHand &p_pack, const ShipLayout *p_deck) {
     site = p_site;
+    deck = p_deck;
     if (!placed()) {
         facing_id = -1;
         stand_down();
@@ -114,18 +127,20 @@ void PlaceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, 
         turns += input->is_action_just_pressed(input_actions::ROTATE_RIGHT) ? 1 : 0;
         turns -= input->is_action_just_pressed(input_actions::ROTATE_LEFT) ? 1 : 0;
         turns = ((turns % 4) + 4) % 4;
-        update_ghost(p_map, p_player, *holding, p_on_ship);
+        update_ghost(p_map, p_player, *holding);
     } else if (ghost_on) {
         stand_down();
     }
 }
 
 bool PlaceHand::claims(const PackHand &p_pack, bool p_interact, bool p_remove) const {
-    return (p_remove && facing_id >= 0) || (p_interact && ((facing_id >= 0 && is_openable(facing_id)) || props::placeable(p_pack.held_item())));
+    // 船上手上拿着能摆的：虚影绿着才归它（摆不下时 E 还是货位、舵的事）
+    const bool holding = props::placeable(p_pack.held_item()) && (!deck || (ghost_on && ghost.ok));
+    return (p_remove && facing_id >= 0) || (p_interact && ((facing_id >= 0 && is_openable(facing_id)) || holding));
 }
 
 bool PlaceHand::engaged() const {
-    return ghost_on || (facing_id >= 0 && is_openable(facing_id));
+    return (ghost_on && (!deck || ghost.ok)) || (facing_id >= 0 && is_openable(facing_id));
 }
 
 PlaceHand::Step PlaceHand::act(PackHand &p_pack, bool p_interact, bool p_remove, const Say &p_say) {

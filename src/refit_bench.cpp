@@ -8,6 +8,7 @@
 #include <godot_cpp/classes/viewport.hpp>
 
 #include "input_actions.h"
+#include "ship_cabins.h"
 
 using namespace godot;
 
@@ -157,12 +158,34 @@ bool RefitBench::get_selected(Cell &r_anchor) const {
     return has_selected;
 }
 
+std::string RefitBench::furniture_problem(const ShipLayout &p_next) const {
+    return furniture && furniture->size() > 0 ? ship_props_problem(p_next, *furniture) : std::string();
+}
+
+std::string RefitBench::remove_problem(const ShipLayout &p_layout, const Cell &p_anchor) const {
+    ShipLayout trial = p_layout;
+    const std::string reason = layout_remove(trial, p_anchor);
+    return reason.empty() ? furniture_problem(trial) : reason;
+}
+
 void RefitBench::update_spots(const ShipLayout &p_layout) {
     if (spots_valid && spots_for == p_layout) {
         return;
     }
     for (int k = 0; k < int(ModuleKind::COUNT); k++) {
         spots[k] = layout_placements(p_layout, ModuleKind(k));
+        if (!furniture || furniture->size() == 0) {
+            continue;
+        }
+        // 放上去会压着船上摆着的东西的落点不亮
+        std::vector<Cell> fit;
+        for (const Cell &anchor : spots[k]) {
+            ShipLayout trial = p_layout;
+            if (layout_place(trial, anchor, ModuleKind(k)).empty() && furniture_problem(trial).empty()) {
+                fit.push_back(anchor);
+            }
+        }
+        spots[k] = fit;
     }
     spots_for = p_layout;
     spots_valid = true;
@@ -171,7 +194,14 @@ void RefitBench::update_spots(const ShipLayout &p_layout) {
 RefitHover RefitBench::pick_at(const ShipLayout &p_layout, const Vector2 &p_screen) const {
     const PickRay ray = overlay->ray_at(p_screen);
     if (drag_kind >= 0) {
-        return pick_spot(p_layout, ModuleKind(drag_kind), spots[drag_kind], ray);
+        RefitHover spot = pick_spot(p_layout, ModuleKind(drag_kind), spots[drag_kind], ray);
+        if (spot.type == RefitHover::SPOT && spot.legal) {
+            ShipLayout trial = p_layout;
+            layout_place(trial, spot.anchor, ModuleKind(drag_kind));
+            spot.reason = furniture_problem(trial); // 合规矩，但会压着摆着的东西
+            spot.legal = spot.reason.empty();
+        }
+        return spot;
     }
     return pick_node(p_layout, ray);
 }
@@ -192,6 +222,11 @@ bool RefitBench::apply(Ship *p_ship, const ShipLayout &p_next, const Say &p_say,
     const int bay = layout_stats(p_next).bay;
     if (bay < p_bay_in_use) {
         p_say(vformat(String(U"船舱里放着 %d 格东西，改完只剩 %d 格：先搬出来"), p_bay_in_use, bay));
+        return false;
+    }
+    const std::string blocked = furniture_problem(p_next);
+    if (!blocked.empty()) {
+        p_say(String(U"船上摆着的") + utf8(blocked) + String(U"：先收起来"));
         return false;
     }
     if (!p_ship->apply_layout(p_next)) {
@@ -414,8 +449,7 @@ void RefitBench::refresh(const Ship *p_ship, double p_delta) {
             pv.hover_text = title_of(m->kind) + String(U" · 点一下选中");
         }
     } else if (pv.hover_remove && chosen) {
-        ShipLayout trial = layout;
-        const bool removable = layout_remove(trial, chosen->at).empty();
+        const bool removable = remove_problem(layout, chosen->at).empty();
         pv.hover_text = removable ? String(U"拆掉选中的") + title_of(chosen->kind) : String(U"拆不了：原因在钮下面");
         pv.hover_tone = RefitPanel::TONE_WARN;
     } else if (pv.hover_card >= 0) {
@@ -428,8 +462,7 @@ void RefitBench::refresh(const Ship *p_ship, double p_delta) {
         pv.selected_title = title_of(chosen->kind);
         pv.selected_where = where_text(chosen->at, chosen->kind);
         pv.selected_detail = utf8(modules::function_text(modules::def(chosen->kind)));
-        ShipLayout trial = layout;
-        const std::string reason = layout_remove(trial, chosen->at);
+        const std::string reason = remove_problem(layout, chosen->at);
         pv.can_remove = reason.empty();
         pv.remove_reason = utf8(reason);
     }
@@ -450,7 +483,8 @@ Vector2 RefitBench::aim_spot(const Ship *p_ship, const Cell &p_anchor, ModuleKin
         return Vector2(-1, -1);
     }
     const ShipLayout &layout = p_ship->get_layout_model();
-    const std::vector<Cell> placements = layout_placements(layout, p_kind);
+    // 与鼠标真指着时同一套亮格（压着摆件的落点不亮）
+    const std::vector<Cell> placements = spots_valid && spots_for == layout ? spots[int(p_kind)] : layout_placements(layout, p_kind);
     const Rect2 screen = overlay->get_viewport()->get_visible_rect();
     for (const Vector3 &p : box_samples(footprint_box(p_anchor, p_kind))) {
         Vector2 at;

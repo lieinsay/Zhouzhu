@@ -160,6 +160,7 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_style_index"), &Expedition::get_style_index);
     ClassDB::bind_method(D_METHOD("select_style", "index"), &Expedition::select_style);
     ClassDB::bind_method(D_METHOD("is_inside_house"), &Expedition::is_inside_house);
+    ClassDB::bind_method(D_METHOD("is_in_cabin"), &Expedition::is_in_cabin);
     ClassDB::bind_method(D_METHOD("set_god_tool", "index"), &Expedition::set_god_tool);
     ClassDB::bind_method(D_METHOD("get_god_tool"), &Expedition::get_god_tool);
     ClassDB::bind_method(D_METHOD("set_god_brush", "size"), &Expedition::set_god_brush);
@@ -277,6 +278,9 @@ void Expedition::_ready() {
         ship->set_process_mode(PROCESS_MODE_DISABLED);
         ship = nullptr;
     }
+    if (ship) {
+        ship->set_furniture(&ship_works.props); // 船上摆的东西：账在这儿，Ship 照着画
+    }
     build_hud();
     if (map_panel) {
         add_to_group(MAP_GROUP); // 开发者工具据此知道这张地图按 M 有岛群地图
@@ -371,6 +375,7 @@ void Expedition::build_hud() {
     refit_overlay->set_visible(false);
     add_child(refit_overlay);
     refit.setup(refit_panel, refit_overlay);
+    refit.set_furniture(&ship_works.props); // 改船不能压着船上摆的东西
     BuildPanel *build_panel = top_right_panel<BuildPanel>(layer, "Build");
     BuildOverlay *build_overlay = memnew(BuildOverlay);
     build_overlay->set_name("BuildOverlay");
@@ -549,6 +554,10 @@ void Expedition::select_style(int p_index) {
 }
 
 Node3D *Expedition::get_prop_node(int p_id) {
+    if (ship && ship->is_aboard(player->get_global_position())) {
+        ship->sync_furniture();
+        return ship->get_furniture_node(p_id);
+    }
     const WorksSite site = works_at(player->get_global_position());
     WorksView *view = site.view.is_valid() ? Object::cast_to<WorksView>(ObjectDB::get_instance(site.view)) : nullptr;
     return view && view->get_props_view() ? view->get_props_view()->get_prop_node(p_id) : nullptr;
@@ -558,7 +567,18 @@ bool Expedition::is_inside_house() {
     return piece.inside_house(player->get_global_position());
 }
 
+bool Expedition::is_in_cabin() const {
+    return ship && player && ship->is_in_cabin(player->get_global_position());
+}
+
 WorksSite Expedition::works_at(const Vector3 &p_global) {
+    if (ship && ship->is_aboard(p_global)) {
+        // 船上：船上那份账，框架是船（摆的东西跟着船走）；实物由 Ship 画，没有 WorksView
+        WorksSite site;
+        site.works = &ship_works;
+        site.frame = ship;
+        return site;
+    }
     WorksSite site = map ? map->map_works_at(p_global) : WorksSite();
     if (!site.works) {
         site.works = &fallback_works;
@@ -962,6 +982,9 @@ int Expedition::bay_in_use() const {
 
 void Expedition::place_act(bool p_interact, bool p_remove) {
     const PlaceHand::Step step = place.act(pack, p_interact, p_remove, say_fn());
+    if (ship) {
+        ship->sync_furniture(); // 船上摆的、收的立刻照画（碰撞跟着）
+    }
     if (step.open >= 0) {
         set_pack_open(true, place.container(step.open) ? SIDE_PROP : SIDE_NONE, step.open);
     }
@@ -1253,7 +1276,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         }
         Shipyard *bench = RefitBench::bench_near(map->map_shipyards(), at, helm_range);
         // 摆放、搭建先看一眼（看着哪件、手上能摆的出虚影）；看着木箱 / 工作台 / 窑按 E、手上拿着能摆的 / 搭建件按 E、看着摆出来的 / 搭好的按 X、
-        // 看着门按 E，都先归摆放与搭建，堆场、村仓往后排（船上不让摆：货位、舵照旧）
+        // 看着门按 E，都先归摆放与搭建，堆场、村仓往后排（船上：摆放照船上的规矩、虚影绿着才抢 E；搭建、挖垒不行）
         const bool panel_open = refit.is_open() || interior.is_open() || build.is_open() || pack.is_open() || dev_works_open;
         const WorksSite site = works_at(at);
         const bool free = player->is_god_mode(); // god 模式：搭建、挖垒不扣料不给料
@@ -1268,7 +1291,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
             if (god_hand) {
                 place.stand_down();
             } else {
-                place.look(site, map, player, pack, aboard);
+                place.look(site, map, player, pack, aboard ? &ship->get_layout_model() : nullptr);
             }
             if (aboard) {
                 piece.stand_down();
@@ -1278,7 +1301,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         }
         const bool remove = input->is_action_just_pressed(input_actions::REMOVE);
         const bool piece_first = !aboard && !panel_open && !freight.is_holding() && piece.claims(held, p_interact, remove);
-        const bool placing_first = piece_first || (!god_hand && !aboard && !panel_open && !freight.is_holding() && place.claims(pack, p_interact, remove));
+        const bool placing_first = piece_first || (!god_hand && !panel_open && !freight.is_holding() && place.claims(pack, p_interact, remove));
         if (dev_works_open) {
             dev_works_browse(p_interact); // 开着开发者营造面板：W/S 选、A/D 换笔刷、E 拿起
         } else if (refit.is_open()) {
@@ -1866,6 +1889,9 @@ void Expedition::update_hud() {
             if (piece.inside_house(at)) {
                 lines.push_back(String(U"在自己盖的屋里（一座完整的屋）"));
             }
+            if (ship && ship->is_in_cabin(at)) {
+                lines.push_back(String(U"在船舱里（算屋里：淋不着雨雪）"));
+            }
             // 背包一眼看全，手上拿着什么；脚下有农田就说田的事
             String pack_line = pack.summary();
             const String fields = farm_hand.fields_text();
@@ -1893,7 +1919,7 @@ void Expedition::update_hud() {
                 prompt = piece.prompt(held); // 手上拿着搭建件 / 样式：先说这个
                 break;
             }
-            if (!aboard && !freight.is_holding() && !god_tool_on() && place.engaged()) {
+            if (!freight.is_holding() && !god_tool_on() && place.engaged()) {
                 prompt = place.prompt(pack); // 看着木箱 / 工作台、手上拿着能摆的：先说这个
                 break;
             }

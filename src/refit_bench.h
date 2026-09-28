@@ -4,6 +4,7 @@
 
 #include <godot_cpp/classes/input_event.hpp>
 
+#include "placeables.h"
 #include "play_notice.h"
 #include "player.h"
 #include "refit_overlay.h"
@@ -20,12 +21,14 @@
 //     再点那张卡片或按右键 / Esc 放下；
 //   · 没拖东西时点船上的节点就选中它（白框），按 X 或面板上的「拆除」拆掉整个节点（复合节一起拆）；点空处取消选中；
 //   · 右键按住拖着转视角（拖着节点时右键是放下），滚轮拉远拉近。
-// 每改一下船立刻重拼并在坞里重新坐定；船舱里放着的东西装不下就不改。开着的时候人站不站住、鼠标放不放出来由编排定。
+// 每改一下船立刻重拼并在坞里重新坐定；船舱里放着的东西装不下就不改；船上摆着的东西（工作台、木箱……）改完放不下（被新砌的墙压住、
+// 脚下的节没了、挡着新开的门……）也不改——这样的落点不亮、红色虚影说原因，拆除钮是灰的。开着的时候人站不站住、鼠标放不放出来由编排定。
 class RefitBench {
     bool open = false;
     Shipyard *yard = nullptr; // 开着时在改的是哪座坞里的船
     RefitPanel *panel = nullptr;
     RefitOverlay *overlay = nullptr;
+    const Placements *furniture = nullptr; // 船上摆着的东西（编排的账，船的局部坐标）
 
     int drag_kind = -1; // 拖着 / 拿着的节点（ModuleKind）；−1 没有
     bool drag_sticky = false; // 点了一下卡片拿着的：下一次左键落下
@@ -47,6 +50,10 @@ class RefitBench {
     std::vector<Cell> spots[int(ModuleKind::COUNT)];
 
     void update_spots(const ShipLayout &p_layout);
+    // 改成 p_next 后船上摆着的东西放不放得下：放得下空串
+    std::string furniture_problem(const ShipLayout &p_next) const;
+    // 拆掉锚点在 p_anchor 的节点拆不拆得了：拆得了空串
+    std::string remove_problem(const ShipLayout &p_layout, const Cell &p_anchor) const;
     void update_hover(const Ship *p_ship);
     RefitHover pick_at(const ShipLayout &p_layout, const godot::Vector2 &p_screen) const;
     void drop(Ship *p_ship, const Say &p_say, int p_bay_in_use);
@@ -59,6 +66,7 @@ public:
     static constexpr double ORBIT_SENSITIVITY = 0.006;
 
     void setup(RefitPanel *p_panel, RefitOverlay *p_overlay);
+    void set_furniture(const Placements *p_furniture) { furniture = p_furniture; }
 
     // p_yards 里离 p_at 不超过 p_range 的那座画样台；没有返回 nullptr
     static Shipyard *bench_near(const std::vector<Shipyard *> &p_yards, const godot::Vector3 &p_at, double p_range);

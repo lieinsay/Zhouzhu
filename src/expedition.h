@@ -100,6 +100,7 @@ private:
     DigHand dig;
     PieceHand piece;
     GroundWorks fallback_works; // 地图不给营造账时自带的一份（全局坐标、不能改地形）
+    GroundWorks ship_works; // 船上摆的东西（只用 props；船的局部坐标，实物由 Ship 画；不存档，船的布局也不存）
     WorksView *fallback_view = nullptr;
     godot::Control *crosshair = nullptr;
     StylePanel *style_panel = nullptr;
@@ -328,6 +329,7 @@ public:
     int get_style_index() const { return piece.get_style_index(); }
     void select_style(int p_index);
     bool is_inside_house();
+    bool is_in_cabin() const; // 人在船上一间能进的舱里（测试查）
     // 开发者营造（给测试查 / 驱动）：拿起清单里第几件（−1 放下；god 没开返回 false）；手上那件 { index, kind, item, style, name, brush, active }；
     // 笔刷；清单每件的名字；面板开没开
     bool set_god_tool(int p_index);
