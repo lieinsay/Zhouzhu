@@ -30,6 +30,7 @@ public:
     static constexpr double CONTACT_V = 0.0; // 接触线（船舷 / 跳板顶）在坪的短轴上的位置：船往海那边伸（可以悬出坪外），跳板与画样台在岛这边；坞墩块都在海那一侧，岛这边留作走道
     static constexpr double GANGWAY_RUN = 8.4; // 跳板的水平投影长（坡约 27°）
     static constexpr double BENCH_U = -4.0, BENCH_V = 4.0; // 画样台在跳板靠码头的一侧：从停机坪走过来不用跨跳板
+    static constexpr uint32_t GANTRY_RENDER_LAYER = 1u << 9; // 门架画在第 10 渲染层：改装的装配视角不画它（横梁挡着看船）
 
     void _ready() override;
 

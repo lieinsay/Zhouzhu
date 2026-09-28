@@ -290,8 +290,15 @@ public:
     int get_facing_prop() const { return place.get_facing(); }
     bool is_aboard() const { return ship && player && ship->is_aboard(player->get_global_position()); }
     bool is_refit_open() const { return refit.is_open(); }
-    godot::Vector3i get_refit_cursor() const;
-    godot::String get_refit_kind() const { return godot::String(modules::def(refit.get_kind()).id); }
+    // 改装（测试用）：拖着的节点 id（没有空串）；选中的节点 "x,y,z:kind"（没有空串）；鼠标指着的 { type: "node"/"spot"/"", anchor, legal, reason }；
+    // 亮着的格子；某张卡片 / 拆除钮在屏幕上的中心；屏幕上哪一点指着锚点 anchor 的落点（kind 是拖着的节点）或节点（kind 空串）——没有返回 (−1, −1)
+    godot::String get_refit_drag() const;
+    godot::String get_refit_selected() const;
+    godot::Dictionary get_refit_hover() const;
+    godot::Array get_refit_glow() const;
+    godot::Vector2 get_refit_card_center(const godot::String &p_kind) const;
+    godot::Vector2 get_refit_remove_center() const { return refit.remove_center(); }
+    godot::Vector2 get_refit_aim(const godot::Vector3i &p_anchor, const godot::String &p_kind) const;
     bool is_ship_in_yard() const; // 空艇停在哪座坞的坞位上（改得了）
     bool is_build_open() const { return build.is_open(); }
     godot::Vector3 get_build_cursor() const { return build.is_open() ? build.cursor_snapped() : godot::Vector3(); }

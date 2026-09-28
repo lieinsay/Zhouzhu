@@ -171,8 +171,13 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_facing_prop"), &Expedition::get_facing_prop);
     ClassDB::bind_method(D_METHOD("is_aboard"), &Expedition::is_aboard);
     ClassDB::bind_method(D_METHOD("is_refit_open"), &Expedition::is_refit_open);
-    ClassDB::bind_method(D_METHOD("get_refit_cursor"), &Expedition::get_refit_cursor);
-    ClassDB::bind_method(D_METHOD("get_refit_kind"), &Expedition::get_refit_kind);
+    ClassDB::bind_method(D_METHOD("get_refit_drag"), &Expedition::get_refit_drag);
+    ClassDB::bind_method(D_METHOD("get_refit_selected"), &Expedition::get_refit_selected);
+    ClassDB::bind_method(D_METHOD("get_refit_hover"), &Expedition::get_refit_hover);
+    ClassDB::bind_method(D_METHOD("get_refit_glow"), &Expedition::get_refit_glow);
+    ClassDB::bind_method(D_METHOD("get_refit_card_center", "kind"), &Expedition::get_refit_card_center);
+    ClassDB::bind_method(D_METHOD("get_refit_remove_center"), &Expedition::get_refit_remove_center);
+    ClassDB::bind_method(D_METHOD("get_refit_aim", "anchor", "kind"), &Expedition::get_refit_aim);
     ClassDB::bind_method(D_METHOD("is_ship_in_yard"), &Expedition::is_ship_in_yard);
     ClassDB::bind_method(D_METHOD("is_build_open"), &Expedition::is_build_open);
     ClassDB::bind_method(D_METHOD("get_build_cursor"), &Expedition::get_build_cursor);
@@ -356,7 +361,11 @@ void Expedition::build_hud() {
     style_panel = top_right_panel<StylePanel>(layer, "Styles");
     dev_works_panel = top_right_panel<DevWorksPanel>(layer, "DevWorks");
     dev_works_panel->set_offset(SIDE_TOP, 84); // 只在 god 下开：让开右上角 DevTools 的 GOD 那两行
-    RefitPanel *refit_panel = top_right_panel<RefitPanel>(layer, "Refit");
+    RefitPanel *refit_panel = memnew(RefitPanel);
+    refit_panel->set_name("Refit");
+    refit_panel->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
+    refit_panel->set_visible(false);
+    layer->add_child(refit_panel);
     RefitOverlay *refit_overlay = memnew(RefitOverlay);
     refit_overlay->set_name("RefitOverlay");
     refit_overlay->set_visible(false);
@@ -801,9 +810,54 @@ Dictionary Expedition::get_freight_order() const {
     return d;
 }
 
-Vector3i Expedition::get_refit_cursor() const {
-    const Cell c = refit.get_cursor();
-    return Vector3i(c.x, c.y, c.z);
+namespace {
+
+const ModuleDef *refit_kind_of(const String &p_id) {
+    return modules::by_id(play::to_std(p_id));
+}
+
+} // namespace
+
+String Expedition::get_refit_drag() const {
+    return refit.get_drag_kind() >= 0 ? String(modules::def(ModuleKind(refit.get_drag_kind())).id) : String();
+}
+
+String Expedition::get_refit_selected() const {
+    Cell anchor;
+    const Module *m = ship && refit.get_selected(anchor) ? ship->get_layout_model().at(anchor) : nullptr;
+    return m ? String::utf8(module_id(*m).c_str()) : String();
+}
+
+Dictionary Expedition::get_refit_hover() const {
+    const RefitHover &h = refit.get_hover();
+    Dictionary d;
+    d["type"] = h.type == RefitHover::NODE ? "node" : (h.type == RefitHover::SPOT ? "spot" : "");
+    d["anchor"] = Vector3i(h.anchor.x, h.anchor.y, h.anchor.z);
+    d["legal"] = h.legal;
+    d["reason"] = String::utf8(h.reason.c_str());
+    return d;
+}
+
+Array Expedition::get_refit_glow() const {
+    Array out;
+    for (const Cell &c : refit.glow_now()) {
+        out.push_back(Vector3i(c.x, c.y, c.z));
+    }
+    return out;
+}
+
+Vector2 Expedition::get_refit_card_center(const String &p_kind) const {
+    const ModuleDef *d = refit_kind_of(p_kind);
+    return d ? refit.card_center(d->kind) : Vector2(-1, -1);
+}
+
+Vector2 Expedition::get_refit_aim(const Vector3i &p_anchor, const String &p_kind) const {
+    const Cell anchor{ p_anchor.x, p_anchor.y, p_anchor.z };
+    if (p_kind.is_empty()) {
+        return refit.aim_node(ship, anchor);
+    }
+    const ModuleDef *d = refit_kind_of(p_kind);
+    return d ? refit.aim_spot(ship, anchor, d->kind) : Vector2(-1, -1);
 }
 
 bool Expedition::is_ship_in_yard() const {
@@ -837,7 +891,14 @@ void Expedition::close_panels() {
     if (pack.is_open()) {
         set_pack_open(false);
     }
+    const bool refit_was_open = refit.is_open();
     refit.close(player);
+    if (refit_was_open) {
+        status_label->set_visible(!map_open && !pack.is_open());
+        if (!map_open) {
+            Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_CAPTURED); // 改装时鼠标是放出来的
+        }
+    }
     build.close(player);
     interior.close(player);
     player->set_input_blocked(map_open);
@@ -912,13 +973,13 @@ void Expedition::set_map_open(bool p_open) {
     }
     map_open = p_open;
     map_panel->set_visible(map_open);
-    status_label->set_visible(!map_open && !pack.is_open()); // 地图自己有标题，底下那行别透上来
+    status_label->set_visible(!map_open && !pack.is_open() && !refit.is_open()); // 地图自己有标题，底下那行别透上来
     prompt_label->set_visible(!map_open && !pack.is_open());
     player->set_input_blocked(map_open || pack.is_open() || refit.is_open() || build.is_open() || interior.is_open());
     if (ship) {
         ship->set_controlled(!map_open && helm.get_state() == Helm::PILOTING);
     }
-    Input::get_singleton()->set_mouse_mode(map_open || pack.is_open() ? Input::MOUSE_MODE_VISIBLE : Input::MOUSE_MODE_CAPTURED);
+    Input::get_singleton()->set_mouse_mode(map_open || pack.is_open() || refit.is_open() ? Input::MOUSE_MODE_VISIBLE : Input::MOUSE_MODE_CAPTURED);
     if (map_open) {
         const Vector3 at = player->get_global_position();
         map->map_refresh_panel(map_panel);
@@ -942,6 +1003,8 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
             set_map_open(false);
         } else if (pack.is_open()) {
             set_pack_open(false);
+        } else if (refit.cancel_drag()) {
+            // 改装时拖着 / 拿着节点：先放下，再按一下才合上
         } else if (refit.is_open() || build.is_open() || interior.is_open() || style_open || dev_works_open) {
             close_panels();
         } else {
@@ -956,12 +1019,14 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
         pack.on_mouse(p_event, say_fn()); // 背包面板上的点法
         return;
     }
+    if (!map_open && refit.is_open() && (motion.is_valid() || button.is_valid())) {
+        refit.on_mouse(p_event, ship, say_fn(), bay_in_use()); // 改装：拖节点、点选、右键转视角、滚轮远近
+        return;
+    }
     const bool captured = input->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED;
-    if (captured && motion.is_valid() && (refit.is_open() || build.is_open() || interior.is_open())) {
+    if (captured && motion.is_valid() && (build.is_open() || interior.is_open())) {
         const Vector2 rel = motion->get_relative();
-        if (refit.is_open()) {
-            refit.orbit(rel.x, rel.y);
-        } else if (build.is_open()) {
+        if (build.is_open()) {
             build.orbit(rel.x, rel.y);
         } else {
             interior.orbit(rel.x, rel.y);
@@ -1217,7 +1282,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         if (dev_works_open) {
             dev_works_browse(p_interact); // 开着开发者营造面板：W/S 选、A/D 换笔刷、E 拿起
         } else if (refit.is_open()) {
-            refit.browse(ship, p_interact, say_fn(), bay_in_use()); // 开着改装：E 是加一节
+            refit.browse(ship, say_fn(), bay_in_use()); // 开着改装：放、选靠鼠标，X 拆选中的
         } else if (interior.is_open()) {
             interior.browse(p_delta, p_interact, say_fn()); // 开着室内编辑：E 是放家具、开门窗……
         } else if (build.is_open()) {
@@ -1244,13 +1309,18 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
             } else {
                 close_panels();
                 farm_hand.stand_down();
-                player->set_input_blocked(refit.open_at(bench, ship, say_fn()) || map_open);
+                const bool opened = refit.open_at(bench, ship, say_fn());
+                player->set_input_blocked(opened || map_open);
+                if (opened) {
+                    Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE); // 拖节点、点选要用鼠标
+                    status_label->set_visible(false); // 左上让给节点卡片（面板右上自己有标题与船况）
+                }
             }
         } else if (p_interact && ship && helm.near_helm()) {
             if (freight.is_holding()) {
                 say(String(U"抱着货箱掌不了舵：先放到货位上"));
             } else if (!ship->can_fly()) {
-                say(String(U"没有动力区，飞不起来：去船坞的画样台加一节"));
+                say(String(U"没有帆也没有浮石舱，飞不起来：去船坞的画样台加一节帆"));
             } else {
                 board();
                 return;
@@ -1769,10 +1839,10 @@ void Expedition::update_hud() {
                 lines.push_back(freight_line);
             }
             const bool near_helm = ship && helm.near_helm();
-            prompt = near_helm ? (ship->can_fly() ? String(U"按 E 掌舵") : String(U"没有动力区，飞不起来")) : String(U"WASD 移动 · 空格 跳 · Shift 疾跑");
+            prompt = near_helm ? (ship->can_fly() ? String(U"按 E 掌舵") : String(U"没有帆也没有浮石舱，飞不起来")) : String(U"WASD 移动 · 空格 跳 · Shift 疾跑");
             if (refit.is_open()) {
-                refit.refresh(ship);
-                prompt = String(U"W/S 前后 · A/D 左右 · 空格/Shift 上下 · 1/2/3 选模块 · E 放/换 · X 拆 · Tab 合上");
+                refit.refresh(ship, get_physics_process_delta_time());
+                prompt = String(U"拖节点到船上亮着的地方 · 点船上的节点选中、X 拆 · 右键拖着转 · 滚轮远近 · Tab 合上");
                 break;
             }
             if (interior.is_open()) {

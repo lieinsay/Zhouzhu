@@ -92,7 +92,8 @@ void Shipyard::build() {
     // 盒子的朝向：x 沿长轴 u；z 取 u × y，与短轴 v 同向或反向都行（盒子对称），但不能是左手系，否则面会翻
     const Basis frame(u_axis, up, u_axis.cross(up));
 
-    auto add_box = [&](const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide) {
+    auto add_box = [&](const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide,
+                           uint32_t p_layers = 1) {
         Ref<BoxMesh> mesh;
         mesh.instantiate();
         mesh->set_size(p_size);
@@ -100,6 +101,7 @@ void Shipyard::build() {
         MeshInstance3D *instance = memnew(MeshInstance3D);
         instance->set_mesh(mesh);
         instance->set_transform(p_xf);
+        instance->set_layer_mask(p_layers);
         instance->set_name(p_name);
         instance->set_meta(GENERATED_META, true);
         add_child(instance);
@@ -128,9 +130,11 @@ void Shipyard::build() {
     // 门架：船首尾两端各一座，跨过船身
     for (int end = -1; end <= 1; end += 2) {
         for (real_t v : { GANTRY_V_SEA, GANTRY_V_LAND }) {
-            add_box(vformat("GantryPost%d%s", end, v < 0 ? "S" : "L"), Vector3(0.4f, GANTRY_H, 0.4f), place(end * GANTRY_U, v, 0.5 * GANTRY_H), mat_timber, true);
+            add_box(vformat("GantryPost%d%s", end, v < 0 ? "S" : "L"), Vector3(0.4f, GANTRY_H, 0.4f), place(end * GANTRY_U, v, 0.5 * GANTRY_H), mat_timber, true,
+                    GANTRY_RENDER_LAYER);
         }
-        add_box(vformat("GantryBeam%d", end), Vector3(0.4f, 0.4f, GANTRY_V_LAND - GANTRY_V_SEA + 0.4f), place(end * GANTRY_U, 0.5 * (GANTRY_V_SEA + GANTRY_V_LAND), GANTRY_H + 0.2), mat_timber, false);
+        add_box(vformat("GantryBeam%d", end), Vector3(0.4f, 0.4f, GANTRY_V_LAND - GANTRY_V_SEA + 0.4f), place(end * GANTRY_U, 0.5 * (GANTRY_V_SEA + GANTRY_V_LAND), GANTRY_H + 0.2), mat_timber, false,
+                GANTRY_RENDER_LAYER);
     }
 
     // 跳板：从坪上斜到接触线上的甲板边缘
