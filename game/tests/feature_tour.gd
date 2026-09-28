@@ -62,6 +62,7 @@ var seed_at_start := 0
 var other_at_start := 0
 # ③
 var layout_at_start: Array = []
+var refit_dragged := false  # 改装那一步：鼠标拖完了
 var speed_at_start := 0.0
 # ④
 var village: Node3D  # 村子的地面宿主（Settlement、Villagers 挂在它下面）
@@ -332,17 +333,20 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "开着改装人还能走")
 					return
 				_shot("REFIT_open")
-				_queue([["move_back", 2], ["interact", 2], ["inventory", 2]])
+				refit_dragged = false
+				_drag_storage_aft()  # 协程：按住储存区卡片拖到舷门后一格松手，再 Tab 合上
 				_enter(Phase.REFIT)
 			elif in_phase > 1.0:
 				_finish(false, "在画样台按了 E，改装没打开（%s）" % main.get_notice())
 		Phase.REFIT:
+			if not refit_dragged:
+				return
 			var want := layout_at_start + ["0,0,1:storage"]
 			want.sort()
 			var now := Array(ship.get_layout())
 			now.sort()
 			if now != want:
-				_finish(false, "S、E 之后布局该是 %s，实为 %s（%s）" % [want, now, main.get_notice()])
+				_finish(false, "拖储存区到舷门后一格之后布局该是 %s，实为 %s（%s）" % [want, now, main.get_notice()])
 			elif main.is_refit_open() or player.is_input_blocked():
 				_finish(false, "Tab 之后改装没合上或人还动不了")
 			elif not main.is_ship_in_yard() or not ship.can_fly():
@@ -529,6 +533,44 @@ func _press_key_action(action: String) -> void:
 		ev.action = action
 		ev.pressed = pressed
 		Input.parse_input_event(ev)
+
+
+## 改装：按住储存区卡片，拖到舷门后一格（船上亮着的）松手，再 Tab 合上
+func _drag_storage_aft() -> void:
+	var card: Vector2 = main.get_refit_card_center("storage")
+	await _mouse_move(card)
+	await _mouse_button(card, true)
+	var aim: Vector2 = main.get_refit_aim(Vector3i(0, 0, 1), "storage")
+	if aim.x < 0.0:
+		_finish(false, "改装：屏幕上找不到舷门后一格（亮格 %s）" % [main.get_refit_glow()])
+		return
+	await _mouse_move(aim)
+	if main.get_refit_hover()["type"] != "spot" or not main.get_refit_hover()["legal"]:
+		_finish(false, "改装：拖着储存区指着舷门后一格，该是能放的落点（%s）" % [main.get_refit_hover()])
+		return
+	await _mouse_button(aim, false)
+	_queue([["inventory", 2]])
+	refit_dragged = true
+
+
+func _mouse_move(at: Vector2) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = at
+	motion.global_position = at
+	Input.parse_input_event(motion)
+	for i in 3:
+		await get_tree().physics_frame
+
+
+func _mouse_button(at: Vector2, pressed: bool) -> void:
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.position = at
+	ev.global_position = at
+	ev.pressed = pressed
+	Input.parse_input_event(ev)
+	for i in 3:
+		await get_tree().physics_frame
 
 
 func _mouse(button: MouseButton, at: Vector2) -> void:
