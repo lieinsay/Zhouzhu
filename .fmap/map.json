@@ -55,7 +55,7 @@
     {
       "id": "ship",
       "label": "Ship 空艇",
-      "detail": "按三维布局拼出的空艇：甲板、舱房、船体、浮石、舷栏、梯子、货位与货箱；野泊时从一舷的舷门放下带碰撞的舷梯（上舵收起），并能在落地位姿上查船身与舷梯压着什么。",
+      "detail": "按三维布局拼出的空艇：结构按节（甲板、舱房、船体、舷栏、梯子），陈设按节点（舵楼、货位垫木、侧桅帆与双桅长帆、浮石与透光格栅、空节的浅色镶边），货位与货箱；野泊时从一舷的舷门放下带碰撞的舷梯（上舵收起），并能在落地位姿上查船身与舷梯压着什么。",
       "tag": "场景角色",
       "evidence": "shipyard_e2e 改装重拼 6 次、航速 32 → 20.4；voyage/respawn/farm e2e 无回归；截图目视货箱 / 舵楼顶 / 侧桅帆",
       "sources": [
@@ -80,7 +80,7 @@
     {
       "id": "input-map",
       "label": "输入动作表",
-      "detail": "输入动作表：移动 / 跳 / 疾跑 / 交互 / 背包 / 返回 / 改装用的 remove（X）与 kind_1/2/3；C++ 与 GDScript 共用同一套名字。",
+      "detail": "输入动作表：移动 / 跳 / 疾跑 / 交互 / 背包 / 返回 / 拆（X，改装时拆选中的节点）与布置模式的 kind_1–5；C++ 与 GDScript 共用同一套名字。改装的放与选都用鼠标。",
       "tag": "引擎构件",
       "evidence": "e2e 全程只经 Input.action_press 这一层动作驱动并通过（移动/升降/转舵/交互）",
       "sources": [
@@ -243,9 +243,9 @@
     {
       "id": "ship-layout",
       "label": "布局与船况",
-      "detail": "空艇的三维格子布局与船况。每节 7 m 见方、3.8 m 高（按人的尺度定），最多 12 节；规矩、梯子、候选格、船况都由布局算出。",
+      "detail": "空艇的三维格子布局与船况。一格一节（7 × 7 × 3.8 m），船由占一节或几节的节点拼成，最多 12 节（按节数算）；节点表、规矩、落点、梯子、船况都由布局算出。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest 302 项通过（三维规则 / 梯子 / 候选格 / id 往返）",
+      "evidence": "ctest 1664 项全过（节点表与复合节、规矩、落点、拆整个节点、id 往返与 power 旧名）",
       "sources": [
         "src/ship_layout.h",
         "src/ship_layout.cpp"
@@ -278,10 +278,10 @@
     },
     {
       "id": "refit-panel",
-      "label": "RefitPanel 改装面板",
-      "detail": "只画：光标在哪儿（舷 / 层 / 排）、这一格能干什么和为什么（着色）、1/2/3 模块表与说明、船况（节数 / 质量 / 推力 / 货舱 / 航速 / 升速 / 转向）、提示行。",
+      "label": "RefitPanel 船节点模块界面",
+      "detail": "铺满屏幕的自绘层：左边每种节点一张卡片（名字、形状、功能、规矩、能放几处），拖着时一枚小标签跟着鼠标；右上船况、指着的地方能不能放及原因、选中的节点与「拆除」钮（拆不了写原因）。只画并回答屏幕上一点落在哪张卡片 / 哪个钮上。",
       "tag": "引擎构件",
-      "evidence": "开窗截图 REFIT_open：两行节、光标、船头船尾标记、船况行、按键提示",
+      "evidence": "shipyard_e2e 截图目视；点卡片、点拆除钮的鼠标事件都落对了",
       "sources": [
         "src/refit_panel.h",
         "src/refit_panel.cpp"
@@ -291,9 +291,9 @@
     {
       "id": "shipyard-e2e",
       "label": "船坞端到端测试",
-      "detail": "无头端到端：画样台被拒 → 入坞 → 装配视角 9 步放 / 换 / 拆并逐步断言布局与拒绝原因 → 六节两层后走跳板上船、爬梯子上二层、面墙后退下到舵旁 → 飞回泊位靠泊。",
+      "detail": "无头端到端：画样台被拒 → 入坞 → 全程鼠标改装：指着卡片船上亮格、拖储存区放上、拖到帆顶上红色虚影被拒、点一下拿着空节再点、拖双桅帆与双层货舱、右键 / Esc 放下、选中驾驶区 X 拆不得、叠一节后拆底下被拒拆上面成功 → 8 节两层后爬梯子上双层货舱顶、下到舵旁 → 飞回泊位靠泊。",
       "tag": "验收",
-      "evidence": "Godot --headless shipyard_e2e.tscn PASS 52.4 s；voyage / respawn / farm 也 PASS",
+      "evidence": "Godot --headless shipyard_e2e.tscn PASS（模拟 67.9 s）；开窗截图目视",
       "sources": [
         "game/tests/shipyard_e2e.gd",
         "game/tests/shipyard_e2e.tscn"
@@ -302,8 +302,8 @@
     },
     {
       "id": "ship-layout-rules",
-      "label": "三维规矩与拒绝原因",
-      "detail": "layout_problem / layout_place / layout_set_kind / layout_remove：每条规矩一句中文原因，Voyage 与面板只转述。",
+      "label": "规矩与拒绝原因",
+      "detail": "layout_problem / layout_place（以锚点放）/ layout_remove（点哪一节都拆整个节点）：节点表的规矩位（帆只能在最上面：顶上不能再搭、浮石舱只能在最下面一层、驾驶区只能有一个……）加原来的悬空、连通、舷门排最宽，每条一句中文原因；layout_placements 给出某种节点眼下的全部落点（改装的亮格）。",
       "tag": "纯算法（不含 Godot 头）",
       "sources": [
         "src/ship_layout.cpp"
@@ -313,8 +313,8 @@
     },
     {
       "id": "ship-layout-ladders",
-      "label": "梯子与候选格",
-      "detail": "layout_ladders 在相邻列高矮不同的墙上给出梯脚 / 梯顶层；layout_candidates 列出当前能放的空格，给装配视角画半透明候选格。",
+      "label": "梯子",
+      "detail": "layout_ladders 在相邻列高矮不同的墙上给出梯脚 / 梯顶层（复合节按它占的每一节算列高）。",
       "tag": "纯算法（不含 Godot 头）",
       "sources": [
         "src/ship_layout.cpp"
@@ -325,9 +325,9 @@
     {
       "id": "refit-overlay",
       "label": "RefitOverlay 装配视角",
-      "detail": "Node3D 跟着船的位姿：环绕相机（鼠标转，仰角有夹）、半透明候选格、光标格填充 + 12 条边框（黄能放 / 红不行 / 白选中，边框不做深度测试）、船头 / 船尾 / 左舷 / 右舷 Label3D。只画，不管输入。",
+      "detail": "Node3D 跟着船的位姿，只画：亮格（能放的格子一呼一吸地发亮）、拖着的节点的虚影（外包盒，能放黄绿、不能放红，头顶写名字或原因）、选中框与指着的淡框、船头船尾左右舷标注；环绕相机加滚轮远近、往右横移让开面板、屏幕点换射线；不画船坞门架（单独的渲染层）。",
       "tag": "引擎构件",
-      "evidence": "窗口截图 REFIT_open / REFIT_stacked 目视确认",
+      "evidence": "shipyard_e2e 开窗截图 REFIT_drag / refused / long_sail / selected 目视",
       "sources": [
         "src/refit_overlay.h",
         "src/refit_overlay.cpp"
@@ -865,14 +865,15 @@
     {
       "id": "refit-bench",
       "label": "RefitBench 改装",
-      "detail": "离哪座画样台够近、船在不在那座坞里；装配视角里挪光标、放 / 换 / 拆。",
+      "detail": "离哪座画样台够近、船在不在坞里；装配视角里的鼠标：按住卡片拖到亮格松手放上、点一下卡片拿着再点、右键 / Esc 放回，点节点选中、X 或拆除钮拆整个节点，右键拖转视角、滚轮远近；改完重拼坐回坞位，船舱装不下就不改；给测试瞄点。",
       "tag": "玩法部件",
       "sources": [
         "src/refit_bench.h",
         "src/refit_bench.cpp"
       ],
       "since": "e16",
-      "parent": "expedition"
+      "parent": "expedition",
+      "evidence": "shipyard_e2e 全程鼠标 PASS；world_features / flat_map 的改装一步拖储存区 PASS"
     },
     {
       "id": "map-host",
@@ -3478,6 +3479,31 @@
         "game/tests/pause_menu_e2e.gd"
       ],
       "since": "e117"
+    },
+    {
+      "id": "ship-layout-modules",
+      "label": "节点表与复合节",
+      "detail": "八种节点：驾驶区 / 储存区 / 帆 / 浮石舱 / 空节（单节），双桅帆（前后双节）、双层货舱（上下双节）、宽空节（左右双节）。每种写明占格、规矩位（只能在最上面 / 最下面一层、最多几个、少不了、拆得拆不得）、功能数与样子；节点以锚点记，格子占用表一步查到某一格属于哪个节点；面板上的形状 / 规矩 / 功能说法也在这儿。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest ship_layout：形状与说法、复合节占格、双层货舱上层货位够得着、带复合节的布局 id 往返",
+      "sources": [
+        "src/ship_layout.h",
+        "src/ship_layout.cpp"
+      ],
+      "since": "e118",
+      "parent": "ship-layout"
+    },
+    {
+      "id": "refit-pick",
+      "label": "改装的射线拾取",
+      "detail": "船局部坐标里的射线对格子盒子求交：手上没东西时指着哪个节点（第 0 层连船体算）；拖着节点时亮格 = 全部落点占的格子，亮格优先（只有船身挡得住），在亮格里按命中点挑落点（复合节往哪头伸），没指着亮格才看贴着船的不亮空格、给出红色虚影的原因。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "ctest refit_pick：选中、亮格落点、复合节挑头、船身遮挡、红色原因",
+      "sources": [
+        "src/refit_pick.h",
+        "src/refit_pick.cpp"
+      ],
+      "since": "e118"
     }
   ],
   "edges": [
@@ -7393,6 +7419,43 @@
       "chains": [
         "dev-tools"
       ]
+    },
+    {
+      "from": "ship-layout-rules",
+      "to": "ship-layout-modules",
+      "label": "规矩位"
+    },
+    {
+      "from": "refit-pick",
+      "to": "ship-layout-rules",
+      "label": "落点与原因",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "refit-bench",
+      "to": "refit-pick",
+      "label": "鼠标指着什么",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "ship",
+      "to": "ship-layout-modules",
+      "label": "节点的样子",
+      "chains": [
+        "shipyard"
+      ]
+    },
+    {
+      "from": "refit-panel",
+      "to": "ship-layout-modules",
+      "label": "卡片",
+      "chains": [
+        "shipyard"
+      ]
     }
   ],
   "chains": [
@@ -7600,13 +7663,13 @@
     {
       "id": "shipyard",
       "title": "切片三：地面船坞，把空艇改成一节节的",
-      "story": "玩家把空艇开进岸边的船坞，下船走到画样台，进装配视角绕着船看，往前后、左右、上下一格格地放储存区和动力区、换类型、拆掉不要的；改完的船更重更慢或更快，没有动力区就飞不起来；上下层靠梯子，改好了再掌舵飞回泊位。",
+      "story": "玩家把空艇开进岸边的船坞，下船走到画样台进装配视角：从左边的船节点卡片里把储存区、帆、双桅帆、双层货舱这些节点拖到船上亮着的格子里，拖到不合规矩的地方亮红并说明原因；点选船上的节点拆掉不要的；改完的船更重更慢或更快，没有帆也没有浮石舱就飞不起来；上下层靠梯子，改好了再掌舵飞回泊位。",
       "date": "2026-09-22",
       "color": "#3fb27f",
       "commits": "440ed3f..30483e5",
       "steps": [
         {
-          "text": "进入主场景：出发岛的停机坪旁沿岸凿出一块石板坪，河与路的选线都绕开它；船坞在坪上搭起坞墩梁、门架、跳板与画样台",
+          "text": "进入主场景：出发岛的停机坪旁沿岸凿出一块石板坪，河与路的选线都绕开它；船坞在坪上搭起坞墩、门架、跳板与画样台",
           "nodes": [
             "main-scene",
             "island-node",
@@ -7618,10 +7681,11 @@
           ]
         },
         {
-          "text": "空艇按三维布局（动力区 + 驾驶区）运行时拼出来：每节的舱房或甲板、船体、舷栏、梯子，舷门固定在原点两舷；船况由布局算出",
+          "text": "空艇按三维布局（帆 + 驾驶区）运行时拼出来：结构按节（舱房或甲板、船体、舷栏、梯子），陈设按节点，舷门固定在原点两舷；船况由布局算出",
           "nodes": [
             "ship",
             "ship-layout",
+            "ship-layout-modules",
             "ship-layout-ladders",
             "flight-model"
           ]
@@ -7636,7 +7700,7 @@
           ]
         },
         {
-          "text": "走上空艇掌舵、升空，飞到船坞跟前（比泊位更近）按 E 入坞：船把朝跳板的舷边贴到坞位接触线上，停在坞墩梁上",
+          "text": "走上空艇掌舵、升空，飞到船坞跟前（比泊位更近）按 E 入坞：船把朝跳板的舷边贴到坞位接触线上，停在坞墩上",
           "nodes": [
             "expedition",
             "ship",
@@ -7646,30 +7710,44 @@
           ]
         },
         {
-          "text": "下船顺跳板走到画样台按 E：进装配视角——相机跳到船外可绕着看，船上画出候选格、光标格与船头船尾左右舷标注，面板说光标在哪儿、能干什么、船况如何",
+          "text": "下船顺跳板走到画样台按 E：进装配视角——鼠标放出来，相机绕着船、让开左边的船节点卡片（形状、功能、规矩、能放几处），右上是船况",
           "nodes": [
             "expedition",
+            "refit-bench",
             "refit-overlay",
             "refit-panel",
-            "ship-layout",
+            "ship-layout-modules",
             "player",
             "shipyard"
           ]
         },
         {
-          "text": "W/S、A/D、空格/Shift 三向挪光标，1/2/3 选模块，E 放或换、X 拆：每改一下船立刻重拼；悬空、盖住舷门排两头、拆有上层的节、改拆驾驶区都被拒并说明",
+          "text": "指着一张卡片，船上就亮起它能放的格子；按住拖到亮格上松手放上（复合节看指在亮格的哪一半往哪头伸）；拖到帆顶上这种不合规矩的地方是红色虚影，说帆只能在最上面、松手不放；点一下卡片也能拿着再点船上",
           "nodes": [
             "expedition",
-            "ship-layout",
+            "refit-bench",
+            "refit-pick",
             "ship-layout-rules",
-            "ship",
+            "ship-layout-modules",
             "refit-overlay",
             "refit-panel",
+            "ship"
+          ]
+        },
+        {
+          "text": "点船上的节点选中它，按 X 或点「拆除」拆掉整个节点；驾驶区拆不得、上面还搭着的拆不了，都说明原因；右键拖着转视角、滚轮拉远拉近",
+          "nodes": [
+            "refit-bench",
+            "refit-pick",
+            "ship-layout-rules",
+            "refit-panel",
+            "refit-overlay",
+            "ship",
             "input-map"
           ]
         },
         {
-          "text": "改成六节两层后，Tab 合上回到人身上：走跳板上船，面朝梯子按 W 爬上二层，背对着按 S 下到舵旁",
+          "text": "改成 8 节两层后 Tab 合上回到人身上：走跳板上船，面朝梯子按 W 爬上双层货舱顶，背对着按 S 下到舵旁",
           "nodes": [
             "player",
             "ship",
@@ -7678,7 +7756,7 @@
           ]
         },
         {
-          "text": "拆掉了动力区的船上不了舵：舵旁按 E 被拒，提示去画样台加一节",
+          "text": "没有帆也没有浮石舱的船上不了舵：舵旁按 E 被拒，提示去画样台加一节帆",
           "nodes": [
             "expedition",
             "ship",
@@ -7687,7 +7765,7 @@
           ]
         },
         {
-          "text": "掌舵升空，飞回泊位：船按自己的宽度把舷边贴到泊位接触线上靠泊；多了货的船航速从 32 掉到 20 m/s",
+          "text": "掌舵升空，飞回泊位：船按自己的宽度把舷边贴到泊位接触线上靠泊；多了货的船航速从 32 掉到 28 m/s",
           "nodes": [
             "expedition",
             "ship",
@@ -7716,7 +7794,10 @@
         "refit-overlay",
         "ship-layout-rules",
         "ship-layout-ladders",
-        "ship-cells-scale"
+        "ship-cells-scale",
+        "refit-pick",
+        "refit-bench",
+        "ship-layout-modules"
       ]
     },
     {
@@ -12713,6 +12794,29 @@
         "peers": [
           "pause-menu",
           "pause-menu-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e118",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：船节点改装重构——节点表、复合节与规矩，拖节点、亮光提示、选中拆除",
+      "summary": "节点占一节或几节（前后 / 上下 / 左右双节），规矩写在节点表里（帆只能在最上面、浮石舱只能在最下面一层……），布局给得出某种节点的全部落点；动力区拆成帆与浮石舱，另有没有功能的空节。改装从键盘挪光标改成从船节点卡片拖到船上亮着的格子、点选节点拆除，指着什么由新的纯算法射线拾取回答。",
+      "commits": "80e5b62..bee788a",
+      "nodes": [
+        "ship-layout",
+        "ship-layout-modules",
+        "refit-pick"
+      ],
+      "info": {
+        "node": "ship-layout",
+        "children": [
+          "ship-layout-modules"
+        ],
+        "adopted": [],
+        "peers": [
+          "refit-pick"
         ]
       }
     }
