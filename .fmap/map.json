@@ -657,7 +657,7 @@
     {
       "id": "dev-tools-node",
       "label": "DevTools 开发者工具",
-      "detail": "全局 autoload（DeveloperTools，game/dev_tools.tscn）：god 开没开、清单开没开只在这里；F2 换地图清单（maps 属性）、F3 开关 god 并随场景切换套到新 Player 上、没有岛群地图的场景按 M 提示；场景根 dev_tools 为假时不理。",
+      "detail": "全局 autoload DeveloperTools：F2 换地图、F3 god、F4 快进、F6 时间与天气、F7 轨道相机等；场景根 dev_tools 为假或树暂停（暂停菜单开着）时不理键。每样工具的说明在 dev_manual。",
       "tag": "切片编排（状态在此）",
       "evidence": "dev_tools_e2e PASS；开窗截图目视",
       "sources": [
@@ -3441,6 +3441,43 @@
       ],
       "since": "e116",
       "parent": "map-works"
+    },
+    {
+      "id": "dev-tools-manual",
+      "label": "开发者工具说明表",
+      "detail": "每样开发者工具：动作名、键、名字、在哪儿能用、几行说明。单测扫 input_actions.h，注释写着「开发者：」的动作都得有一条。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests dev_manual",
+      "sources": [
+        "src/dev_manual.cpp",
+        "src/dev_manual.h"
+      ],
+      "since": "e117",
+      "parent": "dev-tools-node"
+    },
+    {
+      "id": "pause-menu",
+      "label": "暂停菜单 PauseMenu",
+      "detail": "全局 autoload GameMenu（排在 DeveloperTools 前，Esc 最后轮到它）：整棵树暂停、鼠标放出；菜单（返回游戏、开发者工具说明）与可滚动的说明页。",
+      "tag": "场景角色",
+      "evidence": "pause_menu_e2e PASS，截图看过",
+      "sources": [
+        "src/pause_menu.cpp",
+        "src/pause_menu.h",
+        "game/pause_menu.tscn"
+      ],
+      "since": "e117"
+    },
+    {
+      "id": "pause-menu-e2e",
+      "label": "暂停菜单端到端测试",
+      "detail": "平板岛：Esc 暂停（钟不走、人不动、F3 不理）、说明页九样都在能翻、Esc 回菜单与返回游戏、背包 / 换地图清单开着时 Esc 先合它们。",
+      "tag": "验收",
+      "evidence": "PASS",
+      "sources": [
+        "game/tests/pause_menu_e2e.gd"
+      ],
+      "since": "e117"
     }
   ],
   "edges": [
@@ -7332,6 +7369,30 @@
       "chains": [
         "dev-tools"
       ]
+    },
+    {
+      "from": "pause-menu",
+      "to": "dev-tools-manual",
+      "label": "说明表",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "pause-menu-e2e",
+      "to": "pause-menu",
+      "label": "驱动",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "pause-menu-e2e",
+      "to": "expedition",
+      "label": "Esc 先合面板",
+      "chains": [
+        "dev-tools"
+      ]
     }
   ],
   "chains": [
@@ -7964,6 +8025,14 @@
           ]
         },
         {
+          "text": "不知道有哪些开发者工具：按 Esc，游戏整个停住、弹出菜单，点「开发者工具说明」就列出每一样的键、名字、在哪儿能用、怎么用；Esc 回菜单、返回游戏",
+          "nodes": [
+            "pause-menu",
+            "dev-tools-manual",
+            "expedition"
+          ]
+        },
+        {
           "text": "甲乙两岛里按 M：这里没有岛群地图，提示按 F2 换到有地图的「岛群 #2051」",
           "nodes": [
             "dev-tools-node",
@@ -8033,7 +8102,11 @@
         "map-works-batch",
         "terrain-edits",
         "build-pieces",
-        "structure-styles"
+        "structure-styles",
+        "pause-menu",
+        "dev-tools-manual",
+        "pause-menu-e2e",
+        "expedition"
       ]
     },
     {
@@ -12617,6 +12690,30 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e117",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：Esc 暂停菜单与开发者工具说明",
+      "summary": "Esc 暂停整个游戏、弹出菜单（返回游戏、开发者工具说明）；说明页照一张表列出每一样开发者工具，单测逼每个开发者动作都有一条。",
+      "nodes": [
+        "dev-tools-node",
+        "dev-tools-manual",
+        "pause-menu",
+        "pause-menu-e2e"
+      ],
+      "info": {
+        "node": "dev-tools-node",
+        "children": [
+          "dev-tools-manual"
+        ],
+        "adopted": [],
+        "peers": [
+          "pause-menu",
+          "pause-menu-e2e"
+        ]
       }
     }
   ],
