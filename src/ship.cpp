@@ -14,6 +14,7 @@
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/omni_light3d.hpp>
 #include <godot_cpp/classes/physics_direct_space_state3d.hpp>
 #include <godot_cpp/classes/physics_shape_query_parameters3d.hpp>
 #include <godot_cpp/classes/world3d.hpp>
@@ -29,7 +30,9 @@
 #include "flight_model.h"
 #include "freight.h"
 #include "input_actions.h"
+#include "placed_props.h"
 #include "planet_view.h"
+#include "ship_cabins.h"
 
 using namespace godot;
 
@@ -49,16 +52,17 @@ constexpr double BUMP_ROLL = 0.05; // 颠簸时船身跟着晃（弧度，强度
 const char *GENERATED_META = "ship_generated";
 const char *CARGO_META = "ship_cargo"; // 货箱：换货时只重画它们
 const char *GANGWAY_META = "ship_gangway"; // 野泊的舷梯：收放时只动它
+const char *FURNITURE_META = "ship_furniture"; // 船上摆的东西（值是账里的 id）：账变了只重摆它们，改船重拼不动
 constexpr uint32_t LADDER_LAYER = 8; // Player 的 Sensor 只看这一层
 
 // 几何（米）
 constexpr real_t CELL_L = real_t(CELL_LENGTH_M), CELL_W = real_t(CELL_WIDTH_M), CELL_H = real_t(CELL_HEIGHT_M);
 constexpr real_t DECK_T = 0.7f; // 第 0 层甲板板厚，甲板面在 y = 0
 constexpr real_t HULL_W = 5.2f, HULL_H = 2.8f; // 船体吊在甲板下
-constexpr real_t RAIL_T = 0.15f, RAIL_H = 1.15f;
-constexpr real_t GATE_HALF = 1.0f; // 舷门半宽
+constexpr real_t RAIL_T = real_t(SHIP_RAIL_T_M), RAIL_H = 1.15f;
+constexpr real_t GATE_HALF = real_t(SHIP_GATE_HALF_M); // 舷门半宽
 constexpr real_t LADDER_GAP_HALF = 0.7f; // 梯顶处舷栏缺口的半宽
-constexpr real_t LADDER_ALONG = -2.8f; // 梯子靠墙的哪一头：沿墙偏这么多（左舷 / 船头那一头），避开舵柱、座位与货箱
+constexpr real_t LADDER_ALONG = real_t(SHIP_LADDER_ALONG_M); // 梯子靠墙的哪一头：沿墙偏这么多（左舷 / 船头那一头），避开舵柱、座位与货箱
 constexpr real_t HELM_AFT = 1.7f; // 舵柱在驾驶区中心之后多少
 constexpr real_t SEAT_AFT = 2.9f;
 constexpr real_t BOW_WEDGE = 4.5f; // 船头楔的长（与 ship_layout 的 BOW_M 配：楔尖再多出一点）
@@ -68,6 +72,8 @@ constexpr real_t LADDER_ZONE_DEPTH = 1.0f; // 爬梯区域离墙多深
 constexpr real_t LADDER_ZONE_OVER = 1.2f; // 爬梯区域超出梯顶甲板多高：人到这儿才松开，正好落在甲板上
 constexpr real_t GANGWAY_W = 1.8f, GANGWAY_T = 0.25f; // 野泊的舷梯（舷门缺口 2 m 宽）
 constexpr real_t GANGWAY_BURY = 0.4f; // 梯脚往地里多埋一截：地面起伏也不悬着
+constexpr real_t WALL_T = real_t(CABIN_WALL_M), CEILING_T = real_t(CABIN_CEILING_M); // 舱墙、舱顶板
+constexpr real_t LAMP_DROP = 0.25f; // 舱灯吊在舱顶下多深
 
 const int N4[4][2] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }; // (dx, dz)
 
@@ -148,6 +154,37 @@ std::vector<std::pair<real_t, real_t>> cut_gaps(real_t a, real_t b, const std::v
     return pieces;
 }
 
+// 一面舱墙上的开口：沿墙 [a0, a1]、离地 [y0, y1]
+struct WallHole {
+    real_t a0, a1, y0, y1;
+};
+
+// 一面墙（厚 WALL_T）：p_base 是墙脚中线的中点，沿 p_along 长 p_len、高 p_height，挖掉 p_holes；
+// 整高的几段 + 每个开口下面、上面各一块（门洞只有上面的门楣）
+void add_wall(Node3D *p_visual, Node *p_body, const String &p_name, const Vector3 &p_base, const Vector3 &p_along, const Vector3 &p_normal, real_t p_len, real_t p_height,
+        const std::vector<WallHole> &p_holes, const Ref<Material> &p_material) {
+    const Basis frame(p_along, Vector3(0, 1, 0), p_normal);
+    auto piece = [&](const String &p_part, real_t p_a0, real_t p_a1, real_t p_y0, real_t p_y1) {
+        if (p_a1 - p_a0 < 0.02f || p_y1 - p_y0 < 0.02f) {
+            return;
+        }
+        const Vector3 center = p_base + p_along * (0.5f * (p_a0 + p_a1)) + Vector3(0, 0.5f * (p_y0 + p_y1), 0);
+        add_box(p_visual, p_body, p_name + p_part, Vector3(p_a1 - p_a0, p_y1 - p_y0, WALL_T), Transform3D(frame, center), p_material, true);
+    };
+    std::vector<std::pair<real_t, real_t>> gaps;
+    for (const WallHole &h : p_holes) {
+        gaps.push_back({ h.a0, h.a1 });
+    }
+    int k = 0;
+    for (const auto &seg : cut_gaps(-0.5f * p_len, 0.5f * p_len, gaps)) {
+        piece(vformat("_%d", k++), seg.first, seg.second, 0, p_height);
+    }
+    for (size_t h = 0; h < p_holes.size(); h++) {
+        piece(vformat("_Below%d", int(h)), p_holes[h].a0, p_holes[h].a1, 0, p_holes[h].y0);
+        piece(vformat("_Above%d", int(h)), p_holes[h].a0, p_holes[h].a1, p_holes[h].y1, p_height);
+    }
+}
+
 } // namespace
 
 void Ship::_bind_methods() {
@@ -171,6 +208,9 @@ void Ship::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_ladder_tops"), &Ship::get_ladder_tops);
     ClassDB::bind_method(D_METHOD("get_stats"), &Ship::get_stats);
     ClassDB::bind_method(D_METHOD("is_aboard", "global"), &Ship::is_aboard);
+    ClassDB::bind_method(D_METHOD("is_in_cabin", "global"), &Ship::is_in_cabin);
+    ClassDB::bind_method(D_METHOD("get_cell_floor", "x", "y", "z"), &Ship::get_cell_floor);
+    ClassDB::bind_method(D_METHOD("get_furniture_node", "id"), &Ship::get_furniture_node);
     ClassDB::bind_method(D_METHOD("can_fly"), &Ship::can_fly);
     ClassDB::bind_method(D_METHOD("get_section_count"), &Ship::get_section_count);
     ClassDB::bind_method(D_METHOD("get_bow_z"), &Ship::get_bow_z);
@@ -234,6 +274,7 @@ void Ship::ensure_materials() {
     mat_roof = make_material(Color(0.27f, 0.19f, 0.13f), 0.9f);
     mat_glow = curved_material::glowing(Color(0.55f, 0.9f, 0.85f), 0.4f, Color(0.3f, 0.9f, 0.8f), 2.0f);
     mat_inlay = make_material(Color(0.78f, 0.66f, 0.46f), 0.9f);
+    mat_lamp = curved_material::glowing(Color(0.95f, 0.66f, 0.36f), 0.5f, Color(1.0f, 0.62f, 0.3f), 1.2f);
 }
 
 void Ship::clear_generated() {
@@ -252,7 +293,7 @@ void Ship::clear_generated() {
     }
 }
 
-// 一节：顶层 = 开放甲板（第 0 层的甲板板 + 按邻列高度取舍的舷栏），被盖住 = 封闭舱体（露在外面的墙按节点的样子装饰）；
+// 一节：顶层 = 开放甲板（第 0 层的甲板板 + 按邻列高度取舍的舷栏），被盖住 = 能进的舱（build_room）或封死的舱体（露在外面的墙按节点的样子装饰）；
 // 第 0 层下面吊船体，浮石舱再吊浮石
 void Ship::build_cell(const Cell &p_cell, const Module &p_module) {
     const Cell &c = p_cell;
@@ -269,8 +310,12 @@ void Ship::build_cell(const Cell &p_cell, const Module &p_module) {
         }
     }
 
+    if (!top && cell_space(layout, c) == CellSpace::ROOM) {
+        build_room(c, p_module);
+        return;
+    }
     if (!top) {
-        // 封闭舱体：一整块，露在外面的墙按节点装饰
+        // 封死的舱体：一整块，露在外面的墙按节点装饰
         add_box(visual, this, prefix + String("Cabin"), Vector3(CELL_W, CELL_H, CELL_L), at(cx, deck + 0.5f * CELL_H, cz), mat_hull, true);
         for (const auto &d : N4) {
             if (layout.has({ c.x + d[0], c.y, c.z + d[1] })) {
@@ -330,6 +375,67 @@ void Ship::build_cell(const Cell &p_cell, const Module &p_module) {
     }
 }
 
+// 能进的舱：地板（第 0 层是甲板板；往上是下面那一节的顶）、舱顶板（顶面是上面那一节的地板）、四面按 cell_side——
+// 门洞 1.4 × 2.5 m 开在墙正中，外墙两扇窗（窗台高过人腰），同一节点的舱之间不砌墙；舱顶正中吊一盏灯
+void Ship::build_room(const Cell &p_cell, const Module &p_module) {
+    const Cell &c = p_cell;
+    const real_t cx = real_t(cell_center_x(c.x)), cz = real_t(cell_center_z(c.z)), deck = real_t(cell_deck_y(c.y));
+    const real_t wall_h = CELL_H - CEILING_T;
+    const String prefix = vformat("M%d_%d_%d_", c.x, c.y, c.z);
+    if (c.y == 0) {
+        add_box(visual, this, prefix + String("Deck"), Vector3(CELL_W, DECK_T, CELL_L), at(cx, -0.5f * DECK_T, cz), mat_wood, true);
+    }
+    add_box(visual, this, prefix + String("Ceiling"), Vector3(CELL_W, CEILING_T, CELL_L), at(cx, deck + CELL_H - 0.5f * CEILING_T, cz), mat_hull, true);
+    for (const auto &d : N4) {
+        const SideKind side = cell_side(layout, c, d[0], d[1]);
+        if (side == SideKind::OPEN) {
+            continue;
+        }
+        const Vector3 n(real_t(d[0]), 0, real_t(d[1]));
+        const Vector3 along(real_t(d[1]), 0, real_t(-d[0]));
+        const real_t half = 0.5f * (d[0] != 0 ? CELL_W : CELL_L), len = d[0] != 0 ? CELL_L : CELL_W;
+        const Vector3 base = Vector3(cx, deck, cz) + n * (half - 0.5f * WALL_T);
+        const String name = prefix + vformat("Wall%d%d", d[0], d[1]);
+        std::vector<WallHole> holes;
+        if (side == SideKind::DOOR) {
+            holes.push_back({ -0.5f * real_t(CABIN_DOOR_W_M), 0.5f * real_t(CABIN_DOOR_W_M), 0, real_t(CABIN_DOOR_H_M) });
+        } else if (side == SideKind::WINDOW) {
+            for (int s = -1; s <= 1; s += 2) {
+                const real_t mid = s * real_t(CABIN_WINDOW_ALONG_M), w = 0.5f * real_t(CABIN_WINDOW_W_M);
+                holes.push_back({ mid - w, mid + w, real_t(CABIN_WINDOW_SILL_M), real_t(CABIN_WINDOW_SILL_M + CABIN_WINDOW_H_M) });
+            }
+        }
+        add_wall(visual, this, name, base, along, n, len, wall_h, holes, side == SideKind::DOOR ? mat_wood : mat_hull);
+        const Basis frame(along, Vector3(0, 1, 0), n);
+        if (side == SideKind::WINDOW) {
+            for (size_t h = 0; h < holes.size(); h++) {
+                const real_t mid = 0.5f * (holes[h].a0 + holes[h].a1);
+                add_box(visual, this, name + vformat("_Sill%d", int(h)), Vector3(real_t(CABIN_WINDOW_W_M) + 0.2f, 0.08f, WALL_T + 0.16f),
+                        Transform3D(frame, base + along * mid + Vector3(0, real_t(CABIN_WINDOW_SILL_M) - 0.04f, 0)), mat_rail, false);
+            }
+        } else if (side == SideKind::DOOR) {
+            // 门框：两根立柱一道门楣（只画），看得出是门
+            for (int s = -1; s <= 1; s += 2) {
+                add_box(visual, this, name + vformat("_Jamb%d", s + 1), Vector3(0.12f, real_t(CABIN_DOOR_H_M), WALL_T + 0.08f),
+                        Transform3D(frame, base + along * (s * (0.5f * real_t(CABIN_DOOR_W_M) + 0.06f)) + Vector3(0, 0.5f * real_t(CABIN_DOOR_H_M), 0)), mat_rail, false);
+            }
+            add_box(visual, this, name + String("_Lintel"), Vector3(real_t(CABIN_DOOR_W_M) + 0.36f, 0.14f, WALL_T + 0.08f),
+                    Transform3D(frame, base + Vector3(0, real_t(CABIN_DOOR_H_M) + 0.07f, 0)), mat_rail, false);
+        }
+    }
+    // 舱灯：一截吊绳、一盏灯笼、一团暖光（不投影）
+    const real_t lamp_y = deck + wall_h - LAMP_DROP;
+    add_box(visual, this, prefix + String("LampCord"), Vector3(0.04f, LAMP_DROP, 0.04f), at(cx, lamp_y + 0.5f * LAMP_DROP, cz), mat_rail, false);
+    add_box(visual, this, prefix + String("Lamp"), Vector3(0.2f, 0.26f, 0.2f), at(cx, lamp_y - 0.13f, cz), mat_lamp, false);
+    OmniLight3D *light = memnew(OmniLight3D);
+    light->set_color(Color(1.0f, 0.78f, 0.52f));
+    light->set_param(Light3D::PARAM_ENERGY, 1.1f);
+    light->set_param(Light3D::PARAM_RANGE, 7.0f);
+    light->set_shadow(false);
+    light->set_position(Vector3(cx, lamp_y - 0.35f, cz));
+    adopt(visual, light, prefix + String("LampLight"));
+}
+
 // 节点的陈设：摆在它开放的那几节甲板上（驾驶区舵柱舵轮舵楼顶；货舱类每节四个货位的垫木；帆一对侧桅帆、双桅帆两节一面长帆；
 // 浮石舱甲板上一块透光的格栅；空节镶一圈浅色边）
 void Ship::build_furnishing(const Module &p_module) {
@@ -340,7 +446,9 @@ void Ship::build_furnishing(const Module &p_module) {
             open.push_back(c);
         }
     }
-    if (open.empty()) {
+    // 货位的垫木、空节的镶边在能进的舱里也画（舱里也能装货、摆东西）
+    const std::vector<Cell> floors = def.enterable ? module_cells(p_module) : open;
+    if (open.empty() && floors.empty()) {
         return;
     }
     const String prefix = vformat("N%d_%d_%d_", p_module.at.x, p_module.at.y, p_module.at.z);
@@ -369,7 +477,7 @@ void Ship::build_furnishing(const Module &p_module) {
 
         case ModuleLook::CARGO: {
             // 货位上的垫木（不挡脚）；货箱另画（build_cargo）
-            for (const Cell &c : open) {
+            for (const Cell &c : floors) {
                 const real_t cx = real_t(cell_center_x(c.x)), cz = real_t(cell_center_z(c.z)), deck = real_t(cell_deck_y(c.y));
                 for (int side = -1; side <= 1; side += 2) {
                     for (int end = -1; end <= 1; end += 2) {
@@ -429,7 +537,7 @@ void Ship::build_furnishing(const Module &p_module) {
 
         case ModuleLook::BARE: {
             // 空节：甲板上镶一圈浅色边，看得出这块是空着的、能摆东西（贴着甲板面，不挡脚）
-            for (const Cell &c : open) {
+            for (const Cell &c : floors) {
                 const real_t cx = real_t(cell_center_x(c.x)), cz = real_t(cell_center_z(c.z)), deck = real_t(cell_deck_y(c.y));
                 const real_t half = 0.5f * CELL_W - 0.9f, strip = 0.18f;
                 for (int s = -1; s <= 1; s += 2) {
@@ -819,6 +927,7 @@ Dictionary Ship::get_stats() const {
 }
 
 void Ship::_physics_process(double p_delta) {
+    sync_furniture();
     if (mooring) {
         step_mooring(p_delta);
     } else {
@@ -1029,6 +1138,82 @@ Vector3 Ship::get_deck_position(int p_x, int p_z) const {
         return get_global_position();
     }
     return to_global(Vector3(real_t(cell_center_x(p_x)), real_t(cell_deck_y(height - 1)), real_t(cell_center_z(p_z))));
+}
+
+void Ship::set_furniture(const Placements *p_furniture) {
+    furniture = p_furniture;
+    furniture_revision = -1;
+    sync_furniture();
+}
+
+void Ship::sync_furniture() {
+    if (!visual) {
+        return;
+    }
+    const int revision = furniture ? furniture->get_revision() : -2;
+    if (revision == furniture_revision) {
+        return;
+    }
+    furniture_revision = revision;
+    for (Node *parent : { static_cast<Node *>(this), static_cast<Node *>(visual) }) {
+        const TypedArray<Node> children = parent->get_children();
+        for (int64_t k = 0; k < children.size(); k++) {
+            Node *child = Object::cast_to<Node>(children[k]);
+            if (child && child->has_meta(FURNITURE_META)) {
+                parent->remove_child(child);
+                child->queue_free();
+            }
+        }
+    }
+    if (!furniture) {
+        return;
+    }
+    for (const PlacedProp &p : furniture->get_props()) {
+        const PropDef *def = props::find(p.item);
+        if (!def) {
+            continue;
+        }
+        const Transform3D pose(Basis(Vector3(0, 1, 0), real_t(quarter_yaw(p.quarter) + p.yaw_extra)), Vector3(real_t(p.x), real_t(p.y), real_t(p.z)));
+        Node3D *model = memnew(Node3D);
+        model->set_name(vformat("Furniture%d", p.id));
+        model->set_meta(FURNITURE_META, p.id);
+        model->set_transform(pose);
+        build_prop_model(model, *def, p.y - p.low, Ref<Material>());
+        add_prop_light(model, *def);
+        visual->add_child(model);
+        Ref<BoxShape3D> box;
+        box.instantiate();
+        box->set_size(Vector3(real_t(def->width), real_t(def->height), real_t(def->depth)));
+        CollisionShape3D *shape = memnew(CollisionShape3D);
+        shape->set_name(vformat("Furniture%dShape", p.id));
+        shape->set_meta(FURNITURE_META, p.id);
+        shape->set_shape(box);
+        shape->set_transform(pose * Transform3D(Basis(), Vector3(0, 0.5f * real_t(def->height), 0)));
+        add_child(shape);
+    }
+}
+
+Node3D *Ship::get_furniture_node(int p_id) const {
+    if (!visual) {
+        return nullptr;
+    }
+    const TypedArray<Node> children = visual->get_children();
+    for (int64_t k = 0; k < children.size(); k++) {
+        Node3D *child = Object::cast_to<Node3D>(children[k]);
+        if (child && child->has_meta(FURNITURE_META) && int(child->get_meta(FURNITURE_META)) == p_id) {
+            return child;
+        }
+    }
+    return nullptr;
+}
+
+bool Ship::is_in_cabin(const Vector3 &p_global) const {
+    const Vector3 local = get_global_transform().affine_inverse().xform(p_global);
+    return in_cabin(layout, local.x, local.y, local.z);
+}
+
+Vector3 Ship::get_cell_floor(int p_x, int p_y, int p_z) const {
+    return to_global(Vector3(real_t(cell_center_x(p_x)), real_t(cell_deck_y(p_y)), real_t(cell_center_z(p_z))));
 }
 
 PackedVector3Array Ship::get_ladder_feet() const {

@@ -92,8 +92,13 @@ public:
     bool is_ghost() const { return override_material.is_valid(); }
 };
 
-// 局部坐标：原点在占地中心的底面（= 占地最高处的地面），+z 是正面
-void build_model(Node3D *p_root, const PropDef &p_def, double p_lift, const Ref<Material> &p_override) {
+Transform3D pose_of(double p_x, double p_y, double p_z, int p_quarter, double p_yaw = 0.0) {
+    return Transform3D(Basis(Vector3(0, 1, 0), real_t(quarter_yaw(p_quarter) + p_yaw)), Vector3(real_t(p_x), real_t(p_y), real_t(p_z)));
+}
+
+} // namespace
+
+void build_prop_model(Node3D *p_root, const PropDef &p_def, double p_lift, const Ref<Material> &p_override) {
     Builder b(p_root, p_override);
     const real_t w = real_t(p_def.width), d = real_t(p_def.depth), h = real_t(p_def.height);
     // 地不平：底下垫一块，垫到最低处
@@ -148,11 +153,17 @@ void build_model(Node3D *p_root, const PropDef &p_def, double p_lift, const Ref<
     }
 }
 
-Transform3D pose_of(double p_x, double p_y, double p_z, int p_quarter) {
-    return Transform3D(Basis(Vector3(0, 1, 0), real_t(quarter_yaw(p_quarter))), Vector3(real_t(p_x), real_t(p_y), real_t(p_z)));
+void add_prop_light(Node3D *p_root, const PropDef &p_def) {
+    if (p_def.light_m <= 0.0) {
+        return;
+    }
+    OmniLight3D *light = memnew(OmniLight3D);
+    light->set_color(Color(1.0f, 0.72f, 0.42f));
+    light->set_param(Light3D::PARAM_ENERGY, 2.2f);
+    light->set_param(Light3D::PARAM_RANGE, real_t(p_def.light_m));
+    light->set_position(Vector3(0, real_t(p_def.height) + 0.15f, 0));
+    p_root->add_child(light);
 }
-
-} // namespace
 
 void PlacedProps::_bind_methods() {
     ClassDB::bind_method(D_METHOD("is_ghost_visible"), &PlacedProps::is_ghost_visible);
@@ -183,7 +194,7 @@ void PlacedProps::sync(const Placements &p_placed) {
         Transform3D pose = pose_of(p.x, p.y, p.z, p.quarter);
         pose.basis = Basis(Vector3(0, 1, 0), real_t(p.yaw_extra)) * pose.basis; // 换锚累下来的转角
         body->set_transform(pose);
-        build_model(body, *def, p.y - p.low, Ref<Material>());
+        build_prop_model(body, *def, p.y - p.low, Ref<Material>());
         CollisionShape3D *shape = memnew(CollisionShape3D);
         Ref<BoxShape3D> box;
         box.instantiate();
@@ -191,14 +202,7 @@ void PlacedProps::sync(const Placements &p_placed) {
         shape->set_shape(box);
         shape->set_position(Vector3(0, real_t(def->height) * 0.5f, 0));
         body->add_child(shape);
-        if (def->light_m > 0.0) {
-            OmniLight3D *light = memnew(OmniLight3D);
-            light->set_color(Color(1.0f, 0.72f, 0.42f));
-            light->set_param(Light3D::PARAM_ENERGY, 2.2f);
-            light->set_param(Light3D::PARAM_RANGE, real_t(def->light_m));
-            light->set_position(Vector3(0, real_t(def->height) + 0.15f, 0));
-            body->add_child(light);
-        }
+        add_prop_light(body, *def);
         add_child(body);
     }
 }
@@ -217,7 +221,7 @@ void PlacedProps::ensure_ghost_materials() {
     ghost_bad->set_albedo(Color(1.0f, 0.35f, 0.3f, 0.42f));
 }
 
-void PlacedProps::show_ghost(const std::string &p_item, const PlaceCheck &p_check) {
+void PlacedProps::show_ghost(const std::string &p_item, const PlaceCheck &p_check, double p_yaw) {
     const PropDef *def = props::find(p_item);
     if (!def) {
         hide_ghost();
@@ -234,9 +238,9 @@ void PlacedProps::show_ghost(const std::string &p_item, const PlaceCheck &p_chec
         add_child(ghost);
         ghost_item = p_item;
         ghost_ok = p_check.ok;
-        build_model(ghost, *def, 0.0, p_check.ok ? ghost_good : ghost_bad);
+        build_prop_model(ghost, *def, 0.0, p_check.ok ? ghost_good : ghost_bad);
     }
-    ghost->set_transform(pose_of(p_check.x, p_check.y, p_check.z, p_check.quarter));
+    ghost->set_transform(pose_of(p_check.x, p_check.y, p_check.z, p_check.quarter, p_yaw));
     ghost->set_visible(true);
 }
 
@@ -250,7 +254,7 @@ bool PlacedProps::is_ghost_visible() const {
     return ghost && ghost->is_visible();
 }
 
-Object *PlacedProps::obstacle(const PropDef &p_def, const PlaceCheck &p_check, const TypedArray<RID> &p_exclude) const {
+Object *PlacedProps::obstacle(const PropDef &p_def, const PlaceCheck &p_check, const TypedArray<RID> &p_exclude, double p_yaw) const {
     if (!is_inside_tree()) {
         return nullptr;
     }
@@ -262,7 +266,7 @@ Object *PlacedProps::obstacle(const PropDef &p_def, const PlaceCheck &p_check, c
     Ref<PhysicsShapeQueryParameters3D> query;
     query.instantiate();
     query->set_shape(box);
-    Transform3D xf = pose_of(p_check.x, p_check.y, p_check.z, p_check.quarter);
+    Transform3D xf = pose_of(p_check.x, p_check.y, p_check.z, p_check.quarter, p_yaw);
     xf.origin.y += LIFT + h * 0.5f;
     query->set_transform(xf);
     query->set_collision_mask(1);

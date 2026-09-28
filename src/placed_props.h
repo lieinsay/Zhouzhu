@@ -31,11 +31,18 @@ public:
 
     // 账变了就重摆
     void sync(const Placements &p_placed);
-    void show_ghost(const std::string &p_item, const PlaceCheck &p_check);
+    // p_yaw：营造账那个框架本身的朝向（船上的账跟着船转；地面的账差不多是 0），加在 quarter 上
+    void show_ghost(const std::string &p_item, const PlaceCheck &p_check, double p_yaw = 0.0);
     void hide_ghost();
     bool is_ghost_visible() const;
     // 摆在 p_check 处（底面往上抬一点，地面本身不算）的占地盒子碰着的实物（房子、船、石头……；碰撞层 1）；没有 nullptr
-    godot::Object *obstacle(const PropDef &p_def, const PlaceCheck &p_check, const godot::TypedArray<godot::RID> &p_exclude) const;
+    godot::Object *obstacle(const PropDef &p_def, const PlaceCheck &p_check, const godot::TypedArray<godot::RID> &p_exclude, double p_yaw = 0.0) const;
     // 账里 id 那件的实物；没有 nullptr（测试查）
     godot::Node3D *get_prop_node(int p_id) const;
 };
+
+// 一件的样子（局部坐标：原点在占地中心的底面，+z 是正面）：p_lift > 0 时底下垫到最低处；p_override 不为空时全用它（虚影）。
+// 船上摆的东西由 Ship 自己按这个画（样子挂 Visual、碰撞挂船身）
+void build_prop_model(godot::Node3D *p_root, const PropDef &p_def, double p_lift, const godot::Ref<godot::Material> &p_override);
+// 会亮的（火把）挂一盏暖光
+void add_prop_light(godot::Node3D *p_root, const PropDef &p_def);

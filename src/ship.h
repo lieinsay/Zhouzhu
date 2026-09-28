@@ -10,6 +10,7 @@
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
 #include "flight_model.h"
+#include "placeables.h"
 #include "ship_layout.h"
 
 // 空艇。原点在舷门格 (0,0,0) 的第 0 层甲板面中心，船头朝 −z，x 向右舷；甲板可站人。
@@ -17,10 +18,14 @@
 //   · 每列最上面那一节是开放甲板：甲板板（第 0 层）或下面舱体的顶、按邻列高度取舍的舷栏、节点的陈设
 //     （驾驶区舵柱舵轮舵楼顶，货舱类每节两舷各两个货位、中间走道，帆一对侧桅帆、双桅帆两节贯通的长帆，
 //     浮石舱一块透光的格栅，空节一圈浅色镶边——空着留给摆东西）；
-//   · 被上面盖住的节是封闭舱体（货舱类墙上有舱门；浮石舱墙上透着浮石的光；空节是素墙）；
+//   · 被上面盖住的节：能进的（储存区、双层货舱、空节、宽空节）是一间舱——地板、舱顶板、四面按 ship_cabins 的 cell_side
+//     （同一节点的舱连通不砌墙、朝甲板或别的舱开门洞、朝船外开两扇窗、挨着封死的舱是实墙），舱顶挂一盏灯，货舱里照样有货位；
+//     浮石舱是封死的舱体，墙上透着浮石的光；
 //   · 第 0 层每节下面吊船体，浮石舱再吊浮石；最前一排前面一只船头楔；
 //   · 货位（hold_slots）：空着是一块垫木，放了货是一只带碰撞的货箱，箱顶按货物着色；哪个货位上是什么由上层（跑货的货箱账）set_cargo 告诉它，它只画；
 //   · 相邻两列高度不同处生成梯子：踏板 + 带 "ladder" 元数据的 Area3D（+Z 离墙）+ 舷栏缺口，Player 靠它上下；
+//   · 船上摆的东西（工作台、木箱……）：账在编排手里（set_furniture 给，船的局部坐标），这里照账画——样子挂 Visual（跟着侧倾）、
+//     盒子碰撞挂船身（跟着船走、人站得住、船飞的时候不和自己撞）；账变了（revision）就整个重摆，改船重拼不动它们；
 //   · 野泊时从一舷的舷门放下的舷梯（set_gangway，带碰撞，跟着船走）：上层照 wild_landing 算好的长短落差放、上舵时收起。
 // 舷门在舷门那一排（z = 0、第 0 层）两头的船边，z ∈ ±0.9 不设栏。
 // 泊位 / 坞位是「接触线」：X 指向码头的位姿，船按面向码头那一侧的船边算原点该在哪，所以船怎么改都不用挪码头。
@@ -63,12 +68,16 @@ class Ship : public godot::CharacterBody3D {
     godot::Node3D *camera_rig = nullptr;
     godot::Camera3D *camera = nullptr;
 
-    godot::Ref<godot::Material> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow, mat_inlay; // 弯曲标准材质（curved_material）
+    godot::Ref<godot::Material> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow, mat_inlay, mat_lamp; // 弯曲标准材质（curved_material）
+
+    const Placements *furniture = nullptr; // 船上摆的东西的账（编排的）
+    int furniture_revision = -1;
 
     void ensure_materials();
     void clear_generated();
     void rebuild();
     void build_cell(const Cell &p_cell, const Module &p_module);
+    void build_room(const Cell &p_cell, const Module &p_module);
     void build_furnishing(const Module &p_module);
     void build_ladder(const Ladder &p_ladder);
     void build_cargo();
@@ -127,6 +136,15 @@ public:
     double get_port_edge_x() const { return port_edge_x(layout); }
     double get_starboard_edge_x() const { return starboard_edge_x(layout); }
     int get_levels() const { return layout.levels(); }
+
+    // 船上摆的东西：编排把账（船的局部坐标）交过来，账变了就重摆；立刻照账摆一遍（摆完、测试要查的时候；平常每个物理帧自己看）
+    void set_furniture(const Placements *p_furniture);
+    void sync_furniture();
+    godot::Node3D *get_furniture_node(int p_id) const; // 账里 id 那件的样子；没有 nullptr
+    // 全局的一点在不在一间能进的舱里
+    bool is_in_cabin(const godot::Vector3 &p_global) const;
+    // 某一节地板的中心（全局）；测试走路用
+    godot::Vector3 get_cell_floor(int p_x, int p_y, int p_z) const;
 
     // 船舱：每节储存区 12 格（开背包时列在背包下面；里面装什么是上层的账）
     int get_bay_slots() const { return stats.bay; }
