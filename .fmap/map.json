@@ -3191,7 +3191,7 @@
     {
       "id": "dig-hand",
       "label": "DigHand 挖与垒",
-      "detail": "拿着锹镐按住 E 挖准星那一格、拿着土按 E 垒；准星打在坎上挖后面那格、垒前面那格；进背包 / 扣土，god 不扣不给。",
+      "detail": "手上拿着的由编排给（快捷栏那格或开发者工具）。平常：准星那一格描框、按住 E 挖一级 / 按 E 垒一级；开发者：笔刷 n × n，每格照规矩查、能改的一次换账。",
       "tag": "玩法部件",
       "evidence": "earthworks_e2e",
       "sources": [
@@ -3368,6 +3368,79 @@
         "game/tests/house_e2e.gd"
       ],
       "since": "e113"
+    },
+    {
+      "id": "expedition-god-works",
+      "label": "开发者工具（F8）",
+      "detail": "编排持有面板开合、光标、手上的开发者工具与笔刷；held_now() 把工具当成的物品交给挖垒与搭建，摆放与采集让开；按 1–9 或关 god 就放下。",
+      "tag": "编排",
+      "evidence": "god_works_e2e PASS",
+      "sources": [
+        "src/expedition.cpp",
+        "src/expedition.h"
+      ],
+      "since": "e114",
+      "parent": "expedition"
+    },
+    {
+      "id": "god-works",
+      "label": "开发者工具清单与笔刷",
+      "detail": "工具清单（挖、垒、十一种件、样式）与各自当成的物品；笔刷档 1/3/5/9 与以准星格为心的格子。",
+      "tag": "纯算法（不含 Godot 头）",
+      "evidence": "core_tests god_works",
+      "sources": [
+        "src/god_works.cpp",
+        "src/god_works.h"
+      ],
+      "since": "e114"
+    },
+    {
+      "id": "dev-works-panel",
+      "label": "开发者营造面板",
+      "detail": "只画：每一行、光标、手上那行、笔刷。",
+      "tag": "界面",
+      "evidence": "god_works_e2e（F8、W/S、D、E）",
+      "sources": [
+        "src/dev_works_panel.cpp",
+        "src/dev_works_panel.h"
+      ],
+      "since": "e114"
+    },
+    {
+      "id": "god-works-e2e",
+      "label": "开发者营造端到端测试",
+      "detail": "F8 先要 god；挖 5×5 按一下 25 格、按住接着挖；垒与换笔刷；9×9 量那一帧；背包里没有也摆地基与草房；放下工具；背包不动。",
+      "tag": "验收",
+      "evidence": "PASS",
+      "sources": [
+        "game/tests/god_works_e2e.gd"
+      ],
+      "since": "e114"
+    },
+    {
+      "id": "dig-hand-brush",
+      "label": "笔刷与瞬间挖",
+      "detail": "按一下 E 把笔刷里每格改一级（不读条），不行的跳过并说头一条理由；按住隔 repeat_s 再来。",
+      "evidence": "god_works_e2e：25 格、按住到 −6 级、9×9 改 79 跳 2",
+      "sources": [
+        "src/dig_hand.cpp"
+      ],
+      "since": "e115",
+      "parent": "dig-hand"
+    },
+    {
+      "id": "map-works-batch",
+      "label": "一次改多格",
+      "detail": "MapHost::map_set_earth_steps（默认逐格）；GroupWorld::set_edit_steps 用 TerrainEdits::with_steps 一次换账、块并起来重画；PlanetHost 转给锚群。",
+      "evidence": "core_tests god_works（与逐格改一样）；9×9 头一回 58 ms、再按 18 ms（Debug）",
+      "sources": [
+        "src/map_host.h",
+        "src/world.cpp",
+        "src/planet_host.cpp",
+        "src/terrain_edits.cpp"
+      ],
+      "since": "e116",
+      "parent": "map-works"
     }
   ],
   "edges": [
@@ -7187,6 +7260,78 @@
       "chains": [
         "build"
       ]
+    },
+    {
+      "from": "expedition-god-works",
+      "to": "god-works",
+      "label": "工具清单 / 笔刷",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "expedition-god-works",
+      "to": "dev-works-panel",
+      "label": "行 / 光标",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "expedition-god-works",
+      "to": "dig-hand",
+      "label": "手上的 / 笔刷",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "expedition-god-works",
+      "to": "piece-hand",
+      "label": "手上的件 / 样式",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "expedition-god-works",
+      "to": "player-god",
+      "label": "god 开没开",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "god-works-e2e",
+      "to": "expedition-god-works",
+      "label": "驱动",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "dig-hand-brush",
+      "to": "god-works",
+      "label": "笔刷的格",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "dig-hand-brush",
+      "to": "map-works-batch",
+      "label": "一片格的级数",
+      "chains": [
+        "dev-tools"
+      ]
+    },
+    {
+      "from": "map-works-batch",
+      "to": "terrain-edits",
+      "label": "with_steps",
+      "chains": [
+        "dev-tools"
+      ]
     }
   ],
   "chains": [
@@ -7849,6 +7994,26 @@
             "dev-tools-node",
             "player-god"
           ]
+        },
+        {
+          "text": "god 下按 F8 开开发者营造面板：挑「挖」、笔刷 5 × 5，按一下 E 一片 25 格各低半米，按住接着往下；挑「垒」一样一片片垒高",
+          "nodes": [
+            "expedition-god-works",
+            "dev-works-panel",
+            "god-works",
+            "dig-hand-brush",
+            "map-works-batch",
+            "terrain-edits"
+          ]
+        },
+        {
+          "text": "再挑一样搭建件或一整座样式：背包里一件没有也照吸附摆下，拿回快捷栏或关 god 就放下工具，背包从头到尾没动",
+          "nodes": [
+            "expedition-god-works",
+            "piece-hand",
+            "build-pieces",
+            "structure-styles"
+          ]
         }
       ],
       "nodes": [
@@ -7857,7 +8022,18 @@
         "input-map",
         "main-scene",
         "player-god",
-        "world-2051-scene"
+        "world-2051-scene",
+        "expedition-god-works",
+        "god-works",
+        "dev-works-panel",
+        "dig-hand",
+        "piece-hand",
+        "god-works-e2e",
+        "dig-hand-brush",
+        "map-works-batch",
+        "terrain-edits",
+        "build-pieces",
+        "structure-styles"
       ]
     },
     {
@@ -12377,6 +12553,70 @@
         "updated": [
           "place-hand"
         ]
+      }
+    },
+    {
+      "id": "e114",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：开发者营造——god 下直接挖地、搭建",
+      "summary": "god 开着按 F8 从面板挑挖、垒、搭建件或样式拿在手上，不看背包不扣料；挖垒带笔刷、按一下改一级。",
+      "nodes": [
+        "expedition",
+        "expedition-god-works",
+        "god-works",
+        "dev-works-panel",
+        "god-works-e2e"
+      ],
+      "info": {
+        "node": "expedition",
+        "children": [
+          "expedition-god-works"
+        ],
+        "adopted": [],
+        "peers": [
+          "god-works",
+          "dev-works-panel",
+          "god-works-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e115",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：笔刷与瞬间挖",
+      "summary": "开发者工具的挖垒：n × n 各改一级、按住隔 0.2 s 再来，一次交给宿主。",
+      "nodes": [
+        "dig-hand",
+        "dig-hand-brush"
+      ],
+      "info": {
+        "node": "dig-hand",
+        "children": [
+          "dig-hand-brush"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e116",
+      "type": "extend",
+      "date": "2026-09-28",
+      "title": "拓展：一次改多格",
+      "summary": "map_set_earth_steps：一次换账、受影响的块只重画一回。",
+      "nodes": [
+        "map-works",
+        "map-works-batch"
+      ],
+      "info": {
+        "node": "map-works",
+        "children": [
+          "map-works-batch"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
