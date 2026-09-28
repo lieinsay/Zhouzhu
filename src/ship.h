@@ -13,11 +13,12 @@
 #include "ship_layout.h"
 
 // 空艇。原点在舷门格 (0,0,0) 的第 0 层甲板面中心，船头朝 −z，x 向右舷；甲板可站人。
-// 船是三维格子里拼的（layout："x,y,z:kind" 序列，见 ship_layout.h）：
-//   · 每列最上面那一节是开放甲板：甲板板（第 0 层）或下面舱体的顶、按邻列高度取舍的舷栏、模块的陈设
-//     （驾驶区舵柱舵轮舵楼顶，储存区两舷各两个货位、中间走道，动力区一对侧桅帆）；
-//   · 被上面盖住的节是封闭舱体（储存区 = 货舱，墙上有舱门；动力区 = 机舱，墙上透着浮石的光）；
-//   · 第 0 层每节下面吊船体，动力区再吊浮石；最前一排前面一只船头楔；
+// 船是三维格子里拼的一堆节点（layout："x,y,z:kind" 序列，x,y,z 是锚点，见 ship_layout.h）。结构按节拼，陈设按节点摆：
+//   · 每列最上面那一节是开放甲板：甲板板（第 0 层）或下面舱体的顶、按邻列高度取舍的舷栏、节点的陈设
+//     （驾驶区舵柱舵轮舵楼顶，货舱类每节两舷各两个货位、中间走道，帆一对侧桅帆、双桅帆两节贯通的长帆，
+//     浮石舱一块透光的格栅，空节一圈浅色镶边——空着留给摆东西）；
+//   · 被上面盖住的节是封闭舱体（货舱类墙上有舱门；浮石舱墙上透着浮石的光；空节是素墙）；
+//   · 第 0 层每节下面吊船体，浮石舱再吊浮石；最前一排前面一只船头楔；
 //   · 货位（hold_slots）：空着是一块垫木，放了货是一只带碰撞的货箱，箱顶按货物着色；哪个货位上是什么由上层（跑货的货箱账）set_cargo 告诉它，它只画；
 //   · 相邻两列高度不同处生成梯子：踏板 + 带 "ladder" 元数据的 Area3D（+Z 离墙）+ 舷栏缺口，Player 靠它上下；
 //   · 野泊时从一舷的舷门放下的舷梯（set_gangway，带碰撞，跟着船走）：上层照 wild_landing 算好的长短落差放、上舵时收起。
@@ -62,12 +63,13 @@ class Ship : public godot::CharacterBody3D {
     godot::Node3D *camera_rig = nullptr;
     godot::Camera3D *camera = nullptr;
 
-    godot::Ref<godot::Material> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow; // 弯曲标准材质（curved_material）
+    godot::Ref<godot::Material> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow, mat_inlay; // 弯曲标准材质（curved_material）
 
     void ensure_materials();
     void clear_generated();
     void rebuild();
-    void build_module(const Module &p_module);
+    void build_cell(const Cell &p_cell, const Module &p_module);
+    void build_furnishing(const Module &p_module);
     void build_ladder(const Ladder &p_ladder);
     void build_cargo();
     void build_gangway();
@@ -119,7 +121,7 @@ public:
     const ShipStats &get_stats_model() const { return stats; }
     godot::Dictionary get_stats() const; // sections / mass / thrust / hold / max_speed / max_climb / max_yaw_rate / can_fly
     bool can_fly() const { return stats.can_fly(); }
-    int get_section_count() const { return layout.size(); }
+    int get_section_count() const { return layout.cell_count(); } // 节数（复合节按节算）
     double get_bow_z() const { return bow_z(layout); }
     double get_stern_z() const { return stern_z(layout); }
     double get_port_edge_x() const { return port_edge_x(layout); }
