@@ -153,6 +153,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/planet_weather.h
     src/recipes.cpp
     src/recipes.h
+    src/refit_pick.cpp
+    src/refit_pick.h
     src/resource_scatter.cpp
     src/resource_scatter.h
     src/resource_sites.cpp

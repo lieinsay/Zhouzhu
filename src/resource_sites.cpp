@@ -222,7 +222,7 @@ bool place_landmark(const WorldTerrain &p_terrain, const VillageDisks &p_village
 } // namespace
 
 const ShipLayout &resource_reach_ship() {
-    static const ShipLayout ship = layout_from_ids({ "0,0,-2:storage", "0,0,-1:power", "0,0,0:bridge" });
+    static const ShipLayout ship = layout_from_ids({ "0,0,-2:storage", "0,0,-1:sail", "0,0,0:bridge" });
     return ship;
 }
 

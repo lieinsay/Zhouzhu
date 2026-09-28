@@ -127,7 +127,7 @@ struct ResourcePlan {
 // p_terrain 应已 lay_world_works（码头的坪、船坞坪压好了）
 ResourcePlan plan_resource_sites(const WorldTerrain &p_terrain, const WorldSites &p_sites, const ResourceData &p_data,
         const ResourceSiteRules &p_rules = ResourceSiteRules());
-// 量够不够得着船用的那条船：开局的船（储存区 + 动力区 + 驾驶区）
+// 量够不够得着船用的那条船：开局的船（储存区 + 帆 + 驾驶区）
 const ShipLayout &resource_reach_ship();
 // 泊地：采掘面 (p_x, p_z) 周围 20 m 起每 10 m 一圈、每圈 12 个方位、船头朝北或朝东，找第一个野泊得下的位姿（只看地面；村子估的半径外加 10 m 里不算）：
 // 返回那一圈的半径（位姿写进 r_x / r_z / r_yaw），reach_m 内没有返回 −1。体检工具与规划同一份

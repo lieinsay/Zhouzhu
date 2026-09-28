@@ -23,13 +23,13 @@ struct Frame {
 template <typename F>
 void for_each_hull_rect(const ShipLayout &p_layout, F p_fn) {
     const int front = p_layout.min_z();
-    for (const Module &m : p_layout.get_modules()) {
-        if (m.at.y != 0) {
+    for (const CellPart &c : p_layout.cells()) {
+        if (c.at.y != 0) {
             continue;
         }
-        const double cx = cell_center_x(m.at.x), cz = cell_center_z(m.at.z);
+        const double cx = cell_center_x(c.at.x), cz = cell_center_z(c.at.z);
         p_fn(cx - HULL_HALF_W, cx + HULL_HALF_W, cz - 0.5 * CELL_LENGTH_M, cz + 0.5 * CELL_LENGTH_M);
-        if (m.at.z == front) {
+        if (c.at.z == front) {
             p_fn(cx - HULL_HALF_W, cx + HULL_HALF_W, cz - 0.5 * CELL_LENGTH_M - BOW_REACH_M, cz - 0.5 * CELL_LENGTH_M);
         }
     }
