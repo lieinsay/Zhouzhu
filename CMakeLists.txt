@@ -99,6 +99,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/flat_ground.h
     src/freight.cpp
     src/freight.h
+    src/god_works.cpp
+    src/god_works.h
     src/group_memory.cpp
     src/group_memory.h
     src/ground_works.cpp

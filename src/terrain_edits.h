@@ -34,6 +34,12 @@ struct EditGrid {
     }
 };
 
+// 一格改成几级（批量改用）
+struct EditCellStep {
+    int i = 0, j = 0;
+    int step = 0;
+};
+
 struct EditChunk {
     int8_t steps[EditGrid::CHUNK * EditGrid::CHUNK] = {}; // 行主序：k = (i − ci·16)·16 + (j − cj·16)
     int nonzero = 0;
@@ -68,6 +74,8 @@ public:
 
     // 某格改成 p_step 级：返回改了以后的一份新账（本份不变）
     TerrainEdits with_step(int p_i, int p_j, int p_step) const;
+    // 一次改多格（开发者的笔刷）：只换一份账，同一块只拷一回；版本按真改了的格数加（一格没变就原样返回）。同一格写了几回取最后一回
+    TerrainEdits with_steps(const std::vector<EditCellStep> &p_cells) const;
     // 一次拼好整份账（读回用）：块键 → 块；全零的块不收
     static TerrainEdits from_chunks(const EditGrid &p_grid, const std::vector<std::pair<int64_t, EditChunk>> &p_chunks, uint64_t p_revision = 0);
 

@@ -28,6 +28,7 @@
 #include "ground_works.h"
 #include "piece_mesh.h"
 #include "structure_styles.h"
+#include "god_works.h"
 #include "terrain_edits.h"
 #include "group_memory.h"
 #include "crops.h"
@@ -7072,6 +7073,75 @@ void test_structure_styles_repo() {
     check(n >= 2, "仓库里至少两套样式（" + std::to_string(n) + "）");
 }
 
+void test_god_works() {
+    std::printf("god_works\n");
+    EditGrid g;
+    const TerrainEdits empty(g);
+    const TerrainEdits one = empty.with_step(3, 4, -2).with_step(3, 20, 1);
+    std::vector<EditCellStep> cells;
+    for (int i = 0; i < 5; i++) {
+        for (int j = 14; j < 19; j++) {
+            cells.push_back({ i, j, -1 }); // 跨两块
+        }
+    }
+    cells.push_back({ 3, 20, 0 }); // 改回原样：那一格
+    const TerrainEdits many = one.with_steps(cells);
+    check(one.step_at(0, 14) == 0 && one.step_at(3, 20) == 1, "批量改不动原来那份");
+    check(many.step_at(0, 14) == -1 && many.step_at(4, 18) == -1 && many.step_at(3, 20) == 0 && many.step_at(3, 4) == -2, "批量改：25 格一级、改回的那格为 0、别处照旧");
+    check(many.cell_count() == 26 && many.chunk_count() == 2, "两块、26 格改过");
+    check(many.get_revision() == one.get_revision() + 26, "版本按真改了的格数加");
+    TerrainEdits serial = one;
+    for (const EditCellStep &c : cells) {
+        serial = serial.with_step(c.i, c.j, c.step);
+    }
+    bool same = true;
+    for (int i = -2; i < 8 && same; i++) {
+        for (int j = 0; j < 40 && same; j++) {
+            same = serial.step_at(i, j) == many.step_at(i, j);
+        }
+    }
+    check(same && serial.chunk_count() == many.chunk_count() && serial.near_edits(g.cell_x(18) + 0.5, g.cell_z(4) + 0.5) == many.near_edits(g.cell_x(18) + 0.5, g.cell_z(4) + 0.5),
+            "与逐格改一样");
+    check(many.with_steps(cells).get_revision() == many.get_revision(), "一格没变就原样返回");
+    const TerrainEdits back = many.with_steps({ { 3, 4, 0 }, { 3, 4, 5 }, { 3, 4, 0 } });
+    check(back.step_at(3, 4) == 0, "同一格写几回取最后一回");
+    std::vector<EditCellStep> undo;
+    for (const EditCellStep &c : cells) {
+        undo.push_back({ c.i, c.j, 0 });
+    }
+    undo.push_back({ 3, 4, 0 });
+    check(many.with_steps(undo).empty(), "全改回 0：块都删掉");
+
+    const std::vector<GodTool> tools = god_tool_list(2);
+    check(int(tools.size()) == 2 + pieces::COUNT + 2, "工具：挖、垒、十一种件、两套样式");
+    check(tools[0].kind == GodToolKind::DIG && tools[1].kind == GodToolKind::RAISE && tools[2].kind == GodToolKind::PIECE && tools.back().kind == GodToolKind::STYLE && tools.back().style == 1,
+            "工具的次序");
+    check(earth_digs_with(god_tool_held(tools[0])) && earth_raises_with(god_tool_held(tools[1])) && pieces::is_piece(god_tool_held(tools[2])) && god_tool_held(tools.back()).empty(),
+            "工具当成手上拿着的物品");
+    check(god_tool_brushes(tools[0]) && god_tool_brushes(tools[1]) && !god_tool_brushes(tools[2]), "挖垒才有笔刷");
+    EarthFacts ok_facts;
+    ok_facts.solid = true;
+    ok_facts.shore = 50.0;
+    ok_facts.soil_depth = 0.5;
+    const EarthCheck stone = plan_earthwork(ok_facts, -1, EarthAction::DIG, god_tool_held(tools[0]), true);
+    check(stone.ok && stone.stone && stone.item == "stone", "god 的挖：土层以下照样挖得动");
+
+    check(god_brush_step(1, 1) == 3 && god_brush_step(5, 1) == 9 && god_brush_step(9, 1) == 9 && god_brush_step(1, -1) == 1 && god_brush_step(4, 0) == 3, "笔刷换档到头不绕");
+    const std::vector<std::pair<int, int>> b1 = god_brush_cells(-3, 7, 1);
+    check(b1.size() == 1 && b1[0] == std::make_pair(-3, 7), "1 × 1 就是那一格");
+    const std::vector<std::pair<int, int>> b5 = god_brush_cells(10, -2, 5);
+    bool inside = b5.size() == 25 && b5[0] == std::make_pair(10, -2);
+    for (size_t k = 0; k < b5.size() && inside; k++) {
+        inside = std::abs(b5[k].first - 10) <= 2 && std::abs(b5[k].second + 2) <= 2;
+        const auto d = [](const std::pair<int, int> &c) { return (c.first - 10) * (c.first - 10) + (c.second + 2) * (c.second + 2); };
+        inside = inside && (k == 0 || d(b5[k - 1]) <= d(b5[k]));
+    }
+    std::vector<std::pair<int, int>> sorted = b5;
+    std::sort(sorted.begin(), sorted.end());
+    check(inside && std::unique(sorted.begin(), sorted.end()) == sorted.end(), "5 × 5：心在最前、由近到远、不重复");
+    check(god_brush_cells(0, 0, 9).size() == 81, "9 × 9 八十一格");
+}
+
 int main(int argc, char **argv) {
     // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
     if (argc > 1) {
@@ -7079,7 +7149,7 @@ int main(int argc, char **argv) {
             { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent },
             { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
             { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
-            { "structure_styles", test_structure_styles_repo } };
+            { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works } };
         for (int k = 1; k < argc; k++) {
             const auto it = only.find(argv[k]);
             if (it != only.end()) {
@@ -7147,6 +7217,7 @@ int main(int argc, char **argv) {
     test_placeables();
     test_ship_bay();
     test_terrain_edits();
+    test_god_works();
     test_edit_patch();
     test_earthworks();
     test_build_pieces();

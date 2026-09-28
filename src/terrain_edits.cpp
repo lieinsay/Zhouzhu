@@ -98,6 +98,48 @@ TerrainEdits TerrainEdits::with_step(int p_i, int p_j, int p_step) const {
     return out;
 }
 
+TerrainEdits TerrainEdits::with_steps(const std::vector<EditCellStep> &p_cells) const {
+    TerrainEdits out = *this;
+    std::map<int64_t, std::shared_ptr<EditChunk>> copied; // 这一回已拷出来的块（可改）
+    int changed = 0;
+    for (const EditCellStep &c : p_cells) {
+        const int step = std::clamp(c.step, -127, 127);
+        const int ci = EditGrid::chunk_of(c.i), cj = EditGrid::chunk_of(c.j);
+        const int64_t key = EditGrid::chunk_key(ci, cj);
+        const int k = (c.i - ci * EditGrid::CHUNK) * EditGrid::CHUNK + (c.j - cj * EditGrid::CHUNK);
+        auto mine = copied.find(key);
+        if (mine == copied.end()) {
+            const auto found = out.chunks.find(key);
+            const int old = found == out.chunks.end() ? 0 : found->second->steps[k];
+            if (old == step) {
+                continue;
+            }
+            mine = copied.emplace(key, found == out.chunks.end() ? std::make_shared<EditChunk>() : std::make_shared<EditChunk>(*found->second)).first;
+        }
+        EditChunk &chunk = *mine->second;
+        const int old = chunk.steps[k];
+        if (old == step) {
+            continue;
+        }
+        chunk.steps[k] = int8_t(step);
+        chunk.nonzero += (step != 0 ? 1 : 0) - (old != 0 ? 1 : 0);
+        changed++;
+    }
+    if (changed == 0) {
+        return out;
+    }
+    for (auto &kv : copied) {
+        if (kv.second->nonzero == 0) {
+            out.chunks.erase(kv.first);
+        } else {
+            out.chunks[kv.first] = kv.second;
+        }
+    }
+    out.revision = revision + uint64_t(changed);
+    out.update_bounds();
+    return out;
+}
+
 TerrainEdits TerrainEdits::from_chunks(const EditGrid &p_grid, const std::vector<std::pair<int64_t, EditChunk>> &p_chunks, uint64_t p_revision) {
     TerrainEdits out(p_grid);
     for (const auto &kv : p_chunks) {
