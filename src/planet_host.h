@@ -97,6 +97,7 @@ public:
     bool map_earth_facts(int p_i, int p_j, const godot::Vector3 &p_player, EarthFacts &r_facts) override;
     int map_earth_step(int p_i, int p_j) const override;
     bool map_set_earth_step(int p_i, int p_j, int p_step) override;
+    int map_set_earth_steps(const std::vector<EditCellStep> &p_cells) override;
     WeatherModel *map_weather() override;
     void map_weather_models(std::vector<WeatherModel *> &r_out) override;
     bool map_shift_pending() const override;

@@ -11,6 +11,7 @@
 #include "earthworks.h"
 #include "freight.h"
 #include "resource_sites.h"
+#include "terrain_edits.h"
 #include "wild_landing.h"
 
 struct GroundWorks;
@@ -144,6 +145,14 @@ public:
     virtual bool map_earth_facts(int p_i, int p_j, const godot::Vector3 &p_player, EarthFacts &r_facts) { return false; }
     virtual int map_earth_step(int p_i, int p_j) const { return 0; }
     virtual bool map_set_earth_step(int p_i, int p_j, int p_step) { return false; }
+    // 一次改多格（开发者的笔刷）：只换一回账、受影响的块只重画一回；返回真改了几格。默认逐格改
+    virtual int map_set_earth_steps(const std::vector<EditCellStep> &p_cells) {
+        int n = 0;
+        for (const EditCellStep &c : p_cells) {
+            n += map_set_earth_step(c.i, c.j, c.step) ? 1 : 0;
+        }
+        return n;
+    }
 
     // 换锚（可选，只有行星上的宿主 PlanetHost 有）：宿主定下要换（map_shift_pending），编排在下一个物理帧开头
     // map_shift_begin 拿到换法、把人、船、相机、摆出来的东西、自己记的位置都换过去，再 map_shift_commit 让宿主收尾（新锚归位、挂碰撞……）。

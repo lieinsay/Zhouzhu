@@ -1676,33 +1676,47 @@ int GroupWorld::get_edit_step(int p_i, int p_j) const {
 }
 
 bool GroupWorld::set_edit_step(int p_i, int p_j, int p_step) {
-    if (!loaded || !player_works || !player_works->edits) {
-        return false;
+    return set_edit_steps({ { p_i, p_j, p_step } }) > 0;
+}
+
+int GroupWorld::set_edit_steps(const std::vector<EditCellStep> &p_cells) {
+    if (!loaded || !player_works || !player_works->edits || p_cells.empty()) {
+        return 0;
     }
     const std::shared_ptr<const TerrainEdits> old = player_works->edits;
-    TerrainEdits next = old->with_step(p_i, p_j, p_step);
-    if (next.get_revision() == old->get_revision()) {
-        return false;
+    TerrainEdits next = p_cells.size() == 1 ? old->with_step(p_cells[0].i, p_cells[0].j, p_cells[0].step) : old->with_steps(p_cells);
+    const int changed = int(next.get_revision() - old->get_revision());
+    if (changed <= 0) {
+        return 0;
     }
     player_works->edits = std::make_shared<const TerrainEdits>(std::move(next));
     terrain.set_edits(player_works->edits);
     works_touched++;
-    // 要重画的块：这一块；格在块边上时连隔壁块（块边上的坎归谁出跟着变）
-    const int ci = EditGrid::chunk_of(p_i), cj = EditGrid::chunk_of(p_j);
-    const int di = p_i - ci * EditGrid::CHUNK, dj = p_j - cj * EditGrid::CHUNK;
-    std::vector<int64_t> chunks{ EditGrid::chunk_key(ci, cj) };
-    if (di == 0) {
-        chunks.push_back(EditGrid::chunk_key(ci - 1, cj));
-    } else if (di == EditGrid::CHUNK - 1) {
-        chunks.push_back(EditGrid::chunk_key(ci + 1, cj));
-    }
-    if (dj == 0) {
-        chunks.push_back(EditGrid::chunk_key(ci, cj - 1));
-    } else if (dj == EditGrid::CHUNK - 1) {
-        chunks.push_back(EditGrid::chunk_key(ci, cj + 1));
+    // 要重画的块：格所在的块；格在块边上时连隔壁块（块边上的坎归谁出跟着变）。几格落在同一块只重画一回
+    std::vector<int64_t> chunks;
+    auto add = [&chunks](int p_ci, int p_cj) {
+        const int64_t key = EditGrid::chunk_key(p_ci, p_cj);
+        if (std::find(chunks.begin(), chunks.end(), key) == chunks.end()) {
+            chunks.push_back(key);
+        }
+    };
+    for (const EditCellStep &c : p_cells) {
+        const int ci = EditGrid::chunk_of(c.i), cj = EditGrid::chunk_of(c.j);
+        const int di = c.i - ci * EditGrid::CHUNK, dj = c.j - cj * EditGrid::CHUNK;
+        add(ci, cj);
+        if (di == 0) {
+            add(ci - 1, cj);
+        } else if (di == EditGrid::CHUNK - 1) {
+            add(ci + 1, cj);
+        }
+        if (dj == 0) {
+            add(ci, cj - 1);
+        } else if (dj == EditGrid::CHUNK - 1) {
+            add(ci, cj + 1);
+        }
     }
     refresh_edit_chunks(chunks);
-    return true;
+    return changed;
 }
 
 std::string GroupWorld::edit_blocker(int p_i, int p_j) {

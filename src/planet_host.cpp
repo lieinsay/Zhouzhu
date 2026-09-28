@@ -452,6 +452,11 @@ bool PlanetHost::map_set_earth_step(int p_i, int p_j, int p_step) {
     return a && a->map_set_earth_step(p_i, p_j, p_step);
 }
 
+int PlanetHost::map_set_earth_steps(const std::vector<EditCellStep> &p_cells) {
+    GroupWorld *a = anchor_world();
+    return a ? a->map_set_earth_steps(p_cells) : 0;
+}
+
 bool PlanetHost::map_shift_pending() const {
     return stream && stream->is_shift_pending();
 }

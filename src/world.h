@@ -341,6 +341,7 @@ public:
     bool edit_cell_at(double p_x, double p_z, int &r_i, int &r_j) const;
     int get_edit_step(int p_i, int p_j) const;
     bool set_edit_step(int p_i, int p_j, int p_step);
+    int set_edit_steps(const std::vector<EditCellStep> &p_cells); // 一次改多格：返回真改了几格
     EarthFacts earth_facts(int p_i, int p_j, const godot::Vector3 &p_player);
     // 给脚本（测试）：一点所在那格的级数 / 改成几级；某叶块挂着几个补丁；这一群一共改过几格
     int get_edit_step_at(double p_x, double p_z) const;
@@ -416,6 +417,7 @@ public:
     bool map_earth_facts(int p_i, int p_j, const godot::Vector3 &p_player, EarthFacts &r_facts) override;
     int map_earth_step(int p_i, int p_j) const override { return get_edit_step(p_i, p_j); }
     bool map_set_earth_step(int p_i, int p_j, int p_step) override { return set_edit_step(p_i, p_j, p_step); }
+    int map_set_earth_steps(const std::vector<EditCellStep> &p_cells) override { return set_edit_steps(p_cells); }
 
     void set_sites_path(const godot::NodePath &p_value) { sites_path = p_value; }
     godot::NodePath get_sites_path() const { return sites_path; }
