@@ -414,7 +414,9 @@ void RefitBench::refresh(const Ship *p_ship, double p_delta) {
             pv.hover_text = title_of(m->kind) + String(U" · 点一下选中");
         }
     } else if (pv.hover_remove && chosen) {
-        pv.hover_text = String(U"拆掉选中的") + title_of(chosen->kind);
+        ShipLayout trial = layout;
+        const bool removable = layout_remove(trial, chosen->at).empty();
+        pv.hover_text = removable ? String(U"拆掉选中的") + title_of(chosen->kind) : String(U"拆不了：原因在钮下面");
         pv.hover_tone = RefitPanel::TONE_WARN;
     } else if (pv.hover_card >= 0) {
         const int n = int(spots[pv.hover_card].size());
