@@ -16,6 +16,7 @@
 #include <godot_cpp/classes/physics_direct_space_state3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
@@ -936,13 +937,17 @@ void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
         return;
     }
     if (p_event->is_action_pressed("ui_cancel")) {
+        // Esc 先合上开着的：地图、背包、改装 / 布置 / 室内编辑 / 样式 / 开发者营造面板；都没开就不吃掉，往下轮到开发者工具的清单、再到暂停菜单
         if (map_open) {
             set_map_open(false);
         } else if (pack.is_open()) {
             set_pack_open(false);
+        } else if (refit.is_open() || build.is_open() || interior.is_open() || style_open || dev_works_open) {
+            close_panels();
         } else {
-            input->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
+            return;
         }
+        get_viewport()->set_input_as_handled();
         return;
     }
     const Ref<InputEventMouseMotion> motion = p_event;

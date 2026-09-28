@@ -240,6 +240,8 @@ target_sources(
         src/planet_jobs.h
         src/orbit_camera.cpp
         src/orbit_camera.h
+        src/pause_menu.cpp
+        src/pause_menu.h
         src/dev_tools.cpp
         src/dev_works_panel.cpp
         src/dev_works_panel.h

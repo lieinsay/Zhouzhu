@@ -10,6 +10,7 @@ config/features=PackedStringArray("4.4", "Forward Plus")
 
 GameClock="*res://world_clock.tscn"
 BuildingTemplates="*res://building_templates.tscn"
+GameMenu="*res://pause_menu.tscn"
 DeveloperTools="*res://dev_tools.tscn"
 
 [shader_globals]

@@ -811,8 +811,8 @@ void DevTools::_notification(int p_what) {
 }
 
 void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
-    if (!allowed()) {
-        return;
+    if (!allowed() || get_tree()->is_paused()) {
+        return; // 暂停菜单开着（树暂停）：开发者工具的键都不理，Esc 归暂停菜单
     }
     if (planet_open && (p_event->is_action_pressed(input_actions::SWITCH_MAP) || p_event->is_action_pressed("ui_cancel"))) {
         set_planet_open(false);

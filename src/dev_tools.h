@@ -33,7 +33,8 @@ class PlanetMap;
 //   「继续：世界 seedN」：user://worlds 下建过的生存世界，已生成的岛群、粗版不重生成；
 //   「岛群 #2051」照旧（剧情模式 seed42，存档目录 user://worlds/seed42）。
 //   换场景、关窗前让场景里的 GroupStream 把载入着的群的账存进世界存档目录。
-// 当前场景的根节点有 dev_tools 属性且为假时，这些键都不理。
+// 当前场景的根节点有 dev_tools 属性且为假时，这些键都不理；暂停菜单开着（树暂停）时也不理。
+// 每样工具的说明在 dev_manual.cpp（Esc 暂停菜单的「开发者工具说明」照它列）：加了新工具记得添一条。
 // 「god 开没开」「清单开没开」只在这里；它不认识各场景的编排，只找场景里的 Player。
 class DevTools : public godot::Node {
     GDCLASS(DevTools, godot::Node)
