@@ -2,6 +2,7 @@
 
 // 输入动作表。启动时用 InputMap 注册，不写进 project.godot：
 // 动作名只在这里出现一次，C++ 这边拼错了编译不过，测试也经同一层动作来驱动。
+// 开发者工具的动作注释写成「// 开发者：……」：暂停菜单的开发者工具说明（dev_manual.cpp）里得有它一条——单测扫这个文件查。
 namespace input_actions {
 
 constexpr const char *MOVE_FORWARD = "move_forward"; // 步行：前；掌舵：进车

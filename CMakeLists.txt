@@ -85,6 +85,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/day_clock.h
     src/deposit_kinds.cpp
     src/deposit_kinds.h
+    src/dev_manual.cpp
+    src/dev_manual.h
     src/dock_site.cpp
     src/dock_site.h
     src/earthworks.cpp

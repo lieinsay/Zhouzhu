@@ -13,6 +13,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <set>
 #include <functional>
 #include <iterator>
 #include <limits>
@@ -28,6 +29,7 @@
 #include "ground_works.h"
 #include "piece_mesh.h"
 #include "structure_styles.h"
+#include "dev_manual.h"
 #include "god_works.h"
 #include "terrain_edits.h"
 #include "group_memory.h"
@@ -7142,6 +7144,46 @@ void test_god_works() {
     check(god_brush_cells(0, 0, 9).size() == 81, "9 × 9 八十一格");
 }
 
+void test_dev_manual() {
+    std::printf("dev_manual\n");
+    // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
+    std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
+    check(bool(in), "读得到 src/input_actions.h");
+    std::string line;
+    int dev_actions = 0;
+    std::string missing;
+    while (std::getline(in, line)) {
+        if (line.find("// 开发者：") == std::string::npos) {
+            continue;
+        }
+        const size_t q0 = line.find('"');
+        const size_t q1 = q0 == std::string::npos ? q0 : line.find('"', q0 + 1);
+        if (q1 == std::string::npos) {
+            continue;
+        }
+        const std::string action = line.substr(q0 + 1, q1 - q0 - 1);
+        dev_actions++;
+        if (!dev_manual_covers(action)) {
+            missing += " " + action;
+        }
+    }
+    check(dev_actions >= 8, "input_actions.h 里至少八个开发者动作（" + std::to_string(dev_actions) + "）");
+    check(missing.empty(), "每个开发者动作都有说明，缺：" + missing);
+    std::set<std::string> keys, titles;
+    bool filled = true;
+    for (const DevManualEntry &e : dev_manual()) {
+        filled = filled && std::string(e.keys).size() > 0 && std::string(e.title).size() > 0 && std::string(e.where).size() > 0 && !e.lines.empty();
+        for (const std::string &l : e.lines) {
+            filled = filled && !l.empty();
+        }
+        keys.insert(e.keys);
+        titles.insert(e.title);
+    }
+    check(filled, "每条都有键、名字、在哪儿、说明");
+    check(keys.size() == dev_manual().size() && titles.size() == dev_manual().size(), "键、名字不重复");
+    check(!dev_manual_intro().empty() && dev_manual_covers("god_mode") && !dev_manual_covers("interact"), "开头几行；查得到 god、不认玩法动作");
+}
+
 int main(int argc, char **argv) {
     // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
     if (argc > 1) {
@@ -7149,7 +7191,7 @@ int main(int argc, char **argv) {
             { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent },
             { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
             { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
-            { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works } };
+            { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works }, { "dev_manual", test_dev_manual } };
         for (int k = 1; k < argc; k++) {
             const auto it = only.find(argv[k]);
             if (it != only.end()) {
@@ -7218,6 +7260,7 @@ int main(int argc, char **argv) {
     test_ship_bay();
     test_terrain_edits();
     test_god_works();
+    test_dev_manual();
     test_edit_patch();
     test_earthworks();
     test_build_pieces();
