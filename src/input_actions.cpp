@@ -61,6 +61,9 @@ void input_actions::register_all() {
     bind(EDIT_INTERIOR, { KEY_T });
     bind(SAVE_AS, { KEY_N });
     bind(STYLE_PANEL, { KEY_G });
+    bind(DEV_WORKS, { KEY_F8 });
+    bind(BRUSH_SMALLER, { KEY_BRACKETLEFT });
+    bind(BRUSH_LARGER, { KEY_BRACKETRIGHT });
     bind(GEAR_UP, { KEY_R, KEY_PAGEUP });
     bind(GEAR_DOWN, { KEY_F, KEY_PAGEDOWN });
     const Key digits[9] = { KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9 };

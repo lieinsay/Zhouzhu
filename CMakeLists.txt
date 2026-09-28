@@ -239,6 +239,8 @@ target_sources(
         src/orbit_camera.cpp
         src/orbit_camera.h
         src/dev_tools.cpp
+        src/dev_works_panel.cpp
+        src/dev_works_panel.h
         src/dig_hand.cpp
         src/dig_hand.h
         src/dev_tools.h

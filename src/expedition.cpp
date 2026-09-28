@@ -31,6 +31,7 @@
 #include "settlement.h"
 #include "shipyard.h"
 #include "style_panel.h"
+#include "dev_works_panel.h"
 #include "wild_landing.h"
 #include "works_view.h"
 #include "world_clock.h"
@@ -158,6 +159,12 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_style_index"), &Expedition::get_style_index);
     ClassDB::bind_method(D_METHOD("select_style", "index"), &Expedition::select_style);
     ClassDB::bind_method(D_METHOD("is_inside_house"), &Expedition::is_inside_house);
+    ClassDB::bind_method(D_METHOD("set_god_tool", "index"), &Expedition::set_god_tool);
+    ClassDB::bind_method(D_METHOD("get_god_tool"), &Expedition::get_god_tool);
+    ClassDB::bind_method(D_METHOD("set_god_brush", "size"), &Expedition::set_god_brush);
+    ClassDB::bind_method(D_METHOD("get_god_brush"), &Expedition::get_god_brush);
+    ClassDB::bind_method(D_METHOD("get_god_tool_names"), &Expedition::get_god_tool_names);
+    ClassDB::bind_method(D_METHOD("is_dev_works_open"), &Expedition::is_dev_works_open);
     ClassDB::bind_method(D_METHOD("get_prop_node", "id"), &Expedition::get_prop_node);
     ClassDB::bind_method(D_METHOD("get_ghost"), &Expedition::get_ghost);
     ClassDB::bind_method(D_METHOD("get_facing_prop"), &Expedition::get_facing_prop);
@@ -346,6 +353,8 @@ void Expedition::build_hud() {
     layer->add_child(dot);
     crosshair = dot;
     style_panel = top_right_panel<StylePanel>(layer, "Styles");
+    dev_works_panel = top_right_panel<DevWorksPanel>(layer, "DevWorks");
+    dev_works_panel->set_offset(SIDE_TOP, 84); // 只在 god 下开：让开右上角 DevTools 的 GOD 那两行
     RefitPanel *refit_panel = top_right_panel<RefitPanel>(layer, "Refit");
     RefitOverlay *refit_overlay = memnew(RefitOverlay);
     refit_overlay->set_name("RefitOverlay");
@@ -475,6 +484,8 @@ Dictionary Expedition::get_dig_target() const {
     d["i"] = dig.target_i();
     d["j"] = dig.target_j();
     d["working"] = dig.is_working();
+    d["brush_done"] = dig.get_brush_done();
+    d["brush_skipped"] = dig.get_brush_skipped();
     return d;
 }
 
@@ -520,6 +531,9 @@ PackedStringArray Expedition::get_style_names() const {
 }
 
 void Expedition::select_style(int p_index) {
+    if (god_tool >= 0 && god_tools()[size_t(god_tool)].kind == GodToolKind::STYLE) {
+        set_god_tool(-1); // G 面板另挑一套：放下开发者工具里的那套
+    }
     piece.set_style(p_index);
     set_style_open(false);
 }
@@ -585,6 +599,149 @@ void Expedition::set_style_open(bool p_open) {
     if (style_open) {
         refresh_style_panel();
     }
+}
+
+// ---------------------------------------------------------------- 开发者营造
+
+bool Expedition::god_tool_on() const {
+    return god_tool >= 0 && player && player->is_god_mode();
+}
+
+std::string Expedition::held_now() const {
+    if (god_tool_on()) {
+        const std::vector<GodTool> tools = god_tools();
+        if (god_tool < int(tools.size())) {
+            return god_tool_held(tools[size_t(god_tool)]);
+        }
+    }
+    return pack.held_item();
+}
+
+String Expedition::god_tool_name(const GodTool &p_tool) const {
+    switch (p_tool.kind) {
+        case GodToolKind::DIG:
+            return String(U"挖（土石都挖得动）");
+        case GodToolKind::RAISE:
+            return String(U"垒");
+        case GodToolKind::PIECE:
+            return PackHand::name_of(p_tool.item);
+        default:
+            if (p_tool.style >= 0 && p_tool.style < piece.get_style_count()) {
+                return String(U"样式「") + String::utf8(piece.get_style(p_tool.style).name.c_str()) + String(U"」");
+            }
+            return String(U"样式");
+    }
+}
+
+bool Expedition::set_god_tool(int p_index) {
+    const std::vector<GodTool> tools = god_tools();
+    if (p_index >= int(tools.size())) {
+        return false;
+    }
+    if (p_index >= 0 && (!player || !player->is_god_mode())) {
+        return false;
+    }
+    const bool had_style = god_tool >= 0 && god_tool < int(tools.size()) && tools[size_t(god_tool)].kind == GodToolKind::STYLE;
+    god_tool = std::max(-1, p_index);
+    piece.stand_down();
+    dig.stand_down();
+    if (god_tool >= 0 && tools[size_t(god_tool)].kind == GodToolKind::STYLE) {
+        piece.set_style(tools[size_t(god_tool)].style);
+    } else if (had_style) {
+        piece.set_style(-1);
+    }
+    god_cursor = god_tool + 1;
+    refresh_dev_works_panel();
+    return true;
+}
+
+Dictionary Expedition::get_god_tool() const {
+    Dictionary d;
+    d["index"] = god_tool;
+    d["brush"] = god_brush;
+    d["active"] = god_tool_on();
+    const std::vector<GodTool> tools = god_tools();
+    if (god_tool >= 0 && god_tool < int(tools.size())) {
+        const GodTool &t = tools[size_t(god_tool)];
+        static const char *KINDS[4] = { "dig", "raise", "piece", "style" };
+        d["kind"] = KINDS[int(t.kind)];
+        d["item"] = String::utf8(t.item.c_str());
+        d["style"] = t.style;
+        d["name"] = god_tool_name(t);
+    }
+    return d;
+}
+
+void Expedition::set_god_brush(int p_size) {
+    god_brush = god_brush_step(p_size, 0);
+    refresh_dev_works_panel();
+}
+
+PackedStringArray Expedition::get_god_tool_names() const {
+    PackedStringArray out;
+    for (const GodTool &t : god_tools()) {
+        out.push_back(god_tool_name(t));
+    }
+    return out;
+}
+
+void Expedition::set_dev_works_open(bool p_open) {
+    dev_works_open = p_open;
+    if (dev_works_panel) {
+        dev_works_panel->set_visible(dev_works_open);
+    }
+    if (dev_works_open) {
+        god_cursor = god_tool + 1;
+        refresh_dev_works_panel();
+    }
+    if (player) {
+        player->set_input_blocked(dev_works_open || map_open); // 开着面板：W/S、A/D 是挑工具、换笔刷
+    }
+}
+
+void Expedition::refresh_dev_works_panel() {
+    if (!dev_works_panel || !dev_works_open) {
+        return;
+    }
+    std::vector<String> rows{ String(U"空手（用背包里的）") };
+    for (const GodTool &t : god_tools()) {
+        String row = god_tool_name(t);
+        if (god_tool_brushes(t)) {
+            row += vformat(String(U"　笔刷 %d × %d"), god_brush, god_brush);
+        }
+        rows.push_back(row);
+    }
+    dev_works_panel->refresh(rows, god_cursor, god_tool + 1, god_brush);
+}
+
+void Expedition::dev_works_browse(bool p_interact) {
+    Input *input = Input::get_singleton();
+    const int count = int(god_tools().size()) + 1;
+    if (input->is_action_just_pressed(input_actions::MOVE_FORWARD)) {
+        god_cursor = (god_cursor + count - 1) % count;
+    }
+    if (input->is_action_just_pressed(input_actions::MOVE_BACK)) {
+        god_cursor = (god_cursor + 1) % count;
+    }
+    if (input->is_action_just_pressed(input_actions::MOVE_LEFT) || input->is_action_just_pressed(input_actions::BRUSH_SMALLER)) {
+        god_brush = god_brush_step(god_brush, -1);
+    }
+    if (input->is_action_just_pressed(input_actions::MOVE_RIGHT) || input->is_action_just_pressed(input_actions::BRUSH_LARGER)) {
+        god_brush = god_brush_step(god_brush, 1);
+    }
+    if (p_interact) {
+        set_god_tool(god_cursor - 1);
+        set_dev_works_open(false);
+        if (god_tool < 0) {
+            say(String(U"放下了开发者工具：挖垒、搭建照背包里的来"));
+        } else {
+            const GodTool t = god_tools()[size_t(god_tool)];
+            say(String(U"开发者工具：") + god_tool_name(t) +
+                    (god_tool_brushes(t) ? vformat(String(U"（笔刷 %d × %d，按一下 E 改一级）"), god_brush, god_brush) : String(U"（不扣料）")));
+        }
+        return;
+    }
+    refresh_dev_works_panel();
 }
 
 void Expedition::refresh_style_panel() {
@@ -673,6 +830,9 @@ void Expedition::close_panels() {
     piece.stand_down();
     dig.stand_down();
     set_style_open(false);
+    if (dev_works_open) {
+        set_dev_works_open(false);
+    }
     if (pack.is_open()) {
         set_pack_open(false);
     }
@@ -690,6 +850,9 @@ void Expedition::set_pack_open(bool p_open, PackSide p_side, int p_prop) {
         piece.stand_down();
         dig.stand_down();
         set_style_open(false);
+        if (dev_works_open) {
+            set_dev_works_open(false);
+        }
         pack_side = p_side;
         pack_prop = p_prop;
         pack.open_with(nullptr, String());
@@ -918,7 +1081,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
     if (!map_open) {
         const bool aboard = ship && ship->is_aboard(at);
         if (input->is_action_just_pressed(input_actions::INVENTORY)) {
-            if (refit.is_open() || build.is_open() || interior.is_open() || style_open) {
+            if (refit.is_open() || build.is_open() || interior.is_open() || style_open || dev_works_open) {
                 close_panels(); // Tab 先合上开着的那个
             } else if (pack.is_open()) {
                 set_pack_open(false);
@@ -938,6 +1101,12 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
                         say(String(U"拿起了样式「") + String::utf8(piece.get_style(k).name.c_str()) + String(U"」：准星处出整座的虚影，E 摆下"));
                     }
                 } else {
+                    if (god_tool >= 0) {
+                        set_god_tool(-1); // 拿回快捷栏那一格：放下开发者工具
+                        if (dev_works_open) {
+                            set_dev_works_open(false);
+                        }
+                    }
                     pack.select(k); // 1–9：拿起快捷栏那一格
                 }
             }
@@ -948,10 +1117,48 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
             if (style_open) {
                 set_style_open(false);
             } else if (piece.get_style_index() >= 0) {
-                piece.set_style(-1);
+                if (god_tool_on() && god_tools()[size_t(god_tool)].kind == GodToolKind::STYLE) {
+                    set_god_tool(-1); // 拿着的是开发者工具里的样式：连工具一起放下
+                } else {
+                    piece.set_style(-1);
+                }
                 say(String(U"放下了样式"));
             } else {
                 set_style_open(true);
+            }
+        }
+        // 开发者营造：god 关了就放下开发者工具；F8 开合面板；拿着挖垒时 [ ] 换笔刷
+        if (god_tool >= 0 && !player->is_god_mode()) {
+            set_god_tool(-1);
+            if (dev_works_open) {
+                set_dev_works_open(false);
+            }
+            say(String(U"关了 god：放下开发者工具"));
+        }
+        if (dev_tools && input->is_action_just_pressed(input_actions::DEV_WORKS) && !pack.is_open() && !refit.is_open() && !build.is_open() && !interior.is_open()) {
+            if (dev_works_open) {
+                set_dev_works_open(false);
+            } else if (!player->is_god_mode()) {
+                say(String(U"开发者营造要在 god 模式下用：先按 F3"));
+            } else {
+                set_style_open(false);
+                set_dev_works_open(true);
+            }
+        }
+        // 开发者工具里的样式摆完不放下（PieceHand 摆完一整座会放下样式）：接着拿在手上，好一座座地摆
+        if (god_tool_on() && god_tools()[size_t(god_tool)].kind == GodToolKind::STYLE && piece.get_style_index() != god_tools()[size_t(god_tool)].style) {
+            piece.set_style(god_tools()[size_t(god_tool)].style);
+        }
+        if (god_tool_on() && !dev_works_open && god_tool_brushes(god_tools()[size_t(god_tool)])) {
+            const int before = god_brush;
+            if (input->is_action_just_pressed(input_actions::BRUSH_SMALLER)) {
+                god_brush = god_brush_step(god_brush, -1);
+            }
+            if (input->is_action_just_pressed(input_actions::BRUSH_LARGER)) {
+                god_brush = god_brush_step(god_brush, 1);
+            }
+            if (god_brush != before) {
+                say(vformat(String(U"笔刷 %d × %d"), god_brush, god_brush));
             }
         }
         if (style_open) {
@@ -977,26 +1184,34 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
         Shipyard *bench = RefitBench::bench_near(map->map_shipyards(), at, helm_range);
         // 摆放、搭建先看一眼（看着哪件、手上能摆的出虚影）；看着木箱 / 工作台 / 窑按 E、手上拿着能摆的 / 搭建件按 E、看着摆出来的 / 搭好的按 X、
         // 看着门按 E，都先归摆放与搭建，堆场、村仓往后排（船上不让摆：货位、舵照旧）
-        const bool panel_open = refit.is_open() || interior.is_open() || build.is_open() || pack.is_open();
+        const bool panel_open = refit.is_open() || interior.is_open() || build.is_open() || pack.is_open() || dev_works_open;
         const WorksSite site = works_at(at);
         const bool free = player->is_god_mode(); // god 模式：搭建、挖垒不扣料不给料
+        const bool god_hand = god_tool_on(); // 拿着开发者工具：挖垒、搭建用它，摆放、采集让开
+        const std::string held = held_now();
         aim = compute_aim();
         if (panel_open || freight.is_holding()) {
             place.stand_down(); // 抱着货箱腾不出手
             piece.stand_down();
             dig.stand_down();
         } else {
-            place.look(site, map, player, pack, aboard);
+            if (god_hand) {
+                place.stand_down();
+            } else {
+                place.look(site, map, player, pack, aboard);
+            }
             if (aboard) {
                 piece.stand_down();
             } else {
-                piece.look(site, map, player, pack, aim, free);
+                piece.look(site, map, player, held, aim, free);
             }
         }
         const bool remove = input->is_action_just_pressed(input_actions::REMOVE);
-        const bool piece_first = !aboard && !panel_open && !freight.is_holding() && piece.claims(pack, p_interact, remove);
-        const bool placing_first = piece_first || (!aboard && !panel_open && !freight.is_holding() && place.claims(pack, p_interact, remove));
-        if (refit.is_open()) {
+        const bool piece_first = !aboard && !panel_open && !freight.is_holding() && piece.claims(held, p_interact, remove);
+        const bool placing_first = piece_first || (!god_hand && !aboard && !panel_open && !freight.is_holding() && place.claims(pack, p_interact, remove));
+        if (dev_works_open) {
+            dev_works_browse(p_interact); // 开着开发者营造面板：W/S 选、A/D 换笔刷、E 拿起
+        } else if (refit.is_open()) {
             refit.browse(ship, p_interact, say_fn(), bay_in_use()); // 开着改装：E 是加一节
         } else if (interior.is_open()) {
             interior.browse(p_delta, p_interact, say_fn()); // 开着室内编辑：E 是放家具、开门窗……
@@ -1006,7 +1221,7 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
             pack.browse(p_interact, say_fn()); // 开着背包：E 是拿放东西、合成，不是上舵、不是干活
         } else if (placing_first) {
             if (piece_first) {
-                piece.act(player, pack, p_interact, remove, free, say_fn()); // 这一下 E / X 是搭建的事（摆、拆、开关门、摆整座）
+                piece.act(player, pack, held, p_interact, remove, free, say_fn()); // 这一下 E / X 是搭建的事（摆、拆、开关门、摆整座）
             } else {
                 place_act(p_interact, remove); // 这一下 E / X 是摆放的事（摆、收、打开木箱 / 工作台 / 窑）
             }
@@ -1035,8 +1250,8 @@ void Expedition::on_foot(double p_delta, bool p_interact) {
                 board();
                 return;
             }
-        } else if (!aboard && !freight.is_holding() && DigHand::holds(pack) && !gather.prefers(map, player, pack) &&
-                dig.step(map, site, player, pack, aim, free, p_interact, p_delta, say_fn())) {
+        } else if (!aboard && !freight.is_holding() && DigHand::holds(held) && (god_hand || !gather.prefers(map, player, pack)) &&
+                dig.step(map, site, player, pack, held, aim, free, god_hand ? god_brush : 0, p_interact, p_delta, say_fn())) {
             farm_hand.stand_down(); // 这一下 E 是挖垒的事（手上的锹镐、土；面前是对口的资源才让给采集）
             gather.stand_down();
         } else if (gather.step(map, player, pack, freight.is_holding(), p_interact, p_delta, say_fn())) {
@@ -1506,7 +1721,7 @@ void Expedition::update_hud() {
     const Vector3 at = player->get_global_position();
     if (crosshair) {
         crosshair->set_visible(helm.get_state() == Helm::ON_FOOT && !map_open && !pack.is_open() && !refit.is_open() && !build.is_open() && !interior.is_open() &&
-                (DigHand::holds(pack) || piece.holds(pack)));
+                (DigHand::holds(held_now()) || piece.holds(held_now())));
     }
     PackedStringArray lines;
     // 行星航向（行星地图设的）：到了那一群就清掉
@@ -1583,26 +1798,36 @@ void Expedition::update_hud() {
                 pack_line += String(U"    ") + fields;
             }
             lines.push_back(pack_line);
+            if (god_tool_on()) {
+                const GodTool t = god_tools()[size_t(god_tool)];
+                lines.push_back(String(U"开发者工具：") + god_tool_name(t) + (god_tool_brushes(t) ? vformat(String(U" · 笔刷 %d × %d（[ ] 换）"), god_brush, god_brush) : String()) +
+                        String(U" · F8 换 · 1–9 拿回快捷栏那格"));
+            }
+            if (dev_works_open) {
+                prompt = String(U"开发者营造：W/S 选 · E 拿起 · F8 合上");
+                break;
+            }
             if (pack.is_open()) {
                 pack.refresh_panel();
                 prompt = String(U"左键拿 / 放 · 右键拿一半 · Shift+左键搬过去 · 点配方合成 · Tab 合上");
                 break;
             }
             const bool aboard = ship && ship->is_aboard(at);
-            if (!aboard && !freight.is_holding() && piece.holds(pack)) {
-                prompt = piece.prompt(pack); // 手上拿着搭建件 / 样式：先说这个
+            const std::string held = held_now();
+            if (!aboard && !freight.is_holding() && piece.holds(held)) {
+                prompt = piece.prompt(held); // 手上拿着搭建件 / 样式：先说这个
                 break;
             }
-            if (!aboard && !freight.is_holding() && place.engaged()) {
+            if (!aboard && !freight.is_holding() && !god_tool_on() && place.engaged()) {
                 prompt = place.prompt(pack); // 看着木箱 / 工作台、手上拿着能摆的：先说这个
                 break;
             }
             if (!aboard && !freight.is_holding() && piece.get_look_piece() >= 0) {
-                prompt = piece.prompt(pack); // 准星对着搭好的一件：拆、开关门、这座还缺什么
+                prompt = piece.prompt(held); // 准星对着搭好的一件：拆、开关门、这座还缺什么
                 break;
             }
-            if (!aboard && !freight.is_holding() && DigHand::holds(pack) && !gather.prefers(map, player, pack)) {
-                const String digging = dig.prompt(pack);
+            if (!aboard && !freight.is_holding() && DigHand::holds(held) && (god_tool_on() || !gather.prefers(map, player, pack))) {
+                const String digging = dig.prompt(held);
                 if (!digging.is_empty()) {
                     prompt = digging; // 手上的锹镐、土：挖垒的事
                     break;

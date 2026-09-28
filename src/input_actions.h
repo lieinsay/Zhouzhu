@@ -37,6 +37,9 @@ constexpr const char *PREV_STYLE = "prev_style"; // 上一套 / 上一样
 constexpr const char *EDIT_INTERIOR = "edit_interior"; // 开发者：开合室内编辑（改房屋模板）
 constexpr const char *SAVE_AS = "save_as"; // 室内编辑时另存为新模板；样式面板里把看着的那一座另存成样式
 constexpr const char *STYLE_PANEL = "style_panel"; // 开合整座样式面板（切片十一）
+constexpr const char *DEV_WORKS = "dev_works"; // 开发者：god 下开合开发者营造面板（直接挖地、搭建）
+constexpr const char *BRUSH_SMALLER = "brush_smaller"; // 开发者营造：笔刷小一档
+constexpr const char *BRUSH_LARGER = "brush_larger"; // 开发者营造：笔刷大一档
 constexpr const char *FLY_DOWN = "fly_down"; // god 模式下往下飞（Shift 已是加速，不能再用来降）
 // 快捷栏 1–9：步行时选中那一格（拿在手上）；开着背包时把光标那一格放上快捷栏的那一格
 inline constexpr const char *HOTBAR[9] = { "hotbar_1", "hotbar_2", "hotbar_3", "hotbar_4", "hotbar_5", "hotbar_6", "hotbar_7", "hotbar_8", "hotbar_9" };

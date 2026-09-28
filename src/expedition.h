@@ -13,6 +13,7 @@
 #include "dig_hand.h"
 #include "farm_hand.h"
 #include "freight_hand.h"
+#include "god_works.h"
 #include "gather_hand.h"
 #include "helm.h"
 #include "interior_edit.h"
@@ -28,6 +29,7 @@
 #include "world_map.h"
 
 class StylePanel;
+class DevWorksPanel;
 class WorksView;
 
 // 玩家编排：哪张地图都是它（甲乙两岛 main.tscn、岛群 world_2051.tscn、平板岛测试图），场景只配属性。
@@ -41,6 +43,7 @@ class WorksView;
 //   摆放（PlaceHand：手上拿着能摆的东西时身前出虚影、E 摆、X 收起；E 打开木箱 / 工作台 / 窑）、
 //   搭建（PieceHand，切片十一：手上拿着搭建件时准星处出吸附好的虚影、E 摆、X 拆、E 开关门；G 挑整座样式一次摆下）、
 //   挖与垒（DigHand：手上拿着木锹 / 石镐按住 E 挖准星那一格、拿着土按 E 垒）。
+//   开发者营造（god 下 F8）：面板里挑挖、垒、一样搭建件或一套样式拿在手上，挖垒与搭建就用它、不看背包不扣料；挖垒带笔刷（[ ] 换）、按一下改一级。
 // 营造的账（摆件、搭建件、改地形）按脚下那处地面问地图宿主要（map_works_at：岛群每一群一份、存进世界存档）；地图不给的（甲乙两岛、平板岛）用编排自带的一份（全局坐标、不能改地形）。
 // 准星：拿着搭建件、锹镐、土时屏幕中心一个点，相机往前的射线打到的第一样东西就是准星落点（每帧打一回交给搭建与挖垒）。
 // 背包（Tab）照 MC：36 格、前 9 格是快捷栏（1–9 / 滚轮选，拿在手上的就是选中那格）；人在船上时船舱（每节储存区 12 格，账在这里）列在背包上面，
@@ -101,6 +104,12 @@ private:
     godot::Control *crosshair = nullptr;
     StylePanel *style_panel = nullptr;
     bool style_open = false;
+    // 开发者营造（god 下 F8）：面板开没开、光标在第几行（0 = 空手，往下是 god_tool_list 的次序）、手上拿着第几件（−1 没有）、笔刷
+    DevWorksPanel *dev_works_panel = nullptr;
+    bool dev_works_open = false;
+    int god_cursor = 0;
+    int god_tool = -1;
+    int god_brush = 3;
     bool aim_override = false; // 测试另给一条准星射线
     godot::Vector3 aim_from, aim_to;
     AimHit aim; // 这一帧的准星
@@ -152,6 +161,14 @@ private:
     AimHit compute_aim() const;
     void set_style_open(bool p_open);
     void refresh_style_panel();
+    // 开发者营造
+    std::vector<GodTool> god_tools() const { return god_tool_list(piece.get_style_count()); }
+    bool god_tool_on() const; // god 开着、手上拿着开发者工具
+    std::string held_now() const; // 挖垒与搭建看的「手上拿着的」：开发者工具，或快捷栏选中那格
+    godot::String god_tool_name(const GodTool &p_tool) const;
+    void set_dev_works_open(bool p_open);
+    void refresh_dev_works_panel();
+    void dev_works_browse(bool p_interact);
     void set_map_open(bool p_open);
     void on_foot(double p_delta, bool p_interact);
     void toggle_interior(const godot::Vector3 &p_at);
@@ -304,6 +321,14 @@ public:
     int get_style_index() const { return piece.get_style_index(); }
     void select_style(int p_index);
     bool is_inside_house();
+    // 开发者营造（给测试查 / 驱动）：拿起清单里第几件（−1 放下；god 没开返回 false）；手上那件 { index, kind, item, style, name, brush, active }；
+    // 笔刷；清单每件的名字；面板开没开
+    bool set_god_tool(int p_index);
+    godot::Dictionary get_god_tool() const;
+    void set_god_brush(int p_size);
+    int get_god_brush() const { return god_brush; }
+    godot::PackedStringArray get_god_tool_names() const;
+    bool is_dev_works_open() const { return dev_works_open; }
     godot::Node3D *get_prop_node(int p_id); // 脚下那处地面的营造账里某件摆件的实物（测试查）
     godot::String get_interior_template() const { return interior.is_open() ? interior.get_template_id() : godot::String(); }
     int get_interior_building() const { return interior.is_open() ? interior.get_index() : -1; }

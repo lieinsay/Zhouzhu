@@ -87,8 +87,8 @@ void PieceHand::load_styles() {
     }
 }
 
-bool PieceHand::holds(const PackHand &p_pack) const {
-    return style_index >= 0 || pieces::is_piece(p_pack.held_item());
+bool PieceHand::holds(const std::string &p_held) const {
+    return style_index >= 0 || pieces::is_piece(p_held);
 }
 
 Transform3D PieceHand::frame_xform() const {
@@ -215,7 +215,7 @@ std::string PieceHand::obstacle(Player *p_player, const Structure &p_frame, cons
     return def->role == PieceRole::FOUNDATION ? "有东西挡着" : "地面挡着：先挖平";
 }
 
-void PieceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, PackHand &p_pack, const AimHit &p_aim, bool p_free) {
+void PieceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, const std::string &p_held, const AimHit &p_aim, bool p_free) {
     site = p_site;
     view = site.view.is_valid() ? Object::cast_to<WorksView>(ObjectDB::get_instance(site.view)) : nullptr;
     look_structure = look_piece = -1;
@@ -241,7 +241,7 @@ void PieceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, 
             }
         }
     }
-    held_item = p_pack.held_item();
+    held_item = p_held;
     const PieceDef *holding = pieces::find(held_item);
     if (style_index < 0 && !holding) {
         hide_ghost();
@@ -306,14 +306,14 @@ void PieceHand::look(const WorksSite &p_site, MapHost *p_map, Player *p_player, 
     show_ghost(plan.frame, { probe }, ghost_ok);
 }
 
-bool PieceHand::claims(const PackHand &p_pack, bool p_interact, bool p_remove) const {
+bool PieceHand::claims(const std::string &p_held, bool p_interact, bool p_remove) const {
     if (p_remove && look_piece >= 0) {
         return true;
     }
     if (!p_interact) {
         return false;
     }
-    if (holds(p_pack)) {
+    if (holds(p_held)) {
         return true;
     }
     // 看着门：E 开关
@@ -325,7 +325,7 @@ bool PieceHand::claims(const PackHand &p_pack, bool p_interact, bool p_remove) c
     return false;
 }
 
-PieceHand::Step PieceHand::act(Player *p_player, PackHand &p_pack, bool p_interact, bool p_remove, bool p_free, const Say &p_say) {
+PieceHand::Step PieceHand::act(Player *p_player, PackHand &p_pack, const std::string &p_held, bool p_interact, bool p_remove, bool p_free, const Say &p_say) {
     Step out;
     if (!site.works) {
         return out;
@@ -358,7 +358,7 @@ PieceHand::Step PieceHand::act(Player *p_player, PackHand &p_pack, bool p_intera
         return out;
     }
     // 看着门、手上没拿着要摆的（或摆不下）：开关门，往离人远的那面开
-    if (looked_def && looked_def->role == PieceRole::DOOR && !(holds(p_pack) && ghost_on && ghost_ok)) {
+    if (looked_def && looked_def->role == PieceRole::DOOR && !(holds(p_held) && ghost_on && ghost_ok)) {
         out.used = true;
         int open = 0;
         if (looked_piece->open == 0) {
@@ -401,7 +401,7 @@ PieceHand::Step PieceHand::act(Player *p_player, PackHand &p_pack, bool p_intera
         set_style(-1);
         return out;
     }
-    const PieceDef *holding = pieces::find(p_pack.held_item());
+    const PieceDef *holding = pieces::find(p_held);
     if (!holding) {
         return out;
     }
@@ -415,7 +415,9 @@ PieceHand::Step PieceHand::act(Player *p_player, PackHand &p_pack, bool p_intera
         return out;
     }
     list.add(holding->item, plan);
-    p_pack.refresh_bar();
+    if (!p_free) {
+        p_pack.refresh_bar();
+    }
     p_say(String(U"摆下了") + piece_name(holding->item));
     return out;
 }
@@ -500,7 +502,7 @@ bool PieceHand::inside_house(const Vector3 &p_global) {
     return false;
 }
 
-String PieceHand::prompt(const PackHand &p_pack) {
+String PieceHand::prompt(const std::string &p_held) {
     String house;
     if (look_structure >= 0) {
         if (const HouseReport *r = report_of(look_structure)) {
@@ -518,7 +520,7 @@ String PieceHand::prompt(const PackHand &p_pack) {
         }
         return String(U"摆不了「") + utf8(style.name) + String(U"」：") + utf8(ghost_why) + String(U" · G 放下样式");
     }
-    const PieceDef *holding = pieces::find(p_pack.held_item());
+    const PieceDef *holding = pieces::find(p_held);
     if (holding) {
         String extra;
         if (holding->role == PieceRole::ROOF && ghost_on) {

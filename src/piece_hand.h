@@ -63,13 +63,14 @@ private:
 
 public:
     void setup(godot::Node3D *p_ghost_parent);
-    // 手上拿着搭建件，或拿着样式
-    bool holds(const PackHand &p_pack) const;
+    // 手上拿着搭建件，或拿着样式。p_held：快捷栏选中那格的物品，或开发者营造（god 下 F8 面板）挑的那件——都由编排给
+    bool holds(const std::string &p_held) const;
     // 每个物理帧（步行、没开面板、没抱货箱时）：看着哪一件、手上拿着的出虚影
-    void look(const WorksSite &p_site, MapHost *p_map, Player *p_player, PackHand &p_pack, const AimHit &p_aim, bool p_free);
+    void look(const WorksSite &p_site, MapHost *p_map, Player *p_player, const std::string &p_held, const AimHit &p_aim, bool p_free);
     // 这一下 E（p_interact）/ X（p_remove）归不归它
-    bool claims(const PackHand &p_pack, bool p_interact, bool p_remove) const;
-    Step act(Player *p_player, PackHand &p_pack, bool p_interact, bool p_remove, bool p_free, const Say &p_say);
+    bool claims(const std::string &p_held, bool p_interact, bool p_remove) const;
+    // p_free（god）：不扣件、拆了也不还，背包不动
+    Step act(Player *p_player, PackHand &p_pack, const std::string &p_held, bool p_interact, bool p_remove, bool p_free, const Say &p_say);
     void stand_down();
 
     // 整座样式：几套、第几套叫什么、要几件什么；拿起第几套（−1 放下）；把看着的那一座另存成样式（写进 user://structures/），返回新样式的下标
@@ -84,7 +85,7 @@ public:
     // 人站在一座完整的屋里（HUD 报；p_global 是人的位置）
     bool inside_house(const godot::Vector3 &p_global);
     // 底部提示；无事可说返回空
-    godot::String prompt(const PackHand &p_pack);
+    godot::String prompt(const std::string &p_held);
     // 测试查：虚影 { on, ok, why, structure（−1 新开）, slot, x, z, level, tier, dir, snap（全局）}
     godot::Dictionary ghost_state() const;
     // 测试查：某座的完整度 { complete, missing, rooms }
