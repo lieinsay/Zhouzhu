@@ -47,22 +47,27 @@ String work_name(Farm::Action p_action) {
 
 } // namespace
 
+Farm *FarmHand::live() const {
+    return farm && ObjectDB::get_instance(farm_id) == farm ? farm : nullptr;
+}
+
 void FarmHand::stand_down() {
     work_action = Farm::ACTION_NONE;
     work_cell = Farm::NO_CELL;
     work_time = 0.0;
     target_cell = Farm::NO_CELL;
     target_action = Farm::ACTION_NONE;
-    if (farm) {
-        farm->set_highlight(Farm::NO_CELL, Color());
+    if (Farm *f = live()) {
+        f->set_highlight(Farm::NO_CELL, Color());
     }
 }
 
 FarmHand::Worked FarmHand::step(Farm *p_farm, Player *p_player, PackHand &p_pack, double p_reach, double p_delta, bool p_interact, const Say &p_say) {
     Worked worked;
-    if (p_farm != farm) {
+    if (p_farm != farm || !live()) {
         stand_down(); // 换了一片农田（或走出了农田）：旧的描边收起，活作废
         farm = p_farm;
+        farm_id = p_farm ? p_farm->get_instance_id() : ObjectID();
     }
     if (!farm) {
         return worked;
@@ -199,7 +204,7 @@ String FarmHand::refusal(const PackHand &p_pack) const {
 }
 
 String FarmHand::prompt(const PackHand &p_pack) const {
-    if (!farm) {
+    if (!live()) {
         return String();
     }
     const std::string &held = p_pack.held_seed();
@@ -224,7 +229,7 @@ String FarmHand::prompt(const PackHand &p_pack) const {
 }
 
 String FarmHand::fields_text() const {
-    if (!farm) {
+    if (!live()) {
         return String();
     }
     const int fields = farm->get_plot_count(Farm::PLOT_TILLED) + farm->get_plot_count(Farm::PLOT_GROWING) + farm->get_plot_count(Farm::PLOT_RIPE);

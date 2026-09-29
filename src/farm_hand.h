@@ -10,7 +10,9 @@
 // 农事：步行时盯着视线前方的那一格，按下 E 起工，按住才算工时，干满了才落到地里——种子从背包扣、收成往背包放。
 // 与场景无关的玩法部件（不是节点）：农田是哪一片，由编排每帧递进来（地图宿主说脚下是哪片）。
 class FarmHand {
-    Farm *farm = nullptr; // 上一帧盯着的那片农田（换了农田要收起旧的描边）
+    Farm *farm = nullptr; // 上一帧盯着的那片农田（换了农田要收起旧的描边）；用之前经 live() 查它还在
+    godot::ObjectID farm_id; // 那片农田的实例号：人上船飞走、那一群降档拆掉以后农田就没了，指针不能再用（下船那一帧 HUD 就会问它）
+    Farm *live() const; // 那片农田还在就是它，拆了就是 nullptr
     godot::Vector2i target_cell = Farm::NO_CELL;
     Farm::Action target_action = Farm::ACTION_NONE;
     godot::Vector2i work_cell = Farm::NO_CELL;
@@ -33,7 +35,7 @@ public:
     void stand_down();
 
     bool is_working() const { return work_action != Farm::ACTION_NONE; }
-    Farm *get_farm() const { return farm; }
+    Farm *get_farm() const { return live(); }
     // 底部提示：干活的进度、能干什么；无事可说返回空
     godot::String prompt(const PackHand &p_pack) const;
     // HUD：「田 N 块（M 块可收）」；还没有田就提示哪里能垦

@@ -99,6 +99,10 @@ void PieceHand::stand_down() {
     hide_ghost();
     ghost_on = false;
     look_structure = look_piece = -1;
+    // 营造账、它的框架与 WorksView 只在看着的那一帧可信：站下来（上了船、开着面板）就不再拿着——人上船飞走、脚下原来那一群
+    // 降档拆掉以后，下船那一帧 HUD 问「在不在自己盖的屋里」还会读这份账（用了已经释放的账会崩：开船去 #2051 下船时真遇上了）
+    site = WorksSite();
+    view = nullptr;
 }
 
 void PieceHand::hide_ghost() {
