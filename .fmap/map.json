@@ -622,11 +622,11 @@
     },
     {
       "id": "world-2051-scene",
-      "label": "岛群场景 world_2051",
-      "detail": "Expedition + World（data_dir = res://worlds/2051）+ Player + 云海 + 日光；出发码头 #1（邑治旁的仓场）、目的码头 #26；相机远平面 60 km、雾 0.00003，从码头看得见远山。",
+      "label": "世界场景 world_seed42",
+      "detail": "Expedition + World（缺省是开局那群：开局配置 src/story_start.h，PLAN-LAND P0 起 #6329）+ Player + 云海 + 日光 + 行星那一套；出发码头 #1（邑治旁）、目的码头 #28（岛 #13，23 km）；2026-09-29 以前叫 world_2051.tscn、开局是 #2051。",
       "tag": "场景",
       "sources": [
-        "game/world_2051.tscn"
+        "game/world_seed42.tscn"
       ],
       "since": "e11"
     },
@@ -729,9 +729,9 @@
     {
       "id": "site-survey-tool",
       "label": "岛群体检工具",
-      "detail": "zhouzhu_site_survey：离线把一个岛群的码头、村落、资源点、散布铺一遍报缺；--planet / --planet-weather 查行星包；--island-floor [目录] 逐座查本机生成过的群的岛底离云带顶一千米（浮高计划 Z2，不进 ctest）。",
+      "detail": "zhouzhu_site_survey：离线把一个岛群的码头、村落、资源点、散布铺一遍报缺（--start 查开局那群，ctest site_survey_start）；--planet / --planet-weather 查行星包；--island-floor [目录] 逐座查本机生成过的群的岛底离云带顶一千米（浮高计划 Z2，不进 ctest）。",
       "tag": "工具",
-      "evidence": "浮高重导后 2051：61 码头全落地、9,777 座摆下 9,763（缺的只有浮石采石村02，同重导前）、野泊 98.3%，达标",
+      "evidence": "开局那群 #6329：59 码头全落地、1,474 处村落 11,781 座全摆下、239 村都有船台、野泊 96.0%，达标",
       "sources": [
         "tools/site_survey.cpp"
       ],
@@ -805,12 +805,12 @@
     },
     {
       "id": "voyage-2051-e2e",
-      "label": "岛群跑船端到端测试",
-      "detail": "主码头出生 → 邑治（273 座站在地上、有人出门）→ 回主码头 → 上舵换疾档贴着地形飞 30 km → 乙岛 #2 靠泊下船 → 散户有人出门；--shots 存图。",
+      "label": "开局那群跑船端到端测试",
+      "detail": "主码头 #1 出生 → 邑治（486 户，房子站在地上、有人出门）→ 地图点去 12 km 外的村002 → 回主码头 → 上舵换疾档贴着地形飞 23 km → 岛 #13 的码头 #28 靠泊下船；目标村、码头按点位与户数挑。原名 voyage_2051_e2e。",
       "tag": "验收",
-      "evidence": "PASS：模拟 322 s，途中最低离地 58 m",
+      "evidence": "PASS：飞 22.8 km，途中最高 673 m、最低离地 62 m",
       "sources": [
-        "game/tests/voyage_2051_e2e.gd"
+        "game/tests/voyage_start_e2e.gd"
       ],
       "since": "e14"
     },
@@ -853,7 +853,7 @@
     {
       "id": "farm-hand",
       "label": "FarmHand 农事",
-      "detail": "盯着视线前方那一格，按住 E 干满工时才落地；种子从背包扣、收成进背包；拒绝原因按地面说。",
+      "detail": "盯着视线前方那一格，按住 E 干满工时才落地；种子从背包扣、收成进背包；拒绝原因按地面说。盯着的农田按实例号查还在不在（人上船飞走、那一群拆掉以后不再用它）。",
       "tag": "玩法部件",
       "sources": [
         "src/farm_hand.h",
@@ -2064,7 +2064,7 @@
       "label": "行星包导出",
       "detail": "tools/export_planet.py <run> <输出>：planet.bin（行星参数头文本、③④⑨ 的逐节点列、粗版量的主峰 / 岸缘 / 势力范围 / 群心到最远陆地、30 张 1° 场——第三层要读的都在）、lods.bin（索引 + 各岛表 + 空格行程编码的格子：最高点、陆地占比、地表、岛号）、weather.bin（P5：8000 群第 0 年的逐日天气，按列 zlib、无损）；--fine 与细版 weather.tsv 对照。只依赖 numpy，游戏运行时不需要它。",
       "tag": "工具",
-      "evidence": "planet.bin 8.0 MB（41 列、30 张场）、lods.bin 45.6 MB（8020 份）、weather.bin 9.5 MB（与细版逐位相同）",
+      "evidence": "planet.bin 8.0 MB（41 列、30 张场）、lods.bin 45.9 MB（8025 份：全行星 2 km + #6329 周围 320 km 的 25 份 500 m）、weather.bin 9.5 MB（与细版逐位相同）",
       "sources": [
         "tools/export_planet.py",
         "game/planet/seed42/planet.bin",
@@ -2078,7 +2078,7 @@
       "label": "行星包读取与查询",
       "detail": "PlanetData：parse_planet / parse_lods（或 load_files）；node(k)、column(名字)、grid(名字).sample(纬, 经)；nearest_node、nodes_within（2° 经纬格分桶）、node_distance_m；lod(节点, 最大格距) 按需解一份（字节留在内存）。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "core：8000 群与历法、2051 邻群（2050 114 km）、每群有粗版、2051 粗版的实地格 99% 以上在细版里也是陆地",
+      "evidence": "core：8000 群与历法、开局那群 #6329 的邻群（#6327 84 km）、每群有粗版、开局那群的 500 m 粗版与仓库里的细版是同一个群、500 m 那一圈 25 群",
       "sources": [
         "src/planet_data.h",
         "src/planet_data.cpp"
@@ -2204,7 +2204,7 @@
       "sources": [
         "src/planet_view.h",
         "src/planet_view.cpp",
-        "game/world_2051.tscn"
+        "game/world_seed42.tscn"
       ],
       "since": "e68"
     },
@@ -2542,7 +2542,7 @@
     {
       "id": "group-provider",
       "label": "GroupProvider 岛群包从哪来",
-      "detail": "仓库 res://worlds（只算 seed42 的世界）→ 世界存档目录 groups/<节点> → 后台生成（P6e 起在进程内：生成器的 C++ 核心库；backend = python 时照旧起子进程）；同时一件生成岛群的活，瞬移 > 焦点 60 km > 船头 150 km（预取）；缓存键 stamp.json 只读出来；生存世界另补 600 km 内的粗版；进树时把 pending 的世界配到场景各节点。",
+      "detail": "仓库里的细版 res://planet/seed42/groups/<节点>（只算 seed42 的世界；开局那群与邻群）→ 世界存档目录 groups/<节点> → 后台生成（P6e 起在进程内：生成器的 C++ 核心库；backend = python 时照旧起子进程）；同时一件生成岛群的活，瞬移 > 焦点 60 km > 船头 150 km（预取）；缓存键 stamp.json 只读出来；生存世界另补 600 km 内的粗版；进树时把 pending 的世界配到场景各节点。",
       "tag": "场景角色",
       "evidence": "planet_jump_e2e、planet_world_e2e",
       "sources": [
@@ -3205,7 +3205,7 @@
     {
       "id": "piece-hand",
       "label": "PieceHand 搭建",
-      "detail": "拿着搭建件出吸附虚影（物理查挡），E 摆、X 拆、对着门 E 开关、拿着样式 E 摆整座、N 另存样式；报这座完整不完整、人在不在完整的屋里。",
+      "detail": "拿着搭建件出吸附虚影（物理查挡），E 摆、X 拆、对着门 E 开关、拿着样式 E 摆整座、N 另存样式；报这座完整不完整、人在不在完整的屋里。站下来就放掉脚下那份营造账（上船飞走、那一群拆掉以后不再读它）。",
       "tag": "玩法部件",
       "evidence": "house_e2e",
       "sources": [
@@ -3554,6 +3554,54 @@
         "game/tests/cabin_e2e.tscn"
       ],
       "since": "e119"
+    },
+    {
+      "id": "world-session-start",
+      "label": "开局配置",
+      "detail": "src/story_start.h（不含 Godot 头）：出生的群 6329、钟的群 6329（D10）、开局日 85（四月初二）、仓库里另带细版的邻群 6327、行星包与细版目录（game/planet/seed42、它底下 groups/<节点>）。WorldSession、GroupProvider、GroupStream、PlanetView、WorldClock、World、SiteStream、WorldLedgerSpec 的缺省读它；GDScript 读 StoryStart 类的静态方法；剧情世界的存档目录不再被 world.json 里的旧 spawn 钉住。",
+      "tag": "引擎构件",
+      "evidence": "ctest 5/5（core 1712 项）；dev_tools_e2e 按 F2 进剧情世界：出生在 #6329 主码头 #1 旁 0 m、HUD「群 #6329」、四月初二（第 85 天）、纬度 34.23°、地方时差 1.5 分钟",
+      "sources": [
+        "src/story_start.h",
+        "src/story_start_api.h",
+        "src/story_start_api.cpp"
+      ],
+      "since": "e120",
+      "parent": "world-session"
+    },
+    {
+      "id": "voyage-to-2051-e2e",
+      "label": "开船去 #2051 端到端测试",
+      "detail": "开局那群主码头出生 → 瞬移去 #2050（当场生成）→ 开船飞向 #2051：船头方向预取、进程内生成、载入、换锚 → 靠泊 #2051 主码头下船，HUD「群 #2051」、村里有人出门。#2051 只是普通的一群的验收；game/tests 里唯一写着 2051 的。",
+      "tag": "验收",
+      "evidence": "PASS：#2051 排队 0.6 s、生成 1.4 s；飞的那一路最慢 23.9 ms；村001 40 人在外面",
+      "sources": [
+        "game/tests/voyage_2051_e2e.gd"
+      ],
+      "since": "e120"
+    },
+    {
+      "id": "start-shots",
+      "label": "开局截图工具",
+      "detail": "按开局配置拍一组：出生码头一带、邑治、主码头附近的一条大河、码头上空望主岛、高处看整群；机位从这一群的数据算（码头出生位姿、seat 那一村、河网、陆地重心）。",
+      "tag": "工具",
+      "sources": [
+        "game/tools/start_shots.gd"
+      ],
+      "since": "e120"
+    },
+    {
+      "id": "zhouzhu-gen-near-lods",
+      "label": "near-lods：换开局那一圈粗版",
+      "detail": "zhouzhu_gen near-lods --lods <lods.bin> --near N [--near-res 500] [--near-radius 600]：按群心大圆距离挑一圈、lod_only 按格距出粗版、按节点排在全行星那一档后面，同 export_planet --near 写出的样子。",
+      "tag": "工具",
+      "evidence": "--near 2051 --near-radius 600 重生成 8020 条逐字节相同；单测 gen_seed42 比 #6329 的 500 m 那一条",
+      "sources": [
+        "tools/zhouzhu_gen.cpp",
+        "src/gen_core.cpp"
+      ],
+      "since": "e121",
+      "parent": "zhouzhu-gen-cli"
     }
   ],
   "edges": [
@@ -7561,6 +7609,61 @@
       "from": "cabin-e2e",
       "to": "expedition",
       "label": "测试接口"
+    },
+    {
+      "from": "group-provider",
+      "to": "world-session-start",
+      "label": "仓库里的细版在哪"
+    },
+    {
+      "from": "planet-view",
+      "to": "world-session-start",
+      "label": "行星包、钟的群"
+    },
+    {
+      "from": "world-clock",
+      "to": "world-session-start",
+      "label": "开局日"
+    },
+    {
+      "from": "world-node",
+      "to": "world-session-start",
+      "label": "缺省的包与种子"
+    },
+    {
+      "from": "site-stream",
+      "to": "world-session-start",
+      "label": "种子、村落改动目录"
+    },
+    {
+      "from": "site-survey-tool",
+      "to": "world-session-start",
+      "label": "--start"
+    },
+    {
+      "from": "voyage-to-2051-e2e",
+      "to": "world-2051-scene",
+      "label": "剧情世界"
+    },
+    {
+      "from": "voyage-to-2051-e2e",
+      "to": "group-provider",
+      "label": "按需生成 #2050、#2051"
+    },
+    {
+      "from": "start-shots",
+      "to": "world-2051-scene",
+      "label": "开局那群"
+    },
+    {
+      "from": "zhouzhu-gen-near-lods",
+      "to": "gen-core",
+      "label": "lod_only(格距)"
+    },
+    {
+      "from": "zhouzhu-gen-near-lods",
+      "to": "export-planet",
+      "label": "同样的 lods.bin"
     }
   ],
   "chains": [
@@ -8232,7 +8335,7 @@
     {
       "id": "dev-tools",
       "title": "开发者工具：换地图 + god 模式",
-      "story": "开发者在任何一张地图里按 F2 调出地图清单，一点就在甲乙两岛和岛群 #2051 之间来回换；按 F3 开 god，人就能腾空飞起、按住 Shift 以 150 m/s 掠过岛群，降到地上照样站住，换了地图也还飞着。",
+      "story": "开发者在任何一张地图里按 F2 调出地图清单，一点就在甲乙两岛和世界 seed42（剧情，出生在开局那群的主码头）之间来回换；按 F3 开 god，人就能腾空飞起、按住 Shift 以 150 m/s 掠过岛群，降到地上照样站住，换了地图也还飞着。",
       "date": "2026-09-22",
       "color": "#b8a12a",
       "commits": "155924a..35aa1ee",
@@ -8252,7 +8355,7 @@
           ]
         },
         {
-          "text": "甲乙两岛里按 M：这里没有岛群地图，提示按 F2 换到有地图的「岛群 #2051」",
+          "text": "甲乙两岛里按 M：这里没有岛群地图，提示按 F2 换到有地图的「世界 seed42」",
           "nodes": [
             "dev-tools-node",
             "input-map",
@@ -12983,6 +13086,51 @@
           "ship-cabins",
           "cabin-e2e"
         ]
+      }
+    },
+    {
+      "id": "e120",
+      "type": "extend",
+      "date": "2026-09-29",
+      "title": "拓展：开局换到 #6329，开局配置收成一处（地貌与聚落 P0），地图叫 world_seed42",
+      "summary": "剧情世界的开局从 #2051 换到 seed42「东亚」那一块的 #6329（北纬 34.2°、东经 27.8°），开局日第 85 天；出生的群、钟的群、开局日、仓库里带细版的邻群收在 src/story_start.h 一处，各节点的缺省、测试、工具都读它；场景 world_2051.tscn 改名 world_seed42.tscn；仓库里的细版挪进 game/planet/seed42/groups/，带 #6329 与最近的邻群 #6327；#2051 以后是普通的一群，走近了按需生成。",
+      "commits": "c432101、3dbd913、b7a5afe、e5a4720、c8cc13d、f2788ce",
+      "nodes": [
+        "world-session",
+        "world-session-start",
+        "voyage-to-2051-e2e",
+        "start-shots"
+      ],
+      "info": {
+        "node": "world-session",
+        "children": [
+          "world-session-start"
+        ],
+        "adopted": [],
+        "peers": [
+          "voyage-to-2051-e2e",
+          "start-shots"
+        ]
+      }
+    },
+    {
+      "id": "e121",
+      "type": "extend",
+      "date": "2026-09-29",
+      "title": "拓展：zhouzhu_gen near-lods——换行星包里开局周围那一圈 500 m 粗版（C++ 路）",
+      "summary": "留下每群全行星 2 km 那一条、丢掉旧的一圈、给开局那群周围一圈生成 500 m 一档；--near 2051 --near-radius 600 与 Python 那条路导的 lods.bin 8020 条逐字节相同；换成 --near 6329 --near-radius 320（25 条，lods.bin 45.60 → 45.86 MB）。",
+      "commits": "a8cc413",
+      "nodes": [
+        "zhouzhu-gen-cli",
+        "zhouzhu-gen-near-lods"
+      ],
+      "info": {
+        "node": "zhouzhu-gen-cli",
+        "children": [
+          "zhouzhu-gen-near-lods"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
