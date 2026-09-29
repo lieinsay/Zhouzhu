@@ -146,7 +146,7 @@ isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_expor
 }
 
 // 粗版：同 lod.build_lod（cpp 后端）——原生分辨率的地形 + 水系 → 四季、逐日曲线、一年的逐日天气（岸缘取水系之后主岛的 rim_m）→ 块降采样
-void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather) {
+void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather, double p_lod_res_m) {
     const GenConfig &cfg = p_planet.config;
     const isl::NodeInputs x = inputs_of(p_planet, p_node, false);
     isl::Group g = isl::build_terrain(x, p_planet.view, cfg.island, 0.0, cfg.threads());
@@ -162,7 +162,7 @@ void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry 
     g.weather = isl::simulate_year(r, g.clim, g.daily, g.wparams, x.height_m, cfg.island, g.islands[0].rim_j, x.lapse_c_per_km);
     g.year = 0;
     g.has_weather = true;
-    const int f = gen_export::lod_factor(g.res_km * 1000.0);
+    const int f = gen_export::lod_factor(g.res_km * 1000.0, p_lod_res_m);
     const isl::LodBlock b = isl::block_reduce(g, f);
     r_lod = gen_export::lod_entry(p_node, g, b);
     r_weather = gen_export::weather_entry(p_node, g, meta_of(p_planet, p_node));

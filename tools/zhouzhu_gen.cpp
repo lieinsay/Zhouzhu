@@ -6,8 +6,13 @@
 //   zhouzhu_gen lods  --config <config.tsv> --seed N --nodes a,b,c --lod-dir <粗版目录>
 //   zhouzhu_gen world --config <config.tsv> --seed N --world <世界目录>
 //   zhouzhu_gen planet --config <config.tsv> --seed N --out <目录>   （只写 planet.bin / lods.bin / weather.bin，同新建世界时的行星包）
+//   zhouzhu_gen near-lods --config <config.tsv> --seed N --lods <lods.bin> --near N [--near-res 500] [--near-radius 600] [--out <lods.bin>]
+//     （换行星包里「开局周围那一圈」的细一档粗版（D11）：留下每群的第一条（全行星那一档），丢掉后面的（旧的一圈），
+//       再给 --near 那一群 --near-radius km 内（群心之间的大圆距离）的每一群生成 --near-res 米一档、按节点排在后面——
+//       同 tools/export_planet.py --near N --near-res 500 --near-radius 600 写出的 lods.bin；--out 缺省就地改写）
 // 输出（stdout）一行一件：节点、各段用时（秒）。
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -45,8 +50,59 @@ std::vector<int64_t> parse_nodes(const std::string &p_s) {
 }
 
 int usage() {
-    std::fprintf(stderr, "zhouzhu_gen group|lods|world|planet --config <config.tsv> --seed N ...（见 tools/zhouzhu_gen.cpp 开头）\n");
+    std::fprintf(stderr, "zhouzhu_gen group|lods|world|planet|near-lods --config <config.tsv> --seed N ...（见 tools/zhouzhu_gen.cpp 开头）\n");
     return 2;
+}
+
+// lods.bin（export_planet.write_lods / gen_export::lods_bin 的格式）读回成一条条；格距、左上角是 f32，读回再写逐位不变
+bool parse_lods(const std::string &p_bytes, std::vector<gen_export::LodEntry> &r_entries, std::string &r_error) {
+    auto get = [&](size_t p_at, auto &r_value) {
+        std::memcpy(&r_value, p_bytes.data() + p_at, sizeof(r_value));
+    };
+    if (p_bytes.size() < 12 || p_bytes.compare(0, 4, "ZZLD") != 0) {
+        r_error = "不是 lods.bin";
+        return false;
+    }
+    uint32_t version = 0, count = 0;
+    get(4, version);
+    get(8, count);
+    constexpr size_t ROW = 4 + 4 * 3 + 2 * 4 + 8 + 4;
+    if (version != 1 || p_bytes.size() < 12 + size_t(count) * ROW) {
+        r_error = "lods.bin 版本不对或索引不全";
+        return false;
+    }
+    r_entries.clear();
+    for (uint32_t k = 0; k < count; k++) {
+        const size_t at = 12 + size_t(k) * ROW;
+        uint32_t node = 0, bytes = 0;
+        float res = 0.0f, ox = 0.0f, oy = 0.0f;
+        uint16_t rows = 0, cols = 0, n_islands = 0;
+        uint64_t off = 0;
+        get(at, node);
+        get(at + 4, res);
+        get(at + 8, ox);
+        get(at + 12, oy);
+        get(at + 16, rows);
+        get(at + 18, cols);
+        get(at + 20, n_islands);
+        get(at + 24, off);
+        get(at + 32, bytes);
+        if (off + bytes > p_bytes.size()) {
+            r_error = "lods.bin 第 " + std::to_string(k) + " 条的数据越界";
+            return false;
+        }
+        gen_export::LodEntry e;
+        e.node = node;
+        e.res_m = res;
+        e.origin_x = ox;
+        e.origin_y = oy;
+        e.rows = rows;
+        e.cols = cols;
+        e.n_islands = n_islands;
+        e.blob = p_bytes.substr(size_t(off), bytes);
+        r_entries.push_back(std::move(e));
+    }
+    return true;
 }
 
 } // namespace
@@ -160,6 +216,73 @@ int main(int argc, char **argv) {
         }
         std::printf("done %.2f s\n", now_s() - t0);
         return failed ? 1 : 0;
+    }
+    if (cmd == "near-lods") {
+        const std::string in_path = a["--lods"];
+        const std::string out_path = a.count("--out") ? a["--out"] : in_path;
+        const int64_t near = std::atoll(a["--near"].c_str());
+        const double near_res = a.count("--near-res") ? std::atof(a["--near-res"].c_str()) : 500.0;
+        const double radius_km = a.count("--near-radius") ? std::atof(a["--near-radius"].c_str()) : 600.0;
+        std::string bytes;
+        std::vector<gen_export::LodEntry> old_entries;
+        if (!gen_core::read_file(in_path, bytes) || !parse_lods(bytes, old_entries, error)) {
+            std::fprintf(stderr, "读不了 %s：%s\n", in_path.c_str(), error.c_str());
+            return 2;
+        }
+        const auto &I = ps->world.islands;
+        if (near < 0 || size_t(near) >= I.n()) {
+            std::fprintf(stderr, "没有岛群 #%lld\n", static_cast<long long>(near));
+            return 2;
+        }
+        // 每群的第一条是全行星那一档（export_planet 先写全行星、再写近邻），后面的是旧的一圈
+        std::vector<gen_export::LodEntry> entries;
+        std::vector<char> seen(I.n(), 0);
+        size_t dropped = 0, dropped_bytes = 0;
+        for (gen_export::LodEntry &e : old_entries) {
+            if (e.node >= 0 && size_t(e.node) < seen.size() && !seen[size_t(e.node)]) {
+                seen[size_t(e.node)] = 1;
+                entries.push_back(std::move(e));
+            } else {
+                dropped++;
+                dropped_bytes += e.blob.size();
+            }
+        }
+        // 近邻：群心之间的大圆距离（同 export_planet：R · arccos(clip(sin φ0 sin φ + cos φ0 cos φ cos(λ − λ0))）
+        const double deg = 3.14159265358979323846 / 180.0;
+        const double R = ps->world.planet.radius_km;
+        const double la0 = I.lat[size_t(near)] * deg, lo0 = I.lon[size_t(near)] * deg;
+        std::vector<int64_t> nodes;
+        for (size_t k = 0; k < I.n(); k++) {
+            const double la = I.lat[k] * deg, lo = I.lon[k] * deg;
+            double c = std::sin(la0) * std::sin(la) + std::cos(la0) * std::cos(la) * std::cos(lo - lo0);
+            c = c < -1.0 ? -1.0 : (c > 1.0 ? 1.0 : c);
+            const double d = R * std::acos(c);
+            if (d <= radius_km) {
+                nodes.push_back(int64_t(k));
+                if (radius_km - d < 1.0) {
+                    std::printf("注意：#%zu 离 #%lld %.3f km，贴着 %.0f km 的线\n", k, static_cast<long long>(near), d, radius_km);
+                }
+            }
+        }
+        size_t added_bytes = 0;
+        for (int64_t node : nodes) {
+            const double t = now_s();
+            gen_export::LodEntry lod;
+            gen_export::WeatherEntry wx;
+            gen_core::lod_only(*ps, node, lod, wx, near_res);
+            added_bytes += lod.blob.size();
+            std::printf("near %lld res %.0f %dx%d %zu B %.2f s\n", static_cast<long long>(node), lod.res_m, lod.rows, lod.cols, lod.blob.size(), now_s() - t);
+            std::fflush(stdout);
+            entries.push_back(std::move(lod));
+        }
+        if (!gen_core::write_file(out_path, gen_export::lods_bin(entries), error)) {
+            std::fprintf(stderr, "%s\n", error.c_str());
+            return 1;
+        }
+        std::printf("near-lods #%lld：丢掉旧的一圈 %zu 条 %.2f MB，加 %zu 条 %.2f MB（%.0f km 内、%.0f m）；共 %zu 条 → %s，%.2f s\n",
+                static_cast<long long>(near), dropped, dropped_bytes / 1e6, nodes.size(), added_bytes / 1e6, radius_km, near_res, entries.size(),
+                out_path.c_str(), now_s() - t0);
+        return 0;
     }
     if (cmd == "lods") {
         int failed = 0;

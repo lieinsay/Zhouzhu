@@ -75,8 +75,9 @@ void clear_planet_states();
 // （同 skyisle island lod 另跑一遍地形 + 水系的结果，逐字节相同）
 skyisle::island::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry *r_lod = nullptr,
         gen_export::WeatherEntry *r_weather = nullptr);
-// 只出粗版（地形 + 水系 + 四季与一年的逐日天气，不跑资源、聚落：同 skyisle island lod）
-void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather);
+// 只出粗版（地形 + 水系 + 四季与一年的逐日天气，不跑资源、聚落：同 skyisle island lod）；p_lod_res_m 是粗版的格距
+// （同 skyisle island lod --lod-res：块边长 round(格距 / 原生格距)，全行星 2000，开局周围那一圈 500）
+void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather, double p_lod_res_m = 2000.0);
 // [island.climate] precip_mm_min / max / exp（逐日天气包头里的 precip_formula）
 std::array<double, 3> precip_formula(const GenConfig &p_config);
 
