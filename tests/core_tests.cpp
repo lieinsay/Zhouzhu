@@ -99,6 +99,7 @@
 #include "scipy_edt.h"
 #include "skyisle/island/generate.hpp"
 #include "skyisle/planet/view.hpp"
+#include "story_start.h"
 
 namespace {
 
@@ -116,6 +117,17 @@ void check(bool p_ok, const std::string &p_what) {
 void check_near(double p_actual, double p_expected, double p_tol, const std::string &p_what) {
     check(std::abs(p_actual - p_expected) <= p_tol,
             p_what + "（得到 " + std::to_string(p_actual) + "，应为 " + std::to_string(p_expected) + " ± " + std::to_string(p_tol) + "）");
+}
+
+// 仓库里带细版的两群：开局那群与它最近的邻群（开局配置 story_start.h；PLAN-LAND P0 起是 #6329、#6327，以前是 #2051、#2050）。
+// 下面「开局那群」的金标（岛数、码头号、村号、户数……）都是这一群的，换开局或重导要重记。
+constexpr int START = story_start::SPAWN_NODE;
+constexpr int NEIGHBOR = story_start::NEIGHBOR_NODE;
+std::string group_dir(int p_node) {
+    return std::string(ZHOUZHU_SOURCE_DIR) + "/" + story_start::GROUPS_REL + "/" + std::to_string(p_node);
+}
+std::string start_dir() {
+    return group_dir(START);
 }
 
 // 岛上的农田模型：地面与模型一起活着
@@ -1897,31 +1909,31 @@ void test_map_image() {
     check_near(u, 0.5, 1e-9, "格 (0,0) 的格心在像素 (0.5, 0.5)");
 }
 
-// 真正入库的 2051 资产（仓库里有才测）
-void test_world_2051() {
-    const std::string path = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/terrain.bin";
-    std::ifstream in(path, std::ios::binary);
-    if (!in) {
-        std::printf("world 2051（跳过：没有 %s）\n", path.c_str());
+// 真正入库的开局那群的资产（仓库里有才测）
+void test_world_start() {
+    const std::string path = start_dir() + "/terrain.bin";
+    std::ifstream in(path, std::ios::binary), tsv_in(start_dir() + "/sites.tsv", std::ios::binary);
+    if (!in || !tsv_in) {
+        std::printf("world %d（跳过：没有 %s）\n", START, path.c_str());
         return;
     }
-    std::printf("world 2051\n");
+    std::printf("world %d（开局那群）\n", START);
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
     WorldGrid g;
+    WorldSites sites;
     std::string err;
-    check(parse_world_grid(bin.data(), bin.size(), g, err), "2051 的 terrain.bin 能解析：" + err);
-    check(g.rows == 1012 && g.cols == 837 && g.res == 100.0, "1012 × 837 格、100 m");
-    check(g.land_count() == 258847, "陆地格数与 skyisle-gen 一致（" + std::to_string(g.land_count()) + "）");
-    // 邑治（村001，skyisle 的 km (10.35, 21.85)，主岛东北的岸边低地）
-    const double sx = 10350.0, sz = -21850.0;
-    check(g.shore[g.nearest_cell(sx, sz)] > 0 && std::abs(g.height_at(sx, sz) - 238.0) < 6.0, "邑治在陆地上、高约 238 m（" + std::to_string(g.height_at(sx, sz)) + "）");
+    check(parse_world_grid(bin.data(), bin.size(), g, err), "开局那群的 terrain.bin 能解析：" + err);
+    check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
+    check(g.rows == 1312 && g.cols == 1243 && g.res == 100.0, "1312 × 1243 格、100 m");
+    check(g.land_count() == 513994, "陆地格数与生成器一致（" + std::to_string(g.land_count()) + "）");
+    // 邑治（村001，主岛东岸的海岸平原，主码头 #1 往西南 1.2 km）
+    const SiteSettlement *seat = sites.village_by_id(1);
+    check(seat && seat->seat, "村001 是邑治");
+    const double sx = seat ? seat->x : 0.0, sz = seat ? seat->z : 0.0;
+    check(g.shore[g.nearest_cell(sx, sz)] > 0 && std::abs(g.height_at(sx, sz) - 621.0) < 8.0, "邑治在陆地上、高约 621 m（" + std::to_string(g.height_at(sx, sz)) + "）");
     check(g.island[g.nearest_cell(sx, sz)] == 0, "邑治在主岛");
-    WorldIsland main;
-    main.rim_m = 236.1;
-    main.cliff_m = 45.1;
-    main.keel_m = 191.0;
-    main.max_shore_m = 15000.0;
-    const WorldTerrain t(g, { main }, 2051);
+    const WorldTerrain t(g, { sites.terrain_islands().front() }, START);
     double y = 0.0;
     check(t.surface(sx, sz, y), "邑治处连续地形有地");
     const TileLayout layout(g);
@@ -1936,15 +1948,15 @@ void test_world_2051() {
     check(tiles.size() > 20 && tiles.size() < 600, "块数在几十到几百之间（" + std::to_string(tiles.size()) + "）");
 }
 
-// 2051 的地形 v3：生成器下切过的河道、地形区与游戏的厚岛体
-void test_terrain_v3_2051() {
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+// 开局那群的地形 v3：生成器下切过的河道、地形区与游戏的厚岛体
+void test_terrain_v3_start() {
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
-        std::printf("terrain v3（跳过：没有 2051 资产）\n");
+        std::printf("terrain v3（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("terrain v3（2051）\n");
+    std::printf("terrain v3（开局那群）\n");
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
     const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
     WorldGrid g;
@@ -1952,8 +1964,10 @@ void test_terrain_v3_2051() {
     std::string err;
     check(parse_world_grid(bin.data(), bin.size(), g, err) && g.has_hydro() && g.has_channels() && g.zone.size() == g.height.size(), "terrain.bin v3 带河道与地形区：" + err);
     check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
-    // 河道格：有宽深、汇流到溪涧门槛；河床顺流不升（生成器保证单调，导出按汇流反推的流向要接得上）
-    int chan = 0, chan_small = 0, uphill = 0, off_channel = 0;
+    // 河道格：有宽深、汇流到溪涧门槛；河床顺流不升（生成器保证单调，导出按汇流反推的流向要接得上）；
+    // 流进湖（地表类 11，湖格的高是湖面）的那一格另算：湖面比入湖的河床高，那一格河道到头（开局那群 #6329 有湖，以前的 2051 没有）
+    constexpr uint8_t LAKE = 11;
+    int chan = 0, chan_small = 0, uphill = 0, off_channel = 0, into_lake = 0;
     double widest = 0.0;
     for (int r = 0; r < g.rows; r++) {
         for (int c = 0; c < g.cols; c++) {
@@ -1969,18 +1983,23 @@ void test_terrain_v3_2051() {
                 continue;
             }
             const size_t down = g.index(r + WorldGrid::FLOW_OFFSETS[(code & 0x0F) - 1][0], c + WorldGrid::FLOW_OFFSETS[(code & 0x0F) - 1][1]);
+            if (g.landcover[down] == LAKE) {
+                into_lake++;
+                continue;
+            }
             uphill += g.height[down] > g.height[k] + 0.05f ? 1 : 0;
             off_channel += g.river_width[down] <= 0.0f ? 1 : 0;
         }
     }
-    std::printf("  河道格 %d，最宽 %.1f m，顺流上坡 %d 格、流出河道 %d 格\n", chan, widest, uphill, off_channel);
-    check(chan > 10000 && widest > 50.0 && widest < 80.0, "河道格上万、常年河最宽六十多米（台面口径起 2051 有常年河）");
+    std::printf("  河道格 %d，最宽 %.1f m，顺流上坡 %d 格、流出河道 %d 格；流进湖 %d 格\n", chan, widest, uphill, off_channel, into_lake);
+    check(chan > 10000 && widest > 50.0 && widest < 80.0, "河道格上万、常年河最宽六七十米");
     check(chan_small == 0, "河道格的汇流都到了 1 km² 的溪涧门槛");
     check(uphill < chan / 1000, "河床顺流几乎处处不升（" + std::to_string(uphill) + " 格例外）");
-    check(off_channel == 0, "河道格顺流总流到下一个河道格（流向按生成器的汇流反推）");
+    check(off_channel == 0, "河道格顺流总流到下一个河道格或湖（流向按生成器的汇流反推）");
+    check(into_lake > 0 && into_lake < 100, "有河流进湖（" + std::to_string(into_lake) + " 格）");
 
     // 地形区：山里比台地崎岖
-    const WorldTerrain t(g, sites.terrain_islands(), 2051);
+    const WorldTerrain t(g, sites.terrain_islands(), START);
     double rough[8] = {}, count[8] = {};
     for (int r = 2; r < g.rows - 2; r += 3) {
         for (int c = 2; c < g.cols - 2; c += 3) {
@@ -1995,7 +2014,7 @@ void test_terrain_v3_2051() {
     }
     auto mean_of = [&](int z) { return count[z] > 0 ? rough[z] / count[z] : 0.0; };
     std::printf("  细节起伏均值：高山 %.1f、山地 %.1f、丘陵 %.1f、台地平原 %.1f m\n", mean_of(1), mean_of(2), mean_of(3), mean_of(4));
-    check(count[2] > 50 && count[4] > 50, "2051 有山地也有台地平原");
+    check(count[2] > 50 && count[4] > 50, "开局那群有山地也有台地平原");
     check(mean_of(2) > 2.0 * mean_of(4), "山地的细节起伏是台地的两倍以上");
 
     // 厚岛体：主岛崖壁上百米、岛心垂到云带顶以下一千多米；所有岛底都在云海之上
@@ -2015,18 +2034,18 @@ void test_terrain_v3_2051() {
     const TerrainSample deep = t.sample(cx, cz);
     std::printf("  主岛：崖壁 %.0f m、龙骨 %.0f m；岛心顶 %.0f m、底 %.0f m（厚 %.0f m）；全群最低 %.0f m\n", body.wall_m, body.keel_m, deep.top, deep.bottom, deep.top - deep.bottom, t.lowest_bottom());
     check(deep.top - deep.bottom > 3000.0, "主岛岛心厚三千米以上");
-    // 浮高计划 F3：所有岛底（连岩棱）至少高出云带顶 1000 m；2051 的岛本来就在这之上，龙骨一座也不收
+    // 浮高计划 F3：所有岛底（连岩棱）至少高出云带顶 1000 m；开局那群的岛本来就在这之上，龙骨一座也不收
     check(t.lowest_bottom() >= VerticalDatum::ISLAND_BOTTOM_MIN_Y - 1e-6,
             "所有岛底都在云带顶之上一千米以外（" + std::to_string(t.lowest_bottom()) + "，云带顶 " + std::to_string(VerticalDatum::CLOUD_TOP_Y) + "）");
     int clamped = 0;
     for (const WorldIsland &isl : sites.terrain_islands()) {
         clamped += island_body(isl).keel_m < 25.0 * std::sqrt(std::max(1.0, isl.max_shore_m)) - 1e-9 ? 1 : 0;
     }
-    check(clamped == 0, "2051 的岛龙骨一座也不收短（" + std::to_string(clamped) + "）");
-    // 崖脚：离岸线二十米处岛底还贴着崖壁下沿
+    check(clamped == 0, "开局那群的岛龙骨一座也不收短（" + std::to_string(clamped) + "）");
+    // 崖脚：离岸线五十到一百五十米处岛底还贴着崖壁下沿（在整张栅格上散着抽 4000 格）
     int near_edge = 0, near_ok = 0;
-    for (int k = 0; k < 400; k++) {
-        const size_t cell = size_t(k) * 997 % g.shore.size();
+    for (int k = 0; k < 4000; k++) {
+        const size_t cell = size_t(k) * 2654435761ull % g.shore.size();
         if (g.island[cell] != 0 || g.shore[cell] < 50.0f || g.shore[cell] > 150.0f) {
             continue;
         }
@@ -2209,13 +2228,13 @@ void test_village_plan() {
 }
 
 void test_world_sites() {
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
-        std::printf("world_sites（跳过：没有 2051 资产）\n");
+        std::printf("world_sites（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("world_sites（2051）\n");
+    std::printf("world_sites（开局那群）\n");
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
     const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
     WorldGrid g;
@@ -2223,23 +2242,23 @@ void test_world_sites() {
     std::string err;
     check(parse_world_grid(bin.data(), bin.size(), g, err), "terrain.bin 能解析");
     check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
-    check(sites.islands.size() == 32 && sites.docks.size() == 61 && sites.settlements.size() == 1176, "32 岛、61 码头、206 村（含专业聚落 51）+ 970 散户");
+    check(sites.islands.size() == 38 && sites.docks.size() == 59 && sites.settlements.size() == 1474, "38 岛、59 码头、239 村（含专业聚落 51）+ 1235 散户");
     const SiteSettlement *seat = sites.village_by_id(1);
-    check(seat && seat->seat && seat->households == 395 && seat->name == "村001", "村001 是邑治、395 户（农 328 + 邑里的市户 67）");
+    check(seat && seat->seat && seat->households == 486 && seat->name == "村001", "村001 是邑治、486 户（农户与邑里的市户）");
     const SiteDock *main_dock = sites.dock_by_id(1);
     check(main_dock && main_dock->main && main_dock->island == 0, "主码头 #1 在主岛");
     WorldSites bad;
     check(!parse_world_sites("dock\t1\tx\t0\t0\t0\n", bad, err), "坏行报错");
 
-    WorldTerrain t(g, sites.terrain_islands(), 2051);
+    WorldTerrain t(g, sites.terrain_islands(), START);
     const WorldWorks works = lay_world_works(t, sites);
     const std::vector<DockPlan> &docks = works.docks;
     int ok = 0;
     for (const DockPlan &d : docks) {
         ok += d.ok;
     }
-    check(ok == 61, "61 个码头都找到岸缘（" + std::to_string(ok) + "）");
-    // 主码头 #1 与岛 #2 上的目的码头 #28（浮高重导前是 #26）：压平后泊位附近的地面等高（这两处没有河从坪上过；有河的坪让给河）
+    check(ok == int(sites.docks.size()), "59 个码头都找到岸缘（" + std::to_string(ok) + "）");
+    // 主码头 #1 与岛 #13 上的目的码头 #28（场景里配的 destination_dock，离主码头 23 km）：压平后泊位附近的地面等高（这两处没有河从坪上过；有河的坪让给河）
     for (int id : { 1, 28 }) {
         size_t k = 0;
         while (sites.docks[k].id != id) {
@@ -2265,14 +2284,14 @@ void test_world_sites() {
         check(t.surface(d.x - 12.0 * d.out_x, d.z - 12.0 * d.out_z, y) && std::abs(y - d.y) < 1e-6, tag + "：出生点（岸缘内 12 m）在坪上");
         const TerrainSample raw = t.sample_raw(d.x + (d.pier_m + 0.15) * d.out_x, d.z + (d.pier_m + 0.15) * d.out_z);
         check(!raw.land, tag + "：泊位在岸外");
-        const double rim = sites.islands[size_t(sites.docks[k].island)].rim_m; // 浮高以后各岛的岸缘高低不同（岛 #2 往下 90 m、岸缘 121 m）
+        const double rim = sites.islands[size_t(sites.docks[k].island)].rim_m; // 浮高以后各岛的岸缘高低不同（主岛 611 m、岛 #13 464 m）
         check(d.y > rim - 30.0 && d.y < rim + 150.0, tag + "：坪高在岸缘一带（" + std::to_string(d.y) + " m，岸缘 " + std::to_string(rim) + " m）");
     }
-    // 目的码头 #28 旁的村124 与邑治（主码头旁）：不压码头的坪、不在陡坡上
+    // 目的码头 #28 旁的村112（17 户，580 m）与邑治（主码头旁）：不压码头的坪、不在陡坡上
     const WorldVillageRules rules;
-    for (int id : { 124, 1 }) {
+    for (int id : { 112, 1 }) {
         const SiteSettlement *v = sites.village_by_id(id);
-        const VillagePlan plan = plan_world_village(t, *v, 2051, rules);
+        const VillagePlan plan = plan_world_village(t, *v, START, rules);
         const std::string tag = v->name;
         check(plan.missing == 0 && plan.layout.size() == plan.wanted, tag + "：全摆下（" + std::to_string(plan.layout.size()) + " 座）");
         const WorldGround map(t, v->x, v->z);
@@ -2288,7 +2307,7 @@ void test_world_sites() {
         }
         check(!on_pad, tag + "：没有一座压着码头的坪");
         check(!steep, tag + "：没有一座在陡坡上");
-        check(plan.layout == plan_world_village(t, *v, 2051, rules).layout, tag + "：同输入同清单");
+        check(plan.layout == plan_world_village(t, *v, START, rules).layout, tag + "：同输入同清单");
     }
 }
 
@@ -2414,7 +2433,7 @@ void test_map_grounds() {
     check_probe(c);
 
     // 岛群：主码头 #7 的坪与船坞坪、一处溪涧、离水远的生地
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
         return;
@@ -2426,7 +2445,7 @@ void test_map_grounds() {
     std::string err;
     parse_world_grid(bin.data(), bin.size(), g, err);
     parse_world_sites(tsv, sites, err);
-    WorldTerrain t(g, sites.terrain_islands(), 2051);
+    WorldTerrain t(g, sites.terrain_islands(), START);
     const WorldWorks works = lay_world_works(t, sites);
     size_t main_k = 0;
     while (main_k < sites.docks.size() && !sites.docks[main_k].main) {
@@ -2548,7 +2567,7 @@ void test_layout_edits() {
     check(!ok, "认不出时 r_ok 为假");
 }
 
-// ---------------------------------------------------------------- 河：河网、水情、凿河道、地面问水、水面网格（2051）
+// ---------------------------------------------------------------- 河：河网、水情、凿河道、地面问水、水面网格（开局那群）
 
 void test_world_rivers() {
     // v1 的栅格没有水文：河网是空的，地形照旧
@@ -2557,13 +2576,13 @@ void test_world_rivers() {
         const WorldTerrain t(g, {}, 7);
         check(!g.has_hydro() && !t.has_rivers(), "v1 栅格没有水文、没有河网");
     }
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary), wx_in(dir + "/weather.tsv", std::ios::binary);
     if (!bin_in || !tsv_in || !wx_in) {
-        std::printf("world_rivers（跳过：没有 2051 资产）\n");
+        std::printf("world_rivers（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("world_rivers（2051）\n");
+    std::printf("world_rivers（开局那群）\n");
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
     const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
     const std::string weather((std::istreambuf_iterator<char>(wx_in)), std::istreambuf_iterator<char>());
@@ -2576,7 +2595,7 @@ void test_world_rivers() {
     // 水情
     RiverRegime regime;
     check(RiverRegime::parse(weather, regime, err), "weather.tsv 能解析：" + err);
-    check(regime.get_daily().size() == 336 && std::abs(regime.precip_mm() - 901.0) < 1.0, "一年 336 天、年降水 901 mm");
+    check(regime.get_daily().size() == 336 && std::abs(regime.precip_mm() - 810.0) < 1.0, "一年 336 天、年降水 810 mm");
     double mean = 0.0, lo = 1e9, hi = 0.0;
     for (double r : regime.get_daily()) {
         mean += r / double(regime.get_daily().size());
@@ -2593,8 +2612,8 @@ void test_world_rivers() {
     RiverRules rules;
     rules.precip_mm = regime.precip_mm();
     rules.year_days = regime.year_days();
-    const WorldTerrain t(g, sites.terrain_islands(), 2051, rules);
-    check(t.has_rivers(), "2051 有河网");
+    const WorldTerrain t(g, sites.terrain_islands(), START, rules);
+    check(t.has_rivers(), "开局那群有河网");
     const WorldRivers &rivers = t.get_rivers();
     int stems = 0, mouths = 0, rising = 0, drying_acc = 0, off_parent = 0;
     const RiverStem *trunk = nullptr;
@@ -2836,7 +2855,7 @@ void test_goldens() {
     }
     report_golden("出发岛导航格", nav.h, 0x2a3e1b14d039d760ull);
 
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
         return;
@@ -2848,13 +2867,13 @@ void test_goldens() {
     std::string err;
     parse_world_grid(bin.data(), bin.size(), g, err);
     parse_world_sites(tsv, world_sites, err);
-    WorldTerrain t(g, world_sites.terrain_islands(), 2051);
+    WorldTerrain t(g, world_sites.terrain_islands(), START);
     lay_world_works(t, world_sites);
-    // 离主码头（#1，邑治旁）远的几处：目的码头 #28 边的村124、两个普通村、一户散户（浮高重导前是村126、村040、村120、散户175，同一处地方）
+    // 离主码头（#1，邑治旁）远的几处：目的码头 #28（岛 #13）边的村112、主岛西边的村008 与村011、#28 边的散户1073
     Fnv villages;
     for (const SiteSettlement &s : world_sites.settlements) {
-        if ((!s.hamlet && (s.id == 124 || s.id == 26 || s.id == 118)) || (s.hamlet && s.id == 179)) {
-            const VillagePlan plan = plan_world_village(t, s, 2051, WorldVillageRules());
+        if ((!s.hamlet && (s.id == 112 || s.id == 8 || s.id == 11)) || (s.hamlet && s.id == 1073)) {
+            const VillagePlan plan = plan_world_village(t, s, START, WorldVillageRules());
             for (const std::string &id : settlement_ids(plan.layout)) {
                 villages.mix_s(id);
             }
@@ -2865,8 +2884,9 @@ void test_goldens() {
     // 拓展「按新版生成器优化地形」换了下切过河道的栅格、按地形区加减起伏，又记了一次；
     // 重构「按生成器的真实起伏重做 2051」换了地形与全部点位，换了一组村重记；
     // 拓展「按点 / 片 / 散生成资源」换了生成器新版的地表（村周开垦、采场格改裸岩；细节起伏按地表调幅）与码头，又记了一次；
-    // 浮高计划 Z2 按生成器的浮高重导（岛 #1、#2 整座上下平移，村号跟着户数重排、户数也变了：村026 55 → 80 户），同一处地方的村重记）
-    report_golden("岛群远离主码头的村", villages.h, 0x0f501de4a5cc8834ull);
+    // 浮高计划 Z2 按生成器的浮高重导（岛 #1、#2 整座上下平移，村号跟着户数重排、户数也变了：村026 55 → 80 户），同一处地方的村重记；
+    // 地貌与聚落 P0 开局从 #2051 换到 #6329，换成这一群里的四处重记）
+    report_golden("岛群远离主码头的村", villages.h, 0x13d186e4cea19352ull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）
@@ -3290,14 +3310,14 @@ void test_freight() {
     check(slots.size() == 8 && open == 8, "被盖住的那节是能进的货舱，货位也够得着");
 
     // 土产：确定、在表里、不是粮
-    const char *sp = freight::specialty_of(2051, 152, false);
-    check(std::string(sp) == freight::specialty_of(2051, 152, false), "同种子同村同土产");
+    const char *sp = freight::specialty_of(START, 152, false);
+    check(std::string(sp) == freight::specialty_of(START, 152, false), "同种子同村同土产");
     check(catalog::item(sp) && !catalog::crop_of_seed(sp) && catalog::item("coin"), "土产与铜钱在物品表里，不是种子");
     int kinds = 0;
     for (const char *id : { "cloth", "pottery", "lacquer" }) {
         bool seen = false;
         for (int v = 1; v <= 60; v++) {
-            seen = seen || std::string(freight::specialty_of(2051, v, false)) == id;
+            seen = seen || std::string(freight::specialty_of(START, v, false)) == id;
         }
         kinds += seen ? 1 : 0;
     }
@@ -3380,11 +3400,11 @@ void test_freight() {
     }
     check(land_berth::ship_problem(longer).find("太长") != std::string::npos, "七节长的船停不下");
 
-    // 2051：主码头 #1 附近的村029 的委托开到岛 #9 上的烧炭营43（专业聚落也是村，有船台；浮高重导前是村031 → 村号 203，同一处地方）
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    // 开局那群：主码头 #1 附近的一个村（FROM_ID）的委托开到别的岛上最近的村（专业聚落也是村，有船台）
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
-        std::printf("  （跳过 2051：没有资产）\n");
+        std::printf("  （跳过：没有开局那群的资产）\n");
         return;
     }
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
@@ -3394,15 +3414,16 @@ void test_freight() {
     std::string err;
     parse_world_grid(bin.data(), bin.size(), g, err);
     parse_world_sites(tsv, sites, err);
-    WorldTerrain t(g, sites.terrain_islands(), 2051);
+    WorldTerrain t(g, sites.terrain_islands(), START);
     const WorldWorks works = lay_world_works(t, sites);
     const std::vector<FreightPort> world_ports = plan_freight_ports(sites);
+    constexpr int FROM_ID = 3; // 村003：主码头 #1 往南 2.5 km、271 户
     int from = -1;
     for (size_t k = 0; k < world_ports.size(); k++) {
-        from = world_ports[k].site_id == 29 ? int(k) : from;
+        from = world_ports[k].site_id == FROM_ID ? int(k) : from;
     }
-    check(from >= 0 && world_ports.size() == 206, "206 个村都能托运（含专业聚落，散户不算）");
-    const SiteSettlement *v29 = sites.village_by_id(29);
+    check(from >= 0 && world_ports.size() == 239, "239 个村都能托运（含专业聚落，散户不算）");
+    const SiteSettlement *v29 = sites.village_by_id(FROM_ID);
     const WorldGround land_ground(t, 0.0, 0.0);
     const FarmModel land(&land_ground, land_ground.plot_lattice(), FarmRules());
     WorldLedgerSpec spec;
@@ -3410,23 +3431,25 @@ void test_freight() {
     spec.lattice = land.get_lattice();
     spec.farm_rules = land.get_rules();
     const WorldLedger ledger = open_world_ledger(t, spec, SimRules());
-    const std::string item = freight::specialty_of(2051, 29, false);
-    check(ledger.state->store.count(item) == 152 && ledger.state->store.count("millet") == 8, "村029 开账：仓里 " + catalog::item_name(item) + " 152 份（76 户 × 2），粟照旧 8");
-    check(freight_post_building(ledger.layout) >= 0, "村029 有船台（村仓）");
+    const std::string item = freight::specialty_of(START, FROM_ID, false);
+    std::printf("  村003：%d 户，仓里 %s %d 份、粟 %d\n", v29->households, catalog::item_name(item).c_str(), ledger.state->store.count(item), ledger.state->store.count("millet"));
+    check(ledger.state->store.count(item) == 2 * v29->households && ledger.state->store.count("millet") == 8,
+            "村003 开账：仓里 " + catalog::item_name(item) + " " + std::to_string(2 * v29->households) + " 份（户数 × 2），粟照旧 8");
+    check(freight_post_building(ledger.layout) >= 0, "村003 有船台（村仓）");
     FreightOrder o;
-    check(offer_freight(world_ports, from, ledger.state->store, item, rules, o, why), "村029 开得出委托：" + why);
+    check(offer_freight(world_ports, from, ledger.state->store, item, rules, o, why), "村003 开得出委托：" + why);
     if (o.valid()) {
         const FreightPort &to = world_ports[size_t(o.to)];
-        std::printf("  村029 → %s（岛 #%d，%.1f km）%d 箱，运费 %d\n", to.name.c_str(), to.island, o.km, o.crates, o.fee);
-        check(to.site_id == 198 && to.island == 9, "开到别的岛上最近的烧炭营43");
-        check(o.crates == 2 && o.km > 8.0 && o.km < 9.0, "两箱，八公里多");
-        const SiteSettlement *v198 = sites.village_by_id(198);
-        const VillagePlan p198 = plan_world_village(t, *v198, 2051, WorldVillageRules());
-        check(freight_post_building(p198.layout) >= 0, "烧炭营43 也有船台");
+        std::printf("  村003 → %s（村号 %d，岛 #%d，%.1f km）%d 箱，运费 %d\n", to.name.c_str(), to.site_id, to.island, o.km, o.crates, o.fee);
+        check(to.site_id == 238 && to.island == 3, "开到别的岛上最近的烧炭营50（岛 #3，岸缘 1430 m：比主岛高八百来米）");
+        check(o.crates == 2 && o.km > 12.0 && o.km < 13.0, "两箱，十二公里多");
+        const SiteSettlement *v238 = sites.village_by_id(238);
+        const VillagePlan p238 = plan_world_village(t, *v238, START, WorldVillageRules());
+        check(freight_post_building(p238.layout) >= 0, "烧炭营50 也有船台");
     }
 }
 
-// 资源：种类表、存量账、自家的货箱、2051 的采场与地标规划
+// 资源：种类表、存量账、自家的货箱、开局那群的采场与地标规划
 void test_gather() {
     std::printf("gather\n");
     // 种类表：散的有采场（产物在物品表里、有颜色、有工时与存量），点是地标，片没有采场
@@ -3536,12 +3559,12 @@ void test_gather() {
     check(book.unpack_goods(pack).empty() && !book.is_holding() && pack.count("stone") == 7, "拆箱：7 份回到背包");
     check(book.unpack_goods(pack) == "手上没有货", "空手拆不了");
 
-    // 2051：按 resources.tsv 落采场与地标
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    // 开局那群：按 resources.tsv 落采场与地标
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary), res_in(dir + "/resources.tsv", std::ios::binary),
             wx_in(dir + "/weather.tsv", std::ios::binary);
     if (!bin_in || !tsv_in || !res_in || !wx_in) {
-        std::printf("  （跳过 2051：没有资产）\n");
+        std::printf("  （跳过：没有开局那群的资产）\n");
         return;
     }
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
@@ -3558,8 +3581,9 @@ void test_gather() {
     river_rules.precip_mm = regime.precip_mm();
     river_rules.year_days = regime.year_days();
     const bool parsed = parse_resources(res, data, err);
-    check(parsed && data.deposits.size() == 709 && data.occurrences.size() == 499 && data.workings.size() == 254,
-            "2051：点与片 709、赋存区 499、采场 254（" + std::to_string(data.workings.size()) + "）");
+    std::printf("  点与片 %zu、赋存区 %zu、采场 %zu\n", data.deposits.size(), data.occurrences.size(), data.workings.size());
+    check(parsed && data.deposits.size() == 1183 && data.occurrences.size() == 1041 && data.workings.size() == 365,
+            "开局那群：点与片 1183（片 910 + 点 273）、赋存区 1041、采场 365（" + std::to_string(data.workings.size()) + "）");
     // 栅格的片号与清单对得上：片的代表格在自己的片里（点可以落在片里：林子里的泉眼、洞）
     bool patches_ok = grid.has_resources();
     int patch_count = 0, points_in_patch = 0;
@@ -3572,7 +3596,7 @@ void test_gather() {
             points_in_patch += at >= 0 ? 1 : 0;
         }
     }
-    check(patches_ok && patch_count == 556, "2051 的片号：556 片的代表格都在自己的片里（另有 " + std::to_string(points_in_patch) + " 个点在林子这类片里）");
+    check(patches_ok && patch_count == 910, "片号：910 片的代表格都在自己的片里（另有 " + std::to_string(points_in_patch) + " 个点在林子这类片里）");
     // 赋存区的峰值格品位够门槛；采场那一格的品位与清单一致（u8 量化）
     bool fields_ok = true;
     for (const ResourceOccurrence &o : data.occurrences) {
@@ -3582,17 +3606,19 @@ void test_gather() {
         fields_ok = fields_ok && std::abs(grid.field_cell(WorldGrid::field_of(w.kind.c_str()), grid.nearest_cell(w.x, w.z)) - w.grade) < 0.01;
     }
     check(fields_ok, "赋存区的峰值格、采场那一格的品位与赋存场一致");
-    WorldTerrain t(grid, sites.terrain_islands(), 2051, river_rules);
+    WorldTerrain t(grid, sites.terrain_islands(), START, river_rules);
     lay_world_works(t, sites);
     const auto started = std::chrono::steady_clock::now();
     const ResourcePlan plan = plan_resource_sites(t, sites, data);
     const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
     std::printf("  采场 %zu 处落地（%zu 处够不着船）；并掉 %d、在村里 %d、落不了 %zu；地标 %zu 处（落不了 %zu）（%.0f ms）\n", plan.sites.size(), plan.unreachable.size(),
             plan.merged, plan.in_village, plan.failed.size(), plan.landmarks.size(), plan.landmarks_failed.size(), ms);
-    check(int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size()) == 254, "每一处采场都有下落");
-    check(plan.sites.size() >= 220 && plan.failed.size() * 50 <= 254, "绝大多数采场落了地（落不了的不过 2%）");
-    check(plan.underside == 14 && plan.landmarks.size() + plan.landmarks_failed.size() + 14 == 153 && plan.landmarks_failed.size() * 20 <= plan.landmarks.size(),
-            "泉眼 40、洞穴 105、温泉 8：岛底的洞 14 处不摆，其余绝大多数摆得出样子");
+    const int working_count = int(data.workings.size());
+    check(int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size()) == working_count, "每一处采场都有下落");
+    check(plan.sites.size() >= 320 && int(plan.failed.size()) * 50 <= working_count, "绝大多数采场落了地（落不了的不过 2%）");
+    std::printf("  地标：摆了 %zu、落不了 %zu、岛底的洞 %d\n", plan.landmarks.size(), plan.landmarks_failed.size(), plan.underside);
+    check(plan.underside == 26 && plan.landmarks.size() + plan.landmarks_failed.size() + 26 == 273 && plan.landmarks_failed.size() * 20 <= plan.landmarks.size(),
+            "点 273 处（泉眼、洞穴、温泉）：岛底的洞 26 处不摆，其余绝大多数摆得出样子");
     bool spots_ok = true, piles_ok = true, site_fields_ok = true;
     for (const ResourceSite &s : plan.sites) {
         const ResourceWorking &w = data.workings[size_t(s.working)];
@@ -3628,18 +3654,20 @@ void test_gather() {
         check(resource_reach(t, sites, s.face_x, s.face_z, ResourceSiteRules(), x, z, yaw) == s.reach_m && x == s.land_x && z == s.land_z,
                 "采场 #" + std::to_string(s.id) + "：单独量够不够得着船、泊地在哪，与规划记的一样");
     }
-    // 主码头 #1（邑治旁）一公里内有土坑（邑治用的），六公里内有采石场（生成器按村挑石头 5 km 内就近取，林茂的低地少露头）
+    // 主码头 #1（邑治旁）一带的土坑、采石场：开局那群的主码头在东岸的海岸平原上，近处是熟地，土坑在 5.3 km 外、采石场在 10.2 km 外的山脚
+    // （以前的 #2051 一公里内有土坑、六公里内有采石场）
     const SiteDock *main_dock = sites.dock_by_id(1);
-    bool clay_near = false, stone_near = false;
+    double clay_d = 1e9, stone_d = 1e9;
     for (const ResourceSite &s : plan.sites) {
         const double d = main_dock ? std::hypot(s.face_x - main_dock->x, s.face_z - main_dock->z) : 1e9;
-        clay_near = clay_near || (d < 1000.0 && s.item == "clay");
-        stone_near = stone_near || (d < 6000.0 && s.item == "stone");
+        clay_d = s.item == "clay" ? std::min(clay_d, d) : clay_d;
+        stone_d = s.item == "stone" ? std::min(stone_d, d) : stone_d;
     }
-    check(clay_near && stone_near, "主码头 #1 一公里内有土坑、六公里内有采石场");
+    std::printf("  主码头 #1 最近的土坑 %.0f m、采石场 %.0f m\n", clay_d, stone_d);
+    check(clay_d < 6000.0 && stone_d < 11000.0, "主码头 #1 六公里内有土坑、十一公里内有采石场");
 }
 
-// 散布：按块生成、让开、确定；存量账（采空倒下、长回来）；2051 的密度与泊地
+// 散布：按块生成、让开、确定；存量账（采空倒下、长回来）；开局那群的密度与泊地
 void test_scatter() {
     std::printf("scatter\n");
     // 键：块 + 块内序号，负的块号也拆得回来
@@ -3675,7 +3703,7 @@ void test_scatter() {
     sites.settlements.push_back(village);
     const ResourceData data;
     const ResourcePlan plan;
-    const ResourceScatter scatter(t, sites, data, plan, 2051);
+    const ResourceScatter scatter(t, sites, data, plan, START); // 合成岛；种子随便取，取开局那群的号
     check(scatter.valid(), "有资源栅格就能生成");
     std::map<int, int> counts;
     int in_forest = 0, trees = 0, on_field = 0, in_village = 0, off_island = 0;
@@ -3774,7 +3802,7 @@ void test_scatter() {
     site.face_x = 1100.0, site.face_z = -600.0, site.pile_x = 1107.0, site.pile_z = -600.0;
     site.reach_m = 30.0, site.land_x = 1100.0, site.land_z = -570.0;
     with_site.sites.push_back(site);
-    const ResourceScatter cleared(t, sites, data, with_site, 2051);
+    const ResourceScatter cleared(t, sites, data, with_site, START);
     std::vector<ScatterItem> solids;
     scatter.solids_near(1100.0, -570.0, 16.0, solids);
     const size_t before = solids.size();
@@ -3800,12 +3828,12 @@ void test_scatter() {
                     !ledger.standing(rock, 2, 72.0, 1.0),
             "一份份采（GatherHand 的走法）：采到空才倒");
 
-    // 2051：主码头附近的密度、采场的泊地没有树、生成一块的耗时
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+    // 开局那群：主码头附近的密度、采场的泊地没有树、生成一块的耗时
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary), res_in(dir + "/resources.tsv", std::ios::binary),
             wx_in(dir + "/weather.tsv", std::ios::binary);
     if (!bin_in || !tsv_in || !res_in || !wx_in) {
-        std::printf("  （跳过 2051：没有资产）\n");
+        std::printf("  （跳过：没有开局那群的资产）\n");
         return;
     }
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
@@ -3824,10 +3852,10 @@ void test_scatter() {
     RiverRules river_rules; // 同 World：年降水与一年几天取 weather.tsv
     river_rules.precip_mm = regime.precip_mm();
     river_rules.year_days = regime.year_days();
-    WorldTerrain t51(grid, sites51.terrain_islands(), 2051, river_rules);
+    WorldTerrain t51(grid, sites51.terrain_islands(), START, river_rules);
     lay_world_works(t51, sites51);
     const ResourcePlan plan51 = plan_resource_sites(t51, sites51, data51);
-    const ResourceScatter s51(t51, sites51, data51, plan51, 2051);
+    const ResourceScatter s51(t51, sites51, data51, plan51, START);
     const SiteDock *dock = sites51.dock_by_id(1);
     std::map<int, int> near;
     size_t items = 0;
@@ -3844,10 +3872,11 @@ void test_scatter() {
         }
     }
     const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
-    std::printf("  2051 主码头周围 %d 块：%zu 株（树 %d、灌丛 %d、苇 %d、浮石 %d），每块 %.2f ms\n", chunks, items,
+    std::printf("  开局那群主码头周围 %d 块：%zu 株（树 %d、灌丛 %d、苇 %d、浮石 %d），每块 %.2f ms\n", chunks, items,
             near[int(ScatterLook::BROADLEAF)] + near[int(ScatterLook::CONIFER)], near[int(ScatterLook::SHRUB)], near[int(ScatterLook::REEDS)],
             near[int(ScatterLook::FLOATSTONE)], ms / chunks);
-    check(near[int(ScatterLook::BROADLEAF)] + near[int(ScatterLook::CONIFER)] > 500 && near[int(ScatterLook::SHRUB)] > 500, "主码头周围一公里有树林、有灌丛");
+    // 开局那群的主码头在海岸平原上（3 km 内可耕地一半、草坡两成）：树四百来棵、灌丛一千多丛（以前的 #2051 码头边有林子，树五百棵以上）
+    check(near[int(ScatterLook::BROADLEAF)] + near[int(ScatterLook::CONIFER)] > 300 && near[int(ScatterLook::SHRUB)] > 1000, "主码头周围一公里有树、有灌丛");
     int blocked = 0;
     for (const ResourceSite &site51 : plan51.sites) {
         std::vector<ScatterItem> trunks;
@@ -3870,7 +3899,7 @@ void test_scatter_ecotone() {
     isl.rim_m = 200.0;
     isl.max_shore_m = 5000.0;
     const WorldTerrain t(g, { isl }, 11);
-    const ResourceScatter scatter(t, WorldSites(), ResourceData(), ResourcePlan(), 2051);
+    const ResourceScatter scatter(t, WorldSites(), ResourceData(), ResourcePlan(), START);
     constexpr int BINS = 5;
     const double edges[BINS + 1] = { 0.0, 0.05, 0.35, 0.65, 0.95, 1.01 };
     auto bin_of = [&](double w) {
@@ -4557,21 +4586,21 @@ void test_building_mesh() {
     check(set.resolve_id(tower).empty() && set.resolve(tower).id == bare_template(*buildings::by_id("tower")).id, "库里没有这种外壳：空屋");
 }
 
-void test_village_prep_2051() {
-    const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051";
+void test_village_prep_start() {
+    const std::string dir = start_dir();
     std::ifstream bin_in(dir + "/terrain.bin", std::ios::binary), tsv_in(dir + "/sites.tsv", std::ios::binary);
     if (!bin_in || !tsv_in) {
-        std::printf("village prep 2051（跳过：没有资产）\n");
+        std::printf("village prep（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("village prep 2051\n");
+    std::printf("village prep（开局那群）\n");
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(bin_in)), std::istreambuf_iterator<char>());
     const std::string tsv((std::istreambuf_iterator<char>(tsv_in)), std::istreambuf_iterator<char>());
     WorldGrid g;
     WorldSites sites;
     std::string err;
-    check(parse_world_grid(bin.data(), bin.size(), g, err) && parse_world_sites(tsv, sites, err), "读得了 2051：" + err);
-    WorldTerrain terrain(g, sites.terrain_islands(), 2051);
+    check(parse_world_grid(bin.data(), bin.size(), g, err) && parse_world_sites(tsv, sites, err), "读得了开局那群：" + err);
+    WorldTerrain terrain(g, sites.terrain_islands(), START);
     lay_world_works(terrain, sites);
     const SiteSettlement *seat = sites.village_by_id(1);
     check(seat != nullptr, "有村001");
@@ -4579,9 +4608,9 @@ void test_village_prep_2051() {
         return;
     }
     const auto t0 = std::chrono::steady_clock::now();
-    const VillagePrep prep = prepare_world_village(terrain, *seat, 2051, {});
+    const VillagePrep prep = prepare_world_village(terrain, *seat, START, {});
     const auto t1 = std::chrono::steady_clock::now();
-    check(prep.layout == plan_world_village(terrain, *seat, 2051, WorldVillageRules()).layout && prep.layout == prep.plan.layout, "没有改动：清单就是铺村算法铺的");
+    check(prep.layout == plan_world_village(terrain, *seat, START, WorldVillageRules()).layout && prep.layout == prep.plan.layout, "没有改动：清单就是铺村算法铺的");
     check(prep.frames.size() == size_t(prep.layout.size()), "每座一个地坪");
     size_t in_cells = 0;
     int grounded = 0;
@@ -4593,7 +4622,7 @@ void test_village_prep_2051() {
     }
     check(in_cells == size_t(prep.layout.size()) && grounded == prep.layout.size(), "每座都进了格子、都站在地上（" + std::to_string(prep.layout.size()) + " 座、" + std::to_string(prep.cells.size()) + " 格）");
     const std::string removed = "-" + building_id(prep.layout.at(5));
-    const VillagePrep edited = prepare_world_village(terrain, *seat, 2051, { "# 注释", removed });
+    const VillagePrep edited = prepare_world_village(terrain, *seat, START, { "# 注释", removed });
     check(edited.layout.size() == prep.layout.size() - 1 && edited.unmatched == 0 && edited.frames.size() == size_t(edited.layout.size()), "叠上改动：拆一座");
     // 一格细模的花费（后台线程上的活）
     const WorldGround ground(terrain, seat->x, seat->z);
@@ -4638,8 +4667,8 @@ void test_stream_meter() {
 
 // ---------------------------------------------------------------- 时令与天气
 
-bool load_2051_climate(Climate &r_climate) {
-    std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/weather.tsv", std::ios::binary);
+bool load_start_climate(Climate &r_climate) {
+    std::ifstream in(start_dir() + "/weather.tsv", std::ios::binary);
     if (!in) {
         return false;
     }
@@ -4745,59 +4774,63 @@ void test_climate() {
     check(!parse_climate("0\t1\t2\t冰雹\n", bad, err), "不认识的天气报错");
     check(!parse_climate("# year_days 5\n0\t0\t20\t晴\n", bad, err), "天数对不上报错");
     Climate c;
-    if (!load_2051_climate(c)) {
-        std::printf("  （跳过 2051：没有资产）\n");
+    if (!load_start_climate(c)) {
+        std::printf("  （跳过：没有开局那群的资产）\n");
         return;
     }
-    check(c.days.size() == 336 && std::abs(c.calendar.latitude_deg + 31.6523) < 1e-3 && c.calendar.tilt_deg == 34.0 && c.ref_m == 382.0 &&
-                    std::abs(c.rim_m - 236.1) < 1e-9 && c.season_names.size() == 4 && c.season_names[0] == "暖季一" && c.calendar.days_per_month == 28,
-            "2051：336 天、南纬 31.65°、交角 34°、台面 382 m、岸缘 236 m、四季名");
-    check(c.days[0].kind == WeatherKind::RAIN && c.days[0].wind_from_deg == 107.0 && std::abs(c.days[0].wind_ms - 1.4) < 1e-9 && c.days[0].sailable,
-            "第 0 天：小雨、风从 107° 来 1.4 m/s、能出航");
+    check(c.days.size() == 336 && std::abs(c.calendar.latitude_deg - 34.2321) < 1e-3 && c.calendar.tilt_deg == 34.0 && c.ref_m == 755.5 &&
+                    std::abs(c.rim_m - 610.9) < 1e-9 && c.season_names.size() == 4 && c.season_names[0] == "冷季" && c.calendar.days_per_month == 28,
+            "开局那群：336 天、北纬 34.23°、交角 34°、台面 755.5 m、岸缘 610.9 m、四季名（冷季起头）");
+    check(c.days[0].kind == WeatherKind::CLEAR && c.days[0].wind_from_deg == 259.0 && std::abs(c.days[0].wind_ms - 4.2) < 1e-9 && c.days[0].sailable,
+            "第 0 天：晴、风从 259° 来 4.2 m/s、能出航");
     int no_sail = 0;
     for (const ClimateDay &day : c.days) {
         no_sail += day.sailable ? 0 : 1;
     }
-    check(no_sail == 35, "禁航 35 天（生成器的数）");
+    check(no_sail == 59, "禁航 59 天（生成器的数）");
     check(wind_name(1.0, 0.0) == "西风" && wind_name(0.0, 1.0) == "北风" && wind_name(-1.0, -1.0) == "东南风" && wind_name(0.1, 0.1) == "无风", "风向的叫法：风从哪来");
 }
 
 void test_weather_model() {
     Climate c;
-    if (!load_2051_climate(c)) {
-        std::printf("weather model（跳过：没有 2051 资产）\n");
+    if (!load_start_climate(c)) {
+        std::printf("weather model（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("weather model（2051）\n");
-    const WeatherModel wx(c, 0.0, 2050.0);
+    std::printf("weather model（开局那群）\n");
+    const WeatherModel wx(c, 0.0, 2250.0);
     const double ref = c.ref_m;
-    // 晴天（第 3 天）正午哪儿都不下；大雨天（第 2 天）白天雨区七成上下，整片平均对得上那天的雨量
+    // 开局那群（#6329）的逐日表里挑的三天：第 159 天晴、第 160 天大雨（34 mm，风从 122° 来）、第 161 天晴
+    constexpr int CLEAR_DAY = 161, RAIN_DAY = 160;
+    // 晴天正午哪儿都不下；大雨天白天雨区七成上下，整片平均对得上那天的雨量
     double clear_max = 0.0, rain_sum = 0.0;
     int wet = 0, n = 0;
     for (int i = 0; i < 20; i++) {
         for (int j = 0; j < 20; j++) {
             const double x = -40000.0 + i * 4000.0 + 700.0, z = -40000.0 + j * 4000.0 + 300.0;
-            clear_max = std::max(clear_max, wx.sample(3.5, x, z, ref).precip_mm_h);
+            clear_max = std::max(clear_max, wx.sample(CLEAR_DAY + 0.5, x, z, ref).precip_mm_h);
             for (double hour : { 8.0, 11.0, 14.0, 17.0 }) {
-                const WeatherSample s = wx.sample(2.0 + hour / 24.0, x, z, ref);
+                const WeatherSample s = wx.sample(RAIN_DAY + hour / 24.0, x, z, ref);
                 rain_sum += s.precip_mm_h;
                 wet += s.precip_mm_h > 0.05 ? 1 : 0;
                 n++;
             }
         }
     }
-    check(clear_max == 0.0, "晴天（第 3 天）正午：哪儿都不下");
+    check(c.days[CLEAR_DAY].kind == WeatherKind::CLEAR && c.days[RAIN_DAY].kind == WeatherKind::HEAVY_RAIN && c.days[RAIN_DAY - 1].kind == WeatherKind::CLEAR,
+            "挑的三天：晴、大雨、晴");
+    check(clear_max == 0.0, "晴天（第 161 天）正午：哪儿都不下");
     const double day_mm = rain_sum / n * 24.0;
-    std::printf("  大雨天：雨区 %.0f%%，整片平均折成一天 %.1f mm（数据 %.1f mm）\n", 100.0 * wet / n, day_mm, c.days[2].precip_mm);
+    std::printf("  大雨天：雨区 %.0f%%，整片平均折成一天 %.1f mm（数据 %.1f mm）\n", 100.0 * wet / n, day_mm, c.days[RAIN_DAY].precip_mm);
     check_near(double(wet) / n, 0.72, 0.15, "大雨天：雨区约七成");
-    check_near(day_mm / c.days[2].precip_mm, 1.0, 0.4, "大雨天：整片平均对得上那天的雨量");
+    check_near(day_mm / c.days[RAIN_DAY].precip_mm, 1.0, 0.4, "大雨天：整片平均对得上那天的雨量");
 
-    // 时间上连续：跨过子夜的锋面，一分钟一分钟地看
+    // 时间上连续：跨过子夜的锋面（晴转大雨），一分钟一分钟地看
     const double px = 12000.0, pz = -8000.0;
-    WeatherSample prev = wx.sample(1.75, px, pz, ref);
+    WeatherSample prev = wx.sample(RAIN_DAY - 0.25, px, pz, ref);
     double dt_max = 0.0, dc_max = 0.0, dp_max = 0.0, front_max = 0.0;
     for (int m = 1; m <= 12 * 60; m++) {
-        const WeatherSample s = wx.sample(1.75 + m / 1440.0, px, pz, ref);
+        const WeatherSample s = wx.sample(RAIN_DAY - 0.25 + m / 1440.0, px, pz, ref);
         dt_max = std::max(dt_max, std::abs(s.temp_c - prev.temp_c));
         dc_max = std::max(dc_max, std::abs(s.cloud - prev.cloud));
         dp_max = std::max(dp_max, std::abs(s.precip - prev.precip));
@@ -4807,23 +4840,26 @@ void test_weather_model() {
     check(dt_max < 0.2 && dc_max < 0.08 && dp_max < 0.1 && front_max > 0.9,
             "换天没有一刀切：每游戏分钟 气温 ≤ " + std::to_string(dt_max) + " °C、云 ≤ " + std::to_string(dc_max) + "、雨 ≤ " + std::to_string(dp_max) + "，中途经过锋面");
     // 空间上连续：同一刻相距 30 m
-    double ds_max = 0.0;
+    double ds_max = 0.0, dsp_max = 0.0;
     for (int k = 0; k < 400; k++) {
         const double x = -30000.0 + k * 150.0, z = 5000.0 - k * 70.0;
-        const WeatherSample a = wx.sample(2.4, x, z, ref), b = wx.sample(2.4, x + 30.0, z, ref);
+        const WeatherSample a = wx.sample(RAIN_DAY + 0.4, x, z, ref), b = wx.sample(RAIN_DAY + 0.4, x + 30.0, z, ref);
         ds_max = std::max({ ds_max, std::abs(a.precip - b.precip), std::abs(a.cloud - b.cloud) });
+        dsp_max = std::max(dsp_max, std::abs(a.precip - b.precip));
     }
-    check(ds_max < 0.1, "相距 30 m 的两点：雨与云差不出 0.1（雨区边是软的）");
-    // 锋面顺风扫过：第 2 天的大雨从上风先到
+    std::printf("  相距 30 m：雨、云最多差 %.3f（雨 %.3f）\n", ds_max, dsp_max);
+    // 门槛 0.12：原来按 #2051 第 2 天定的 0.1；#6329 第 160 天的大雨云量高，云边的坡陡一点（0.104），雨只差 0.05
+    check(ds_max < 0.12, "相距 30 m 的两点：雨与云差不出 0.12（雨区边是软的）");
+    // 锋面顺风扫过：大雨从上风先到
     double tx = 0.0, tz = 0.0;
     {
-        const double to = (c.days[2].wind_from_deg + 180.0) * 3.14159265358979 / 180.0;
+        const double to = (c.days[RAIN_DAY].wind_from_deg + 180.0) * 3.14159265358979 / 180.0;
         tx = std::sin(to);
         tz = -std::cos(to);
     }
     auto arrival = [&](double p_x, double p_z) {
         for (int m = 0; m < 24 * 60; m++) {
-            const double t = 1.5 + m / 1440.0;
+            const double t = RAIN_DAY - 0.5 + m / 1440.0;
             if (wx.sample(t, p_x, p_z, ref).cloud_cover > 0.5 * (0.12 + 0.95)) {
                 return t;
             }
@@ -4833,7 +4869,9 @@ void test_weather_model() {
     const double up = arrival(-20000.0 * tx, -20000.0 * tz), down = arrival(20000.0 * tx, 20000.0 * tz);
     check_near((down - up) * 24.0, 40.0 / wx.get_rules().front_kmh, 0.15, "锋面顺风扫过：下风 40 km 晚到（钟头）");
 
-    // 海拔与季节：积雪、冰、物候
+    // 海拔与季节：积雪、冰、物候。开局那群在北半球北纬 34°，历年从冷季起头：第 0–83 天冷季（冬末到早春）、84–167 暖季、168–251 热季、
+    // 252–335 凉季（秋到初冬）；一月、十二月台面日均 0 °C 上下，冬天台面也积雪（#2051 在南半球、冬天只有山上有雪，这几条原来按它写）
+    constexpr int HOT_DAY = 180; // 热季（七月）
     double min_line = 1e9, min_day = 0.0, summer_line = 1e9;
     for (int dd = 0; dd < 336; dd += 2) {
         const double line = wx.snow_line(dd + 0.5);
@@ -4841,14 +4879,14 @@ void test_weather_model() {
             min_line = line;
             min_day = dd + 0.5;
         }
-        if (dd < 60 || dd >= 280) {
+        if (dd >= 168 && dd < 224) {
             summer_line = std::min(summer_line, line);
         }
     }
-    std::printf("  雪线最低 %.0f m（第 %.0f 天）；暖季最低 %.0f；冰线（河）第 %.0f 天 %.0f m\n", min_line, min_day, summer_line, min_day, wx.ice_line(min_day, 20.0));
-    check(min_line < 1800.0 && min_line > ref, "冷季山上积雪：雪线在台面之上、峰顶之下");
-    check(min_day >= 84.0 && min_day < 252.0, "雪线最低落在冷季");
-    check(summer_line > 1e8, "暖季（前 60 天与最后 56 天）：哪儿都没雪");
+    std::printf("  雪线最低 %.0f m（第 %.0f 天）；热季头两个月最低 %.0f；冰线（河）第 %.0f 天 %.0f m\n", min_line, min_day, summer_line, min_day, wx.ice_line(min_day, 20.0));
+    check(min_line < ref, "冬天雪线下到台面以下（冬天台面也积雪）");
+    check(min_day < 84.0 || min_day >= 280.0, "雪线最低落在冬天（冷季或凉季末）");
+    check(summer_line > 1e8, "热季头两个月（第 168–223 天）：哪儿都没雪");
     double deep_day = 0.0, deep_snow = 0.0, mid_day = 0.0;
     for (int dd = 0; dd < 336; dd++) {
         const double sn = wx.elevation(dd + 0.5, 2000.0).snow_mm;
@@ -4857,50 +4895,54 @@ void test_weather_model() {
             deep_day = dd + 0.5;
         }
         const double line = wx.snow_line(dd + 0.5);
-        if (mid_day == 0.0 && line > 1300.0 && line < 1700.0 && dd >= 190) {
+        if (mid_day == 0.0 && line > 1300.0 && line < 1700.0 && dd >= 84) {
             mid_day = dd + 0.5;
         }
     }
-    check(deep_snow > 100.0 && wx.elevation(deep_day, ref).snow_mm < 1.0 && deep_day >= 150.0 && deep_day < 260.0,
-            "冷季末两千米积雪最厚（" + std::to_string(deep_snow) + " mm，第 " + std::to_string(deep_day) + " 天）、台面没有");
-    check(wx.ice_line(min_day, 20.0) < 2050.0 && wx.ice_line(20.5, 8.0) > 1e8, "冷季高处的河冻、暖季哪儿都不冻");
-    const ElevationState lush = wx.elevation(20.5, ref), bare = wx.elevation(min_day, 1800.0);
-    check(lush.green > 0.6 && lush.leaf > 0.95 && bare.leaf < 0.3 && bare.green < lush.green, "暖季台面满绿、冷季高处落叶");
+    std::printf("  两千米积雪最厚 %.0f mm（第 %.1f 天），那天台面 %.1f mm；雪线在 1300–1700 m 的头一天（暖季起）第 %.1f 天\n", deep_snow, deep_day,
+            wx.elevation(deep_day, ref).snow_mm, mid_day);
+    check(deep_snow > 100.0 && deep_day < 100.0 && wx.elevation(deep_day, 2000.0).snow_mm > 10.0 * wx.elevation(deep_day, ref).snow_mm,
+            "冷季末两千米积雪最厚（" + std::to_string(deep_snow) + " mm，第 " + std::to_string(deep_day) + " 天）、台面薄得多");
+    check(wx.ice_line(min_day, 20.0) < 2050.0 && wx.ice_line(HOT_DAY + 0.5, 8.0) > 1e8, "冬天高处的河冻、热季哪儿都不冻");
+    const ElevationState lush = wx.elevation(HOT_DAY + 0.5, ref), bare = wx.elevation(min_day, 1800.0);
+    std::printf("  热季台面 绿 %.2f 叶 %.2f；冬天一千八百米 绿 %.2f 叶 %.2f\n", lush.green, lush.leaf, bare.green, bare.leaf);
+    check(lush.green > 0.6 && lush.leaf > 0.95 && bare.leaf < 0.3 && bare.green < lush.green, "热季台面满绿、冬天高处落叶");
     double autumn_max = 0.0, spring_max = 0.0;
     for (int dd = 0; dd < 336; dd++) {
-        autumn_max = std::max(autumn_max, wx.elevation(dd + 0.5, 800.0).autumn * (dd >= 60 && dd < 200 ? 1.0 : 0.0));
-        spring_max = std::max(spring_max, wx.elevation(dd + 0.5, 800.0).spring * (dd >= 200 ? 1.0 : 0.0));
+        autumn_max = std::max(autumn_max, wx.elevation(dd + 0.5, 800.0).autumn * (dd >= 224 ? 1.0 : 0.0));
+        spring_max = std::max(spring_max, wx.elevation(dd + 0.5, 800.0).spring * (dd >= 40 && dd < 168 ? 1.0 : 0.0));
     }
-    check(autumn_max > 0.4 && spring_max > 0.3, "八百米处：入冷季有秋色、回暖有春芽");
-    check(wx.mean_temperature(20.5, ref + 1000.0) < wx.mean_temperature(20.5, ref) - 5.9, "直减率：高一千米冷六度");
+    std::printf("  八百米：秋色最多 %.2f、春芽最多 %.2f\n", autumn_max, spring_max);
+    check(autumn_max > 0.4 && spring_max > 0.3, "八百米处：入冬前有秋色、开春有春芽");
+    check(wx.mean_temperature(HOT_DAY + 0.5, ref + 1000.0) < wx.mean_temperature(HOT_DAY + 0.5, ref) - 5.9, "直减率：高一千米冷六度");
 
     // 开发者覆盖
     WeatherModel storm = wx;
     storm.edit_override() = { true, WeatherKind::STORM, 0.0, 1.0, 0.0 };
-    WeatherSample s = storm.sample(3.5, 0.0, 0.0, ref);
+    WeatherSample s = storm.sample(CLEAR_DAY + 0.5, 0.0, 0.0, ref);
     check(s.storm == 1.0 && s.wind_ms >= 13.99 && !s.sailable && s.day_kind == WeatherKind::STORM && s.kind == WeatherKind::STORM, "覆盖成风暴：风暴、大风、禁航（雨区外也叫风暴）");
     storm.edit_override().blend = 0.5;
-    s = storm.sample(3.5, 0.0, 0.0, ref);
+    s = storm.sample(CLEAR_DAY + 0.5, 0.0, 0.0, ref);
     check_near(s.storm, 0.5, 1e-9, "渐入一半：风暴一半");
     WeatherModel cold = wx;
     cold.edit_override() = { true, WeatherKind::COUNT, -8.0, 1.0, 0.0 };
     check(mid_day > 0.0 && cold.snow_line(mid_day) < wx.snow_line(mid_day) - 800.0, "气温偏移冷 8 °C：雪线低了八百米以上（第 " + std::to_string(mid_day) + " 天）");
-    check_near(cold.mean_temperature(3.5, ref), wx.mean_temperature(3.5, ref) - 8.0, 1e-9, "气温偏移：日均温照偏");
+    check_near(cold.mean_temperature(CLEAR_DAY + 0.5, ref), wx.mean_temperature(CLEAR_DAY + 0.5, ref) - 8.0, 1e-9, "气温偏移：日均温照偏");
     WeatherModel snowy = wx;
     snowy.edit_override() = { true, WeatherKind::HEAVY_SNOW, 0.0, 1.0, 30.0 };
-    s = snowy.sample(20.0 + 4.0 / 24.0, 0.0, 0.0, ref);
-    check(s.snow_frac > 0.9 && s.temp_c < 0.0 && s.snow_mm >= 29.0, "覆盖成大雪（暖季也行）：台面零下、下的是雪、新雪留得住");
+    s = snowy.sample(HOT_DAY + 4.0 / 24.0, 0.0, 0.0, ref);
+    check(s.snow_frac > 0.9 && s.temp_c < 0.0 && s.snow_mm >= 29.0, "覆盖成大雪（热季也行）：台面零下、下的是雪、新雪留得住");
 }
 
 // 行星计划 P3：几群的天气——按权混、云团的公共平面、地方时的作息
 void test_group_weather() {
     Climate c;
-    if (!load_2051_climate(c)) {
-        std::printf("group weather（跳过：没有 2051 资产）\n");
+    if (!load_start_climate(c)) {
+        std::printf("group weather（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("group weather（2051）\n");
-    const WeatherModel own(c, 0.0, 2050.0);
+    std::printf("group weather（开局那群）\n");
+    const WeatherModel own(c, 0.0, 2250.0);
     // 一天的大势：按权加起来（群与群之间的混法）一份就是原样，两份各半取中间
     const WeatherState a = weather_day_state(c.days[2]), b = weather_day_state(c.days[3]);
     WeatherState one;
@@ -4913,26 +4955,26 @@ void test_group_weather() {
     half.add(b, 0.5);
     check_near(half.temp, 0.5 * (a.temp + b.temp), 1e-12, "两份各半：气温取中间");
     check_near(half.wind_x, 0.5 * (a.wind_x + b.wind_x), 1e-12, "风按分量混");
-    // 地方时：西边 2.2 分钟（2050 比 2051 的钟点晚）——出工、午歇、收工的钟点都往后挪同样的量
+    // 地方时：西边 3.4 分钟（邻群 #6327 在开局那群西边 0.86°，比钟点晚）——出工、午歇、收工的钟点都往后挪同样的量
     const DayRules day;
-    const LocalSeason here(&own, day, 294.0, 0.0, 0.0, c.ref_m), west(&own, day, 294.0, 0.0, 0.0, c.ref_m, SeasonRules(), -0.0363);
+    const LocalSeason here(&own, day, 126.0, 0.0, 0.0, c.ref_m), west(&own, day, 126.0, 0.0, 0.0, c.ref_m, SeasonRules(), -0.0573);
     const DayMarks h = day_marks(3, day, &here), w = day_marks(3, day, &west);
-    check_near(w.work_start - h.work_start, 0.0363, 1e-9, "西边的地方时晚：出工的钟点往后挪");
-    check_near(w.lunch_start - h.lunch_start, 0.0363, 1e-9, "午歇同样");
-    check_near(w.work_end - h.work_end, 0.0363, 1e-9, "收工同样");
+    check_near(w.work_start - h.work_start, 0.0573, 1e-9, "西边的地方时晚：出工的钟点往后挪");
+    check_near(w.lunch_start - h.lunch_start, 0.0573, 1e-9, "午歇同样");
+    check_near(w.work_end - h.work_end, 0.0573, 1e-9, "收工同样");
 }
 
 void test_local_season() {
     Climate c;
-    if (!load_2051_climate(c)) {
-        std::printf("local season（跳过：没有 2051 资产）\n");
+    if (!load_start_climate(c)) {
+        std::printf("local season（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("local season（2051）\n");
-    const WeatherModel wx(c, 0.0, 2050.0);
+    std::printf("local season（开局那群）\n");
+    const WeatherModel wx(c, 0.0, 2250.0);
     const DayRules day;
-    // 冬（北半球夏至那天，南半球的冬至）与夏：出工收工随日出日落
-    const LocalSeason winter(&wx, day, 126.0, 0.0, 0.0, c.ref_m), summer(&wx, day, 294.0, 0.0, 0.0, c.ref_m);
+    // 冬（第 294 天：北半球的冬至）与夏（第 126 天：夏至）：出工收工随日出日落（开局那群在北纬 34°）
+    const LocalSeason winter(&wx, day, 294.0, 0.0, 0.0, c.ref_m), summer(&wx, day, 126.0, 0.0, 0.0, c.ref_m);
     const DayMarks w = day_marks(0, day, &winter), s = day_marks(0, day, &summer);
     check(w.work_start > 7.5 && w.work_end < 16.5 && s.work_start == 5.0 && s.work_end > 19.0, "作息：冬天快八点出工、四点多收工，夏天五点到七点多");
     DayMark mark = DayMark::LUNCH_END;
@@ -4941,10 +4983,10 @@ void test_local_season() {
     check(is_home_time(clock_at(0, 7.0, day), day, &winter) && !is_home_time(clock_at(0, 7.0, day), day, &summer), "早上七点：冬天还在家、夏天已经出工");
     check(!is_home_time(clock_at(0, 7.0, day), day, nullptr) && is_home_time(clock_at(0, 5.5, day), day, nullptr), "没有时令：照固定钟点");
     // 庄稼
-    const LocalSeason deep(&wx, day, 196.0, 0.0, 0.0, c.ref_m), high(&wx, day, 294.0, 0.0, 0.0, 1900.0);
+    const LocalSeason deep(&wx, day, 14.0, 0.0, 0.0, c.ref_m), high(&wx, day, 126.0, 0.0, 0.0, 1900.0);
     const double noon = clock_at(0, 12.0, day);
     check(summer.growth_factor(noon) > 0.9 && summer.sowing(noon), "夏天台面：庄稼照常长、照常播");
-    check(deep.growth_factor(noon) < 0.35 && !deep.sowing(noon), "深冬（第 196 天）台面：庄稼几乎不长、不播（" + std::to_string(deep.growth_factor(noon)) + "）");
+    check(deep.growth_factor(noon) < 0.35 && !deep.sowing(noon), "深冬（第 14 天，一月）台面：庄稼几乎不长、不播（" + std::to_string(deep.growth_factor(noon)) + "）");
     check(high.growth_factor(noon) < summer.growth_factor(noon), "同一天，一千九百米比台面长得慢");
     check(crop_season_factor(20.0, 10.0, SeasonRules()) == 0.0 && crop_season_factor(20.0, 0.0, SeasonRules()) == 1.0 && crop_season_factor(4.0, 0.0, SeasonRules()) == 0.0,
             "积雪盖着不长；暖和照常；5 °C 以下不长");
@@ -4953,7 +4995,7 @@ void test_local_season() {
     c2.days[9].kind = WeatherKind::CLEAR;
     c2.days[10].kind = WeatherKind::STORM;
     c2.days[11].kind = WeatherKind::CLEAR;
-    const WeatherModel wx2(c2, 0.0, 2050.0);
+    const WeatherModel wx2(c2, 0.0, 2250.0);
     const LocalSeason here(&wx2, day, 0.0, 0.0, 0.0, c.ref_m);
     check(!here.sheltering(clock_at(9, 12.0, day)) && here.sheltering(clock_at(10, 12.0, day)) && !here.sheltering(clock_at(11, 12.0, day)), "风暴那天正午歇工，前后一天不歇");
     const double change = here.next_shelter_change(clock_at(9, 12.0, day), clock_at(11, 12.0, day));
@@ -4976,24 +5018,25 @@ int count_outdoors(const VillageState &p_state) {
 
 void test_village_seasons() {
     Climate c;
-    if (!load_2051_climate(c)) {
-        std::printf("village seasons（跳过：没有 2051 资产）\n");
+    if (!load_start_climate(c)) {
+        std::printf("village seasons（跳过：没有开局那群的资产）\n");
         return;
     }
-    std::printf("village seasons（2051 的气候、平板岛的村）\n");
+    std::printf("village seasons（开局那群的气候、平板岛的村）\n");
     for (ClimateDay &d : c.days) {
         d.kind = WeatherKind::CLEAR; // 天气由覆盖给，免得真实的雨搅进来
     }
-    WeatherModel wx(c, -100.0, 2050.0);
+    WeatherModel wx(c, -100.0, 2250.0);
     const DayRules day;
+    constexpr double WARM = 180.0; // 暖和的一天：热季（北半球七月；原来按南半球的 #2051 取第 20 天）
     const double h = c.ref_m;
-    // 作息：冬天日出晚，七点半还没人出门
+    // 作息：冬天（第 294 天，北半球的冬至）日出晚，七点半还没人出门
     {
         SimBed bed;
-        const LocalSeason season(&wx, day, 126.0, 0.0, -70.0, h);
+        const LocalSeason season(&wx, day, 294.0, 0.0, -70.0, h);
         bed.season = &season;
         bed.wx = &wx;
-        bed.wx_offset = 126.0;
+        bed.wx_offset = 294.0;
         VillageState s;
         bed.found(s, true, clock_at(0, 5.5, day));
         bed.run_near(s, clock_at(0, 7.5, day));
@@ -5006,7 +5049,7 @@ void test_village_seasons() {
         SimBed bed;
         VillageState s;
         {
-            const LocalSeason season(&wx, day, 20.0, 0.0, -70.0, h);
+            const LocalSeason season(&wx, day, WARM, 0.0, -70.0, h);
             bed.season = &season;
             bed.found(s, near, clock_at(0, 5.5, day));
             if (near) {
@@ -5018,7 +5061,7 @@ void test_village_seasons() {
         const int before = count_outdoors(s);
         wx.edit_override() = { true, WeatherKind::STORM, 0.0, 1.0, 0.0 };
         {
-            const LocalSeason season(&wx, day, 20.0, 0.0, -70.0, h); // 时令记着最近问过的格：天气换了就换一份（游戏里每帧、每次结算都现造）
+            const LocalSeason season(&wx, day, WARM, 0.0, -70.0, h); // 时令记着最近问过的格：天气换了就换一份（游戏里每帧、每次结算都现造）
             bed.season = &season;
             // 开发者覆盖不在格边上变：推进一秒，外面的人就都改成往家走
             {
@@ -5040,7 +5083,7 @@ void test_village_seasons() {
         const int storm = count_outdoors(s);
         wx.edit_override() = WeatherOverride();
         {
-            const LocalSeason season(&wx, day, 20.0, 0.0, -70.0, h);
+            const LocalSeason season(&wx, day, WARM, 0.0, -70.0, h);
             bed.season = &season;
             if (near) {
                 bed.run_near(s, clock_at(0, 11.0, day));
@@ -5054,10 +5097,10 @@ void test_village_seasons() {
     // 冷天不播不开荒、地里的不长
     {
         SimBed warm_bed;
-        const LocalSeason warm(&wx, day, 20.0, 0.0, -70.0, h);
+        const LocalSeason warm(&wx, day, WARM, 0.0, -70.0, h);
         warm_bed.season = &warm;
         warm_bed.wx = &wx;
-        warm_bed.wx_offset = 20.0;
+        warm_bed.wx_offset = WARM;
         VillageState ws;
         warm_bed.found(ws, true, clock_at(0, 5.5, day));
         warm_bed.run_near(ws, clock_at(0, 11.0, day));
@@ -5070,7 +5113,7 @@ void test_village_seasons() {
             }
         }
         wx.edit_override() = { true, WeatherKind::COUNT, -25.0, 1.0, 0.0 };
-        const LocalSeason cold(&wx, day, 20.0, 0.0, -70.0, h);
+        const LocalSeason cold(&wx, day, WARM, 0.0, -70.0, h);
         warm_bed.season = &cold;
         warm_bed.run_near(ws, clock_at(0, 13.0, day)); // 冷下来之前领了的活照样干完
         growing.clear();
@@ -5093,7 +5136,7 @@ void test_village_seasons() {
         SimBed cold_bed;
         cold_bed.season = &cold;
         cold_bed.wx = &wx;
-        cold_bed.wx_offset = 20.0;
+        cold_bed.wx_offset = WARM;
         VillageState cs;
         cold_bed.found(cs, true, clock_at(0, 5.5, day));
         cold_bed.run_near(cs, clock_at(0, 11.0, day));
@@ -5103,7 +5146,7 @@ void test_village_seasons() {
     // 远近同源（有时令）：一年里挑六天各跑一整天，加起来比（单独一天随机差得多一点，与没有时令时一样）
     {
         VillageTally a, b;
-        for (double off : { 10.0, 20.0, 30.0, 40.0, 250.0, 300.0 }) {
+        for (double off : { 178.0, 188.0, 198.0, 208.0, 82.0, 132.0 }) { // 原来按南半球的 #2051 挑的六天挪半年
             const LocalSeason season(&wx, day, off, 0.0, -70.0, h);
             SimBed near_bed, far_bed;
             near_bed.season = far_bed.season = &season;
@@ -5146,10 +5189,10 @@ void test_planet_frame() {
         check_near(la, -31.65, 1e-9, "经纬度往返：纬度");
         check_near(lo, 152.15, 1e-9, "经纬度往返：经度");
     }
-    // 2051 → 2050：大圆 114 km（生成器 s03 算的数）
-    const double d51_50 = great_circle_m(-31.65, 152.15, -32.57, 151.61, 6371000.0);
-    check(std::abs(d51_50 - 114000.0) < 1500.0, "2051 与 2050 相距约 114 km（得到 " + std::to_string(d51_50) + "）");
-    const GroupFrame a(-31.65, 152.15, shape), b(-32.57, 151.61, shape);
+    // 开局那群 #6329（北纬 34.23°、东经 27.77°）→ 邻群 #6327（北纬 34.51°、东经 26.91°）：大圆 84 km（生成器 s03 算的数）
+    const double d_ab = great_circle_m(34.2321, 27.7650, 34.51, 26.91, 6371000.0);
+    check(std::abs(d_ab - 84400.0) < 1500.0, "#6329 与 #6327 相距约 84 km（得到 " + std::to_string(d_ab) + "）");
+    const GroupFrame a(34.2321, 27.7650, shape), b(34.51, 26.91, shape);
     // AEQD：往返、离群心的距离与方位不变
     {
         double worst = 0.0;
@@ -5164,8 +5207,8 @@ void test_planet_frame() {
         const PlanetVec p(60000.0, 0.0, -80000.0); // 东 60 km、北 80 km
         double la = 0.0, lo = 0.0;
         a.flat_latlon(p, la, lo);
-        check_near(great_circle_m(-31.65, 152.15, la, lo, R), 100000.0, 1e-3, "AEQD：离群心的大圆距离 = 平面距离");
-        check_near(bearing_deg(-31.65, 152.15, la, lo), std::atan2(60.0, 80.0) * 180.0 / 3.14159265358979323846, 1e-6, "AEQD：方位不变");
+        check_near(great_circle_m(34.2321, 27.7650, la, lo, R), 100000.0, 1e-3, "AEQD：离群心的大圆距离 = 平面距离");
+        check_near(bearing_deg(34.2321, 27.7650, la, lo), std::atan2(60.0, 80.0) * 180.0 / 3.14159265358979323846, 1e-6, "AEQD：方位不变");
         const PlanetVec back = a.latlon_flat(la, lo);
         check((back - p).length() < 1e-3, "经纬度 → 平面：回到原点");
     }
@@ -5424,18 +5467,18 @@ void test_planet_add_lods() {
     check(pd.parse_planet(planet_bytes.data(), planet_bytes.size(), err), "行星包读得出");
     const uint8_t empty[12] = { 'Z', 'Z', 'L', 'D', 1, 0, 0, 0, 0, 0, 0, 0 };
     check(pd.parse_lods(empty, sizeof(empty), err), "0 条的 lods.bin 读得出（新建世界时还没有粗版）");
-    check(!pd.has_lod(2050) && pd.lod(2050).empty() && pd.lod_count() == 0, "没有粗版：has_lod 为假、lod() 空");
+    check(!pd.has_lod(NEIGHBOR) && pd.lod(NEIGHBOR).empty() && pd.lod_count() == 0, "没有粗版：has_lod 为假、lod() 空");
     const uint64_t gen0 = pd.lod_generation();
-    const std::vector<uint8_t> b2050 = single(2050, 2000.0f);
+    const std::vector<uint8_t> b2050 = single(NEIGHBOR, 2000.0f); // 邻群的 2 km 粗版
     std::vector<int> added;
-    check(!b2050.empty() && pd.add_lods(b2050.data(), b2050.size(), err, &added) && added.size() == 1 && added[0] == 2050, "加进 2050 的 2 km 粗版：" + err);
-    check(pd.has_lod(2050) && pd.lod_generation() == gen0 + 1 && pd.lod_count() == 1, "加了以后有了、代数加一");
-    const PlanetLod a = pd.lod(2050), b = ref.lod(2050, 2000.0);
+    check(!b2050.empty() && pd.add_lods(b2050.data(), b2050.size(), err, &added) && added.size() == 1 && added[0] == NEIGHBOR, "加进邻群的 2 km 粗版：" + err);
+    check(pd.has_lod(NEIGHBOR) && pd.lod_generation() == gen0 + 1 && pd.lod_count() == 1, "加了以后有了、代数加一");
+    const PlanetLod a = pd.lod(NEIGHBOR), b = ref.lod(NEIGHBOR, 2000.0);
     check(a.rows == b.rows && a.cols == b.cols && a.height == b.height && a.land == b.land && a.landcover == b.landcover && a.island == b.island &&
                     a.islands.size() == b.islands.size() && a.res_m == 2000.0,
             "加进来的粗版与 lods.bin 里那一条解出来一样");
     // 同一格距再加一次：换掉，不重复
-    check(pd.add_lods(b2050.data(), b2050.size(), err) && pd.lod_resolutions(2050).size() == 1, "同一格距再加一次换成新的（仍是一份）");
+    check(pd.add_lods(b2050.data(), b2050.size(), err) && pd.lod_resolutions(NEIGHBOR).size() == 1, "同一格距再加一次换成新的（仍是一份）");
     // 群号不在行星包里：不收
     std::vector<uint8_t> bad = b2050;
     const uint32_t bogus = 999999;
@@ -5448,7 +5491,7 @@ void test_planet_add_lods() {
     for (int t = 0; t < 4; t++) {
         readers.emplace_back([&]() {
             while (!stop.load()) {
-                const PlanetLod l = pd.lod(2050);
+                const PlanetLod l = pd.lod(NEIGHBOR);
                 if (l.rows != b.rows || l.land != b.land) {
                     wrong++;
                 }
@@ -5456,7 +5499,7 @@ void test_planet_add_lods() {
             }
         });
     }
-    const int more[] = { 2051, 1827, 2049, 2278, 1303, 518, 1083, 3000 };
+    const int more[] = { START, 6331, 6328, 6609, 6330, 1303, 518, 3000 }; // 开局那群、它周围几群与远处几群
     int ok = 0;
     for (int node : more) {
         const std::vector<uint8_t> bytes = single(node, 2000.0f);
@@ -5470,10 +5513,10 @@ void test_planet_add_lods() {
         t.join();
     }
     check(ok == 8 && wrong.load() == 0, "边读边加：8 群都加上、读的 " + std::to_string(reads.load()) + " 回都对");
-    check(pd.lod(2049).land == ref.lod(2049, 2000.0).land && pd.nodes_within(pd.node(2051).lat, pd.node(2051).lon, 300000.0).size() >= 5, "后加的 2049 也对");
+    check(pd.lod(6328).land == ref.lod(6328, 2000.0).land && pd.nodes_within(pd.node(START).lat, pd.node(START).lon, 300000.0).size() >= 5, "后加的 #6328 也对");
 }
 
-// 行星包（planet_data）：game/planet/seed42 的 planet.bin / lods.bin 读得出、数对得上生成器、2051 的粗版与仓库里的细版是同一个群
+// 行星包（planet_data）：game/planet/seed42 的 planet.bin / lods.bin 读得出、数对得上生成器、开局那群的粗版与仓库里的细版是同一个群
 void test_planet_data() {
     const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
     std::printf("[planet_data]\n");
@@ -5495,15 +5538,15 @@ void test_planet_data() {
         land += pd.node(k).area_km2;
     }
     check(std::abs(land - 2.5e7) < 2.5e4, "全行星陆地 2500 万 km²（得到 " + std::to_string(land) + "）");
-    const PlanetNode &n51 = pd.node(2051);
-    check(std::abs(n51.lat + 31.65) < 0.01 && std::abs(n51.lon - 152.15) < 0.01, "2051 在南纬 31.65°、东经 152.15°");
-    check(std::abs(n51.area_km2 - 2587.0) < 2.0 && n51.cls == 1 && n51.pop > 0.0, "2051：陆地 2587 km²、中疏、有人口");
-    check(pd.nearest_node(n51.lat, n51.lon) == 2051, "离 2051 群心最近的是 2051");
-    check(pd.nearest_node(n51.lat - 0.9, n51.lon - 0.5) == 2050, "往西南 100 km 最近的是 2050");
-    check_near(pd.node_distance_m(2051, 2050), 114000.0, 1500.0, "2051 与 2050 相距 114 km");
-    const std::vector<int> near160 = pd.nodes_within(n51.lat, n51.lon, 160000.0);
-    check(near160.size() == 2 && near160[0] == 2051 && near160[1] == 2050, "160 km 内只有 2051 与 2050（1827 在 174 km）");
-    check(pd.nodes_within(n51.lat, n51.lon, 500000.0).size() == 16, "500 km 内 16 群（含自己）");
+    const PlanetNode &n51 = pd.node(START);
+    check(std::abs(n51.lat - 34.23) < 0.01 && std::abs(n51.lon - 27.77) < 0.01, "开局那群在北纬 34.23°、东经 27.77°");
+    check(std::abs(n51.area_km2 - 5141.0) < 2.0 && n51.cls == 1 && n51.pop > 0.0, "开局那群：陆地 5141 km²、中疏、有人口");
+    check(pd.nearest_node(n51.lat, n51.lon) == START, "离开局那群的群心最近的是它自己");
+    check(pd.nearest_node(n51.lat + 0.22, n51.lon - 0.72) == NEIGHBOR, "往西北 70 km 最近的是邻群 #6327");
+    check_near(pd.node_distance_m(START, NEIGHBOR), 84400.0, 1500.0, "开局那群与邻群相距 84 km");
+    const std::vector<int> near90 = pd.nodes_within(n51.lat, n51.lon, 90000.0);
+    check(near90.size() == 2 && near90[0] == START && near90[1] == NEIGHBOR, "90 km 内只有开局那群与邻群（#6331 在 113 km）");
+    check(pd.nodes_within(n51.lat, n51.lon, 500000.0).size() == 51, "500 km 内 51 群（含自己）");
     check(pd.nodes_within(-89.0, 0.0, 800000.0).size() > 0 && pd.nearest_node(0.0, 0.0) >= 0, "极点、赤道也找得到群");
     // 每群都有粗版
     int missing = 0;
@@ -5511,15 +5554,20 @@ void test_planet_data() {
         missing += pd.lod_resolutions(k).empty() ? 1 : 0;
     }
     check(missing == 0, "每个岛群都有粗版（没有的 " + std::to_string(missing) + "）");
-    const std::vector<double> r51 = pd.lod_resolutions(2051);
-    check(r51.size() == 2 && r51.front() == 2000.0 && r51.back() == 500.0, "2051 有 2 km 与 500 m 两份粗版");
-    // 2051 的粗版：陆地面积、岛数与细版对得上
-    const PlanetLod fine = pd.lod(2051, 600.0), coarse = pd.lod(2051);
+    const std::vector<double> r51 = pd.lod_resolutions(START);
+    check(r51.size() == 2 && r51.front() == 2000.0 && r51.back() == 500.0, "开局那群有 2 km 与 500 m 两份粗版（开局周围 320 km 那一圈有 500 m 的）");
+    int rings = 0;
+    for (int k = 0; k < pd.node_count(); k++) {
+        rings += pd.lod_resolutions(k).size() == 2 ? 1 : 0;
+    }
+    check(rings == 25 && pd.lod_resolutions(6332).size() == 2 && pd.lod_resolutions(6607).size() == 1, "500 m 的一圈：开局 320 km 内 25 群（#6332 在 268 km 有、#6607 在 322 km 没有）");
+    // 开局那群的粗版：陆地面积、岛数与细版对得上
+    const PlanetLod fine = pd.lod(START, 600.0), coarse = pd.lod(START);
     check(fine.res_m == 500.0 && coarse.res_m == 2000.0, "lod() 按格距挑：≤ 600 m 给 500 m，不限给最粗的");
-    check(fine.islands.size() == 32 && std::abs(fine.land_km2() - 2587.0) < 0.03 * 2587.0, "500 m 粗版：32 岛、陆地差不到 3%（" + std::to_string(fine.land_km2()) + " km²）");
-    check(std::abs(coarse.land_km2() - 2587.0) < 0.05 * 2587.0, "2 km 粗版：陆地差不到 5%");
-    // 与仓库里 2051 的细版（terrain.bin）是同一个群：粗版里的实地格，细版在那儿也是陆地
-    std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/terrain.bin", std::ios::binary);
+    check(fine.islands.size() == 38 && std::abs(fine.land_km2() - 5141.0) < 0.03 * 5141.0, "500 m 粗版：38 岛、陆地差不到 3%（" + std::to_string(fine.land_km2()) + " km²）");
+    check(std::abs(coarse.land_km2() - 5141.0) < 0.05 * 5141.0, "2 km 粗版：陆地差不到 5%");
+    // 与仓库里开局那群的细版（terrain.bin）是同一个群：粗版里的实地格，细版在那儿也是陆地
+    std::ifstream in(start_dir() + "/terrain.bin", std::ios::binary);
     const std::vector<uint8_t> bin((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     WorldGrid g;
     if (parse_world_grid(bin.data(), bin.size(), g, err)) {
@@ -5546,12 +5594,12 @@ void test_planet_data() {
     const PlanetGrid *precip = pd.grid("s04.climate_grid.precip");
     check(u && u->rows == 180 && u->cols == 360 && std::abs(u->lat0 + 89.5) < 1e-6, "局地风 1° 网格、第 0 行在南");
     check(edges && edges->rows == 8 && edges->cols == 360, "带界 8 × 360");
-    check(precip && std::isfinite(precip->sample(n51.lat, n51.lon)) && precip->sample(n51.lat, n51.lon) > 0.0, "气候场在 2051 取得到降水");
+    check(precip && std::isfinite(precip->sample(n51.lat, n51.lon)) && precip->sample(n51.lat, n51.lon) > 0.0, "气候场在开局那群取得到降水");
     check(u && std::abs(u->sample(10.0, 179.9) - u->sample(10.0, -180.1)) < 1e-4, "经度绕回：180° 两边一样");
     check(pd.column("s03.plate") && pd.grid("s03.plates.plate_id"), "第三层要的板块也在包里（P6 用）");
 }
 
-// 远处岛群的低模（far_group_mesh）：2049 群的 500 m / 2 km 粗版建出顶面、崖壁、岛底；朝向对、按真球面弯过、岛体同游戏里的式子
+// 远处岛群的低模（far_group_mesh）：#6611 群（开局那群东北 170 km）的 500 m / 2 km 粗版建出顶面、崖壁、岛底；朝向对、按真球面弯过、岛体同游戏里的式子
 void test_far_group_mesh() {
     const std::string dir = std::string(ZHOUZHU_SOURCE_DIR) + "/game/planet/seed42";
     std::printf("[far_group_mesh]\n");
@@ -5562,8 +5610,9 @@ void test_far_group_mesh() {
         return;
     }
     const double R = PlanetShape().radius();
+    constexpr int FAR = 6611; // 开局周围 500 m 那一圈里主岛大的一群（原来用 2051 旁边的 2049）
     for (double res : { 600.0, 1e9 }) {
-        const PlanetLod lod = pd.lod(2049, res);
+        const PlanetLod lod = pd.lod(FAR, res);
         const auto t0 = std::chrono::steady_clock::now();
         const FarGroupMesh m = build_far_group_mesh(lod, R);
         const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
@@ -5571,12 +5620,12 @@ void test_far_group_mesh() {
         for (uint8_t v : lod.land) {
             land += v >= 128 ? 1 : 0;
         }
-        std::printf("  2049 %.0f m：%d 实地格、%zu 顶点、%zu 三角面，%.1f ms；包围盒 y %.0f…%.0f，最高 %.0f m\n", lod.res_m, m.solid_cells, m.vertex_count(), m.indices.size() / 3, ms,
+        std::printf("  #6611 %.0f m：%d 实地格、%zu 顶点、%zu 三角面，%.1f ms；包围盒 y %.0f…%.0f，最高 %.0f m\n", lod.res_m, m.solid_cells, m.vertex_count(), m.indices.size() / 3, ms,
                 m.aabb_min[1], m.aabb_max[1], m.peak_y);
         check(!m.empty() && m.solid_cells == land, "每个实地格都进了网格（" + std::to_string(m.solid_cells) + " / " + std::to_string(land) + "）");
         check(m.positions.size() == m.normals.size() && m.uvs.size() / 2 == m.vertex_count() && m.season.size() / 4 == m.vertex_count() && m.colors.size() / 4 == m.vertex_count(),
                 "顶点的各样数组一样长");
-        check(std::abs(m.peak_y - pd.node(2049).peak_m) < 0.25 * pd.node(2049).peak_m, "最高的角接近主峰（" + std::to_string(m.peak_y) + " m）");
+        check(std::abs(m.peak_y - pd.node(FAR).peak_m) < 0.25 * pd.node(FAR).peak_m, "最高的角接近主峰（" + std::to_string(m.peak_y) + " m）");
         // 朝向：三角面的面法线（Godot：(a − c) × (a − b)）与顶点法线同向
         int agree = 0, tris = int(m.indices.size() / 3), down = 0, up = 0;
         for (int t = 0; t < tris; t++) {
@@ -5590,7 +5639,7 @@ void test_far_group_mesh() {
         }
         check(agree >= tris * 0.99, "三角面朝外（面法线与顶点法线同向 " + std::to_string(agree) + " / " + std::to_string(tris) + "）");
         check(up > 0 && down > 0 && std::abs(up - down) < tris / 5, "顶面朝上、岛底朝下，片数相当");
-        // 岛体：岛底垂得很深（2049 主岛 4978 km²、最深岸距二三十公里：龙骨 25·√R ≈ 3.5–4.5 km），但不低于云带顶之上 1000 m（浮高计划 F3）
+        // 岛体：岛底垂得很深（#6611 主岛 3482 km²、最深岸距二十来公里：龙骨 25·√R ≈ 3.5–4 km），但不低于云带顶之上 1000 m（浮高计划 F3）
         double deep = 0.0;
         for (size_t v = 0; v < m.vertex_count(); v++) {
             deep = std::min(deep, double(m.uvs[v * 2]));
@@ -5785,7 +5834,7 @@ void test_planet_float_orbit() {
     check(worst_limb < 5e-5, "行星的边缘单精度求交只差 < 5e-5 rad（二十分之一像素）");
 }
 
-// 行星计划 P2 · 行星贴图（planet_surface）：立方体面映射往返、像素立体角加起来是 4π、全行星的陆地烘得对、2051 群心那一格是陆地、替身
+// 行星计划 P2 · 行星贴图（planet_surface）：立方体面映射往返、像素立体角加起来是 4π、全行星的陆地烘得对、开局那群群心那一格是陆地、替身
 void test_planet_surface() {
     std::printf("[planet_surface]\n");
     double worst = 0.0;
@@ -5829,7 +5878,7 @@ void test_planet_surface() {
     int home_face = -1;
     double hu = 0.0, hv = 0.0;
     {
-        const PlanetVec h = planet_unit(pd.node(2051).lat, pd.node(2051).lon);
+        const PlanetVec h = planet_unit(pd.node(START).lat, pd.node(START).lon);
         const double d[3] = { h.x, h.y, h.z };
         home_face = planet_cube::face_of(d, hu, hv);
     }
@@ -5860,13 +5909,13 @@ void test_planet_surface() {
                 best = std::max(best, int(home.color[(size_t(jj) * size_t(rules.size) + size_t(ii)) * 4 + 3]));
             }
         }
-        check(best > 128, "2051 群心附近的像素是陆地（份额 " + std::to_string(best) + " / 255）");
+        check(best > 128, "开局那群群心附近的像素是陆地（份额 " + std::to_string(best) + " / 255）");
     }
     // 替身：面积按行星包
-    const PlanetLod s = surface_stand_in(pd, 2049, 2000.0);
-    check(!s.empty() && std::abs(s.land_km2() - pd.node(2049).area_km2) < 0.3 * pd.node(2049).area_km2,
-            "替身的陆地与行星包差不到三成（" + std::to_string(s.land_km2()) + " / " + std::to_string(pd.node(2049).area_km2) + " km²）");
-    // 游戏里的面宽：2051 那一面 2048²，烘一面、压成 BC3 各要多久（游戏里六面在后台一面一面做）
+    const PlanetLod s = surface_stand_in(pd, 6611, 2000.0);
+    check(!s.empty() && std::abs(s.land_km2() - pd.node(6611).area_km2) < 0.3 * pd.node(6611).area_km2,
+            "替身的陆地与行星包差不到三成（" + std::to_string(s.land_km2()) + " / " + std::to_string(pd.node(6611).area_km2) + " km²）");
+    // 游戏里的面宽：开局那群那一面 2048²，烘一面、压成 BC3 各要多久（游戏里六面在后台一面一面做）
     {
         SurfaceBakeRules full;
         SurfaceFace face;
@@ -5876,7 +5925,7 @@ void test_planet_surface() {
         std::vector<uint8_t> blocks(size_t(full.size / 4) * size_t(full.size / 4) * 16);
         bc3_encode_image(face.color.data(), full.size, full.size, blocks.data());
         const double bc_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
-        std::printf("  2048² 一面（2051 那面，%d 群）：烘 %.0f ms、压 BC3 %.0f ms\n", st.groups, st.ms, bc_ms);
+        std::printf("  2048² 一面（开局那群那面，%d 群）：烘 %.0f ms、压 BC3 %.0f ms\n", st.groups, st.ms, bc_ms);
         check(st.land_texels > 1000, "2048² 那一面烘得出陆地");
     }
     // BC3：压过再解开，平滑的渐变与贴图里的海岸都差得不多
@@ -5992,13 +6041,13 @@ void test_weather_pack() {
     check(pk.entries.size() == 8000 && pk.year_days == 336, "八千群、一年 336 天");
     int e51 = -1, e50 = -1;
     for (int k = 0; k < int(pk.entries.size()); k++) {
-        e51 = pk.entries[size_t(k)].node == 2051 ? k : e51;
-        e50 = pk.entries[size_t(k)].node == 2050 ? k : e50;
+        e51 = pk.entries[size_t(k)].node == START ? k : e51;
+        e50 = pk.entries[size_t(k)].node == NEIGHBOR ? k : e50;
     }
-    check(e51 >= 0 && e50 >= 0, "2051、2050 都在包里");
+    check(e51 >= 0 && e50 >= 0, "开局那群、邻群都在包里");
     // 有细版的群：与 weather.tsv 逐位相同（粗细两版的天气类型逐日相同的比例报出来）
-    for (int node : { 2051, 2050 }) {
-        std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/" + std::to_string(node) + "/weather.tsv", std::ios::binary);
+    for (int node : { START, NEIGHBOR }) {
+        std::ifstream in(group_dir(node) + "/weather.tsv", std::ios::binary);
         const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
         Climate fine;
         std::string err;
@@ -6006,7 +6055,7 @@ void test_weather_pack() {
             check(false, "细版 weather.tsv 读得出");
             continue;
         }
-        const int entry = node == 2051 ? e51 : e50;
+        const int entry = node == START ? e51 : e50;
         const Climate coarse = pk.climate(entry, fx.planet->node(node).lat, fx.planet->node(node).lon, fx.planet->tilt_deg);
         int same_kind = 0, same_all = 0;
         for (size_t d = 0; d < fine.days.size() && d < coarse.days.size(); d++) {
@@ -6043,27 +6092,27 @@ void test_planet_weather() {
     }
     const PlanetData &pd = *fx.planet;
     Climate c51;
-    if (!load_2051_climate(c51)) {
-        std::printf("  （跳过：没有 2051 资产）\n");
+    if (!load_start_climate(c51)) {
+        std::printf("  （跳过：没有开局那群的资产）\n");
         return;
     }
     const auto t_build = std::chrono::steady_clock::now();
     auto pw = std::make_shared<PlanetWeather>(fx.planet);
     const int added = pw->add_pack(fx.pack);
     const double build_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_build).count();
-    std::printf("  建场 %.0f ms（%d 群有逐日表）；2051 管 %.1f km、2050 管 %.1f km\n", build_ms, added, pw->reach_km(2051), pw->reach_km(2050));
+    std::printf("  建场 %.0f ms（%d 群有逐日表）；开局那群管 %.1f km、邻群管 %.1f km\n", build_ms, added, pw->reach_km(START), pw->reach_km(NEIGHBOR));
     check(added == 8000 && pw->table_count() == 8000, "八千群都有逐日表");
-    check(pw->reach_km(2051) > 40.0 && pw->reach_km(2051) < 90.0 && pw->reach_km(2050) > 10.0 && pw->reach_km(2050) < 60.0, "一群管多远：按陆地往各方位铺多远");
+    check(pw->reach_km(START) > 50.0 && pw->reach_km(START) < 100.0 && pw->reach_km(NEIGHBOR) > 40.0 && pw->reach_km(NEIGHBOR) < 90.0, "一群管多远：按陆地往各方位铺多远（开局那群 79 km、邻群 67 km）");
 
-    const PlanetNode &n51 = pd.node(2051), &n50 = pd.node(2050);
+    const PlanetNode &n51 = pd.node(START), &n50 = pd.node(NEIGHBOR);
     PlanetShape shape;
     shape.sea_radius_m = pd.radius_km * 1000.0;
     const GroupFrame f51(n51.lat, n51.lon, shape);
     // 1. 群自己的陆地上：挂上场与不挂一模一样（逐位）
-    const WeatherModel alone(c51, 0.0, 2050.0);
-    WeatherModel attached(c51, 0.0, 2050.0);
-    pw->set_group_climate(2051, c51);
-    attached.attach_planet(pw, 2051, f51);
+    const WeatherModel alone(c51, 0.0, 2250.0);
+    WeatherModel attached(c51, 0.0, 2250.0);
+    pw->set_group_climate(START, c51);
+    attached.attach_planet(pw, START, f51);
     int same = 0, total = 0;
     for (double day : { 3.3, 17.9, 40.01, 128.52, 250.77 }) {
         for (const auto &xz : std::vector<std::pair<double, double>>{ { 0.0, 0.0 }, { 20000.0, 5000.0 }, { -15000.0, 18000.0 }, { 8000.0, -25000.0 } }) {
@@ -6075,56 +6124,49 @@ void test_planet_weather() {
                     : 0;
         }
     }
-    check(same == total, "2051 自己的陆地上：挂上行星天气场与不挂逐位一样（" + std::to_string(same) + " / " + std::to_string(total) + "）");
-    // 2051 的村落：几处在过渡带里（场说「别的群、背景也有份」）——那几处的天气与没挂场时不一样
+    check(same == total, "开局那群自己的陆地上：挂上行星天气场与不挂逐位一样（" + std::to_string(same) + " / " + std::to_string(total) + "）");
+    // 开局那群的村落：几处在过渡带里（场说「别的群、背景也有份」）——那几处的天气与没挂场时不一样
     {
-        std::ifstream sin(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/2051/sites.tsv", std::ios::binary);
-        std::string line;
-        int villages = 0, mixed = 0;
+        std::ifstream sin(start_dir() + "/sites.tsv", std::ios::binary);
+        const std::string tsv((std::istreambuf_iterator<char>(sin)), std::istreambuf_iterator<char>());
+        WorldSites home_sites;
+        std::string err;
+        parse_world_sites(tsv, home_sites, err);
+        const SiteDock *main_dock = home_sites.dock_by_id(1);
+        int villages = 0, mixed = 0, home_mixed = 0;
         double worst = 1.0;
-        while (std::getline(sin, line)) {
-            if (line.rfind("village\t", 0) != 0 && line.rfind("hamlet\t", 0) != 0) {
-                continue;
-            }
-            std::vector<std::string> cols;
-            std::string cur;
-            for (char ch : line) {
-                if (ch == '\t') {
-                    cols.push_back(cur);
-                    cur.clear();
-                } else if (ch != '\r') {
-                    cur += ch;
-                }
-            }
-            cols.push_back(cur);
-            if (cols.size() < 5) {
-                continue;
-            }
-            const double x = std::atof(cols[3].c_str()), z = std::atof(cols[4].c_str());
+        for (const SiteSettlement &v : home_sites.settlements) {
+            const double x = v.x, z = v.z;
             villages++;
-            const PlanetGroupSample g = pw->sample_group(2051, f51, c51.ref_m, 3.5, x, z, false);
+            const PlanetGroupSample g = pw->sample_group(START, f51, c51.ref_m, 3.5, x, z, false);
+            // 邑治与主码头一带（主码头 3 km 内）：开局那一刻人就在这儿
+            const bool home = v.seat || (main_dock && std::hypot(x - main_dock->x, z - main_dock->z) < 3000.0);
+            home_mixed += home && !g.own ? 1 : 0;
             if (!g.own) {
                 mixed++;
                 double lat = 0.0, lon = 0.0;
                 f51.flat_latlon(PlanetVec(x, 0.0, z), lat, lon);
                 const PlanetRegional r = pw->sample(3.5, lat, lon, 0.0);
                 for (int k = 0; k < r.n; k++) {
-                    if (r.nodes[k] == 2051) {
+                    if (r.nodes[k] == START) {
                         worst = std::min(worst, r.weights[k]);
                     }
                 }
             }
         }
-        std::printf("  2051 的 %d 处村落：%d 处在过渡带里（别的群或背景也有份，2051 的权最少 %.2f）\n", villages, mixed, worst);
-        check(villages > 1000 && mixed < villages / 10, "2051 的村落九成以上在它自己管的地方（天气与没挂场时逐位一样）");
+        std::printf("  开局那群的 %d 处村落：%d 处在过渡带里（别的群或背景也有份，它的权最少 %.2f）；主码头 3 km 内在过渡带里的 %d 处\n", villages, mixed, worst, home_mixed);
+        // 开局那群（5141 km²）离邻群 #6327（3990 km²）只有 84 km，两群各管的范围（79 / 67 km）叠了一截：主岛西半边的村子天气里有邻群的份
+        // （2051 那样孤零零的群九成以上的村落在它自己管的地方，这里是五成多）。开局那群的权处处过半，主码头、邑治一带是它自己的天气。
+        check(villages > 1000 && mixed < villages * 6 / 10 && worst > 0.5 && home_mixed == 0,
+                "开局那群的村落：过渡带里的也是它的权过半，主码头与邑治一带全是它自己的天气（与没挂场时逐位一样）");
     }
-    // 2. 2051 → 2050 一路：每公里变得不多（大势连着、锋面连着），两头是各自的天气
+    // 2. 开局那群 → 邻群一路：每公里变得不多（大势连着、锋面连着），两头是各自的天气
     const double day0 = 9.37;
     double worst_cover = 0.0, worst_temp = 0.0, worst_wind = 0.0, worst_cov = 0.0;
     PlanetRegional prev;
-    for (int k = 0; k <= 114; k++) {
+    for (int k = 0; k <= 84; k++) {
         double lat = 0.0, lon = 0.0;
-        great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, k / 114.0, lat, lon);
+        great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, k / 84.0, lat, lon);
         const PlanetRegional r = pw->sample(day0, lat, lon, 0.0);
         if (k > 0) {
             worst_cover = std::max(worst_cover, std::abs(r.state.cloud - prev.state.cloud));
@@ -6134,10 +6176,10 @@ void test_planet_weather() {
         }
         prev = r;
     }
-    std::printf("  2051 → 2050 每公里最多变：云量 %.3f、雨区 %.3f、气温 %.2f °C、风 %.2f m/s\n", worst_cover, worst_cov, worst_temp, worst_wind);
+    std::printf("  开局那群 → 邻群每公里最多变：云量 %.3f、雨区 %.3f、气温 %.2f °C、风 %.2f m/s\n", worst_cover, worst_cov, worst_temp, worst_wind);
     check(worst_cover < 0.08 && worst_cov < 0.08 && worst_temp < 0.5 && worst_wind < 1.0, "两群之间一路过去没有瞬变（每公里云量、雨区 < 0.08，气温 < 0.5 °C，风 < 1 m/s）");
     const PlanetRegional at51 = pw->sample(day0, n51.lat, n51.lon, 0.0), at50 = pw->sample(day0, n50.lat, n50.lon, 0.0);
-    check(at51.n == 1 && at51.nodes[0] == 2051 && at51.bg_weight == 0.0 && at50.n == 1 && at50.nodes[0] == 2050, "两个群心各是各的（别的群、背景的权都丢了）");
+    check(at51.n == 1 && at51.nodes[0] == START && at51.bg_weight == 0.0 && at50.n == 1 && at50.nodes[0] == NEIGHBOR, "两个群心各是各的（别的群、背景的权都丢了）");
     // 3. 时间上：两群中间，三天里每游戏分钟变得不多（锋面扫过也是渐变）
     double mlat = 0.0, mlon = 0.0;
     great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, 0.5, mlat, mlon);
@@ -6148,21 +6190,21 @@ void test_planet_weather() {
         worst_t = std::max({ worst_t, std::abs(r.state.cloud - last.state.cloud), std::abs(r.state.coverage - last.state.coverage) });
         last = r;
     }
-    std::printf("  两群中间三天：每游戏分钟云量、雨区最多变 %.4f；中点的权 2051 %.2f / 2050 %.2f / 背景 %.2f\n", worst_t, last.n > 0 ? last.weights[0] : 0.0,
+    std::printf("  两群中间三天：每游戏分钟云量、雨区最多变 %.4f；中点的权 开局那群 %.2f / 邻群 %.2f / 背景 %.2f\n", worst_t, last.n > 0 ? last.weights[0] : 0.0,
             last.n > 1 ? last.weights[1] : 0.0, last.bg_weight);
     check(worst_t < 0.02, "两群中间换天是渐变（每游戏分钟云量、雨区 < 0.02）");
-    // 4. 云团场一路连续（几群按权混、权过门槛时也不跳）：2051 → 2050 每 10 m 取一次
+    // 4. 云团场一路连续（几群按权混、权过门槛时也不跳）：开局那群 → 邻群每 10 m 取一次
     double worst_field = 0.0, prev_field = -1.0;
-    for (int k = 0; k <= 11400; k++) {
+    for (int k = 0; k <= 8440; k++) {
         double lat = 0.0, lon = 0.0;
-        great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, k / 11400.0, lat, lon);
+        great_circle_at(n51.lat, n51.lon, n50.lat, n50.lon, k / 8440.0, lat, lon);
         const double fv = pw->field(33.3, lat, lon);
         if (prev_field >= 0.0) {
             worst_field = std::max(worst_field, std::abs(fv - prev_field));
         }
         prev_field = fv;
     }
-    std::printf("  云团场 2051 → 2050 每 10 m 最多变 %.4f\n", worst_field);
+    std::printf("  云团场 开局那群 → 邻群每 10 m 最多变 %.4f\n", worst_field);
     check(worst_field < 0.03, "云团场一路连续（每 10 m 变不到 0.03）");
     // 5. 云团按权混方差不变：过渡带里按门槛取的面积份额还对得上覆盖率
     {
@@ -6233,9 +6275,9 @@ void test_planet_weather() {
             d.temp_c += 10.0;
         }
         const double before = pw->sample(5.5, n51.lat, n51.lon, c51.ref_m).state.temp;
-        pw->set_group_climate(2051, hot);
+        pw->set_group_climate(START, hot);
         const double after = pw->sample(5.5, n51.lat, n51.lon, c51.ref_m).state.temp;
-        pw->set_group_climate(2051, c51);
+        pw->set_group_climate(START, c51);
         check_near(after - before, 10.0, 1e-9, "细版为准：set_group_climate 换了表，场里那一群跟着换");
     }
     // 9. 全行星的天气贴图：群上是群的天气、赤道永暴带是风暴
@@ -6254,9 +6296,9 @@ void test_planet_weather() {
         };
         const float *t51 = texel(n51.lat, n51.lon), *teq = texel(0.3, -150.0);
         const PlanetRegional r51 = pw->sample(12.25, -90.0 + (int((n51.lat + 90.0) / 180.0 * H) + 0.5) * 180.0 / H, -180.0 + (int((n51.lon + 180.0) / 360.0 * W) + 0.5) * 360.0 / W, 0.0);
-        std::printf("  贴图 256 × 128：备 %.0f ms、烘 %.0f ms；2051 那格云量 %.2f（取样 %.2f）群 %.2f；赤道那格风暴 %.2f、群 %.2f\n", prep_ms, bake_ms, t51[0], r51.state.cloud, t51[2],
+        std::printf("  贴图 256 × 128：备 %.0f ms、烘 %.0f ms；开局那群那格云量 %.2f（取样 %.2f）群 %.2f；赤道那格风暴 %.2f、群 %.2f\n", prep_ms, bake_ms, t51[0], r51.state.cloud, t51[2],
                 teq[3], teq[2]);
-        check(std::abs(t51[0] - r51.state.cloud) < 0.05 && t51[2] > 0.95, "贴图上 2051 那格的云量就是场在那一点的（±0.05）");
+        check(std::abs(t51[0] - r51.state.cloud) < 0.05 && t51[2] > 0.95, "贴图上开局那群那格的云量就是场在那一点的（±0.05）");
         check(teq[3] > 0.9 && teq[2] < 0.1, "贴图上赤道永暴带是风暴、背景");
     }
     // 10. 用时
@@ -6311,13 +6353,13 @@ void test_island_floor() {
     }
     // 够不着那么深的岛不动：龙骨照旧 max(生成器, 25·√R)
     {
-        WorldIsland isl;
-        isl.rim_m = 236.1;
-        isl.cliff_m = 45.1;
-        isl.keel_m = 191.0;
-        isl.max_shore_m = 17000.0;
+        WorldIsland isl; // 开局那群的主岛（sites.tsv 的 island 0 照抄）
+        isl.rim_m = 610.9;
+        isl.cliff_m = 310.9;
+        isl.keel_m = 300.0;
+        isl.max_shore_m = 22568.3;
         const IslandBody b = island_body(isl);
-        check_near(b.keel_m, 25.0 * std::sqrt(17000.0), 1e-9, "像 2051 主岛那样的（最深岸距 17 km）：龙骨不收");
+        check_near(b.keel_m, 25.0 * std::sqrt(22568.3), 1e-9, "像开局那群主岛那样的（最深岸距 22.6 km）：龙骨不收");
         check(island_lowest(isl, b) > floor_y, "…岛底本来就在最低线之上");
         isl.rim_m = -4500.0; // 岸缘都在最低线以下（不该有）：龙骨收到零，不出负数
         check(island_body(isl).keel_m == 0.0, "岸缘低过最低线：龙骨收到零");
@@ -6337,7 +6379,7 @@ void test_island_floor() {
                 }
                 return d;
             };
-            for (int node : { 4684, 4981, 4855, 2051, 2049 }) {
+            for (int node : { 4684, 4981, 4855, START, 6611 }) {
                 const PlanetLod lod = pd.lod(node);
                 const double before = deepest(build_far_group_mesh(lod, R, loose)), after = deepest(build_far_group_mesh(lod, R));
                 std::printf("  粗版 %d（%.0f m 格）：低模岛底最深 %.0f → %.0f m\n", node, lod.res_m, before, after);
@@ -6348,11 +6390,11 @@ void test_island_floor() {
             check(false, "行星包读得出：" + err);
         }
     }
-    // 仓库里的两群细版（浮高以后岸缘 22–1554 m）：每座岛都在最低线之上，岛体厚度与浮高无关
-    for (int node : { 2051, 2050 }) {
+    // 仓库里的两群细版（开局那群与邻群；浮高以后岸缘 35–1642 m）：每座岛都在最低线之上，岛体厚度与浮高无关
+    for (int node : { START, NEIGHBOR }) {
         WorldSites sites;
         std::string perr;
-        const std::string tsv = read_bytes(std::string(ZHOUZHU_SOURCE_DIR) + "/game/worlds/" + std::to_string(node) + "/sites.tsv");
+        const std::string tsv = read_bytes(group_dir(node) + "/sites.tsv");
         if (!parse_world_sites(tsv, sites, perr)) {
             check(false, "#" + std::to_string(node) + " 的 sites.tsv 能解析：" + perr);
             continue;
@@ -6372,7 +6414,7 @@ void test_island_floor() {
     }
     // 浮高只是整座平移（生成器的岸缘与 keel_m——崖脚的高程——一起加 δ）：岛体（龙骨、崖壁）不跟着变
     {
-        WorldIsland lo; // 2051 #24 浮高以前
+        WorldIsland lo; // 浮高计划 Z2 时量的 #2051（那时的开局）岛 #24，浮高以前
         lo.rim_m = 228.3;
         lo.cliff_m = 76.0;
         lo.keel_m = 152.3;
@@ -6557,8 +6599,8 @@ void test_sea_descent() {
     {
         // y < 0 的气温取 y = 0 处的（D13：云带是一层逆温）；y > 0 照直减率
         Climate c;
-        if (load_2051_climate(c)) {
-            const WeatherModel wx(c, 0.0, 2050.0);
+        if (load_start_climate(c)) {
+            const WeatherModel wx(c, 0.0, 2250.0);
             const double x = 12000.0, z = -8000.0, day = 3.5;
             const double t0 = wx.sample(day, x, z, 0.0).temp_c;
             check_near(wx.sample(day, x, z, ABOVE).temp_c, t0, 1e-12, "y = −4200（云带顶上）的气温同 y = 0");
@@ -6597,7 +6639,7 @@ void test_sea_descent() {
         std::printf("  岛龄：0–0.2 %d 群、0.2–0.4 %d、0.4–0.6 %d、0.6–0.8 %d、0.8–1 %d\n", by_age[0], by_age[1], by_age[2], by_age[3], by_age[4]);
         const double d_old = reef_density_at(pd, pd.node(oldest).lat, pd.node(oldest).lon, rr);
         const double d_young =reef_density_at(pd, pd.node(youngest).lat, pd.node(youngest).lon, rr);
-        const double d_home = reef_density_at(pd, pd.node(2051).lat, pd.node(2051).lon, rr);
+        const double d_home = reef_density_at(pd, pd.node(START).lat, pd.node(START).lon, rr);
         const auto t0 = std::chrono::steady_clock::now();
         std::vector<uint8_t> tex;
         bake_reef_density(pd, 1024, 512, tex, rr);
@@ -6618,8 +6660,8 @@ void test_sea_descent() {
             const double lat = -90.0 + (r + 0.5) * 180.0 / 512, lon = -180.0 + (c + 0.5) * 360.0 / 1024;
             worst = std::max(worst, std::abs(tex[size_t(r) * 1024 + size_t(c)] / 255.0 - reef_density_at(pd, lat, lon, rr)));
         }
-        std::printf("  白礁：最老的群 #%d（岛龄 %.2f）%.2f、最年轻的 #%d（%.2f）%.2f、2051（%.2f）%.2f；全行星平均 %.3f、三成以上的面积 %.1f%%；烘 1024 × 512 %.0f ms\n", oldest,
-                pd.node(oldest).age, d_old, youngest, pd.node(youngest).age, d_young, pd.node(2051).age, d_home, sum / area, 100.0 * over / area, ms);
+        std::printf("  白礁：最老的群 #%d（岛龄 %.2f）%.2f、最年轻的 #%d（%.2f）%.2f、开局那群（%.2f）%.2f；全行星平均 %.3f、三成以上的面积 %.1f%%；烘 1024 × 512 %.0f ms\n", oldest,
+                pd.node(oldest).age, d_old, youngest, pd.node(youngest).age, d_young, pd.node(START).age, d_home, sum / area, 100.0 * over / area, ms);
         check(d_old > 0.5, "最老的岛群附近白礁多");
         check(d_young < d_old, "年轻的岛群附近比老的少");
         check(worst < 0.01, "烘的贴图与逐点的式子对得上（最多差 " + std::to_string(worst) + "）");
@@ -6718,7 +6760,8 @@ void test_gen_format() {
     }
 }
 
-// seed42：进程内生成的行星包与岛群包，与仓库里 Python 那条路导出的（game/planet/seed42、game/worlds/2051、2050）逐字节相同
+// seed42：进程内生成的行星包与岛群包，与仓库里的（game/planet/seed42、它底下 groups/ 里开局那群与邻群的细版）逐字节相同。
+// 行星包原是 Python 那条路导出的；两群细版 PLAN-LAND P0 起由 tools/zhouzhu_gen.cpp 导（与 Python 那条路逐字节相同，行星计划 P6e 验过），这里守着不变
 void test_gen_seed42() {
     std::printf("[gen_seed42]\n");
     const std::string root = ZHOUZHU_SOURCE_DIR;
@@ -6768,30 +6811,30 @@ void test_gen_seed42() {
         m.tilt_deg = ps->world.planet.axial_tilt_deg;
         return m;
     };
-    for (int node : { 2050, 2051 }) {
+    for (int node : { NEIGHBOR, START }) {
         const auto t1 = std::chrono::steady_clock::now();
         gen_export::LodEntry lod;
         gen_export::WeatherEntry wx;
         const isl::Group g = gen_core::generate_group(*ps, node, &lod, &wx);
         const gen_export::GroupFiles f = gen_export::group_files(g, meta(node));
         const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t1).count();
-        if (node == 2050) {
+        if (node == NEIGHBOR) {
             // 拆开来一步一步生成（为了在水系之后取粗版）与生成器的 island::generate 逐字节相同；顺带的粗版与单跑粗版（同 skyisle island lod）逐字节相同
             isl::NodeInputs x = skyisle::planet::node_inputs(ps->world.islands, ps->world.climate, node, 42, cfg.planet);
             skyisle::planet::apply_polity(ps->society.polity, node, cfg.planet, x);
             const gen_export::GroupFiles f2 = gen_export::group_files(isl::generate(x, ps->view, cfg.island, 0, 5, 0.0, cfg.threads()), meta(node));
             check(f.terrain_bin == f2.terrain_bin && f.world_json == f2.world_json && f.sites_tsv == f2.sites_tsv && f.resources_tsv == f2.resources_tsv &&
                             f.weather_tsv == f2.weather_tsv,
-                    "#2050：拆开来生成与 island::generate 的包逐字节相同");
+                    "邻群：拆开来生成与 island::generate 的包逐字节相同");
             gen_export::LodEntry lod2;
             gen_export::WeatherEntry wx2;
             gen_core::lod_only(*ps, node, lod2, wx2);
             const std::array<double, 3> pf = gen_core::precip_formula(cfg);
-            check(gen_export::lods_bin({ lod }) == gen_export::lods_bin({ lod2 }), "#2050：顺带的粗版与单跑粗版逐字节相同");
-            check(gen_export::weather_bin({ wx }, pf, "") == gen_export::weather_bin({ wx2 }, pf, ""), "#2050：顺带的逐日天气与单跑粗版的逐字节相同");
-            check(lod.rows > 0 && lod.cols > 0 && lod.n_islands == int(g.islands.size()) && lod.res_m == 2000.0, "#2050：粗版 2 km、岛数对");
+            check(gen_export::lods_bin({ lod }) == gen_export::lods_bin({ lod2 }), "邻群：顺带的粗版与单跑粗版逐字节相同");
+            check(gen_export::weather_bin({ wx }, pf, "") == gen_export::weather_bin({ wx2 }, pf, ""), "邻群：顺带的逐日天气与单跑粗版的逐字节相同");
+            check(lod.rows > 0 && lod.cols > 0 && lod.n_islands == int(g.islands.size()) && lod.res_m == 2000.0, "邻群：粗版 2 km、岛数对");
         }
-        const std::string dir = root + "/game/worlds/" + std::to_string(node);
+        const std::string dir = group_dir(node);
         const std::string n = "#" + std::to_string(node) + " ";
         check(f.terrain_bin == read_bytes(dir + "/terrain.bin"), n + "terrain.bin 逐字节相同");
         check(lf(f.world_json) == lf(read_bytes(dir + "/world.json")), n + "world.json 逐字节相同（换行一律按 \\n 比：git 检出时会换）");
@@ -6799,6 +6842,41 @@ void test_gen_seed42() {
         check(f.resources_tsv == lf(read_bytes(dir + "/resources.tsv")), n + "resources.tsv 逐字节相同");
         check(f.weather_tsv == lf(read_bytes(dir + "/weather.tsv")), n + "weather.tsv 逐字节相同");
         std::printf("  #%d：生成 + 转换 %.2f s\n", node, s);
+    }
+    // 开局周围那一圈 500 m 的粗版（D11；tools/zhouzhu_gen.cpp near-lods 写进 lods.bin）：开局那群自己的那一条与现场单跑 500 m 粗版逐字节相同
+    {
+        gen_export::LodEntry fine;
+        gen_export::WeatherEntry wx;
+        gen_core::lod_only(*ps, START, fine, wx, 500.0);
+        const std::string lods = read_bytes(root + "/game/planet/seed42/lods.bin");
+        bool found = false, same = false;
+        uint32_t count = 0;
+        if (lods.size() >= 12) {
+            std::memcpy(&count, lods.data() + 8, 4);
+        }
+        for (uint32_t k = 0; k < count && 12 + size_t(k + 1) * 36 <= lods.size(); k++) {
+            const char *e = lods.data() + 12 + size_t(k) * 36;
+            uint32_t node = 0, bytes = 0;
+            float res = 0.0f, ox = 0.0f, oy = 0.0f;
+            uint16_t rows = 0, cols = 0, nis = 0;
+            uint64_t off = 0;
+            std::memcpy(&node, e, 4);
+            std::memcpy(&res, e + 4, 4);
+            std::memcpy(&ox, e + 8, 4);
+            std::memcpy(&oy, e + 12, 4);
+            std::memcpy(&rows, e + 16, 2);
+            std::memcpy(&cols, e + 18, 2);
+            std::memcpy(&nis, e + 20, 2);
+            std::memcpy(&off, e + 24, 8);
+            std::memcpy(&bytes, e + 32, 4);
+            if (int(node) != START || res != float(fine.res_m)) {
+                continue;
+            }
+            found = true;
+            same = ox == float(fine.origin_x) && oy == float(fine.origin_y) && rows == fine.rows && cols == fine.cols && nis == fine.n_islands &&
+                    off + bytes <= lods.size() && lods.compare(size_t(off), bytes, fine.blob) == 0;
+        }
+        check(found && same && fine.res_m == 500.0, "开局那群的 500 m 粗版：lods.bin 里那一条与现场生成的逐字节相同");
     }
     std::printf("  行星层 ①–⑨（⑧ 跳过）%.2f s\n", planet_s);
 }
@@ -7439,7 +7517,14 @@ int main(int argc, char **argv) {
             { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent },
             { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
             { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
-            { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works }, { "dev_manual", test_dev_manual } };
+            { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works }, { "dev_manual", test_dev_manual },
+            // 读开局那群的几段（换开局、重导时逐段重记金标）
+            { "almanac", test_almanac }, { "climate", test_climate }, { "local_season", test_local_season }, { "village_seasons", test_village_seasons },
+            { "world_start", test_world_start }, { "village_prep", test_village_prep_start }, { "terrain_v3", test_terrain_v3_start },
+            { "world_sites", test_world_sites }, { "world_rivers", test_world_rivers }, { "map_grounds", test_map_grounds }, { "freight", test_freight },
+            { "gather", test_gather }, { "scatter", test_scatter }, { "goldens", test_goldens }, { "planet_data", test_planet_data },
+            { "planet_add_lods", test_planet_add_lods }, { "planet_frame", test_planet_frame }, { "far_group_mesh", test_far_group_mesh },
+            { "planet_surface", test_planet_surface } };
         for (int k = 1; k < argc; k++) {
             const auto it = only.find(argv[k]);
             if (it != only.end()) {
@@ -7489,9 +7574,9 @@ int main(int argc, char **argv) {
     test_cover_blend();
     test_terrain_tiles();
     test_map_image();
-    test_world_2051();
-    test_village_prep_2051();
-    test_terrain_v3_2051();
+    test_world_start();
+    test_village_prep_start();
+    test_terrain_v3_start();
     test_dock_site();
     test_village_plan();
     test_world_sites();
