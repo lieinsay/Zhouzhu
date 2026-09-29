@@ -213,7 +213,7 @@ void GroupProvider::apply_config() {
         }
     }
     if (config.spawn_node < 0) {
-        return; // 剧情：场景里配的 2051
+        return; // 剧情：场景里配的（各节点的缺省就是开局配置 story_start.h）
     }
     // 生存：出生的那一群换进场景里的 World
     if (GroupWorld *w = Object::cast_to<GroupWorld>(get_node_or_null(world_path))) {

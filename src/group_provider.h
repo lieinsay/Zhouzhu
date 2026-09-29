@@ -18,8 +18,8 @@
 class GroupStream;
 class PlanetView;
 
-// 岛群包从哪来（行星计划 P4，docs/PLAN-PLANET.md 第五节 P4 第 1–3 条、第 4.7 节）：一个场景一个（world_2051.tscn，挂在 World 后面）。按这个次序找：
-//   仓库里的 res://worlds/<节点>/（只有剧情模式 seed42 的世界算：仓库里的 2051、2050 是 seed42 生成的）；
+// 岛群包从哪来（行星计划 P4，docs/PLAN-PLANET.md 第五节 P4 第 1–3 条、第 4.7 节）：一个场景一个（world_seed42.tscn，挂在 World 后面）。按这个次序找：
+//   仓库里的 res://planet/seed42/groups/<节点>/（story_start::GROUPS_DIR；只有剧情模式 seed42 的世界算：仓库里带的开局那群与它最近的邻群是 seed42 生成的）；
 //   这个世界的存档目录 user://worlds/<世界>/groups/<节点>/；
 //   都没有就在后台生成（行星计划 P6e 起在进程内：生成器的 C++ 核心库，GenJob 放进场景的任务池 PlanetJobs，一群一两秒；
 //   项目设置 zhouzhu/generator/backend = "python" 时照旧起 Python 子进程 tools/zhouzhu_gen.py，留作开发时的对照），有进度、出错报得清楚；
@@ -54,7 +54,7 @@ private:
     godot::String world_dir; // user://worlds/<世界>；空 = 不存档（只有仓库里的包，不生成）
     godot::String world_name;
     godot::String mode = "story";
-    godot::String repo_dir = "res://worlds";
+    godot::String repo_dir = story_start::GROUPS_DIR;
     bool story = true;
     godot::String gen_run; // 空 = 项目设置 zhouzhu/generator/run
     bool full_lods = true;

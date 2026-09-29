@@ -3,6 +3,6 @@
 [node name="DevTools" type="DevTools"]
 maps = {
 "res://main.tscn": "甲乙两岛（切片一至五）",
-"res://world_2051.tscn": "岛群 #2051（真实比例）",
+"res://world_seed42.tscn": "世界 seed42（剧情，真实比例）",
 "res://flat_map.tscn": "平板岛（新地图样板 / 测试图）"
 }

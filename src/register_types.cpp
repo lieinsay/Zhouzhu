@@ -37,6 +37,7 @@
 #include "scatter_stream.h"
 #include "site_stream.h"
 #include "ship.h"
+#include "story_start_api.h"
 #include "shipyard.h"
 #include "villagers.h"
 #include "world.h"
@@ -55,6 +56,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
         return;
     }
     GDREGISTER_CLASS(WorldClock);
+    GDREGISTER_ABSTRACT_CLASS(StoryStart);
     GDREGISTER_CLASS(TemplateLibrary);
     GDREGISTER_CLASS(Island);
     GDREGISTER_CLASS(Farm);

@@ -1,22 +1,23 @@
 // 岛群体检：把一个岛群的全部码头与村落离线铺一遍，报出哪里铺不好。不链 Godot。
 //
-//   build/Debug/zhouzhu_site_survey.exe game/worlds/2051                  # 摘要
-//   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --report out.tsv # 另写逐条明细（每个码头 / 村一行）
-//   build/Release/zhouzhu_site_survey.exe game/worlds/2051 --sim 24      # 另把全部村落开账、在远处结 24 个游戏小时，报花费
-//   build/Debug/zhouzhu_site_survey.exe game/worlds/2051 --rivers 河.tsv  # 另把河网逐点写出（河号、x、z、平岸水面、宽、深、汇流）
+//   build/Debug/zhouzhu_site_survey.exe --start                           # 开局那群（story_start.h：仓库里的 game/planet/seed42/groups/<开局>）的摘要
+//   build/Debug/zhouzhu_site_survey.exe game/planet/seed42/groups/6329     # 摘要（岛群目录）
+//   build/Debug/zhouzhu_site_survey.exe --start --report out.tsv          # 另写逐条明细（每个码头 / 村一行）
+//   build/Release/zhouzhu_site_survey.exe --start --sim 24               # 另把全部村落开账、在远处结 24 个游戏小时，报花费
+//   build/Debug/zhouzhu_site_survey.exe --start --rivers 河.tsv           # 另把河网逐点写出（河号、x、z、平岸水面、宽、深、汇流）
 //   有 weather.tsv 时另报一年的天气（逐月的台面气温、雨量、雪线、河冰线、物候、日出日落定的出工收工），再抽几处村子
 //   一年里每两个钟头取一次局地天气，看雨量对不对得上那一年、坏天气歇工多少钟头（局地雨量差出四成就不达标）
 //   有 resources.tsv 时另把采场与地标落一遍（采掘面、堆场；采掘面要在 60 m 内够得着开局的船野泊，规划时就量好了，只看地面、不看房子），
 //   再抽样生成散布（每隔 --scatter-stride 块取一块，默认 6），报每公顷长了多少、每块花多少时间、泊地上有没有树
-//   build/Release/zhouzhu_site_survey.exe --planet game/planet/seed42 [--home 2051] [--overlap]
+//   build/Release/zhouzhu_site_survey.exe --planet game/planet/seed42 [--home <节点>] [--overlap]   （--home 缺省是开局那群）
 //                                          # 行星包：摘要、邻群表、坐标自检、每群粗版对陆地；--overlap 另查邻群陆地叠没叠
-//   build/Release/zhouzhu_site_survey.exe --planet-weather game/planet/seed42 [--grid 2] [--steps 4] [--worlds game/worlds]
+//   build/Release/zhouzhu_site_survey.exe --planet-weather game/planet/seed42 [--grid 2] [--steps 4] [--worlds game/planet/seed42/groups]
 //                                          # 行星天气场（行星计划 P5）：逐日天气包、粗细两版天气对照、一年里全行星的云量与降水按纬度带与 ④ 的气候场对账（±20%）
 //   build/Release/zhouzhu_site_survey.exe --island-floor [<群目录>]
 //                                          # 本机生成过的岛群逐座查岛底离云带顶一千米（浮高计划 F3；缺省查 %APPDATA%\Godot\app_userdata\州渚\worlds\seed42\groups，不进 ctest）
-//   选项：--seed N（默认 2051，与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
+//   选项：--seed N（默认：目录名是节点号就用它，否则开局那群；与 World 的 terrain_seed 一致）、--max-missing F（摆不下的房子占比上限，默认 0.02）、
 //         --sim H（远处结算几个游戏小时；0 = 不结）、--scatter-stride N（散布抽样的间隔块数；0 = 不抽）、
-//         --calendar N（开局是一年里的第几天，远处结算的时令按它；默认 3，与 WorldClock 一致）
+//         --calendar N（开局是一年里的第几天，远处结算的时令按它；默认同 WorldClock，开局配置的 story_start::CALENDAR_START）
 //
 // 游戏里走近了才铺的东西，这里一次全铺：同一套纯算法（world_sites.h），所以这里铺得好，游戏里就铺得好。
 // 退出码：0 = 全部达标；1 = 有码头找不到岸缘，或摆不下的房子超过上限，或资源点落不了地 / 野泊不下的超过上限；2 = 读不了资产。
@@ -38,6 +39,7 @@
 
 #include "almanac.h"
 #include "planet_data.h"
+#include "story_start.h"
 #include "planet_frame.h"
 #include "planet_weather.h"
 #include "freight.h"
@@ -72,7 +74,7 @@ double since_ms(const std::chrono::steady_clock::time_point &p_start) {
 } // namespace
 
 // ---------------------------------------------------------------- 行星体检（--planet）
-// 行星包（game/planet/<seed>）读一遍：摘要、2051 的邻群表、坐标自检、每群粗版解开对陆地；--overlap 另查邻群陆地叠没叠（Release 下几十秒）。
+// 行星包（game/planet/<seed>）读一遍：摘要、开局那群（或 --home）的邻群表、坐标自检、每群粗版解开对陆地；--overlap 另查邻群陆地叠没叠（Release 下几十秒）。
 int survey_planet(const std::string &p_dir, int p_home, bool p_overlap) {
     const auto t0 = std::chrono::steady_clock::now();
     PlanetData pd;
@@ -103,7 +105,8 @@ int survey_planet(const std::string &p_dir, int p_home, bool p_overlap) {
     std::printf("势力范围：布局重摆过的 %d 群，陆地仍越过分界线的 %d 群\n", constrained, crossing);
     // 邻群表
     const PlanetNode &home = pd.node(p_home);
-    std::printf("%d（南纬 %.2f°、东经 %.2f°）600 km 内的岛群：\n", p_home, -home.lat, home.lon);
+    std::printf("%d（%s %.2f°、%s %.2f°）600 km 内的岛群：\n", p_home, home.lat >= 0.0 ? "北纬" : "南纬", std::abs(home.lat), home.lon >= 0.0 ? "东经" : "西经",
+            std::abs(home.lon));
     std::printf("  节点   距离 km   方位°   陆地 km²   主峰 m   粗版\n");
     for (int k : pd.nodes_within(home.lat, home.lon, 600000.0)) {
         if (k == p_home) {
@@ -445,7 +448,7 @@ int main(int argc, char **argv) {
     if (argc >= 3 && std::string(argv[1]) == "--planet-weather") {
         double grid = 5.0;
         int steps = 2;
-        std::string worlds = std::string(argv[2]) + "/../../worlds";
+        std::string worlds = std::string(argv[2]) + "/groups"; // 仓库里带的细版在行星包底下（PLAN-LAND P0）
         for (int k = 3; k < argc; k++) {
             const std::string opt = argv[k];
             if (opt == "--grid" && k + 1 < argc) {
@@ -459,7 +462,7 @@ int main(int argc, char **argv) {
         return survey_planet_weather(argv[2], grid, steps, worlds);
     }
     if (argc >= 3 && std::string(argv[1]) == "--planet") {
-        int home = 2051;
+        int home = story_start::SPAWN_NODE;
         bool overlap = false;
         for (int k = 3; k < argc; k++) {
             const std::string opt = argv[k];
@@ -472,17 +475,27 @@ int main(int argc, char **argv) {
         return survey_planet(argv[2], home, overlap);
     }
     if (argc < 2) {
-        std::fprintf(stderr, "用法：zhouzhu_site_survey <岛群目录> [--seed N] [--report 明细.tsv] [--max-missing 0.02]\n");
+        std::fprintf(stderr, "用法：zhouzhu_site_survey <岛群目录> | --start [--seed N] [--report 明细.tsv] [--max-missing 0.02]\n");
         return 2;
     }
-    const std::string dir = argv[1];
-    uint64_t seed = 2051;
+    // --start：开局那群（开局配置 story_start.h，仓库里带的细版）
+    const std::string dir = std::string(argv[1]) == "--start"
+            ? std::string(ZHOUZHU_SOURCE_DIR) + "/" + story_start::GROUPS_REL + "/" + std::to_string(story_start::SPAWN_NODE)
+            : std::string(argv[1]);
+    // 种子 = 节点号（World 的 terrain_seed）：目录名是节点号就用它
+    uint64_t seed = story_start::SPAWN_NODE;
+    {
+        const std::string name = std::filesystem::path(dir).filename().string();
+        if (!name.empty() && name.find_first_not_of("0123456789") == std::string::npos) {
+            seed = std::strtoull(name.c_str(), nullptr, 10);
+        }
+    }
     std::string report_path;
     double max_missing = 0.02;
     double sim_hours = 0.0;
     std::string rivers_path;
     int scatter_stride = 6;
-    int calendar_start = 3;
+    int calendar_start = story_start::CALENDAR_START;
     for (int k = 2; k + 1 < argc; k += 2) {
         const std::string opt = argv[k];
         if (opt == "--seed") {

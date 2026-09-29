@@ -438,7 +438,7 @@ void FarGroups::update_seasons(bool p_force) {
             continue;
         }
         // 简化版海拔表：气温 = 海面（高度 0）的年均温 + 半个温差 × cos（离最暖那天多远），按各群自己的直减率往上减；
-        // 最暖那天 = 该半球的夏至 + 45 天（2051 的逐日表：一月最暖、七月最冷）
+        // 最暖那天 = 该半球的夏至 + 45 天（逐日表里南半球一月最暖、七月最冷，北半球的开局那群 #6329 七月最暖、一月最冷）
         const PlanetNode &n = pd->node(it.first);
         const double lapse = n.height_m > 50.0 ? std::clamp((n.temp_sea_c - n.temp_c) / n.height_m * 1000.0, 3.5, 9.0) : 6.0; // °C/km
         const double amp = 0.5 * n.season_range_c;

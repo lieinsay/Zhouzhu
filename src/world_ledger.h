@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "story_start.h"
 #include "village_sim.h"
 #include "world_ground.h"
 #include "world_sites.h"
@@ -16,7 +17,7 @@
 
 struct WorldLedgerSpec {
     SiteSettlement site;
-    uint64_t seed = 2051; // SiteStream 的种子（铺村与起名都从它来）
+    uint64_t seed = story_start::SPAWN_NODE; // SiteStream 的种子（铺村与起名都从它来；= 节点号）
     int per_house = 2, max_folk = 40;
     std::vector<std::string> edits; // 布置模式改动的文本行（village_<号>.txt / hamlet_<号>.txt）
     PlotLattice lattice; // 岛群农田的地块格（岛群坐标）

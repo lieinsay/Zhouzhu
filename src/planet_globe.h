@@ -21,7 +21,7 @@ class SeaSurface;
 class GroupWorld;
 class JobPool;
 
-// 整颗行星（行星计划 P2，docs/PLAN-PLANET.md 第 4.3 节「600 km 到轨道」）：挂在有行星数据的地图里（world_2051.tscn），与 PlanetView、Atmosphere、FarGroups 并列。
+// 整颗行星（行星计划 P2，docs/PLAN-PLANET.md 第 4.3 节「600 km 到轨道」）：挂在有行星数据的地图里（world_seed42.tscn），与 PlanetView、Atmosphere、FarGroups 并列。
 // 画法见 game/shaders/planet_sky.gdshaderinc 开头：行星与大气逐像素按视线与同心球面求交来画，不建网格——
 //   - 天空着色器（Atmosphere 建的 sky.gdshader）：地平线以下的整颗行星（海、云带壳、贴图岛群、夜里的灯）与大气散射、星空日月；
 //   - 云层叠画（本节点建的一张盖满屏幕的片，planet_overlay.gdshader）：相机升过 +2.8 km 以后往下看的天气云层，高空再加一层空气透视。

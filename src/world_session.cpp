@@ -49,21 +49,31 @@ WorldConfig WorldSession::story_config() {
     c.name = STORY_NAME;
     c.mode = "story";
     c.world_dir = String(WORLDS_DIR).path_join(STORY_NAME);
-    c.planet_dir = "res://planet/seed42";
+    c.planet_dir = story_start::PLANET_DIR;
     c.story = true;
-    c.seed = 42;
+    c.seed = story_start::SEED;
     c.full_lods = true;
+    // 出生群、钟不从 world.json 读（spawn_node / clock_node 留 −1 = 场景里配的，即开局配置）：开局换了（PLAN-LAND P0，2051 → 6329），
+    // 旧存档目录的 world.json 还记着 2051，照样跟着开局配置走；这里只把 world.json 里的 spawn 改成此刻的开局，免得看着对不上。
+    // groups/ 里缓存的群、memory/ 里离开的群的账都留着（它们本来就是按需生成、按群记的；2051 以后是普通的一群，走近了从缓存或当场生成）。
     const String meta = c.world_dir.path_join("world.json");
-    if (!FileAccess::file_exists(meta)) {
+    Dictionary d = read_json(meta);
+    const bool fresh = d.is_empty();
+    if (fresh || int(d.get("spawn", -1)) != story_start::SPAWN_NODE) {
         DirAccess::make_dir_recursive_absolute(ProjectSettings::get_singleton()->globalize_path(c.world_dir));
-        Dictionary d;
-        d["name"] = c.name;
-        d["mode"] = c.mode;
-        d["seed"] = c.seed;
-        d["spawn"] = 2051;
-        d["planet"] = c.planet_dir;
-        d["note"] = String(U"剧情模式（D15）：行星包、全部粗版、2051 与 2050 的细版出厂就在仓库里；这里只存按需生成的岛群、离开的岛群的账");
-        d["created"] = Time::get_singleton()->get_datetime_string_from_system();
+        if (fresh) {
+            d["name"] = c.name;
+            d["mode"] = c.mode;
+            d["seed"] = c.seed;
+            d["planet"] = c.planet_dir;
+            d["created"] = Time::get_singleton()->get_datetime_string_from_system();
+        } else {
+            d["spawn_before"] = d.get("spawn", -1);
+            d["spawn_changed"] = Time::get_singleton()->get_datetime_string_from_system();
+        }
+        d["spawn"] = story_start::SPAWN_NODE;
+        d["note"] = String(U"剧情模式（D15）：行星包、全部粗版、开局那群与最近的邻群的细版出厂就在仓库里（res://planet/seed42/groups）；"
+                           U"这里只存按需生成的岛群、离开的岛群的账。出生群跟着游戏的开局配置（src/story_start.h），不看这里的 spawn");
         Ref<FileAccess> f = FileAccess::open(meta, FileAccess::WRITE);
         if (f.is_valid()) {
             f->store_string(JSON::stringify(d, " "));

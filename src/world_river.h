@@ -53,7 +53,7 @@ struct RiverRules {
     double meander_wave_k = 12.0; // 曲流波长 ≈ 宽 × 这个（夹在 60..300 m）
     double wander_m = 55.0, wander_wave_m = 900.0; // 大尺度的摆：D8 的格心连线是一段段横平竖直的长直线，靠它摆开
     double head_ramp_m = 80.0; // 源头这么长一段渐宽渐深
-    double dry_k = 0.7, dry_exp = 1.1, dry_min = 0.02, dry_max = 0.95; // 渗漏门槛：1 km² 0.7（旱季常干）、3 km² 0.2、5 km² 起约 0.1（2051 常年有水）
+    double dry_k = 0.7, dry_exp = 1.1, dry_min = 0.02, dry_max = 0.95; // 渗漏门槛：1 km² 0.7（旱季常干）、3 km² 0.2、5 km² 起约 0.1（常年有水）
     double stage_exp = 0.4; // 水深 ∝ 流量^这个
     double flood_max = 3.0; // 流量最多到平岸的几倍（漫滩的上限）
     double wet_depth_m = 0.03; // 比这浅就算干了

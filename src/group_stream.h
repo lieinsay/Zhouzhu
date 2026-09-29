@@ -21,6 +21,7 @@
 #include "planet_frame.h"
 #include "resource_scatter.h"
 #include "resource_sites.h"
+#include "story_start.h"
 #include "world_sites.h"
 
 class FarGroups;
@@ -41,7 +42,7 @@ struct GroupShift {
     double yaw(const godot::Vector3 &p_old) const; // 该点处转了多少（弧度，Godot 的 y 转角：朝向的 yaw 加它）
 };
 
-// 岛群的流式（行星计划 P3，计划 4.4）：一个场景一个（world_2051.tscn），按焦点（人或船）到各群陆地的距离给档——
+// 岛群的流式（行星计划 P3，计划 4.4）：一个场景一个（world_seed42.tscn），按焦点（人或船）到各群陆地的距离给档——
 //   远景（FAR）：只有 FarGroups 的粗版；
 //   近景（NEAR）：GroupWorld（后台载入，Farm、Shipyard 跟着）只流地面块与河，没有碰撞，不接焦点——焦点按真球面换到它的平面喂给它选块；
 //   细版（DETAIL）：再挂上 SiteStream、ScatterStream、Hinterland（这一群的村子、散布、账房），是锚或即将成为锚；同时细版的 ≤ max_detail（锚 + 最近的一个）。
@@ -52,7 +53,7 @@ struct GroupShift {
 // 换锚：人或船离哪个群的陆地最近就以它为锚（回滞 shift_margin），只在云海上空换（脚下两群都没有地）；定了之后挂起（is_shift_pending），
 // 编排（Expedition）下一个物理帧把人、船、相机、摆出来的东西按 GroupShift 换过去，再 commit_shift：新锚归位、挂上碰撞，旧锚摆上刚体变换、撤掉碰撞，
 // PlanetView 换锚。画面只取决于真球面上的位置与相机，所以换锚那一帧不跳。
-// 场景里摆的那一群（home，2051）的节点在场景根下（名字照旧：World、SiteStream、ScatterStream、Hinterland，测试与工具按名字找）；
+// 场景里摆的那一群（home，开局那群）的节点在场景根下（名字照旧：World、SiteStream、ScatterStream、Hinterland，测试与工具按名字找）；
 // 别的群建在自己的容器（Group<节点号>）下，子节点同名，所以它们之间的相对路径（../World）照旧。离开细版时村子的账、离开近景时农田与采场的账留在内存（GroupMemory）。
 // 行星计划 P4：
 //   岛群包从 GroupProvider 来（仓库 / 世界存档目录 / 按需生成）：开局认得的是已有包的群，生成好一群（group_ready）就加进来——群只往后加，下标不变；
@@ -119,7 +120,7 @@ private:
     godot::NodePath home_path = "../World";
     godot::NodePath far_groups_path = "../FarGroups";
     godot::NodePath provider_path = "../GroupProvider";
-    godot::String worlds_dir = "res://worlds";
+    godot::String worlds_dir = story_start::GROUPS_DIR; // 没有 GroupProvider 时（P3 的做法）看这里以节点号命名的包
     godot::String settlements_dir = "res://settlements";
     double detail_in = 30000.0, detail_out = 40000.0;
     double near_in = 55000.0, near_out = 70000.0;
@@ -183,7 +184,7 @@ private:
     double works_save_timer = 0.0;
     void save_works(Group &r_group, bool p_force); // 营造账变了就存（p_force：不看隔多久）
     void finish_ledgers(Group &r_group, bool p_wait); // 后台存账做完了（或 p_wait 等它做完）：并进 memory.ledgers、存进存档目录
-    // 拆一群（降档）不在一帧里拆完（行星计划 P4 量出来的：2051 的村子、地面块一下子拆掉主线程要两三百毫秒）：
+    // 拆一群（降档）不在一帧里拆完（行星计划 P4 量出来的：当时的开局 2051 那样的群，村子、地面块一下子拆掉主线程要两三百毫秒）：
     // 节点先停下、改名（同名的新节点照旧叫 World / SiteStream……）、交给「坟地」，每帧按 reap_budget_ms 从叶子往上拆一点
     std::vector<godot::ObjectID> graveyard;
     int buried = 0;

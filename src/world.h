@@ -30,6 +30,7 @@
 #include "stream_meter.h"
 #include "terrain_tile.h"
 #include "planet_weather.h"
+#include "story_start.h"
 #include "weather.h"
 #include "world_grid.h"
 #include "world_sites.h"
@@ -96,10 +97,10 @@ struct RiverArrays : JobResult {
 class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
     GDCLASS(GroupWorld, godot::Node3D)
 
-    godot::String data_dir = "res://worlds/2051";
+    godot::String data_dir = godot::String(story_start::GROUPS_DIR).path_join(godot::itos(story_start::SPAWN_NODE)); // 缺省：开局那群（story_start.h）
     godot::NodePath sites_path = "../SiteStream"; // 可以不接：那就没有码头与村落的实物，也靠不了岸
     godot::NodePath scatter_path = "../ScatterStream"; // 可以不接：那就没有地上的树、灌丛、石块
-    int64_t terrain_seed = 2051;
+    int64_t terrain_seed = story_start::SPAWN_NODE; // 地形细节、铺村的种子 = 节点号
     double split = 1.25; // 焦点到块的距离 < 块边长 × split 就细分
     int build_threads = 4; // 场景里没有 PlanetJobs 时，自己的任务池几条线程
     double retarget_distance = 12.0; // 焦点挪了这么远才重新选块
@@ -440,7 +441,7 @@ public:
     double get_runoff_override() const { return runoff_override; }
 };
 
-// 兼容名：只有一个群的 GroupWorld（world_2051.tscn 里摆的那个、脚本里的 `as World`）。什么都不加。
+// 兼容名：只有一个群的 GroupWorld（world_seed42.tscn 里摆的那个、脚本里的 `as World`）。什么都不加。
 class World : public GroupWorld {
     GDCLASS(World, GroupWorld)
 

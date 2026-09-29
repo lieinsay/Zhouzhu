@@ -368,7 +368,7 @@ void DevTools::refresh_weather_panel() {
                 String::num(double(w["latitude"]), 1), hour_text(w["sunrise"]), hour_text(w["sunset"]), String::num(double(w["day_length"]), 1),
                 int(std::lround(double(w["sun_altitude"]))), int(std::lround(double(w["moon_lit"]) * 100.0))));
         if (bool(w.get("planet", false))) {
-            // 行星计划 P1：日月按相机的经纬度，钟点是 2051（152.15°E）的地方时（D10）
+            // 行星计划 P1：日月按相机的经纬度，钟点是钟的那一群（开局配置 story_start::CLOCK_NODE）的地方时（D10）
             const double lat = w["sun_latitude"], lon = w["sun_longitude"], off = w["local_offset_h"];
             // 行星计划 P7：离海面多高（海面 −6800 m，D13）；在云带里、云底下另说一声
             const double sea = w.get("sea_height", NAN);
@@ -606,7 +606,7 @@ void DevTools::set_orbit(bool p_enabled) {
     Viewport *viewport = get_viewport();
     Camera3D *current = viewport ? viewport->get_camera_3d() : nullptr;
     if (!view || !scene || !current) {
-        show_notice(String(U"这张地图没有行星数据，轨道相机用不了（F2 换到「岛群 #2051」）"));
+        show_notice(String(U"这张地图没有行星数据，轨道相机用不了（F2 换到「世界 seed42」）"));
         return;
     }
     orbit = memnew(OrbitCamera);
@@ -653,7 +653,7 @@ void DevTools::switch_to(const String &p_path) {
 
 void DevTools::open_planet_map() {
     if (!PlanetView::active_view()) {
-        show_notice(String(U"这张地图没有行星数据（F2 换到「岛群 #2051」或新建一个世界）"));
+        show_notice(String(U"这张地图没有行星数据（F2 换到「世界 seed42」或新建一个世界）"));
         return;
     }
     set_menu_open(false);
@@ -902,7 +902,7 @@ void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
     }
     // 岛群场景自己管 M；别的场景没有地图，告诉开发者去哪儿找
     if (p_event->is_action_pressed(input_actions::MAP) && !get_tree()->get_first_node_in_group(Expedition::MAP_GROUP)) {
-        show_notice(String(U"这张地图没有岛群地图——按 F2 换到有地图的「岛群 #2051」"));
+        show_notice(String(U"这张地图没有岛群地图——按 F2 换到有地图的「世界 seed42」"));
     }
 }
 

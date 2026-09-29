@@ -1,6 +1,6 @@
 // 云带顶（行星计划 P1，D13：y = −5000 m）：PlanetView 建的一张同心环网格，跟着相机走、半径到 1,000 km，
 // 顶点按真球面弯（planet_curve.gdshaderinc），所以远处的云海顺着地平线弯下去、岛群从地平线上冒出来。
-// 颜色与原来的平板云海（world_2051.tscn 的 CloudSea）一样，另按平面坐标加两层很淡的大斑（几公里到十几公里），高处往下看有起伏、看得出远近。
+// 颜色与原来的平板云海（world_seed42.tscn 的 CloudSea）一样，另按平面坐标加两层很淡的大斑（几公里到十几公里），高处往下看有起伏、看得出远近。
 // P2 换成行星球的云带壳。
 shader_type spatial;
 render_mode cull_back, specular_schlick_ggx, world_vertex_coords;

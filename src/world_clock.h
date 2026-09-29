@@ -5,6 +5,7 @@
 
 #include "almanac.h"
 #include "day_clock.h"
+#include "story_start.h"
 
 // 全局唯一的世界时钟（autoload「GameClock」，见 game/world_clock.tscn）：从第 0 天子夜起走过的秒数只有这一份。
 // 在场景之上，所以换地图（F2）钟点不断；所有村子（近处逐帧、远处结算）、农田生长都读它，将来的码头班次也读它。
@@ -22,7 +23,7 @@ class WorldClock : public godot::Node {
     DayRules rules;
     CalendarRules calendar;
     double start_hour = 7.5;
-    int calendar_start = 3; // 开局是一年里的第几天（2051：第 3 天，雨季里的晴天）
+    int calendar_start = story_start::CALENDAR_START; // 开局是一年里的第几天（开局配置：#6329 的第 85 天，开春第一个晴天；#2051 时是第 3 天）
     int calendar_shift = 0; // 开发者拨过的日子
     double seconds = 0.0;
     bool fast_forward = false;

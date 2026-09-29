@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://b0zhouzhuw2051"]
+[gd_scene load_steps=9 format=3 uid="uid://b0zhouzhuws42"]
 
 [ext_resource type="PackedScene" path="res://player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://ship.tscn" id="2_ship"]
@@ -31,7 +31,7 @@ roughness = 1.0
 material = SubResource("cloud_material")
 size = Vector2(240000, 240000)
 
-[node name="World2051" type="Expedition"]
+[node name="WorldSeed42" type="Expedition"]
 map = NodePath("PlanetHost")
 origin_dock = 1
 destination_dock = 28
@@ -55,8 +55,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5000, 0)
 mesh = SubResource("cloud_mesh")
 
 [node name="World" type="World" parent="."]
-data_dir = "res://worlds/2051"
-terrain_seed = 2051
 
 [node name="Farm" type="Farm" parent="World"]
 
@@ -67,7 +65,6 @@ terrain_seed = 2051
 [node name="Player" parent="." instance=ExtResource("1_player")]
 
 [node name="SiteStream" type="SiteStream" parent="."]
-seed = 2051
 
 [node name="ScatterStream" type="ScatterStream" parent="."]
 

@@ -172,6 +172,7 @@ set(ZHOUZHU_CORE_SOURCES
     src/ship_layout.h
     src/stream_meter.cpp
     src/stream_meter.h
+    src/story_start.h
     src/structure_styles.cpp
     src/structure_styles.h
     src/template_set.cpp
@@ -275,6 +276,8 @@ target_sources(
         src/planet_map.h
         src/world_session.cpp
         src/world_session.h
+        src/story_start_api.cpp
+        src/story_start_api.h
         src/group_stream.h
         src/flat_map.cpp
         src/flat_map.h
@@ -399,7 +402,7 @@ set_target_properties(
 enable_testing()
 add_executable(zhouzhu_core_tests ${ZHOUZHU_CORE_SOURCES} tests/core_tests.cpp)
 target_include_directories(zhouzhu_core_tests PRIVATE src)
-# 有的测试读仓库里的真资产（game/worlds/…）
+# 有的测试读仓库里的真资产（game/planet/seed42/…：开局那群与它的邻群的细版，见 src/story_start.h）
 target_compile_definitions(zhouzhu_core_tests PRIVATE ZHOUZHU_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 set_target_properties(zhouzhu_core_tests PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
 target_link_libraries(zhouzhu_core_tests PRIVATE zhouzhu_gen)
@@ -425,14 +428,15 @@ if(MSVC)
 endif()
 add_test(NAME skyisle_core_selftest COMMAND skyisle_core_selftest)
 
-# 岛群体检：把 2051 的全部码头与村落离线铺一遍（见 tools/site_survey.cpp）
+# 岛群体检：把开局那群（src/story_start.h）的全部码头与村落离线铺一遍（见 tools/site_survey.cpp）
 add_executable(zhouzhu_site_survey ${ZHOUZHU_CORE_SOURCES} tools/site_survey.cpp)
 target_include_directories(zhouzhu_site_survey PRIVATE src)
 set_target_properties(zhouzhu_site_survey PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF)
 if(MSVC)
     target_compile_options(zhouzhu_site_survey PRIVATE /utf-8)
 endif()
-add_test(NAME site_survey_2051 COMMAND zhouzhu_site_survey ${CMAKE_CURRENT_SOURCE_DIR}/game/worlds/2051)
+target_compile_definitions(zhouzhu_site_survey PRIVATE ZHOUZHU_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_test(NAME site_survey_start COMMAND zhouzhu_site_survey --start)
 # 行星包体检：摘要、邻群表、坐标自检、每群粗版对陆地（邻群叠没叠要 --overlap，手动跑）
 add_test(NAME site_survey_planet COMMAND zhouzhu_site_survey --planet ${CMAKE_CURRENT_SOURCE_DIR}/game/planet/seed42)
 # 行星天气场（行星计划 P5）：粗细两版天气对照、一年里全行星的云量与降水与 ④ 的气候场对账（5° 的格、一天两个时刻；细一点的用 --grid 2 --steps 4）

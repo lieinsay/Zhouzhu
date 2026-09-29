@@ -245,7 +245,7 @@ void GroupWorld::_ready() {
     attach_pool();
     set_physics_on(physics_on); // 进树前就定了是邻群（GroupStream 建的）：船坞跟着撤出物理
     if (async_load) {
-        // 后台读（Debug 下 2051 约 1 s）：这期间主线程不碰地形这些成员；_process 里等它做完再装
+        // 后台读（Debug 下一群约 1 s，行星计划 P3 量的 2051）：这期间主线程不碰地形这些成员；_process 里等它做完再装
         loading = true;
         pool->submit(job_key(JobKind::GROUP_LOAD, 0), 0.0, [this]() -> std::unique_ptr<JobResult> {
             std::unique_ptr<GroupLoadDone> out = std::make_unique<GroupLoadDone>();

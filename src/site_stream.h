@@ -29,7 +29,7 @@ class SiteStream : public godot::Node3D {
 
     godot::NodePath world_path = "../World";
     godot::NodePath hinterland_path = "../Hinterland";
-    godot::String layout_dir = "res://settlements/2051"; // 布置模式的改动：<layout_dir>/village_<号>.txt、hamlet_<号>.txt
+    godot::String layout_dir = godot::String(story_start::SETTLEMENTS_DIR).path_join(godot::itos(story_start::SPAWN_NODE)); // 布置模式的改动：<layout_dir>/village_<号>.txt、hamlet_<号>.txt
     double dock_radius = 3000.0;
     double village_radius = 6000.0; // 简模
     double detail_radius = 300.0; // 格子换细模
@@ -39,7 +39,7 @@ class SiteStream : public godot::Node3D {
     double hysteresis = 1.25;
     int per_house = 2;
     int max_folk = 40;
-    int64_t seed = 2051;
+    int64_t seed = story_start::SPAWN_NODE; // 与 World 的 terrain_seed 一致（节点号）
     double check_interval = 0.25;
     int mount_budget_usec = 3000; // 每帧最多花这么久挂村子、挂 / 拆细模、招村民
 

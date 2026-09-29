@@ -18,15 +18,16 @@
 #include "planet_data.h"
 #include "planet_frame.h"
 #include "planet_weather.h"
+#include "story_start.h"
 
 class GroupWorld;
 class MapHost;
 
-// 行星的画面（行星计划 P1，docs/PLAN-PLANET.md 第 4.2 节）：一个场景一个，挂在有行星数据的地图里（world_2051.tscn）。
+// 行星的画面（行星计划 P1，docs/PLAN-PLANET.md 第 4.2 节）：一个场景一个，挂在有行星数据的地图里（world_seed42.tscn）。
 // 读行星包（planet_dir：planet.bin + lods.bin，纯 C++ 的 PlanetData），锚 = 地图宿主的岛群（world.json 的 source.lat / lon / node）；
 // 每帧按当前相机（在锚群的平面坐标里）用双精度算出：
 //   c、R_c、δ(c) → 全局着色器参数 planet_curve_*（地皮、散布、河、天空的云层、弯曲标准材质、云带顶都读它，visual(p) 见 planet_curve.gdshaderinc）；
-//   相机的经纬度（AEQD 逆算）→ 天与光按它算日月、钟按参考经度的地方时（D10：clock_node 的经度，2051 = 152.15°E）；
+//   相机的经纬度（AEQD 逆算）→ 天与光按它算日月、钟按参考经度的地方时（D10：clock_node 的经度；开局那群 #6329 = 27.77°E，2026-09-29 以前是 2051 的 152.15°E）；
 //   远处岛群的刚体摆放（group_transform：群心相对相机的位置与朝向，FarGroups 用）；
 //   当前相机的远近平面：远平面至少 camera_far（60 km：着色器把 10 km 外沿视线压到 26 km 以内，见 CurveSqueeze），近平面随离地高度放大（高空时到 1 m）。
 // 云带顶：把场景里的平板云海（cloud_sea_path）藏起来，换成一张跟着相机走的同心环网格（y = −5000，D13），半径 cloud_deck_radius，按真球面弯。
@@ -37,11 +38,11 @@ class PlanetView : public godot::Node3D {
 
     static PlanetView *active;
 
-    godot::String planet_dir = "res://planet/seed42";
+    godot::String planet_dir = story_start::PLANET_DIR;
     godot::String extra_lods_dir; // 按需生成的粗版（世界存档目录的 lods/，行星计划 P4）：读完行星包接着读这里的 <节点>.bin
     godot::NodePath map_path = "../World";
     godot::NodePath cloud_sea_path = "../CloudSea";
-    int clock_node = 2051; // 钟点 = 这个群的地方时（D10）
+    int clock_node = story_start::CLOCK_NODE; // 钟点 = 这个群的地方时（D10）
     double camera_far = 60000.0; // > CurveSqueeze::LIMIT_M
     double cloud_deck_radius = 1000000.0;
     double near_min = 0.05, near_max = 1.0; // 近平面：离地 near_rise_from 以下是 near_min，往上按高度放大到 near_max

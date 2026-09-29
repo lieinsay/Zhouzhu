@@ -32,7 +32,7 @@ class StylePanel;
 class DevWorksPanel;
 class WorksView;
 
-// 玩家编排：哪张地图都是它（甲乙两岛 main.tscn、岛群 world_2051.tscn、平板岛测试图），场景只配属性。
+// 玩家编排：哪张地图都是它（甲乙两岛 main.tscn、世界 seed42 的 world_seed42.tscn、平板岛测试图），场景只配属性。
 // 地图只认地图宿主（MapHost，map 属性指过去）：地面、码头、船坞、农田、脚下的聚落、流式焦点、岛群地图面板都问它。
 // 玩法是几个与场景无关的部件，这里持有、按优先级调度：
 //   掌舵（Helm）：上舵、飞（R/F 换档）、叫靠泊 / 入坞、离舵；

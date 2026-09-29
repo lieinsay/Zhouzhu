@@ -31,7 +31,7 @@ class PlanetMap;
 //   「新建世界（随机种子）」：WorldMaker 在进程内用生成器的 C++ 核心库算行星层、出生的岛群（行星计划 P6e；项目设置切到 python 时调 tools/zhouzhu_gen.py world），
 //     好了换进这个世界（生存模式，计划 4.8）；
 //   「继续：世界 seedN」：user://worlds 下建过的生存世界，已生成的岛群、粗版不重生成；
-//   「岛群 #2051」照旧（剧情模式 seed42，存档目录 user://worlds/seed42）。
+//   「世界 seed42」是剧情模式（存档目录 user://worlds/seed42；出生在开局那群的主码头，开局配置见 story_start.h）。
 //   换场景、关窗前让场景里的 GroupStream 把载入着的群的账存进世界存档目录。
 // 当前场景的根节点有 dev_tools 属性且为假时，这些键都不理；暂停菜单开着（树暂停）时也不理。
 // 每样工具的说明在 dev_manual.cpp（Esc 暂停菜单的「开发者工具说明」照它列）：加了新工具记得添一条。
@@ -80,7 +80,7 @@ class DevTools : public godot::Node {
         bool enabled = true;
     };
     std::vector<MenuEntry> entries;
-    godot::String planet_scene = "res://world_2051.tscn"; // 行星场景（剧情、生存都用它）
+    godot::String planet_scene = "res://world_seed42.tscn"; // 行星场景（剧情、生存都用它）
     PlanetMap *planet_map = nullptr;
     bool planet_open = false;
     bool blocked_before_planet = false;
