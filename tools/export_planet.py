@@ -1,7 +1,11 @@
 """把 skyisle-gen 的一个行星（十步管线的 run 目录 + 第三层粗版）转成游戏的行星包（docs/PLAN-PLANET.md P0）。
 
-    python tools/export_planet.py <run 目录> <输出目录> [--lod-res 2000] [--near 2051 --near-res 500 --near-radius 600] [--generator <skyisle-gen 根>] [--fine <岛群包目录>]
-    python tools/export_planet.py D:/Project/skyisle-gen/out/seed42 game/planet/seed42 --near 2051 --fine game/worlds
+    python tools/export_planet.py <run 目录> <输出目录> [--lod-res 2000] [--near <开局那群> --near-res 500 --near-radius 320] [--generator <skyisle-gen 根>] [--fine <岛群包目录>]
+    python tools/export_planet.py D:/Project/skyisle-gen/out/seed42 game/planet/seed42 --near 6329 --near-radius 320 --fine game/planet/seed42/groups
+
+开局周围那一圈 500 m 的粗版（D11；开局配置在 src/story_start.h）也能不经 Python、只换那一圈：
+    build/Debug/zhouzhu_gen.exe near-lods --config game/planet/seed42/config.tsv --seed 42 --lods game/planet/seed42/lods.bin --near 6329 --near-radius 320
+（地貌与聚落 P0 就这么把 2051 周围 600 km 换成 6329 周围 320 km；拿 --near 2051 --near-radius 600 验过与这里导的逐字节相同）
 
 --fine：有细版的群（<目录>/<节点>/weather.tsv）拿来与粗版的逐日天气对一遍，报类型逐日相同的比例（行星计划 P5）。
 --generator：记生成器提交号用（缺省按 run 目录的上上级，即 skyisle-gen/out/<run>；新建世界的 run 在游戏的存档目录里，要给）。
@@ -9,7 +13,7 @@ run 目录里没有粗版（新建世界：只算了行星层）照样导：lods
 单群的粗版（游戏按需生成的，tools/zhouzhu_gen.py 调 write_lods）写成同格式、只有一条的 lods/<节点>.bin。
 
 粗版先用生成器批跑：skyisle island lod --run out/seed42 --lod-res 2000,1000（全行星），
-                   skyisle island lod --run out/seed42 --lod-res 500 --near 2051 --radius 600（近邻）。
+                   skyisle island lod --run out/seed42 --lod-res 500 --near 6329 --radius 320（近邻）。
 只依赖 numpy。游戏运行时不需要它，也不读 skyisle-gen 的 out/。
 行星计划 P6e：游戏进程内生成用的是这里的 C++ 版（src/gen_export.*，连同生成器 Python 前端在中间做的那一步），两边写出的文件逐字节相同；
 改这里的格式或写法，C++ 那边要一起改（单测 gen_seed42 与 tools/zhouzhu_gen.cpp 的对照会报出来）。

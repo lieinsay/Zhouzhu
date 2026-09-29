@@ -1,11 +1,11 @@
 extends Node
-## 村子的目视检查：邑治（村001）与村004 各从村里、350 m、1.8 km、高空四个距离各拍一张（不做断言，只存图）。
+## 村子的目视检查：开局那群的邑治（world.json 里 seat 的那一村）与离主码头 25 km 内户数最多的另一个村（#6329 是村006）各从村里、350 m、1.8 km、高空四个距离各拍一张（不做断言，只存图）。
 ## 近处看房子的细模（门窗、屋顶、灯），远处看简模接得上接不上、远处的村子画没画出来。人跟着相机挪（流式焦点就是人）。
 ##
 ##   Godot --path game --fixed-fps 60 res://tools/village_shots.tscn -- --shots=<目录>
 
-const SCENE := preload("res://world_2051.tscn")
-const VILLAGES := [[1, Vector2(10350, -21850)], [4, Vector2(3050, -26550)]]
+const SCENE := preload("res://world_seed42.tscn")
+var villages: Array = []  # [村号, 村心]：_plan 里从 world.json 挑
 # [名字, 相机离村心（水平，米）, 相机离地（米）, 看向离地（米）]
 const DISTANCES := [["near", 45.0, 6.0, 2.0], ["mid", 350.0, 60.0, 0.0], ["far", 1800.0, 260.0, 0.0], ["aerial", 3500.0, 1600.0, 0.0]]
 const WAIT_S := 8.0
@@ -45,7 +45,19 @@ func _ground(p: Vector2) -> float:
 
 
 func _plan() -> void:
-	for v in VILLAGES:
+	var dock3 := world.get_dock_position(world.find_dock(main.origin_dock))
+	var dock := Vector2(dock3.x, dock3.z)
+	var big := []
+	for v in world.get_info()["villages"]:
+		var p := Vector2(float(v["pos"][0]), float(v["pos"][1]))
+		if bool(v.get("seat", false)):
+			villages.push_front([int(v["id"]), p])
+		elif p.distance_to(dock) < 25000.0 and (big.is_empty() or int(v["households"]) > int(big[2])):
+			big = [int(v["id"]), p, int(v["households"])]
+	if not big.is_empty():
+		villages.append([big[0], big[1]])
+	print("village_shots: 群 #%d，拍村 %s" % [StoryStart.get_spawn_node(), villages.map(func(v): return v[0])])
+	for v in villages:
 		var center: Vector2 = v[1]
 		for d in DISTANCES:
 			var at := center + Vector2(0.35, 1.0).normalized() * float(d[1])

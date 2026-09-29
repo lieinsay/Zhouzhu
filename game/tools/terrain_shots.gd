@@ -1,12 +1,13 @@
 extends Node
-## 岛群地形目视检查：从几个固定的机位拍 world_2051 的岛体、崖壁、岛底、河谷与山地（不做断言，只存图）。
+## 岛群地形目视检查：从几个机位拍开局那群（world_seed42.tscn，StoryStart 的出生群）的岛体、崖壁、岛底、河谷与山地（不做断言，只存图）。
 ##
 ##   Godot --path game --fixed-fps 60 res://tools/terrain_shots.tscn -- --shots=<目录>
 ##
 ## 机位全按出发码头（主码头）与岛心推：人开 god 模式悬在机位附近（地面块按人的位置细分），另放一台相机拍。
-## 浮高计划 Z2 起多几张看同群的岛高低错落（11–16）：机位按岛表里各岛的岛心与岸缘推，岛号是 2051 的。
+## 浮高计划 Z2 起多几张看同群的岛高低错落（11–16）：机位按岛表（world.json 的 islands）里各岛的岛心、面积与岸缘推——
+## 「高岛」是浮得最高的那座（岸缘最高的非主岛，面积 5 km² 起），「低岛」是离它最近、岸缘比它低六百米以上的那座；岛号不写死。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 
 var main: Expedition
 var world: World
@@ -57,22 +58,24 @@ func _plan() -> void:
 		var p := Vector3(river["x"], 0, river["z"])
 		p.y = world.get_surface_height(p.x, p.z)
 		views.append(["4_valley", p, p + Vector3(-250, 140, -250), p + Vector3(150, -10, 150)])
-	# 5 山地：主岛上最高的一块（抽样找），离地 250 m 斜看
+	# 5 山地：主岛上最高的一块（整张岛群栅格每 1 km 抽一处，只看主岛：浮得高的小岛顶上可能比主峰还高），离地 250 m 斜看
+	var g: Dictionary = world.get_info()["grid"]
 	var best := Vector3.ZERO
-	for i in range(60):
-		for j in range(60):
-			var x := -30000.0 + j * 1000.0
-			var z := -30000.0 + i * 1000.0
+	for i in range(int(float(g["rows"]) * float(g["res_m"]) / 1000.0) + 1):
+		for j in range(int(float(g["cols"]) * float(g["res_m"]) / 1000.0) + 1):
+			var x := float(g["x0"]) + j * 1000.0
+			var z := float(g["z0"]) + i * 1000.0
 			var h := world.get_surface_height(x, z)
-			if h > best.y:
+			if h > best.y and world.get_island_at(x, z) == 0:
 				best = Vector3(x, h, z)
 	views.append(["5_mountain", best, best + Vector3(-900, 250, -900), best + Vector3(200, -60, 200)])
 	# 7 从出发码头望山：人眼的高度，朝着上面找到的最高处（远山靠远平面与淡雾才看得见）
 	var eye := world.get_dock_spawn(world.find_dock(main.origin_dock)).origin + Vector3(0, 1.7, 0)
 	views.append(["7_dock_view", eye, eye, Vector3(best.x, eye.y + (best.y - eye.y) * 0.6, best.z)])
-	# 6 小岛：12 号岛（14.7 km²，岛心 (-21920, 16486)），离岛心 4 km 平视，整座岛悬在云海上（高度按它的岸缘：浮高以后它比主岛低 150 m）
-	var islet := _island_center(12)
-	var islet_rim := _island_rim(12)
+	# 6 小岛：离主码头最近的一座 10–40 km² 的岛，离岛心 4 km 平视，整座岛悬在云海上（高度按它的岸缘）
+	var islet_id := _pick_island(func(r): return float(r["area_km2"]) >= 10.0 and float(r["area_km2"]) <= 40.0, func(r): return -_island_center(int(r["id"])).distance_to(Vector3(dock.x, 0, dock.z)))
+	var islet := _island_center(islet_id)
+	var islet_rim := _island_rim(islet_id)
 	views.append(["6_islet", islet + Vector3(0, islet_rim + 124.0, -2600), islet + Vector3(-2800, islet_rim - 156.0, -2800), islet + Vector3(0, islet_rim - 356.0, 0)])
 	# 浮高计划 Z1：云带顶在 −5000 m，岛底（连岩棱）至少高出它 1000 m
 	# 8 岛边往下看：岸外 120 m、岸缘上 30 m，朝外往下约 50° 望——脚下几千米是云带顶
@@ -81,18 +84,24 @@ func _plan() -> void:
 	views.append(["9_gap_side", dock + out * 600.0, Vector3(dock.x, -4600.0, dock.z) + out * 8000.0 + side * 1500.0, Vector3(dock.x, -3300.0, dock.z) - out * 6000.0])
 	# 10 远看整座主岛：岸外 25 km、y = −4500，平看——一整座浮山悬在云带顶上
 	views.append(["10_gap_far", dock + out * 600.0, Vector3(dock.x, -4500.0, dock.z) + out * 25000.0, Vector3(dock.x, -3900.0, dock.z) - out * 8000.0])
-	# 浮高计划 Z2：同群的岛按岛龄上下错开（主岛不动，−223…+1325 m）
-	# 11 从主码头望东：码头岸外 30 m、坪上 3 m（背着船坞门架），朝东（方位 85°）平望——8 号（岸缘 910 m、11 km）比码头高 670 m，
-	#    9 号（116 m、8.6 km）、26 号（258 m、15 km）在左手边、与码头差不多高或更低
-	var i19 := _island_center(19)
+	# 浮高计划 Z2：同群的岛按岛龄上下错开（主岛不动）
+	var hi_id := _pick_island(func(r): return float(r["area_km2"]) >= 5.0, func(r): return float(r["rim_m"]))  # 高岛
+	var i19 := _island_center(hi_id)
+	var rim_hi := _island_rim(hi_id)
+	var lo_id := _pick_island(func(r): return int(r["id"]) != hi_id and float(r["rim_m"]) <= rim_hi - 600.0, func(r): return -_island_center(int(r["id"])).distance_to(i19))  # 低岛
+	var i14 := _island_center(lo_id)
+	# 11 从主码头望离码头 25 km 内浮得最高的那座岛：码头岸外 30 m、坪上 3 m（背着船坞门架）平望——它比码头高的看得见倒锥的底，低的看得见顶面
+	var near_hi := _pick_island(func(r): return _island_center(int(r["id"])).distance_to(Vector3(dock.x, 0, dock.z)) < 25000.0, func(r): return float(r["rim_m"]))
 	var dock_eye := dock + out * 30.0 + Vector3(0, 3.0, 0)
-	var east := Vector3(sin(deg_to_rad(85.0)), 0.0, -cos(deg_to_rad(85.0)))
-	views.append(["11_dock_east", dock_eye, dock_eye, dock_eye + east * 10000.0 + Vector3(0, 250.0, 0)])
-	# 12 站在 19 号（岸缘 1237 m）北岸往下看：14 号（134 m、北边 5 km）在脚下一千一百米，8 号（910 m）远一点、也低，左手是主岛
-	var i14 := _island_center(14)
+	var toward := _island_center(near_hi) - Vector3(dock_eye.x, 0.0, dock_eye.z)
+	toward.y = 0.0
+	views.append(["11_dock_across", dock_eye, dock_eye, dock_eye + toward.normalized() * 10000.0 + Vector3(0, 250.0, 0)])
+	print("terrain_shots: 小岛 #%d（岸缘 %.0f m）、高岛 #%d（%.0f m）、低岛 #%d（%.0f m）、码头 25 km 内最高的 #%d（%.0f m）" % [islet_id, islet_rim, hi_id, rim_hi, lo_id, _island_rim(lo_id),
+		near_hi, _island_rim(near_hi)])
+	# 12 站在高岛朝低岛的那边崖上往下看：低岛在脚下几百到上千米
 	var to14 := Vector3(i14.x - i19.x, 0.0, i14.z - i19.z).normalized()
 	var edge := i19
-	for k in 200:
+	for k in 400:
 		var q := i19 + to14 * (50.0 * k)
 		var h := world.get_surface_height(q.x, q.z)
 		if is_nan(h):
@@ -102,23 +111,39 @@ func _plan() -> void:
 	var high_eye19 := edge + to14 * 40.0 + Vector3(0, 25.0, 0)
 	var stand19 := edge - to14 * 30.0
 	stand19.y = world.get_surface_height(stand19.x, stand19.z) + 1.0
-	views.append(["12_high_down", stand19, high_eye19, Vector3(i14.x, _island_rim(14), i14.z)])
-	# 13 从主峰望东：峰上 40 m，朝 19 号、16 号、2 号那一片略往下看——群里的岛一层层落在不同的高度上
+	views.append(["12_high_down", stand19, high_eye19, Vector3(i14.x, _island_rim(lo_id), i14.z)])
+	# 13 从主峰望高岛：峰上 40 m，朝高岛那一片略往下看——群里的岛一层层落在不同的高度上
 	var summit := best + Vector3(0, 40.0, 0)
-	var i16 := _island_center(16)
-	views.append(["13_peak_view", summit, summit, Vector3(i16.x, summit.y - 900.0, i16.z)])
-	# 14 群外东边 15 km、y = 700 平看整群的东半边：29 号（1166 m）、19 号、8 号高高在上，2 号（121 m）、14 号低低在下，底下远远的是云带顶
-	var i29 := _island_center(29)
-	var side_eye := i29 + Vector3(15000.0, 700.0, 6000.0)
+	views.append(["13_peak_view", summit, summit, Vector3(i19.x, summit.y - 900.0, i19.z)])
+	# 14 群外 15 km 平看高岛那一侧：从群心朝高岛往外（高岛就在群心时朝主码头往外），y = 700——高的岛在上、低的在下，底下远远的是云带顶
+	var away := Vector3(i19.x, 0.0, i19.z)
+	if away.length() < 5000.0:
+		away = Vector3(dock.x, 0.0, dock.z)
+	var side_eye := i19 + away.normalized() * 15000.0 + Vector3(0.0, 700.0, 0.0)
 	views.append(["14_group_side", side_eye, side_eye, Vector3(i19.x, 500.0, i19.z)])
-	# 15 19 号的岛底：岸外 3 km、比它的岸缘低 1600 m 仰看——浮在 1.2 km 高的小岛，倒锥的底还在主岛岸缘之上，远处是主岛的崖
-	var rim19 := _island_rim(19)
+	# 15 高岛的岛底：岸外 3.5 km、比它的岸缘低 1600 m 仰看——浮得高的岛，倒锥的底悬在头顶，远处是主岛的崖
+	var rim19 := rim_hi
 	var out19 := (i19 - dock).normalized()
 	var under_eye := i19 + out19 * 3500.0 + Vector3(0, rim19 - 1600.0, 0)
 	views.append(["15_high_underside", under_eye, under_eye, i19 + Vector3(0, rim19 - 700.0, 0)])
-	# 16 god 在高处斜看整群：群心东南 45 km、y = 6000 m，朝群心往下约 7°——一群浮山各在各的高度上，底下是云带顶
-	var high_eye := Vector3(32000.0, 6000.0, 32000.0)
+	# 16 god 在高处斜看整群：群心东南、离群心约栅格半宽的一倍（开局那群 #6329 七十来公里）、y = 6000 m，朝群心往下——一群浮山各在各的高度上，底下是云带顶
+	var half := 0.5 * maxf(float(g["cols"]), float(g["rows"])) * float(g["res_m"])
+	var high_eye := Vector3(0.7 * half, 6000.0, 0.7 * half)
 	views.append(["16_group_high", high_eye, high_eye, Vector3(0.0, 500.0, 0.0)])
+
+
+# 岛表里挑一座（主岛不算）：p_ok 过滤、p_score 最大的那座
+func _pick_island(p_ok: Callable, p_score: Callable) -> int:
+	var best := -1
+	var best_score := -INF
+	for row in world.get_info()["islands"]:
+		if bool(row.get("main", false)) or not p_ok.call(row):
+			continue
+		var s: float = p_score.call(row)
+		if s > best_score:
+			best_score = s
+			best = int(row["id"])
+	return best
 
 
 func _island_center(p_id: int) -> Vector3:

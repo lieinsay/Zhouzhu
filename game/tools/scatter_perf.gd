@@ -3,7 +3,7 @@ extends Node
 ##
 ##   Godot --path game res://tools/scatter_perf.tscn            # 不加 --fixed-fps：量的是真帧时
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 
 var main: Expedition
 var world: World

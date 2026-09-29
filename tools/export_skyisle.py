@@ -1,14 +1,18 @@
 """把 skyisle-gen 的一个岛群（第三层产物）转成游戏资产。
 
     python tools/export_skyisle.py <岛群目录> <输出目录>
-    python tools/export_skyisle.py D:/Project/skyisle-gen/out/seed42/islands/2051 game/worlds/2051
-    python tools/export_skyisle.py --sites game/worlds/2051      # 只按已有的 world.json 重写 sites.tsv
-    python tools/export_skyisle.py --terrain-only <岛群目录> game/worlds/2051
+    python tools/export_skyisle.py D:/Project/skyisle-gen/out/seed42/islands/6329 game/planet/seed42/groups/6329
+    python tools/export_skyisle.py --sites game/planet/seed42/groups/6329      # 只按已有的 world.json 重写 sites.tsv
+    python tools/export_skyisle.py --terrain-only <岛群目录> game/planet/seed42/groups/6329
                                    # 只换地形（terrain.bin / weather.tsv / world.json 的岛表与栅格）：村、码头等点位沿用已有的 world.json
-    python tools/export_skyisle.py --resources <岛群目录> game/worlds/2051
+    python tools/export_skyisle.py --resources <岛群目录> game/planet/seed42/groups/6329
                                    # 只写 resources.tsv（点 / 片 / 赋存区 / 采场），别的文件不动（采场挂的村号按生成器的聚落层算，须与已有 world.json 同一版）
-    python tools/export_skyisle.py --weather <岛群目录> game/worlds/2051
+    python tools/export_skyisle.py --weather <岛群目录> game/planet/seed42/groups/6329
                                    # 只写 weather.tsv（逐日天气与气候参数），别的文件不动
+
+仓库里带的细版（开局那群与它最近的邻群，见 src/story_start.h）在 game/planet/seed42/groups/<节点>/；地貌与聚落 P0 起用本仓库的 C++ 路导
+（build/Debug/zhouzhu_gen.exe group --config game/planet/seed42/config.tsv --seed 42 --nodes 6329,6327 --out-root game/planet/seed42/groups，
+与这里逐字节相同，见 tools/zhouzhu_gen.cpp），这个脚本留作对照。
 
 读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json，写五份文件。
 生成器（台面口径那一版起）的 height_m 是主岛陆地高程的中位数，峰由第三层长出来；聚落层没有码头、只有泊场——

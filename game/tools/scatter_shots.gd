@@ -1,11 +1,11 @@
 extends Node
-## 散布目视检查：在主码头附近挑几样散布物、一处采场、一处地标，从几个机位拍 world_2051（不做断言，只存图）。
+## 散布目视检查：在主码头附近挑几样散布物、一处采场、一处地标，从几个机位拍开局那群（world_seed42）（不做断言，只存图）。
 ##
 ##   Godot --path game --fixed-fps 60 res://tools/scatter_shots.tscn -- --shots=<目录>
 ##
 ## 机位按主码头推：人开 god 模式悬在机位附近（地面块、散布块都按人的位置铺），另放一台相机拍。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 
 var main: Expedition
 var world: World

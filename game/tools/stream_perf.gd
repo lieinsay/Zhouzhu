@@ -1,5 +1,6 @@
 extends Node
-## 流式加载的帧时实测：开局在主码头站定，再开 god 模式离地 40 m 顺着一串大村（村004 → 村006 → 村003 → 村002）飞过去——
+## 流式加载的帧时实测：开局在主码头站定，再开 god 模式离地 40 m 顺着一串大村飞过去（开局那群主岛上离主码头 25 km 内户数最多的四个村、邑治除外，
+## 由近及远；开局那群换了照样从 world.json 挑，#6329 是村003 → 村002 → 村006 → 村004）——
 ## 先 150 m/s（god 加速）飞一段，再 30 m/s 飞一段。每段报帧时（平均、P99、最慢、超过 50 / 100 ms 的帧数），
 ## 列出最慢的十几帧和那一帧主线程上各流式子系统花了多少（World.get_stream_frame：地面块、水面、码头、村子、村民、采场、散布……），
 ## 以及各子系统的累计与单帧最多。改前改后走同一条路线对比。
@@ -12,9 +13,9 @@ extends Node
 ##   Godot --path game res://tools/stream_perf.tscn               # 带窗口：帧时含渲染
 ##   Godot --headless --path game res://tools/stream_perf.tscn    # 无头：只有主线程的活
 ##
-## `--voyage=<秒>`（行星计划 P3，单独跑）：主码头站定 15 s 报内存；god 模式挪到 2051 西南岸外 4.6 km 的云海上空 1800 m，
-##   以 150 m/s 朝 2050 飞 <秒> 秒（默认 240：约 100 s 时过换锚线，再飞到 2050 岸边），再原路飞回同样久（过换锚线回到 2051）；
-##   两段各报帧时（换锚那一帧与下一帧另报）与进程内存。
+## `--voyage=<秒>`（行星计划 P3，单独跑）：主码头站定 15 s 报内存；god 模式挪到开局那群朝最近的邻群（StoryStart 的 neighbor，#6327）那边岸外 4.6 km 的云海上空 1800 m，
+##   以 150 m/s 朝邻群的群心飞 <秒> 秒（默认 240），再原路飞回同样久（过换锚线回到开局那群）；两段各报帧时（换锚那一帧与下一帧另报）与进程内存。
+##   （2026-09-29 以前开局是 #2051、邻群 #2050。）
 ##
 ## `--sea=<秒>`（行星计划 P7，单独跑）：主码头站定 15 s；一架自由相机摆到主码头往外（背着主峰）的开阔云海上空，钟停在 10 点、天气覆盖成晴——
 ##   云带顶上 150 m、云带里（−5.6 km）、云底下（−6.5 km）、海面上 20 m、风暴里的海面各停 <秒> 秒（相机慢慢转一圈），
@@ -22,8 +23,10 @@ extends Node
 ## 不加 --fixed-fps：量的是真帧时（带窗口时加 --disable-vsync，免得被刷新率卡住）。
 ## 末尾加 `-- --fast=<秒> --slow=<秒> --stand=<秒> --high=<秒>` 改各段多久（默认 60 / 30 / 20 / 0）。
 
-const SCENE := preload("res://world_2051.tscn")
-const ROUTE := [Vector2(3050, -26550), Vector2(150, -27450), Vector2(-7750, -28050), Vector2(-9150, -23450), Vector2(-3050, -18000)]
+const SCENE := preload("res://world_seed42.tscn")
+const ROUTE_VILLAGES := 4  # 顺着飞过去的大村几个
+const ROUTE_RADIUS := 25000.0  # 离主码头这么远以内挑
+var route: Array[Vector2] = []
 const SETTLE_S := 15.0
 const HEIGHT_M := 40.0
 const SLOW_MS := 50.0
@@ -45,8 +48,10 @@ var sea_cam: Camera3D = null
 var sea_point := Vector2.ZERO
 var sea_heading := 0.0
 var atmosphere = null
-const VOYAGE_FROM := Vector3(-21612.0, 1800.0, 57039.0)  # 2051 平面：西南岸外 4.6 km、朝 2050 主码头的航线上
-const VOYAGE_DIR := Vector3(-0.3739, 0.0, 0.9275)
+var voyage_from := Vector3.ZERO  # 开局那群的平面：朝邻群那边岸外 4.6 km、云海上空 1800 m（开跑时按行星包推）
+var voyage_dir := Vector3.ZERO
+const VOYAGE_Y := 1800.0
+const VOYAGE_OFFSHORE := 4600.0
 const VOYAGE_SPEED := 150.0
 var stream = null  # GroupStream
 var shifts_seen := 0
@@ -59,7 +64,7 @@ var gate := Vector3.ZERO
 var gate_ll := Vector2.ZERO
 var gate_heading := 0.0
 const ORBIT_TOP_M := 2.0e7
-const SEAT := Vector2(10350, -21850)  # 邑治
+var seat := Vector2.ZERO  # 邑治（world.json 里 seat 的那一村）
 var dock := Vector3.ZERO
 
 var elapsed := 0.0
@@ -102,7 +107,39 @@ func _ready() -> void:
 		GameClock.restart(10.0)
 		GameClock.paused = true
 	atmosphere = main.get_node_or_null("Atmosphere")
+	_plan_route()
 	last = Time.get_ticks_usec()
+
+
+## 邑治与顺着飞的大村：从开局那群的 world.json 挑（主码头所在的岛上、离主码头 ROUTE_RADIUS 内户数最多的几个，邑治除外，由近及远）
+func _plan_route() -> void:
+	var info: Dictionary = world.get_info()
+	var dock3 := world.get_dock_position(world.find_dock(main.origin_dock))
+	var dock2 := Vector2(dock3.x, dock3.z)
+	var island := world.get_island_at(dock3.x, dock3.z)
+	var picks: Array = []
+	for v in info["villages"]:
+		var p := Vector2(float(v["pos"][0]), float(v["pos"][1]))
+		if bool(v.get("seat", false)):
+			seat = p
+			continue
+		if int(v["island"]) == island and p.distance_to(dock2) < ROUTE_RADIUS:
+			picks.append([int(v["households"]), p, String(v["name"])])
+	picks.sort_custom(func(a, b): return a[0] > b[0])
+	picks = picks.slice(0, ROUTE_VILLAGES)
+	picks.sort_custom(func(a, b): return a[1].distance_to(dock2) < b[1].distance_to(dock2))
+	var names := []
+	for pk in picks:
+		route.append(pk[1])
+		names.append("%s（%d 户）" % [pk[2], pk[0]])
+	print("stream_perf: 群 #%d，邑治 %s；顺着飞的大村 %s" % [StoryStart.get_spawn_node(), seat, " → ".join(names)])
+
+
+## 岛群栅格的范围（world.json 的 grid）：x0, z0, x1, z1
+func _grid_rect() -> Rect2:
+	var g: Dictionary = world.get_info()["grid"]
+	var res := float(g["res_m"])
+	return Rect2(float(g["x0"]), float(g["z0"]), float(g["cols"]) * res, float(g["rows"]) * res)
 
 
 func _breakdown(frame: int) -> Dictionary:
@@ -175,9 +212,9 @@ func _memory() -> void:
 
 func _fly(speed: float, delta: float) -> void:
 	var p := player.global_position
-	var target: Vector2 = ROUTE[min(leg, ROUTE.size() - 1)]
+	var target: Vector2 = route[min(leg, route.size() - 1)]
 	var to := Vector2(target.x - p.x, target.y - p.z)
-	if to.length() < speed * delta * 2.0 and leg < ROUTE.size() - 1:
+	if to.length() < speed * delta * 2.0 and leg < route.size() - 1:
 		leg += 1
 	var dir := to.normalized()
 	p.x += dir.x * speed * delta
@@ -276,11 +313,11 @@ func _orbit_process(delta: float, ms: float) -> void:
 		if planet == null or not planet.is_active():
 			return
 		if orbit == null:
-			var g := SEAT + Vector2(0.35, 1.0).normalized() * 350.0
+			var g := seat + Vector2(0.35, 1.0).normalized() * 350.0
 			var h := world.get_surface_height(g.x, g.y)
 			gate = Vector3(g.x, h + 1.0, g.y)
 			gate_ll = planet.latlon_at(Vector3(g.x, 0.0, g.y))
-			var to_seat := SEAT - g
+			var to_seat := seat - g
 			gate_heading = rad_to_deg(atan2(to_seat.x, -to_seat.y))
 			var behind := g - to_seat.normalized() * 25.0
 			player.global_position = Vector3(behind.x, world.get_surface_height(behind.x, behind.y) + 1.0, behind.y)
@@ -335,7 +372,31 @@ func _orbit_process(delta: float, ms: float) -> void:
 			get_tree().quit(0)
 
 
-# ---- 行星计划 P3：150 m/s 从 2051 飞过换锚线到 2050，再飞回来
+# ---- 行星计划 P3：150 m/s 从开局那群飞过换锚线到最近的邻群，再飞回来
+## 起点：开局那群的群心朝邻群群心的连线上，最后一块地再往外 VOYAGE_OFFSHORE、云海上空 VOYAGE_Y（群心的位置按行星包，PlanetView 换到开局那群的平面）
+func _plan_voyage() -> void:
+	var planet = main.get_node("PlanetView")
+	var home := StoryStart.get_spawn_node()
+	var ll_a: Vector2 = planet.node_latlon(home)
+	var ll_b: Vector2 = planet.node_latlon(StoryStart.get_neighbor_node())
+	var a: Vector3 = planet.flat_of_latlon(ll_a.x, ll_a.y)
+	var b: Vector3 = planet.flat_of_latlon(ll_b.x, ll_b.y)
+	a.y = 0.0
+	b.y = 0.0
+	voyage_dir = (b - a).normalized()
+	var edge := 0.0
+	var d := 0.0
+	while d < (b - a).length() * 0.5:
+		var q := a + voyage_dir * d
+		if not is_nan(world.get_surface_height(q.x, q.z)):
+			edge = d
+		d += 100.0
+	voyage_from = a + voyage_dir * (edge + VOYAGE_OFFSHORE)
+	voyage_from.y = VOYAGE_Y
+	print("stream_perf: 朝邻群 #%d（群心相距 %.1f km、方位 %.0f°）飞；起点离开局那群的群心 %.1f km" % [StoryStart.get_neighbor_node(), (b - a).length() / 1000.0,
+		fposmod(rad_to_deg(atan2(voyage_dir.x, -voyage_dir.z)), 360.0), (edge + VOYAGE_OFFSHORE) / 1000.0])
+
+
 func _voyage_process(delta: float, ms: float) -> void:
 	if phase == 0:
 		if stream == null or not stream.is_ready():
@@ -343,8 +404,9 @@ func _voyage_process(delta: float, ms: float) -> void:
 		frames.append(ms)
 		if elapsed > SETTLE_S:
 			_report("主码头站定 %d s" % int(SETTLE_S))
+			_plan_voyage()
 			player.set_god_mode(true)
-			player.global_position = VOYAGE_FROM
+			player.global_position = voyage_from
 			phase = 1
 			phase_started = elapsed
 			last = Time.get_ticks_usec()
@@ -363,16 +425,16 @@ func _voyage_process(delta: float, ms: float) -> void:
 		shift_watch -= 1
 		if shift_watch == 0:
 			print("stream_perf: 换锚之后三帧的帧时 %s ms" % [shift_ms])
-	# 目标点按 2051 的平面定，每帧换到此刻的锚群平面（换锚之后照样朝同一个真方向飞）
+	# 目标点按开局那群的平面定，每帧换到此刻的锚群平面（换锚之后照样朝同一个真方向飞）
 	var sign := 1.0 if phase == 1 else -1.0
-	var target_2051: Vector3 = VOYAGE_FROM + VOYAGE_DIR * (sign * 400000.0)
-	var target: Vector3 = stream.to_anchor(2051, target_2051)
+	var target_home: Vector3 = voyage_from + voyage_dir * (sign * 400000.0)
+	var target: Vector3 = stream.to_anchor(StoryStart.get_spawn_node(), target_home)
 	var p := player.global_position
 	var to := Vector3(target.x - p.x, 0.0, target.z - p.z).normalized()
-	player.global_position = Vector3(p.x + to.x * VOYAGE_SPEED * delta, VOYAGE_FROM.y, p.z + to.z * VOYAGE_SPEED * delta)
+	player.global_position = Vector3(p.x + to.x * VOYAGE_SPEED * delta, VOYAGE_Y, p.z + to.z * VOYAGE_SPEED * delta)
 	player.velocity = Vector3.ZERO
 	if elapsed - phase_started > voyage_s:
-		var names := {1: "去程（2051 → 2050）", 2: "回程（2050 → 2051）"}
+		var names := {1: "去程（开局那群 → 邻群）", 2: "回程（邻群 → 开局那群）"}
 		_voyage_report("150 m/s %s %d s" % [names[phase], int(voyage_s)])
 		if phase == 2:
 			get_tree().quit(0)
@@ -438,9 +500,10 @@ func _sea_process(delta: float, ms: float) -> void:
 		var dock2 := Vector2(berth.origin.x, berth.origin.z)
 		var peak := Vector2.ZERO
 		var peak_h := -1e9
-		for i in range(-60, 61):
-			for j in range(-60, 61):
-				var q := Vector2(j, i) * 1000.0
+		var r := _grid_rect()
+		for i in range(int(r.size.y / 1000.0) + 1):
+			for j in range(int(r.size.x / 1000.0) + 1):
+				var q := r.position + Vector2(j, i) * 1000.0
 				var h := world.get_surface_height(q.x, q.y)
 				if not is_nan(h) and h > peak_h:
 					peak_h = h

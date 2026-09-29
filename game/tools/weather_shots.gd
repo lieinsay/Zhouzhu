@@ -6,7 +6,7 @@ extends Node
 ##
 ##   Godot --path game --fixed-fps 60 res://tools/weather_shots.tscn -- --shots=<目录>
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const WAIT_S := 9.0
 
 var main: Expedition
@@ -78,8 +78,15 @@ func _is_high_river(p: Vector2) -> bool:
 	return not world.find_river_near(p.x, p.y, 200.0, 1.0).is_empty()
 
 
+# 季节按半球换：日子写成南半球的（原来的开局 #2051 在南纬，第 0–83 天是暖季一），北半球的群往后挪半年（168 天）
+func _season_day(p_south_day: int) -> int:
+	var lat := float(world.get_info()["source"]["lat"])
+	return p_south_day if lat < 0.0 else (p_south_day + 168) % 336
+
+
 func _plan() -> void:
-	var spawn: Transform3D = world.get_dock_spawn(world.find_dock(1))
+	var start := StoryStart.get_calendar_start()  # 主码头那几张拍开局那天
+	var spawn: Transform3D = world.get_dock_spawn(world.find_dock(main.origin_dock))
 	var dock := Vector2(spawn.origin.x, spawn.origin.z)
 	# 主峰：主码头 40 km 内最高的一点
 	var peak := dock
@@ -105,32 +112,32 @@ func _plan() -> void:
 	var toward_peak := (peak - dock).normalized()
 	var eye := Vector3(dock.x, _ground(dock) + 40.0, dock.y)
 	var far_look := Vector3(peak.x, peak_h * 0.6, peak.y)
-	views.append(["dock_morning", eye, far_look, 3, 7.0, ""])
-	views.append(["dock_noon", eye, far_look, 3, 12.5, ""])
-	views.append(["dock_dusk", eye, eye + Vector3(-1000.0, 40.0, 0.0), 3, 18.9, ""])
-	views.append(["dock_night", eye, far_look, 14, 23.5, ""])
-	views.append(["dock_rain", eye, far_look, 3, 12.5, "rain"])
-	views.append(["dock_heavy_rain", eye, far_look, 3, 12.5, "heavy_rain"])
-	views.append(["dock_storm", eye, far_look, 3, 15.0, "storm"])
+	views.append(["dock_morning", eye, far_look, start, 7.0, ""])
+	views.append(["dock_noon", eye, far_look, start, 12.5, ""])
+	views.append(["dock_dusk", eye, eye + Vector3(-1000.0, 40.0, 0.0), start, 18.9, ""])
+	views.append(["dock_night", eye, far_look, 14, 23.5, ""])  # 第 14 天：满月前后（月相全行星一样，不按半球挪）
+	views.append(["dock_rain", eye, far_look, start, 12.5, "rain"])
+	views.append(["dock_heavy_rain", eye, far_look, start, 12.5, "heavy_rain"])
+	views.append(["dock_storm", eye, far_look, start, 15.0, "storm"])
 	var high := eye + Vector3(-toward_peak.x * 600.0, 520.0, -toward_peak.y * 600.0)
-	views.append(["sea_fog_from_above", high, Vector3(dock.x, 200.0, dock.y) + Vector3(toward_peak.x, 0, toward_peak.y) * 3000.0, 3, 9.0, "sea_fog"])
+	views.append(["sea_fog_from_above", high, Vector3(dock.x, 200.0, dock.y) + Vector3(toward_peak.x, 0, toward_peak.y) * 3000.0, start, 9.0, "sea_fog"])
 	# 主峰：从 3 km 外、比峰低四百米看
 	var peak_eye2 := peak - toward_peak * 3000.0
 	var peak_eye := Vector3(peak_eye2.x, peak_h - 300.0, peak_eye2.y)
-	views.append(["peak_warm", peak_eye, peak3, 20, 12.0, ""])
-	views.append(["peak_winter", peak_eye, peak3, 200, 12.0, ""])
-	views.append(["peak_late_winter", peak_eye, peak3, 236, 12.0, ""])
-	views.append(["peak_blizzard", peak_eye, peak3, 200, 12.0, "blizzard"])
+	views.append(["peak_warm", peak_eye, peak3, _season_day(20), 12.0, ""])
+	views.append(["peak_winter", peak_eye, peak3, _season_day(200), 12.0, ""])
+	views.append(["peak_late_winter", peak_eye, peak3, _season_day(236), 12.0, ""])
+	views.append(["peak_blizzard", peak_eye, peak3, _season_day(200), 12.0, "blizzard"])
 	# 八百米上下的林子（林地为主）
 	var forest := _find(dock, 20000.0, 400.0, _is_forest)
 	if forest != Vector2.INF:
 		var fh := _ground(forest)
 		var f_eye := Vector3(forest.x - 60.0, fh + 25.0, forest.y - 40.0)
 		var f_look := Vector3(forest.x, fh + 4.0, forest.y)
-		views.append(["forest_warm", f_eye, f_look, 20, 12.0, ""])
-		views.append(["forest_autumn", f_eye, f_look, 128, 12.0, ""])
-		views.append(["forest_winter", f_eye, f_look, 180, 12.0, ""])
-		views.append(["forest_spring", f_eye, f_look, 262, 12.0, ""])
+		views.append(["forest_warm", f_eye, f_look, _season_day(20), 12.0, ""])
+		views.append(["forest_autumn", f_eye, f_look, _season_day(128), 12.0, ""])
+		views.append(["forest_winter", f_eye, f_look, _season_day(180), 12.0, ""])
+		views.append(["forest_spring", f_eye, f_look, _season_day(262), 12.0, ""])
 	# 高处的河（1200 m 以上）
 	var river_at := _find(peak, 12000.0, 300.0, _is_high_river)
 	if river_at != Vector2.INF:
@@ -140,8 +147,8 @@ func _plan() -> void:
 		var dir := Vector2(float(r["dir_x"]), float(r["dir_z"]))
 		var back := rp - dir * 60.0
 		var r_eye := Vector3(back.x, maxf(_ground(back), rh) + 30.0, back.y)
-		views.append(["river_high_warm", r_eye, Vector3(rp.x, rh, rp.y), 20, 12.0, ""])
-		views.append(["river_high_frozen", r_eye, Vector3(rp.x, rh, rp.y), 174, 12.0, ""])
+		views.append(["river_high_warm", r_eye, Vector3(rp.x, rh, rp.y), _season_day(20), 12.0, ""])
+		views.append(["river_high_frozen", r_eye, Vector3(rp.x, rh, rp.y), _season_day(174), 12.0, ""])
 	print("weather_shots: 主峰 %.0f m %s；林子 %s；高处的河 %s；共 %d 张" % [peak_h, peak, forest, river_at, views.size()])
 
 
