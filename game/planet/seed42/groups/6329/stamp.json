@@ -1,0 +1,24 @@
+{
+ "node": 6329,
+ "created": "2026-09-29T21:07:05",
+ "generator": {
+  "root": "extern/skyisle-gen",
+  "commit": "8a2f12b",
+  "dirty": false,
+  "backend": "游戏内"
+ },
+ "run": {
+  "config": "game/planet/seed42/config.tsv",
+  "seed": 42,
+  "config_sha1": "95d11305b7deb4f0df3d67b2c309d40f60ba280e",
+  "island_sha1": "97ef894cc5ffcd75614afba15976559191a64d6b"
+ },
+ "export": {
+  "terrain_version": 5,
+  "exporter": "src/gen_export.cpp"
+ },
+ "seconds": {
+  "generate": 1.32,
+  "write": 0.4
+ }
+}
