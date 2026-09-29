@@ -1,10 +1,10 @@
 extends Node
-## 采集（world_2051.tscn），只通过输入（动作、转视角）操作，一路不瞬移（拨钟是测试的特权）：
+## 采集（world_seed42.tscn，开局那群），只通过输入（动作、转视角）操作，一路不瞬移（拨钟是测试的特权）：
 ## 主码头 #1 出生 → 走到近处一丛灌丛前按住 E 砍柴，砍空了它就倒（剩一截茬，按 E 不再有它）
 ## → 走到近处一棵树前按住 E 伐木，伐空了倒成树桩、树干的碰撞跟着拆掉 → 拨钟 60 个钟头：树与灌丛都长回来、树干又挡人
 ## → 走回主码头上船掌舵、升过船坞的门架，先飞到近处村里一座民居上空：野泊不了（船底下有房子）
 ## → 飞到一片林子上空、降低：野泊不了（船底下、舷梯边有树）
-## → 飞到最近的土坑规划好的泊地（采场的泊地上不长树），从它背后顺着规划的朝向进场、停稳：提示「按 E 野泊」→ E：状态行「野泊中」，
+## → 飞到最近的土坑规划好的泊地（采场的泊地上不长树；远了换疾档），从它背后顺着规划的朝向进场、停稳：提示「按 E 野泊」→ E：状态行「野泊中」，
 ##   船悬停落定、舷梯从舷门斜下到地面（梯脚贴地），人下船
 ## → 顺着舷梯走下去、绕开树干到采掘面：提示按住 E → 按住 E 一份份采进背包、存量跟着少；到堆场按 E 打成一箱抱着（背包少 5 份）
 ## → 抱着箱子走上舷梯、放上货位 0；再下去采 5 份、打一箱，按 E 拆回背包、再打包，抱上去放货位 2
@@ -14,12 +14,15 @@ extends Node
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 1200.0  # 模拟秒
 const SETTLE_TIMEOUT := 30.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
 const HOVER_CLEARANCE := 16.0  # 落点上空停在离地这么高（甲板）
 const PER_CRATE := 5
+const SITE_RANGE := 6000.0  # 找最近的土坑的范围
+const SLOW_DOWN_AT := 1500.0  # 去土坑：离泊地背后这么远以外换疾档
+const FOREST_RINGS := [350.0, 500.0, 700.0, 1000.0, 1400.0, 2000.0, 2800.0, 3600.0]  # 找林子：离主码头这几圈
 
 enum Phase { SETTLE, WALK_SHRUB, CUT_SHRUB, WALK_TREE, CHOP, REGROW, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, FLY_VILLAGE, OVER_HOUSE, FLY_FOREST, OVER_FOREST,
 	FLY_BEHIND, FLY_SITE, HOVER, LAND, WALK_DOWN, GATHER, TO_PILE, PACK, CARRY_UP, STOW, TO_HELM, LIFT_OFF, DONE }
@@ -299,9 +302,10 @@ func _fly_to(target: Vector3, p_radius: float) -> bool:
 
 
 ## 离主码头几百米外找一片林子：12 m 内至少 4 棵树、地面本身野泊得下（远处还没挂树干的碰撞，probe 只看到地面）
+## 开局那群 #6329 的主码头在海岸平原上（码头 3 km 内一半是可耕地、两成草坡），林子要往外找到两三公里
 func _pick_forest() -> bool:
 	var dock := world.get_dock_position(world.find_dock(main.origin_dock))
-	for r in [350.0, 500.0, 700.0, 1000.0, 1400.0]:
+	for r in FOREST_RINGS:
 		for k in 24:
 			var a := TAU * k / 24.0
 			var p: Vector3 = dock + Vector3(cos(a), 0, sin(a)) * r
@@ -338,9 +342,10 @@ func _physics_process(delta: float) -> void:
 		Phase.SETTLE:
 			if in_phase > 1.0 and _standing() and scatter.get_chunk_count() > 0:
 				spawn = player.global_position
-				site_id = world.find_resource_near(spawn.x, spawn.z, 3000.0, "clay")
+				# 最近的一处落了地的土坑（开局那群 #6329：主码头 1.2、2.5 km 的两处在村001、村003 里、不单摆，最近的在 5.3 km 外）
+				site_id = world.find_resource_near(spawn.x, spawn.z, SITE_RANGE, "clay")
 				if site_id < 0:
-					_finish(false, "主码头 3 km 内该有土坑")
+					_finish(false, "主码头 %.0f km 内该有土坑" % (SITE_RANGE / 1000.0))
 					return
 				site = world.get_resource_site(site_id)
 				item = site["item"]
@@ -527,7 +532,7 @@ func _physics_process(delta: float) -> void:
 			_log("民居上空：野泊不了——%s；提示「%s」" % [note, main.get_prompt().replace("\n", " / ")])
 			_shot("5_over_house")
 			if not _pick_forest():
-				_finish(false, "主码头 1.4 km 内找不到一片地面落得下、树密的林子")
+				_finish(false, "主码头 %.1f km 内找不到一片地面落得下、树密的林子" % (FOREST_RINGS[-1] / 1000.0))
 				return
 			_goto(Phase.FLY_FOREST)
 		Phase.FLY_FOREST:
@@ -556,11 +561,19 @@ func _physics_process(delta: float) -> void:
 			# 从泊地背后 70 m、离地 40 m 进场：到泊地时船头正好朝规划的朝向
 			var behind := landing - _forward(landing_yaw) * 70.0
 			behind.y = world.get_surface_height(behind.x, behind.z) + 40.0
-			if _fly_to(behind, 8.0):
+			# 土坑远（开局那群 #6329 的在主码头 5.3 km 外）：远了换疾档、近了换回泊档（同 freight_e2e）
+			var gap := Vector2(behind.x - ship.global_position.x, behind.z - ship.global_position.z).length()
+			if gap > SLOW_DOWN_AT and ship.get_gear() < 2 and not held.has("gear_up"):
+				_tap("gear_up")
+			elif gap < SLOW_DOWN_AT and ship.get_gear() > 0 and not held.has("gear_down"):
+				_tap("gear_down")
+			if ship.get_gear() == 0 and _fly_to(behind, 8.0):
 				_release_all()
 				_goto(Phase.FLY_SITE)
-			elif in_phase > 200.0:
-				_finish(false, "200 s 没飞到泊地背后（离 %.0f m）" % Vector2(behind.x - ship.global_position.x, behind.z - ship.global_position.z).length())
+			elif ship.get_gear() > 0:
+				_fly_to(behind, 8.0)
+			if in_phase > 400.0:
+				_finish(false, "400 s 没飞到泊地背后（离 %.0f m）" % gap)
 		Phase.FLY_SITE:
 			if _fly_to(landing, 4.0):
 				_release_all()

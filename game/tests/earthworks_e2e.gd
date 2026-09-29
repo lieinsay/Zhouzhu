@@ -1,5 +1,5 @@
 extends Node
-## 改地形（world_2051.tscn，切片十一：方格台阶）：只经输入动作操作，准星用一条测试给的射线（set_aim_ray：从格子上方往下打，不靠相机）；
+## 改地形（world_seed42.tscn，开局那群，切片十一：方格台阶）：只经输入动作操作，准星用一条测试给的射线（set_aim_ray：从格子上方往下打，不靠相机）；
 ## 世界存档目录用测试自己的 user://worlds/e2e_earthworks（开局清空）。行李：木锹、石镐（开局的粟照旧）。
 ## 主码头出生：准星对着停机坪——挖不了（这是码头的坪）
 ## → 在主码头附近（岸边是崖缘、土薄，往里找）找一块 5 × 6 格都能动土、土层 2 m、够平的地，瞬移过去站在边上
@@ -8,13 +8,13 @@ extends Node
 ## → 走进坑里：落到坑底（比原地面低 2 m）、站得稳；按住前进 + 跳三秒——跳不出去（坑壁 2 m，跳 1.3 m）
 ## → 土放上快捷栏第 3 格：对着坑里另一格按两下 E，垒成 1 m 高的一级台阶（扣土 2）→ 前进 + 跳：先上台阶、再上地面，出来了
 ## → 坑边隔两格垒一个 1 m 的土台（扣土 2）、跳上去站着
-## → 存档：GroupStream.save_world()，works/2051.txt 在；拆掉场景、同一个存档目录再开一回——坑、台阶、土台都在（级数逐格一样），地面块照挂补丁
+## → 存档：GroupStream.save_world()，works/<开局那群>.txt 在；拆掉场景、同一个存档目录再开一回——坑、台阶、土台都在（级数逐格一样），地面块照挂补丁
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/earthworks_e2e.tscn
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const WORLD_DIR := "user://worlds/e2e_earthworks"
 const TIMEOUT := 600.0  # 模拟秒
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "sprint", "jump", "interact"]
@@ -492,7 +492,7 @@ func _run() -> void:
 			saved_steps[Vector2i(i0 + di, j0 + dj)] = _step(i0 + di, j0 + dj)
 	main.get_node("GroupStream").save_world()
 	await _frames(5)
-	var works_path := WORLD_DIR.path_join("works").path_join("2051.txt")
+	var works_path := WORLD_DIR.path_join("works").path_join("%d.txt" % StoryStart.get_spawn_node())
 	if not FileAccess.file_exists(works_path):
 		_finish(false, "存档里没有 %s" % works_path)
 		return

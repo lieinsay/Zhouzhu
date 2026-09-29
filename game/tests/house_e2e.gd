@@ -1,5 +1,5 @@
 extends Node
-## 搭建件拼一座完整的屋（world_2051.tscn，切片十一）：只经输入动作与背包里的点击操作，准星用测试给的射线（set_aim_ray，不靠相机）。
+## 搭建件拼一座完整的屋（world_seed42.tscn，开局那群，切片十一）：只经输入动作与背包里的点击操作，准星用测试给的射线（set_aim_ray，不靠相机）。
 ## 行李：地基 8、土 18、夯土墙 6、门墙 2、窗墙 2、草顶 8、山墙 8（开局的粟照旧）。
 ## 在主码头附近找一块 7 × 7 m 能盖、够平的地，瞬移过去 → 背包里点配方「夯土墙」6 回（随身：土 3 → 1）
 ## → 地基：对准地面摆第一块（新开一座），再对准旁边三格的地面接成 2 × 2（同一座）
@@ -14,7 +14,7 @@ extends Node
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 600.0  # 模拟秒
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "sprint", "jump", "interact"]
 const FAR := Vector3(1e6, 0, 1e6)
@@ -290,6 +290,10 @@ func _run() -> void:
 	stage = "地基"
 	if not await _hold("foundation", 0):
 		return
+	# 新开一座的朝向按人的视线取整（15°）：面朝北（yaw 0）站在地基南边 5 m，这一座往东、往南铺，四边的墙都在 7 m 的够得着里
+	# （原来跟着出生时的视线走；开局换到 #6329 后出生视线是 225°，这一座斜着往人背后铺，远端的墙够不着、吸到了里面的格边上）
+	player.set_look_yaw(0.0)
+	await _frames(2)
 	main.set_aim_ray(site + Vector3(0, 3, 0), site - Vector3(0, 3, 0))
 	await _frames(3)
 	if int(main.get_piece_ghost()["structure"]) != -1:

@@ -1,5 +1,5 @@
 extends Node
-## 开发者营造（world_2051.tscn，拓展切片十一）：god 下 F8 开面板挑工具，直接挖地、垒土、摆搭建件与整座样式，不看背包、不扣料；挖垒带笔刷、按一下改一级。
+## 开发者营造（world_seed42.tscn，拓展切片十一）：god 下 F8 开面板挑工具，直接挖地、垒土、摆搭建件与整座样式，不看背包、不扣料；挖垒带笔刷、按一下改一级。
 ## 只经输入动作操作（F3 走 DevTools 的输入事件），准星用测试给的射线（set_aim_ray，不靠相机）。行李只有粟 5（挖垒搭建的东西一样都没有）。
 ## 在主码头附近找一块 9 × 9 m 能动土、够平的地，瞬移过去
 ## → 没开 god 按 F8：面板不开、提示先按 F3 → F3 开 god → F8 开面板：S 挪到「挖」、D 笔刷 3 → 5、E 拿在手上（面板合上）
@@ -14,7 +14,7 @@ extends Node
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 600.0  # 模拟秒
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "sprint", "jump", "interact"]
 const FAR := Vector3(1e6, 0, 1e6)

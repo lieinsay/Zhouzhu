@@ -1,5 +1,5 @@
 extends Node
-## 真实比例岛群（world_2051.tscn）端到端测试，只通过输入（动作、鼠标）操作：
+## 真实比例岛群（world_seed42.tscn，开局那群）端到端测试，只通过输入（动作、鼠标）操作：
 ## 出生在主码头的停机坪上、脚下有地 → 往前跑几秒一直踩在地上 → M 开地图 → 滚轮缩小 → 左键点乙岛（#1）→ 瞬移过去站在 #1 的地上
 ## → 再开地图点最远的码头 → 站在那座岛上 → 把人挪到云海上空 → 掉下去回到上一处站稳的地方。
 ##
@@ -7,7 +7,7 @@ extends Node
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 180.0  # 模拟秒
 const SETTLE_TIMEOUT := 30.0
 

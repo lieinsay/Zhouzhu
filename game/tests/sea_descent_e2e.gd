@@ -1,6 +1,6 @@
 extends Node
-## 行星计划 P7：降到海面——云带之下（world_2051.tscn），只通过输入动作开船：
-## 2051 主码头出生（钟停在一月初四 10 点、天气覆盖成晴：光与雾只随高度变）→ 走上船、掌舵、升空、换疾档
+## 行星计划 P7：降到海面——云带之下（world_seed42.tscn），只通过输入动作开船：
+## 开局那群（StoryStart，PLAN-LAND P0 起是 #6329）主码头出生（钟停在开局那天 10 点、天气覆盖成晴：光与雾只随高度变）→ 走上船、掌舵、升空、换疾档
 ## → 背着主峰往外飞到一片开阔的云海上空（2.5 km 内没有地）
 ## → 按住下降一路降到海面：每一帧录光与雾的读数（日光、环境光、雾的浓淡与颜色、天空蒙雾的份、云带的剖面、颠簸）——
 ##   云带顶上：天与光照旧；云带里（−5.6 km 上下）：浓雾（能见度几十米）、天被雾盖满、日光只剩一点、船在颠、HUD 报「云带里」；
@@ -13,11 +13,11 @@ extends Node
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/sea_descent_e2e.tscn
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 1800.0  # 模拟秒
 const SETTLE_TIMEOUT := 150.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const DAY := 3
+var DAY := StoryStart.get_calendar_start()  # 开局那天（开局配置的 calendar_start：#6329 是四月初二）
 const HOUR := 10.0
 const CRUISE_Y := 420.0
 const TOP_Y := -5000.0  # 云带顶、云底、海面：同 src/planet_frame.h 的 VerticalDatum（浮高计划 F4 起整体下移 1200 m）
@@ -70,6 +70,8 @@ func _ready() -> void:
 		if arg.begins_with("--shots="):
 			shots_dir = arg.trim_prefix("--shots=")
 			DirAccess.make_dir_recursive_absolute(shots_dir)
+		elif arg.begins_with("--day="):
+			DAY = int(arg.trim_prefix("--day="))
 	get_tree().root.size = Vector2i(1280, 720)
 	GameClock.restart(HOUR)
 	GameClock.set_date(DAY, HOUR)
@@ -373,8 +375,9 @@ func _descend() -> void:
 	if not seen.has("before") and cam_y < DECK_Y:
 		seen["before"] = true
 		before = look.duplicate()
-		_log("云带顶上（相机 %.0f）：日光 %.3f、环境光 %.3f、雾 %.7f、天空蒙雾 %.2f、颠 %.2f；HUD「%s」" % [cam_y, float(look["sun_energy"]), float(look["ambient_energy"]),
-			float(look["fog_density"]), float(look["fog_sky_affect"]), float(look["turbulence"]), status.get_slice("\n", 0)])
+		_log("云带顶上（相机 %.0f）：日光 %.3f、环境光 %.3f、雾 %.7f、天空蒙雾 %.2f、颠 %.2f；船 %s、此地「%s」云 %.2f；HUD「%s」" % [cam_y, float(look["sun_energy"]), float(look["ambient_energy"]),
+			float(look["fog_density"]), float(look["fog_sky_affect"]), float(look["turbulence"]), ship.global_position, atmosphere.get_weather()["kind_name"],
+			float(atmosphere.get_weather()["cloud"]), status.get_slice("\n", 0)])
 		if float(look["band_inside"]) > 0.0 or float(look["band_under"]) > 0.0 or float(look["turbulence"]) > 0.0:
 			_finish(false, "云带顶上 200 m 不该有云带的雾、不该颠：%s" % [look])
 			return
@@ -546,7 +549,10 @@ func _ascend() -> void:
 		var diffs := []
 		for key in ["sun_energy", "ambient_energy", "fog_density", "fog_sky_affect", "fog_r", "band_inside", "band_under", "band_below", "turbulence"]:
 			diffs.append("%s %s→%s" % [key, _num(float(before[key])), _num(float(look[key]))])
-		_log("升回云带顶上（相机 %.0f）：%s" % [cam_y, ", ".join(diffs)])
+		var pw_up: Dictionary = atmosphere.planet_weather_at(ship.global_position)
+		_log("升回云带顶上（相机 %.0f）：%s；船 %s、此地「%s」云 %.2f（场里群 %s 权 %s、背景 %.2f；覆盖 %s）" % [cam_y, ", ".join(diffs), ship.global_position,
+			atmosphere.get_weather()["kind_name"], float(atmosphere.get_weather()["cloud"]), pw_up.get("nodes", []), pw_up.get("weights", []), float(pw_up.get("bg", 0.0)),
+			atmosphere.get_override()])
 		for key in ["sun_energy", "ambient_energy", "fog_sky_affect", "fog_r", "fog_g", "fog_b"]:
 			if absf(float(look[key]) - float(before[key])) > 0.02:
 				_finish(false, "升回云带顶以上 %s 没恢复：%.4f（降下去之前 %.4f）" % [key, float(look[key]), float(before[key])])

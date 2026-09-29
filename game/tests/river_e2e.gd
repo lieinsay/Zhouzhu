@@ -1,6 +1,7 @@
 extends Node
-## 岛群的河（world_2051.tscn）端到端测试：
-## 开局（不钉径流，跟着全局钟的日历：开局是一年里的第 3 天）：雨季里水不小，出生点最近的溪沿途 200 m 处处有水、有水深
+## 岛群的河（world_seed42.tscn，开局那群）端到端测试：
+## 开局（不钉径流，跟着全局钟的日历：开局配置的那一天，#6329 是第 85 天、四月初二开春）：水情不枯（径流指数不低于年均的一半），
+## 出生点最近的溪沿途 200 m 处处有水、有水深
 ## → 主码头附近找一条大河 → 瞬移到河滩上、面朝下游 → 脚下有河况、HUD 报河宽水深 → 河心的地面是河床、水面高过河床
 ## → 径流钉在年均 / 枯水 / 大水三档：水深、水面宽跟着涨落，大水漫出平岸 → 源头的小溪枯水时断流 → 放开钉子后跟着钟走、换日子水情变
 ## → 到这条河的河口看跌水 → 飞到河的上空往下游看。
@@ -9,11 +10,12 @@ extends Node
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 120.0  # 模拟秒
 const BIG_RIVER_KM2 := 60.0  # 找汇流至少这么大的河
 const SMALL_STREAM_KM2 := 1.0
 const OPENING_MIN_DEPTH := 0.3  # 开局出生点附近的溪至少这么深
+const OPENING_MIN_RUNOFF := 0.5  # 开局的径流指数（年均 = 1）不低于这个：开春不是枯水期（#6329 开局那天 0.87）
 
 enum Phase { SETTLE, OPENING, FIND, LAND, MEAN, LOW, FLOOD, BROOK, CLOCK, MOUTH, AERIAL, DONE }
 
@@ -106,7 +108,7 @@ func _physics_process(delta: float) -> void:
 				_goto(Phase.OPENING)
 		Phase.OPENING:
 			var spawn := main.get_spawn_point()
-			if not _expect(world.get_runoff() > 1.0, "开局径流 %.2f，没对上雨季" % world.get_runoff()):
+			if not _expect(world.get_runoff() > OPENING_MIN_RUNOFF, "开局径流 %.2f，开局那天（一年里第 %d 天）不该是枯水" % [world.get_runoff(), GameClock.get_calendar_start()]):
 				return
 			var near: Dictionary = world.find_river_near(spawn.x, spawn.z, 3000.0, SMALL_STREAM_KM2)
 			if not _expect(not near.is_empty(), "出生点 3 km 内没有河"):

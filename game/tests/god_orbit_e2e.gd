@@ -1,22 +1,23 @@
 extends Node
-## god 飞到高空、绕着行星转、再落地（world_2051.tscn，剧情模式 seed42，世界存档目录用测试自己的 user://worlds/e2e_orbit，开局清空）。
+## god 飞到高空、绕着行星转、再落地（world_seed42.tscn，剧情模式 seed42，世界存档目录用测试自己的 user://worlds/e2e_orbit，开局清空）。
+## 开局那群（StoryStart，PLAN-LAND P0 起是 #6329；修这个毛病时是旧开局）的主码头起飞。
 ## 查的是用户报的「上帝模式飞到非常高、绕着行星转，想落地时场景已经乱了」：原来锚只在细版的群之间换，高空巡航一群也进不了细版，
-## 锚一直是 2051，人在它的平面里跑出一整圈（平面坐标 4 万公里，远过 AEQD 的对跖点）——回到 2051 上空时 HUD 报「离群 #2051 陆地 40027 km」、
-## 画面弯曲的展开式失效（云带顶斜成一块板）、2051 的地在平面里够不着，一路掉到海面；飞到几千公里外落地，脚下那一群排在一长串顺路生成的群后面，迟迟轮不到；
+## 锚一直是开局那群，人在它的平面里跑出一整圈（平面坐标 4 万公里，远过 AEQD 的对跖点）——回到它上空时 HUD 报「离群陆地 40027 km」、
+## 画面弯曲的展开式失效（云带顶斜成一块板）、开局那群的地在平面里够不着，一路掉到海面；飞到几千公里外落地，脚下那一群排在一长串顺路生成的群后面，迟迟轮不到；
 ## 另外远处岛群（FarGroups）的低模在高速下一份份重复地建、攒着不挂，一圈下来内存涨到十几 GB、任务池被占满，落地处的地面块迟迟建不出来。
 ##   A. 主码头站稳 → F3 开 god → 按住空格 + Shift 升到 500 km → 按住前进 + Shift 绕行星一整圈（4 万公里）：
-##      一路上人在锚群平面里的坐标不超过对跖点（过了就「换到锚群自己」，平面坐标规范化），锚照旧是 2051；
+##      一路上人在锚群平面里的坐标不超过对跖点（过了就「换到锚群自己」，平面坐标规范化），锚照旧是开局那群；
 ##      一圈里 Godot 的内存（静态）比起飞前多不过 1 GB；600 km 内有岛群的那些帧里，七成以上挂着至少一份远处岛群的低模（修之前后六成的路上一份也没有）；
-##      停下、降到 20 km、飞回主码头上空、落在码头边一块平地上：锚是 2051、人站在它的地上（离起飞处 1 km 内）、脚下的块挂好了。
+##      停下、降到 20 km、飞回主码头上空、落在码头边一块平地上：锚是开局那群、人站在它的地上（离起飞处 1 km 内）、脚下的块挂好了。
 ##   B. 再升到 500 km，朝同一个方向飞 3,000 km，停下、往下落：锚换到了那里最近的一群（远离锚群时换到近的群；没有包就当场生成），
 ##      人在新锚群平面里的坐标在一千公里以内；飞到它的码头（没有码头就找一块地）上空落下，站在它的地上、脚下的块挂好了。
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`：A 升到顶、一圈回来、20 km、落地，B 停下、换锚后、落地各一张。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/god_orbit_e2e.tscn
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const WORLD_DIR := "user://worlds/e2e_orbit"
-const HOME := 2051
+var HOME := StoryStart.get_spawn_node()  # 开局那群
 const TIMEOUT_REAL_S := 1200.0
 const CRUISE_Y := 500000.0
 const LAP_M := 2.0 * PI * 6377800.0  # 一整圈（R = 海面半径 + 6.8 km，同 src/planet_frame.h）
@@ -304,7 +305,7 @@ func _physics_process(delta: float) -> void:
 			var world: GroupWorld = main.get_node("World")
 			if not world.is_loaded() or not planet.is_active() or not stream.is_ready() or not player.is_on_floor() or t < 1.0:
 				if t > 120.0:
-					_finish(false, "120 s 没在 2051 站稳")
+					_finish(false, "120 s 没在开局那群 #%d 站稳" % HOME)
 				return
 			if not provider.can_generate():
 				print("god_orbit_e2e: SKIP —— 生成不了岛群：%s" % provider.get_problem())
@@ -383,14 +384,14 @@ func _physics_process(delta: float) -> void:
 				return
 			Input.action_release("fly_down")
 			if phase == Phase.A_DOWN:
-				# 一圈回来：就在 2051 上空，离主码头没多远（平面坐标规范化过）
+				# 一圈回来：就在开局那群上空，离主码头没多远（平面坐标规范化过）
 				var off := _gc_m(planet.get_camera_latlon(), dock_ll)
 				_log("A：降到 %.0f km，离主码头 %.1f km、人在平面 %.1f km 处；%s" % [player.global_position.y / 1000.0, off / 1000.0, _flat() / 1000.0, _state_line()])
 				if off > 300000.0 or _flat() > 300000.0:
-					_finish(false, "一圈回来离主码头 %.0f km、平面坐标 %.0f km：没回到 2051 上空" % [off / 1000.0, _flat() / 1000.0])
+					_finish(false, "一圈回来离主码头 %.0f km、平面坐标 %.0f km：没回到开局那群上空" % [off / 1000.0, _flat() / 1000.0])
 					return
 				if not _landing_in(HOME):
-					_finish(false, "A：2051 找不到落脚的地方")
+					_finish(false, "A：开局那群 #%d 找不到落脚的地方" % HOME)
 					return
 				_shot("a3_20km")
 				_goto(Phase.A_LAND)

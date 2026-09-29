@@ -1,31 +1,36 @@
 extends Node
-## 行星计划 P5：全球天气与风（world_2051.tscn），只通过输入动作开船：
-## 2051 主码头出生：行星天气场在后台建好、全行星的天气贴图烘好，脚下是 2051 自己的天气（场里只有 2051 一群、权 1），近处的云团槽里有 2051
+## 行星计划 P5：全球天气与风（world_seed42.tscn），只通过输入动作开船。开局那群（StoryStart，PLAN-LAND P0 起是 #6329）与最近的邻群（#6327）：
+## 开局那群主码头出生：行星天气场在后台建好、全行星的天气贴图烘好，脚下是它自己的天气（场里只有它一群、权 1），近处的云团槽里有它
 ## → 走上船、掌舵、升空、换疾档
-## → 一路取样：2051 主码头到 2050 主码头的大圆上每 500 m 问一次场（大势、风），又经锚群的天气模型问一次（地上判雨、HUD 用的那一份）：没有瞬变，两头各是各的
-## → 船瞬移到换锚线前 10 km 的云海上空，朝 2050 的主码头飞过换锚线：每一帧录此地此刻的天气（云量、雨区、降水、气温、风），相邻两帧差得不多（换锚那一帧也是）
-## → 船瞬移到信风带（南纬 20°、东经 158°）、西风带（南纬 50°、东经 164°）开阔的云海上空，松开舵等几秒：船往下风漂，漂向就是此地的风，风向跟 ② 的风差不多
-## → 船瞬移进赤道永暴带：风暴、禁航，HUD 报「赤道永暴带：风暴，禁航」，船被往外推
-## 去掉 --headless、末尾加 `-- --shots=<目录>`：再从轨道上拍几张（2051 一带的全景、当天晴着的一群、下着雨的一群，各报它们当天的天气），
+## → 一路取样：开局那群主码头到邻群主码头的连线上每 500 m 问一次场（大势、风），又经锚群的天气模型问一次（地上判雨、HUD 用的那一份）：没有瞬变，两头各是各的
+## → 找换锚线（两群群心连线上离两群陆地一样远的点，同 planet_voyage_e2e），船瞬移到换锚线前 10 km 的云海上空，朝邻群的主码头飞过换锚线、
+##   一直飞到场里邻群占到九成：每一帧录此地此刻的天气（云量、雨区、降水、气温、风），相邻两帧差得不多（换锚那一帧也是）
+## → 船瞬移到信风带（纬度 14–23°、开局那群的经度 ±90°）、西风带（纬度 45–50°、经度 ±40°，都在开局那群的半球）开阔的云海上空（行星天气场里「背景」占得最多的一点；有几处背景都占九成以上就挑其中 ② 的风最大的），
+##   松开舵等几秒：船往下风漂，漂向就是此地的风，风向跟 ② 的风差不多
+## → 船瞬移进赤道永暴带（赤道上开局那群的经度 ±60° 里背景占得最多的一点）：风暴、禁航，HUD 报「赤道永暴带：风暴，禁航」，船被往外推
+## 去掉 --headless、末尾加 `-- --shots=<目录>`：再从轨道上拍几张（开局那群一带的全景、当天晴着的一群、下着雨的一群，各报它们当天的天气），
 ## 天气读数另存一份 CSV（飞过换锚线那一段）。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/planet_weather_e2e.tscn
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 1500.0  # 模拟秒
 const SETTLE_TIMEOUT := 150.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const HOME := 2051
-const AWAY := 2050
-const AWAY_DOCK := 2050001
-# 2051 平面里：两群陆地等远的那一点（换锚线上），与从 2051 主码头往 2050 主码头的方向（同 planet_voyage_e2e）
-const LINE := Vector3(-27354.0, 0.0, 71282.0)
-const OUT_DIR := Vector3(-0.3739, 0.0, 0.9275)
+var HOME := StoryStart.get_spawn_node()  # 开局那群
+var AWAY := StoryStart.get_neighbor_node()  # 最近的邻群
+var AWAY_DOCK := AWAY * 1000 + 1  # 邻群的主码头 #1（地图宿主里别的群的码头号带群号）
+# 开局那群的平面里：两群陆地等远的那一点（换锚线上）与两群群心的方向——开局时量（同 planet_voyage_e2e）
+var switch_line := Vector3.ZERO
+var out_dir := Vector3.ZERO
+var probe_at := 0.0
+const LINE_PROBES := 10
 const CRUISE_Y := 1500.0
-# 开阔的云海：离最近的群陆地三四百公里，② 的风 7–11 m/s
-const TRADE := Vector2(-20.0, 158.0)
-const WEST := Vector2(-50.0, 164.0)
-const STORM := Vector2(1.0, -150.0)  # 赤道永暴带的核心（单测里验过：背景接手、风暴、禁航）
+# 开阔的云海（场里背景占得多，② 的风 6–11 m/s）：纬度按开局那群的半球，经度在开局那群的经度附近挑——开局时算（_open_sea）
+var trade := Vector2.ZERO
+var west := Vector2.ZERO
+var storm := Vector2.ZERO  # 赤道永暴带（赤道上离岛群最远的一点：背景接手、风暴、禁航）
+const OPEN_SEA_BG := 0.9
 # 飞过换锚线那一段：相邻两帧最多变多少
 const MAX_STEP_COVER := 0.01
 const MAX_STEP_TEMP := 0.05
@@ -210,6 +215,39 @@ func _weight_of(pw: Dictionary, node: int) -> float:
 	return 0.0
 
 
+## 纬度、经度的叫法
+func _ll_text(ll: Vector2) -> String:
+	return "%s %.1f°、%s %.1f°" % ["北纬" if ll.x >= 0.0 else "南纬", absf(ll.x), "东经" if ll.y >= 0.0 else "西经", absf(ll.y)]
+
+
+## 开阔的云海：纬度 p_lats 里、经度 center ± span（每度一点）上，行星天气场里「背景」（② 的大势）占 OPEN_SEA_BG 以上的点
+## （离岛群够远：大群的天气管得远，离群心四百公里有时还只占一成），p_by_wind 时挑其中 ② 的风最大的
+## （船才漂得动：开局那群一侧近处的信风只有五六米），否则挑背景占得最多的；一个都不够就挑背景占得最多的
+func _open_sea(p_lats: Array, center: float, span: float, p_by_wind: bool) -> Vector2:
+	var best := Vector2(float(p_lats[0]), center)
+	var best_score := -INF
+	var best_bg := 0.0
+	var best_wind := 0.0
+	for p_lat in p_lats:
+		var lon := center - span
+		while lon <= center + span:
+			var here := Vector2(float(p_lat), wrapf(lon, -180.0, 180.0))
+			var pw := atmosphere.planet_weather_latlon(here.x, here.y)
+			var bg := float(pw["bg"])
+			var wind := Vector2(float(pw["wind2_x"]), float(pw["wind2_z"])).length()
+			var score := bg
+			if p_by_wind and bg >= OPEN_SEA_BG:
+				score = 10.0 + wind
+			if score > best_score:
+				best_score = score
+				best = here
+				best_bg = bg
+				best_wind = wind
+			lon += 1.0
+	_log("开阔的云海：纬度 %s 里挑了 %s，场里背景占 %.2f、② 的风 %.1f m/s" % [p_lats, _ll_text(best), best_bg, best_wind])
+	return best
+
+
 func _angle_deg(a: Vector2, b: Vector2) -> float:
 	if a.length() < 1e-6 or b.length() < 1e-6:
 		return 180.0
@@ -246,10 +284,10 @@ func _physics_process(delta: float) -> void:
 			if int(ws["tables"]) != 8000:
 				_finish(false, "行星包里该有 8000 群的逐日天气，实为 %d" % int(ws["tables"]))
 				return
-			# 脚下：场里只有 2051 一群（2051 自己的陆地上，场就是它自己的天气）
+			# 脚下：场里只有开局那群（它自己的陆地上，场就是它自己的天气）
 			var pw := atmosphere.planet_weather_at(player.global_position)
 			if _weight_of(pw, HOME) < 0.999 or float(pw["bg"]) > 0.0:
-				_finish(false, "2051 主码头上场里该只有 2051：%s / %s，背景 %.3f" % [pw["nodes"], pw["weights"], float(pw["bg"])])
+				_finish(false, "开局那群 #%d 的主码头上场里该只有它：%s / %s，背景 %.3f" % [HOME, pw["nodes"], pw["weights"], float(pw["bg"])])
 				return
 			var wx: Dictionary = atmosphere.get_weather()
 			if absf(float(wx["cloud_cover"]) - float(pw["cloud_cover"])) > 0.02:
@@ -260,17 +298,21 @@ func _physics_process(delta: float) -> void:
 			for s in slots:
 				has_home = has_home or (int(s["node"]) == HOME and float(s["fade"]) > 0.99)
 			if not has_home:
-				_finish(false, "近处的云团槽里该有 2051：%s" % [slots])
+				_finish(false, "近处的云团槽里该有 #%d：%s" % [HOME, slots])
 				return
-			# 贴图上 2051 那一格就是场的云量
+			# 贴图上开局那群那一格就是场的云量
 			var ll: Vector2 = planet.node_latlon(HOME)
 			var tex: Color = globe.weather_texel(ll.x, ll.y)
 			var at_home := atmosphere.planet_weather_latlon(ll.x, ll.y)
-			_log("2051 主码头：今天「%s」，场里 2051 权 1、云量 %.2f、雨区 %.2f；贴图上群心那一格云量 %.2f、群的份 %.2f；近处的云团槽 %s" % [wx["day_kind_name"],
+			_log("#%d 主码头：今天「%s」，场里它的权 1、云量 %.2f、雨区 %.2f；贴图上群心那一格云量 %.2f、群的份 %.2f；近处的云团槽 %s" % [HOME, wx["day_kind_name"],
 				float(pw["cloud_cover"]), float(pw["coverage"]), tex.r, tex.b, slots])
 			if absf(tex.r - float(at_home["cloud_cover"])) > 0.1 or tex.b < 0.9:
-				_finish(false, "贴图上 2051 那一格（云量 %.2f、群的份 %.2f）与场（%.2f）对不上" % [tex.r, tex.b, float(at_home["cloud_cover"])])
+				_finish(false, "贴图上 #%d 那一格（云量 %.2f、群的份 %.2f）与场（%.2f）对不上" % [HOME, tex.r, tex.b, float(at_home["cloud_cover"])])
 				return
+			var hemi := 1.0 if ll.x >= 0.0 else -1.0
+			trade = _open_sea([14.0 * hemi, 17.0 * hemi, 20.0 * hemi, 23.0 * hemi], ll.y, 90.0, true)
+			west = _open_sea([45.0 * hemi, 50.0 * hemi], ll.y, 40.0, true)
+			storm = _open_sea([1.0 * hemi], ll.y, 60.0, false)
 			var berth: Transform3D = main.get_origin_berth()
 			waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
 			_goto(Phase.ORBIT if orbit_only and not shots_dir.is_empty() else Phase.WALK_TO_SHIP)
@@ -301,20 +343,46 @@ func _physics_process(delta: float) -> void:
 			_transect()
 			_goto(Phase.JUMP_OUT)
 		Phase.JUMP_OUT:
+			# 换锚线：两群群心连线上离两群陆地一样远的那一点（船挪过去、读 GroupStream 量的到各群陆地的距离，差多少挪一半；同 planet_voyage_e2e）
 			if step == 0:
-				ship.set_pose(LINE - OUT_DIR * 10000.0 + Vector3(0, CRUISE_Y, 0), _yaw_toward(OUT_DIR))
+				var c_home: Vector3 = planet.flat_of_latlon(planet.node_latlon(HOME).x, planet.node_latlon(HOME).y)
+				var c_away: Vector3 = planet.flat_of_latlon(planet.node_latlon(AWAY).x, planet.node_latlon(AWAY).y)
+				out_dir = Vector3(c_away.x - c_home.x, 0.0, c_away.z - c_home.z).normalized()
+				switch_line = (c_home + c_away) * 0.5
+				switch_line.y = 0.0
+				ship.set_pose(switch_line + Vector3(0, CRUISE_Y, 0), _yaw_toward(out_dir))
+				probe_at = elapsed
 				step = 1
-			elif in_phase > 1.0:
+			elif step <= LINE_PROBES:
+				if elapsed - probe_at < 0.6:
+					return
+				var h_km := float(stream.get_group_state(HOME)["land_km"])
+				var a_km := float(stream.get_group_state(AWAY)["land_km"])
+				if absf(a_km - h_km) < 0.2:
+					_log("换锚线：%s（开局那群的平面），离两群陆地 %.1f / %.1f km，量了 %d 回" % [switch_line, h_km, a_km, step])
+					step = LINE_PROBES + 1
+					return
+				switch_line += out_dir * (a_km - h_km) * 500.0
+				ship.set_pose(switch_line + Vector3(0, CRUISE_Y, 0), _yaw_toward(out_dir))
+				probe_at = elapsed
+				step += 1
+				if step > LINE_PROBES:
+					_finish(false, "挪了 %d 回还没找到两群陆地等远的点（此刻离两群 %.1f / %.1f km）" % [LINE_PROBES, h_km, a_km])
+			elif step == LINE_PROBES + 1:
+				ship.set_pose(switch_line - out_dir * 10000.0 + Vector3(0, CRUISE_Y, 0), _yaw_toward(out_dir))
+				probe_at = elapsed
+				step += 1
+			elif elapsed - probe_at > 1.0:
 				last_wx = {}
 				shifts_seen = main.get_shift_count()
-				csv = ["t,anchor,x,z,cloud_cover,coverage,precip,temp_c,wind_x,wind_z,w2051,w2050,bg"]
+				csv = ["t,anchor,x,z,cloud_cover,coverage,precip,temp_c,wind_x,wind_z,w_home,w_away,bg"]
 				_goto(Phase.CROSS)
 		Phase.CROSS:
 			_cross(delta, in_phase)
 		Phase.WIND_TRADE:
-			_wind_band("信风带", TRADE, in_phase, Phase.WIND_WEST)
+			_wind_band("信风带", trade, in_phase, Phase.WIND_WEST)
 		Phase.WIND_WEST:
-			_wind_band("西风带", WEST, in_phase, Phase.STORM_BAND)
+			_wind_band("西风带", west, in_phase, Phase.STORM_BAND)
 		Phase.STORM_BAND:
 			_storm_band(in_phase)
 		Phase.ORBIT:
@@ -323,7 +391,7 @@ func _physics_process(delta: float) -> void:
 			pass
 
 
-## 2051 主码头 → 2050 主码头的大圆上每 500 m 问一次场，又经锚群的天气模型问一次
+## 开局那群主码头 → 邻群主码头的连线上每 500 m 问一次场，又经锚群的天气模型问一次
 func _transect() -> void:
 	var a: Vector3 = main.get_origin_berth().origin
 	var b: Vector3 = host.get_dock_berth_by_id(AWAY_DOCK).origin
@@ -349,8 +417,8 @@ func _transect() -> void:
 		prev_f = f
 		prev_m = m
 	var end_f := atmosphere.planet_weather_at(b)
-	_log("2051 → 2050 主码头的大圆上（%.0f km，每 500 m）：场每一步最多变 云量 %.3f、雨区 %.3f、气温 %.2f °C、风 %.2f m/s；经锚群的天气模型 云量 %.3f、雨区 %.3f、气温 %.2f（含云影的日变化）、风 %.2f；离 2051 码头 %.1f km 起 2050 过半" % [
-		(b - a).length() / 1000.0, worst_f["cloud_cover"], worst_f["coverage"], worst_f["temp_c"], worst_f["wind"], worst_m["cloud_cover"], worst_m["coverage"],
+	_log("#%d → #%d 主码头的连线上（%.0f km，每 500 m）：场每一步最多变 云量 %.3f、雨区 %.3f、气温 %.2f °C、风 %.2f m/s；经锚群的天气模型 云量 %.3f、雨区 %.3f、气温 %.2f（含云影的日变化）、风 %.2f；离开局那群的码头 %.1f km 起邻群过半" % [
+		HOME, AWAY, (b - a).length() / 1000.0, worst_f["cloud_cover"], worst_f["coverage"], worst_f["temp_c"], worst_f["wind"], worst_m["cloud_cover"], worst_m["coverage"],
 		worst_m["temp_c"], worst_m["wind"], half_at])
 	# 经天气模型取的气温含云影的日变化（云团一过就差一两度，是局地的、不是瞬变）：大势只比场的；模型的比云量、雨区、风
 	if worst_f["cloud_cover"] > 0.05 or worst_f["coverage"] > 0.05 or worst_f["temp_c"] > 0.3 or worst_f["wind"] > 0.6:
@@ -360,7 +428,7 @@ func _transect() -> void:
 		_finish(false, "两群之间 500 m 一步经天气模型取的变得太多（瞬变）：%s" % [worst_m])
 		return
 	if _weight_of(end_f, AWAY) < 0.9 or half_at < 0.0:
-		_finish(false, "到了 2050 的主码头场里 2050 该占大头：%s / %s" % [end_f["nodes"], end_f["weights"]])
+		_finish(false, "到了邻群 #%d 的主码头场里它该占大头：%s / %s" % [AWAY, end_f["nodes"], end_f["weights"]])
 
 
 ## 飞过换锚线：每一帧录此地此刻的天气
@@ -376,7 +444,7 @@ func _cross(delta: float, in_phase: float) -> void:
 	if shifted:
 		shifts_seen = main.get_shift_count()
 		shift_frames += 1
-		_log("换锚 → %d（离 2051 陆地 %.1f km、2050 陆地 %.1f km）：场里 2050 的权 %.2f" % [stream.get_anchor_node(), float(stream.get_group_state(HOME)["land_km"]),
+		_log("换锚 → %d（离开局那群陆地 %.1f km、邻群陆地 %.1f km）：场里邻群的权 %.2f" % [stream.get_anchor_node(), float(stream.get_group_state(HOME)["land_km"]),
 			float(stream.get_group_state(AWAY)["land_km"]), w_away])
 	if not last_wx.is_empty():
 		for key in ["cloud_cover", "coverage", "temp_c"]:
@@ -396,9 +464,10 @@ func _cross(delta: float, in_phase: float) -> void:
 			float(wx["cloud_cover"]), float(wx["coverage"]), float(wx["precip"]), float(wx["temp_c"]), float(wx["wind_x"]), float(wx["wind_z"]), _weight_of(pw, HOME), w_away,
 			float(pw["bg"])])
 	var away_land := float(stream.get_group_state(AWAY)["land_km"])
-	if stream.get_anchor_node() == AWAY and away_land < 12.0:
+	# 飞到场里邻群占九成（或到它岸边 1 km）：两群陆地只隔十几公里，原来的「离邻群陆地 12 km」那时还在两群正当中
+	if stream.get_anchor_node() == AWAY and (w_away >= 0.9 or away_land < 1.0):
 		_release_all()
-		_log("飞过换锚线到 2050 陆地 %.1f km（%d 帧、换锚 %d 回）：相邻两帧最多变 云量 %.4f（%s）、雨区 %.4f（%s）、气温 %.3f °C（%s）、风 %.3f m/s（%s）；一路上场里 2050 的权 %.2f → %.2f" % [
+		_log("飞过换锚线到邻群陆地 %.1f km（%d 帧、换锚 %d 回）：相邻两帧最多变 云量 %.4f（%s）、雨区 %.4f（%s）、气温 %.3f °C（%s）、风 %.3f m/s（%s）；一路上场里邻群的权 %.2f → %.2f" % [
 			away_land, frames, shift_frames, worst["cloud_cover"], worst_at.get("cloud_cover", "-"), worst["coverage"], worst_at.get("coverage", "-"), worst["temp_c"],
 			worst_at.get("temp_c", "-"), worst["wind"], worst_at.get("wind", "-"), away_weight_min, away_weight_max])
 		if not shots_dir.is_empty():
@@ -408,12 +477,14 @@ func _cross(delta: float, in_phase: float) -> void:
 		if worst["cloud_cover"] > MAX_STEP_COVER or worst["coverage"] > MAX_STEP_COVER or worst["temp_c"] > MAX_STEP_TEMP or worst["wind"] > MAX_STEP_WIND:
 			_finish(false, "飞过换锚线时天气有瞬变：%s（%s）" % [worst, worst_at])
 			return
-		if shift_frames < 1 or away_weight_min > 0.3 or away_weight_max < 0.8:
-			_finish(false, "该飞过换锚线、场里 2050 的权从三成以下涨到八成以上（换锚 %d 回，权 %.2f → %.2f）" % [shift_frames, away_weight_min, away_weight_max])
+		# 两群的陆地只隔十五公里上下：起飞处就在开局那群的岸边，场里对面那群也占三成（两群隔七十多公里时起飞处是一成上下），
+		# 所以查的是「从三成半以下涨到八成半以上」——从少数涨到多数
+		if shift_frames < 1 or away_weight_min > 0.35 or away_weight_max < 0.85:
+			_finish(false, "该飞过换锚线、场里邻群的权从三成半以下涨到八成半以上（换锚 %d 回，权 %.2f → %.2f）" % [shift_frames, away_weight_min, away_weight_max])
 			return
 		_goto(Phase.WIND_TRADE)
 	elif in_phase > 600.0:
-		_finish(false, "飞了 %.0f s 还没到 2050（锚 %d、离 2050 陆地 %.1f km）" % [in_phase, stream.get_anchor_node(), away_land])
+		_finish(false, "飞了 %.0f s 还没到邻群（锚 %d、离它陆地 %.1f km、场里它的权 %.2f）" % [in_phase, stream.get_anchor_node(), away_land, w_away])
 
 
 ## 开阔的云海：松开舵等几秒，船往下风漂——漂向就是此地的风（天与光给的，场的），风向跟 ② 的差不多
@@ -433,8 +504,8 @@ func _wind_band(band: String, ll: Vector2, in_phase: float, next: Phase) -> void
 	var w2 := Vector2(float(pw["wind2_plane_x"]), float(pw["wind2_plane_z"]))
 	var drift_angle := _angle_deg(v, wind)
 	var band_angle := _angle_deg(wind, w2)
-	_log("%s（南纬 %.0f°、东经 %.0f°，离锚群 %.0f km）：此地的风 %.1f m/s（%s），② 的风 %.1f m/s；船漂 %.2f m/s，漂向与此地的风差 %.1f°，此地的风与 ② 差 %.1f°；场里背景 %.2f、群 %s" % [
-		band, -ll.x, ll.y, Vector2(at.x, at.z).length() / 1000.0, wind.length(), atmosphere.get_weather()["wind_name"], w2.length(), v.length(), drift_angle, band_angle,
+	_log("%s（%s，离锚群 %.0f km）：此地的风 %.1f m/s（%s），② 的风 %.1f m/s；船漂 %.2f m/s，漂向与此地的风差 %.1f°，此地的风与 ② 差 %.1f°；场里背景 %.2f、群 %s" % [
+		band, _ll_text(ll), Vector2(at.x, at.z).length() / 1000.0, wind.length(), atmosphere.get_weather()["wind_name"], w2.length(), v.length(), drift_angle, band_angle,
 		float(pw["bg"]), pw["nodes"]])
 	if wind.length() < 5.5:
 		_finish(false, "%s的风该过 5 m/s（船才漂），实为 %.1f m/s" % [band, wind.length()])
@@ -451,7 +522,7 @@ func _wind_band(band: String, ll: Vector2, in_phase: float, next: Phase) -> void
 ## 赤道永暴带：风暴、禁航，HUD 报出来，船被往外推
 func _storm_band(in_phase: float) -> void:
 	if step == 0:
-		_place_ship(STORM)
+		_place_ship(storm)
 		step = 1
 		return
 	if in_phase < 6.0:
@@ -463,7 +534,7 @@ func _storm_band(in_phase: float) -> void:
 	var v := Vector2(ship.velocity.x, ship.velocity.z)
 	var sailing := atmosphere.sailing_text(at)
 	var status := main.get_status_text()
-	_log("赤道永暴带（北纬 %.0f°、西经 %.0f°）：此地「%s」风暴 %.2f、能出航 %s；场里带 %d、背景 %.2f、推 %.0f m/s；船漂 %.0f m/s、与推的方向差 %.1f°；HUD「风：%s」" % [STORM.x, -STORM.y,
+	_log("赤道永暴带（%s）：此地「%s」风暴 %.2f、能出航 %s；场里带 %d、背景 %.2f、推 %.0f m/s；船漂 %.0f m/s、与推的方向差 %.1f°；HUD「风：%s」" % [_ll_text(storm),
 		wx["kind_name"], float(wx["storm"]), wx["sailable"], int(pw["zone_kind"]), float(pw["bg"]), push.length(), v.length(), _angle_deg(v, push), sailing])
 	if int(pw["zone_kind"]) != 1 or float(wx["storm"]) < 0.8 or bool(wx["sailable"]):
 		_finish(false, "赤道永暴带里该是风暴、禁航")
@@ -476,15 +547,15 @@ func _storm_band(in_phase: float) -> void:
 		return
 	_goto(Phase.ORBIT if not shots_dir.is_empty() else Phase.DONE)
 	if shots_dir.is_empty():
-		_finish(true, "行星天气场建好、2051 脚下是它自己的天气 → 两群之间一路取样、飞过换锚线天气没有瞬变 → 信风带、西风带船往下风漂、风跟 ② 走 → 赤道永暴带风暴禁航、船被往外推")
+		_finish(true, "行星天气场建好、开局那群脚下是它自己的天气 → 两群之间一路取样、飞过换锚线天气没有瞬变 → 信风带、西风带船往下风漂、风跟 ② 走 → 赤道永暴带风暴禁航、船被往外推")
 
 
-## 从轨道上看（只在 --shots 时）：2051 一带的全景、当天晴着的一群、下着雨的一群
+## 从轨道上看（只在 --shots 时）：开局那群一带的全景、当天晴着的一群、下着雨的一群
 func _orbit(delta: float) -> void:
 	if orbit_views.is_empty():
 		_release_all()
-		# 钟拨到 2051 的正午（一年里的第 3 天）；挑 1500 km 内当天晴着的、下着雨的群
-		GameClock.set_date(3, 12.0)
+		# 钟拨到开局那天的正午（开局配置的 calendar_start；钟点是钟的那一群的地方时）；挑 1500 km 内当天晴着的、下着雨的群
+		GameClock.set_date(StoryStart.get_calendar_start(), 12.0)
 		var home: Vector2 = planet.node_latlon(HOME)
 		var clear_node := -1
 		var rain_node := -1
@@ -503,7 +574,7 @@ func _orbit(delta: float) -> void:
 			if cov > best_rain:
 				best_rain = cov
 				rain_node = node
-		_log("轨道：2051 一带今天晴得最透的是 #%d（云量 %.2f）、雨下得最开的是 #%d（雨区 %.2f）" % [clear_node, best_clear, rain_node, best_rain])
+		_log("轨道：开局那群一带今天晴得最透的是 #%d（云量 %.2f）、雨下得最开的是 #%d（雨区 %.2f）" % [clear_node, best_clear, rain_node, best_rain])
 		orbit = ClassDB.instantiate("OrbitCamera")
 		main.add_child(orbit)
 		orbit.fov = 50.0
@@ -525,11 +596,11 @@ func _orbit(delta: float) -> void:
 	var ll: Vector2 = v[1]
 	var pw := atmosphere.planet_weather_latlon(ll.x, ll.y)
 	var tex: Color = globe.weather_texel(ll.x, ll.y)
-	_log("  %s：南纬 %.1f°、东经 %.1f°，今天「%s」云量 %.2f、雨区 %.2f；贴图那一格云量 %.2f、雨 %.2f" % [v[0], -ll.x, ll.y, pw["day_kind"], float(pw["cloud_cover"]),
+	_log("  %s：%s，今天「%s」云量 %.2f、雨区 %.2f；贴图那一格云量 %.2f、雨 %.2f" % [v[0], _ll_text(ll), pw["day_kind"], float(pw["cloud_cover"]),
 		float(pw["coverage"]), tex.r, tex.g])
 	orbit_index += 1
 	if orbit_index >= orbit_views.size():
-		_finish(true, "行星天气场建好、2051 脚下是它自己的天气 → 两群之间一路取样、飞过换锚线天气没有瞬变 → 信风带、西风带船往下风漂、风跟 ② 走 → 赤道永暴带风暴禁航、船被往外推 → 轨道上拍了 %d 张" % orbit_views.size())
+		_finish(true, "行星天气场建好、开局那群脚下是它自己的天气 → 两群之间一路取样、飞过换锚线天气没有瞬变 → 信风带、西风带船往下风漂、风跟 ② 走 → 赤道永暴带风暴禁航、船被往外推 → 轨道上拍了 %d 张" % orbit_views.size())
 		return
 	_orbit_view()
 

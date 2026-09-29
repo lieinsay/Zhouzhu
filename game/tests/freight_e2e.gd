@@ -1,23 +1,24 @@
 extends Node
-## 跑货（world_2051.tscn），只通过输入（动作、转视角）操作，一路不瞬移：
-## 主码头 #1 出生：船上带一节储存区、4 个货位；村029、烧炭营43（专业聚落也是村）都有船台
-## → 走上船掌舵，飞 2.5 km 到村029 的船台，提示「按 E 落上船台」→ 落上去：船舷贴着跳板顶
+## 跑货（world_seed42.tscn，开局那群 #6329），只通过输入（动作、转视角）操作，一路不瞬移：
+## 主码头出生：船上带一节储存区、4 个货位；起运村（主码头 2–6 km、主岛上户数最多的村：#6329 是村003、271 户）与
+## 目的村（别的岛上离起运村最近的村，同 freight::offer_freight 的规矩：#6329 是 12.3 km 外岛 #3 上的烧炭营50，岸缘比主岛高 820 m；专业聚落也是村）都有船台
+## → 走上船掌舵，飞 2.5 km 到起运村的船台，提示「按 E 落上船台」→ 落上去：船舷贴着跳板顶
 ## → 走下跳板到村仓（跳板脚前）：提示里有托运 → E 接下、打包第一箱：村仓少 5 份，人抱着箱子
 ## → 抱着箱子走上跳板：慢、跳不起来；到舵旁按 E 被拒（抱着箱子掌不了舵）→ 放上 0 号货位
-## → 下跳板打包第二箱、上来放上 2 号货位 → 掌舵：航向行指着托运的目的村 → 飞 8.6 km 到 9 号岛烧炭营43 的船台落下
-## → 从货位抱起一箱走下跳板交货：烧炭营43 的仓多 5 份、还没给钱 → 再抱一箱交：交齐，背包里多了运费、这单结了；两边村仓一共挪了 10 份。
+## → 下跳板打包第二箱、上来放上 2 号货位 → 掌舵：航向行指着托运的目的村 → 飞到目的村的船台落下（爬升跟着前方的地形）
+## → 从货位抱起一箱走下跳板交货：目的村的仓多 5 份、还没给钱 → 再抱一箱交：交齐，背包里多了运费、这单结了；两边村仓一共挪了 10 份。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/freight_e2e.tscn
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 900.0  # 模拟秒
 const SETTLE_TIMEOUT := 30.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const ORIGIN_VILLAGE := 29  # 村029：主码头 2.5 km 外、76 户（浮高计划 Z2 重导前这一处是村031、66 户）
-const DEST_VILLAGE := 198  # 烧炭营43：9 号岛上、离村029 最近的别岛村子（重导前村号 203；9 号岛浮高 −62 m）
-const ORIGIN_STORE := 152  # 村029 开账时的土产：76 户 × 2
+const ORIGIN_MIN_M := 2000.0  # 起运村：离主码头 2–6 km、主岛上户数最多的村（不算邑治）
+const ORIGIN_MAX_M := 6000.0
+const MAX_ROUTE_M := 40000.0  # 同 FreightRules::max_route_m：委托开到别的岛上最近的村
 const CRUISE_CLEARANCE := 60.0
 const SLOW_DOWN_AT := 1500.0
 
@@ -52,8 +53,14 @@ var helm_tried := false
 var carry_top_speed := 0.0
 var carry_rise := 0.0
 var jump_tapped := false
+var hops := 0  # 空手卡住跳了几次
+var hop_from := Vector3.ZERO
+var hop_t := 0.0
 var centers := {}  # 村号 → 村心
 var names := {}  # 村号 → 名字
+var ORIGIN_VILLAGE := -1
+var DEST_VILLAGE := -1
+var ORIGIN_STORE := 0  # 起运村开账时的土产：户数 × 2
 
 
 func _ready() -> void:
@@ -69,10 +76,27 @@ func _ready() -> void:
 	ship = main.get_node("Ship")
 	sites = main.get_node("SiteStream")
 	hinterland = main.get_node("Hinterland")
-	for v in world.get_info()["villages"]:
+	var home := world.get_dock_position(world.find_dock(main.origin_dock))
+	var villages: Array = world.get_info()["villages"]
+	var best_hh := 0
+	var origin_island := -1
+	for v in villages:
 		centers[int(v["id"])] = Vector3(v["pos"][0], 0, v["pos"][1])
 		names[int(v["id"])] = v["name"]
-	_log("出生 %s；%s 村心 %s，%s 村心 %s" % [player.global_position, names[ORIGIN_VILLAGE], centers[ORIGIN_VILLAGE], names[DEST_VILLAGE], centers[DEST_VILLAGE]])
+		var d := Vector2(v["pos"][0] - home.x, v["pos"][1] - home.z).length()
+		if int(v["island"]) == 0 and not bool(v.get("seat", false)) and d >= ORIGIN_MIN_M and d <= ORIGIN_MAX_M and int(v["households"]) > best_hh:
+			best_hh = int(v["households"])
+			ORIGIN_VILLAGE = int(v["id"])
+			origin_island = int(v["island"])
+	ORIGIN_STORE = best_hh * 2
+	var best_d := MAX_ROUTE_M
+	for v in villages:
+		var d := Vector2(v["pos"][0] - centers[ORIGIN_VILLAGE].x, v["pos"][1] - centers[ORIGIN_VILLAGE].z).length()
+		if int(v["island"]) != origin_island and d <= best_d:
+			best_d = d
+			DEST_VILLAGE = int(v["id"])
+	_log("群 #%d 出生 %s；起运 %s（%d 户）村心 %s，目的 %s 村心 %s（%.1f km）" % [StoryStart.get_spawn_node(), player.global_position, names[ORIGIN_VILLAGE], best_hh,
+		centers[ORIGIN_VILLAGE], names[DEST_VILLAGE], centers[DEST_VILLAGE], best_d / 1000.0])
 
 
 func _log(line: String) -> void:
@@ -168,9 +192,27 @@ func _walk_toward(target: Vector3, radius: float) -> bool:
 	return false
 
 
+## 空手走不动了就跳一下（真人也这样）：陡的跳板顶上人会被挤到舷门框边卡住（#6329 烧炭营50 的船台，跳板三十来度）；抱着箱子跳不了，那一程靠路点对正
+func _hop_if_stuck() -> void:
+	var p := player.global_position
+	if hop_from.distance_to(p) > 0.3:
+		hop_from = p
+		hop_t = elapsed
+	elif elapsed - hop_t > 0.8 and player.is_on_floor() and not main.is_carrying():
+		_tap("jump")
+		hops += 1
+		hop_t = elapsed
+
+
 func _follow_waypoints(radius: float = 0.5) -> bool:
 	if waypoints.is_empty():
 		return true
+	# 跳板顶外 1 m 内的路点（对正舷门那一点）要走准：偏了会被跳板的栏杆、舷门框挡住
+	var s := _berth_settlement(_village_id())
+	if s != null:
+		var c := _berth_contact(_village_id()).origin
+		if Vector2(waypoints[0].x - c.x, waypoints[0].z - c.z).length() < 1.0:
+			radius = minf(radius, 0.1)
 	if _walk_toward(waypoints[0], radius):
 		waypoints.pop_front()
 	return waypoints.is_empty()
@@ -201,11 +243,18 @@ func _down_gangway(village_id: int) -> Array[Vector3]:
 
 ## 从村仓走上跳板、到货位旁
 func _up_gangway(village_id: int, slot: int) -> Array[Vector3]:
-	var contact := _berth_contact(village_id)
-	var out: Array[Vector3] = [contact.origin + contact.basis.x * 9.0, contact.origin + contact.basis.x * 0.4, ship.global_position]
+	var out := _board_points(village_id)
 	out.append(_slot_midline(slot))
 	out.append(_slot_stand(slot))
 	return out
+
+
+## 从跳板脚走上船心：跳板顶外 0.7 m 先走准（半径 0.1 m，见 _follow_waypoints），再笔直走进舷门 1.5 m，然后才去船心
+## （陡的跳板上斜着直奔船心，到顶时会被跳板的栏杆带偏、卡在舷门框上：#6329 的村003、烧炭营50 的船台都高五米多、跳板三十来度）
+func _board_points(village_id: int) -> Array[Vector3]:
+	var contact := _berth_contact(village_id)
+	var x := contact.basis.x
+	return [contact.origin + x * 9.0, contact.origin + x * 2.0, contact.origin + x * 0.7, contact.origin - x * 1.5, ship.global_position]
 
 
 func _terrain_ahead(target: Vector3) -> float:
@@ -386,7 +435,7 @@ func _physics_process(delta: float) -> void:
 							return
 						waypoints = _up_gangway(ORIGIN_VILLAGE, 0 if crate_no == 0 else 2)
 						if crate_no == 0:
-							waypoints.insert(3, ship.get_helm_position())  # 上了船先到舵旁试一下
+							waypoints.insert(5, ship.get_helm_position())  # 上了船先到舵旁试一下
 						carry_top_speed = 0.0
 						carry_rise = 0.0
 						jump_tapped = false
@@ -453,12 +502,14 @@ func _physics_process(delta: float) -> void:
 			var slot := 0 if crate_no == 0 else 2
 			match step:
 				0:
-					if _follow_waypoints(0.4):
+					if _follow_waypoints(0.2):
 						_release_all()
 						step = 1
 						phase_started = elapsed
 					elif in_phase > 60.0:
-						_finish(false, "60 s 没走到货位 %d 旁" % slot)
+						_finish(false, "60 s 没走到货位 %d 旁（%s；船局部 %s，路点 %s；跳了 %d 次）" % [slot, player.global_position, ship.to_local(player.global_position), waypoints, hops])
+					else:
+						_hop_if_stuck()
 				1:
 					# HUD 在编排的物理帧里才刷新（比测试晚一步）：等提示跟上
 					if not main.get_prompt().contains("抱起"):
@@ -502,8 +553,8 @@ func _physics_process(delta: float) -> void:
 						return
 					_shot("9_delivered_1")
 					crate_no = 1
-					var contact := _berth_contact(DEST_VILLAGE)
-					waypoints = [contact.origin + contact.basis.x * 9.0, contact.origin + contact.basis.x * 0.4, ship.global_position, _slot_midline(2), _slot_stand(2)]
+					waypoints = _board_points(DEST_VILLAGE)
+					waypoints.append_array([_slot_midline(2), _slot_stand(2)])
 					_goto(Phase.CARRY_DOWN)
 				else:
 					var fee := int(order["fee"])

@@ -1,7 +1,7 @@
 extends Node
 ## 行星计划 P4：开发机上新建随机世界（生存模式，计划 4.8、D15）——
 ## F2「新建世界」走的同一条路（DeveloperTools.new_world：生成器算行星层 → 行星包（没有粗版）→ 出生的岛群 → world.json），
-## 只是好了不换场景，这里自己实例化 world_2051.tscn（DeveloperTools.prepare_world 把这个世界交给场景里的 GroupProvider）：
+## 只是好了不换场景，这里自己实例化 world_seed42.tscn（DeveloperTools.prepare_world 把这个世界交给场景里的 GroupProvider）：
 ##   从点下去到在出生群的主码头能走 ≤ 60 s（真实秒）；
 ##   远处是替身（行星包里没有粗版：FarGroups 画的是 planet_surface 的替身，行星贴图里也是）；
 ##   F2 的清单里有「行星」「新建世界」；打开行星地图（F2「行星」）：读数说得出你在哪一群、别的群没生成过；选中 600 km 内的一群、点瞬移（T）——
@@ -13,7 +13,7 @@ extends Node
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/planet_world_e2e.tscn [-- --seed=2027 --shots=<目录>]
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const WORLD_NAME := "e2e_newworld"
 const WORLD_DIR := "user://worlds/" + WORLD_NAME
 const TIMEOUT_REAL_S := 900.0  # 真实秒：生成器在真实时间里跑，无头下模拟时间比它快几十倍，等生成器的都按真实秒算

@@ -1,32 +1,42 @@
 extends Node
-## 真实比例岛群里跑一趟船（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
-## 主码头 #1 的停机坪上出生 → 旁边的邑治（395 户）已经铺出来、房子站在地上、地图上的码头与村子和 3D 里一一对应
-## → M 开地图点 8.5 km 外的村004 瞬移过去：256 户的房子站在地上、村民陆续出门 → 再开地图点回主码头
-## → 走过栈桥上船 → 掌舵、升空、R 换到疾档 → 飞 23 km 到岛 #2 的码头 #28（途中贴着地形保持高度；浮高计划 Z2 重导前是 #26，岛 #2 现在比主岛低 90 m）→ 近了换回泊档
-## → 按 E 靠泊 → 下船走上岛 #2 的停机坪 → 码头边的村子房子站在地上、有人出门。
+## 地貌与聚落计划 P0 的验收：开船去 #2051——按需生成、能落地（world_seed42.tscn，剧情模式 seed42，世界存档目录用测试自己的 user://worlds/e2e_2051，开局清空）。
+## 2026-09-29 以前 #2051 是开局、细版在仓库里；开局换到 #6329 以后它只是行星上普通的一群，走近了照样按需生成（不走缓存：开局把这个测试世界生成过的群清掉）。
+## 开局那群的主码头出生 → 开发者瞬移（Expedition.request_planet_jump，行星地图点一下走的就是它）去 2051 的近邻 #2050（离 2051 群心 114 km，没生成过、当场生成）
+## → 走上 2050 主码头的船、掌舵、升空、换疾档 → 船瞬移到 2050 陆地往 2051 那边 10 km 外的云海上空，船头朝 2051 的群心
+## → 一路飞：船头朝着 2051、走得比 15 m/s 快（疾档八十来米每秒），它在船头方向 150 km 内，GroupProvider 按船头方向预取、当场生成（进程内的 C++ 生成器；
+##   慢了的话焦点离它群心 60 km 内也会排进队），GroupStream 登记、后台载入，离 2051 的陆地比离 2050 的近了就换锚到 2051
+##   （飞的是 2050 与 2051 陆地之间的云海：两群陆地等远的换锚线在路上）
+## → 船瞬移到 2051 主码头外 1.5 km 的云海上空（往外一路都没有地的方向）→ 换回泊档、靠泊、下船走上停机坪：脚下是 2051 的地，
+##   HUD 第一行「群 #2051」，码头边的村子铺出来、有人出门（这时下雨下雪就覆盖成晴，照 planet_voyage 的做法）。
+## 记下：2050、2051 各自从排进生成到包写好的用时，飞的那一路（含 2051 生成、载入、换锚）的最慢一帧，落地的位置。
+## 2051、2050 的群心从行星包（PlanetView.node_latlon / flat_of_latlon）推，主码头从各自的 world.json 找（main 那一座），不写死坐标。
+## 这是 game/tests 里唯一写着 2051 的测试。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/voyage_2051_e2e.tscn
 ##
-## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
+## 去掉 --headless、末尾加 `-- --shots=<目录>`：每个阶段存一张截图。
 
-const SCENE := preload("res://world_2051.tscn")
-const TIMEOUT := 1500.0  # 模拟秒
-const SETTLE_TIMEOUT := 30.0
-const FOLK_TIMEOUT := 60.0
+const SCENE := preload("res://world_seed42.tscn")
+const WORLD_DIR := "user://worlds/e2e_2051"
+const TARGET := 2051  # 要去的那一群（2026-09-29 以前的开局）
+const VIA := 2050  # 它最近的邻群：先瞬移到这里，再开船过去
+const TIMEOUT := 4000.0  # 模拟秒
+const TIMEOUT_REAL_S := 900.0  # 真实秒（生成器在真实时间里跑）
+const SETTLE_TIMEOUT := 60.0
+const FOLK_TIMEOUT := 90.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const SEAT_ID := 1  # 邑治：主码头 #1 旁 400 m
-const FAR_VILLAGE_ID := 4  # 村004：主码头 8.5 km 外、256 户
-const CRUISE_CLEARANCE := 60.0  # 飞越陆地时离地至少这么高
-const SLOW_DOWN_AT := 2000.0  # 离目的泊位这么近换回泊档
+const CRUISE_Y := 1500.0  # 云海上空飞（两群之间没有岛；主岛岸缘几百米，别的岛浮到 1.3–1.6 km 的在群里，这一段飞的是群外的云海）
+const OUT_OF_LAND := 10000.0  # 船瞬移到 2050 陆地边往外这么远
 
-enum Phase { SETTLE, CHECK_HOME, MAP_TO_FAR, FAR_VILLAGE, MAP_TO_DOCK, BACK_AT_DOCK, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, CRUISE, APPROACH, MOORING, WALK_ASHORE, ASHORE_VILLAGE, VISIT, DONE }
+enum Phase { SETTLE, JUMP, LANDED_VIA, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, JUMP_OUT, CROSS, JUMP_IN, APPROACH, MOORING, WALK_ASHORE, CHECK, DONE }
 
 var main: Expedition
-var world: World
 var player: Player
 var ship: Ship
-var sites: SiteStream
-var map: WorldMap
+var stream: GroupStream
+var host: PlanetHost
+var planet: PlanetView
+var provider: GroupProvider
 
 var phase := Phase.SETTLE
 var elapsed := 0.0
@@ -34,17 +44,30 @@ var phase_started := 0.0
 var shots_dir := ""
 var pending_shot := ""
 var shot_wait := 0
-var held := {}  # 动作 → 还要按住几帧
+var held := {}
 var waypoints: Array[Vector3] = []
 var climb_from := 0.0
-var map_step := 0
-var dest_index := -1
-var dest_site := {}  # 目的码头边上最近的村 / 散户（world.json 的一行）
-var dest_is_hamlet := false
-var cruise_top := 0.0
-var min_clearance := INF
-var cruise_shots := 0
-var log_lines: Array[String] = []
+var step := 0
+var start_us := Time.get_ticks_usec()
+
+var last_tick := 0
+var jump_t0 := 0
+var jump_max_ms := 0.0
+var cross_max_ms := 0.0
+var cross_frames := 0
+var gen_max_ms := 0.0  # 2051 从排进生成到包写好期间的最慢一帧
+var target_state := GroupProvider.NONE
+var target_queued_km := 0.0  # 2051 排进生成那一刻，焦点离它的群心多远
+var target_ready_km := 0.0
+var target_seconds := {}
+var via_seconds := {}
+var flown_from := Vector3.ZERO
+var flown_m := 0.0
+var shift_seen := 0
+var shift_line := ""
+var via_dock_id := -1
+var target_dock_id := -1
+var results: Array[String] = []
 
 
 func _ready() -> void:
@@ -52,37 +75,46 @@ func _ready() -> void:
 		if arg.begins_with("--shots="):
 			shots_dir = arg.trim_prefix("--shots=")
 			DirAccess.make_dir_recursive_absolute(shots_dir)
-	get_tree().root.size = Vector2i(1280, 720)  # 无头时根视口默认很小，地图上的点没处可点
+	get_tree().root.size = Vector2i(1280, 720)
 	main = SCENE.instantiate()
+	provider = main.get_node("GroupProvider")
+	provider.world_dir = WORLD_DIR
+	# 这个测试世界里生成过的群、离开的群的账全清掉（仓库里的不动）：2050、2051 都从「没生成过」起
+	for sub in ["groups", "memory", "logs", "works"]:
+		_remove_tree(WORLD_DIR.path_join(sub))
 	add_child(main)
-	world = main.get_node("World")
 	player = main.get_node("Player")
 	ship = main.get_node("Ship")
-	sites = main.get_node("SiteStream")
-	map = main.get_map()
-	dest_index = world.find_dock(main.destination_dock)
-	# 目的码头边上最近的聚落（#28 边上是村124）
-	var dock := world.get_dock_position(dest_index)
-	var best := INF
-	var info: Dictionary = world.get_info()
-	for key in ["villages", "hamlets"]:
-		for row in info[key]:
-			var d := Vector2(row["pos"][0] - dock.x, row["pos"][1] - dock.z).length()
-			if int(row["island"]) == int(world.get_island_at(dock.x, dock.z)) and d < best:
-				best = d
-				dest_site = row
-				dest_is_hamlet = key == "hamlets"
-	_log("出生 %s，船 %s，目的泊位 %s（%.1f km）；目的码头边最近的是 %s（%d 户，%.0f m）" % [
-		player.global_position, ship.global_position, main.get_destination_berth().origin,
-		ship.global_position.distance_to(main.get_destination_berth().origin) / 1000.0,
-		dest_site.get("name", "?"), int(dest_site.get("households", 0)), best])
+	stream = main.get_node("GroupStream")
+	host = main.get_node("PlanetHost")
+	planet = main.get_node("PlanetView")
+	last_tick = Time.get_ticks_usec()
+	if not provider.can_generate():
+		print("voyage_2051: SKIP —— 调不了生成器：%s" % provider.get_problem())
+		get_tree().quit(77)
+
+
+func _remove_tree(dir: String) -> void:
+	if not DirAccess.dir_exists_absolute(dir):
+		return
+	for f in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir.path_join(f))
+	for d in DirAccess.get_directories_at(dir):
+		_remove_tree(dir.path_join(d))
+	DirAccess.remove_absolute(dir)
 
 
 func _log(line: String) -> void:
 	print("voyage_2051: " + line)
 
 
-# ---------------------------------------------------------------- 输入
+func _finish(ok: bool, why: String) -> void:
+	_release_all()
+	for r in results:
+		_log(r)
+	print("voyage_2051: %s —— %s（阶段 %s，模拟 %.1f s，真实 %.0f s）" % ["PASS" if ok else "FAIL", why, Phase.keys()[phase], elapsed, (Time.get_ticks_usec() - start_us) / 1e6])
+	get_tree().quit(0 if ok else 1)
+
 
 func _hold(action: String, pressed: bool) -> void:
 	if pressed:
@@ -96,7 +128,6 @@ func _release_all() -> void:
 		Input.action_release(action)
 
 
-## 按一下：按住几帧再松（当帧按下一帧就松，物理帧里读不到「刚按下」）
 func _tap(action: String) -> void:
 	if held.has(action):
 		return
@@ -112,30 +143,17 @@ func _tick_taps() -> void:
 			held.erase(action)
 
 
-func _mouse(button: MouseButton, at: Vector2) -> void:
-	for pressed in [true, false]:
-		var ev := InputEventMouseButton.new()
-		ev.button_index = button
-		ev.position = at
-		ev.global_position = at
-		ev.pressed = pressed
-		Input.parse_input_event(ev)
-
-
-func _press_key_action(action: String) -> void:
-	var ev := InputEventAction.new()
-	ev.action = action
-	ev.pressed = true
-	Input.parse_input_event(ev)
-	var up := InputEventAction.new()
-	up.action = action
-	up.pressed = false
-	Input.parse_input_event(up)
-
-
-# ---------------------------------------------------------------- 截图
-
 func _process(_delta: float) -> void:
+	var now := Time.get_ticks_usec()
+	var ms := (now - last_tick) / 1000.0
+	last_tick = now
+	if phase == Phase.JUMP:
+		jump_max_ms = maxf(jump_max_ms, ms)
+	if phase == Phase.CROSS:
+		cross_max_ms = maxf(cross_max_ms, ms)
+		cross_frames += 1
+		if target_state == GroupProvider.QUEUED or target_state == GroupProvider.RUNNING:
+			gen_max_ms = maxf(gen_max_ms, ms)
 	if pending_shot.is_empty() or shots_dir.is_empty():
 		return
 	shot_wait -= 1
@@ -146,57 +164,34 @@ func _process(_delta: float) -> void:
 
 
 func _shot(shot_name: String) -> void:
+	if shots_dir.is_empty():
+		return
 	pending_shot = shot_name
 	shot_wait = 3
 
 
-# ---------------------------------------------------------------- 断言用的小工具
+func _goto(next: Phase) -> void:
+	_log("%-14s 用时 %6.1f s" % [Phase.keys()[phase], elapsed - phase_started])
+	phase = next
+	phase_started = elapsed
+	step = 0
+
+
+# ---------------------------------------------------------------- 小工具
+
+func _anchor() -> GroupWorld:
+	return stream.get_group_world(stream.get_anchor_node())
+
 
 func _standing_on_ground() -> bool:
+	var w := _anchor()
+	if w == null:
+		return false
 	var at := player.global_position
-	var ground: float = world.get_surface_height(at.x, at.z)
-	return player.is_on_floor() and not is_nan(ground) and absf(at.y - ground) < 1.0 and world.is_ready_at(at)
+	var ground: float = w.get_surface_height(at.x, at.z)
+	return player.is_on_floor() and not is_nan(ground) and absf(at.y - ground) < 1.0 and w.is_ready_at(at)
 
 
-## 村子里每座房子都站在地上：还站得住（勘察照过）、地坪在地面之上一个台基高左右。返回空串 = 都好
-func _houses_stand(v: WorldVillage) -> String:
-	if v == null:
-		return "村子没铺出来"
-	var s: Settlement = v.get_settlement()
-	if s == null or s.get_count() == 0:
-		return "村子里没有房子"
-	for i in s.get_count():
-		var why := s.survey_building(i)
-		if not why.is_empty():
-			return "%s 第 %d 座站不住：%s" % [v.get_site_name(), i, why]
-		var at: Vector3 = s.get_building_position(i)
-		var ground: float = world.get_surface_height(at.x, at.z)
-		if is_nan(ground):
-			return "%s 第 %d 座底下没有地" % [v.get_site_name(), i]
-		var lift := at.y - ground
-		if lift < 0.2 or lift > 4.0:
-			return "%s 第 %d 座地坪离地 %.2f m（悬空或埋进地里）" % [v.get_site_name(), i, lift]
-	return ""
-
-
-func _folk_walking(v: WorldVillage) -> int:
-	if v == null or v.get_villagers() == null:
-		return 0
-	var folk: Villagers = v.get_villagers()
-	var n := 0
-	for i in folk.get_villager_count():
-		if folk.get_villager_phase(i) == Villagers.WALKING:
-			n += 1
-	return n
-
-
-func _dest_village() -> WorldVillage:
-	return sites.get_hamlet(int(dest_site["id"])) if dest_is_hamlet else sites.get_village(int(dest_site["id"]))
-
-
-# ---------------------------------------------------------------- 走与飞
-
-## 朝目标走；到了返回 true。转视角就是真人转鼠标那一下，其余只按前进。
 func _walk_toward(target: Vector3, radius: float) -> bool:
 	var to := target - player.global_position
 	to.y = 0.0
@@ -216,183 +211,118 @@ func _follow_waypoints() -> bool:
 	return waypoints.is_empty()
 
 
-## 船头前方 2 km 内（沿着去泊位的方向）最高的地面
-func _terrain_ahead(berth: Vector3) -> float:
-	var from := ship.global_position
-	var dir := Vector3(berth.x - from.x, 0, berth.z - from.z)
-	var flat := dir.length()
-	dir = dir.normalized()
-	var top := -INF
-	var d := 0.0
-	while d <= minf(2000.0, flat):
-		for side in [-60.0, 0.0, 60.0]:
-			var p: Vector3 = from + dir * d + Vector3(-dir.z, 0, dir.x) * side
-			var h: float = world.get_surface_height(p.x, p.z)
-			if not is_nan(h):
-				top = maxf(top, h)
-		d += 50.0
-	return top
+func _yaw_toward(dir: Vector3) -> float:
+	return atan2(-dir.x, -dir.z)  # 船头朝 −z
 
 
-## 朝泊位飞：舵对准方位；高度在陆地上空贴着地形留足余量，近了对准泊位略高处；远了进车近了滑行。进入可靠泊的距离返回 true。
-func _fly_toward(berth: Vector3) -> bool:
-	var to := berth - ship.global_position
+## 朝目标飞：舵对准方位、按 want_y 定高度；到了 arrive 以内返回 true
+func _fly_toward(target: Vector3, want_y: float, arrive: float) -> bool:
+	var to := target - ship.global_position
 	var local := ship.global_transform.basis.inverse() * to
-	var bearing := rad_to_deg(atan2(local.x, -local.z))  # 正 = 目标在右舷
+	var bearing := rad_to_deg(atan2(local.x, -local.z))
 	var flat := Vector2(to.x, to.z).length()
-	var want_y := berth.y + 8.0
-	if flat > 600.0:
-		var ground := _terrain_ahead(berth)
-		if ground > -INF:
-			want_y = maxf(want_y, ground + CRUISE_CLEARANCE)
 	var climb := want_y - ship.global_position.y
-
 	_hold("move_right", bearing > 3.0)
 	_hold("move_left", bearing < -3.0)
 	_hold("ascend", climb > 2.0)
 	_hold("descend", climb < -2.0)
-	# 高度差太多先别往前冲，免得撞上山
-	_hold("move_forward", flat > 30.0 and absf(bearing) < 60.0 and climb < 40.0)
-	var below: float = world.get_surface_height(ship.global_position.x, ship.global_position.z)
-	if not is_nan(below):
-		min_clearance = minf(min_clearance, ship.global_position.y - below)
-	cruise_top = maxf(cruise_top, ship.global_position.y)
-	return to.length() < main.get_dock_range() - 5.0
+	_hold("move_forward", flat > 30.0 and absf(bearing) < 60.0 and climb < 60.0)
+	return to.length() < arrive
+
+
+## 那一群的群心在此刻锚群的平面里（行星包的经纬度，PlanetView 按真球面换算）
+func _center_flat(node: int) -> Vector3:
+	var ll: Vector2 = planet.node_latlon(node)
+	var p: Vector3 = planet.flat_of_latlon(ll.x, ll.y)
+	p.y = 0.0
+	return p
+
+
+## 那一群 world.json 里标 main 的码头号（没有就第一座）
+func _main_dock_id(node: int) -> int:
+	var w: GroupWorld = stream.get_group_world(node)
+	if w == null:
+		return -1
+	var first := -1
+	for d in w.get_info()["docks"]:
+		if first < 0:
+			first = int(d["id"])
+		if bool(d.get("main", false)):
+			return int(d["id"])
+	return first
+
+
+## 地图宿主的码头号：别的群的 = 群号 × 1000 + 它自己的号
+func _host_dock(node: int, id: int) -> int:
+	return node * 1000 + id
 
 
 # ---------------------------------------------------------------- 流程
-
-func _goto(next: Phase) -> void:
-	_log("%-14s 用时 %6.1f s" % [Phase.keys()[phase], elapsed - phase_started])
-	phase = next
-	phase_started = elapsed
-	map_step = 0
-
 
 func _physics_process(delta: float) -> void:
 	elapsed += delta
 	var in_phase := elapsed - phase_started
 	_tick_taps()
 	if elapsed > TIMEOUT:
-		_finish(false, "超时（卡在阶段 %s）" % Phase.keys()[phase])
+		_finish(false, "超时（模拟 %.0f s）" % TIMEOUT)
+		return
+	if (Time.get_ticks_usec() - start_us) / 1e6 > TIMEOUT_REAL_S:
+		_finish(false, "超时（真实 %.0f s）" % TIMEOUT_REAL_S)
 		return
 	match phase:
 		Phase.SETTLE:
-			if in_phase > 1.0 and _standing_on_ground():
-				if world.get_island_at(player.global_position.x, player.global_position.z) != 0:
-					_finish(false, "出生点不在主岛")
+			if stream.is_ready() and _standing_on_ground() and in_phase > 1.0:
+				var home := StoryStart.get_spawn_node()
+				if stream.get_anchor_node() != home:
+					_finish(false, "开局锚该是开局那群 #%d，实为 #%d" % [home, stream.get_anchor_node()])
 					return
-				if sites.get_dock(main.origin_dock) == null or sites.get_dock(main.destination_dock) != null:
-					_finish(false, "主码头的栈桥该铺出来、23 km 外的目的码头该还没铺（%s）" % [sites.get_built_docks()])
+				if provider.is_available(TARGET) or provider.is_available(VIA):
+					_finish(false, "开局 #%d、#%d 该都没有包（仓库里不带、测试世界清过）：%s / %s" % [TARGET, VIA, provider.get_group_info(TARGET), provider.get_group_info(VIA)])
 					return
-				_shot("1_spawn_dock")
-				_goto(Phase.CHECK_HOME)
+				_log("开局那群 #%d 主码头出生 %s；#%d 离这里 %.0f km、#%d %.0f km，都没有包" % [home, player.global_position, TARGET, planet.distance_to_node(TARGET) / 1000.0,
+					VIA, planet.distance_to_node(VIA) / 1000.0])
+				_shot("1_spawn")
+				jump_t0 = Time.get_ticks_usec()
+				jump_max_ms = 0.0
+				last_tick = jump_t0
+				if not main.request_planet_jump(VIA):
+					_finish(false, "瞬移去 #%d 起不了：%s" % [VIA, main.get_jump_state()["last"]])
+					return
+				_goto(Phase.JUMP)
 			elif in_phase > SETTLE_TIMEOUT:
-				_finish(false, "出生 %.0f s 还没站稳：%s" % [SETTLE_TIMEOUT, player.global_position])
-		Phase.CHECK_HOME:
-			# 等旁边的邑治铺出来（每帧最多铺一处，由近及远）
-			var near := sites.get_village(SEAT_ID)
-			if near == null:
-				if in_phase > 10.0:
-					_finish(false, "主码头旁的邑治没铺出来（已铺 %s）" % [sites.get_built_villages()])
+				_finish(false, "%.0f s 没在开局那群站稳" % SETTLE_TIMEOUT)
+		Phase.JUMP:
+			var js: Dictionary = main.get_jump_state()
+			if int(js["stage"]) != 0:
+				if (Time.get_ticks_usec() - jump_t0) / 1e6 > 300.0:
+					_finish(false, "瞬移 300 s（真实）没好（%s）" % js)
 				return
-			var why := _houses_stand(near)
-			if not why.is_empty():
-				_finish(false, why)
+			var last: Dictionary = js["last"]
+			if int(last.get("node", -1)) != VIA:
 				return
-			var count: int = near.get_settlement().get_count()
-			if count != 398:
-				_finish(false, "邑治 395 户该有 395 座民居 + 堂屋 + 仓 + 船台，实为 %d 座" % count)
+			if not bool(last.get("ok", false)):
+				_finish(false, "去 #%d 失败：%s" % [VIA, last.get("why", "?")])
 				return
-			if sites.get_village(FAR_VILLAGE_ID) != null:
-				_finish(false, "8.5 km 外的村%03d 不该铺出来" % FAR_VILLAGE_ID)
+			via_seconds = provider.get_request(VIA)
+			var line := "瞬移去 #%d（没生成过）：从点下去到能走 %.1f s（生成 %.1f s）、最慢一帧 %.1f ms；落在%s" % [VIA, (Time.get_ticks_usec() - jump_t0) / 1e6,
+				float(via_seconds.get("run_s", 0.0)), jump_max_ms, last["where"]]
+			results.append(line)
+			_log(line)
+			_goto(Phase.LANDED_VIA)
+		Phase.LANDED_VIA:
+			if stream.get_anchor_node() != VIA or not _standing_on_ground():
+				if in_phase > 60.0:
+					_finish(false, "落在 #%d 60 s：锚 #%d、站稳 %s" % [VIA, stream.get_anchor_node(), _standing_on_ground()])
 				return
-			_log("主码头边的%s：%d 座房子都站在地上；已铺村 %s、散户 %d 处、码头 %s" % [
-				near.get_site_name(), count, sites.get_built_villages(), sites.get_built_hamlet_count(), sites.get_built_docks()])
-			_goto(Phase.MAP_TO_FAR)
-		Phase.MAP_TO_FAR:
-			match map_step:
-				0:
-					_press_key_action("map")
-					map_step = 1
-				1:
-					if main.is_map_open():
-						# 地图上的码头、村子与 3D 里一一对应
-						var dock_node := sites.get_dock(main.origin_dock)
-						var marker := map.get_dock_marker(main.origin_dock)
-						if Vector2(marker.x - dock_node.global_position.x, marker.z - dock_node.global_position.z).length() > 1.0:
-							_finish(false, "地图上的主码头 %s 与 3D 里的栈桥根 %s 对不上" % [marker, dock_node.global_position])
-							return
-						if not map.is_dock_marked_berthable(main.origin_dock) or not map.is_dock_marked_berthable(main.destination_dock):
-							_finish(false, "出发、目的码头在地图上该标成能靠泊")
-							return
-						if not map.is_village_marked_built(SEAT_ID) or map.is_village_marked_built(FAR_VILLAGE_ID):
-							_finish(false, "地图上该标出已铺的邑治、不标还没铺的村%03d" % FAR_VILLAGE_ID)
-							return
-						# 滚轮缩小一格，村004（8.5 km 外）就在屏幕里
-						_mouse(MOUSE_BUTTON_WHEEL_DOWN, Vector2(640, 360))
-						map_step = 2
-				2:
-					_shot("2_map_home")
-					map_step = 3
-				3:
-					if in_phase > 0.3:
-						# 点村004 南边 250 m（村心一圈是房子，别落在房顶上）
-						var far := _village_pos(FAR_VILLAGE_ID) + Vector3(0, 0, 250)
-						_mouse(MOUSE_BUTTON_LEFT, map.world_to_screen(far.x, far.z))
-						_goto(Phase.FAR_VILLAGE)
-		Phase.FAR_VILLAGE:
-			var far_village := sites.get_village(FAR_VILLAGE_ID)
-			if in_phase > 1.0 and _standing_on_ground() and far_village != null:
-				if map_step == 0:
-					var why := _houses_stand(far_village)
-					if not why.is_empty():
-						_finish(false, why)
-						return
-					var count: int = far_village.get_settlement().get_count()
-					if count != 257:
-						_finish(false, "村004 256 户该有 256 座民居 + 船台，实为 %d 座" % count)
-						return
-					_log("村004：%d 座房子都站在地上，村民 %d 人" % [count, far_village.get_villagers().get_villager_count() if far_village.get_villagers() else 0])
-					player.set_look_yaw(0.0)  # 望着村子：落点在村心南边 250 m，look_yaw 0 朝北
-					map_step = 1
-				elif _folk_walking(far_village) > 0:
-					_log("村004：%.1f s 后有 %d 人出了门" % [in_phase, _folk_walking(far_village)])
-					_shot("3_far_village")
-					_goto(Phase.MAP_TO_DOCK)
-				elif in_phase > FOLK_TIMEOUT:
-					_finish(false, "村004 %.0f s 里没人出门" % FOLK_TIMEOUT)
-			elif in_phase > SETTLE_TIMEOUT:
-				_finish(false, "瞬移到村004 %.0f s 还没站稳 / 没铺出来：%s" % [SETTLE_TIMEOUT, player.global_position])
-		Phase.MAP_TO_DOCK:
-			match map_step:
-				0:
-					_press_key_action("map")
-					map_step = 1
-				1, 2, 3, 4, 5, 6:
-					if main.is_map_open():
-						# 对着出生点滚轮放大几格，点得准
-						var spawn := main.get_spawn_point()
-						_mouse(MOUSE_BUTTON_WHEEL_UP, map.world_to_screen(spawn.x, spawn.z))
-						map_step += 1
-				7:
-					var spawn := main.get_spawn_point()
-					_mouse(MOUSE_BUTTON_LEFT, map.world_to_screen(spawn.x, spawn.z))
-					_goto(Phase.BACK_AT_DOCK)
-		Phase.BACK_AT_DOCK:
-			if in_phase > 1.0 and _standing_on_ground():
-				var off := player.global_position.distance_to(main.get_spawn_point())
-				if off > 15.0:
-					_finish(false, "点回主码头落在 %.0f m 外" % off)
-					return
-				if sites.get_village(FAR_VILLAGE_ID) != null and sites.get_village(FAR_VILLAGE_ID).has_folk():
-					_finish(false, "离开村004 后它的村民该散掉")
-					return
-				var berth: Transform3D = main.get_origin_berth()
-				waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
-				_goto(Phase.WALK_TO_SHIP)
-			elif in_phase > SETTLE_TIMEOUT:
-				_finish(false, "点回主码头 %.0f s 还没站稳" % SETTLE_TIMEOUT)
+			via_dock_id = _main_dock_id(VIA)
+			var berth: Transform3D = host.get_dock_berth_by_id(_host_dock(VIA, via_dock_id))
+			if via_dock_id < 0 or ship.global_position.distance_to(berth.origin) > 40.0:
+				_finish(false, "#%d 的主码头 #%d：船该停在它的泊位上（船 %s、泊位 %s）" % [VIA, via_dock_id, ship.global_position, berth.origin])
+				return
+			_log("站在 #%d 主码头 #%d 的坪上 %s；船在泊位上" % [VIA, via_dock_id, player.global_position])
+			_shot("2_via_dock")
+			waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
+			_goto(Phase.WALK_TO_SHIP)
 		Phase.WALK_TO_SHIP:
 			if _follow_waypoints():
 				_goto(Phase.TAKE_HELM)
@@ -401,124 +331,211 @@ func _physics_process(delta: float) -> void:
 		Phase.TAKE_HELM:
 			if main.get_state() == 1:
 				climb_from = ship.global_position.y
-				_shot("4_helm")
 				_goto(Phase.CLIMB_OUT)
 			elif _walk_toward(ship.get_helm_position(), 1.9):
 				_tap("interact")
 			elif in_phase > 30.0:
 				_finish(false, "30 s 没上舵（%s）" % main.get_prompt())
 		Phase.CLIMB_OUT:
-			# 先升起来再转向：船身平行于岸，原地转会把船尾扫到栈桥上
 			_hold("ascend", true)
 			if ship.global_position.y > climb_from + 8.0:
 				_hold("ascend", false)
 				_goto(Phase.GEAR_UP)
 		Phase.GEAR_UP:
 			if ship.get_gear() >= 2:
-				_log("换到%s档，极速 %.0f m/s" % [ship.get_gear_name(), ship.get_max_speed()])
-				_goto(Phase.CRUISE)
+				_log("换到%s档，极速 %.1f m/s" % [ship.get_gear_name(), ship.get_max_speed()])
+				_goto(Phase.JUMP_OUT)
 			elif not held.has("gear_up"):
 				_tap("gear_up")
-		Phase.CRUISE:
-			var berth: Vector3 = main.get_destination_berth().origin
-			_fly_toward(berth)
-			var flat := Vector2(berth.x - ship.global_position.x, berth.z - ship.global_position.z).length()
-			if cruise_shots == 0 and in_phase > 20.0:
-				cruise_shots = 1
-				_shot("5_cruise")
-			elif cruise_shots == 1 and flat < 12000.0:
-				cruise_shots = 2
-				_log("离目的泊位 12 km：航速 %.0f m/s，高 %.0f m，途中最低离地 %.0f m" % [ship.get_speed(), ship.global_position.y, min_clearance])
-				_shot("6_cruise_far")
-			if flat < SLOW_DOWN_AT:
+		Phase.JUMP_OUT:
+			# 2050 群心 → 2051 群心的连线上：从 2050 的群心往外走，最后一块 2050 的地再往外 OUT_OF_LAND，云海上空、船头朝 2051 的群心
+			if step == 0:
+				var w := _anchor()
+				var a := _center_flat(VIA)
+				var b := _center_flat(TARGET)
+				var dir := (b - a).normalized()
+				var span := (b - a).length()
+				var edge := 0.0
+				var d := 0.0
+				while d < span * 0.5:
+					var p := a + dir * d
+					if not is_nan(w.get_surface_height(p.x, p.z)):
+						edge = d
+					d += 100.0
+				var at := a + dir * (edge + OUT_OF_LAND)
+				at.y = CRUISE_Y
+				ship.set_pose(at, _yaw_toward(dir))
+				flown_from = at
+				_log("两群群心相距 %.1f km；#%d 的地沿连线铺到 %.1f km，船瞬移到 %.1f km 处（离 #%d 群心 %.1f km）" % [span / 1000.0, VIA, edge / 1000.0,
+					(edge + OUT_OF_LAND) / 1000.0, TARGET, (span - edge - OUT_OF_LAND) / 1000.0])
+				step = 1
+			elif in_phase > 1.0:
+				_shot("3_out")
+				cross_max_ms = 0.0
+				cross_frames = 0
+				shift_seen = main.get_shift_count()
+				_goto(Phase.CROSS)
+		Phase.CROSS:
+			_fly_toward(_center_flat(TARGET), CRUISE_Y, 50.0)
+			flown_m = Vector2(ship.global_position.x - flown_from.x, ship.global_position.z - flown_from.z).length() if main.get_shift_count() == shift_seen else flown_m
+			# 2051 的生成：排进队、在做、做好
+			var r: Dictionary = provider.get_request(TARGET)
+			var st := int(r["state"])
+			if st != target_state:
+				var km := planet.distance_to_node(TARGET) / 1000.0
+				if st == GroupProvider.QUEUED or (st == GroupProvider.RUNNING and target_state == GroupProvider.NONE):
+					target_queued_km = km
+					_log("#%d 排进生成的队（优先级 %d）：焦点离它的群心 %.1f km（飞了 %.1f km）" % [TARGET, int(r.get("priority", -1)), km, flown_m / 1000.0])
+				if st == GroupProvider.READY:
+					target_ready_km = km
+					target_seconds = r
+					_log("#%d 生成好了：排队 %.2f s、生成 %.2f s（%s）；此刻离群心 %.1f km" % [TARGET, float(r.get("queued_s", 0.0)), float(r.get("run_s", 0.0)), r.get("seconds", {}), km])
+				if st == GroupProvider.FAILED:
+					_finish(false, "#%d 生成失败：%s" % [TARGET, r.get("error", "?")])
+					return
+				target_state = st
+			# 换锚到 2051
+			if main.get_shift_count() > shift_seen:
+				var t := stream.get_group_state(TARGET)
+				var v := stream.get_group_state(VIA)
+				if stream.get_anchor_node() != TARGET:
+					_finish(false, "飞着换锚换到了 #%d，该是 #%d" % [stream.get_anchor_node(), TARGET])
+					return
+				if target_state != GroupProvider.READY:
+					_finish(false, "换锚到 #%d 时它的生成状态是 %d（该已生成好）" % [TARGET, target_state])
+					return
+				shift_line = "换锚到 #%d：飞了 %.1f km，离 #%d 陆地 %.1f km、#%d 陆地 %.1f km（档 %d、载入 %s）" % [TARGET, flown_m / 1000.0, TARGET, float(t["land_km"]), VIA,
+					float(v["land_km"]), int(t["tier"]), t["loaded"]]
+				_log(shift_line)
+				_shot("4_after_shift")
+				_goto(Phase.JUMP_IN)
+			elif int(in_phase * 60.0) % 3600 == 0:
+				var t := stream.get_group_state(TARGET)
+				_log("飞着：%.1f km，离 #%d 群心 %.1f km，速 %.1f m/s；#%d 的生成状态 %d%s" % [flown_m / 1000.0, TARGET, planet.distance_to_node(TARGET) / 1000.0, ship.get_speed(),
+					TARGET, target_state, "" if t.is_empty() else "、档 %d、离陆地 %.1f km" % [int(t["tier"]), float(t["land_km"])]])
+			if in_phase > 3500.0:
+				_finish(false, "飞了 %.0f s 还没换锚到 #%d（生成状态 %d，%s）" % [in_phase, TARGET, target_state, stream.get_group_state(TARGET)])
+		Phase.JUMP_IN:
+			# 2051 的地面块在后台挂上以前先等它成细版、载入完
+			var t := stream.get_group_state(TARGET)
+			if step == 0:
+				if int(t["tier"]) != GroupStream.TIER_DETAIL or not bool(t["loaded"]):
+					# 接着朝群心飞到离它的陆地 8 km（细版 30 km 进），再近了就停在云海上空等（群里有岛浮到一千多米，别撞上）
+					if float(t["land_km"]) > 8.0:
+						_fly_toward(_center_flat(TARGET), CRUISE_Y, 50.0)
+					else:
+						_release_all()
+					if in_phase > 300.0:
+						_finish(false, "换锚后 300 s #%d 还没成细版、载入完（%s）" % [TARGET, t])
+					return
+				target_dock_id = _main_dock_id(TARGET)
+				if target_dock_id < 0:
+					_finish(false, "#%d 的 world.json 里没有码头" % TARGET)
+					return
+				# 省点时间：船瞬移到 2051 主码头外 1.5 km 的云海上空（往外一路都没有地的那个方向），船头朝码头
+				var berth: Transform3D = host.get_dock_berth_by_id(_host_dock(TARGET, target_dock_id))
+				var w := _anchor()
+				var best_dir := Vector3.ZERO
+				var best_clear := -1
+				for k in 32:
+					var ang := TAU * k / 32.0
+					var dir := Vector3(cos(ang), 0.0, sin(ang))
+					var clear := 0
+					for d in range(100, 1600, 100):
+						var p := berth.origin + dir * float(d)
+						if is_nan(w.get_surface_height(p.x, p.z)):
+							clear += 1
+					if clear > best_clear:
+						best_clear = clear
+						best_dir = dir
+				var at := berth.origin + best_dir * 1500.0
+				at.y = berth.origin.y + 60.0
+				ship.set_pose(at, _yaw_toward(-best_dir))
+				_release_all()
+				_log("#%d 成了细版、载入完；船瞬移到主码头 #%d 外 1.5 km（泊位 %s）" % [TARGET, target_dock_id, berth.origin])
+				step = 1
+			elif in_phase > 1.0:
 				_goto(Phase.APPROACH)
 		Phase.APPROACH:
 			if ship.get_gear() > 0 and not held.has("gear_down"):
 				_tap("gear_down")
-			if _fly_toward(main.get_destination_berth().origin):
+			var berth: Transform3D = host.get_dock_berth_by_id(_host_dock(TARGET, target_dock_id))
+			var flat := Vector2(berth.origin.x - ship.global_position.x, berth.origin.z - ship.global_position.z).length()
+			var want_y := berth.origin.y + (8.0 if flat < 400.0 else 40.0)
+			if _fly_toward(berth.origin, want_y, main.get_dock_range() - 5.0):
 				_release_all()
-				_shot("7_approach")
+				_shot("5_approach")
 				_tap("interact")
 				_goto(Phase.MOORING)
+			elif in_phase > 180.0:
+				_finish(false, "180 s 没飞到 #%d 的泊位（还差 %.0f m）" % [TARGET, flat])
 		Phase.MOORING:
 			if main.get_state() == 0:
-				var berth: Transform3D = main.get_destination_berth()
-				waypoints = [ship.global_position, berth.origin + berth.basis.x * 0.8, world.get_dock_spawn(dest_index).origin]
-				_shot("8_moored")
+				var id := _host_dock(TARGET, target_dock_id)
+				var berth: Transform3D = host.get_dock_berth_by_id(id)
+				waypoints = [ship.global_position, berth.origin + berth.basis.x * 0.8, host.get_dock_spawn_by_id(id).origin]
 				_goto(Phase.WALK_ASHORE)
 			elif in_phase > 5.0 and main.get_state() == 1:
-				_tap("interact")  # 没叫上靠泊（离得还远）：再按一下
+				_tap("interact")
 			elif in_phase > 40.0:
-				_finish(false, "40 s 没靠上泊位（状态 %d，%s）" % [main.get_state(), main.get_prompt()])
+				_finish(false, "40 s 没靠上 #%d 的泊位（状态 %d，%s）" % [TARGET, main.get_state(), main.get_prompt()])
 		Phase.WALK_ASHORE:
 			if _follow_waypoints():
 				_release_all()
-				if main.has_arrived() and _standing_on_ground():
-					var island: int = world.get_island_at(player.global_position.x, player.global_position.z)
-					if island != int(dest_site["island"]):
-						_finish(false, "下了船站在岛 #%d 上，不是目的码头那座岛" % island)
-						return
-					_log("到了：站在岛 #%d 的停机坪上 %s" % [island, player.global_position])
-					_shot("9_ashore")
-					_goto(Phase.ASHORE_VILLAGE)
+				if _standing_on_ground():
+					_log("下了船站在 #%d 主码头 #%d 的停机坪上 %s" % [TARGET, target_dock_id, player.global_position])
+					_shot("6_ashore")
+					_goto(Phase.CHECK)
 				elif in_phase > 20.0:
-					_finish(false, "走完了路点，但没判定抵达（站稳 %s）" % _standing_on_ground())
+					_finish(false, "走完了路点还没站稳（%s）" % player.global_position)
 			elif in_phase > 60.0:
 				_finish(false, "60 s 没走下船")
-		Phase.ASHORE_VILLAGE:
-			var v := _dest_village()
-			if v == null:
-				if in_phase > 10.0:
-					_finish(false, "目的码头边的%s没铺出来" % dest_site["name"])
-				return
-			if map_step == 0:
-				var why := _houses_stand(v)
-				if not why.is_empty():
-					_finish(false, why)
+		Phase.CHECK:
+			var status := main.get_status_text()
+			if step == 0:
+				if stream.get_anchor_node() != TARGET or host.get_anchor_node() != TARGET:
+					_finish(false, "落地后锚该是 #%d（GroupStream %d、PlanetHost %d）" % [TARGET, stream.get_anchor_node(), host.get_anchor_node()])
 					return
-				# 面朝那户人家
-				var to := v.global_position - player.global_position
-				player.set_look_yaw(atan2(-to.x, -to.z))
-				map_step = 1
-			elif _folk_walking(v) > 0:
-				_log("%s：%d 座房子站在地上，%.1f s 后有人出门" % [v.get_site_name(), v.get_settlement().get_count(), in_phase])
-				_goto(Phase.VISIT)
-			elif in_phase > FOLK_TIMEOUT:
-				_finish(false, "%s %.0f s 里没人出门（村民 %d）" % [v.get_site_name(), FOLK_TIMEOUT, v.get_villagers().get_villager_count() if v.get_villagers() else 0])
-		Phase.VISIT:
-			# 只为截图：疾跑到那户人家门前 35 m 看一眼（走不到也不算失败，断言上面都做过了）
-			var v := _dest_village()
-			var house: Vector3 = v.get_settlement().get_building_position(0)
-			_hold("sprint", true)
-			if _walk_toward(house, 35.0) or in_phase > 150.0:
-				_release_all()
-				var to := house - player.global_position
-				player.set_look_yaw(atan2(-to.x, -to.z))
-				_log("走到%s跟前 %.0f m" % [v.get_site_name(), Vector2(to.x, to.z).length()])
-				_shot("10_dest_village")
+				if not status.begins_with("群 #%d" % TARGET):
+					_finish(false, "HUD 第一行该以「群 #%d」开头：%s" % [TARGET, status.get_slice("\n", 0)])
+					return
+				var info: Dictionary = provider.get_group_info(TARGET)
+				if String(info.get("source", "")) != "cache":
+					_finish(false, "#%d 的包该是这回生成进测试世界的（%s）" % [TARGET, info])
+					return
+				_log("HUD：%s；包在 %s" % [status.get_slice("\n", 0), info.get("dir", "?")])
+				step = 1
+			# 码头边铺出来的村招了人、有人在外面；此刻下雨下雪（村民照规矩在屋里）就覆盖成晴看他们出门
+			var sites: SiteStream = stream.get_group_sites(TARGET)
+			var out := 0
+			var folk_total := 0
+			var village := ""
+			for v in sites.get_children():
+				if v is WorldVillage and v.get_villagers() != null:
+					var folk: Villagers = v.get_villagers()
+					folk_total += folk.get_villager_count()
+					for i in folk.get_villager_count():
+						if folk.get_villager_phase(i) != Villagers.INDOORS:
+							out += 1
+							village = v.get_site_name()
+			var atmo: Atmosphere = main.get_node("Atmosphere")
+			if step == 1 and folk_total > 0 and out == 0 and in_phase > 5.0:
+				var w: Dictionary = atmo.get_weather()
+				_log("码头边的村招了 %d 人都在屋里，此地此刻「%s」（降水 %.2f）、%s——覆盖成晴，看他们出门" % [folk_total, w.get("kind_name", "?"), float(w.get("precip", 0.0)), GameClock.get_clock_text()])
+				atmo.set_weather_override("clear", 0.0)
+				step = 2
+			if out > 0:
+				var built: Array = sites.get_built_villages()
+				results.append(shift_line)
+				results.append("#%d：排进生成时离群心 %.1f km、生成好时 %.1f km；排队 %.2f s、生成 %.2f s；飞的那一路 %d 帧最慢 %.1f ms，其中 #%d 生成期间最慢 %.1f ms" % [TARGET,
+					target_queued_km, target_ready_km, float(target_seconds.get("queued_s", 0.0)), float(target_seconds.get("run_s", 0.0)), cross_frames, cross_max_ms, TARGET, gen_max_ms])
+				results.append("落在 #%d 主码头 #%d 的坪上 %s；码头边铺出来的村 %s，%s 有 %d 人在外面（招了 %d 人）" % [TARGET, target_dock_id, player.global_position, built, village, out, folk_total])
+				_shot("7_folk")
 				_goto(Phase.DONE)
+			elif in_phase > FOLK_TIMEOUT:
+				_finish(false, "#%d 的码头边 %.0f s 里没人出门（铺出来的村 %s）" % [TARGET, FOLK_TIMEOUT, sites.get_built_villages()])
 		Phase.DONE:
-			if in_phase > 0.3:
-				_finish(true, "主码头出生（邑治在旁）→ 村004 → 回主码头 → 上舵换档飞 %.1f km → 码头 #%d 靠泊下船；途中最高 %.0f m、最低离地 %.0f m" % [
-					main.get_origin_berth().origin.distance_to(main.get_destination_berth().origin) / 1000.0, main.destination_dock, cruise_top, min_clearance])
-
-
-func _village_pos(id: int) -> Vector3:
-	for v in world.get_info()["villages"]:
-		if int(v["id"]) == id:
-			return Vector3(v["pos"][0], 0, v["pos"][1])
-	return Vector3.ZERO
-
-
-func _finish(ok: bool, why: String) -> void:
-	_release_all()
-	for action in held.keys():
-		Input.action_release(action)
-	set_physics_process(false)
-	print("voyage_2051: %s —— %s（阶段 %s，模拟 %.1f s；玩家 %s，船 %s，状态 %d，提示「%s」）" % [
-		"PASS" if ok else "FAIL", why, Phase.keys()[phase], elapsed, player.global_position, ship.global_position, main.get_state(), main.get_prompt()])
-	# 截图还在排队就等它存完
-	if not pending_shot.is_empty() and not shots_dir.is_empty():
-		for i in 6:
-			await get_tree().process_frame
-	get_tree().quit(0 if ok else 1)
+			if pending_shot.is_empty():
+				var stats: Dictionary = provider.get_stats()
+				_finish(true, "开局那群 → 瞬移 #%d（当场生成）→ 开船飞 %.1f km，#%d 路上按需生成、换锚 → 靠泊主码头 #%d、下船站在它的地上，HUD「群 #%d」、村里有人出门（这回生成了 %d 群、失败 %d）" % [
+					VIA, flown_m / 1000.0, TARGET, target_dock_id, TARGET, int(stats["generated"]), int(stats["failed"])])

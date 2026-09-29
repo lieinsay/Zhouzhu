@@ -1,14 +1,15 @@
 extends Node
-## 行星计划 P4：按需生成，任何一个岛群都能去（world_2051.tscn，剧情模式 seed42，世界存档目录用测试自己的 user://worlds/e2e_jump）。
-## 2051 主码头出生 → 开发者瞬移（Expedition.request_planet_jump，行星地图点一下走的就是它）去——
-##   群 #6449（北纬 36°、中疏、离 2051 约七千公里，没生成过：先清掉缓存，当场调生成器）；
-##   群 #7997（北纬 78°，没生成过，一月里是极夜）；
+## 行星计划 P4：按需生成，任何一个岛群都能去（world_seed42.tscn，剧情模式 seed42，世界存档目录用测试自己的 user://worlds/e2e_jump）。
+## 开局那群（StoryStart，PLAN-LAND P0 起是 #6329）主码头出生 → 开发者瞬移（Expedition.request_planet_jump，行星地图点一下走的就是它）去——
+##   群 #6449（北纬 36.5°、西经 170.8°、中疏、离开局那群 #6329 约一万二千公里，没生成过：先清掉缓存，当场调生成器）；
+##   群 #7997（北纬 78°，没生成过；开局那天（四月初）已是极昼，一月里是极夜）；
 ##   再回 #6449（这回有缓存：只载入）；
 ##   第一回落地后（#6449）试预取：人（god）以 150 m/s 朝 70–140 km 外一群没生成过的飞，几秒内它该按「船头方向」排进生成的队（优先级 2）；
 ##   密接群 #162（南纬 50°，离 #163 群心 25 km）：落地以后等 #163 预取、载入成细版，人（god）摆到 #163 的陆地上空——
 ##     换锚的新规矩：脚下是别的群的地、不是锚群的地，当场换过去（原来只在云海上空换，挨着的群落在陆地上空就一直不换）。
 ## 每一回查：从点下去到能走（人站在那一群的地上、脚下的碰撞挂好）用了多久（真实秒）、期间最慢一帧（真实毫秒），落点是主码头（没有码头是邑治），
-## 锚换成了那一群、HUD 第一行报「群 #N」，码头边的村子铺出来了，相机的纬度就是那一群的纬度，季节对（2051 在南半球的夏天，北半球同一天是冬天：白天短于 12 小时）。
+## 锚换成了那一群、HUD 第一行报「群 #N」，码头边的村子铺出来了，相机的纬度就是那一群的纬度，季节对：此刻太阳在哪个半球（开局那天，
+## 开局那群北纬 34°、白天长于 12 小时），同一半球的群白天也长于 12 小时、隔着赤道的就短于 12 小时（#162 在南纬 50°）。
 ## 没生成过的 ≤ 60 s、有缓存的 ≤ 5 s、期间最慢帧 ≤ 50 ms（计划 P4 的验收，带窗口量；无头下只拦 150 ms 以上的大卡）。
 ## 行星计划 P6e 起生成在进程内（生成器的 C++ 核心库），不要 Python：Python 路径设成无效的照样 PASS；只有行星包里没有 config.tsv
 ## （GroupProvider.can_generate 为假）时报 SKIP、退出码 77——不算 PASS。项目设置 zhouzhu/generator/backend = python 时照旧调 Python（开发时对照）。
@@ -17,9 +18,9 @@ extends Node
 ##   … -- --nodes=4,3588,162,2484,3922 --shots=<目录>      换一串群去（依次），每落一次存一张截图（去掉 --headless）
 ##   … -- --keep                                         不清缓存（没生成过的就当成有缓存的去）
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const WORLD_DIR := "user://worlds/e2e_jump"
-const HOME := 2051
+var HOME := StoryStart.get_spawn_node()  # 开局那群
 const TIMEOUT_REAL_S := 600.0  # 真实秒（生成器在真实时间里跑，无头下模拟时间比它快十几倍）
 const UNCACHED_LIMIT_S := 60.0
 const CACHED_LIMIT_S := 5.0
@@ -60,6 +61,7 @@ var jump_max_ms := 0.0
 var jump_frames := 0
 var jump_t0 := 0
 var home_day_length := 0.0
+var home_lat := 0.0
 var results: Array[String] = []
 var worst_ms := 0.0
 var stay_max_ms := 0.0
@@ -85,14 +87,14 @@ func _ready() -> void:
 	provider = main.get_node("GroupProvider")
 	provider.world_dir = WORLD_DIR
 	# 没生成过的：清掉这个测试世界里它们的缓存（仓库里的不动）；同一群第二回去就是「有缓存」
-	_remove_tree(WORLD_DIR.path_join("memory"))  # 上一回留下的 2051 的账：别让这一回开局补回
+	_remove_tree(WORLD_DIR.path_join("memory"))  # 上一回留下的开局那群的账：别让这一回开局补回
 	# 这个测试世界里生成过的群全清掉（仓库里的不动）：要去的、预取的都从「没生成过」起；同一群第二回去就是「有缓存」
 	if not keep:
 		_remove_tree(WORLD_DIR.path_join("groups"))
 		_remove_tree(WORLD_DIR.path_join("logs"))
 	var seen := {}
 	for n in targets:
-		expect_cached.append(seen.has(n) or keep or DirAccess.dir_exists_absolute("res://worlds/%d" % n))
+		expect_cached.append(seen.has(n) or keep or DirAccess.dir_exists_absolute(StoryStart.get_group_dir(n)))
 		seen[n] = true
 	add_child(main)
 	player = main.get_node("Player")
@@ -184,10 +186,15 @@ func _physics_process(delta: float) -> void:
 		Phase.SETTLE:
 			if stream.is_ready() and _standing() and in_phase > 1.0:
 				home_day_length = float(atmo.get_weather()["day_length"])
-				_log("2051 主码头站稳；此地白天 %.1f h（南半球的夏天）；生成器可用" % home_day_length)
+				home_lat = float(atmo.get_weather()["latitude"])
+				_log("开局那群 #%d 主码头站稳；此地纬度 %.1f°、白天 %.1f h（太阳直射 %.1f°）；生成器可用；#%d 离这儿 %.0f km" % [HOME, home_lat, home_day_length,
+					float(atmo.get_weather().get("sun_latitude", 0.0)), targets[0], planet.distance_to_node(targets[0]) / 1000.0])
+				if absf(home_day_length - 12.0) < 0.3:
+					_finish(false, "开局那天白天 %.1f h，贴着昼夜平分，比不出季节（开局配置的日子换了？）" % home_day_length)
+					return
 				_start_jump()
 			elif in_phase > 60.0:
-				_finish(false, "60 s 没在 2051 站稳")
+				_finish(false, "60 s 没在开局那群 #%d 站稳" % HOME)
 		Phase.JUMP:
 			var js: Dictionary = main.get_jump_state()
 			if int(js["stage"]) != 0:
@@ -244,10 +251,11 @@ func _physics_process(delta: float) -> void:
 			if absf(float(w["latitude"]) - float(src["lat"])) > 0.01:
 				_finish(false, "天气模型的纬度 %.2f° 该是这一群的 %.2f°" % [float(w["latitude"]), float(src["lat"])])
 				return
-			# 季节：与 2051（南半球，此刻夏天）隔着赤道就反过来——白天短于 12 h；同在南半球就也长于 12 h；赤道附近不查
+			# 季节：与开局那群在同一半球，白天比 12 h 长还是短跟它一样；隔着赤道就反过来；赤道附近不查
 			var dl := float(w["day_length"])
-			if absf(float(src["lat"])) > 10.0 and (dl - 12.0) * (home_day_length - 12.0) * (-1.0 if float(src["lat"]) > 0.0 else 1.0) <= 0.0:
-				_finish(false, "群 #%d（纬度 %.1f°）此刻白天 %.1f h，季节不对（2051 此刻 %.1f h）" % [node, float(src["lat"]), dl, home_day_length])
+			var same_side := 1.0 if float(src["lat"]) * home_lat > 0.0 else -1.0
+			if absf(float(src["lat"])) > 10.0 and (dl - 12.0) * (home_day_length - 12.0) * same_side <= 0.0:
+				_finish(false, "群 #%d（纬度 %.1f°）此刻白天 %.1f h，季节不对（开局那群纬度 %.1f°，此刻 %.1f h）" % [node, float(src["lat"]), dl, home_lat, home_day_length])
 				return
 			var look: Dictionary = atmo.get_look()
 			var line := "  群 #%d：%s · 相机 %.2f° %.2f° · 此地「%s」%s（降水 %.2f、雨丝 %.2f）、白天 %.1f h · 铺出来的村 %d 个 · 地方时比钟点%s %.0f 分钟" % [node, status.get_slice("\n", 0).get_slice("    ", 0),

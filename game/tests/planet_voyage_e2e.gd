@@ -1,10 +1,13 @@
 extends Node
-## 行星计划 P3：开船从岛群 #2051 飞到 114 km 外的 #2050（world_2051.tscn），只通过输入动作开船、走路：
-## 2051 主码头 #1 出生、邑治的账开好 → 走上船、掌舵、升空、换疾档 → 船瞬移到换锚线前 10 km 的云海上空（2050 这时载入成细版）
-## → 朝 2050 的主码头飞过换锚线：换锚那一帧人、船、相机都换到 2050 的平面（相机的经纬度连续、那一帧的帧时）、2050 挂上碰撞、2051 撤掉
-## → 船瞬移到 2050 主码头外 3 km → 换回泊档、靠泊、下船走上停机坪：脚下是 2050、HUD 报群 #2050 与地方时（比钟点早两分多钟）、码头边的村子有人出门
-## → 钟往前拨 26 个钟头（2051 已降回近景，村子的账存成了文本留在内存）→ 上船、升空，船瞬移到换锚线另一边 10 km
-## → 飞回 2051：在换锚线外停船、离舵站稳，前后各一张截图、手动换锚（相机在真球面上不动）→ 掌舵接着飞，2051 升回细版：
+## 行星计划 P3：开船从开局那群（world_seed42.tscn；开局配置 StoryStart，PLAN-LAND P0 起是 #6329）飞到最近的邻群（#6327，群心相距 84 km），
+## 只通过输入动作开船、走路（两群都是仓库里带的细版；2026-09-29 换开局以前飞的是旧开局到它 114 km 外的邻群）：
+## 开局那群主码头 #1 出生、邑治的账开好 → 走上船、掌舵、升空、换疾档
+## → 找换锚线：两群群心的连线上、离两群陆地一样远的那一点（船当探针挪几回，读 GroupStream 量的到各群陆地的距离）
+## → 船瞬移到换锚线前 10 km 的云海上空（邻群这时载入成细版）
+## → 朝邻群的主码头飞过换锚线：换锚那一帧人、船、相机都换到邻群的平面（相机的经纬度连续、那一帧的帧时）、邻群挂上碰撞、开局那群撤掉
+## → 船瞬移到邻群主码头外 1.5 km → 换回泊档、靠泊、下船走上停机坪：脚下是邻群、HUD 报它的群号与地方时（按两群的经度差）、码头边的村子有人出门
+## → 钟往前拨 26 个钟头（开局那群已降回近景，村子的账存成了文本留在内存）→ 上船、升空，船瞬移到换锚线另一边 10 km
+## → 飞回开局那群：在换锚线外停船、离舵站稳，前后各一张截图、手动换锚（相机在真球面上不动）→ 掌舵接着飞，开局那群升回细版：
 ##   各村的账从文本补回（新账房由近及远开账），离开 26 h 多只补最后 24 h（每本跳过两个多钟头），都补结到此刻。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/planet_voyage_e2e.tscn
@@ -12,19 +15,21 @@ extends Node
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图；换锚前后那两张（shift_before / shift_after）拿来对照画面跳没跳。
 ## 再加 `--mem`：几个节点上报进程内存（工作集、私有提交、显存）。
 
-const SCENE := preload("res://world_2051.tscn")
-const TIMEOUT := 1800.0  # 模拟秒
+const SCENE := preload("res://world_seed42.tscn")
+const TIMEOUT := 3000.0  # 模拟秒
 const SETTLE_TIMEOUT := 60.0
 const FOLK_TIMEOUT := 90.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
-const HOME := 2051
-const AWAY := 2050
-const SEAT_ID := 1  # 2051 的邑治（主码头 #1 旁）
-const AWAY_DOCK := 2050001  # 2050 的主码头 #1（地图宿主的码头号带群号）
-# 2051 平面里：两群陆地等远的那一点（换锚线上），与从 2051 主码头往 2050 主码头的方向
-const LINE := Vector3(-27354.0, 0.0, 71282.0)
-const OUT_DIR := Vector3(-0.3739, 0.0, 0.9275)
-const CRUISE_Y := 1500.0  # 云海上空飞（云带顶 −5000 m；两群主岛的岸缘在几百米，浮高以后别的岛岸缘到 1.3–1.6 km，但这一段只飞两群之间的云海，进港前瞬移到主码头外 1.5 km 的云海上空）
+var HOME := StoryStart.get_spawn_node()  # 开局那群
+var AWAY := StoryStart.get_neighbor_node()  # 最近的邻群（仓库里带细版）
+const SEAT_ID := 1  # 开局那群的邑治（主码头 #1 旁）
+var AWAY_DOCK := AWAY * 1000 + 1  # 邻群的主码头 #1（地图宿主里别的群的码头号带群号）
+# 开局那群的平面里：两群陆地等远的那一点（换锚线上）与从开局那群的群心往邻群群心的方向——开局时量（JUMP_OUT）
+var switch_line := Vector3.ZERO
+var probe_at := 0.0
+var out_dir := Vector3.ZERO
+const LINE_PROBES := 10  # 找换锚线最多挪几回船
+const CRUISE_Y := 1500.0  # 云海上空飞（云带顶 −5000 m；两群主岛岸缘几百米、浮高以后别的岛岸缘到 1.6 km，但这一段只飞两群之间的云海，进港前瞬移到主码头外 1.5 km 的云海上空）
 
 enum Phase { SETTLE, WALK_TO_SHIP, TAKE_HELM, CLIMB_OUT, GEAR_UP, JUMP_OUT, CROSS_OUT, JUMP_IN, APPROACH, MOORING, WALK_ASHORE, CHECK_AWAY, ADVANCE_CLOCK,
 	WALK_BACK, TAKE_HELM_BACK, CLIMB_BACK, JUMP_BACK, CROSS_BACK, STOP, LEAVE_HELM, SHOT_BEFORE, FORCE_SHIFT, SHOT_AFTER, RETAKE_HELM, CHECK_HOME, DONE }
@@ -61,6 +66,8 @@ var shift_jump_m := 0.0
 var cross_jump_m := 0.0  # 飞过换锚线那一次
 var manual_jump_m := 0.0  # 停船手动换锚那一次
 var near_in := 0.0
+var detail_in := 0.0
+var detail_out := 0.0
 var near_out := 0.0
 var seat_clock_saved := 0.0
 var clock_step_at := 0.0
@@ -251,6 +258,13 @@ func _fly_toward(target: Vector3, want_y: float, arrive: float) -> bool:
 	return Vector3(to.x, to.y, to.z).length() < arrive
 
 
+## 回程往哪飞：换锚线前 8 km（开局那群这边的云海上空，换到此刻的锚群平面）——开局那群的主码头可能在另一头，直飞要横穿主岛
+func _home_target() -> Vector3:
+	var p: Vector3 = stream.to_anchor(HOME, switch_line - out_dir * 8000.0)
+	p.y = CRUISE_Y
+	return p
+
+
 func _seat_ledger() -> Dictionary:
 	var h: Hinterland = stream.get_group_hinterland(HOME)
 	return h.get_ledger_summary(SEAT_ID, false) if h else {}
@@ -294,21 +308,21 @@ func _physics_process(delta: float) -> void:
 			if _standing_on_ground() and bool(seat.get("opened", false)):
 				var nodes := stream.get_group_nodes()
 				if not nodes.has(HOME) or not nodes.has(AWAY):
-					_finish(false, "GroupStream 的目录该有 2051 与 2050，实为 %s" % [nodes])
+					_finish(false, "GroupStream 的目录该有 %d 与 %d，实为 %s" % [HOME, AWAY, nodes])
 					return
 				if stream.get_anchor_node() != HOME or host.get_anchor_node() != HOME:
-					_finish(false, "开局锚该是 2051")
+					_finish(false, "开局锚该是 %d" % HOME)
 					return
 				var away := stream.get_group_state(AWAY)
 				if int(away["tier"]) != GroupStream.TIER_FAR:
-					_finish(false, "开局 2050 该是远景（离 2050 陆地 %.0f km），实为档 %d" % [float(away["land_km"]), int(away["tier"])])
+					_finish(false, "开局 %d 该是远景（离它的陆地 %.0f km），实为档 %d" % [AWAY, float(away["land_km"]), int(away["tier"])])
 					return
-				if not main.get_status_text().begins_with("群 #2051"):
-					_finish(false, "HUD 第一行该以「群 #2051」开头：%s" % main.get_status_text())
+				if not main.get_status_text().begins_with("群 #%d" % HOME):
+					_finish(false, "HUD 第一行该以「群 #%d」开头：%s" % [HOME, main.get_status_text()])
 					return
-				_log("出生在 %s；邑治的账开了（%s）；2050 离陆地 %.0f km、远景" % [player.global_position, seat, float(away["land_km"])])
+				_log("出生在 %s；邑治的账开了（%s）；%d 离陆地 %.0f km、远景" % [player.global_position, seat, AWAY, float(away["land_km"])])
 				_shot("1_spawn")
-				_memory("2051 主码头")
+				_memory("开局那群 #%d 主码头" % HOME)
 				var berth: Transform3D = main.get_origin_berth()
 				waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
 				_goto(Phase.WALK_TO_SHIP)
@@ -339,15 +353,44 @@ func _physics_process(delta: float) -> void:
 			elif not held.has("gear_up"):
 				_tap("gear_up")
 		Phase.JUMP_OUT:
-			# 瞬移到换锚线前 10 km（2051 这边）的云海上空，船头朝 2050 的主码头
+			# 先找换锚线：两群群心的连线（开局那群的平面里）上离两群陆地一样远的那一点——船挪过去、等 GroupStream 量一回到各群陆地的距离
+			# （每 0.25 s 一量），差多少就顺着连线挪一半，几回就收住；再瞬移到换锚线前 10 km（开局那群这边）的云海上空，船头朝邻群
 			if step == 0:
-				var at := LINE - OUT_DIR * 10000.0 + Vector3(0, CRUISE_Y, 0)
-				ship.set_pose(at, _yaw_toward(OUT_DIR))
+				var c_home: Vector3 = planet.flat_of_latlon(planet.node_latlon(HOME).x, planet.node_latlon(HOME).y)
+				var c_away: Vector3 = planet.flat_of_latlon(planet.node_latlon(AWAY).x, planet.node_latlon(AWAY).y)
+				out_dir = Vector3(c_away.x - c_home.x, 0.0, c_away.z - c_home.z).normalized()
+				switch_line = (c_home + c_away) * 0.5
+				switch_line.y = 0.0
+				ship.set_pose(switch_line + Vector3(0, CRUISE_Y, 0), _yaw_toward(out_dir))
+				probe_at = elapsed
 				step = 1
-			elif in_phase > 1.0:
+			elif step <= LINE_PROBES:
+				if elapsed - probe_at < 0.6:
+					return
+				var h_km := float(stream.get_group_state(HOME)["land_km"])
+				var a_km := float(stream.get_group_state(AWAY)["land_km"])
+				if absf(a_km - h_km) < 0.2:
+					_log("换锚线：%s（开局那群的平面），离两群陆地 %.1f / %.1f km，量了 %d 回；两群群心方向 %s" % [switch_line, h_km, a_km, step, out_dir])
+					step = LINE_PROBES + 1
+					return
+				switch_line += out_dir * (a_km - h_km) * 500.0  # 离邻群远就往它那边挪差的一半
+				ship.set_pose(switch_line + Vector3(0, CRUISE_Y, 0), _yaw_toward(out_dir))
+				probe_at = elapsed
+				step += 1
+				if step > LINE_PROBES:
+					_finish(false, "挪了 %d 回还没找到两群陆地等远的点（此刻离两群 %.1f / %.1f km）" % [LINE_PROBES, h_km, a_km])
+			elif step == LINE_PROBES + 1:
+				var at := switch_line - out_dir * 10000.0 + Vector3(0, CRUISE_Y, 0)
+				if not is_nan(_anchor().get_surface_height(at.x, at.z)):
+					_finish(false, "换锚线前 10 km 是开局那群的陆地（%s）：两群的陆地挨得太近" % at)
+					return
+				ship.set_pose(at, _yaw_toward(out_dir))
+				probe_at = elapsed
+				step += 1
+			elif elapsed - probe_at > 1.0:
 				var away := stream.get_group_state(AWAY)
 				var home := stream.get_group_state(HOME)
-				_log("瞬移到换锚线前 10 km：离 2051 陆地 %.1f km、2050 陆地 %.1f km；2050 档 %d" % [float(home["land_km"]), float(away["land_km"]), int(away["tier"])])
+				_log("瞬移到换锚线前 10 km：离 %d 陆地 %.1f km、%d 陆地 %.1f km；%d 档 %d" % [HOME, float(home["land_km"]), AWAY, float(away["land_km"]), AWAY, int(away["tier"])])
 				if absf(float(away["land_km"]) - float(home["land_km"])) < 15.0:
 					_finish(false, "瞬移的落点离换锚线不到 10 km")
 					return
@@ -375,30 +418,33 @@ func _physics_process(delta: float) -> void:
 						var a := _world(AWAY)
 						var h := _world(HOME)
 						if stream.get_anchor_node() != AWAY or host.get_anchor_node() != AWAY or planet.get_anchor_node() != AWAY:
-							_finish(false, "换锚后锚该是 2050（GroupStream %d、PlanetHost %d、PlanetView %d）" % [stream.get_anchor_node(), host.get_anchor_node(), planet.get_anchor_node()])
+							_finish(false, "换锚后锚该是邻群（GroupStream %d、PlanetHost %d、PlanetView %d）" % [stream.get_anchor_node(), host.get_anchor_node(), planet.get_anchor_node()])
 							return
 						if not a.is_physics_on() or h.is_physics_on():
-							_finish(false, "换锚后 2050 该挂上碰撞、2051 撤掉（%s / %s）" % [a.is_physics_on(), h.is_physics_on()])
+							_finish(false, "换锚后邻群该挂上碰撞、开局那群撤掉（%s / %s）" % [a.is_physics_on(), h.is_physics_on()])
 							return
 						if not a.get_transform().is_equal_approx(Transform3D()) or h.get_transform().is_equal_approx(Transform3D()):
-							_finish(false, "换锚后 2050 该归位、2051 摆上刚体变换")
+							_finish(false, "换锚后邻群该归位、开局那群摆上刚体变换")
 							return
 						_log("换锚那一帧前后的帧时最多 %.1f ms（headless Debug）；跨群飞了 %d 帧，最慢 %.1f ms" % [shift_frame_ms, cross_frames, cross_max_ms])
 						_shot("3_after_line")
 						_goto(Phase.JUMP_IN)
 			elif in_phase > 400.0:
 				var away := stream.get_group_state(AWAY)
-				_finish(false, "飞了 %.0f s 还没换锚（2050 档 %d、离 %.1f km；2051 离 %.1f km）" % [in_phase, int(away["tier"]), float(away["land_km"]), float(stream.get_group_state(HOME)["land_km"])])
+				_finish(false, "飞了 %.0f s 还没换锚（邻群档 %d、离 %.1f km；开局那群离 %.1f km）" % [in_phase, int(away["tier"]), float(away["land_km"]), float(stream.get_group_state(HOME)["land_km"])])
 		Phase.JUMP_IN:
-			# 省点时间：船瞬移到 2050 主码头外 1.5 km 的云海上空（往外 1.5 km 一路都没有地的那个方向），船头朝码头
+			# 省点时间：船瞬移到邻群主码头外 1.5 km 的云海上空（往外 1.5 km 一路都没有地的那个方向），船头朝码头
 			if step == 0:
 				var berth: Transform3D = host.get_dock_berth_by_id(AWAY_DOCK)
 				var w := _anchor()
+				# 先试栈桥伸出去的方向（泊位的 basis.x 朝栈桥）：顺着它进港不擦着栈桥、门架；那个方向 1.5 km 内有地再挑别的方向
 				var best_dir := Vector3.ZERO
 				var best_clear := -1
-				for k in 32:
+				var pier_out := -berth.basis.x
+				pier_out.y = 0.0
+				for k in 33:
 					var a := TAU * k / 32.0
-					var dir := Vector3(cos(a), 0.0, sin(a))
+					var dir := pier_out.normalized() if k == 0 else Vector3(cos(a), 0.0, sin(a))
 					var clear := 0
 					for d in range(100, 1600, 100):
 						var p := berth.origin + dir * float(d)
@@ -428,7 +474,7 @@ func _physics_process(delta: float) -> void:
 				_tap("interact")
 				_goto(Phase.MOORING)
 			elif in_phase > 180.0:
-				_finish(false, "180 s 没飞到 2050 的泊位（还差 %.0f m）" % flat)
+				_finish(false, "180 s 没飞到邻群的泊位（还差 %.0f m）" % flat)
 		Phase.MOORING:
 			if main.get_state() == 0:
 				var berth: Transform3D = host.get_dock_berth_by_id(AWAY_DOCK)
@@ -437,24 +483,24 @@ func _physics_process(delta: float) -> void:
 			elif in_phase > 5.0 and main.get_state() == 1:
 				_tap("interact")
 			elif in_phase > 40.0:
-				_finish(false, "40 s 没靠上 2050 的泊位（状态 %d，%s）" % [main.get_state(), main.get_prompt()])
+				_finish(false, "40 s 没靠上邻群的泊位（状态 %d，%s）" % [main.get_state(), main.get_prompt()])
 		Phase.WALK_ASHORE:
 			if _follow_waypoints():
 				_release_all()
 				if _standing_on_ground():
-					_log("下了船站在 2050 的停机坪上 %s" % player.global_position)
-					_shot("5_ashore_2050")
+					_log("下了船站在 %d 的停机坪上 %s" % [AWAY, player.global_position])
+					_shot("5_ashore_away")
 					_goto(Phase.CHECK_AWAY)
 				elif in_phase > 20.0:
 					_finish(false, "走完了路点还没站稳（%s）" % player.global_position)
 			elif in_phase > 60.0:
-				_finish(false, "60 s 没走下船")
+				_finish(false, "60 s 没走下船（人 %s、在地上 %s；还剩路点 %s；船 %s）" % [player.global_position, player.is_on_floor(), waypoints, ship.global_position])
 		Phase.CHECK_AWAY:
-			# HUD：群号、地方时（2050 在 151.61°E，比钟点所在的 152.15°E 晚约 2.2 分钟）
+			# HUD：群号、地方时（按邻群与钟的那一群的经度差：15° 一小时）
 			var status := main.get_status_text()
 			if step == 0:
-				if not status.begins_with("群 #2050"):
-					_finish(false, "2050 上 HUD 第一行该以「群 #2050」开头：%s" % status)
+				if not status.begins_with("群 #%d" % AWAY):
+					_finish(false, "%d 上 HUD 第一行该以「群 #%d」开头：%s" % [AWAY, AWAY, status])
 					return
 				var src: Dictionary = _world(AWAY).get_info()["source"]
 				var offset_h := (float(src["lon"]) - planet.get_clock_longitude()) / 15.0
@@ -466,11 +512,11 @@ func _physics_process(delta: float) -> void:
 					_finish(false, "HUD 该报地方时（钟点 %.3f h + %.2f min = %s）：%s" % [GameClock.get_hour(), offset_h * 60.0, expect, status])
 					return
 				if absf(_world(AWAY).get_local_offset_hours() - offset_h) > 1e-4:
-					_finish(false, "2050 的地方时差 %.4f h，该是 %.4f h" % [_world(AWAY).get_local_offset_hours(), offset_h])
+					_finish(false, "邻群的地方时差 %.4f h，该是 %.4f h" % [_world(AWAY).get_local_offset_hours(), offset_h])
 					return
-				_log("HUD：%s（地方时比钟点晚 %.2f 分钟）" % [status.get_slice("\n", 0), -offset_h * 60.0])
+				_log("HUD：%s（地方时比钟点%s %.2f 分钟）" % [status.get_slice("\n", 0), "晚" if offset_h < 0.0 else "早", absf(offset_h) * 60.0])
 				step = 1
-			# 村民：码头边铺出来的村招了人，有人在外面走 / 干活。2050 开局这几天是风暴（它自己的 weather.tsv），村民照规矩在屋里避雨——
+			# 村民：码头边铺出来的村招了人，有人在外面走 / 干活。邻群此刻要是风暴、下雨（它自己的 weather.tsv），村民照规矩在屋里避雨——
 			# 那就把天气覆盖成晴（开发者覆盖改在每一群的模型上），看他们雨停了出门
 			var sites: SiteStream = stream.get_group_sites(AWAY)
 			var out := 0
@@ -493,30 +539,42 @@ func _physics_process(delta: float) -> void:
 				return
 			if step == 1 and folk_total > 0 and out == 0 and in_phase > 5.0:
 				var w: Dictionary = atmo.get_weather()
-				_log("2050：码头边的村招了 %d 人都在屋里，此地此刻「%s」（风暴 %.2f、降水 %.2f）——覆盖成晴，看他们出门" % [folk_total, w.get("kind_name", "?"), float(w.get("storm", 0.0)), float(w.get("precip", 0.0))])
+				_log("邻群：码头边的村招了 %d 人都在屋里，此地此刻「%s」（风暴 %.2f、降水 %.2f）——覆盖成晴，看他们出门" % [folk_total, w.get("kind_name", "?"), float(w.get("storm", 0.0)), float(w.get("precip", 0.0))])
 				atmo.set_weather_override("clear", 0.0)
 				step = 2
 			if out > 0:
-				_log("2050：%s 有 %d 人在外面（招了 %d 人；钟点 %s）" % [village, out, folk_total, GameClock.get_clock_text()])
-				_shot("6_folk_2050")
-				_memory("2050 主码头，村民出门")
+				_log("邻群：%s 有 %d 人在外面（招了 %d 人；钟点 %s）" % [village, out, folk_total, GameClock.get_clock_text()])
+				_shot("6_folk_away")
+				_memory("邻群主码头，村民出门")
 				step = 3
 			elif in_phase > FOLK_TIMEOUT:
-				_finish(false, "2050 的码头边 %.0f s 里没人出门（铺出来的村 %s）" % [FOLK_TIMEOUT, sites.get_built_villages()])
+				_finish(false, "邻群的码头边 %.0f s 里没人出门（铺出来的村 %s）" % [FOLK_TIMEOUT, sites.get_built_villages()])
 		Phase.ADVANCE_CLOCK:
-			# 2051 此刻降回了近景：村子的账存成文本留在内存
+			# 开局那群此刻该降回了近景：村子的账存成文本留在内存。两群的陆地只隔十几公里（邻群的主码头离开局那群的陆地二十来公里，
+			# 细版 30 km 进、40 km 出），开局那群还是细版——细版的门槛临时调低到它此刻的距离以内，看它降到近景、账存成文本
 			var home := stream.get_group_state(HOME)
-			if int(home["tier"]) == GroupStream.TIER_DETAIL or int(home["ledgers_saved"]) == 0:
-				_finish(false, "人在 2050 时 2051 该降回近景、账存成文本（档 %d、存了 %d 本、离陆地 %.0f km）" % [int(home["tier"]), int(home["ledgers_saved"]), float(home["land_km"])])
+			var land_m := float(home["land_km"]) * 1000.0
+			if step == 0:
+				detail_in = stream.get_detail_in()
+				detail_out = stream.get_detail_out()
+				near_in = stream.get_near_in()
+				near_out = stream.get_near_out()
+				if int(home["tier"]) == GroupStream.TIER_DETAIL:
+					stream.set_detail_in(land_m - 13000.0)
+					stream.set_detail_out(land_m - 8000.0)
+					_log("开局那群离陆地 %.1f km 还是细版：细版门槛临时调成 %.0f / %.0f km" % [land_m / 1000.0, (land_m - 13000.0) / 1000.0, (land_m - 8000.0) / 1000.0])
+				step = 1
 				return
-			# 近景的门槛临时调低（45 / 50 km）：2051 降到远景——World 拆掉，农田、采场、散布的账存进内存（回程前调回来，它在后台重新载入）
-			near_in = stream.get_near_in()
-			near_out = stream.get_near_out()
-			stream.set_near_in(45000.0)
-			stream.set_near_out(50000.0)
+			if int(home["tier"]) == GroupStream.TIER_DETAIL or int(home["ledgers_saved"]) == 0:
+				if in_phase > 20.0:
+					_finish(false, "人在邻群时开局那群该降回近景、账存成文本（档 %d、存了 %d 本、离陆地 %.0f km）" % [int(home["tier"]), int(home["ledgers_saved"]), float(home["land_km"])])
+				return
+			# 近景的门槛也临时调低（到它此刻的距离以内）：开局那群降到远景——World 拆掉，农田、采场、散布的账存进内存（回程前调回来，它在后台重新载入）
+			stream.set_near_in(land_m - 5000.0)
+			stream.set_near_out(land_m - 3000.0)
 			clock_step_at = GameClock.get_seconds()
 			GameClock.step_hours(26.0)
-			_log("2051 离陆地 %.0f km、档 %d，存了 %d 本账；钟往前拨 26 个钟头 → %s" % [float(home["land_km"]), int(home["tier"]), int(home["ledgers_saved"]), GameClock.get_clock_text()])
+			_log("开局那群离陆地 %.0f km、档 %d，存了 %d 本账；钟往前拨 26 个钟头 → %s" % [float(home["land_km"]), int(home["tier"]), int(home["ledgers_saved"]), GameClock.get_clock_text()])
 			var berth: Transform3D = host.get_dock_berth_by_id(AWAY_DOCK)
 			waypoints = [berth.origin + berth.basis.x * 0.8, ship.global_position]
 			_goto(Phase.WALK_BACK)
@@ -533,10 +591,10 @@ func _physics_process(delta: float) -> void:
 			if step == 0:
 				var home := stream.get_group_state(HOME)
 				if int(home["tier"]) == GroupStream.TIER_FAR and not bool(home["loaded"]):
-					_log("2051 降到远景、World 拆了（离陆地 %.0f km；场景根下还有 World：%s）" % [float(home["land_km"]), main.get_node_or_null("World") != null])
+					_log("开局那群降到远景、World 拆了（离陆地 %.0f km；场景根下还有 World：%s）" % [float(home["land_km"]), main.get_node_or_null("World") != null])
 					step = 1
 				elif in_phase > 10.0:
-					_finish(false, "近景门槛调低后 10 s，2051 该降到远景、World 拆掉（%s）" % [home])
+					_finish(false, "近景门槛调低后 10 s，开局那群该降到远景、World 拆掉（%s）" % [home])
 					return
 			if _follow_waypoints() and step == 1:
 				_goto(Phase.TAKE_HELM_BACK)
@@ -559,15 +617,16 @@ func _physics_process(delta: float) -> void:
 				else:
 					_goto(Phase.JUMP_BACK)
 		Phase.JUMP_BACK:
-			# 换锚线另一边（2050 这边）10 km，船头朝 2051 的主码头；这一趟手动换锚（截图对照），先关了自动换
+			# 换锚线另一边（邻群这边）10 km，船头朝开局那群的主码头；这一趟手动换锚（截图对照），先关了自动换
 			if step == 0:
 				stream.set_auto_shift(false)
 				stream.set_near_in(near_in)
 				stream.set_near_out(near_out)
-				var at: Vector3 = stream.to_anchor(HOME, LINE + OUT_DIR * 10000.0)
+				stream.set_detail_in(detail_in)
+				stream.set_detail_out(detail_out)
+				var at: Vector3 = stream.to_anchor(HOME, switch_line + out_dir * 10000.0)
 				at.y = CRUISE_Y
-				var home_berth: Transform3D = host.get_dock_berth_by_id(1)
-				var dir := home_berth.origin - at
+				var dir := _home_target() - at
 				dir.y = 0.0
 				ship.set_pose(at, _yaw_toward(dir.normalized()))
 				step = 1
@@ -575,14 +634,13 @@ func _physics_process(delta: float) -> void:
 				cross_frames = 0
 				_goto(Phase.CROSS_BACK)
 		Phase.CROSS_BACK:
-			var home_berth: Transform3D = host.get_dock_berth_by_id(1)
-			_fly_toward(home_berth.origin, CRUISE_Y, 50.0)
+			_fly_toward(_home_target(), CRUISE_Y, 50.0)
 			var home := stream.get_group_state(HOME)
 			var away := stream.get_group_state(AWAY)
-			# 过了换锚线 3 km（离 2051 的陆地比 2050 的近 3 km 以上）就停船
+			# 过了换锚线 3 km（离开局那群的陆地比邻群的近 3 km 以上）就停船
 			if float(home["land_km"]) + 3.0 < float(away["land_km"]):
 				_release_all()
-				_log("过了换锚线：离 2051 陆地 %.1f km、2050 陆地 %.1f km；2051 档 %d" % [float(home["land_km"]), float(away["land_km"]), int(home["tier"])])
+				_log("过了换锚线：离开局那群陆地 %.1f km、邻群陆地 %.1f km；开局那群档 %d" % [float(home["land_km"]), float(away["land_km"]), int(home["tier"])])
 				_goto(Phase.STOP)
 			elif in_phase > 400.0:
 				_finish(false, "飞了 %.0f s 还没过换锚线" % in_phase)
@@ -609,7 +667,7 @@ func _physics_process(delta: float) -> void:
 			elif pending_shot.is_empty() and in_phase > 0.5:
 				shot_ll = _cam_state()
 				if not stream.force_shift_to(HOME):
-					_finish(false, "2051 这时该是细版、载入完了，换得过去（%s）" % [stream.get_group_state(HOME)])
+					_finish(false, "开局那群这时该是细版、载入完了，换得过去（%s）" % [stream.get_group_state(HOME)])
 					return
 				_goto(Phase.FORCE_SHIFT)
 		Phase.FORCE_SHIFT:
@@ -636,17 +694,16 @@ func _physics_process(delta: float) -> void:
 			elif in_phase > 30.0:
 				_finish(false, "30 s 没重新上舵")
 		Phase.CHECK_HOME:
-			# 2051 升回细版：邑治的账从文本补回、只补最后一天，补结到此刻
-			var home_berth: Transform3D = host.get_dock_berth_by_id(1)
-			_fly_toward(home_berth.origin, CRUISE_Y, 50.0)
+			# 开局那群升回细版：邑治的账从文本补回、只补最后一天，补结到此刻
+			_fly_toward(_home_target(), CRUISE_Y, 50.0)
 			var h: Hinterland = stream.get_group_hinterland(HOME)
 			var home_world := main.get_node_or_null("World")
 			if home_world == null or not (home_world is World) or not home_world.is_loaded():
-				_finish(false, "2051 重新载入后场景根下该有 World（%s）" % [home_world])
+				_finish(false, "开局那群重新载入后场景根下该有 World（%s）" % [home_world])
 				return
 			if h == null:
 				if in_phase > 60.0:
-					_finish(false, "回到 2051 这边 60 s，2051 还没升回细版（%s）" % [stream.get_group_state(HOME)])
+					_finish(false, "回到开局那群这边 60 s，开局那群还没升回细版（%s）" % [stream.get_group_state(HOME)])
 				return
 			# 新账房由近及远开账（船在西南岸外，近的先开）：补回的那些都结到了此刻（远处最久没结的落后不到一个钟头），
 			# 每本都只补了最后一天（离开 26 h 多：每本至少跳过两个钟头）
@@ -656,16 +713,18 @@ func _physics_process(delta: float) -> void:
 			if restored >= 20 and float(stats.get("stalest_s", 1e9)) <= hour_s:
 				var skipped := float(stats.get("skipped_hours", 0.0))
 				var away_h: float = (GameClock.get_seconds() - clock_step_at) / hour_s
-				_log("2051 的账补回 %d 本（还有 %d 本存着没开）、跳过 %.0f 个钟头（每本平均 %.1f；离开 %.1f 个钟头）；最久没结的落后 %.0f s（一个钟头 %.0f s）" % [restored,
+				_log("开局那群的账补回 %d 本（还有 %d 本存着没开）、跳过 %.0f 个钟头（每本平均 %.1f；离开 %.1f 个钟头）；最久没结的落后 %.0f s（一个钟头 %.0f s）" % [restored,
 						int(stats.get("waiting_restore", 0)), skipped, skipped / restored, away_h, float(stats["stalest_s"]), hour_s])
 				if skipped / restored < 1.5:
 					_finish(false, "离开 26 个钟头以上该只补最后 24 个钟头（每本该跳过两个钟头以上，实为 %.2f）" % (skipped / restored))
 					return
 				_shot("7_home_again")
-				_memory("回到 2051，账补回")
+				_memory("回到开局那群，账补回")
 				_goto(Phase.DONE)
-			elif in_phase > 240.0:
-				_finish(false, "240 s 里 2051 的账没补回 / 没补结（%s）" % [stats])
+			elif in_phase > 1500.0:
+				_finish(false, "1500 s 里开局那群的账没补回 / 没补结（%s）" % [stats])
+			elif int(in_phase * 60.0) % 3600 == 0:
+				_log("补结中（%.0f s）：补回 %d 本，最久没结的落后 %.0f s" % [in_phase, restored, float(stats.get("stalest_s", 0.0))])
 		Phase.DONE:
 			_log("雨雪粒子对得上此地此刻的天：没有降水的 %d 帧里都没下" % dry_frames)
-			_finish(true, "2051 主码头上船 → 换锚线前 10 km → 飞过换锚线（相机在真球面上跳了 %.3f m、那一帧前后 %.1f ms、跨群最慢 %.1f ms）→ 2050 主码头靠泊下船（地方时、有人出门）→ 2051 降到远景、拨钟 26 h → 飞回、2051 重新载入、停船手动换锚（相机挪了 %.4f m）→ 2051 的账补回、只补最后一天" % [cross_jump_m, shift_frame_ms, cross_max_ms, manual_jump_m])
+			_finish(true, "开局那群主码头上船 → 换锚线前 10 km → 飞过换锚线（相机在真球面上跳了 %.3f m、那一帧前后 %.1f ms、跨群最慢 %.1f ms）→ 邻群主码头靠泊下船（地方时、有人出门）→ 开局那群降到远景、拨钟 26 h → 飞回、开局那群重新载入、停船手动换锚（相机挪了 %.4f m）→ 开局那群的账补回、只补最后一天" % [cross_jump_m, shift_frame_ms, cross_max_ms, manual_jump_m])

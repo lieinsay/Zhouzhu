@@ -1,5 +1,5 @@
 extends Node
-## 合成与摆放（world_2051.tscn）：背包、配方、摆放、船舱，只通过输入（动作、鼠标事件、转视角）操作；去林子那一下用开发者瞬移。
+## 合成与摆放（world_seed42.tscn）：背包、配方、摆放、船舱，只通过输入（动作、鼠标事件、转视角）操作；去林子那一下用开发者瞬移。
 ## 行李里带着石料 12、黏土 8（开局的粟、菽照旧）：
 ## 主码头出生：背包 36 格、快捷栏空着，开局的东西在主区 → 瞬移到最近的一片林子边上，走到树跟前按住 E 伐 6 份木料（空手 4 秒一份；一棵伐倒了换下一棵）
 ## → Tab 开背包（不在船上：没有船舱）：鼠标点配方「木板」5 回（木料 1 → 木板 4）、再点「工作台」；「木箱」暗着（要工作台）
@@ -17,7 +17,7 @@ extends Node
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 600.0  # 模拟秒
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "sprint", "jump"]
 const PACK := 0

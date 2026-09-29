@@ -1,5 +1,5 @@
 extends Node
-## god 模式飞到海面（world_2051.tscn，只通过输入动作开关 god、往下飞）：
+## god 模式飞到海面（world_seed42.tscn，开局那群的主码头，只通过输入动作开关 god、往下飞）：
 ## 主码头站稳 → F3 开 god → 人挪到主码头外一片开阔的云海上空（2.5 km 内没有地，离地面 200 m 上下）
 ## → 按住 Ctrl 一路往下：穿过 y = −40 m（不开 god 时算坠入云海、回到上一处站稳的地方）也不回位，
 ##   往下飞的速度也随离起飞处的距离放大（一分钟内到海面），停在海面之上 2 m（再按也不往下），HUD 报「云底下 · 离海面 2 m」
@@ -8,7 +8,7 @@ extends Node
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/god_sea_e2e.tscn
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 600.0  # 模拟秒
 const SETTLE_TIMEOUT := 150.0  # 墙钟秒
 const TOP_Y := -5000.0  # 云带顶、云底、海面：同 src/planet_frame.h 的 VerticalDatum（浮高计划 F4 起整体下移 1200 m）

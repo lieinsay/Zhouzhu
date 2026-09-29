@@ -1,21 +1,29 @@
 extends Node
-## 看不见的地方也在按自己的逻辑运转（world_2051.tscn），只通过输入（动作、鼠标、转视角）操作：
-## 清早 05:45 主码头 #1 出生 → M 开地图点到村029 旁：卯时一到有人出门，记下仓、水缸、账
-## → 点回主码头、上船掌舵、换疾档飞 23 km 到岛 #2 的码头 #28（途中村029 的村民散了、账收回远处账房，远处的账接着记）
-## → 下船，F4 快进待到 11 点（途中断言村029 与 8.5 km 外村004 的账都在远处推进）→ F4 关
-## → 上船飞回主码头 → 点地图回村029：钟点一路连续（没倒流、没跳）、HUD 与全局钟一致；
+## 看不见的地方也在按自己的逻辑运转（world_seed42.tscn，开局那群 #6329），只通过输入（动作、鼠标、转视角）操作：
+## 清早 05:45 主码头出生 → M 开地图点到村 A 旁（主码头 2–6 km、主岛上户数最多的村：#6329 是 2.5 km 外的村003）：卯时一到有人出门，记下仓、水缸、账
+## → 点回主码头、上船掌舵、换疾档飞到场景配的目的码头（#6329 是岛 #13 的码头 #28，23 km；从泊位外 400 m 的进场点进港）
+##   （途中村 A 的村民散了、账收回远处账房，远处的账接着记）
+## → 下船，F4 快进待到 11 点（途中断言村 A 与村 B——主码头 7–13 km、户数最多的村，#6329 是 12 km 外的村002——的账都在远处推进）→ F4 关
+## → 上船飞回主码头 → 点地图回村 A：钟点一路连续（没倒流、没跳）、HUD 与全局钟一致；
 ##   仓里的粮按规矩变了（起初 + 收 − 播 − 吃，对得上账）、水缸有水；村民散在各自的岗位上，不在自家门口扎堆；地块都回到了农田里。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/world_sim_e2e.tscn
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
 
-const SCENE := preload("res://world_2051.tscn")
+const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 2400.0  # 模拟秒
 const START_HOUR := 5.75
 const STAY_UNTIL_HOUR := 11.0  # 在目的码头快进待到这个钟点再飞回去（船 20 m/s，疾档回程三个多钟头，得赶在收工前回到村里）
-const VILLAGE_A := 29  # 主码头 2.5 km 外的村子（有田有水：农夫、挑水的都有；浮高计划 Z2 重导前这一处是村031）
-const VILLAGE_B := 4  # 村004：8.5 km 外，这一趟一直在远处（邑治就在主码头旁，不合适）
+# 村 A：主码头 2–6 km、主岛上户数最多的村（不算邑治：它就在主码头旁）；村 B：主码头 7–13 km、户数最多的村，这一趟一直在远处
+const A_MIN_M := 2000.0
+const A_MAX_M := 6000.0
+const B_MIN_M := 7000.0
+const B_MAX_M := 13000.0
+# 远处账房每帧的预算：游戏里 0.5 ms。e2e 跑的是 Debug 的扩展，远处结算比 Release 慢三十来倍——开局那群 1474 处村落每帧要约 1 ms
+# （Release 下约 0.03 ms，`zhouzhu_site_survey --sim 24` 量的），0.5 ms 追不上、越落越多；这里调到 2 ms 查账的规矩（Release 下花不满，调了也一样）
+const HINTERLAND_BUDGET_MS := 2.0
+const APPROACH_OUT_M := 400.0  # 进场点：泊位沿栈桥往岸外这么远（从岸外进港，别从岛上空斜插下来撞坪）
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
 const CRUISE_CLEARANCE := 60.0
 const SLOW_DOWN_AT := 2000.0
@@ -49,6 +57,9 @@ var map_step := 0
 var map_target := Vector3.ZERO
 var village_a_pos := Vector3.ZERO
 var b_pos := Vector3.ZERO
+var VILLAGE_A := -1
+var VILLAGE_B := -1
+var approach_leg := 0
 
 # 钟
 var last_clock := -1.0
@@ -82,16 +93,27 @@ func _ready() -> void:
 	ship = main.get_node("Ship")
 	sites = main.get_node("SiteStream")
 	hinterland = main.get_node("Hinterland")
+	hinterland.budget_ms = maxf(hinterland.budget_ms, HINTERLAND_BUDGET_MS)
 	map = main.get_map()
 	var info: Dictionary = world.get_info()
+	var home := world.get_dock_position(world.find_dock(main.origin_dock))
+	var a_hh := 0
+	var b_hh := 0
 	for v in info["villages"]:
-		if int(v["id"]) == VILLAGE_A:
+		var d := Vector2(v["pos"][0] - home.x, v["pos"][1] - home.z).length()
+		if int(v["island"]) != 0 or bool(v.get("seat", false)):
+			continue
+		if d >= A_MIN_M and d <= A_MAX_M and int(v["households"]) > a_hh:
+			a_hh = int(v["households"])
+			VILLAGE_A = int(v["id"])
 			village_a_pos = Vector3(v["pos"][0], 0, v["pos"][1])
-		if int(v["id"]) == VILLAGE_B:
+		if d >= B_MIN_M and d <= B_MAX_M and int(v["households"]) > b_hh:
+			b_hh = int(v["households"])
+			VILLAGE_B = int(v["id"])
 			b_pos = Vector3(v["pos"][0], 0, v["pos"][1])
-	_log("出生 %s，钟 %s；村%03d 在 %s（%.0f m），村%03d %.1f km" % [player.global_position, GameClock.get_clock_text(), VILLAGE_A, village_a_pos,
+	_log("群 #%d：出生 %s，钟 %s；村%03d（%d 户）在 %s（%.0f m），村%03d（%d 户）%.1f km" % [StoryStart.get_spawn_node(), player.global_position, GameClock.get_clock_text(), VILLAGE_A, a_hh, village_a_pos,
 		Vector2(village_a_pos.x - player.global_position.x, village_a_pos.z - player.global_position.z).length(),
-		VILLAGE_B, Vector2(b_pos.x - player.global_position.x, b_pos.z - player.global_position.z).length() / 1000.0])
+		VILLAGE_B, b_hh, Vector2(b_pos.x - player.global_position.x, b_pos.z - player.global_position.z).length() / 1000.0])
 
 
 func _log(line: String) -> void:
@@ -223,13 +245,14 @@ func _terrain_ahead(berth: Vector3) -> float:
 	return top
 
 
-func _fly_toward(berth: Vector3) -> bool:
+## p_hug：离目标这么远以外才贴着地形留余量（朝岸外的进场点飞时一路都留）
+func _fly_toward(berth: Vector3, p_hug := 600.0) -> bool:
 	var to := berth - ship.global_position
 	var local := ship.global_transform.basis.inverse() * to
 	var bearing := rad_to_deg(atan2(local.x, -local.z))
 	var flat := Vector2(to.x, to.z).length()
 	var want_y := berth.y + 8.0
-	if flat > 600.0:
+	if flat > p_hug:
 		var ground := _terrain_ahead(berth)
 		if ground > -INF:
 			want_y = maxf(want_y, ground + CRUISE_CLEARANCE)
@@ -342,6 +365,7 @@ func _goto(next: Phase) -> void:
 	phase = next
 	phase_started = elapsed
 	map_step = 0
+	approach_leg = 0
 
 
 func _physics_process(delta: float) -> void:
@@ -419,8 +443,9 @@ func _physics_process(delta: float) -> void:
 			elif not held.has("gear_up"):
 				_tap("gear_up")
 		Phase.CRUISE, Phase.CRUISE_2:
-			var berth := _flight_berth()
-			_fly_toward(berth)
+			# 先飞到泊位外的进场点（从岸外进港）
+			var berth := _approach_point()
+			_fly_toward(berth, 0.0)
 			if in_phase > 20.0 and in_phase - delta <= 20.0:
 				_shot("2_cruise" if phase == Phase.CRUISE else "6_cruise_back")
 			if Vector2(berth.x - ship.global_position.x, berth.z - ship.global_position.z).length() < SLOW_DOWN_AT:
@@ -428,7 +453,12 @@ func _physics_process(delta: float) -> void:
 		Phase.APPROACH, Phase.APPROACH_2:
 			if ship.get_gear() > 0 and not held.has("gear_down"):
 				_tap("gear_down")
-			if _fly_toward(_flight_berth()):
+			if approach_leg == 0:
+				var p := _approach_point()
+				_fly_toward(p, 0.0)
+				if Vector2(p.x - ship.global_position.x, p.z - ship.global_position.z).length() < 40.0:
+					approach_leg = 1
+			elif _fly_toward(_flight_berth()):
 				_release_all()
 				_tap("interact")
 				_goto(phase + 1)
@@ -519,11 +549,22 @@ func _physics_process(delta: float) -> void:
 			_check_return(folk)
 		Phase.DONE:
 			if in_phase > 0.5:
-				_finish(true, "村%03d 出门 → 飞 23 km 待到下午 → 飞回：钟点连续（查了 %d 帧）、账对得上、村民在各自岗位上；远处的账一路在记（不快进时最多落后 %.0f s）" % [VILLAGE_A, clock_checks, stale_max])
+				_finish(true, "群 #%d：村%03d 出门 → 飞 %.1f km 到码头 #%d 待到下午 → 飞回：钟点连续（查了 %d 帧）、账对得上、村民在各自岗位上；远处的账一路在记（不快进时最多落后 %.0f s）" % [
+					StoryStart.get_spawn_node(), VILLAGE_A, main.get_origin_berth().origin.distance_to(main.get_destination_berth().origin) / 1000.0, main.destination_dock,
+					clock_checks, stale_max])
 
 
 func _flight_berth() -> Vector3:
 	return main.get_destination_berth().origin if phase <= Phase.APPROACH else main.get_origin_berth().origin
+
+
+## 进场点：这一程要去的泊位沿栈桥往岸外 APPROACH_OUT_M（岸缘点 → 泊位的方向），高同泊位
+func _approach_point() -> Vector3:
+	var berth := _flight_berth()
+	var dock_id: int = main.destination_dock if phase <= Phase.APPROACH else main.origin_dock
+	var root := world.get_dock_position(world.find_dock(dock_id))
+	var out := Vector3(berth.x - root.x, 0, berth.z - root.z).normalized()
+	return berth + out * APPROACH_OUT_M
 
 
 func _check_return(folk: Villagers) -> void:
@@ -536,14 +577,16 @@ func _check_return(folk: Villagers) -> void:
 	var d_h: int = int(now["harvested"]) - int(base["harvested"])
 	var d_s: int = int(now["sown"]) - int(base["sown"])
 	var d_e: int = int(now["eaten"]) - int(base["eaten"])
+	var d_hungry: int = int(now["hungry"]) - int(base["hungry"])
 	var expect: int = int(base["grain"]) + d_h - d_s - d_e
-	_log("回到村%03d（%s，离开了 %.1f 个钟头）：粮 %d → %d（收 +%d、播 −%d、吃 −%d，应为 %d），水缸 %.1f → %.1f（挑进 +%.1f）" % [
-		VILLAGE_A, GameClock.get_clock_text(), away_h, base["grain"], now["grain"], d_h, d_s, d_e, expect, base["water"], now["water"],
+	_log("回到村%03d（%s，离开了 %.1f 个钟头）：粮 %d → %d（收 +%d、播 −%d、吃 −%d，应为 %d；午饭没吃上 %d 人次），水缸 %.1f → %.1f（挑进 +%.1f）" % [
+		VILLAGE_A, GameClock.get_clock_text(), away_h, base["grain"], now["grain"], d_h, d_s, d_e, expect, d_hungry, base["water"], now["water"],
 		float(now["water_in"]) - float(base["water_in"])])
 	if int(now["grain"]) != expect:
 		_finish(false, "粮对不上账")
 		return
-	if d_h <= 0 or d_e <= 0 or int(now["grain"]) == int(base["grain"]):
+	# 开过饭：吃上的加没吃上的（开春青黄不接：卯时仓里只有十来份粮，午饭时扣掉给农夫留的种子就不够分，全村饿一顿——按规矩，不算错）
+	if d_h <= 0 or d_e + d_hungry <= 0 or int(now["grain"]) == int(base["grain"]):
 		_finish(false, "离开的这些钟头里村里没收粮、没开饭，或仓一点没变")
 		return
 	if float(now["water"]) <= 0.0 or float(now["water"]) > folk.get_water_cap() + 1e-6 or float(now["water_in"]) <= float(base["water_in"]):
@@ -553,7 +596,7 @@ func _check_return(folk: Villagers) -> void:
 		_finish(false, "只离开了 %.1f 个钟头，不到大半天" % away_h)
 		return
 	# 村民：多半在外面，在自家门口扎堆的不到三成，有人在干活；在岗的（在做活或在去做活、送东西的路上，不算串门、歇着、回家）不少于四分之一
-	# （浮高计划 Z2：这一处的村子 66 → 76 户、房子多一圈，那一刻走在去地里、送粮路上的多，正在做活的 9 人，原来 14–15 人；原先只数正在做活的）
+	# （只数正在做活的不够：村子大、房子多，那一刻走在去地里、送粮路上的多）
 	var outside := 0
 	var at_door := 0
 	var working := 0
