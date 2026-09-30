@@ -17,6 +17,7 @@ game/bin/*.lib
 # 导出
 export/
 build/
+build-release/
 
 # CMake / IDE
 cmake-build-*/
