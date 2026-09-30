@@ -310,7 +310,8 @@ String GroupProvider::find_group(int p_node) const {
 PackedInt32Array GroupProvider::available_nodes() const {
     std::set<int> nodes;
     auto scan = [&](const String &p_dir) {
-        if (!DirAccess::dir_exists_absolute(abs_path(p_dir))) {
+        // 不转成磁盘路径：导出的游戏里 res:// 在 .pck 里，只有 DirAccess 认得
+        if (!DirAccess::dir_exists_absolute(p_dir)) {
             return;
         }
         const PackedStringArray names = DirAccess::get_directories_at(p_dir);
