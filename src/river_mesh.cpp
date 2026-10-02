@@ -113,7 +113,9 @@ RiverMesh build_river_mesh(const WorldTerrain &p_terrain, const RiverChunkKey &p
         const double grade = (a.bed()-b.bed()) / std::max(1e-3,b.s-a.s);
         int row[2][5];
         for (int e = 0; e < 2; e++) {
-            const RiverVertex &v = e == 0 ? a : b;
+            RiverVertex v = e == 0 ? a : b;
+            // 每个小段读上游的供水曲线，与 CPU 插值一致；不能把不同流域的纹理行混合。
+            v.basin = a.basin;
             double lx, lz;
             lateral(stem, i + size_t(e), lx, lz);
             // 近岸处带子收窄到离岸线的距离：河口一带岸线斜着切过河，整幅带子会伸到云海上空

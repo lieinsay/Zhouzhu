@@ -2253,9 +2253,9 @@ void test_world_sites() {
     std::string err;
     check(parse_world_grid(bin.data(), bin.size(), g, err), "terrain.bin 能解析");
     check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
-    check(sites.islands.size() == 38 && sites.docks.size() == 42 && sites.settlements.size() == 1922, "38 岛、42 码头、215 常住村（含驿站）+ 1707 散户");
+    check(sites.islands.size() == 38 && sites.docks.size() == 42 && sites.settlements.size() == 1919, "38 岛、42 码头、214 常住村（含驿站）+ 1705 散户");
     const SiteSettlement *seat = sites.village_by_id(19);
-    check(seat && seat->seat && seat->households == 99 && seat->name == "村019", "村019 是邑治、99 户（农户与邑里的市户）");
+    check(seat && seat->seat && seat->households == 102 && seat->name == "村019", "村019 是邑治、102 户（农户与邑里的市户）");
     const SiteDock *main_dock = sites.dock_by_id(1);
     check(main_dock && main_dock->main && main_dock->island == 0, "主码头 #1 在主岛");
     WorldSites bad;
@@ -2809,6 +2809,9 @@ void test_river_contract() {
     const auto shallow=river_stage(brook,0.23,rules);
     check(shallow.depth>0 && shallow.depth<0.03 && shallow.wet,
             "源数据仍有流量的厘米级溪水不能被旧 3 cm 断流阈值隐藏");
+    const auto dried=river_stage(brook,0,rules);
+    check(!dried.wet && dried.depth==0 && dried.discharge==0 && dried.half_width==0,
+            "临时路径的零事件指数必须得到真实断流，而不是全年显示水沟");
 
     WorldGrid g; g.rows=5; g.cols=5; g.res=100; g.authoritative_rivers=true;
     g.height.assign(25,102); g.shore.assign(25,500); g.island.assign(25,0);
@@ -2818,6 +2821,27 @@ void test_river_contract() {
     r.points={{{1,1,1,4,2,10,10,2,6.58f,1.05f,102,100,.03f,64,3,0,120,2,20,1}},
               {{1,2,1,4,2,10,10,2,6.58f,1.05f,101,99,.03f,64,3,0,120,2,20,1}}};
     r.outlet_drop=44.7; g.river_sources={r};
+    {
+        auto mixed=g;
+        mixed.event_basin_offset=1;
+        mixed.basin_runoff={{1,1,1,1},{0,2,2,0}};
+        auto &source=mixed.river_sources[0]; source.exit=0;
+        source.points[0][20]=0; source.points[1][20]=1;
+        auto tail=source.points[1]; tail[1]=3; source.points.push_back(tail);
+        WorldTerrain flow_types(mixed,{WorldIsland()},42,rules);
+        const auto &vertices=flow_types.get_rivers().get_stems()[0].v;
+        check(vertices.front().flow_regime==0 && vertices.front().basin==1 && vertices.back().flow_regime==1 && vertices.back().basin==0,
+                "同一段上游临时流路和下游常驻河分别使用事件曲线与基流曲线");
+        check(!river_stage(vertices.front(),river_runoff_index(mixed.basin_runoff[1],0.5),rules).wet
+                && river_stage(vertices.back(),river_runoff_index(mixed.basin_runoff[0],0.5),rules).wet,
+                "干天临时支流归零，下游常驻河保持供水");
+        const auto mm=build_river_mesh(flow_types,{0,0}); bool separate=!mm.empty();
+        for(size_t i=0;i+2<mm.indices.size();i+=3) {
+            const auto a=mm.custom1[size_t(mm.indices[i])*4+3];
+            separate &= a==mm.custom1[size_t(mm.indices[i+1])*4+3] && a==mm.custom1[size_t(mm.indices[i+2])*4+3];
+        }
+        check(separate,"GPU 每个三角形使用同一供水曲线，不把常驻河水插值到干支流");
+    }
     WorldTerrain terrain(g,{WorldIsland()},42,rules);
     const auto mesh=build_river_mesh(terrain,{0,0});
     bool has_fall=false, attrs_ok=!mesh.empty(), has_side_normal=false;
@@ -3034,7 +3058,7 @@ void test_goldens() {
     // 拓展「按点 / 片 / 散生成资源」换了生成器新版的地表（村周开垦、采场格改裸岩；细节起伏按地表调幅）与码头，又记了一次；
     // 浮高计划 Z2 按生成器的浮高重导（岛 #1、#2 整座上下平移，村号跟着户数重排、户数也变了：村026 55 → 80 户），同一处地方的村重记；
     // 地貌与聚落 P0 开局从 #2051 换到 #6329，换成这一群里的四处重记）
-    report_golden("岛群远离主码头的村", villages.h, 0x930bbc25eb823b2aull);
+    report_golden("岛群远离主码头的村", villages.h, 0x7744abf7882a3e22ull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）
@@ -3738,8 +3762,8 @@ void test_gather() {
     river_rules.year_days = regime.year_days();
     const bool parsed = parse_resources(res, data, err);
     std::printf("  点与片 %zu、赋存区 %zu、采场 %zu\n", data.deposits.size(), data.occurrences.size(), data.workings.size());
-    check(parsed && data.deposits.size() == 869 && data.occurrences.size() == 821 && data.workings.size() == 417,
-            "开局那群：点与片 869（片 514 + 点 355）、赋存区 821、采场 417（" + std::to_string(data.workings.size()) + "）");
+    check(parsed && data.deposits.size() == 870 && data.occurrences.size() == 826 && data.workings.size() == 418,
+            "开局那群：点与片 870（片 514 + 点 356）、赋存区 826、采场 418（" + std::to_string(data.workings.size()) + "）");
     // 栅格的片号与清单对得上：片的代表格在自己的片里（点可以落在片里：林子里的泉眼、洞）
     bool patches_ok = grid.has_resources();
     int patch_count = 0, points_in_patch = 0;
@@ -3773,8 +3797,8 @@ void test_gather() {
     check(int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size()) == working_count, "每一处采场都有下落");
     check(plan.sites.size() >= 320 && int(plan.failed.size()) * 50 <= working_count, "绝大多数采场落了地（落不了的不过 2%）");
     std::printf("  地标：摆了 %zu、落不了 %zu、岛底的洞 %d\n", plan.landmarks.size(), plan.landmarks_failed.size(), plan.underside);
-    check(plan.underside == 26 && plan.landmarks.size() + plan.landmarks_failed.size() + 26 == 355 && plan.landmarks_failed.size() * 20 <= plan.landmarks.size(),
-            "点 355 处（泉眼、洞穴、温泉、盐泉、化石）：岛底的洞 26 处不摆，其余绝大多数摆得出样子");
+    check(plan.underside == 26 && plan.landmarks.size() + plan.landmarks_failed.size() + 26 == 356 && plan.landmarks_failed.size() * 20 <= plan.landmarks.size(),
+            "点 356 处（泉眼、洞穴、温泉、盐泉、化石）：岛底的洞 26 处不摆，其余绝大多数摆得出样子");
     bool spots_ok = true, piles_ok = true, site_fields_ok = true;
     for (const ResourceSite &s : plan.sites) {
         const ResourceWorking &w = data.workings[size_t(s.working)];
@@ -4935,8 +4959,8 @@ void test_climate() {
         return;
     }
     check(c.days.size() == 336 && std::abs(c.calendar.latitude_deg - 34.2321) < 1e-3 && c.calendar.tilt_deg == 34.0 && c.ref_m == 755.5 &&
-                    std::abs(c.rim_m - 528.3) < 1e-9 && c.season_names.size() == 4 && c.season_names[0] == "冷季" && c.calendar.days_per_month == 28,
-            "开局那群：336 天、北纬 34.23°、交角 34°、台面 755.5 m、岸缘 528.3 m、四季名（冷季起头）");
+                    std::abs(c.rim_m - 528.2) < 1e-9 && c.season_names.size() == 4 && c.season_names[0] == "冷季" && c.calendar.days_per_month == 28,
+            "开局那群：336 天、北纬 34.23°、交角 34°、台面 755.5 m、岸缘 528.2 m、四季名（冷季起头）");
     check(c.days[0].kind == WeatherKind::CLEAR && c.days[0].wind_from_deg == 258.0 && std::abs(c.days[0].wind_ms - 3.7) < 1e-9 && c.days[0].sailable,
             "第 0 天：晴、风从 258° 来 3.7 m/s、能出航");
     int no_sail = 0;

@@ -1,7 +1,7 @@
 extends Node
 ## 岛群的河（world_seed42.tscn，开局那群）端到端测试：
-## 开局（不钉径流，跟着全局钟的日历：开局配置的那一天，#6329 是第 85 天、四月初二开春）：水情不枯（径流指数不低于年均的一半），
-## 出生点最近的溪沿途 200 m 处处有水、有水深
+## 开局（不钉径流，跟着全局钟的日历：#6329 是第 85 天、四月初二开春）：全群背景径流不枯，
+## 出生点最近的临时流水路径沿途 200 m 的供水类型、实际流量、干湿和宽深一致，允许局部断流
 ## → 主码头附近找一条大河 → 瞬移到河滩上、面朝下游 → 脚下有河况、HUD 报河宽水深 → 河心的地面是河床、水面高过河床
 ## → 径流钉在年均 / 枯水 / 大水三档：水深、水面宽跟着涨落，大水漫出平岸 → 零径流边界隐藏水面 → 放开钉子后跟着钟走、换日子水情变
 ## → 到这条河的河口看跌水 → 飞到河的上空往下游看。
@@ -114,24 +114,24 @@ func _physics_process(delta: float) -> void:
 			if not _expect(not near.is_empty(), "出生点 3 km 内没有河"):
 				return
 			# 从源头附近向下游走；必须实际查足样本，不能走一步就 break 后误判通过。
-			var shallow := 0
+			var inconsistent := 0
 			var checked := 0
 			var least := INF
 			var at: Dictionary = near
 			for k in range(25):
 				var here: Dictionary = world.get_river_at(at["x"], at["z"])
 				checked += 1
-				if here.is_empty() or not bool(here["wet"]) or float(here["width"]) <= 0 or float(here["discharge_m3_s"]) <= 0:
-					shallow += 1
+				if here.is_empty() or not here.get("temporary_flow", false) or bool(here["wet"]) != (float(here["discharge_m3_s"]) > 0) or (not bool(here["wet"]) and (float(here["width"]) != 0 or float(here["depth"]) != 0)):
+					inconsistent += 1
 				else:
 					least = minf(least, float(here["depth"]))
 				var next: Dictionary = world.find_river_near(float(at["x"]) + float(at["dir_x"]) * 8.0, float(at["z"]) + float(at["dir_z"]) * 8.0, 12.0, SMALL_STREAM_KM2)
 				if next.is_empty() or Vector2(next.x - at.x, next.z - at.z).length() < 4.0:
 					break
 				at = next
-			print("river_e2e: 开局最近的河 %.0f m 外：检查 %d 处，缺水 %d 处，最浅 %.3f m" % [
-				Vector2(near["x"] - spawn.x, near["z"] - spawn.z).length(), checked, shallow, least])
-			if not _expect(checked >= 20 and shallow == 0 and is_finite(least), "开局细溪必须查足样本且源流量仍有水"):
+			print("river_e2e: 开局最近的临时流路 %.0f m 外：检查 %d 处，数据不一致 %d 处，最浅 %.3f m" % [
+				Vector2(near["x"] - spawn.x, near["z"] - spawn.z).length(), checked, inconsistent, least])
+			if not _expect(checked >= 20 and inconsistent == 0, "开局临时流路必须查足样本，供水类型和实际干湿一致"):
 				return
 			_goto(Phase.FIND)
 		Phase.FIND:

@@ -39,10 +39,11 @@ struct WorldGrid {
         int island = 0, down = -1, join = -1, exit = 0, basin = -1;
         double outlet_drop = 0.0; // world.json landscape.falls 的 kind=0 崖瀑
         // rivers.json COLS, preserved in generator order (row/col identify cell centres).
-        std::vector<std::array<float, 20>> points;
+        std::vector<std::array<float, 21>> points; // 第21列 flow_regime；旧格式为 -1（未知）
     };
     std::vector<RiverSource> river_sources;
     std::vector<std::vector<float>> basin_runoff;
+    int event_basin_offset = 0; // v7：后半是临时流水的事件曲线；v6=0
     bool authoritative_rivers = false;
 
     // 赋存场的层（同 export_skyisle.py 的 FIELD_KINDS、生成器的 res_field）

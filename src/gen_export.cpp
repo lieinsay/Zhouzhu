@@ -578,7 +578,7 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
     std::string out;
     out.reserve(n * 30 + 64);
     out += "ZZWG";
-    put<uint32_t>(out, 6u);
+    put<uint32_t>(out, 7u);
     put<uint32_t>(out, uint32_t(R.rows));
     put<uint32_t>(out, uint32_t(R.cols));
     put<double>(out, R.res);
@@ -643,18 +643,20 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
         for (int v : { s.island, s.down, s.join, int(s.exit), s.basin }) put<int32_t>(out, v);
         put<uint32_t>(out, uint32_t(s.n));
         for (int i = s.start; i < s.start + s.n; i++) {
-            const double vals[20] = { double(net.cell[i] / W), double(net.cell[i] % W), double(net.level[i]), npround(net.acc[i], 2),
-                npround(net.q_mean[i], 4), npround(net.q_bf[i], 4), npround(net.w[i], 2), npround(net.d[i], 2),
-                npround(net.w_mean[i], 2), npround(net.d_mean[i], 2), npround(net.surf[i], 1), npround(net.bed[i], 1),
+            const double vals[21] = { double(net.cell[i] / W), double(net.cell[i] % W), double(net.level[i]), npround(net.acc[i], 2),
+                npround(net.q_mean[i], 6), npround(net.q_bf[i], 6), npround(net.w[i], 6), npround(net.d[i], 6),
+                npround(net.w_mean[i], 6), npround(net.d_mean[i], 6), npround(net.surf[i], 1), npround(net.bed[i], 1),
                 npround(net.slope[i], 5), npround(net.d50_mm[i], 3), double(net.d50c[i]), double(net.planform[i]),
-                npround(net.ssc[i], 0), npround(net.fp_l[i], 0), npround(net.fp_r[i], 0), double(net.confine[i]) };
+                npround(net.ssc[i], 0), npround(net.fp_l[i], 0), npround(net.fp_r[i], 0), double(net.confine[i]), double(net.flow_regime[i]) };
             for (double v : vals) put<float>(out, float(v));
         }
     }
-    put<uint32_t>(out, uint32_t(net.basins.size()));
-    for (const auto &b : net.basins) {
-        put<uint32_t>(out, uint32_t(b.index.size()));
-        for (double v : b.index) put<float>(out, float(npround(v, 3)));
+    // 前半持续供水，后半同一批流域的事件径流；GPU 与 CPU 用同一个索引。
+    put<uint32_t>(out, uint32_t(net.basins.size() * 2));
+    for (int event = 0; event < 2; ++event) for (const auto &b : net.basins) {
+        const auto &index = event ? b.event_index : b.index;
+        put<uint32_t>(out, uint32_t(index.size()));
+        for (double v : index) put<float>(out, float(npround(v, 6)));
     }
     return out;
 }

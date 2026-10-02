@@ -88,6 +88,7 @@ struct RiverVertex {
     double floodplain_at(double side) const { return source_data() ? (side>=0 ? floodplain_left : floodplain_right) : floodplain; }
     double core_at(double side) const { return half()+floodplain_at(side); }
     int basin = -1;
+    int flow_regime = -1; // -1 旧数据未知；0 临时路径；1 常驻河
 
     double half() const { return 0.5 * width; }
     double core() const { return 0.5 * width + floodplain; } // 河道 + 滩（地形全按横断面）

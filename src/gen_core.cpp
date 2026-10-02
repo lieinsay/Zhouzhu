@@ -385,7 +385,7 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         run.set("island_sha1", cfg.island_sha1);
         stamp.set("run", run);
         Json exp = Json::obj();
-        exp.set("terrain_version", 6);
+        exp.set("terrain_version", 7);
         exp.set("exporter", "src/gen_export.cpp");
         stamp.set("export", exp);
         std::vector<std::pair<std::string, double>> secs = { { "generate", r_times.generate }, { "write", r_times.write } };

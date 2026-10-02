@@ -14,7 +14,9 @@ var bed := 0.0
 func _plan() -> void:
 	var data_dir := "res://planet/seed42/groups/%d" % world.get_node_id()
 	var f := FileAccess.open(data_dir.path_join("terrain.bin"), FileAccess.READ)
-	f.seek(8)
+	f.seek(4)
+	var version := f.get_32()
+	var stride := 21 if version >= 7 else 20
 	var rows := f.get_32()
 	var cols := f.get_32()
 	var res := f.get_double()
@@ -34,9 +36,9 @@ func _plan() -> void:
 		f.get_32() # exit
 		var b := int(f.get_32())
 		var n := f.get_32()
-		var pts := f.get_buffer(n * 80).to_float32_array()
+		var pts := f.get_buffer(n * stride * 4).to_float32_array()
 		for i in range(2, n - 2):
-			var p := pts.slice(i * 20, (i + 1) * 20)
+			var p := pts.slice(i * stride, (i + 1) * stride)
 			var pos := Vector2(x0 + p[1] * res, z0 + p[0] * res)
 			var distance := pos.distance_to(Vector2(dock.x, dock.z))
 			if p[3] < 100.0 or p[8] < 5.0 or p[12] > 0.015:
@@ -51,8 +53,9 @@ func _plan() -> void:
 			point = p
 			river_probe = pos
 			basin = b
-			flow_dir = Vector3(pts[(i + 1) * 20 + 1] - p[1], 0, pts[(i + 1) * 20] - p[0]).normalized()
+			flow_dir = Vector3(pts[(i + 1) * stride + 1] - p[1], 0, pts[(i + 1) * stride] - p[0]).normalized()
 	var basins := f.get_32()
+	if version >= 7 and not point.is_empty() and point[20] == 0: basin += basins / 2
 	for b in basins:
 		var days := f.get_32()
 		var values := f.get_buffer(days * 4).to_float32_array()
@@ -96,7 +99,7 @@ func _enter() -> void:
 	var q := q_mean * series[sample_day]
 	var depth := d_bf * pow(q / q_bf, 0.4)
 	var width := w_bf * pow(q / q_bf, 0.26)
-	var speed := q / (width * depth)
+	var speed := q / (width * depth) if width * depth > 0 else 0.0
 	if absf(float(here["discharge_m3_s"]) - q) > 0.001 or absf(float(here["depth"]) - depth) > 0.001 or absf(float(here["width"]) - width) > 0.001 or absf(float(here["speed_m_s"]) - speed) > 0.001:
 		push_error("river_data_shots: source daily contract failed %s" % here)
 		get_tree().quit(1)

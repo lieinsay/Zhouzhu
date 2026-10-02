@@ -20,7 +20,7 @@
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
-    u32      版本 = 6（游戏仍兼容 1–5；v6 使用生成器岸距、中心线及逐盆地径流）
+    u32      版本 = 7（游戏仍兼容 1–6；v7 分开常驻供水与临时事件径流）
     u32      rows, cols
     f64      res_m（格距）
     f64      x0, z0（格 (0, 0) 格心的游戏坐标，米）
@@ -41,11 +41,11 @@ terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北�
     u8 [8][rows·cols] cultivable、cultivated、fallow_years、landcover_natural、landuse、lith、cloud_forest、rockwall_dir
     f32[6][rows·cols] rockwall_m、rain_mm、runoff_mm、bed_m、wt_m、condense_mm（无河床格的 bed_m 可为 NaN）
     i32[rows·cols] polder_id；至此 v6 每格 66 字节
-    u32 中心线段数；每段 { i32 island, down, join, exit, basin; u32 点数; f32[点数][20] }
+    u32 中心线段数；每段 { i32 island, down, join, exit, basin; u32 点数; f32[点数][21] }
       列序沿用 rivers.json COLS：row,col,level,acc_km2,q_mean,q_bf,w_bf_m,d_bf_m,w_mean_m,d_mean_m,surf_m,bed_m,
-      slope,d50_mm,d50,planform,ssc_mgl,fp_left_m,fp_right_m,confine
+      slope,d50_mm,d50,planform,ssc_mgl,fp_left_m,fp_right_m,confine,flow_regime（0 临时、1 常驻）
       down 指下游段，join 是下游段的共享点下标；exit = 汇入/崖边/湖/没入地里 的 0/1/2/3
-    u32 盆地数；每个盆地 { u32 天数; f32[天数] 年均归一的逐日径流指数 }
+    u32 曲线数 = 2×盆地数；每条 { u32 天数; f32[天数] 年均归一的逐日径流指数 }，前半持续供水，后半事件径流
 
     流向由生成器的汇流面积（flowacc_km2）反推：挨着虚空的格同生成器一律流出去（河口）；其余格按汇流守恒配给下游——生成器的 D8 走在它自己的「路由面」上（填平面 + 弯曲噪声 + 朝岸缘微倾，
     河道据此下切），导出的高程上重算的 D8 会把整片流域改道。下游格的汇流 = 本格 + 各上游格的汇流，所以按汇流从大到小，
@@ -97,7 +97,7 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 
-VERSION = 6
+VERSION = 7
 FIELD_KINDS = ["ore", "sulfur", "placer", "clay", "gravel", "stone", "salt"]  # terrain.bin 赋存场的层序（同生成器的 res_field）
 
 
@@ -324,6 +324,9 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
     max_shore = ndimage.maximum(inside, labels=island + 1, index=np.arange(1, island.max() + 2))
 
     dst.mkdir(parents=True, exist_ok=True)
+    rivers = json.loads((src / "rivers.json").read_text(encoding="utf-8"))
+    if rivers["cols"][-1] != "flow_regime" or any("event_index" not in b for b in rivers["basins"]):
+        raise ValueError("河网数据过期：请先用新版生成器重新生成该岛群")
     with open(dst / "terrain.bin", "wb") as f:
         f.write(b"ZZWG")
         f.write(struct.pack("<III", VERSION, rows, cols))
@@ -353,17 +356,17 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
         for key in ("rockwall_m", "rain_mm", "runoff_mm", "bed_m", "wt_m", "condense_mm"):
             f.write(terrain[key].astype("<f4").tobytes())
         f.write(terrain["polder_id"].astype("<i4").tobytes())
-        rivers = json.loads((src / "rivers.json").read_text(encoding="utf-8"))
         segments = rivers["segments"]
         f.write(struct.pack("<I", len(segments)))
         exits = ["汇入", "崖边", "湖", "没入地里"]
         for segment in segments:
             f.write(struct.pack("<5iI", segment["island"], segment["down"], segment["join"], exits.index(segment["exit"]), segment["basin"], len(segment["pts"])))
             f.write(np.asarray(segment["pts"], dtype="<f4").tobytes())
-        f.write(struct.pack("<I", len(rivers["basins"])))
-        for basin in rivers["basins"]:
-            f.write(struct.pack("<I", len(basin["index"])))
-            f.write(np.asarray(basin["index"], dtype="<f4").tobytes())
+        f.write(struct.pack("<I", len(rivers["basins"]) * 2))
+        for key in ("index", "event_index"):
+            for basin in rivers["basins"]:
+                f.write(struct.pack("<I", len(basin[key])))
+                f.write(np.asarray(basin[key], dtype="<f4").tobytes())
 
     write_weather(src, info, dst, run)
 

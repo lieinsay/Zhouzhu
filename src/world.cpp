@@ -804,6 +804,8 @@ Dictionary GroupWorld::get_river_at(double p_x, double p_z) const {
     out["bankfull_discharge_m3_s"]=hit.at.bankfull_flow;
     out["runoff_index"]=local_runoff;
     out["basin"]=hit.at.basin;
+    out["flow_regime"]=hit.at.flow_regime;
+    out["temporary_flow"]=hit.at.flow_regime == 0;
     out["floodplain_left"]=hit.at.floodplain_left;
     out["floodplain_right"]=hit.at.floodplain_right;
     out["slope"]=hit.at.slope;
@@ -2223,6 +2225,7 @@ String GroupWorld::map_location_text(const Vector3 &p_global) const {
                 : flow > 0.6                     ? String(U"水大")
                 : flow < 0.15                    ? String(U"水浅")
                                                  : String(U"水平");
+        text += bool(river["temporary_flow"]) ? String(U" · 临时流水") : String(U" · 河流");
         text += vformat(String(U" · 河宽 %s m（平岸 %s m）· 水深 %s m · %s"), String::num(double(river["width"]), 1),
                 String::num(double(river["bankfull_width"]), 1), String::num(double(river["depth"]), 2), state);
     }

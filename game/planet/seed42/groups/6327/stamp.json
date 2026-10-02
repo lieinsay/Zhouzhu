@@ -1,10 +1,10 @@
 {
  "node": 6327,
- "created": "2026-10-02T15:00:03",
+ "created": "2026-10-02T23:04:53",
  "generator": {
   "root": "extern/skyisle-gen",
-  "commit": "103fea1",
-  "dirty": true,
+  "commit": "cfb126c",
+  "dirty": false,
   "backend": "游戏内"
  },
  "run": {
@@ -14,11 +14,11 @@
   "island_sha1": "ed99cae3c67e8373ec4a31758893846d149a7aa7"
  },
  "export": {
-  "terrain_version": 6,
+  "terrain_version": 7,
   "exporter": "src/gen_export.cpp"
  },
  "seconds": {
-  "generate": 2.91,
-  "write": 0.51
+  "generate": 2.33,
+  "write": 0.47
  }
 }

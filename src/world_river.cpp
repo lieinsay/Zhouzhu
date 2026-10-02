@@ -159,6 +159,7 @@ RiverVertex lerp_vertex(const RiverVertex &a, const RiverVertex &b, double t) {
     v.floodplain_left=a.floodplain_left+(b.floodplain_left-a.floodplain_left)*t;
     v.floodplain_right=a.floodplain_right+(b.floodplain_right-a.floodplain_right)*t;
     v.basin = a.basin;
+    v.flow_regime = a.flow_regime;
     return v;
 }
 
@@ -253,6 +254,8 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
                 v.floodplain_right=std::max(0.0,double(p[18]));
                 v.floodplain = std::max(v.floodplain_left,v.floodplain_right);
                 v.basin = src.basin >= 0 ? src.basin : int(g.basin_runoff.size()) - 1;
+                v.flow_regime = int(p[20]);
+                if (v.flow_regime == 0 && g.event_basin_offset > 0) v.basin += g.event_basin_offset;
                 raw.push_back(v);
             }
             // join is a point index in the downstream segment, not in this segment.

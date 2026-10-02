@@ -77,6 +77,8 @@ func _ready() -> void:
 	var last := code.rfind("}")
 	marker.code = code.substr(0, last) + "\nALBEDO = vec3(1.0, 0.0, 1.0); EMISSION = vec3(1.0, 0.0, 1.0); ALPHA = 1.0;\n}" + code.substr(last + 1)
 	print("river_opening_render: source=", world.get_data_dir(), " point=", p, " bankfull_width=", river.width)
+	var wet_views := 0
+	var dry_views := 0
 	for month in 12:
 		if month > 0: get_node("/root/DeveloperTools").shift_days(28)
 		for frame in 4: await get_tree().process_frame
@@ -85,9 +87,11 @@ func _ready() -> void:
 		if absf(float(original.get_shader_parameter("calendar_day")) - day) > 0.001:
 			_fail("GPU calendar did not follow the F6 monthly action")
 			return
-		if not bool(state.wet) or float(state.width) <= 0:
-			_fail("source has discharge but opening brook was hidden: %s" % state)
+		if not state.get("temporary_flow", false):
+			_fail("opening path lost its temporary-flow classification")
 			return
+		if bool(state.wet): wet_views += 1
+		else: dry_views += 1
 		await RenderingServer.frame_post_draw
 		if not shots.is_empty():
 			get_viewport().get_texture().get_image().save_png(shots.path_join("month_%02d.png" % month))
@@ -106,11 +110,14 @@ func _ready() -> void:
 				if minf(color.r, color.b) - color.g > 0.16: visible += 1
 		for node in water: node.material_override = null
 		print("river_opening_render: month=%d day=%.3f depth=%.4f width=%.3f water_pixels=%d center=%s" % [month, day, state.depth, state.width, visible, center])
-		if visible < 12:
+		if (bool(state.wet) and visible < 12) or (not bool(state.wet) and visible > 2):
 			if not shots.is_empty(): img.save_png(shots.path_join("missing_water_mask.png"))
-			_fail("water is below terrain or discarded in the opening view")
+			_fail("rendered water disagrees with source wet/dry state")
 			return
-	print("river_opening_render: PASS 12 monthly views contain rendered water")
+	if wet_views == 0 or dry_views == 0:
+		_fail("monthly regression must cover both wet and dry days")
+		return
+	print("river_opening_render: PASS %d wet and %d dry monthly views match source" % [wet_views,dry_views])
 	get_tree().quit(0)
 
 func _fail(message: String) -> void:
