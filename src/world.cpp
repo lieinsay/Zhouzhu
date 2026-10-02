@@ -440,6 +440,23 @@ void GroupWorld::update_shading() {
 }
 
 bool GroupWorld::load_data(std::string &r_error) {
+    // Scene children may load World before PlanetView. Apply the package datum
+    // before constructing island bodies, so their clearance uses this planet.
+    const String planet_path=data_dir.get_base_dir().get_base_dir().path_join("planet.bin");
+    if(FileAccess::file_exists(planet_path)) {
+        const PackedByteArray package=FileAccess::get_file_as_bytes(planet_path);
+        PlanetData planet;
+        std::string error;
+        if(!planet.parse_planet(package.ptr(),size_t(package.size()),error)) {
+            r_error=error;
+            return false;
+        }
+        VerticalDatum::SEA_Y=planet.vertical.sea;
+        VerticalDatum::CLOUD_BASE_Y=planet.vertical.base;
+        VerticalDatum::CLOUD_TOP_Y=planet.vertical.top;
+        VerticalDatum::ISLAND_CLEARANCE_M=planet.vertical.clearance;
+        VerticalDatum::ISLAND_BOTTOM_MIN_Y=planet.vertical.top+planet.vertical.clearance;
+    }
     const PackedByteArray bytes = FileAccess::get_file_as_bytes(data_dir.path_join("terrain.bin"));
     std::string error;
     if (bytes.is_empty() || !parse_world_grid(bytes.ptr(), size_t(bytes.size()), grid, error)) {

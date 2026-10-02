@@ -39,12 +39,12 @@ void planet_squeeze_f(const float p_visual[3], const float p_cam[3], float p_kee
 // 垂直结构（D13；浮高计划 F4 起整体下移 1200 m，原来是 −3800 / −5000 / −5600）：游戏 y（生成器的高度零点之上的米）。
 // 云带相对海面的高度不变（海面之上 600–1800 m），等于把岛抬高 1.2 km。气温照旧：y < 0 取 y = 0 处（云带是逆温层）
 struct VerticalDatum {
-    static constexpr double CLOUD_TOP_Y = -5000.0; // 云带顶（看得见的云海面）
-    static constexpr double CLOUD_BASE_Y = -6200.0; // 云带底
-    static constexpr double SEA_Y = -6800.0; // 海面
+    inline static double CLOUD_TOP_Y = -5000.0; // 云带顶（看得见的云海面）
+    inline static double CLOUD_BASE_Y = -6200.0; // 云带底
+    inline static double SEA_Y = -6800.0; // 海面
     // 岛底（含岩棱的最深处）至少高出云带顶这么多（浮高计划 F3：超了就把龙骨收短，见 world_terrain 的 island_body）
-    static constexpr double ISLAND_CLEARANCE_M = 1000.0;
-    static constexpr double ISLAND_BOTTOM_MIN_Y = CLOUD_TOP_Y + ISLAND_CLEARANCE_M;
+    inline static double ISLAND_CLEARANCE_M = 1000.0;
+    inline static double ISLAND_BOTTOM_MIN_Y = CLOUD_TOP_Y + ISLAND_CLEARANCE_M;
 };
 
 struct PlanetVec {
@@ -83,7 +83,7 @@ struct PlanetShape {
     constexpr double radius() const { return sea_radius_m + datum_above_sea_m; } // 弯曲与投影统一用的 R
 };
 // 缺省行星（生成器的 6371 km）的 R：没有行星包时的缺省值、着色器全局参数的初值（project.godot 的 planet_curve_radius、planet_datum_r）
-constexpr double PLANET_DEFAULT_R = PlanetShape().radius(); // 6,377,800 m
+constexpr double PLANET_DEFAULT_R = 6377800.0; // fallback when no planet package is loaded
 
 // 经纬度（度）↔ 单位向量（同 sphere.py）
 PlanetVec planet_unit(double p_lat_deg, double p_lon_deg);

@@ -16,6 +16,20 @@ DeveloperTools="*res://dev_tools.tscn"
 
 [shader_globals]
 
+planet_sea_y={
+"type": "float",
+"value": -6800.0
+}
+planet_cloud_base_y={
+"type": "float",
+"value": -6200.0
+}
+planet_cloud_top_y={
+"type": "float",
+"value": -5000.0
+}
+
+
 wx_elev={
 "type": "sampler2D",
 "value": ""

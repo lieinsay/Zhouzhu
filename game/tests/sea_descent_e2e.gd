@@ -19,7 +19,7 @@ const SETTLE_TIMEOUT := 150.0
 const MOVES := ["move_forward", "move_back", "move_left", "move_right", "ascend", "descend", "sprint", "jump"]
 var DAY := StoryStart.get_calendar_start()  # 开局那天（开局配置的 calendar_start：#6329 是四月初二）
 const HOUR := 10.0
-const CRUISE_Y := 420.0
+var CRUISE_Y := 420.0
 const TOP_Y := -5000.0  # 云带顶、云底、海面：同 src/planet_frame.h 的 VerticalDatum（浮高计划 F4 起整体下移 1200 m）
 const BASE_Y := -6200.0
 const SEA_Y := -6800.0
@@ -327,7 +327,7 @@ func _physics_process(delta: float) -> void:
 				_finish(false, "30 s 没上舵（%s）" % main.get_prompt())
 		Phase.CLIMB_OUT:
 			_hold("ascend", true)
-			if ship.global_position.y > climb_from + 8.0:
+			if ship.global_position.y > climb_from + 24.0:
 				_hold("ascend", false)
 				_goto(Phase.GEAR_UP)
 		Phase.GEAR_UP:
@@ -336,6 +336,9 @@ func _physics_process(delta: float) -> void:
 			elif not held.has("gear_up"):
 				_tap("gear_up")
 		Phase.FLY_OUT:
+			# New terrain can stand above the historical 420 m cruise height.
+			# Clear the coastal approach before beginning the sea descent.
+			CRUISE_Y = maxf(CRUISE_Y, climb_from + 80.0)
 			if _fly_toward(sea_point, CRUISE_Y, 150.0):
 				_release_all()
 				if ship.get_speed() < 3.0:
@@ -375,6 +378,7 @@ func _descend() -> void:
 	if not seen.has("before") and cam_y < DECK_Y:
 		seen["before"] = true
 		before = look.duplicate()
+		before["weather_look"] = atmosphere.get_look().duplicate()
 		_log("云带顶上（相机 %.0f）：日光 %.3f、环境光 %.3f、雾 %.7f、天空蒙雾 %.2f、颠 %.2f；船 %s、此地「%s」云 %.2f；HUD「%s」" % [cam_y, float(look["sun_energy"]), float(look["ambient_energy"]),
 			float(look["fog_density"]), float(look["fog_sky_affect"]), float(look["turbulence"]), ship.global_position, atmosphere.get_weather()["kind_name"],
 			float(atmosphere.get_weather()["cloud"]), status.get_slice("\n", 0)])
@@ -554,7 +558,15 @@ func _ascend() -> void:
 			atmosphere.get_weather()["kind_name"], float(atmosphere.get_weather()["cloud"]), pw_up.get("nodes", []), pw_up.get("weights", []), float(pw_up.get("bg", 0.0)),
 			atmosphere.get_override()])
 		for key in ["sun_energy", "ambient_energy", "fog_sky_affect", "fog_r", "fog_g", "fog_b"]:
-			if absf(float(look[key]) - float(before[key])) > 0.02:
+			var expected := float(before[key])
+			if key == "sun_energy":
+				# 晴天的云团仍会随风平移，比较相同云带剖面时扣除此刻的遮光。
+				var old_weather: Dictionary = before["weather_look"]
+				var new_weather: Dictionary = atmosphere.get_look()
+				var old_dim := clampf(1.0 - 0.7 * float(old_weather["cloud"]) * (0.4 + 0.6 * float(old_weather["cover"])) - 0.25 * float(old_weather["overcast"]), 0.12, 1.0)
+				var new_dim := clampf(1.0 - 0.7 * float(new_weather["cloud"]) * (0.4 + 0.6 * float(new_weather["cover"])) - 0.25 * float(new_weather["overcast"]), 0.12, 1.0)
+				expected *= new_dim / old_dim
+			if absf(float(look[key]) - expected) > 0.02:
 				_finish(false, "升回云带顶以上 %s 没恢复：%.4f（降下去之前 %.4f）" % [key, float(look[key]), float(before[key])])
 				return
 		if absf(float(look["fog_density"]) - float(before["fog_density"])) > 1e-6 or float(look["band_inside"]) > 0.0 or float(look["band_under"]) > 0.0 or float(look["turbulence"]) > 0.0:

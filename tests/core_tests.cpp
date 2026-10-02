@@ -6486,8 +6486,8 @@ void test_sea_descent() {
     std::printf("[sea_descent]\n");
     const CloudBandRules rules;
     // 按垂直结构取高（浮高计划 F4 起整体下移 1200 m：云带 −5000…−6200、海面 −6800）
-    constexpr double TOP = VerticalDatum::CLOUD_TOP_Y, BASE = VerticalDatum::CLOUD_BASE_Y, SEA = VerticalDatum::SEA_Y;
-    constexpr double ABOVE = TOP + 800.0, MID = 0.5 * (TOP + BASE), UNDER = BASE - 300.0, FLOOR = SEA + 15.0;
+    const double TOP = VerticalDatum::CLOUD_TOP_Y, BASE = VerticalDatum::CLOUD_BASE_Y, SEA = VerticalDatum::SEA_Y;
+    const double ABOVE = TOP + 800.0, MID = 0.5 * (TOP + BASE), UNDER = BASE - 300.0, FLOOR = SEA + 15.0;
     check(TOP - BASE == 1200.0 && BASE - SEA == 600.0, "云带厚 1.2 km、云底以下 600 m 净空（相对海面不变）");
     check_near(PlanetShape().radius() - PlanetShape().sea_radius_m, -SEA, 1e-9, "基准球 R = 海面半径 + 6800 m");
     {
