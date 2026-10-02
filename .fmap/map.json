@@ -1196,7 +1196,7 @@
         "tests/core_tests.cpp"
       ],
       "since": "e24",
-      "evidence": "v7 开局实际检查 25 点、数据一致；河流端到端与 12 月 GPU 检查通过；完整核心 8219 项通过。"
+      "evidence": "本次无头 E2E 通过；隐藏 GPU 从实际开局逐月推进，4 湿/8 干均与源状态相符。42 项断面与平滑契约检查通过。"
     },
     {
       "id": "land-berth",
@@ -3646,6 +3646,33 @@
         "extern/skyisle-gen/skyisle_gen/web/server.py"
       ],
       "since": "e123"
+    },
+    {
+      "id": "skyisle-channel-geometry",
+      "label": "河槽断面与深度口径",
+      "detail": "由幂函数断面积积分区分 A/W 与中心最大深度；切槽与河点使用同一静态几何。参考流量倍数仍为待校准的工程近似，未宣称坡度、阻力与水沙过程已闭合。",
+      "tag": "外部：skyisle-gen",
+      "evidence": "生成器积分自检与跨年份/切槽导出/临时断流/核心候选隔离检查通过。",
+      "sources": [
+        "extern/skyisle-gen/core/include/skyisle/island/channel_geometry.hpp",
+        "extern/skyisle-gen/core/src/island/river.cpp",
+        "extern/skyisle-gen/core/src/island/rivernet.cpp",
+        "docs/RIVER-MODEL-AUDIT.md"
+      ],
+      "since": "e126",
+      "parent": "skyisle-core"
+    },
+    {
+      "id": "river-geometry-audit",
+      "label": "全河网断面审计",
+      "detail": "比较多个流域和汇水等级，分开统计有水日宽深与全年断流比例；核对水输入、分类、年均流量和断面闭合。日常水宽未统一放大。",
+      "tag": "工具",
+      "evidence": "四群抽样、两现用群水账逐值相同、Python/C++ 地形包逐字节一致；6538 项源点/实包检查通过。",
+      "sources": [
+        "tools/audit_river_geometry.py",
+        "docs/RIVER-MODEL-AUDIT.md"
+      ],
+      "since": "e127"
     }
   ],
   "edges": [
@@ -5089,9 +5116,10 @@
     {
       "from": "world-river-water",
       "to": "world-river-regime",
-      "label": "当前流量、宽深、干湿",
+      "label": "日流量与湿断面积",
       "chains": [
-        "river-supply-separation"
+        "river-supply-separation",
+        "river-cross-section"
       ]
     },
     {
@@ -7764,6 +7792,43 @@
       "chains": [
         "river-supply-separation"
       ]
+    },
+    {
+      "from": "skyisle-channel-geometry",
+      "to": "skyisle-river-supply",
+      "label": "原供水与分类"
+    },
+    {
+      "from": "gen-export",
+      "to": "skyisle-channel-geometry",
+      "label": "同源宽深与床高",
+      "chains": [
+        "river-cross-section"
+      ]
+    },
+    {
+      "from": "world-river-net",
+      "to": "gen-export",
+      "label": "源几何",
+      "chains": [
+        "river-cross-section"
+      ]
+    },
+    {
+      "from": "river-geometry-audit",
+      "to": "gen-export",
+      "label": "实包核对",
+      "chains": [
+        "river-cross-section"
+      ]
+    },
+    {
+      "from": "skyisle-river-inspector",
+      "to": "skyisle-channel-geometry",
+      "label": "同一断面",
+      "chains": [
+        "river-cross-section"
+      ]
     }
   ],
   "chains": [
@@ -10198,6 +10263,63 @@
         "skyisle-river-supply",
         "world-terrain",
         "world-river-water"
+      ]
+    },
+    {
+      "id": "river-cross-section",
+      "title": "修复：各级河槽与真实湿断面积一致",
+      "story": "玩家沿河看到与源断面一致的水深和水流，小溪随实际雨雪事件变湿、干涸，河槽在断流时保留。",
+      "date": "2026-10-03",
+      "color": "#6c9a3b",
+      "commits": "66336bd（生成器 dfc07a2）",
+      "steps": [
+        {
+          "text": "生成器按原供水形成干流、支流和小溪的同口径断面",
+          "nodes": [
+            "skyisle-channel-geometry",
+            "skyisle-river-supply"
+          ]
+        },
+        {
+          "text": "细包保留河床高程精度，并同步更新相应岛群远景",
+          "nodes": [
+            "gen-export",
+            "skyisle-export",
+            "skyisle-lod"
+          ]
+        },
+        {
+          "text": "游戏沿保留源点和汇流锚点的平滑中线还原河床",
+          "nodes": [
+            "world-river-net"
+          ]
+        },
+        {
+          "text": "逐日水量通过实际湿断面积决定平均流速，事件退水后小溪归零",
+          "nodes": [
+            "world-river-regime",
+            "world-river-water"
+          ]
+        },
+        {
+          "text": "生成器查看器展示同口径的当前宽度、中心深度和流速",
+          "nodes": [
+            "skyisle-river-inspector"
+          ]
+        }
+      ],
+      "nodes": [
+        "river-geometry-audit",
+        "river-e2e",
+        "skyisle-channel-geometry",
+        "skyisle-river-supply",
+        "gen-export",
+        "skyisle-export",
+        "skyisle-lod",
+        "world-river-net",
+        "world-river-regime",
+        "world-river-water",
+        "skyisle-river-inspector"
       ]
     }
   ],
@@ -13575,6 +13697,68 @@
           "world-river-net",
           "skyisle-river-inspector",
           "skyisle-river-supply"
+        ]
+      }
+    },
+    {
+      "id": "e126",
+      "type": "extend",
+      "date": "2026-10-03",
+      "title": "拓展：统一各级河槽的断面口径",
+      "summary": "干流、支流和小溪共用静态参考断面，将平均水深换成中心最大深度，取消临时槽额外减半；供水与常驻分类不放大。",
+      "commits": "66336bd（生成器 dfc07a2）",
+      "nodes": [
+        "skyisle-core",
+        "skyisle-channel-geometry"
+      ],
+      "info": {
+        "node": "skyisle-core",
+        "children": [
+          "skyisle-channel-geometry"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e127",
+      "type": "slice",
+      "date": "2026-10-03",
+      "title": "切片：修复：各级河槽与真实湿断面积一致",
+      "summary": "玩家沿河看到与源断面一致的水深和水流，小溪随实际雨雪事件变湿、干涸，河槽在断流时保留。",
+      "commits": "66336bd（生成器 dfc07a2）",
+      "chain": "river-cross-section",
+      "nodes": [
+        "river-geometry-audit",
+        "river-e2e",
+        "skyisle-channel-geometry",
+        "skyisle-river-supply",
+        "gen-export",
+        "skyisle-export",
+        "skyisle-lod",
+        "world-river-net",
+        "world-river-regime",
+        "world-river-water",
+        "skyisle-river-inspector"
+      ],
+      "info": {
+        "created": [
+          "river-geometry-audit"
+        ],
+        "reused": [
+          "river-e2e",
+          "skyisle-channel-geometry",
+          "skyisle-river-supply",
+          "gen-export",
+          "skyisle-export",
+          "skyisle-lod",
+          "world-river-net",
+          "world-river-regime",
+          "world-river-water",
+          "skyisle-river-inspector"
+        ],
+        "updated": [
+          "river-e2e"
         ]
       }
     }
