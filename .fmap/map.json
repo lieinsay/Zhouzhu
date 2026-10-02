@@ -573,7 +573,7 @@
       "label": "分块地面",
       "detail": "按四叉树铺顶面、崖壁、岛底、块边裙边与叶块碰撞；顶面颜色读取同一地表过渡场。近处河槽随源宽局部细分：平岸宽 <2 m 的槽到 0.125 m，2–12 m 的槽到 0.5 m，接缝与碰撞同步，避免地面三角形盖住真实浅溪；不放大水宽或抬高水位。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "a401987：斜向细溪回归修复前 16/16 点被盖住、修复后 16/16 点露出水面；地形编辑回归通过。远处粗 LOD 对细溪仍可能采样不足，不能将近处修复当作全部距离验收。",
+      "evidence": "b825e0d：斜向细溪回归修复前 16/16 点被盖住、修复后 16/16 点露出水面；地形编辑回归通过。远处粗 LOD 对细溪仍可能采样不足，不能将近处修复当作全部距离验收。",
       "sources": [
         "src/terrain_tile.h",
         "src/terrain_tile.cpp"
@@ -787,7 +787,7 @@
         "src/world_village.cpp"
       ],
       "since": "e14",
-      "evidence": "875e7c6：接岸坡道修复；world_features_e2e 验证开局码头步行、入坞改船与返回泊位。"
+      "evidence": "ccb1a7c：接岸坡道修复；world_features_e2e 验证开局码头步行、入坞改船与返回泊位。"
     },
     {
       "id": "site-stream",
@@ -3093,7 +3093,7 @@
       "label": "垂直结构（云带、海面、R）",
       "detail": "从行星数据包读取海面、云带底/顶与岛底净空，GroupWorld 建岛体前先应用，PlanetView 同步 C++ 和着色器共用参数，投影半径由海面半径和基准高差计算。旧值 −6800/−6200/−5000 m、净空 1000 m 和 R=6377800 m 仅作无包默认，不再描述为所有场景固定值。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "e487124 与完整核心回归：导出、解析、岛体构造与着色器使用同一份包内垂直结构。",
+      "evidence": "dd71031 与完整核心回归：导出、解析、岛体构造与着色器使用同一份包内垂直结构。",
       "sources": [
         "src/planet_frame.h",
         "src/planet_data.cpp",
@@ -3627,7 +3627,7 @@
       "label": "河流供水类型",
       "detail": "逐点输出 flow_regime；常驻候选用不含凝结增量的径流阈值。每个出口有独立 index 与有限窗 event_index，临时流路无事件后归零。常驻水源仍为流域水库近似。",
       "tag": "外部：skyisle-gen",
-      "evidence": "b038fa2；251 项 Python 测试、C++ selftest、三种种子体检通过；core_gain=0/3 不改变降雨、汇流面积与河网掩膜。",
+      "evidence": "9accce7；251 项 Python 测试、C++ selftest、三种种子体检通过；core_gain=0/3 不改变降雨、汇流面积与河网掩膜。",
       "sources": [
         "extern/skyisle-gen/core/src/island/hydro.cpp",
         "extern/skyisle-gen/core/src/island/rivernet.cpp"
@@ -3640,7 +3640,7 @@
       "label": "生成器河段查看器",
       "detail": "点击河线查看当前日期的宽深、Q、流速、供水类型和有水天数；日期滑条同步更新数据与地图，蓝线有水、棕线断流。",
       "tag": "界面",
-      "evidence": "cfb126c；真实点击 #6329 段 #3471，第 84 日零宽深流量，第 12 日宽 0.204 m、深 0.031 m、2.333 L/s。",
+      "evidence": "aa6468c；真实点击 #6329 段 #3471，第 84 日零宽深流量，第 12 日宽 0.204 m、深 0.031 m、2.333 L/s。",
       "sources": [
         "extern/skyisle-gen/skyisle_gen/web/static/island.html",
         "extern/skyisle-gen/skyisle_gen/web/server.py"
@@ -10097,7 +10097,7 @@
         "river-e2e",
         "world-e2e"
       ],
-      "commits": "f043711..9ab9d09"
+      "commits": "f043711..dd956bc"
     },
     {
       "id": "river-supply-separation",
@@ -10160,7 +10160,7 @@
         "map-image",
         "world-map"
       ],
-      "commits": "27022a6（生成器 b038fa2、cfb126c）"
+      "commits": "431f4a7（生成器 9accce7、aa6468c）"
     }
   ],
   "events": [
@@ -13386,7 +13386,7 @@
       "date": "2026-10-02",
       "title": "场景重构：world_seed42 的地貌、河流与聚落",
       "summary": "重构现有世界场景，复用地形、河流、码头与跨群加载节点，新增景观职责；按职责扩展记录，不是新玩法切片，也没有合并功能节点。此前游戏重建河网、叠加岸线偏移并在多处使用固定高度；现在 v6 保留源中心线和岸线，逐日流域水量驱动 CPU/GPU 的宽深，场景与着色器共用包内垂直基准。开局浅溪另修地面遮挡、旧水深阈值和透明度，完整核心 1774 项、12 个月 GPU 水面与 4 项玩法回归通过。全行星粗包和罕见地貌逐类验收未完成；缺少细岸缘、曲流和分汊几何时保留数据缺口。",
-      "commits": "f043711..9ab9d09",
+      "commits": "f043711..dd956bc",
       "chain": "generator-natural-world",
       "nodes": [
         "gen-export",
