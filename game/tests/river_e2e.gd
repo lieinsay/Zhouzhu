@@ -3,12 +3,13 @@ extends Node
 ## 开局（不钉径流，跟着全局钟的日历：开局配置的那一天，#6329 是第 85 天、四月初二开春）：水情不枯（径流指数不低于年均的一半），
 ## 出生点最近的溪沿途 200 m 处处有水、有水深
 ## → 主码头附近找一条大河 → 瞬移到河滩上、面朝下游 → 脚下有河况、HUD 报河宽水深 → 河心的地面是河床、水面高过河床
-## → 径流钉在年均 / 枯水 / 大水三档：水深、水面宽跟着涨落，大水漫出平岸 → 源头的小溪枯水时断流 → 放开钉子后跟着钟走、换日子水情变
+## → 径流钉在年均 / 枯水 / 大水三档：水深、水面宽跟着涨落，大水漫出平岸 → 零径流边界隐藏水面 → 放开钉子后跟着钟走、换日子水情变
 ## → 到这条河的河口看跌水 → 飞到河的上空往下游看。
 ##
 ##   Godot --headless --path game --fixed-fps 60 res://tests/river_e2e.tscn
 ##
 ## 去掉 --headless、末尾加 `-- --shots=<目录>`，每个阶段存一张截图（目视检查用）。
+## 开局细溪的实际 GPU 像素验收另见 river_opening_render.tscn；无头查询不能证明水面可见。
 
 const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 120.0  # 模拟秒
@@ -272,4 +273,4 @@ func _physics_process(delta: float) -> void:
 				_goto(Phase.DONE)
 		Phase.DONE:
 			if pending_shot.is_empty() and _in_phase() > 0.3:
-				_finish(true, "河网、河道、水涨水落与水面都对")
+				_finish(true, "河道查询、水情和水面块挂载通过；GPU 像素另见 river_opening_render")

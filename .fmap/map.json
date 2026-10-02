@@ -549,9 +549,9 @@
     {
       "id": "world-grid",
       "label": "岛群栅格",
-      "detail": "岛群 100 m 栅格（terrain.bin v1–v5）：高程、岸距、岛号、地表、水文、河道、地形区；v5 起另有赋存场（field_at 双线性品位）与片号（patch_at）。",
+      "detail": "读取 terrain v1–v6；新版附带自然地貌、岩性、岩壁、耕地、水文、盐类、来源河网及逐日流域指数。校验长度与索引边界。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest world_grid / world 2051",
+      "evidence": "1754 项核心测试通过，含矩形岸距、v6 往返和来源河网核对。",
       "sources": [
         "src/world_grid.h",
         "src/world_grid.cpp"
@@ -1146,9 +1146,9 @@
     {
       "id": "world-river-net",
       "label": "河网",
-      "detail": "按汇流建河网（干流 + 支流、磨圆摆开、河口截在岸线）；栅格 v3 时宽深与生成器取大、平岸水面不高于生成器的 河床 + 水深。",
+      "detail": "v6 保留源中心线、level、bed/surf、真实流量宽深、左右漫滩、河床质与平面型；不自行生成曲流/分汊/砂洲。surf 与 bed+d_bf 的源口径差分别保留供诊断。岛缘沿 coast_dist_m=0，不补随机缺口。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest world_rivers：588 条、1160 km，水面顺流不升、支流接干流、越往下越宽",
+      "evidence": "52,459 个源点核对床高、Q/w/d、surf、level 与床质；river_contract 回归检查左右漫滩和零源流量。源平岸差最大约 0.48 m，见 docs/RIVER-DATA.md。",
       "sources": [
         "src/world_river.h",
         "src/world_river.cpp"
@@ -1159,9 +1159,9 @@
     {
       "id": "world-river-regime",
       "label": "水情",
-      "detail": "weather.tsv 的逐日降水进快慢两个线性水库 → 径流指数（1 = 年均）；river_stage 按渗漏门槛（小溪先干）与水力几何给此刻的水深、水位、水面半宽，没过平岸就漫滩。着色器用同一公式。",
+      "detail": "按各流域指定年份的 336 日指数算 Q、水深、宽度与 Q/(w*d) 流速；日间和年末连续插值。缺少逐日断流掩膜与多年序列时不复制天气水库猜测，现有一年按年循环。v6 中仍有正流量的厘米级溪水保留，零流量才隐藏；旧包保留原显示阈值。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest：年均 = 1、0.15..6.7、小溪 0.5 时断流、大水漫滩不出滩",
+      "evidence": "river_contract 校验正流量浅溪不被旧阈值隐藏；river_opening_render 以 F6 的 shift_days(28) 路径验证 12 个月 GPU 日历和水面同步。",
       "sources": [
         "src/world_river.h",
         "src/world_river.cpp"
@@ -1172,14 +1172,17 @@
     {
       "id": "world-river-water",
       "label": "河的水面",
-      "detail": "水面按 512 m 块切成带子（river_mesh 纯算法），焦点 4 km 内挂上，共用 river.gdshader 材质；每帧由 GameClock 算径流设进去；河口挂跌水帘；runoff_override / calendar_offset 调试用。",
+      "detail": "水面按源水位和逐日 Q 绘制，不按相机距离抬水；Q/(w*d) 驱动水纹，SSC/D50/比降驱动材质，左右滩宽独立。近处河槽采用 0.5 m 网格，平岸宽小于 2 m 的细溪进一步细分到 0.125 m 并同步碰撞与接缝，避免地面盖水。v6 正流量浅水保留显示与掠射反光，不套旧 3 cm 隐藏阈值。河口水帘取 falls.drop_m；100 m D8 线形与远处细溪 LOD 限制保留。",
       "tag": "场景角色",
-      "evidence": "river_e2e：年均 / 枯水 / 大水三档水深水面宽涨落、小溪断流、换日子水情变；开窗截图目视",
+      "evidence": "a401987：开局最近溪流 (34450,-12150) 的斜向河槽回归从 0/16 露水变为 16/16；F6 同接口逐月调时，12/12 Vulkan 画面检测到真实水面像素（373–1072），并检查正常材质截图。114 项针对性核心与 4 项玩法回归通过。 最终完整核心 1774 项通过。",
       "sources": [
         "src/river_mesh.h",
         "src/river_mesh.cpp",
         "src/world.cpp",
-        "game/shaders/river.gdshader"
+        "src/terrain_tile.cpp",
+        "game/shaders/river.gdshader",
+        "game/tests/river_opening_render.gd",
+        "docs/RIVER-DATA.md"
       ],
       "since": "e24",
       "parent": "world-node"
@@ -1187,12 +1190,16 @@
     {
       "id": "river-e2e",
       "label": "河 e2e",
-      "detail": "岛群大河河滩上 HUD 报河宽水深、河心地面是河床、三档水情涨落、小溪断流、换日子水情变、河口跌水、上空看河。",
+      "detail": "数值回归检查流量、宽深、Q=vwd、零流量边界、逐日变化和水面块挂载；开局溪流必须实际查足至少 20 点，不能提前结束后误通过。GPU 回归独立运行：使用 F6 同接口逐月拨时，对最近溪流检测通过生产水位/裁切/深度测试的水面像素，保存正常材质截图。",
       "tag": "测试",
       "sources": [
-        "game/tests/river_e2e.gd"
+        "game/tests/river_e2e.gd",
+        "game/tests/river_opening_render.gd",
+        "game/tools/river_data_shots.gd",
+        "tests/core_tests.cpp"
       ],
-      "since": "e24"
+      "since": "e24",
+      "evidence": "开局 E2E 实查 25 点、缺水 0 点，最浅 0.035 m；GPU 12/12 月通过。此前大河截图及无头查询不足以验收开局水面可见性，已在 docs/RIVER-DATA.md 纠正。"
     },
     {
       "id": "land-berth",
@@ -3014,13 +3021,13 @@
     {
       "id": "gen-export",
       "label": "生成器产物 → 游戏文件（C++）",
-      "detail": "export_skyisle.py、export_planet.py 连同生成器前端的拼装与译码移成 C++：terrain.bin（按汇流反推流向、虚空格取最近陆地）、world.json、sites.tsv、resources.tsv、weather.tsv、lods.bin、weather.bin / .wx（zlib 1.3.1 level 9）、planet.bin（as_column 的收窄照抄）；与 Python 那条路逐字节相同。",
+      "detail": "C++ 与 Python 同步导出 terrain v6：66 字节栅格、来源中心线/20 列属性、流域逐日径流、聚落景观；常住中转站进入站点与人口账，非定居点不增人口。记录生成器提交与本地 core 修改。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "97 群 × 7 份、3 个新世界、游戏里生成的 42 份与 Python 那条路比，0 份不同；Debug 与 Release 相同",
+      "evidence": "核心测试与生成器自检通过；#6329 的 sites/resources/weather 两路一致；旧参考产物的岸距及泉流量有已记录的上游坐标修正差异。",
       "sources": [
-        "src/gen_export.h",
         "src/gen_export.cpp",
-        "extern/zlib"
+        "tools/export_skyisle.py",
+        "tools/export_planet.py"
       ],
       "since": "e101"
     },
@@ -3602,6 +3609,19 @@
       ],
       "since": "e121",
       "parent": "zhouzhu-gen-cli"
+    },
+    {
+      "id": "world-landscape",
+      "label": "地貌与聚落景观",
+      "detail": "近处流式铺峰林、天生桥、岸缘泉线/崖瀑、水利、轮值中转站、遗迹与季节使用点；大尺度地貌来自栅格。常住建筑由村落流式系统负责。",
+      "tag": "场景角色",
+      "evidence": "31/31 Godot 回归通过，开局与跨群加载无脚本错误；Vulkan Forward+ 集中检查码头、河流、岸线三张实机截图，无着色器报错。罕见地貌尚未逐类巡检。",
+      "sources": [
+        "game/landscape_view.gd",
+        "game/shaders/spring_water.gdshader",
+        "src/world.cpp"
+      ],
+      "since": "e122"
     }
   ],
   "edges": [
@@ -5021,7 +5041,10 @@
     {
       "from": "world-river-net",
       "to": "world-grid",
-      "label": "流向 / 汇流"
+      "label": "来源中心线与流域",
+      "chains": [
+        "generator-natural-world"
+      ]
     },
     {
       "from": "world-river-regime",
@@ -7664,6 +7687,22 @@
       "from": "zhouzhu-gen-near-lods",
       "to": "export-planet",
       "label": "同样的 lods.bin"
+    },
+    {
+      "from": "world-node",
+      "to": "world-landscape",
+      "label": "景观数据与流式焦点",
+      "chains": [
+        "generator-natural-world"
+      ]
+    },
+    {
+      "from": "world-river-regime",
+      "to": "world-grid",
+      "label": "逐日径流指数",
+      "chains": [
+        "generator-natural-world"
+      ]
     }
   ],
   "chains": [
@@ -9914,6 +9953,72 @@
         "placed-props",
         "world-2051-scene"
       ]
+    },
+    {
+      "id": "generator-natural-world",
+      "title": "新版生成器接入：自然地貌、河网与聚落",
+      "story": "玩家走到真实岸线和河滩，沿着涨落的河水探索地貌、水利与村落，再飞往其他岛群靠泊落地。",
+      "date": "2026-10-02",
+      "color": "#b8a12a",
+      "steps": [
+        {
+          "text": "世界载入新版生成器的地形、河网、聚落与垂直结构",
+          "nodes": [
+            "gen-core",
+            "gen-export",
+            "world-grid",
+            "planet-view"
+          ]
+        },
+        {
+          "text": "玩家踩在切到真实岸线的地面上，看到多核岛底、岩壁和近处地貌",
+          "nodes": [
+            "world-terrain",
+            "world-terrain-body",
+            "world-node",
+            "world-landscape"
+          ]
+        },
+        {
+          "text": "河道保留原来的流路，水面按所属流域的逐日径流涨落",
+          "nodes": [
+            "world-river-net",
+            "world-river-regime",
+            "world-river-water"
+          ]
+        },
+        {
+          "text": "常住中转站有居民，季节采场与无人使用点保留自身用途",
+          "nodes": [
+            "world-sites",
+            "world-landscape"
+          ]
+        },
+        {
+          "text": "玩家沿码头坡道上下船，飞往新岛群，也能落在无人岛的自然落点",
+          "nodes": [
+            "world-dock",
+            "group-stream"
+          ]
+        }
+      ],
+      "nodes": [
+        "gen-export",
+        "world-grid",
+        "world-river-net",
+        "world-river-regime",
+        "world-landscape",
+        "gen-core",
+        "planet-view",
+        "world-terrain",
+        "world-terrain-body",
+        "world-node",
+        "world-river-water",
+        "world-sites",
+        "world-dock",
+        "group-stream"
+      ],
+      "commits": "875e7c6..a401987"
     }
   ],
   "events": [
@@ -13131,6 +13236,56 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e122",
+      "type": "slice",
+      "date": "2026-10-02",
+      "title": "切片：新版生成器接入：自然地貌、河网与聚落",
+      "summary": "玩家走到真实岸线和河滩，沿着涨落的河水探索地貌、水利与村落，再飞往其他岛群靠泊落地。",
+      "chain": "generator-natural-world",
+      "nodes": [
+        "gen-export",
+        "world-grid",
+        "world-river-net",
+        "world-river-regime",
+        "world-landscape",
+        "gen-core",
+        "planet-view",
+        "world-terrain",
+        "world-terrain-body",
+        "world-node",
+        "world-river-water",
+        "world-sites",
+        "world-dock",
+        "group-stream"
+      ],
+      "info": {
+        "created": [
+          "world-landscape"
+        ],
+        "reused": [
+          "gen-export",
+          "world-grid",
+          "world-river-net",
+          "world-river-regime",
+          "gen-core",
+          "planet-view",
+          "world-terrain",
+          "world-terrain-body",
+          "world-node",
+          "world-river-water",
+          "world-sites",
+          "world-dock",
+          "group-stream"
+        ],
+        "updated": [
+          "gen-export",
+          "world-grid",
+          "world-river-net",
+          "world-river-regime"
+        ]
       }
     }
   ],
