@@ -10,6 +10,7 @@
 #include <godot_cpp/core/class_db.hpp>
 
 #include "hinterland.h"
+#include "dock_builder.h"
 #include "template_library.h"
 
 using namespace godot;
@@ -467,7 +468,10 @@ void SiteStream::refresh(int p_build_budget) {
             const auto found = docks.find(k);
             if (found == docks.end() && d <= dock_radius) {
                 WorldDock *dock = memnew(WorldDock);
-                dock->setup(plans[size_t(k)], k, world->get_dock_id(k));
+                const auto &plan=plans[size_t(k)];
+                const double back=dock_builder::PIER_INLAND+4.0;
+                const auto approach=world->get_terrain().sample(plan.x-back*plan.out_x,plan.z-back*plan.out_z);
+                dock->setup(plan, k, world->get_dock_id(k), approach.land ? approach.top : plan.y);
                 add_child(dock);
                 docks[k] = dock;
             } else if (found != docks.end() && d > dock_radius * hysteresis) {
