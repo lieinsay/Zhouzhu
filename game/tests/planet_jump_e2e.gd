@@ -237,7 +237,8 @@ func _physics_process(delta: float) -> void:
 			# 人站在地上；码头边的村子铺出来（给村子 60 s）
 			var sites: SiteStream = stream.get_group_sites(node)
 			var villages: int = sites.get_built_villages().size() if sites != null else 0
-			if not _standing() or villages == 0:
+			var inhabited: bool = not _anchor_world().get_info().get("villages", []).is_empty()
+			if not _standing() or (inhabited and villages == 0):
 				if in_phase > 60.0:
 					_finish(false, "群 #%d 落地 60 s：站稳 %s、铺出来的村 %d" % [node, _standing(), villages])
 				return

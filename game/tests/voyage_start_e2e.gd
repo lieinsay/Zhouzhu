@@ -505,7 +505,11 @@ func _physics_process(delta: float) -> void:
 				elif in_phase > 20.0:
 					_finish(false, "走完了路点，但没判定抵达（站稳 %s）" % _standing_on_ground())
 			elif in_phase > 60.0:
-				_finish(false, "60 s 没走下船")
+				var hits := []
+				for k in player.get_slide_collision_count():
+					var hit := player.get_slide_collision(k)
+					hits.append([str(hit.get_collider().get_path()), hit.get_normal()])
+				_finish(false, "60 s 没走下船：路点 %s，碰撞 %s" % [waypoints, hits])
 		Phase.ASHORE_VILLAGE:
 			var v := _dest_village()
 			if v == null:

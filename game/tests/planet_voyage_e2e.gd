@@ -504,9 +504,11 @@ func _physics_process(delta: float) -> void:
 					return
 				var src: Dictionary = _world(AWAY).get_info()["source"]
 				var offset_h := (float(src["lon"]) - planet.get_clock_longitude()) / 15.0
-				var local := fposmod(GameClock.get_hour() + offset_h, 24.0)
+				# HUD follows the player's actual longitude, while the village
+				# weather model uses its group centre; coastal docks can differ.
+				var local := fposmod(GameClock.get_hour() + planet.get_local_hour_offset(), 24.0)
 				var expect := "地方时 %02d:%02d" % [int(local), int(floor(local * 60.0 + 1e-6)) % 60]
-				var alt := fposmod(local + 1.0 / 60.0, 24.0)
+				var alt := fposmod(local - 1.0 / 60.0, 24.0) # HUD refresh may lag a frame across the minute.
 				var expect2 := "地方时 %02d:%02d" % [int(alt), int(floor(alt * 60.0 + 1e-6)) % 60]
 				if not status.contains(expect) and not status.contains(expect2):
 					_finish(false, "HUD 该报地方时（钟点 %.3f h + %.2f min = %s）：%s" % [GameClock.get_hour(), offset_h * 60.0, expect, status])

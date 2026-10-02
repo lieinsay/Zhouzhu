@@ -128,6 +128,9 @@ func _physics_process(delta: float) -> void:
 				print("world_e2e: 出生站稳（%.1f s），块 %d，待建 %d" % [in_phase, world.get_tile_count(), world.get_pending_count()])
 				_shot("1_spawn")
 				run_from = player.global_position
+				# Spawn faces the pier. Exercise walking inland, away from the
+				# berthed ship and the coast rather than walking into its hull.
+				player.set_look_yaw(player.get_look_yaw() + PI)
 				_goto(Phase.RUN)
 			elif in_phase > SETTLE_TIMEOUT:
 				_finish(false, "出生后 %.0f s 还没站稳：%s" % [SETTLE_TIMEOUT, player.global_position])

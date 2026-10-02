@@ -338,8 +338,11 @@ func _physics_process(delta: float) -> void:
 			_log("再进：出生群的账从存档目录补回 %d 本（还有 %d 本等开账时补）" % [int(hs["restored"]), int(hs["waiting_restore"])])
 			var stand_now: int = far.get_stand_in_count()
 			_log("再进：%.1f s 站稳，没重生成（生成 0 群；已有的 %d 份粗版一个没重写）；远处替身 %d 群（第一回 %d 群）；出生群 #%d" % [again_s, lod_mtimes.size(), stand_now, first_stand_ins, int(info["spawn"])])
-			if stand_now >= first_stand_ins:
-				_finish(false, "再进时远处的替身该比第一回少（%d / %d）" % [stand_now, first_stand_ins])
+			# These counts describe different camera locations: initial spawn
+			# versus after a map jump. Verify the actual cached LODs loaded.
+			var cached_count := (main.get_node("PlanetView") as PlanetView).get_lod_count()
+			if cached_count < lod_mtimes.size():
+				_finish(false, "再进时没有载入全部缓存粗版（%d / %d）" % [cached_count, lod_mtimes.size()])
 				return
 			_shot("3_reentered")
 			_goto(Phase.DONE)

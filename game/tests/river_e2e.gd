@@ -141,7 +141,7 @@ func _physics_process(delta: float) -> void:
 			print("river_e2e: 大河在 (%.0f, %.0f)，汇流 %.0f km²，平岸宽 %.1f m，离出生点 %.1f km" % [
 				river["x"], river["z"], river["acc_km2"], river["width"], Vector2(river["x"] - spawn.x, river["z"] - spawn.z).length() / 1000.0])
 			# 河滩：顺水方向的左手边，平岸外一半滩宽处
-			var side: float = 0.5 * float(river["width"]) + 0.5 * float(river["floodplain"])
+			var side: float = 0.5 * float(river["width"]) + 0.5 * float(river["floodplain_left"])
 			bank = Vector3(river["x"] + float(river["dir_z"]) * side, 0, river["z"] - float(river["dir_x"]) * side)
 			world.set_runoff_override(1.0)
 			_stand_at(bank, river["dir_x"], river["dir_z"])
@@ -169,6 +169,9 @@ func _physics_process(delta: float) -> void:
 					return
 				if not _expect(bool(mean_state["wet"]) and float(mean_state["level"]) > ground + 0.1, "年均时大河里没水"):
 					return
+				var q: float = float(mean_state["speed_m_s"]) * float(mean_state["width"]) * float(mean_state["depth"])
+				if not _expect(absf(q - float(mean_state["discharge_m3_s"])) < 0.001, "流速与流量、断面不一致"):
+					return
 				world.set_runoff_override(0.2)
 				_goto(Phase.LOW)
 				_shot("2_low")
@@ -178,20 +181,21 @@ func _physics_process(delta: float) -> void:
 				print("river_e2e: 枯水：水深 %.2f，水面宽 %.1f" % [low_state["depth"], low_state["width"]])
 				if not _expect(float(low_state["depth"]) < float(mean_state["depth"]) and float(low_state["width"]) < float(mean_state["width"]), "枯水时水没变浅变窄"):
 					return
-				world.set_runoff_override(6.5)
+				# Bankfull / mean flow is supplied per reach by the generator.
+				world.set_runoff_override(2.0 * float(mean_state["bankfull_discharge_m3_s"]) / maxf(0.000001, float(mean_state["mean_discharge_m3_s"])))
 				_goto(Phase.FLOOD)
 				_shot("3_flood")
 		Phase.FLOOD:
 			if _in_phase() > 0.5:
 				var flood: Dictionary = world.get_river_at(river["x"], river["z"])
 				print("river_e2e: 大水：水深 %.2f，水面宽 %.1f（平岸 %.1f）" % [flood["depth"], flood["width"], flood["bankfull_width"]])
-				if not _expect(float(flood["width"]) > float(flood["bankfull_width"]), "大水没漫出平岸"):
+				if not _expect(float(flood["depth"]) > float(flood["bankfull_depth"]) and float(flood["width"]) >= float(flood["bankfull_width"]), "大水没到平岸以上"):
 					return
 				if not _expect(String(main.get_status_text()).contains("涨水漫滩"), "HUD 没说涨水"):
 					return
 				_goto(Phase.BROOK)
 		Phase.BROOK:
-			# 源头的小溪：旱季断流，来水了又有水
+			# 只验证零径流边界；源数据尚无逐日干湿掩膜，不能称作自然旱季断流验收。
 			# find_river_near 取最近的一点，在大河边上找常就是大河本身；绕着它换几处找源头附近的小溪
 			var probe := {}
 			for offset in [Vector2(-3000, 0), Vector2(3000, 0), Vector2(0, -3000), Vector2(0, 3000), Vector2(-2000, 2000), Vector2(2000, -2000)]:
@@ -201,11 +205,11 @@ func _physics_process(delta: float) -> void:
 					break
 			if not _expect(not probe.is_empty(), "大河附近找不到汇流 < 2.5 km² 的小溪"):
 				return
-			world.set_runoff_override(0.2)
+			world.set_runoff_override(0.0)
 			var dry: Dictionary = world.get_river_at(probe["x"], probe["z"])
 			world.set_runoff_override(1.5)
 			var wet: Dictionary = world.get_river_at(probe["x"], probe["z"])
-			print("river_e2e: 小溪（汇流 %.1f km²）：径流 0.2 时 %s，1.5 时水深 %.2f" % [probe["acc_km2"], "有水" if dry["wet"] else "断流", wet["depth"]])
+			print("river_e2e: 小溪（汇流 %.1f km²）：零径流时 %s，1.5 时水深 %.2f" % [probe["acc_km2"], "有水" if dry["wet"] else "断流", wet["depth"]])
 			if not _expect(not bool(dry["wet"]) and bool(wet["wet"]), "小溪没有随水情断流 / 来水"):
 				return
 			_goto(Phase.CLOCK)
@@ -217,7 +221,7 @@ func _physics_process(delta: float) -> void:
 			for day in [2, 30, 60, 100, 150, 200, 250, 300]:
 				GameClock.set_calendar_shift(day - GameClock.get_calendar_start())  # 拨日历（钟不走）
 				world.set_runoff_override(-1.0)
-				seen[snappedf(world.get_runoff(), 0.01)] = true
+				seen[snappedf(float(world.get_river_at(river["x"], river["z"])["runoff_index"]), 0.01)] = true
 			if not _expect(seen.size() >= 4, "换了日子径流不变：%s" % [seen.keys()]):
 				return
 			GameClock.set_calendar_shift(shift0)
