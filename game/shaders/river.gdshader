@@ -98,7 +98,8 @@ void vertex() {
 
 void fragment() {
 	float half_w = v_lateral >= 0.0 ? v_half_left : v_half_right;
-	if (v_depth < wet_depth || abs(v_lateral) > half_w) discard;
+	// The source already supplies discharge. Its shallow brooks are not dry rivers.
+	if ((v_source > 0.5 ? v_depth <= 0.0 : v_depth < wet_depth) || abs(v_lateral) > half_w) discard;
 	// Local optical depth fades at the waterline instead of painting the entire strip opaque.
 	float side = abs(v_lateral);
 	float u = clamp(side / v_bank_half, 0.0, 1.0);
@@ -121,8 +122,12 @@ void fragment() {
 	float foam = smoothstep(0.7, 1.0, w2) * turbulence * mix(0.08, 0.25, grain);
 	col = mix(col, foam_color, clamp(foam + v_fall * 0.65, 0.0, 0.9));
 	ALBEDO = mix(col, ice_color, v_ice);
-	float edge = smoothstep(0.0, 0.08, local_depth);
-	ALPHA = mix(mix(0.35, 0.93, max(deep, suspended)) * edge, 0.96 * edge, v_ice);
+	// Even a centimetre of water reflects at grazing angles. The old 8 cm fade
+	// made whole 2--4 cm brooks almost transparent, rather than just their banks.
+	float edge = smoothstep(0.0, 0.004, local_depth);
+	float fresnel = 0.02 + 0.98 * pow(1.0 - clamp(dot(normalize(NORMAL), normalize(VIEW)), 0.0, 1.0), 5.0);
+	float opacity = mix(mix(0.35, 0.93, max(deep, suspended)), 1.0, fresnel);
+	ALPHA = mix(opacity * edge, 0.96 * edge, v_ice);
 	ROUGHNESS = mix(mix(0.09, 0.25, turbulence), 0.3, v_ice);
 	SPECULAR = 0.5;
 }

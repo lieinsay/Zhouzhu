@@ -14,7 +14,6 @@ const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 120.0  # 模拟秒
 const BIG_RIVER_KM2 := 60.0  # 找汇流至少这么大的河
 const SMALL_STREAM_KM2 := 1.0
-const OPENING_MIN_DEPTH := 0.3  # 开局出生点附近的溪至少这么深
 const OPENING_MIN_RUNOFF := 0.5  # 开局的径流指数（年均 = 1）不低于这个：开春不是枯水期（#6329 开局那天 0.87）
 
 enum Phase { SETTLE, OPENING, FIND, LAND, MEAN, LOW, FLOOD, BROOK, CLOCK, MOUTH, AERIAL, DONE }
@@ -113,24 +112,25 @@ func _physics_process(delta: float) -> void:
 			var near: Dictionary = world.find_river_near(spawn.x, spawn.z, 3000.0, SMALL_STREAM_KM2)
 			if not _expect(not near.is_empty(), "出生点 3 km 内没有河"):
 				return
-			# 顺着这条溪往上游走 200 m，每 8 m 贴回中线查一次：处处有水
+			# 从源头附近向下游走；必须实际查足样本，不能走一步就 break 后误判通过。
 			var shallow := 0
+			var checked := 0
 			var least := INF
 			var at: Dictionary = near
 			for k in range(25):
 				var here: Dictionary = world.get_river_at(at["x"], at["z"])
-				if here.is_empty() or not bool(here["wet"]) or float(here["depth"]) < OPENING_MIN_DEPTH:
+				checked += 1
+				if here.is_empty() or not bool(here["wet"]) or float(here["width"]) <= 0 or float(here["discharge_m3_s"]) <= 0:
 					shallow += 1
 				else:
 					least = minf(least, float(here["depth"]))
-				var next: Dictionary = world.find_river_near(float(at["x"]) - float(at["dir_x"]) * 8.0, float(at["z"]) - float(at["dir_z"]) * 8.0, 6.0, SMALL_STREAM_KM2)
-				if next.is_empty():
+				var next: Dictionary = world.find_river_near(float(at["x"]) + float(at["dir_x"]) * 8.0, float(at["z"]) + float(at["dir_z"]) * 8.0, 12.0, SMALL_STREAM_KM2)
+				if next.is_empty() or Vector2(next.x - at.x, next.z - at.z).length() < 4.0:
 					break
 				at = next
-			print("river_e2e: 开局径流 %.2f；出生点最近的河（%.0f m 外，汇流 %.1f km²）往上游 200 m 有 %d 处水浅于 %.1f m，最浅 %.2f m" % [
-				world.get_runoff(), Vector2(near["x"] - spawn.x, near["z"] - spawn.z).length(), near["acc_km2"], shallow, OPENING_MIN_DEPTH, least])
-			# 河口前后、支流汇口会偏离中线几米：容一两处
-			if not _expect(shallow <= 2, "开局出生点附近的河断断续续"):
+			print("river_e2e: 开局最近的河 %.0f m 外：检查 %d 处，缺水 %d 处，最浅 %.3f m" % [
+				Vector2(near["x"] - spawn.x, near["z"] - spawn.z).length(), checked, shallow, least])
+			if not _expect(checked >= 20 and shallow == 0 and is_finite(least), "开局细溪必须查足样本且源流量仍有水"):
 				return
 			_goto(Phase.FIND)
 		Phase.FIND:

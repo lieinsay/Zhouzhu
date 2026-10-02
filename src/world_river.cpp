@@ -222,7 +222,7 @@ RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRule
     st.discharge = st.flow * (p_at.source_data() ? p_at.bankfull_flow : p_rules.mean_discharge(p_at.acc) * p_rules.bankfull_ratio);
     const double area = (st.half_left + st.half_right) * st.depth;
     st.speed = area > 1e-12 ? st.discharge / area : 0.0;
-    st.wet = st.depth > p_rules.wet_depth_m;
+    st.wet = p_at.source_data() ? st.discharge > 0.0 && st.depth > 0.0 : st.depth > p_rules.wet_depth_m;
     return st;
 }
 

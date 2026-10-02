@@ -2729,7 +2729,7 @@ void test_world_rivers() {
     check(dry_bank == 0, "年均水位时水面半宽内是水、外是岸（" + std::to_string(dry_bank) + " 处不对）");
 
     // 水情落到一点上：小溪先干、大河旱季也有水、涨水漫滩
-    check(!river_stage(src, 0.25, rules).wet && river_stage(end, 0.25, rules).wet, "径流 0.25（旱季）：源头的溪干了、干流还有水");
+    check(river_stage(src, 0.25, rules).wet && river_stage(end, 0.25, rules).wet, "源数据仍给出正流量，浅溪与干流都保留水面");
     check(river_stage(end, 0.15, rules).wet, "全年最枯时干流也有水");
     const RiverStage low = river_stage(end, 0.5, rules), high = river_stage(end, 3.0, rules), flood = river_stage(end, 20.0, rules);
     check(low.level < high.level && low.half_width < high.half_width, "水涨了：水位高、水面宽");
@@ -2804,6 +2804,11 @@ void test_river_contract() {
     auto dry_source=p; dry_source.authoritative=true; dry_source.mean_flow=0; dry_source.bankfull_flow=0; dry_source.acc=100;
     const auto zero=river_stage(dry_source,5,rules);
     check(zero.discharge==0 && zero.depth==0 && zero.speed==0 && !zero.wet,"生成器零流量不回退成按面积猜流量的旧河");
+    auto brook=p; brook.width=0.62; brook.depth=0.11; brook.surface=100.11;
+    brook.mean_flow=0.004; brook.bankfull_flow=0.0536;
+    const auto shallow=river_stage(brook,0.23,rules);
+    check(shallow.depth>0 && shallow.depth<0.03 && shallow.wet,
+            "源数据仍有流量的厘米级溪水不能被旧 3 cm 断流阈值隐藏");
 
     WorldGrid g; g.rows=5; g.cols=5; g.res=100; g.authoritative_rivers=true;
     g.height.assign(25,102); g.shore.assign(25,500); g.island.assign(25,0);
@@ -2853,6 +2858,36 @@ void test_river_contract() {
     RiverHit nh; narrow.get_rivers().nearest(px,pz,10,nh);
     const auto dry_stage=river_stage(nh.at,0.5,rules);
     check(rendered>99.9 && rendered<dry_stage.level,"枯水细溪在实际地面/碰撞网格上连续露出，不靠抬高水面");
+
+    // Opening brook: 0.62 m bankfull width, 2--7 cm seasonal depth, diagonal
+    // and offset from grid vertices. A 0.5 m mesh can roof over this entire flow.
+    g.height.assign(25,100.11f); g.shore.assign(25,500);
+    for(size_t k=0;k<r.points.size();k++) {
+        auto &pt=r.points[k]; pt[0]=float(1+k)+0.003f; pt[1]=float(1+k);
+        pt[4]=0.004f; pt[5]=0.0536f; pt[6]=0.62f; pt[7]=0.11f; pt[10]=100.11f; pt[11]=100;
+    }
+    g.river_sources={r};
+    WorldTerrain opening(g,{WorldIsland()},42,rules);
+    const auto opening_tile=build_tile_mesh(opening,layout,layout.leaf_at(150,150));
+    int submerged=0;
+    for(int sample=0;sample<16;sample++) {
+        const double x=145.07+sample*0.17, z=x+double(r.points[0][0]-1)*g.res;
+        double top=-1e9;
+        for(size_t i=0;i+8<opening_tile.collision.size();i+=9) {
+            const auto *a=&opening_tile.collision[i], *b=&opening_tile.collision[i+3], *c=&opening_tile.collision[i+6];
+            const double ax=a[0]+opening_tile.origin_x,az=a[2]+opening_tile.origin_z;
+            const double bx=b[0]+opening_tile.origin_x,bz=b[2]+opening_tile.origin_z;
+            const double cx=c[0]+opening_tile.origin_x,cz=c[2]+opening_tile.origin_z;
+            const double det=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);
+            if(std::abs(det)<1e-9) continue;
+            const double u=((bz-cz)*(x-cx)+(cx-bx)*(z-cz))/det;
+            const double v=((cz-az)*(x-cx)+(ax-cx)*(z-cz))/det;
+            if(u>=-1e-6 && v>=-1e-6 && u+v<=1+1e-6) top=std::max(top,u*a[1]+v*b[1]+(1-u-v)*c[1]);
+        }
+        RiverHit hit; opening.get_rivers().nearest(x,z,1,hit);
+        submerged+=top>99.9 && top<river_stage(hit.at,0.23,rules).level;
+    }
+    check(submerged==16,"开局宽 0.62 m 的斜溪在枯月实际网格中连续有水（"+std::to_string(submerged)+"/16）");
 }
 
 // ---------------------------------------------------------------- 金标：地图宿主重构前后逐位一致

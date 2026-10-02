@@ -409,31 +409,44 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
         }
     };
 
+    constexpr int RIVER_FINE = 16; // 0.125 m for sub-two-metre channels at leaf LOD.
     std::vector<int> river_ids;
     std::vector<int8_t> river_refined(size_t((N+2)*(N+2)),-1);
-    auto refine_quad = [&](int qi,int qj) {
+    auto refine_quad = [&](int qi,int qj) -> int {
         auto &cached=river_refined[size_t((qi+1)*(N+2)+qj+1)];
-        if(cached>=0) return cached!=0;
+        if(cached>=0) return cached;
         RiverHit hit;
-        cached=leaf && p_terrain.get_grid().authoritative_rivers && p_terrain.has_rivers() && solid(qi,qj) && !holed(qi,qj)
+        const bool refine=leaf && p_terrain.get_grid().authoritative_rivers && p_terrain.has_rivers() && solid(qi,qj) && !holed(qi,qj)
                 && p_terrain.get_rivers().nearest(mesh.origin_x+(qj+0.5)*step,mesh.origin_z+(qi+0.5)*step,20.0,hit)
-                && hit.at.width<12.0 && hit.distance<hit.at.half()+2.0*step;
-        return cached!=0;
+                && hit.at.width<12.0 && hit.distance<hit.at.half()+0.8*step;
+        cached=refine ? (hit.at.width<2.0 ? RIVER_FINE : 4) : 0;
+        return cached;
     };
     auto river_vertex = [&](int ri,int cj) {
-        const int side=N*4+1, key=ri*side+cj;
+        const int side=N*RIVER_FINE+1, key=ri*side+cj;
         if(river_ids.empty()) river_ids.assign(size_t(side*side),-1);
         if(river_ids[size_t(key)]>=0) return river_ids[size_t(key)];
-        const double spacing=step/4, x=cj*spacing, z=ri*spacing;
+        const double spacing=step/RIVER_FINE, x=cj*spacing, z=ri*spacing;
         const double wx=mesh.origin_x+x, wz=mesh.origin_z+z;
         auto sample=p_terrain.sample(wx,wz);
-        // 细分带外沿贴合相邻粗三角形的边，消除 T 接缝漏出的亮点。
-        if(ri%4==0 && cj%4!=0 && (!refine_quad(ri/4-1,cj/4) || !refine_quad(ri/4,cj/4))) {
-            const double a=at(ri/4,cj/4).top, b=at(ri/4,cj/4+1).top;
-            sample.top=a+(b-a)*(cj%4)/4.0;
-        } else if(cj%4==0 && ri%4!=0 && (!refine_quad(ri/4,cj/4-1) || !refine_quad(ri/4,cj/4))) {
-            const double a=at(ri/4,cj/4).top, b=at(ri/4+1,cj/4).top;
-            sample.top=a+(b-a)*(ri%4)/4.0;
+        // Shared edges use the coarser of their neighbours (2 m, 0.5 m or 0.125 m).
+        // This also stitches the two river resolutions without T-junction cracks.
+        if(ri%RIVER_FINE==0 && cj%RIVER_FINE!=0) {
+            const int count=std::max(1,std::min(refine_quad(ri/RIVER_FINE-1,cj/RIVER_FINE),refine_quad(ri/RIVER_FINE,cj/RIVER_FINE)));
+            const int interval=RIVER_FINE/count, offset=cj%interval;
+            if(offset) {
+                const double ax=mesh.origin_x+(cj-offset)*spacing;
+                const double a=p_terrain.sample(ax,wz).top,b=p_terrain.sample(ax+interval*spacing,wz).top;
+                sample.top=a+(b-a)*offset/interval;
+            }
+        } else if(cj%RIVER_FINE==0 && ri%RIVER_FINE!=0) {
+            const int count=std::max(1,std::min(refine_quad(ri/RIVER_FINE,cj/RIVER_FINE-1),refine_quad(ri/RIVER_FINE,cj/RIVER_FINE)));
+            const int interval=RIVER_FINE/count, offset=ri%interval;
+            if(offset) {
+                const double az=mesh.origin_z+(ri-offset)*spacing;
+                const double a=p_terrain.sample(wx,az).top,b=p_terrain.sample(wx,az+interval*spacing).top;
+                sample.top=a+(b-a)*offset/interval;
+            }
         }
         const double nx=-(p_terrain.sample(wx+spacing,wz).top-p_terrain.sample(wx-spacing,wz).top)/(2*spacing);
         const double nz=-(p_terrain.sample(wx,wz+spacing).top-p_terrain.sample(wx,wz-spacing).top)/(2*spacing);
@@ -459,15 +472,15 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             mesh.land_quads++;
             const size_t k00 = node(i, j), k01 = node(i, j + 1), k10 = node(i + 1, j), k11 = node(i + 1, j + 1);
             const bool hole = holed(i, j);
-            // 近处细河槽细分到 0.5 m；仍取同一地形函数，不抬水、不改源宽度。
-            // 2 m 格会跨过枯水溪流，让插值地面周期性盖住水面。
-            const bool refine_river = refine_quad(i,j);
+            // Fine enough for the opening 20--30 cm stream; keep source width and stage.
+            const int subdivisions = refine_quad(i,j);
+            const int stride = subdivisions ? RIVER_FINE/subdivisions : 0;
             // 从上往下看：x 向右、z 向下，(i,j) → (i,j+1) → (i+1,j) 是顺时针
             if (!hole) {
-                if (refine_river) {
-                    int ids[5][5];
-                    for(int ri=0;ri<=4;ri++) for(int cj=0;cj<=4;cj++) ids[ri][cj]=river_vertex(i*4+ri,j*4+cj);
-                    for(int ri=0;ri<4;ri++) for(int cj=0;cj<4;cj++) {
+                if (subdivisions) {
+                    int ids[RIVER_FINE+1][RIVER_FINE+1];
+                    for(int ri=0;ri<=subdivisions;ri++) for(int cj=0;cj<=subdivisions;cj++) ids[ri][cj]=river_vertex(i*RIVER_FINE+ri*stride,j*RIVER_FINE+cj*stride);
+                    for(int ri=0;ri<subdivisions;ri++) for(int cj=0;cj<subdivisions;cj++) {
                         b.triangle(ids[ri][cj],ids[ri][cj+1],ids[ri+1][cj],true);
                         b.triangle(ids[ri][cj+1],ids[ri+1][cj+1],ids[ri+1][cj],true);
                     }
@@ -502,11 +515,11 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                     // 崖壁：从顶面垂到岛底
                     b.cliff(&top_pos[ka * 3], &top_pos[kb * 3], &bottom_pos[kb * 3], &bottom_pos[ka * 3], e.nx, e.nz, true);
                 } else if (on_border && !hole) {
-                    if(refine_river) {
+                    if(subdivisions) {
                         // 块边裙边同样细分，避免旧 2 m 的裙边横穿新河槽。
-                        for(int t=0;t<4;t++) {
-                            const int a=river_vertex(e.ai*4+(e.bi-e.ai)*t,e.aj*4+(e.bj-e.aj)*t);
-                            const int c=river_vertex(e.ai*4+(e.bi-e.ai)*(t+1),e.aj*4+(e.bj-e.aj)*(t+1));
+                        for(int t=0;t<subdivisions;t++) {
+                            const int a=river_vertex(e.ai*RIVER_FINE+(e.bi-e.ai)*t*stride,e.aj*RIVER_FINE+(e.bj-e.aj)*t*stride);
+                            const int c=river_vertex(e.ai*RIVER_FINE+(e.bi-e.ai)*(t+1)*stride,e.aj*RIVER_FINE+(e.bj-e.aj)*(t+1)*stride);
                             const float pa[3]={mesh.positions[a*3],mesh.positions[a*3+1],mesh.positions[a*3+2]};
                             const float pc[3]={mesh.positions[c*3],mesh.positions[c*3+1],mesh.positions[c*3+2]};
                             const float al[3]={pa[0],pa[1]-skirt,pa[2]}, cl[3]={pc[0],pc[1]-skirt,pc[2]};
