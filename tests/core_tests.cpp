@@ -6933,10 +6933,16 @@ void test_gen_seed42() {
     const auto t0 = std::chrono::steady_clock::now();
     const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(cfg, 42);
     const double planet_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-    // planet.bin：除了粗版量的 lod.* 五列（新建世界时没有粗版；仓库里的包是全行星粗版量的）逐字节相同，头里 source 行的提交号是子模块的
+    // Reproduce the fixture with its recorded export provenance. A later source
+    // commit must not force rewriting historical asset metadata or mask data changes.
+    // Only lod.* differs: a new world has no coarse entries yet.
     {
-        const std::string mine = gen_export::planet_bin(ps->world, ps->society, 42, "seed42 " + std::string(gen_core::generator_commit()));
         const std::string repo = read_bytes(root + "/game/planet/seed42/planet.bin");
+        PlanetData fixture;
+        const bool parsed=fixture.parse_planet(reinterpret_cast<const uint8_t *>(repo.data()),repo.size(),error);
+        check(parsed && !fixture.source.empty(), "planet.bin：历史导出来源可读（"+error+"）");
+        if (!parsed) return;
+        const std::string mine = gen_export::planet_bin(ps->world, ps->society, 42, fixture.source);
         auto split = [](const std::string &b, size_t &r_lod_begin, size_t &r_lod_end) {
             uint32_t n = 0, ncol = 0, hb = 0;
             std::memcpy(&n, b.data() + 12, 4);
