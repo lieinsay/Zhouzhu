@@ -20,23 +20,32 @@
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
-    u32      版本 = 5（1 没有水文；2 没有河道与地形区；3 的高程是 u16 厘米、封顶 655 m；4 没有最后两段资源栅格；游戏各版都读）
+    u32      版本 = 6（游戏仍兼容 1–5；v6 使用生成器岸距、中心线及逐盆地径流）
     u32      rows, cols
     f64      res_m（格距）
     f64      x0, z0（格 (0, 0) 格心的游戏坐标，米）
-    f32[rows·cols]  高程：云带顶以上的米数（v4；v1–v3 是 u16 厘米，生成器有了真山以后装不下）；虚空格填最近陆地格的值（插值到岸外不跳变）
-    i16[rows·cols]  岸距：到岸线的有符号距离（米），陆地为正、虚空为负
+    f32[rows·cols]  高程：生成器的高度零点之上的米数，直接对应游戏 y；虚空格填最近陆地格的值
+    f32[rows·cols]  岸距（v6）：亚格岸距，米，陆地正、虚空负；按零等值线切岸线，不再加岸线噪声
     u8 [rows·cols]  最近的岛号（陆地即本岛；虚空取最近陆地格的岛）
     u8 [rows·cols]  地表类（island.json landcover.classes 的下标，0 = 虚空）
     u8 [rows·cols]  1 = 溪涧
     u8 [rows·cols]  D8 流向（v2）：0 = 不流（虚空格），1..8 = 流向邻格 (dr, dc) = FLOW_OFFSETS[k − 1]；
                     或上 0x10 = 那个邻格是虚空（河口：水从岸缘跌下去）
     f32[rows·cols]  汇流面积（v2）：平方公里，含本格；虚空格为 0（v3 起就是生成器的 flowacc_km2）
-    u16[rows·cols]  河宽（v3）：分米；生成器 river.py 的水力几何（夸张后的数；溪涧为湿季值），非河道格为 0
-    u16[rows·cols]  水深（v3）：厘米，同上。河道格的高程是河床（生成器已下切），水面 = 河床 + 水深
+    u16[rows·cols]  年均河宽：分米，非河道格为 0；水面和横断面以末尾中心线属性为准
+    u16[rows·cols]  年均水深：厘米，同上；显式河床高程见 bed_m，不能以最近格的岸上高程代替
     u8 [rows·cols]  地形区（v3）：resources.py 的 ZONE_NAMES 下标（0 虚空 1 高山 2 山地 3 丘陵 4 台地平原 5 河谷 6 崖缘 7 水域）
-    u8 [6][rows·cols] 赋存场（v5）：生成器的 res_field，每类一层、品位 × 255，各类可叠在同一格；层序 = FIELD_KINDS（金属矿、硫磺、砂金、黏土、砂砾、石料）
+    u8 [7][rows·cols] 赋存场：金属矿、硫磺、砂金、黏土、砂砾、石料、岩盐
     u16[rows·cols]  片号（v5）：生成器的 patch_id + 1（片 = 林木 / 泥炭芦苇 / 浮石露头 / 鸟粪石，即 resources.tsv 里 form = patch 的 deposit id）；0 = 不在片里
+
+    u8 [8][rows·cols] cultivable、cultivated、fallow_years、landcover_natural、landuse、lith、cloud_forest、rockwall_dir
+    f32[6][rows·cols] rockwall_m、rain_mm、runoff_mm、bed_m、wt_m、condense_mm（无河床格的 bed_m 可为 NaN）
+    i32[rows·cols] polder_id；至此 v6 每格 66 字节
+    u32 中心线段数；每段 { i32 island, down, join, exit, basin; u32 点数; f32[点数][20] }
+      列序沿用 rivers.json COLS：row,col,level,acc_km2,q_mean,q_bf,w_bf_m,d_bf_m,w_mean_m,d_mean_m,surf_m,bed_m,
+      slope,d50_mm,d50,planform,ssc_mgl,fp_left_m,fp_right_m,confine
+      down 指下游段，join 是下游段的共享点下标；exit = 汇入/崖边/湖/没入地里 的 0/1/2/3
+    u32 盆地数；每个盆地 { u32 天数; f32[天数] 年均归一的逐日径流指数 }
 
     流向由生成器的汇流面积（flowacc_km2）反推：挨着虚空的格同生成器一律流出去（河口）；其余格按汇流守恒配给下游——生成器的 D8 走在它自己的「路由面」上（填平面 + 弯曲噪声 + 朝岸缘微倾，
     河道据此下切），导出的高程上重算的 D8 会把整片流域改道。下游格的汇流 = 本格 + 各上游格的汇流，所以按汇流从大到小，
@@ -58,6 +67,7 @@ world.json —— 岛表与点位，坐标全换成游戏的米：x 向东、z �
 sites.tsv —— 同一份岛表与点位的平铺版，给不读 JSON 的纯 C++（src/world_sites.*：游戏里铺码头与村落、批量体检工具）。
     UTF-8，制表符分隔，# 开头是注释，一行一条：
     island   id  rim_m  cliff_m  keel_m  max_shore_m
+    core     island_id  x  z  area_km2  depth_m
     dock     id  island  x  z  main(0/1)
     village  id  island  x  z  households  seat(0/1)  name
     hamlet   id  island  x  z  households  0           name
@@ -87,8 +97,8 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 
-VERSION = 5
-FIELD_KINDS = ["ore", "sulfur", "placer", "clay", "gravel", "stone"]  # terrain.bin 赋存场的层序（同生成器的 res_field）
+VERSION = 6
+FIELD_KINDS = ["ore", "sulfur", "placer", "clay", "gravel", "stone", "salt"]  # terrain.bin 赋存场的层序（同生成器的 res_field）
 
 
 # D8 流向的邻格（行、列偏移），下标 + 1 即 terrain.bin 里的流向码
@@ -308,7 +318,7 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
     # 有符号岸距：格心到另一类格心的距离减半格，陆地为正
     inside = ndimage.distance_transform_edt(land) * res
     outside = ndimage.distance_transform_edt(~land) * res
-    shore = np.where(land, inside - 0.5 * res, -(outside - 0.5 * res))
+    shore = terrain["coast_dist_m"]
 
     # 各岛最深处的岸距：岛底按「向内程度」垂下去要用
     max_shore = ndimage.maximum(inside, labels=island + 1, index=np.arange(1, island.max() + 2))
@@ -319,14 +329,14 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
         f.write(struct.pack("<III", VERSION, rows, cols))
         f.write(struct.pack("<ddd", res, x0, z0))
         f.write(height.astype("<f4").tobytes())
-        f.write(np.clip(np.round(shore), -32767, 32767).astype("<i2").tobytes())
+        f.write(shore.astype("<f4").tobytes())
         f.write(nearest.astype(np.uint8).tobytes())
         f.write(terrain["landcover"].astype(np.uint8).tobytes())
         f.write((terrain["stream"] > 0).astype(np.uint8).tobytes())
         f.write(flow.tobytes())
         f.write(np.where(land, ref, 0.0).astype("<f4").tobytes())  # 写生成器的汇流：河道格与它的溪涧 / 河一一对应；反推重算的只拿来对照
-        f.write(np.clip(np.round(np.where(land, terrain["river_width_m"], 0) * 10.0), 0, 65535).astype("<u2").tobytes())
-        f.write(np.clip(np.round(np.where(land, terrain["river_depth_m"], 0) * 100.0), 0, 65535).astype("<u2").tobytes())
+        f.write(np.clip(np.round(np.where(land, terrain["w_ch_m"], 0) * 10.0), 0, 65535).astype("<u2").tobytes())
+        f.write(np.clip(np.round(np.where(land, terrain["d_ch_m"], 0) * 100.0), 0, 65535).astype("<u2").tobytes())
         f.write(np.where(land, terrain["terrain_zone"], 0).astype(np.uint8).tobytes())
         # v5：赋存场（6 层品位）与片号
         kinds = json.loads((src / "resources.json").read_text(encoding="utf-8"))["fields"]["kinds"]
@@ -337,6 +347,23 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
         patch = terrain["patch_id"].astype(np.int64)
         assert patch.max() < 65535
         f.write(np.where(land & (patch >= 0), patch + 1, 0).astype("<u2").tobytes())
+
+        for key in ("cultivable", "cultivated", "fallow_years", "landcover_natural", "landuse", "lith", "cloud_forest", "rockwall_dir"):
+            f.write(terrain[key].astype(np.uint8).tobytes())
+        for key in ("rockwall_m", "rain_mm", "runoff_mm", "bed_m", "wt_m", "condense_mm"):
+            f.write(terrain[key].astype("<f4").tobytes())
+        f.write(terrain["polder_id"].astype("<i4").tobytes())
+        rivers = json.loads((src / "rivers.json").read_text(encoding="utf-8"))
+        segments = rivers["segments"]
+        f.write(struct.pack("<I", len(segments)))
+        exits = ["汇入", "崖边", "湖", "没入地里"]
+        for segment in segments:
+            f.write(struct.pack("<5iI", segment["island"], segment["down"], segment["join"], exits.index(segment["exit"]), segment["basin"], len(segment["pts"])))
+            f.write(np.asarray(segment["pts"], dtype="<f4").tobytes())
+        f.write(struct.pack("<I", len(rivers["basins"])))
+        for basin in rivers["basins"]:
+            f.write(struct.pack("<I", len(basin["index"])))
+            f.write(np.asarray(basin["index"], dtype="<f4").tobytes())
 
     write_weather(src, info, dst, run)
 
@@ -355,6 +382,7 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
             "cliff_m": isl["cliff_m"],
             "keel_m": isl["keel_m"],
             "max_shore_m": round(float(max_shore[isl["id"]]), 1),
+            "cores": [{"pos": to_game(c["center_km"]), "area_km2": c["area_km2"], "depth_m": c["root_depth_m"]} for c in isl.get("cores", [])],
         })
 
     def places(key, fields):
@@ -379,9 +407,17 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
     next_id = max(by_id, default=0) + 1
     for sp in settle.get("specials") or []:
         row = {"id": next_id, "island": sp["island"], "pos": to_game(sp["km"]), "name": sp["name"], "households": sp["households"],
-               "special": sp["kind"], "landing": sp.get("landing")}
+               "special": sp["kind"], "landing": sp.get("landing"), "resident": sp.get("occupancy", "常住") == "常住", "home_village": sp.get("home_village")}
         villages.append(row)
-        owner[sp["name"]] = next_id
+        owner[sp["name"]] = next_id if row["resident"] else sp.get("home_village", -1)
+        next_id += 1
+
+    for relay in settle.get("relays") or []:
+        if relay.get("occupancy") != "常住" or relay.get("households", 0) <= 0:
+            continue
+        villages.append({"id": next_id, "island": relay["island"], "pos": to_game(relay["km"]),
+                         "households": relay["households"], "elev_m": relay["elev_m"], "landing": relay.get("landing"),
+                         "name": f"驿站{relay['id']:03d}", "special": "驿站", "resident": True, "relay": relay["id"]})
         next_id += 1
 
     world = {
@@ -402,13 +438,17 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
         "hamlets": places("hamlets", ["name", "households", "elev_m"]),
         "docks": docks_from_landings(settle, island, res, (ox_km, oy_km), lambda l: owner.get(l.get("of"))) if not terrain_only else [],
         "outposts": places("outposts", ["settlement", "households"]),
-        "bridgeheads": places("bridgeheads", ["to", "gap_km"]),
         "population": settle.get("population"),
     }
+    world["landscape"] = {k: landscape_record(settle.get(k, [] if k != "waterworks" else {})) for k in ("towns", "boat_lines", "relays", "specials", "uses", "ruins", "land_tenure", "waterworks")}
+    world["landscape"]["landforms"] = landscape_record(info.get("landforms", []))
+    world["landscape"]["springline"] = rivers.get("springline", [])
+    world["landscape"]["falls"] = [{**landscape_record(f), "kind": ["崖边瀑布", "瀑布", "跌水"].index(f["kind"])} for f in rivers.get("falls", [])]
+    world["landscape"] = landscape_record(world["landscape"])
     if terrain_only:
         # 点位沿用已有的：游戏里的码头、村落、存档与测试路线都认它们（生成器的聚落层另有演进，换点位是另一件事）
         old = json.loads((dst / "world.json").read_text(encoding="utf-8"))
-        for key in ("villages", "hamlets", "docks", "outposts", "bridgeheads", "population"):
+        for key in ("villages", "hamlets", "docks", "outposts", "population"):
             world[key] = old.get(key)
     (dst / "world.json").write_text(json.dumps(world, ensure_ascii=False, indent=1), encoding="utf-8")
     write_sites(world, dst)
@@ -460,14 +500,31 @@ def write_weather(src: Path, info: dict, dst: Path, run: Path | None = None) -> 
     print(f"{dst / 'weather.tsv'}: {len(lines) - 5} 天，纬度 {info['meta']['lat']:.2f}°，交角 {tilt:g}°，台面 {ref:g} m，岸缘 {rim:g} m")
 
 
+MACHINE_CODES = {'上': 'hi', '中': 'mid', '下': 'lo', '新岛': 'young', '中年': 'mid', '老岛': 'old', '四季分明': 'four', '冷暖两季': 'two', '雨旱季': 'rain', '风暴季': 'stormy', '常夏': 'none_warm', '常寒': 'none_cold', '热季': 'hot', '冷季': 'cold', '暖季': 'warm', '凉季': 'cool', '雨季': 'wet', '旱季': 'dry', '转季': 'turn', '平静季': 'calm', '过渡季': 'transition', '季': 'season', '矿镇': 'ore_town', '矿村': 'ore_village', '浮石采石村': 'floatstone_village', '窑村': 'kiln_village', '烧炭营': 'charcoal_camp', '温泉地': 'hotspring', '盐井村': 'salt_village', '河湖溪涧': 'waterway', '蓄水池': 'cistern', '取水点': 'intake', '邑治旁': 'seat_side', '河湖僻处': 'riverside', '高台': 'highland', '小岛前哨': 'outpost_isle', '人多、近航线：邑治与主泊场（仓场）之间的一块地': 'seat_side', '离村三公里外、临水的僻静处': 'riverside', '主岛能落脚的最高处，俯瞰全群': 'highland', '⑨ polity.npz': 'polity', '可耕地 × 人口密度（无 ⑨）': 'arable', '烽火': 'beacon', '关卡': 'gate', '过夜': 'inn', '候风': 'wait', '避风': 'shelter', '换船': 'transship', '守关': 'gate', '驿卒': 'post', '客栈': 'inn', '修船': 'repair', '仓夫': 'porter', '常住': 'resident', '轮班': 'rotation', '群内': 'inner', '群间': 'outer', '群内、群间': 'both', '步行': 'walk', '航船': 'boat', '工棚': 'workcamp', '季节住': 'seasonal', '放牧': 'graze', '夏牧': 'shieling', '烽火台': 'beacon', '庙': 'shrine', '墓岛': 'tomb', '只放牲口': 'livestock', '香火': 'incense', '无人': 'none', '有人用': 'used', '荒岛': 'empty', '村': 'village', '大户': 'magnate', '官用': 'office', '官荒': 'crown', '干渠': 'main', '支渠': 'branch', '排水渠': 'drain', '纵浦': 'ns', '横塘': 'ew', '堰塘': 'weir', '村塘': 'village', '山塘': 'hill', '圩塘': 'polder', '渠首闸': 'head', '圩闸': 'polder', '排水闸': 'outlet', '常年河': 'river', '季节性溪涧': 'stream', '大堰': 'weir', '邑': 'yi'}
+
+MACHINE_CODES.update({'针叶林': 'conifer', '针阔混交林': 'mixed', '阔叶林': 'broadleaf', '泥炭': 'peat', '芦苇荡': 'reed', '崖面露头': 'cliff_face', '峡谷露头': 'gorge', '骨架空洞': 'skeleton_void', '峡谷岩洞': 'gorge_cave', '裂隙洞': 'fracture_cave', '溶洞': 'karst_cave', '落水洞': 'sinkhole', '地下河': 'underground_river', '崖洞': 'cliff_cave', '底面洞': 'underside_cave', '瀑布后洞': 'waterfall_cave', '金银': 'goldsilver', '铁': 'iron', '铅锌': 'leadzinc', '铜': 'copper', '锡': 'tin', '铬': 'chromium', '镍': 'nickel', '锰': 'manganese', '热泉硫磺': 'hydrothermal', '海相石灰岩': 'marine_limestone', '辉长岩': 'gabbro', '蛇纹岩': 'serpentinite', '河湖黏土': 'lake_clay', '溪边黏土': 'stream_clay', '河滩砂砾': 'river_gravel', '砂金': 'placer_gold', '盐丘': 'salt_dome'})
+
+def landscape_record(value):
+    """Stable machine fields: remove presentation prose, retain generator coordinates and units."""
+    if isinstance(value, dict):
+        return {MACHINE_CODES.get(k,k): landscape_record(v) for k,v in sorted(value.items()) if k not in ("note", "name", "summary")}
+    if isinstance(value, list):
+        return [landscape_record(v) for v in value]
+    return MACHINE_CODES.get(value,value) if isinstance(value,str) else value
+
 def write_sites(world: dict, dst: Path) -> None:
     lines = ["# 由 tools/export_skyisle.py 从 world.json 导出，别手改。格式见那个脚本开头。"]
     for isl in world["islands"]:
         lines.append("\t".join(str(v) for v in ("island", isl["id"], isl["rim_m"], isl["cliff_m"], isl["keel_m"], isl["max_shore_m"])))
+    for isl in world["islands"]:
+        for c in isl.get("cores", []):
+            lines.append("\t".join(str(x) for x in ("core", isl["id"], *c["pos"], c["area_km2"], c["depth_m"])))
     for d in world["docks"]:
         lines.append("\t".join(str(v) for v in ("dock", d["id"], d["island"], d["pos"][0], d["pos"][1], 1 if d.get("main") else 0)))
     for kind, key in (("village", "villages"), ("hamlet", "hamlets")):
         for v in world[key]:
+            if not v.get("resident", True):
+                continue
             row = (kind, v["id"], v["island"], v["pos"][0], v["pos"][1], v["households"], 1 if v.get("seat") else 0, v.get("name", ""))
             lines.append("\t".join(str(x) for x in row))
     (dst / "sites.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
@@ -486,7 +543,8 @@ def write_resources(src: Path, dst: Path) -> None:
 
     # 采场挂的村 → 游戏的村号：生成器的村号不变，专业聚落接着村号往下编（同 export）
     next_id = max((v["id"] for v in settle.get("villages") or []), default=0) + 1
-    special_ids = {sp["id"]: next_id + k for k, sp in enumerate(settle.get("specials") or [])}
+    special_ids = {sp["id"]: next_id + k if sp.get("occupancy", "常住") == "常住" else sp.get("home_village", -1)
+                   for k, sp in enumerate(settle.get("specials") or [])}
     occ_subtype = {o["id"]: o.get("subtype") or "" for o in resources["occurrences"]}
 
     lines = ["# 由 tools/export_skyisle.py 从 resources.json 导出，别手改。格式见那个脚本开头。"]
@@ -503,7 +561,9 @@ def write_resources(src: Path, dst: Path) -> None:
         x, z = to_game(cell_km(w["cell"]))
         users = list(w.get("villages") or [])
         if w.get("special") is not None:
-            users.append(special_ids[w["special"]])
+            owner = special_ids[w["special"]]
+            if owner is not None and owner >= 0 and owner not in users:
+                users.append(owner)
         row = ("working", w["id"], w["kind"], w["island"], x, z, w["occurrence"], w["grade"], occ_subtype.get(w["occurrence"], ""),
                ",".join(str(v) for v in users) or "-")
         lines.append("\t".join(str(v) for v in row))

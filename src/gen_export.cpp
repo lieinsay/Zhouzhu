@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <map>
 #include <stdexcept>
@@ -11,6 +12,7 @@
 
 #include "skyisle/grid.hpp"
 #include "skyisle/island/resources.hpp"
+#include "skyisle/island/landforms.hpp"
 
 #include "py_format.h"
 #include "scipy_edt.h"
@@ -31,7 +33,7 @@ const int LANDCOVER_PALETTE[12][3] = { { 20, 24, 40 }, { 90, 80, 75 }, { 150, 15
     { 190, 200, 110 }, { 230, 200, 90 }, { 210, 170, 60 }, { 90, 160, 150 }, { 40, 90, 200 }, { 30, 60, 170 } };
 const char *const CLASS_ZH[4] = { "密接群岛", "中疏诸岛", "稀疏岛链", "孤悬散岛" };
 const char *const WEATHER_TYPES[9] = { "晴", "多云", "小雨", "大雨", "云海漫顶", "风暴", "小雪", "大雪", "暴风雪" };
-const char *const FIELD_KINDS[6] = { "ore", "sulfur", "placer", "clay", "gravel", "stone" };
+const char *const FIELD_KINDS[7] = { "ore", "sulfur", "placer", "clay", "gravel", "stone", "salt" };
 
 std::string age_zh(isl::AgeKind p_kind) {
     return p_kind == isl::YOUNG ? "新岛" : (p_kind == isl::OLD ? "老岛" : "中年");
@@ -59,8 +61,7 @@ const std::map<std::string, std::string> &subtype_table() {
         { "reed", "芦苇荡" },
         { "cliff_face", "崖面露头" },
         { "gorge", "峡谷露头" },
-        { "lava_tube", "熔岩管" },
-        { "lava_tube_collapsed", "熔岩管（塌陷天窗）" },
+        { "skeleton_void", "骨架空洞" },
         { "gorge_cave", "峡谷岩洞" },
         { "fracture_cave", "裂隙洞" },
         { "karst_cave", "溶洞" },
@@ -69,18 +70,24 @@ const std::map<std::string, std::string> &subtype_table() {
         { "cliff_cave", "崖洞" },
         { "underside_cave", "底面洞" },
         { "waterfall_cave", "瀑布后洞" },
-        { "gold", "金" },
+        { "goldsilver", "金银" },
         { "iron", "铁" },
         { "leadzinc", "铅锌" },
         { "copper", "铜" },
         { "tin", "锡" },
-        { "tintungsten", "锡钨" },
+        { "chromium", "铬" },
+        { "nickel", "镍" },
         { "manganese", "锰" },
-        { "vent", "火山口 / 喷气孔" },
-        { "basalt", "玄武岩" },
-        { "andesite", "安山岩 / 凝灰岩" },
-        { "limestone", "石灰岩" },
-        { "sandstone", "砂岩" },
+        { "hydrothermal", "热泉硫磺" },
+        { "marine_limestone", "海相石灰岩" },
+        { "gabbro", "辉长岩" },
+        { "serpentinite", "蛇纹岩" },
+        { "salt_dome", "盐丘" },
+        { "karst_spring", "岩溶泉" },
+        { "contact_spring", "接触泉" },
+        { "fissure_spring", "裂隙泉" },
+        { "seep_spring", "渗水泉" },
+        { "core_hotspring", "核山温泉" },
         { "lake_clay", "河湖黏土" },
         { "stream_clay", "溪边黏土" },
         { "river_gravel", "河滩砂砾" },
@@ -110,6 +117,7 @@ std::string special_zh(const std::string &p_code) {
         { "kiln_village", "窑村" },
         { "charcoal_camp", "烧炭营" },
         { "hotspring", "温泉地" },
+        { "salt_village", "盐井村" },
     };
     const auto it = t.find(p_code);
     if (it == t.end()) {
@@ -162,7 +170,8 @@ std::string name_zh(const std::string &p_code) {
         const size_t b = rest.find(':');
         return special_zh(rest.substr(0, b)) + pad_int(std::stoll(rest.substr(b + 1)), 2);
     }
-    throw std::runtime_error("不认识的名字代码 " + p_code);
+    if (p_code == "seat" || kind == "town") return p_code == "seat" ? "邑治" : "镇" + pad_int(std::stoll(rest), 2);
+    return p_code;
 }
 
 // decode.settlements 的镇名
@@ -182,6 +191,24 @@ const char *res_form_name(int p_kind) {
         default:
             return "field";
     }
+}
+
+
+Json landscape_record(const Json &value) {
+    if (value.type() == Json::OBJ) {
+        Json out = Json::obj();
+        for (const auto &kv : value.fields()) {
+            if (kv.first != "note" && kv.first != "name" && kv.first != "summary") out.set(kv.first, landscape_record(kv.second));
+        }
+        std::sort(out.fields().begin(),out.fields().end(),[](const auto &a,const auto &b){return a.first<b.first;});
+        return out;
+    }
+    if (value.type() == Json::ARR) {
+        Json out = Json::arr();
+        for (const Json &v : value.items()) out.push(landscape_record(v));
+        return out;
+    }
+    return value;
 }
 
 // ---------------------------------------------------------------- 写二进制
@@ -551,7 +578,7 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
     std::string out;
     out.reserve(n * 30 + 64);
     out += "ZZWG";
-    put<uint32_t>(out, 5u);
+    put<uint32_t>(out, 6u);
     put<uint32_t>(out, uint32_t(R.rows));
     put<uint32_t>(out, uint32_t(R.cols));
     put<double>(out, R.res);
@@ -562,12 +589,7 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
         put<float>(out, float(height[src]));
     }
     for (size_t q = 0; q < n; q++) {
-        const double inside = r_inside[q];
-        const double outside = out_d[q] * R.res;
-        const double shore = land[q] ? inside - 0.5 * R.res : -(outside - 0.5 * R.res);
-        double v = std::nearbyint(shore);
-        v = v < -32767.0 ? -32767.0 : (v > 32767.0 ? 32767.0 : v);
-        put<int16_t>(out, int16_t(v));
+        put<float>(out, float(g.coast_dist.v[q]));
     }
     for (size_t q = 0; q < n; q++) {
         const size_t src = size_t(ri[q]) * size_t(W) + size_t(ci[q]);
@@ -599,7 +621,7 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
     for (size_t q = 0; q < n; q++) {
         put<uint8_t>(out, land[q] ? g.zone.v[q] : uint8_t(0));
     }
-    for (int f = 0; f < 6; f++) {
+    for (int f = 0; f < isl::FK_COUNT; f++) {
         for (size_t q = 0; q < n; q++) {
             put<uint8_t>(out, land[q] ? g.res_field[f].v[q] : uint8_t(0));
         }
@@ -607,6 +629,32 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
     for (size_t q = 0; q < n; q++) {
         const int32_t p = g.patch_id.v[q];
         put<uint16_t>(out, uint16_t(land[q] && p >= 0 ? p + 1 : 0));
+    }
+    for (const auto *v : { &g.cultivable, &g.cultivated, &g.fallow_years, &g.landcover_natural, &g.landuse, &g.lith, &g.cloud_forest, &g.rockwall_dir }) {
+        for (size_t q = 0; q < n; q++) put<uint8_t>(out, v->v.empty() ? 0 : v->v[q]);
+    }
+    for (const auto *v : { &g.rockwall_m, &g.rain, &g.runoff, &g.bed_m, &g.wt, &g.condense }) {
+        for (size_t q = 0; q < n; q++) put<float>(out, v->v.empty() ? 0.0f : float(v->v[q]));
+    }
+    for (size_t q = 0; q < n; q++) put<int32_t>(out, g.polder_id.v.empty() ? 0 : g.polder_id.v[q]);
+    const auto &net = g.rnet;
+    put<uint32_t>(out, uint32_t(net.segs.size()));
+    for (const auto &s : net.segs) {
+        for (int v : { s.island, s.down, s.join, int(s.exit), s.basin }) put<int32_t>(out, v);
+        put<uint32_t>(out, uint32_t(s.n));
+        for (int i = s.start; i < s.start + s.n; i++) {
+            const double vals[20] = { double(net.cell[i] / W), double(net.cell[i] % W), double(net.level[i]), npround(net.acc[i], 2),
+                npround(net.q_mean[i], 4), npround(net.q_bf[i], 4), npround(net.w[i], 2), npround(net.d[i], 2),
+                npround(net.w_mean[i], 2), npround(net.d_mean[i], 2), npround(net.surf[i], 1), npround(net.bed[i], 1),
+                npround(net.slope[i], 5), npround(net.d50_mm[i], 3), double(net.d50c[i]), double(net.planform[i]),
+                npround(net.ssc[i], 0), npround(net.fp_l[i], 0), npround(net.fp_r[i], 0), double(net.confine[i]) };
+            for (double v : vals) put<float>(out, float(v));
+        }
+    }
+    put<uint32_t>(out, uint32_t(net.basins.size()));
+    for (const auto &b : net.basins) {
+        put<uint32_t>(out, uint32_t(b.index.size()));
+        for (double v : b.index) put<float>(out, float(npround(v, 3)));
     }
     return out;
 }
@@ -760,6 +808,15 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         row.set("cliff_m", r.cliff_j);
         row.set("keel_m", r.keel_j);
         row.set("max_shore_m", pyround(k < max_shore.size() ? max_shore[k] : 0.0, 1));
+        Json cores = Json::arr();
+        for (const auto &c : r.cores) {
+            Json core = Json::obj();
+            core.set("pos", to_game(pyround(r.gcx+c.load_x,3), pyround(r.gcy+c.load_y,3)));
+            core.set("area_km2", pyround(double(c.cells)*R.res_km()*R.res_km(),3));
+            core.set("depth_m", pyround(m.core_root_ratio*c.mean_above,1));
+            cores.push(core);
+        }
+        row.set("cores", cores);
         islands.push(row);
     }
     world.set("islands", islands);
@@ -768,7 +825,7 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         Json row = Json::obj();
         row.set("a", l.a);
         row.set("b", l.b);
-        row.set("kind", l.bridge ? "bridge" : "ferry");
+        row.set("kind", "ferry");
         row.set("gap_km", pyround(l.gap, 3));
         links.push(row);
     }
@@ -806,10 +863,28 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         row.set("households", field(sp, "households"));
         row.set("special", special_zh(field(sp, "kind").as_str()));
         row.set("landing", has_key(sp, "landing") ? field(sp, "landing") : Json());
+        row.set("resident", !has_key(sp,"occupancy") || field(sp,"occupancy").as_str()=="resident");
+        row.set("home_village", has_key(sp,"home_village") ? field(sp,"home_village") : Json());
         villages.push(row);
-        owner[nm] = next_id;
-        special_ids[field(sp, "id").as_int()] = next_id;
+        const bool resident=field(row,"resident").as_bool();
+        const int64_t home=has_key(sp,"home_village") && field(sp,"home_village").type()!=Json::NUL ? field(sp,"home_village").as_int() : -1;
+        owner[nm] = resident ? next_id : home;
+        special_ids[field(sp, "id").as_int()] = resident ? next_id : home;
         next_id++;
+    }
+    // Permanent relay households join the same village stream and ledger.
+    // Rotation-only beacons remain landmarks without an invented population.
+    for (const Json &relay:field(S,"relays").items()) {
+        if (field(relay,"occupancy").as_str()!="resident" || field(relay,"households").as_int()<=0) continue;
+        Json row=place_row(relay,{"households","elev_m","landing"},false);
+        row.set("id",next_id++);
+        const int id=int(field(relay,"id").as_int());
+        char suffix[32]; std::snprintf(suffix,sizeof(suffix),"%03d",id);
+        row.set("name",std::string("驿站")+suffix);
+        row.set("special","驿站");
+        row.set("resident",true);
+        row.set("relay",id);
+        villages.push(row);
     }
     world.set("villages", villages);
     Json hamlets = Json::arr();
@@ -930,12 +1005,29 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         outposts.push(place_row(o, { "settlement", "households" }, true));
     }
     world.set("outposts", outposts);
-    Json bridgeheads = Json::arr();
-    for (const Json &b : field(S, "bridgeheads").items()) {
-        bridgeheads.push(place_row(b, { "to", "gap_km" }, false));
-    }
-    world.set("bridgeheads", bridgeheads);
     world.set("population", has_key(S, "population") ? field(S, "population") : Json());
+    Json landscape = Json::obj();
+    for (const char *key : {"towns", "boat_lines", "relays", "specials", "uses", "ruins", "land_tenure", "waterworks"})
+        landscape.set(key, has_key(S,key) ? landscape_record(field(S,key)) : (std::string(key)=="waterworks" ? Json::obj() : Json::arr()));
+    Json landforms = Json::arr();
+    for (size_t i=0;i<g.landforms.size();i++) {
+        landforms.push(isl::landform_json(g,g.landforms[i],int(i)));
+    }
+    landscape.set("landforms",landforms);
+    Json springs=Json::arr();
+    for (const auto &sl:g.springline) {
+        Json v=Json::arr(), cell=Json::arr(); cell.push(sl.ci); cell.push(sl.cj);
+        v.push(sl.island); v.push(cell); v.push(pyround(sl.q_ls,2)); v.push(pyround(sl.height_m,0));
+        v.push(pyround(sl.length_km,2)); v.push(sl.fall); v.push(pyround(sl.aquifer_m,1)); v.push(sl.kind); springs.push(v);
+    }
+    landscape.set("springline",springs);
+    Json falls=Json::arr();
+    for (const auto &f:g.rnet.falls) {
+        Json v=Json::obj(), cell=Json::arr(); cell.push(f.ci); cell.push(f.cj);
+        v.set("seg",f.seg); v.set("idx",f.idx); v.set("cell",cell); v.set("kind",int(f.kind)); v.set("level",f.level);
+        v.set("drop_m",pyround(f.drop_m,1)); v.set("length_m",pyround(f.length_m,0)); v.set("q_mean",pyround(f.q_mean,4)); falls.push(v);
+    }
+    landscape.set("falls",falls); world.set("landscape",landscape_record(landscape));
 #ifdef _WIN32
     const bool crlf = true; // Python 的 Path.write_text 在 Windows 上把 \n 写成 \r\n
 #else
@@ -951,6 +1043,10 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
                          py_str(field(i, "max_shore_m")) }) +
                     "\n";
         }
+        for (const Json &i : field(world,"islands").items()) for (const Json &c : field(i,"cores").items()) {
+            const auto &pos=field(c,"pos").items();
+            s+=join_tab({"core",py_str(field(i,"id")),py_str(pos[0]),py_str(pos[1]),py_str(field(c,"area_km2")),py_str(field(c,"depth_m"))})+"\n";
+        }
         for (const Json &d : field(world, "docks").items()) {
             const Json &pos = field(d, "pos");
             s += join_tab({ "dock", py_str(field(d, "id")), py_str(field(d, "island")), py_str(pos.items()[0]), py_str(pos.items()[1]),
@@ -960,6 +1056,7 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         const std::pair<const char *, const char *> kinds[2] = { { "village", "villages" }, { "hamlet", "hamlets" } };
         for (const auto &kk : kinds) {
             for (const Json &v : field(world, kk.second).items()) {
+                if (has_key(v,"resident") && !field(v,"resident").as_bool()) continue;
                 const Json &pos = field(v, "pos");
                 const bool seat = has_key(v, "seat") && field(v, "seat").type() == Json::BOOL && field(v, "seat").as_bool();
                 s += join_tab({ kk.first, py_str(field(v, "id")), py_str(field(v, "island")), py_str(pos.items()[0]), py_str(pos.items()[1]),
@@ -999,7 +1096,7 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
             for (int v : w.villages) {
                 users += (users.empty() ? "" : ",") + std::to_string(v);
             }
-            if (w.special >= 0) {
+            if (w.special >= 0 && special_ids.at(w.special)>=0 && std::find(w.villages.begin(),w.villages.end(),special_ids.at(w.special))==w.villages.end()) {
                 users += (users.empty() ? "" : ",") + std::to_string(special_ids.at(w.special));
             }
             const auto it = occ_subtype.find(w.occurrence);
@@ -1380,6 +1477,9 @@ std::string planet_bin(const skyisle::planet::World &w, const skyisle::planet::S
     cols.push_back(f32_column("s04.season_range", C.i_season_range));
     cols.push_back(f32_column("s04.temp_winter", C.i_temp_winter));
     cols.push_back(f32_column("s04.temp_summer", C.i_temp_summer));
+    cols.push_back(f32_column("s04.precip_mm", C.i_precip_mm));
+    cols.push_back(f32_column("s04.precip_eff_mm", C.i_precip_eff_mm));
+    cols.push_back(f32_column("s04.arable_frac_eff", C.i_arable_frac_eff));
     // s09 polity.npz（pop state polity kind realm circle fief）
     cols.push_back(f32_column("s09.pop", P.pop));
     cols.push_back(int_column("s09.state", P.state));
@@ -1431,6 +1531,7 @@ std::string planet_bin(const skyisle::planet::World &w, const skyisle::planet::S
     grids.push_back(geo(ca, f32_column("s04.climate_grid.eps", C.eps)));
     grids.push_back(geo(ca, f32_column("s04.climate_grid.season_range", C.season_range)));
     grids.push_back(geo(ca, f32_column("s04.climate_grid.continentality", C.continentality)));
+    grids.push_back(geo(ca, f32_column("s04.climate_grid.lift", C.lift)));
     grids.push_back(geo(ca, f32_column("s04.wind_local.u", C.u)));
     grids.push_back(geo(ca, f32_column("s04.wind_local.v", C.v)));
     grids.push_back(geo(ca, f32_column("s04.wind_local.u_bg", C.u_bg)));
@@ -1461,6 +1562,11 @@ std::string planet_bin(const skyisle::planet::World &w, const skyisle::planet::S
         "g_storm " + pyfmt::repr(w.winds.g.lat) + " " + pyfmt::repr(w.winds.g.lon) + " " + pyfmt::repr(w.winds.g.radius_deg),
         "source " + p_source,
     };
+    if (pl.vert.present) {
+        const auto &v = pl.vert;
+        head.push_back("vertical " + pyfmt::repr(v.sea_level_m) + " " + pyfmt::repr(v.cloud_base_m) + " " + pyfmt::repr(v.cloud_top_m) + " " +
+            pyfmt::repr(v.keel_gap_m) + " " + pyfmt::repr(v.datum_pressure_atm) + " " + pyfmt::repr(v.scale_height_km) + " " + pyfmt::repr(v.o2_fraction));
+    }
     std::string head_b;
     for (size_t k = 0; k < head.size(); k++) {
         head_b += head[k];

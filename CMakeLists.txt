@@ -41,6 +41,15 @@ execute_process(
 if(NOT ZHOUZHU_GENERATOR_COMMIT)
     set(ZHOUZHU_GENERATOR_COMMIT "?")
 endif()
+execute_process(
+    COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}/extern/skyisle-gen" diff --quiet HEAD -- core
+    RESULT_VARIABLE ZHOUZHU_GENERATOR_DIFF
+    ERROR_QUIET
+)
+set(ZHOUZHU_GENERATOR_DIRTY 0)
+if(ZHOUZHU_GENERATOR_DIFF EQUAL 1)
+    set(ZHOUZHU_GENERATOR_DIRTY 1)
+endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git/modules/extern/skyisle-gen/HEAD")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/.git/modules/extern/skyisle-gen/HEAD")
 endif()

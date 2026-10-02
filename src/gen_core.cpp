@@ -1,5 +1,8 @@
 #include "gen_core.h"
 
+#include "skyisle/island/landforms.hpp"
+#include "skyisle/island/rivernet.hpp"
+
 #include <chrono>
 #include <cmath>
 #include <ctime>
@@ -20,6 +23,9 @@
 
 #ifndef ZHOUZHU_GENERATOR_COMMIT
 #define ZHOUZHU_GENERATOR_COMMIT "?"
+#endif
+#ifndef ZHOUZHU_GENERATOR_DIRTY
+#define ZHOUZHU_GENERATOR_DIRTY 0
 #endif
 
 using skyisle::Json;
@@ -69,7 +75,7 @@ Json generator_json() {
     Json g = Json::obj();
     g.set("root", "extern/skyisle-gen");
     g.set("commit", generator_commit());
-    g.set("dirty", false);
+    g.set("dirty", ZHOUZHU_GENERATOR_DIRTY!=0);
     g.set("backend", "游戏内");
     return g;
 }
@@ -96,6 +102,7 @@ gen_export::GroupMeta meta_of(const PlanetState &p_planet, int64_t p_node) {
     m.lapse_c_per_km = p_planet.config.planet.get("s04.climate.lapse_c_per_km", 6.0);
     m.snow_temp_c = p_planet.config.island.get("weather.snow_temp_c", 0.5);
     m.fog_surface_max_m = p_planet.config.island.get("weather.fog_surface_max_m", 800.0);
+    m.core_root_ratio = p_planet.config.island.get("core_root_ratio", 5.0);
     return m;
 }
 
@@ -104,6 +111,7 @@ isl::NodeInputs inputs_of(const PlanetState &p_planet, int64_t p_node, bool p_po
     isl::NodeInputs x = pln::node_inputs(p_planet.world.islands, p_planet.world.climate, p_node, p_planet.seed, p_planet.config.planet);
     if (p_polity) {
         pln::apply_polity(p_planet.society.polity, p_node, p_planet.config.planet, x);
+        pln::apply_routes(p_planet.world.islands, p_planet.society.routes, p_node, x);
     }
     return x;
 }
@@ -111,8 +119,7 @@ isl::NodeInputs inputs_of(const PlanetState &p_planet, int64_t p_node, bool p_po
 } // namespace
 
 std::array<double, 3> precip_formula(const GenConfig &p_config) {
-    return { p_config.island.get("climate.precip_mm_min", 150.0), p_config.island.get("climate.precip_mm_max", 4000.0),
-        p_config.island.get("climate.precip_mm_exp", 1.3) };
+    return { 0.0,p_config.planet.get("s04.climate.precip_mm_ref",4000.0),1.0 };
 }
 
 isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry *r_lod, gen_export::WeatherEntry *r_weather) {
@@ -130,6 +137,7 @@ isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_expor
         *r_lod = gen_export::lod_entry(p_node, g, isl::block_reduce(g, gen_export::lod_factor(g.res_km * 1000.0)));
     }
     isl::build_resources(g, cfg.island);
+    isl::detect_landforms(g, cfg.island);
     g.clim = isl::build_climate(g.inp, p_planet.view, cfg.island);
     g.daily = isl::daily_curves(g.clim, g.inp);
     g.has_climate = true;
@@ -142,6 +150,7 @@ isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_expor
         *r_weather = gen_export::weather_entry(p_node, g, meta_of(p_planet, p_node));
     }
     isl::build_settlements(g, p_planet.view, cfg.island);
+    isl::build_rivernet(g, cfg.island);
     return g;
 }
 
@@ -376,7 +385,7 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         run.set("island_sha1", cfg.island_sha1);
         stamp.set("run", run);
         Json exp = Json::obj();
-        exp.set("terrain_version", 5);
+        exp.set("terrain_version", 6);
         exp.set("exporter", "src/gen_export.cpp");
         stamp.set("export", exp);
         std::vector<std::pair<std::string, double>> secs = { { "generate", r_times.generate }, { "write", r_times.write } };

@@ -101,6 +101,7 @@ extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned l
 #include "py_format.h"
 #include "scipy_edt.h"
 #include "skyisle/island/generate.hpp"
+#include "skyisle/island/coast.hpp"
 #include "skyisle/planet/view.hpp"
 #include "story_start.h"
 
@@ -6696,6 +6697,12 @@ std::string lf(const std::string &p_s) {
 
 void test_gen_format() {
     std::printf("[gen_format]\n");
+    // Rectangular, off-centre coast: a centred square would conceal an axis swap.
+    skyisle::GridD phi(7,11,0.0);
+    for (int r=0;r<phi.H;r++) for (int c=0;c<phi.W;c++) phi(r,c)=3.25-c;
+    const auto coast=skyisle::island::coast_distance(phi,100.0);
+    check_near(coast(5,1),225.0,1e-8,"亚格岸距：陆地到竖直岸线 225 m");
+    check_near(coast(1,7),-375.0,1e-8,"亚格岸距：岸外为负，距离 375 m");
     // Python 的 repr / format(x, "g") / round（与 Python 逐字对过 90 万个值，这里留几个边界）
     const std::pair<double, const char *> reprs[] = { { 0.0, "0.0" }, { -0.0, "-0.0" }, { 1.0, "1.0" }, { 0.1, "0.1" }, { 1e16, "1e+16" },
         { 1e15, "1000000000000000.0" }, { 1e-4, "0.0001" }, { 1e-5, "1e-05" }, { 1.0 / 3.0, "0.3333333333333333" }, { 123456.789, "123456.789" },
