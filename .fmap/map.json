@@ -1143,9 +1143,9 @@
     {
       "id": "world-river-net",
       "label": "河网",
-      "detail": "保留生成器中线与原始床高、宽深、流量、床质等字段。v7 读取 flow_regime，为临时点选择后半事件曲线；兼容旧包。",
+      "detail": "权威河点采用固定源点的有界 Hermite 插值，平滑 D8 折角；汇流点不移动，床高与宽深、流量仍从相邻来源点插值。v7 的临时/常驻曲线索引保留。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "核心 8219 项通过，包含 v7 供水分类、断流和 GPU 三角形曲线索引一致性检查。",
+      "evidence": "a5d45ae；90° 折角回归先失败后通过，river_contract/world_rivers 共 6544 项检查通过。",
       "sources": [
         "src/world_river.h",
         "src/world_river.cpp"
@@ -3625,9 +3625,9 @@
     {
       "id": "skyisle-river-supply",
       "label": "河流供水类型",
-      "detail": "逐点输出 flow_regime；常驻候选用不含凝结增量的径流阈值。每个出口有独立 index 与有限窗 event_index，临时流路无事件后归零。常驻水源仍为流域水库近似。",
+      "detail": "逐点 flow_regime 分开常驻和临时事件供水，增强凝结不增加河网资格。此次按画面倒推的宽度系数 5→15 与 core_gain 1→10 已撤回；20–40 m 干流目标尚无充分成因依据，未宣称完成。",
       "tag": "外部：skyisle-gen",
-      "evidence": "9accce7；251 项 Python 测试、C++ selftest、三种种子体检通过；core_gain=0/3 不改变降雨、汇流面积与河网掩膜。",
+      "evidence": "原供水回归见 9accce7；ba5dc00 撤回无依据标定，游戏数据和预览恢复。",
       "sources": [
         "extern/skyisle-gen/core/src/island/hydro.cpp",
         "extern/skyisle-gen/core/src/island/rivernet.cpp"
@@ -3638,9 +3638,9 @@
     {
       "id": "skyisle-river-inspector",
       "label": "生成器河段查看器",
-      "detail": "点击河线查看当前日期的宽深、Q、流速、供水类型和有水天数；日期滑条同步更新数据与地图，蓝线有水、棕线断流。",
+      "detail": "河段绘制与拾取共享固定源点的曲线缓存；仍按日期显示真实宽深和 Q，支流末点不借用下游流量。",
       "tag": "界面",
-      "evidence": "aa6468c；真实点击 #6329 段 #3471，第 84 日零宽深流量，第 12 日宽 0.204 m、深 0.031 m、2.333 L/s。",
+      "evidence": "4d956c7；Node 检查通过，最大相邻转角 0.270 rad，源点、水文属性及汇流保持。",
       "sources": [
         "extern/skyisle-gen/skyisle_gen/web/static/island.html",
         "extern/skyisle-gen/skyisle_gen/web/server.py"
@@ -10161,6 +10161,44 @@
         "world-map"
       ],
       "commits": "66046e3（生成器 9accce7、aa6468c）"
+    },
+    {
+      "id": "river-curve-scale-audit",
+      "title": "修复河流折线并核对真实尺度",
+      "story": "玩家查看河流时恢复平滑弯曲，米制与人物比例有实测依据；缺乏依据的大河倍率已撤回。",
+      "date": "2026-10-03",
+      "color": "#d97a9f",
+      "commits": "a5d45ae, a00fa7c",
+      "steps": [
+        {
+          "text": "生成器预览沿保留源点的曲线画河，点击同一曲线查询数据",
+          "nodes": [
+            "skyisle-river-inspector"
+          ]
+        },
+        {
+          "text": "游戏按相同平滑定义建立河床和水面，汇流点与源宽深保留",
+          "nodes": [
+            "world-river-net",
+            "world-terrain",
+            "world-river-water"
+          ]
+        },
+        {
+          "text": "按真实开局核对水面与人物米制，不用倍率凑出大河",
+          "nodes": [
+            "world-river-water",
+            "skyisle-river-supply"
+          ]
+        }
+      ],
+      "nodes": [
+        "world-river-net",
+        "skyisle-river-inspector",
+        "skyisle-river-supply",
+        "world-terrain",
+        "world-river-water"
+      ]
     }
   ],
   "events": [
@@ -13506,6 +13544,37 @@
           "world-river-regime",
           "world-river-water",
           "river-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e125",
+      "type": "slice",
+      "date": "2026-10-03",
+      "title": "切片：修复河流折线并核对真实尺度",
+      "summary": "玩家查看河流时恢复平滑弯曲，米制与人物比例有实测依据；缺乏依据的大河倍率已撤回。",
+      "commits": "a5d45ae, a00fa7c",
+      "chain": "river-curve-scale-audit",
+      "nodes": [
+        "world-river-net",
+        "skyisle-river-inspector",
+        "skyisle-river-supply",
+        "world-terrain",
+        "world-river-water"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "world-river-net",
+          "skyisle-river-inspector",
+          "skyisle-river-supply",
+          "world-terrain",
+          "world-river-water"
+        ],
+        "updated": [
+          "world-river-net",
+          "skyisle-river-inspector",
+          "skyisle-river-supply"
         ]
       }
     }
