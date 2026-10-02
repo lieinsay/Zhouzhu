@@ -22,6 +22,9 @@
 #include <string>
 #include <thread>
 #include <vector>
+#ifdef _WIN32
+extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned long);
+#endif
 
 #include "build_pieces.h"
 #include "ship_cabins.h"
@@ -7511,6 +7514,10 @@ void test_dev_manual() {
 }
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+    SetErrorMode(0x0001 | 0x0002); // fail critical errors and report crashes without a JIT dialog
+#endif
+    std::setvbuf(stdout, nullptr, _IONBF, 0);
     // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
     if (argc > 1) {
         const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
