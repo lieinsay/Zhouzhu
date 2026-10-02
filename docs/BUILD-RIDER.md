@@ -4,6 +4,16 @@
 
 ## 在 Rider 中使用
 
+首次克隆后，先在项目根取得子模块与地形数据。岛群 `terrain.bin` 已由 Git LFS 跟踪；GitHub 的普通 Git 单文件限制无法容纳当前 #6329 地形包。
+
+```text
+git submodule update --init --recursive
+git lfs install --local
+git lfs pull
+```
+
+确认 `terrain.bin` 是实际二进制文件，而不是只有几行 `version https://git-lfs...` 的指针文本，再启动游戏。
+
 1. 打开项目根 `D:\Project\Zhouzhu` 的 CMake 项目，等待 CMake 加载完成。
 2. 选择 CMake Profile **Debug** 和运行配置 **zhouzhu**。
 3. 在游戏 C++ 代码处设置断点，点击该配置的 **Debug**。配置已经启用 Build Before Run，会先构建 `zhouzhu`，随后启动 Godot 并调试其加载的扩展。
@@ -61,3 +71,5 @@ set "VSLANG=2052"
 ## 提交说明与历史来源
 
 后续提交标题和正文使用中文。2026-10-02 按用户要求，将本次尚未推送的 14 条英文提交说明改为中文，保留代码、作者与时间；原历史保存在本地 `codex/backup-before-chinese-commits-20261002` 分支。生成器提交映射为 `978cfee → 3a9761b`、`b038fa2 → 9accce7`、`cfb126c → aa6468c`，对应代码树完全相同。主仓库同步子模块引用，文档与 FeatureMap 使用新提交号；数据包内的历史生成来源不改写，仍可出现旧提交号。
+
+随后因 GitHub 拒绝超过 100 MB 的地形文件，将未发布历史中的 `game/planet/seed42/groups/*/terrain.bin` 转为 Git LFS；远端已发布历史保持不变，本地原始数据逐份验证 SHA-256。迁移前历史另存于本地 `codex/backup-before-lfs-20261002`，文档中的主仓库提交号随迁移再次同步。

@@ -6,9 +6,17 @@
 - 每次提交只包含该功能相关改动，避免夹带用户或其他工作的改动。推送遵循用户当次授权。
 - Git 提交标题和说明正文使用中文；代码符号、路径和必要技术名词可保留原文。
 
+## 必要范围内验证
+
+- 减少非必要测试，只运行与本次改动直接相关、足以验证实际行为的检查；通过后不重复执行，不默认扩大成全量回归。
+- 文档、记忆和提交说明等低影响改动，核对内容、引用、结构与 diff 即可，不为此编译整个项目或运行游戏回归。
+- 只有新的代码改动、测试失败或尚未排除的具体问题才扩大验证；避免重复截图、重复启动游戏和重复运行已经通过的检查。
+
 ## Windows 编译与调试：沿用已成功的 Rider 配置
 
 用户已通过 Rider 编译和调试本项目。后续会话开始编译或排查启动问题前，先读 [Rider 编译调试说明](docs/BUILD-RIDER.md)，核对 `.run/zhouzhu.run.xml` 和 `cmake-build-debug/CMakeCache.txt`。
+
+- 岛群 `terrain.bin` 由 Git LFS 跟踪；首次克隆后按说明拉取子模块与 LFS 数据。若文件只是 `version https://git-lfs...` 指针，先恢复真实数据，不能拿指针文件启动游戏或修改读包代码来迁就它。
 
 - 现有配置：CMake Profile `Debug`，目标 `zhouzhu`，生成器 **Ninja**，工具链 **Visual Studio 2022 MSVC x64**，构建目录 **`cmake-build-debug`**。
 - Rider 先构建目标，再以项目根为工作目录运行 `D:/Program Files/Godot/Godot_v4.4.1-stable_win64.exe --path game`；用此配置的 Debug 按钮调试 C++ 扩展。
