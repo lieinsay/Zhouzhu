@@ -16,6 +16,7 @@
 #include "yard_site.h"
 
 // 岛群的连续地形：在任意 (x, z) 上给出有没有地、顶面多高、岛底多深、是什么地表。
+// v6 岸线严格使用源 coast_dist_m=0，不补随机锯齿、裂口；下面的岸线噪声只用于旧资产。
 // 大形全听栅格（Catmull-Rom 双三次），栅格量不到的 100 m 以下细节由确定性噪声补上：
 //   陆地 ⇔ 岸距 + 岸线噪声 > 0（岸线不再是 100 m 的锯齿）
 //   顶面 = 栅格高程 + 细节噪声（按地表调幅：岩多草少、田最平；栅格有地形区时再按区加减，山地另加几百米一道的岩梁）
@@ -28,7 +29,10 @@
 // 同一点无论哪一级网格来取，结果都一样，所以不同精度的地块拼得上。
 // 停机坪与船坞坪在建第一块地面之前设好、之后不再变；除此之外没有状态，取样线程安全。
 
+struct IslandCore { double x=0,z=0,area_km2=0,depth_m=0; };
+
 struct WorldIsland {
+    std::vector<IslandCore> cores;
     int id = 0;
     double rim_m = 0.0; // 岸缘高
     double cliff_m = 20.0; // 生成器的崖高（岸缘到岛底边）
@@ -59,7 +63,11 @@ struct TerrainSample {
     int island = 0; // 最近的岛
     int landcover = 0; // 最近格的地表类
     bool stream = false;
+    int lith = 0;
+    double rockwall = 0.0;
+    bool cloud_forest = false;
     float bed = 0.0f; // 在河床里（1）→ 出了平岸（0），地表色用
+    double bed_d50_mm = -1.0; // 负数代表旧资产没有河床质数据
     float bank = 0.0f; // 在河漫滩上（1）→ 渐回原地形（0）
 };
 

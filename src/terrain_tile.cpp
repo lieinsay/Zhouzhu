@@ -32,6 +32,17 @@ GroundColor lerp(const GroundColor &a, const GroundColor &b, double t) {
     return { a.r + (b.r - a.r) * k, a.g + (b.g - a.g) * k, a.b + (b.b - a.b) * k };
 }
 
+GroundColor lith_color(int lith) {
+    switch(lith) {
+        case 1:return {0.72f,0.71f,0.65f};
+        case 2:return {0.57f,0.49f,0.37f};
+        case 3:return {0.24f,0.28f,0.28f};
+        case 4:return {0.43f,0.51f,0.38f};
+        case 5:return PUMICE;
+        default:return ROCK;
+    }
+}
+
 // 一个顶点的季相份额（见 TileMesh::season）
 struct GroundSeason {
     uint8_t v[4] = { 0, 0, 0, 0 };
@@ -40,8 +51,8 @@ struct GroundSeason {
 constexpr int COVER_CLIFF_EDGE = 1, COVER_ALPINE = 3, COVER_FOREST = 4, COVER_SHRUB = 5, COVER_GRASS = 6, COVER_ARABLE = 7, COVER_TERRACE = 8, COVER_WETLAND = 9;
 
 // 崖壁与岛底的岩色：上浅下深（p_t：0 崖顶 → 1 崖脚），按绝对高度一层层夹着浮石的灰白层（同一高度在各处是同一层，相邻的崖面对得上）
-GroundColor rock_color(double p_y, double p_t) {
-    const GroundColor base = lerp(CLIFF_TOP, CLIFF_LOW, p_t);
+GroundColor rock_color(double p_y, double p_t,int lith=0) {
+    const GroundColor base = lith ? lerp(lith_color(lith),UNDERSIDE,0.5*p_t) : lerp(CLIFF_TOP, CLIFF_LOW, p_t);
     const double layer = hash_fbm(STRATA_SEED, p_y / STRATA_M, 0.5, 1.0, 2);
     const GroundColor banded = lerp(base, PUMICE, std::clamp((layer - 0.15) * 1.6, 0.0, 0.55));
     const float shade = float(1.0 + 0.10 * hash_noise(STRATA_SEED + 1, p_y / (0.37 * STRATA_M), 0.25));
@@ -69,20 +80,30 @@ GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_s
             out = { out.r + mix.w[k] * c.r, out.g + mix.w[k] * c.g, out.b + mix.w[k] * c.b };
         }
     }
+    if (p_sample.cloud_forest) {
+        out=lerp(out,GroundColor{0.22f,0.39f,0.29f},0.45);
+        forest*=0.25; // Persistent moist canopy keeps most of its colour in winter.
+    }
     // 约 30° 起露岩、45° 全岩；门槛按细噪声进退（远处退掉）
     const double breakup = ROCK_BREAKUP * (1.0 - cover_ramp(p_footprint, 0.0, 0.75 * ROCK_BREAKUP_FEATURE_M));
     const double rock = (0.86 - p_normal_y) / 0.16 + breakup * hash_fbm(COLOR_SEED + 3, p_x, p_z, ROCK_BREAKUP_FEATURE_M, 2);
+    const GroundColor exposed=lith_color(p_sample.lith);
     double bare = std::clamp(rock, 0.0, 1.0); // 露岩、河床不换季
+    if (p_sample.rockwall>0) bare=std::max(bare, std::clamp((0.9-p_normal_y)*3.0,0.0,1.0));
     if (p_terrain.has_rivers()) {
         out = lerp(out, MEADOW, 0.45 * p_sample.bank);
-        out = lerp(out, ROCK, rock);
-        out = lerp(out, GRAVEL, p_sample.bed); // 河床不论坡度都是卵石
+        out = lerp(out, exposed, bare);
+        // 只按源数据的粒径分材质；不凭河宽/涨水猜河床质，也不新增砂洲或石块位置。
+        const double d50 = p_sample.bed_d50_mm;
+        const GroundColor bed_color = d50 < 0 ? GRAVEL : d50 < 0.0625 ? GroundColor{0.32f,0.29f,0.24f}
+                : d50 < 2.0 ? GroundColor{0.58f,0.53f,0.40f} : d50 < 64.0 ? GRAVEL : exposed;
+        out = lerp(out, bed_color, p_sample.bed);
         herb += 0.45 * p_sample.bank * (1.0 - herb);
         bare = 1.0 - (1.0 - bare) * (1.0 - std::clamp(double(p_sample.bed), 0.0, 1.0));
     } else {
         const WorldGrid &g = p_terrain.get_grid();
         out = lerp(out, WET, 0.55 * blend.smooth(st, [&g](size_t k) { return g.stream[k] ? 1.0 : 0.0; }));
-        out = lerp(out, ROCK, rock);
+        out = lerp(out, exposed, bare);
     }
     const double keep = 1.0 - bare;
     const double shares[4] = { herb, field, shrub, forest };
@@ -97,6 +118,7 @@ struct Builder {
     TileMesh &mesh;
     bool collide;
     double wall_row = WALL_ROW_M; // 崖壁分段高：粗块（远处）按格距分，不必那么细
+    int lith=0;
 
     int vertex(float x, float y, float z, float nx, float ny, float nz, const GroundColor &c, const GroundSeason &s = GroundSeason()) {
         mesh.positions.insert(mesh.positions.end(), { x, y, z });
@@ -120,7 +142,7 @@ struct Builder {
         const double drop = std::max(p0[1] - p3[1], p1[1] - p2[1]);
         const int rows = std::clamp(int(std::ceil(drop / wall_row)), 1, WALL_ROWS_MAX);
         const double top = 0.5 * (p0[1] + p1[1]);
-        auto color = [&](const float *q) { return rock_color(q[1], (top - q[1]) / WALL_FADE_M); };
+        auto color = [&](const float *q) { return rock_color(q[1], (top - q[1]) / WALL_FADE_M,lith); };
         float a_hi[3] = { p0[0], p0[1], p0[2] }, b_hi[3] = { p1[0], p1[1], p1[2] };
         for (int k = 1; k <= rows; k++) {
             const float t = float(k) / float(rows);
@@ -344,20 +366,115 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
         return a + (c - a) * ti;
     };
 
+    // Clip boundary triangles against the continuous coast field; the same edge roots
+    // feed the top, underside and collision wall, so there is no staircase or open seam.
+    auto clipped_triangle = [&](size_t a, size_t c, size_t d) {
+        struct V { double x, z, shore; };
+        auto point = [&](size_t k) { double x=mesh.origin_x+double(k%(N+1))*step, z=mesh.origin_z+double(k/(N+1))*step; return V{x,z,p_terrain.sample(x,z).shore}; };
+        std::vector<V> src = {point(a),point(c),point(d)}, poly, roots;
+        for (size_t k=0;k<3;k++) {
+            const V &u=src[k], &v=src[(k+1)%3];
+            if (u.shore>0) poly.push_back(u);
+            if ((u.shore>0)!=(v.shore>0)) {
+                V lo=u,hi=v;
+                for (int it=0;it<24;it++) {
+                    V mid{(lo.x+hi.x)*0.5,(lo.z+hi.z)*0.5,0}; mid.shore=p_terrain.sample(mid.x,mid.z).shore;
+                    if ((mid.shore>0)==(lo.shore>0)) lo=mid; else hi=mid;
+                }
+                V root{(lo.x+hi.x)*0.5,(lo.z+hi.z)*0.5,0}; poly.push_back(root); roots.push_back(root);
+            }
+        }
+        if (poly.size()<3) return;
+        std::vector<int> top,low;
+        for (const V &v:poly) {
+            const auto q=p_terrain.sample(v.x,v.z);
+            const double e=std::max(0.5,step*0.5);
+            const float nx=float(-(p_terrain.sample(v.x+e,v.z).top-p_terrain.sample(v.x-e,v.z).top)/(2*e));
+            const float nz=float(-(p_terrain.sample(v.x,v.z+e).top-p_terrain.sample(v.x,v.z-e).top)/(2*e));
+            const float inv=1/std::sqrt(1+nx*nx+nz*nz);
+            GroundSeason season; const auto color=ground_color(p_terrain,q,v.x,v.z,inv,step,season);
+            top.push_back(b.vertex(float(v.x-mesh.origin_x),float(q.top),float(v.z-mesh.origin_z),nx*inv,inv,nz*inv,color,season));
+            low.push_back(b.vertex(float(v.x-mesh.origin_x),float(q.bottom),float(v.z-mesh.origin_z),0,-1,0,UNDERSIDE));
+        }
+        for (size_t k=1;k+1<poly.size();k++) { b.triangle(top[0],top[k],top[k+1],true); b.triangle(low[0],low[k+1],low[k],true); }
+        if (roots.size()==2) {
+            const auto u=p_terrain.sample(roots[0].x,roots[0].z),v=p_terrain.sample(roots[1].x,roots[1].z);
+            float p0[3]={float(roots[0].x-mesh.origin_x),float(u.top),float(roots[0].z-mesh.origin_z)};
+            float p1[3]={float(roots[1].x-mesh.origin_x),float(v.top),float(roots[1].z-mesh.origin_z)};
+            float p2[3]={p1[0],float(v.bottom),p1[2]},p3[3]={p0[0],float(u.bottom),p0[2]};
+            double x=(roots[0].x+roots[1].x)*0.5,z=(roots[0].z+roots[1].z)*0.5;
+            double nx=-(p_terrain.sample(x+1,z).shore-p_terrain.sample(x-1,z).shore),nz=-(p_terrain.sample(x,z+1).shore-p_terrain.sample(x,z-1).shore);
+            b.lith=p_terrain.sample(x,z).lith;
+            double len=std::hypot(nx,nz); if(len>0) b.cliff(p0,p1,p2,p3,float(nx/len),float(nz/len),true);
+        }
+    };
+
+    std::vector<int> river_ids;
+    std::vector<int8_t> river_refined(size_t((N+2)*(N+2)),-1);
+    auto refine_quad = [&](int qi,int qj) {
+        auto &cached=river_refined[size_t((qi+1)*(N+2)+qj+1)];
+        if(cached>=0) return cached!=0;
+        RiverHit hit;
+        cached=leaf && p_terrain.get_grid().authoritative_rivers && p_terrain.has_rivers() && solid(qi,qj) && !holed(qi,qj)
+                && p_terrain.get_rivers().nearest(mesh.origin_x+(qj+0.5)*step,mesh.origin_z+(qi+0.5)*step,20.0,hit)
+                && hit.at.width<12.0 && hit.distance<hit.at.half()+2.0*step;
+        return cached!=0;
+    };
+    auto river_vertex = [&](int ri,int cj) {
+        const int side=N*4+1, key=ri*side+cj;
+        if(river_ids.empty()) river_ids.assign(size_t(side*side),-1);
+        if(river_ids[size_t(key)]>=0) return river_ids[size_t(key)];
+        const double spacing=step/4, x=cj*spacing, z=ri*spacing;
+        const double wx=mesh.origin_x+x, wz=mesh.origin_z+z;
+        auto sample=p_terrain.sample(wx,wz);
+        // 细分带外沿贴合相邻粗三角形的边，消除 T 接缝漏出的亮点。
+        if(ri%4==0 && cj%4!=0 && (!refine_quad(ri/4-1,cj/4) || !refine_quad(ri/4,cj/4))) {
+            const double a=at(ri/4,cj/4).top, b=at(ri/4,cj/4+1).top;
+            sample.top=a+(b-a)*(cj%4)/4.0;
+        } else if(cj%4==0 && ri%4!=0 && (!refine_quad(ri/4,cj/4-1) || !refine_quad(ri/4,cj/4))) {
+            const double a=at(ri/4,cj/4).top, b=at(ri/4+1,cj/4).top;
+            sample.top=a+(b-a)*(ri%4)/4.0;
+        }
+        const double nx=-(p_terrain.sample(wx+spacing,wz).top-p_terrain.sample(wx-spacing,wz).top)/(2*spacing);
+        const double nz=-(p_terrain.sample(wx,wz+spacing).top-p_terrain.sample(wx,wz-spacing).top)/(2*spacing);
+        const double inv=1.0/std::sqrt(nx*nx+1+nz*nz);
+        GroundSeason season;
+        const auto color=ground_color(p_terrain,sample,wx,wz,inv,spacing,season);
+        const int id=b.vertex(float(x),float(sample.top),float(z),float(nx*inv),float(inv),float(nz*inv),color,season);
+        river_ids[size_t(key)]=id;
+        return id;
+    };
+
     // 裙边垂多深：比相邻两级精度之差大就行
     const float skirt = float(2.0 + step);
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             if (!solid(i, j)) {
+                if (p_terrain.get_grid().authoritative_rivers && !holed(i,j)) {
+                    const size_t a=node(i,j),c=node(i,j+1),d=node(i+1,j),e=node(i+1,j+1);
+                    clipped_triangle(a,c,d); clipped_triangle(c,e,d);
+                }
                 continue;
             }
             mesh.land_quads++;
             const size_t k00 = node(i, j), k01 = node(i, j + 1), k10 = node(i + 1, j), k11 = node(i + 1, j + 1);
             const bool hole = holed(i, j);
+            // 近处细河槽细分到 0.5 m；仍取同一地形函数，不抬水、不改源宽度。
+            // 2 m 格会跨过枯水溪流，让插值地面周期性盖住水面。
+            const bool refine_river = refine_quad(i,j);
             // 从上往下看：x 向右、z 向下，(i,j) → (i,j+1) → (i+1,j) 是顺时针
             if (!hole) {
-                b.triangle(top_id[k00], top_id[k01], top_id[k10], true);
-                b.triangle(top_id[k01], top_id[k11], top_id[k10], true);
+                if (refine_river) {
+                    int ids[5][5];
+                    for(int ri=0;ri<=4;ri++) for(int cj=0;cj<=4;cj++) ids[ri][cj]=river_vertex(i*4+ri,j*4+cj);
+                    for(int ri=0;ri<4;ri++) for(int cj=0;cj<4;cj++) {
+                        b.triangle(ids[ri][cj],ids[ri][cj+1],ids[ri+1][cj],true);
+                        b.triangle(ids[ri][cj+1],ids[ri+1][cj+1],ids[ri+1][cj],true);
+                    }
+                } else {
+                    b.triangle(top_id[k00], top_id[k01], top_id[k10], true);
+                    b.triangle(top_id[k01], top_id[k11], top_id[k10], true);
+                }
             }
             if (i % bottom_stride == 0 && j % bottom_stride == 0) {
                 const int d = bottom_stride;
@@ -381,10 +498,23 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             for (const Edge &e : edges) {
                 const size_t ka = node(e.ai, e.aj), kb = node(e.bi, e.bj);
                 const bool on_border = e.qi < 0 || e.qj < 0 || e.qi >= N || e.qj >= N;
-                if (!solid(e.qi, e.qj)) {
+                if (!solid(e.qi, e.qj) && !p_terrain.get_grid().authoritative_rivers) {
                     // 崖壁：从顶面垂到岛底
                     b.cliff(&top_pos[ka * 3], &top_pos[kb * 3], &bottom_pos[kb * 3], &bottom_pos[ka * 3], e.nx, e.nz, true);
                 } else if (on_border && !hole) {
+                    if(refine_river) {
+                        // 块边裙边同样细分，避免旧 2 m 的裙边横穿新河槽。
+                        for(int t=0;t<4;t++) {
+                            const int a=river_vertex(e.ai*4+(e.bi-e.ai)*t,e.aj*4+(e.bj-e.aj)*t);
+                            const int c=river_vertex(e.ai*4+(e.bi-e.ai)*(t+1),e.aj*4+(e.bj-e.aj)*(t+1));
+                            const float pa[3]={mesh.positions[a*3],mesh.positions[a*3+1],mesh.positions[a*3+2]};
+                            const float pc[3]={mesh.positions[c*3],mesh.positions[c*3+1],mesh.positions[c*3+2]};
+                            const float al[3]={pa[0],pa[1]-skirt,pa[2]}, cl[3]={pc[0],pc[1]-skirt,pc[2]};
+                            const GroundColor ca{mesh.colors[a*4],mesh.colors[a*4+1],mesh.colors[a*4+2]};
+                            const GroundColor cc{mesh.colors[c*4],mesh.colors[c*4+1],mesh.colors[c*4+2]};
+                            b.wall(pa,pc,cl,al,e.nx,e.nz,ca,cc,cc,ca,false);
+                        }
+                    } else {
                     // 裙边：邻块精度不同，两边的面对不齐，垂一圈同色的面把缝遮住（两面都画，从哪边看都有）
                     const float a_low[3] = { top_pos[ka * 3], top_pos[ka * 3 + 1] - skirt, top_pos[ka * 3 + 2] };
                     const float b_low[3] = { top_pos[kb * 3], top_pos[kb * 3 + 1] - skirt, top_pos[kb * 3 + 2] };
@@ -396,6 +526,7 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                     b.triangle(va, vc, vd, false);
                     b.triangle(va, vc, vb, false);
                     b.triangle(va, vd, vc, false);
+                    }
 
                     // 岛底也一样：往上（岛里）翘一圈，从下面看不漏天。翘边的底要贴着画出来的岛底（隔格铺时是插值线，不是这一点的真值），
                     // 翘多高按格距放（相邻两块插值的差随跨度长），但不高过这里的岛体厚度，免得从地面上戳出来

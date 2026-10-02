@@ -2743,7 +2743,82 @@ void test_world_rivers() {
     for (size_t k = 1; k < mouth_mesh.custom1.size(); k += 4) {
         fall = fall || mouth_mesh.custom1[k] > 0.5f;
     }
-    check(fall, "河口块有跌水帘");
+    check(!fall, "只读 terrain.bin 而未读 falls 时不编造河口瀑布高度");
+}
+
+void test_river_contract() {
+    std::printf("river_contract\n");
+    RiverRules rules;
+    RiverVertex p;
+    p.surface=102; p.source_surface=102; p.depth=2; p.width=10;
+    p.mean_flow=2; p.bankfull_flow=10; p.floodplain_left=2; p.floodplain_right=20; p.floodplain=20;
+    const auto bank=river_stage(p,5,rules), low=river_stage(p,0.2,rules), mean=river_stage(p,1,rules);
+    check_near(bank.level,102,1e-9,"平岸水面与源数据闭合时逐米吻合");
+    check_near(bank.speed,0.5,1e-9,"10 m³/s 通过 10×2 m 断面，流速 0.5 m/s");
+    check_near(low.discharge,0.4,1e-9,"枯水流量来自年均乘当日指数");
+    check(low.speed<mean.speed && mean.speed<bank.speed,"真实断面下流速随当天流量变化");
+    check_near(mean.speed*mean.depth*(mean.half_left+mean.half_right),2,1e-9,"流量与宽、深、流速守恒");
+    const auto flood=river_stage(p,20,rules);
+    check_near(flood.discharge,40,1e-9,"源数据流量不被旧 flood_max 偷截成 30");
+    check_near(flood.half_left,7,1e-9,"左滩只有 2 m，不使用右滩 20 m 的上限");
+    check(flood.half_right>flood.half_left,"漫滩左右保持不对称");
+    check_near(river_profile(p,12,rules),102.08,1e-9,"左滩剖面在源宽度处截止");
+    check_near(river_profile(p,-12,rules),102.28,1e-9,"右滩按右侧宽度计算");
+    const std::vector<float> daily{0.2f,1.0f,5.0f,0.4f};
+    check_near(river_runoff_index(daily,1.0),0.6,1e-7,"相邻日平滑过渡");
+    check_near(river_runoff_index(daily,0.0),0.3,1e-7,"年末至年初也平滑过渡");
+    auto dry_source=p; dry_source.authoritative=true; dry_source.mean_flow=0; dry_source.bankfull_flow=0; dry_source.acc=100;
+    const auto zero=river_stage(dry_source,5,rules);
+    check(zero.discharge==0 && zero.depth==0 && zero.speed==0 && !zero.wet,"生成器零流量不回退成按面积猜流量的旧河");
+
+    WorldGrid g; g.rows=5; g.cols=5; g.res=100; g.authoritative_rivers=true;
+    g.height.assign(25,102); g.shore.assign(25,500); g.island.assign(25,0);
+    for(int row=0;row<5;row++) for(int col=0;col<5;col++) g.shore[size_t(row*5+col)]=float(250-col*100);
+    g.landcover.assign(25,6); g.stream.assign(25,1); g.basin_runoff={daily};
+    WorldGrid::RiverSource r; r.exit=1; r.basin=0;
+    r.points={{{1,1,1,4,2,10,10,2,6.58f,1.05f,102,100,.03f,64,3,0,120,2,20,1}},
+              {{1,2,1,4,2,10,10,2,6.58f,1.05f,101,99,.03f,64,3,0,120,2,20,1}}};
+    r.outlet_drop=44.7; g.river_sources={r};
+    WorldTerrain terrain(g,{WorldIsland()},42,rules);
+    const auto mesh=build_river_mesh(terrain,{0,0});
+    bool has_fall=false, attrs_ok=!mesh.empty(), has_side_normal=false;
+    for(size_t i=0;i<mesh.custom1.size();i+=4) {
+        const double drop=mesh.custom1[i+1];
+        has_fall|=std::abs(drop-44.7)<1e-4;
+        attrs_ok &= drop<1e-6 || std::abs(drop-44.7)<1e-4;
+        attrs_ok &= mesh.custom2[i]==2 && mesh.custom2[i+1]==120 && mesh.custom2[i+2]==64;
+        attrs_ok &= mesh.custom3[i]==2 && mesh.custom3[i+1]==20;
+        if(drop>0) has_side_normal |= std::abs(mesh.normals[(i/4)*3+1])<1e-6;
+    }
+    check(has_fall && attrs_ok,"GPU 收到原始流量/SSC/粒径/左右滩宽以及 44.7 m 的源瀑布，非固定 150 m");
+    check(has_side_normal,"瀑布水帘法线朝侧面");
+    check(mesh.min_y<60,"瀑布真实落差包含在包围盒里");
+
+    // A one-metre channel between the old 2 m grid rows must remain visible at low stage.
+    // Check the rendered/collision triangles, not just the continuous height function.
+    g.height.assign(25,100.25f);
+    r.exit=0; r.outlet_drop=0;
+    for(auto &pt:r.points) { pt[0]=1.003f; pt[4]=0.2f; pt[5]=1; pt[6]=1; pt[7]=0.25f; pt[10]=100.25f; pt[11]=100; }
+    g.river_sources={r};
+    WorldTerrain narrow(g,{WorldIsland()},42,rules);
+    TileLayout layout(g);
+    const double px=150.25,pz=double(r.points[0][0])*g.res;
+    const auto tile=build_tile_mesh(narrow,layout,layout.leaf_at(px,pz));
+    double rendered=-1e9;
+    for(size_t i=0;i+8<tile.collision.size();i+=9) {
+        const auto *a=&tile.collision[i], *b=&tile.collision[i+3], *c=&tile.collision[i+6];
+        const double ax=a[0]+tile.origin_x,az=a[2]+tile.origin_z;
+        const double bx=b[0]+tile.origin_x,bz=b[2]+tile.origin_z;
+        const double cx=c[0]+tile.origin_x,cz=c[2]+tile.origin_z;
+        const double det=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);
+        if(std::abs(det)<1e-9) continue;
+        const double u=((bz-cz)*(px-cx)+(cx-bx)*(pz-cz))/det;
+        const double v=((cz-az)*(px-cx)+(ax-cx)*(pz-cz))/det;
+        if(u>=-1e-6 && v>=-1e-6 && u+v<=1+1e-6) rendered=std::max(rendered,u*a[1]+v*b[1]+(1-u-v)*c[1]);
+    }
+    RiverHit nh; narrow.get_rivers().nearest(px,pz,10,nh);
+    const auto dry_stage=river_stage(nh.at,0.5,rules);
+    check(rendered>99.9 && rendered<dry_stage.level,"枯水细溪在实际地面/碰撞网格上连续露出，不靠抬高水面");
 }
 
 // ---------------------------------------------------------------- 金标：地图宿主重构前后逐位一致
@@ -7535,7 +7610,7 @@ int main(int argc, char **argv) {
             // 读开局那群的几段（换开局、重导时逐段重记金标）
             { "almanac", test_almanac }, { "climate", test_climate }, { "local_season", test_local_season }, { "village_seasons", test_village_seasons },
             { "world_start", test_world_start }, { "village_prep", test_village_prep_start }, { "terrain_v3", test_terrain_v3_start },
-            { "world_sites", test_world_sites }, { "world_rivers", test_world_rivers }, { "map_grounds", test_map_grounds }, { "freight", test_freight },
+            { "world_sites", test_world_sites }, { "world_rivers", test_world_rivers }, { "river_contract", test_river_contract }, { "map_grounds", test_map_grounds }, { "freight", test_freight },
             { "gather", test_gather }, { "scatter", test_scatter }, { "goldens", test_goldens }, { "planet_data", test_planet_data },
             { "planet_add_lods", test_planet_add_lods }, { "planet_frame", test_planet_frame }, { "far_group_mesh", test_far_group_mesh },
             { "planet_surface", test_planet_surface } };
@@ -7595,6 +7670,7 @@ int main(int argc, char **argv) {
     test_village_plan();
     test_world_sites();
     test_world_rivers();
+    test_river_contract();
     test_map_grounds();
     test_layout_edits();
     test_house_templates();

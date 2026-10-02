@@ -22,6 +22,9 @@ const DepositKind KINDS[] = {
     { "sulfur", "硫磺", DepositForm::FIELD, "硫磺坑", "采硫", "sulfur", 4.0, 20, 48.0, DepositLook::CRUST, 0.9f, 0.9f, 0.24f },
     { "cave", "洞穴", DepositForm::POINT, "洞穴", "", "", 0.0, 0, 0.0, DepositLook::CAVE, 0.2f, 0.2f, 0.2f },
     { "guano", "鸟粪石", DepositForm::PATCH, "", "", "", 0.0, 0, 0.0, DepositLook::NONE, 0.94f, 0.94f, 0.82f },
+    { "salt", "岩盐", DepositForm::FIELD, "盐井", "汲卤煮盐", "salt", 4.0, 30, 48.0, DepositLook::SLUICE, 0.92f, 0.90f, 0.85f },
+    { "saltspring", "盐泉", DepositForm::POINT, "盐泉", "", "", 0.0, 0, 0.0, DepositLook::SPRING, 0.75f, 0.85f, 0.9f },
+    { "fossil", "贝壳化石", DepositForm::POINT, "贝壳化石", "", "", 0.0, 0, 0.0, DepositLook::QUARRY, 0.85f, 0.82f, 0.68f },
 };
 const int KIND_COUNT = int(sizeof(KINDS) / sizeof(KINDS[0]));
 
@@ -52,16 +55,18 @@ const OreKind ORES[] = {
     { "铜", "copper_ore" },
     { "铁", "iron_ore" },
     { "铅锌", "lead_zinc_ore" },
-    { "金", "gold_ore" },
+    { "金银", "gold_ore" },
     { "锰", "manganese_ore" },
-    { "锡钨", "tin_ore" },
+    { "锡", "tin_ore" },
+    { "铬", "chromium_ore" },
+    { "镍", "nickel_ore" },
 };
 constexpr int ORE_COUNT = int(sizeof(ORES) / sizeof(ORES[0]));
 
 // 采得到的原料（颜色在物品表里）
 const char *const RAW_ITEMS[] = {
     "stone", "clay", "floatstone", "timber", "firewood", "gravel", "gold_dust", "copper_ore", "iron_ore", "lead_zinc_ore", "gold_ore",
-    "manganese_ore", "tin_ore", "peat", "reed", "sulfur", "guano",
+    "manganese_ore", "tin_ore", "peat", "reed", "sulfur", "guano", "salt", "chromium_ore", "nickel_ore",
 };
 
 } // namespace

@@ -140,11 +140,25 @@ RiverVertex lerp_vertex(const RiverVertex &a, const RiverVertex &b, double t) {
     v.z = a.z + (b.z - a.z) * t;
     v.s = a.s + (b.s - a.s) * t;
     v.surface = a.surface + (b.surface - a.surface) * t;
+    v.source_surface = a.source_surface + (b.source_surface - a.source_surface) * t;
     v.width = a.width + (b.width - a.width) * t;
     v.depth = a.depth + (b.depth - a.depth) * t;
     v.floodplain = a.floodplain + (b.floodplain - a.floodplain) * t;
     v.acc = a.acc + (b.acc - a.acc) * t;
     v.dry = a.dry + (b.dry - a.dry) * t;
+    v.mean_flow = a.mean_flow + (b.mean_flow - a.mean_flow) * t;
+    v.bankfull_flow = a.bankfull_flow + (b.bankfull_flow - a.bankfull_flow) * t;
+    v.authoritative = a.authoritative;
+    v.slope=a.slope+(b.slope-a.slope)*t;
+    v.d50_mm=a.d50_mm+(b.d50_mm-a.d50_mm)*t;
+    v.ssc_mg_l=a.ssc_mg_l+(b.ssc_mg_l-a.ssc_mg_l)*t;
+    v.planform=t<0.5 ? a.planform : b.planform;
+    v.level=t<0.5 ? a.level : b.level;
+    v.bed_class=t<0.5 ? a.bed_class : b.bed_class;
+    v.confine=t<0.5 ? a.confine : b.confine;
+    v.floodplain_left=a.floodplain_left+(b.floodplain_left-a.floodplain_left)*t;
+    v.floodplain_right=a.floodplain_right+(b.floodplain_right-a.floodplain_right)*t;
+    v.basin = a.basin;
     return v;
 }
 
@@ -177,6 +191,7 @@ double river_profile(const RiverVertex &p_at, double p_d, const RiverRules &p_ru
     const double b = std::max(1e-3, p_at.half());
     const double flat = p_rules.bed_flat * b;
     const double d = std::abs(p_d);
+    if (p_at.source_data() && d<=b) return p_at.bed()+p_at.depth*std::pow(d/b,0.4/0.26);
     if (d <= flat) {
         return p_at.bed();
     }
@@ -184,13 +199,15 @@ double river_profile(const RiverVertex &p_at, double p_d, const RiverRules &p_ru
         const double u = (d - flat) / std::max(1e-6, b - flat);
         return p_at.bed() + p_at.depth * u * u;
     }
-    return p_at.surface + p_rules.floodplain_slope * (std::min(d, p_at.core()) - b);
+    return p_at.surface + p_rules.floodplain_slope * (std::min(d, p_at.core_at(p_d)) - b);
 }
 
 RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRules &p_rules) {
     RiverStage st;
     const double dry = std::clamp(p_at.dry, 0.0, 0.999);
-    st.flow = std::min(std::max(0.0, p_runoff - dry) / ((1.0 - dry) * p_rules.bankfull_ratio), p_rules.flood_max);
+    st.flow = p_at.source_data()
+            ? (p_at.bankfull_flow > 0.0 ? std::max(0.0, p_runoff) * p_at.mean_flow / p_at.bankfull_flow : 0.0)
+            : std::min(std::max(0.0, p_runoff - dry) / ((1.0 - dry) * p_rules.bankfull_ratio), p_rules.flood_max);
     st.depth = p_at.depth * std::pow(st.flow, p_rules.stage_exp);
     st.level = p_at.bed() + st.depth;
     const double b = p_at.half();
@@ -199,6 +216,12 @@ RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRule
     st.half_width = st.depth <= 0.0          ? 0.0
             : st.depth <= p_at.depth ? flat + (b - flat) * std::sqrt(st.depth / std::max(1e-6, p_at.depth))
                                      : std::min(b + (st.depth - p_at.depth) / p_rules.floodplain_slope, p_at.core());
+    if (p_at.source_data() && st.flow<=1) st.half_width=b*std::pow(st.flow,0.26);
+    st.half_left = std::min(st.half_width, p_at.core_at(1));
+    st.half_right = std::min(st.half_width, p_at.core_at(-1));
+    st.discharge = st.flow * (p_at.source_data() ? p_at.bankfull_flow : p_rules.mean_discharge(p_at.acc) * p_rules.bankfull_ratio);
+    const double area = (st.half_left + st.half_right) * st.depth;
+    st.speed = area > 1e-12 ? st.discharge / area : 0.0;
     st.wet = st.depth > p_rules.wet_depth_m;
     return st;
 }
@@ -206,6 +229,93 @@ RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRule
 std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const RiverRules &p_rules, uint64_t p_seed, const ShoreFn &p_shore) {
     auto net = std::make_shared<WorldRivers>();
     net->rules = p_rules;
+    if (g.authoritative_rivers) {
+        net->stems.resize(g.river_sources.size());
+        for (size_t si = 0; si < g.river_sources.size(); si++) {
+            const auto &src = g.river_sources[si];
+            auto &stem = net->stems[si];
+            stem.island = src.island; stem.parent = src.down; stem.mouth = src.exit == 1;
+            stem.outlet_drop = src.outlet_drop;
+            std::vector<RiverVertex> raw;
+            for (const auto &p : src.points) {
+                RiverVertex v;
+                v.authoritative = true;
+                v.x = g.x0 + double(p[1]) * g.res;
+                v.z = g.z0 + double(p[0]) * g.res;
+                v.acc = p[3]; v.mean_flow = p[4]; v.bankfull_flow = p[5];
+                v.width = p[6]; v.depth = p[7];
+                v.surface = double(p[11]) + v.depth;
+                v.source_surface = p[10];
+                v.level = int(p[2]); v.bed_class = int(p[14]);
+                v.slope=p[12]; v.d50_mm=p[13]; v.planform=int(p[15]);
+                v.ssc_mg_l=p[16]; v.confine=int(p[19]);
+                v.floodplain_left=std::max(0.0,double(p[17]));
+                v.floodplain_right=std::max(0.0,double(p[18]));
+                v.floodplain = std::max(v.floodplain_left,v.floodplain_right);
+                v.basin = src.basin >= 0 ? src.basin : int(g.basin_runoff.size()) - 1;
+                raw.push_back(v);
+            }
+            // join is a point index in the downstream segment, not in this segment.
+            // The generator omits that shared cell from the tributary's own points.
+            if (!raw.empty() && src.down >= 0 && src.join >= 0) {
+                const auto &down = g.river_sources[size_t(src.down)];
+                if (size_t(src.join) < down.points.size()) {
+                    const auto &p = down.points[size_t(src.join)];
+                    auto join = raw.back();
+                    join.x = g.x0 + double(p[1]) * g.res;
+                    join.z = g.z0 + double(p[0]) * g.res;
+                    join.surface = double(p[11]) + join.depth;
+                    join.source_surface = p[10];
+                    raw.push_back(join);
+                }
+            }
+            double arc = 0;
+            for (size_t i = 0; i + 1 < raw.size(); i++) {
+                const double length = std::hypot(raw[i+1].x - raw[i].x, raw[i+1].z - raw[i].z);
+                const int steps = std::max(1, int(std::ceil(length / p_rules.step_m)));
+                for (int j = 0; j < steps; j++) {
+                    auto v = lerp_vertex(raw[i], raw[i+1], double(j) / steps);
+                    v.s = arc + length * j / steps;
+                    stem.v.push_back(v);
+                }
+                arc += length;
+            }
+            if (!raw.empty()) { raw.back().s = arc; stem.v.push_back(raw.back()); }
+            // Extend the exported outlet cell to the subcell coastline, keeping the upstream path fixed.
+            if (stem.mouth && stem.v.size() >= 2) {
+                auto a = stem.v[stem.v.size()-2], end = stem.v.back();
+                const double len = std::hypot(end.x-a.x, end.z-a.z);
+                if (len > 0 && p_shore(end.x,end.z) > 0) {
+                    double best = 2.0 * g.res, bx = 0, bz = 0;
+                    // An outlet's D8 tangent can follow the coast. Find the nearest
+                    // zero crossing instead of leaving its waterfall inland.
+                    for (int k=0;k<32;k++) {
+                        const double angle=6.283185307179586*k/32.0;
+                        const double dx=std::cos(angle), dz=std::sin(angle);
+                        double lo=0, hi=0;
+                        for (double d=g.res/8;d<=best;d+=g.res/8) {
+                            if (p_shore(end.x+dx*d,end.z+dz*d)<=0) { hi=d; break; }
+                            lo=d;
+                        }
+                        if (hi==0) continue;
+                        for (int n=0;n<24;n++) {
+                            const double m=(lo+hi)*0.5;
+                            (p_shore(end.x+dx*m,end.z+dz*m)>0 ? lo : hi)=m;
+                        }
+                        if (hi<best) { best=hi; bx=dx; bz=dz; }
+                    }
+                    if (bx!=0 || bz!=0) {
+                        const auto start=end;
+                        end.x+=bx*best; end.z+=bz*best; end.s+=best;
+                        const int steps=std::max(1,int(std::ceil(best/p_rules.step_m)));
+                        for (int j=1;j<=steps;j++) stem.v.push_back(lerp_vertex(start,end,double(j)/steps));
+                    } else stem.mouth=false;
+                }
+            }
+        }
+        net->index_segments();
+        return net;
+    }
     if (!g.has_hydro()) {
         return net;
     }
@@ -507,7 +617,7 @@ int WorldRivers::near(double p_x, double p_z, RiverHit *r_hits, int p_cap) const
     int count = 0;
     for (uint32_t id : found->second) {
         const RiverHit hit = measure(id, p_x, p_z);
-        if (hit.distance >= hit.at.core() + rules.blend_m) {
+        if (hit.distance >= hit.at.core_at(hit.side) + rules.blend_m) {
             continue;
         }
         int slot = -1;
@@ -690,4 +800,19 @@ double RiverRegime::runoff(double p_day) const {
     const size_t a = size_t(std::floor(t)) % daily.size(), b = (a + 1) % daily.size();
     const double f = t - std::floor(t);
     return daily[a] + (daily[b] - daily[a]) * f;
+}
+
+RiverRegime RiverRegime::from_index(const std::vector<float> &p_index) {
+    RiverRegime r;
+    r.daily.assign(p_index.begin(), p_index.end());
+    r.days = double(p_index.size());
+    return r;
+}
+
+
+double river_runoff_index(const std::vector<float> &index,double day) {
+    if (index.empty()) return 1.0;
+    double t=std::fmod(day-0.5,double(index.size())); if(t<0) t+=index.size();
+    const size_t a=size_t(std::floor(t)),b=(a+1)%index.size();
+    return index[a]+(index[b]-index[a])*(t-std::floor(t));
 }

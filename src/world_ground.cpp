@@ -153,7 +153,7 @@ WaterKind WorldGround::water_at(double p_x, double p_z) const {
 
 bool WorldGround::on_floodplain(double p_x, double p_z) const {
     RiverHit hit;
-    return terrain.has_rivers() && terrain.get_rivers().nearest(origin_x + p_x, origin_z + p_z, 1e9, hit) && hit.distance <= hit.at.core();
+    return terrain.has_rivers() && terrain.get_rivers().nearest(origin_x + p_x, origin_z + p_z, 1e9, hit) && hit.distance <= hit.at.core_at(hit.side);
 }
 
 double WorldGround::water_depth(double p_x, double p_z) const {
@@ -259,7 +259,9 @@ bool WorldGround::on_yard(double p_x, double p_z, double p_margin) const {
 
 bool WorldGround::fertile(double p_x, double p_z) const {
     const WorldGrid &g = terrain.get_grid();
-    const int cover = g.landcover[g.nearest_cell(origin_x + p_x, origin_z + p_z)];
+    const size_t cell=g.nearest_cell(origin_x+p_x,origin_z+p_z);
+    if (!g.cultivable.empty()) return g.cultivable[cell]!=0;
+    const int cover = g.landcover[cell];
     return cover == LANDCOVER_FARMLAND || cover == LANDCOVER_TERRACE;
 }
 

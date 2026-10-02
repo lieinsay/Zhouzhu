@@ -70,6 +70,7 @@ IslandBody island_body(const WorldIsland &p_island) {
     // 龙骨只按岛的尺度（浮高计划 Z2）：生成器的 keel_m 是崖脚的高程（岸缘 − 崖高），不是深度——原先拿它与 25·√R 取大，
     // 浮高以前它只有一两百米、从来赢不了；岛整座往上浮 δ 以后它跟着涨，高岛的龙骨会随浮高变长。岛体厚度不该随浮高变（F3），所以不再用它
     b.keel_m = KEEL_K * std::pow(std::max(1.0, p_island.max_shore_m), KEEL_EXP);
+    for (const IslandCore &c : p_island.cores) b.keel_m=std::max(b.keel_m,c.depth_m);
     b.wall_m = std::max(p_island.cliff_m, std::clamp(WALL_SHARE * b.keel_m, WALL_MIN_M, WALL_MAX_M));
     // 浮高计划 F3：岛底连岩棱（龙骨的 RIB_SHARE）与起伏（UNDERSIDE_AMP_M）的最深处不低于云带顶之上 1000 m——超了收短龙骨，崖壁照未收短的龙骨定（不变）
     const double room = p_island.rim_m - b.wall_m - UNDERSIDE_AMP_M - VerticalDatum::ISLAND_BOTTOM_MIN_Y;
@@ -104,7 +105,7 @@ WorldTerrain::WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIslan
         bodies[k] = island_body(islands[k]);
     }
     rivers = WorldRivers::build(p_grid, p_river_rules, p_seed, [this](double x, double z) {
-        return grid->shore_at(x, z) + COAST_AMP_M * coast_noise(x, z);
+        return grid->shore_at(x, z) + (grid->authoritative_rivers ? 0.0 : COAST_AMP_M * coast_noise(x, z));
     });
 }
 
@@ -156,23 +157,26 @@ double WorldTerrain::detail(double p_x, double p_z) const {
         return a + (b - a) * tr;
     };
     double out = bilinear(amp) * hash_fbm(seed ^ STREAM_DETAIL, p_x, p_z, DETAIL_FEATURE_M, DETAIL_OCTAVES);
-    if (zoned) {
+    if (zoned && !g.authoritative_rivers) {
         const double rm = bilinear(ridge);
         if (rm > 0.0) {
             out += rm * hash_fbm(seed ^ STREAM_RIDGE, p_x, p_z, RIDGE_FEATURE_M, 3);
         }
     }
-    return out;
+    return g.authoritative_rivers ? std::clamp(out,-3.0,3.0) : out;
 }
 
 TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     TerrainSample s;
     const WorldGrid &g = *grid;
-    s.shore = g.shore_at(p_x, p_z) + COAST_AMP_M * coast_noise(p_x, p_z);
+    s.shore = g.shore_at(p_x, p_z) + (grid->authoritative_rivers ? 0.0 : COAST_AMP_M * coast_noise(p_x, p_z));
     const size_t cell = g.nearest_cell(p_x, p_z);
     s.island = g.island[cell];
     s.landcover = g.landcover[cell];
     s.stream = g.stream[cell] != 0;
+    if (!g.lith.empty()) s.lith=g.lith[cell];
+    if (!g.rockwall.empty()) s.rockwall=g.rockwall[cell];
+    if (!g.cloud_forest.empty()) s.cloud_forest=g.cloud_forest[cell]!=0;
     s.land = s.shore > 0.0;
     RiverHit hits[WorldRivers::MAX_HITS];
     const int n_hits = rivers ? rivers->near(p_x, p_z, hits, WorldRivers::MAX_HITS) : 0;
@@ -183,16 +187,18 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
         const RiverRules &rr = rivers->get_rules();
         double fade = 1.0;
         for (int k = 0; k < n_hits; k++) {
-            fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core()) / rr.blend_m));
+            fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core_at(hits[k].side)) / rr.blend_m));
         }
         const double natural = g.height_at(p_x, p_z) + fade * detail(p_x, p_z);
         double top = 1e18;
         for (int k = 0; k < n_hits; k++) {
             const RiverHit &h = hits[k];
-            const double target = river_profile(h.at, h.distance, rr);
-            const double w = 1.0 - smooth01((h.distance - h.at.core()) / rr.blend_m);
+            const double target = river_profile(h.at, h.distance * h.side, rr);
+            const double w = 1.0 - smooth01((h.distance - h.at.core_at(h.side)) / rr.blend_m);
             top = std::min(top, natural + w * (target - natural));
-            s.bed = std::max(s.bed, float(1.0 - smooth01((h.distance - h.at.half()) / 1.5)));
+            const float bed_weight = float(1.0 - smooth01((h.distance - h.at.half()) / 1.5));
+            if (bed_weight > s.bed && h.at.source_data()) s.bed_d50_mm = h.at.d50_mm;
+            s.bed = std::max(s.bed, bed_weight);
             s.bank = std::max(s.bank, float(w));
         }
         s.top = top;
@@ -200,7 +206,16 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     const WorldIsland &isl = island_info(s.island);
     const double inward = std::clamp(s.shore / std::max(1.0, isl.max_shore_m), 0.0, 1.0);
     const IslandBody &body = island_body_of(s.island);
-    const double hang = std::sqrt(inward);
+    double hang = std::sqrt(inward);
+    if (!isl.cores.empty()) {
+        double root=0;
+        for (const auto &c:isl.cores) {
+            const double radius=std::sqrt(std::max(1.0,c.area_km2*1e6)/3.141592653589793);
+            const double dist=std::hypot(p_x-c.x,p_z-c.z)/radius;
+            root=std::max(root,std::min(body.keel_m,c.depth_m)*std::exp(-1.6*dist*dist));
+        }
+        hang=body.keel_m>0 ? (0.15*body.keel_m*std::sqrt(inward)+0.85*root*smooth01(s.shore/150.0))/body.keel_m : 0;
+    }
     s.bottom = isl.rim_m - body.wall_m - body.keel_m * hang + UNDERSIDE_AMP_M * hash_fbm(seed ^ STREAM_UNDERSIDE, p_x, p_z, UNDERSIDE_FEATURE_M, 3) +
             RIB_SHARE * body.keel_m * hang * hash_fbm(seed ^ STREAM_RIB, p_x, p_z, RIB_FEATURE_M, 4);
     s.bottom = std::min(s.bottom, s.top - MIN_THICKNESS_M);
@@ -285,7 +300,7 @@ void WorldTerrain::set_yards(const std::vector<YardPlan> &p_yards, const YardRul
 }
 
 bool WorldTerrain::is_land(double p_x, double p_z) const {
-    return grid->shore_at(p_x, p_z) + COAST_AMP_M * coast_noise(p_x, p_z) > 0.0;
+    return grid->shore_at(p_x, p_z) + (grid->authoritative_rivers ? 0.0 : COAST_AMP_M * coast_noise(p_x, p_z)) > 0.0;
 }
 
 bool WorldTerrain::surface(double p_x, double p_z, double &r_y) const {

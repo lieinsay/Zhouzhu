@@ -16,6 +16,7 @@
 // 所以游戏里走近了才铺（远处不占内存），批量体检工具（tools/site_survey.cpp）也能离线把整个岛群铺一遍看有没有毛病。
 
 struct SiteIsland {
+    std::vector<IslandCore> cores;
     int id = 0;
     double rim_m = 0.0, cliff_m = 20.0, keel_m = 100.0, max_shore_m = 1000.0;
 };

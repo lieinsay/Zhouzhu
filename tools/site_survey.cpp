@@ -53,6 +53,7 @@
 #include "world_ledger.h"
 #include "world_sites.h"
 #include "world_terrain.h"
+#include "terrain_tile.h"
 
 namespace {
 
@@ -69,6 +70,62 @@ constexpr double SURVEY_PI = 3.14159265358979323846;
 
 double since_ms(const std::chrono::steady_clock::time_point &p_start) {
     return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - p_start).count();
+}
+
+bool survey_generator(const WorldTerrain &terrain) {
+    const WorldGrid &g=terrain.get_grid();
+    if (!g.authoritative_rivers) return true;
+    bool ok=true;
+    int samples=0, coast_tiles=0, coast_vertices=0, river_points=0;
+    double detail_max=0, coast_max=0, bed_error=0, width_error=0, flow_error=0;
+    const TileLayout layout(g);
+    for (size_t k=0;k<g.height.size();k+=137) {
+        const double x=g.x0+double(k%size_t(g.cols))*g.res, z=g.z0+double(k/size_t(g.cols))*g.res;
+        if (g.shore[k]>g.res) {
+            const auto s=terrain.sample_raw(x,z);
+            if (s.bank==0 && s.land) {
+                detail_max=std::max(detail_max,std::abs(s.top-g.height[k]));
+                samples++;
+            }
+        }
+        if (coast_tiles<24 && std::abs(g.shore[k])<g.res) {
+            const auto mesh=build_tile_mesh(terrain,layout,layout.leaf_at(x,z));
+            coast_tiles++;
+            for(size_t j=0;j<mesh.positions.size()/3;j++) {
+                if (std::abs(mesh.normals[3*j+1])>1e-5) continue;
+                const double px=mesh.origin_x+mesh.positions[3*j], pz=mesh.origin_z+mesh.positions[3*j+2];
+                coast_max=std::max(coast_max,std::abs(g.shore_at(px,pz)));
+                coast_vertices++;
+            }
+        }
+    }
+    const auto &stems=terrain.get_rivers().get_stems();
+    for (size_t s=0;s<g.river_sources.size();s++) {
+        if (g.river_sources[s].points.size()<2) continue;
+        if (s>=stems.size()) { ok=false; continue; }
+        const auto &vertices=stems[s].v;
+        size_t cursor=0;
+        for(size_t j=0;j<g.river_sources[s].points.size();j++) {
+            const auto &p=g.river_sources[s].points[j];
+            const double x=g.x0+double(p[1])*g.res,z=g.z0+double(p[0])*g.res;
+            if(j>0) {
+                const auto &prev=g.river_sources[s].points[j-1];
+                cursor+=size_t(std::max(1.0,std::ceil(std::hypot(double(p[0]-prev[0]),double(p[1]-prev[1]))*g.res/terrain.get_rivers().get_rules().step_m)));
+            }
+            if(cursor>=vertices.size()) { ok=false; break; }
+            const auto &v=vertices[cursor];
+            ok=ok && std::hypot(x-v.x,z-v.z)<1e-5;
+            bed_error=std::max(bed_error,std::abs(v.bed()-p[11]));
+            width_error=std::max(width_error,std::abs(v.width-p[6]));
+            flow_error=std::max(flow_error,std::abs(v.mean_flow-p[4]));
+            river_points++;
+        }
+    }
+    ok=ok && samples>0 && detail_max<=3.001 && coast_vertices>0 && coast_max<=0.5*g.res
+            && river_points>0 && bed_error<1e-5 && width_error<1e-5 && flow_error<1e-5;
+    std::printf("生成器契约：陆地 %d 点细节偏差 ≤ %.3f m；岸线 %d 顶点偏移 ≤ %.3f m（半格 %.0f）；河道 %d 源点床高 / 平岸宽 / 年均流量误差 %.6f / %.6f / %.6f；%s\n",
+            samples,detail_max,coast_vertices,coast_max,0.5*g.res,river_points,bed_error,width_error,flow_error,ok ? "通过" : "失败");
+    return ok;
 }
 
 } // namespace
@@ -554,6 +611,7 @@ int main(int argc, char **argv) {
     }
     auto river_started = std::chrono::steady_clock::now();
     WorldTerrain terrain(grid, sites.terrain_islands(), seed, river_rules);
+    const bool generator_ok=survey_generator(terrain);
     const double river_ms = since_ms(river_started);
     if (terrain.has_rivers()) {
         const WorldRivers &rivers = terrain.get_rivers();
@@ -971,7 +1029,7 @@ int main(int argc, char **argv) {
                 sim_ok ? "都对得上" : "有对不上的");
     }
 
-    const bool pass = dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing && no_berth_ratio <= max_missing && sim_ok && resources_ok && weather_ok;
+    const bool pass = generator_ok && dock_failed == 0 && yard_failed == 0 && missing_ratio <= max_missing && no_berth_ratio <= max_missing && sim_ok && resources_ok && weather_ok;
     std::printf("%s\n", pass ? "达标" : "不达标");
     return pass ? 0 : 1;
 }
