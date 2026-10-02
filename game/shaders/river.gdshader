@@ -43,6 +43,14 @@ varying float v_slope;
 varying float v_d50;
 varying float v_ice;
 
+float source_side_area(float half_w, float bank_half, float depth, float bank_depth) {
+	float inner = min(half_w, bank_half);
+	float outer = max(0.0, half_w - bank_half);
+	float exponent = 0.4 / 0.26;
+	return depth * inner - bank_depth * bank_half * pow(inner / bank_half, exponent + 1.0) / (exponent + 1.0)
+		+ (depth - bank_depth) * outer - 0.5 * floodplain_slope * outer * outer;
+}
+
 void vertex() {
 	float bed = CUSTOM0.x;
 	float bank_depth = max(CUSTOM0.y, 1e-4);
@@ -83,6 +91,8 @@ void vertex() {
 	float freeze = bank_depth < ice_small_depth ? 8.0 : 20.0;
 	v_ice = smoothstep(freeze - 2.0, freeze + 2.0, wx_elev_row(bed, 0).g) * (1.0 - v_fall);
 	float area = (half_left + half_right) * depth;
+	if (source) area = max(0.0, source_side_area(half_left, half_bank, depth, bank_depth)
+		+ source_side_area(half_right, half_bank, depth, bank_depth));
 	v_speed = (source ? (area > 1e-12 ? CUSTOM2.x * max(0.0, local_runoff) / area : 0.0)
 		: CUSTOM1.z * (0.5 + flow)) * (1.0 - v_ice);
 	// Align ripples with this river, including sloping reaches and falling curtains.

@@ -645,7 +645,7 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
         for (int i = s.start; i < s.start + s.n; i++) {
             const double vals[21] = { double(net.cell[i] / W), double(net.cell[i] % W), double(net.level[i]), npround(net.acc[i], 2),
                 npround(net.q_mean[i], 6), npround(net.q_bf[i], 6), npround(net.w[i], 6), npround(net.d[i], 6),
-                npround(net.w_mean[i], 6), npround(net.d_mean[i], 6), npround(net.surf[i], 1), npround(net.bed[i], 1),
+                npround(net.w_mean[i], 6), npround(net.d_mean[i], 6), npround(net.surf[i], 6), npround(net.bed[i], 6),
                 npround(net.slope[i], 5), npround(net.d50_mm[i], 3), double(net.d50c[i]), double(net.planform[i]),
                 npround(net.ssc[i], 0), npround(net.fp_l[i], 0), npround(net.fp_r[i], 0), double(net.confine[i]), double(net.flow_regime[i]) };
             for (double v : vals) put<float>(out, float(v));

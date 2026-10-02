@@ -98,8 +98,19 @@ func _enter() -> void:
 	var here: Dictionary = world.get_river_at(river_probe.x, river_probe.y)
 	var q := q_mean * series[sample_day]
 	var depth := d_bf * pow(q / q_bf, 0.4)
-	var width := w_bf * pow(q / q_bf, 0.26)
-	var speed := q / (width * depth) if width * depth > 0 else 0.0
+	var bank_half := w_bf * 0.5
+	var wet_half := bank_half * pow(q / q_bf, 0.26) if q <= q_bf else bank_half + (depth - d_bf) / 0.04
+	var left := minf(wet_half, bank_half + float(here["floodplain_left"]))
+	var right := minf(wet_half, bank_half + float(here["floodplain_right"]))
+	var width := left + right
+	var area := 0.0
+	for half in [left, right]:
+		var inner := minf(half, bank_half)
+		var outer := maxf(0.0, half - bank_half)
+		var exponent := 0.4 / 0.26
+		area += depth * inner - d_bf * bank_half * pow(inner / bank_half, exponent + 1.0) / (exponent + 1.0)
+		area += (depth - d_bf) * outer - 0.5 * 0.04 * outer * outer
+	var speed := q / area if area > 0 else 0.0
 	if absf(float(here["discharge_m3_s"]) - q) > 0.001 or absf(float(here["depth"]) - depth) > 0.001 or absf(float(here["width"]) - width) > 0.001 or absf(float(here["speed_m_s"]) - speed) > 0.001:
 		push_error("river_data_shots: source daily contract failed %s" % here)
 		get_tree().quit(1)

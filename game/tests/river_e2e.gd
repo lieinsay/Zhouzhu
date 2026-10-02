@@ -170,7 +170,7 @@ func _physics_process(delta: float) -> void:
 					return
 				if not _expect(bool(mean_state["wet"]) and float(mean_state["level"]) > ground + 0.1, "年均时大河里没水"):
 					return
-				var q: float = float(mean_state["speed_m_s"]) * float(mean_state["width"]) * float(mean_state["depth"])
+				var q: float = float(mean_state["speed_m_s"]) * float(mean_state["wet_area_m2"])
 				if not _expect(absf(q - float(mean_state["discharge_m3_s"])) < 0.001, "流速与流量、断面不一致"):
 					return
 				world.set_runoff_override(0.2)

@@ -245,8 +245,19 @@ RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRule
     st.half_left = std::min(st.half_width, p_at.core_at(1));
     st.half_right = std::min(st.half_width, p_at.core_at(-1));
     st.discharge = st.flow * (p_at.source_data() ? p_at.bankfull_flow : p_rules.mean_discharge(p_at.acc) * p_rules.bankfull_ratio);
-    const double area = (st.half_left + st.half_right) * st.depth;
-    st.speed = area > 1e-12 ? st.discharge / area : 0.0;
+    st.area = (st.half_left + st.half_right) * st.depth;
+    if (p_at.source_data() && b > 0.0) {
+        // Integrate the same power-profile bed used by terrain and the shader,
+        // including each floodplain separately when its available width is capped.
+        auto side_area = [&](double half) {
+            const double in = std::min(half, b), out = std::max(0.0, half - b);
+            constexpr double exponent = 0.4 / 0.26;
+            return st.depth * in - p_at.depth * b * std::pow(in / b, exponent + 1) / (exponent + 1)
+                + (st.depth - p_at.depth) * out - 0.5 * p_rules.floodplain_slope * out * out;
+        };
+        st.area = std::max(0.0, side_area(st.half_left) + side_area(st.half_right));
+    }
+    st.speed = st.area > 1e-12 ? st.discharge / st.area : 0.0;
     st.wet = p_at.source_data() ? st.discharge > 0.0 && st.depth > 0.0 : st.depth > p_rules.wet_depth_m;
     return st;
 }

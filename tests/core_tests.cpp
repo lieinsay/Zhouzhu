@@ -2788,14 +2788,27 @@ void test_river_contract() {
     p.mean_flow=2; p.bankfull_flow=10; p.floodplain_left=2; p.floodplain_right=20; p.floodplain=20;
     const auto bank=river_stage(p,5,rules), low=river_stage(p,0.2,rules), mean=river_stage(p,1,rules);
     check_near(bank.level,102,1e-9,"平岸水面与源数据闭合时逐米吻合");
-    check_near(bank.speed,0.5,1e-9,"10 m³/s 通过 10×2 m 断面，流速 0.5 m/s");
+    check_near(bank.area,400.0/33.0,1e-9,"10 m 宽、2 m 中心深的曲面湿断面积为 400/33 m²");
+    check_near(bank.speed,0.825,1e-9,"按真实湿断面积计算流速，不按矩形截面");
     check_near(low.discharge,0.4,1e-9,"枯水流量来自年均乘当日指数");
     check(low.speed<mean.speed && mean.speed<bank.speed,"真实断面下流速随当天流量变化");
-    check_near(mean.speed*mean.depth*(mean.half_left+mean.half_right),2,1e-9,"流量与宽、深、流速守恒");
+    check_near(mean.speed*mean.area,2,1e-9,"流量与湿断面积、流速守恒");
     const auto flood=river_stage(p,20,rules);
     check_near(flood.discharge,40,1e-9,"源数据流量不被旧 flood_max 偷截成 30");
     check_near(flood.half_left,7,1e-9,"左滩只有 2 m，不使用右滩 20 m 的上限");
     check(flood.half_right>flood.half_left,"漫滩左右保持不对称");
+    for (double index : {0.0, 0.0001, 0.2, 1.0, 5.0, 5.01, 20.0, 200.0}) {
+        const auto water = river_stage(p,index,rules);
+        double integral = 0.0;
+        constexpr int count = 20000;
+        const double dx = (water.half_left + water.half_right) / count;
+        for (int i=0;i<count;++i) {
+            const double x=-water.half_right+(i+0.5)*dx;
+            integral += std::max(0.0,water.level-river_profile(p,x,rules))*dx;
+        }
+        check_near(water.area,integral,1e-5,"低水、满槽和非对称漫滩面积与地形数值积分一致");
+        check_near(water.speed*water.area,water.discharge,1e-9,"包括洪水与断流在内的 Q=VA 闭合");
+    }
     check_near(river_profile(p,12,rules),102.08,1e-9,"左滩剖面在源宽度处截止");
     check_near(river_profile(p,-12,rules),102.28,1e-9,"右滩按右侧宽度计算");
     const std::vector<float> daily{0.2f,1.0f,5.0f,0.4f};

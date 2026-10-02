@@ -796,6 +796,7 @@ Dictionary GroupWorld::get_river_at(double p_x, double p_z) const {
     out["half_width_left"] = st.half_left;
     out["half_width_right"] = st.half_right;
     out["speed_m_s"] = st.speed;
+    out["wet_area_m2"] = st.area;
     out["source_surface"] = hit.at.source_surface;
     out["bankfull_surface_error_m"] = hit.at.surface - hit.at.source_surface;
     out["flow"] = st.flow;

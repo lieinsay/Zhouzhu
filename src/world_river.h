@@ -75,7 +75,7 @@ struct RiverVertex {
     double surface = 0.0; // 平岸水面
     double source_surface = 0.0; // 生成器 surf_m，独立保留，不拿 bed + d_bf 覆盖它
     double width = 0.0; // 平岸宽
-    double depth = 0.0; // 平岸深
+    double depth = 0.0; // 参考满槽的中心最大深度，非断面平均深度
     double floodplain = 0.0; // 河漫滩宽（单侧）
     double acc = 0.0; // 汇流面积 km²
     double dry = 0.0; // 渗漏门槛
@@ -113,11 +113,12 @@ struct RiverHit {
 
 // 某一刻的水：水深、水位、水面半宽
 struct RiverStage {
-    double depth = 0.0;
+    double depth = 0.0; // 当前中心最大深度
     double level = 0.0; // 水面 y
     double half_width = 0.0;
     double half_left = 0.0, half_right = 0.0;
-    double discharge = 0.0, speed = 0.0; // m³/s、m/s，Q / (w*d)
+    double area = 0.0; // 实际湿断面积 m²（中心最大深度 × 水宽并不等于面积）
+    double discharge = 0.0, speed = 0.0; // m³/s、m/s，Q / area
     double flow = 0.0; // 流量 / 平岸流量
     bool wet = false;
 };

@@ -32,8 +32,8 @@ terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北�
     u8 [rows·cols]  D8 流向（v2）：0 = 不流（虚空格），1..8 = 流向邻格 (dr, dc) = FLOW_OFFSETS[k − 1]；
                     或上 0x10 = 那个邻格是虚空（河口：水从岸缘跌下去）
     f32[rows·cols]  汇流面积（v2）：平方公里，含本格；虚空格为 0（v3 起就是生成器的 flowacc_km2）
-    u16[rows·cols]  年均河宽：分米，非河道格为 0；水面和横断面以末尾中心线属性为准
-    u16[rows·cols]  年均水深：厘米，同上；显式河床高程见 bed_m，不能以最近格的岸上高程代替
+    u16[rows·cols]  参考满槽河宽：分米，非河道格为 0；水面和横断面以末尾中心线属性为准
+    u16[rows·cols]  参考满槽中心最大水深：厘米，同上；显式河床高程见 bed_m，不能以最近格的岸上高程代替
     u8 [rows·cols]  地形区（v3）：resources.py 的 ZONE_NAMES 下标（0 虚空 1 高山 2 山地 3 丘陵 4 台地平原 5 河谷 6 崖缘 7 水域）
     u8 [7][rows·cols] 赋存场：金属矿、硫磺、砂金、黏土、砂砾、石料、岩盐
     u16[rows·cols]  片号（v5）：生成器的 patch_id + 1（片 = 林木 / 泥炭芦苇 / 浮石露头 / 鸟粪石，即 resources.tsv 里 form = patch 的 deposit id）；0 = 不在片里

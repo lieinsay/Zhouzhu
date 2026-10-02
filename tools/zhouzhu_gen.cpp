@@ -7,6 +7,8 @@
 //   zhouzhu_gen world --config <config.tsv> --seed N --world <世界目录>
 //   zhouzhu_gen planet --config <config.tsv> --seed N --out <目录>   （只写 planet.bin / lods.bin / weather.bin，同新建世界时的行星包）
 //   zhouzhu_gen near-lods --config <config.tsv> --seed N --lods <lods.bin> --near N [--near-res 500] [--near-radius 600] [--out <lods.bin>]
+//   zhouzhu_gen refresh-lods --config <config.tsv> --seed N --lods <lods.bin> --nodes a,b --out <lods.bin>
+//     （按原有分辨率更新指定岛群，保留其余条目的原始数据。）
 //   zhouzhu_gen refresh-weather --config <config.tsv> --seed N --lods <lods.bin> --out <weather.bin> [--fine-root <groups目录>]
 //     （换行星包里「开局周围那一圈」的细一档粗版（D11）：留下每群的第一条（全行星那一档），丢掉后面的（旧的一圈），
 //       再给 --near 那一群 --near-radius km 内（群心之间的大圆距离）的每一群生成 --near-res 米一档、按节点排在后面——
@@ -55,7 +57,7 @@ std::vector<int64_t> parse_nodes(const std::string &p_s) {
 }
 
 int usage() {
-    std::fprintf(stderr, "zhouzhu_gen group|lods|world|planet|near-lods|refresh-weather --config <config.tsv> --seed N ...（见 tools/zhouzhu_gen.cpp 开头）\n");
+    std::fprintf(stderr, "zhouzhu_gen group|lods|world|planet|near-lods|refresh-lods|refresh-weather --config <config.tsv> --seed N ...（见 tools/zhouzhu_gen.cpp 开头）\n");
     return 2;
 }
 
@@ -255,6 +257,38 @@ int main(int argc, char **argv) {
         }
         if(!gen_core::write_file(a["--out"],gen_export::weather_bin(entries,{0,cfg.planet.get("s04.climate.precip_mm_ref",4000),1},ps->run+" "+gen_core::generator_commit()),error))return 1;
         std::printf("weather %zu groups %.2f s\n",entries.size(),now_s()-t0);return 0;
+    }
+    if (cmd == "refresh-lods") {
+        if (!a.count("--lods") || !a.count("--out") || !a.count("--nodes")) return usage();
+        std::string bytes;
+        std::vector<gen_export::LodEntry> entries;
+        if (!gen_core::read_file(a["--lods"], bytes) || !parse_lods(bytes, entries, error)) {
+            std::fprintf(stderr, "LOD read failed: %s\n", error.c_str());
+            return 1;
+        }
+        const auto nodes = parse_nodes(a["--nodes"]);
+        for (const auto node : nodes) {
+            bool found = false;
+            for (auto &entry : entries) {
+                if (entry.node != node) continue;
+                gen_export::LodEntry fresh;
+                gen_export::WeatherEntry weather;
+                gen_core::lod_only(*ps, node, fresh, weather, entry.res_m);
+                entry = std::move(fresh);
+                found = true;
+                std::printf("refresh-lods %lld %.0f m\n", static_cast<long long>(node), entry.res_m);
+                std::fflush(stdout);
+            }
+            if (!found) {
+                std::fprintf(stderr, "No existing LOD for node %lld\n", static_cast<long long>(node));
+                return 1;
+            }
+        }
+        if (!gen_core::write_file(a["--out"], gen_export::lods_bin(entries), error)) {
+            std::fprintf(stderr, "%s\n", error.c_str());
+            return 1;
+        }
+        return 0;
     }
     if (cmd == "near-lods") {
         const std::string in_path = a["--lods"];
