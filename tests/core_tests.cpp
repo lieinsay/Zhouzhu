@@ -2822,6 +2822,28 @@ void test_river_contract() {
               {{1,2,1,4,2,10,10,2,6.58f,1.05f,101,99,.03f,64,3,0,120,2,20,1}}};
     r.outlet_drop=44.7; g.river_sources={r};
     {
+        auto curved=g; curved.shore.assign(25,500);
+        auto &source=curved.river_sources[0]; source.exit=0;
+        source.points={r.points[0],r.points[0],r.points[0],r.points[0]};
+        const float positions[4][2]={{1,1},{1,2},{2,2},{3,3}};
+        for(int i=0;i<4;i++) { source.points[i][0]=positions[i][0]; source.points[i][1]=positions[i][1]; }
+        WorldTerrain curve(curved,{WorldIsland()},42,rules);
+        const auto &v=curve.get_rivers().get_stems()[0].v;
+        double max_turn=0; bool anchors=true, attributes=true;
+        for(size_t i=1;i+1<v.size();i++) {
+            const double ax=v[i].x-v[i-1].x,az=v[i].z-v[i-1].z,bx=v[i+1].x-v[i].x,bz=v[i+1].z-v[i].z;
+            max_turn=std::max(max_turn,std::acos(std::clamp((ax*bx+az*bz)/(std::hypot(ax,az)*std::hypot(bx,bz)),-1.0,1.0)));
+        }
+        for(const auto &p:source.points) {
+            double closest=1e9;
+            for(const auto &q:v) closest=std::min(closest,std::hypot(q.x-p[1]*100,q.z-p[0]*100));
+            anchors &= closest<1e-6;
+        }
+        for(const auto &q:v) attributes &= q.width==10 && q.mean_flow==2 && q.basin==0 && q.bed()==100;
+        check(max_turn<0.35,"新河网的 90 度格点转弯恢复连续曲线（最大转角 "+std::to_string(max_turn)+" rad）");
+        check(anchors && attributes,"平滑通过所有源点和汇流锚点，保持原宽深、流量、河床与流域");
+    }
+    {
         auto mixed=g;
         mixed.event_basin_offset=1;
         mixed.basin_runoff={{1,1,1,1},{0,2,2,0}};

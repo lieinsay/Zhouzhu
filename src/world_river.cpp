@@ -163,6 +163,30 @@ RiverVertex lerp_vertex(const RiverVertex &a, const RiverVertex &b, double t) {
     return v;
 }
 
+// 通过源点的有界 Hermite 插值。只恢复格点间的平滑，不挪动汇流锚点、
+// 不添加随机曲流；床高与水文属性仍沿相邻两个来源点线性变化。
+std::pair<double,double> source_tangent(const std::vector<RiverVertex> &p, size_t i) {
+    const auto &a=p[i ? i-1 : i], &b=p[i], &c=p[std::min(i+1,p.size()-1)];
+    const double ax=b.x-a.x,az=b.z-a.z,bx=c.x-b.x,bz=c.z-b.z;
+    const double la=std::hypot(ax,az),lb=std::hypot(bx,bz);
+    if (la<1e-9) return {bx,bz};
+    if (lb<1e-9) return {ax,az};
+    const double tx=ax/la+bx/lb,tz=az/la+bz/lb,len=std::hypot(tx,tz);
+    if (len<1e-9) return {0,0};
+    const double scale=std::min(la,lb)/len;
+    return {tx*scale,tz*scale};
+}
+
+RiverVertex source_curve(const std::vector<RiverVertex> &p, size_t i, double t) {
+    auto v=lerp_vertex(p[i],p[i+1],t);
+    const auto [ax,az]=source_tangent(p,i);
+    const auto [bx,bz]=source_tangent(p,i+1);
+    const double t2=t*t,t3=t2*t,h00=2*t3-3*t2+1,h10=t3-2*t2+t,h01=-2*t3+3*t2,h11=t3-t2;
+    v.x=h00*p[i].x+h10*ax+h01*p[i+1].x+h11*bx;
+    v.z=h00*p[i].z+h10*az+h01*p[i+1].z+h11*bz;
+    return v;
+}
+
 // 折线上离 (x, z) 最近的点
 RiverVertex closest_on_stem(const RiverStem &p_stem, double p_x, double p_z) {
     double best = 1e18;
@@ -277,13 +301,16 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
                 const double length = std::hypot(raw[i+1].x - raw[i].x, raw[i+1].z - raw[i].z);
                 const int steps = std::max(1, int(std::ceil(length / p_rules.step_m)));
                 for (int j = 0; j < steps; j++) {
-                    auto v = lerp_vertex(raw[i], raw[i+1], double(j) / steps);
-                    v.s = arc + length * j / steps;
+                    auto v = source_curve(raw,i,double(j)/steps);
+                    if (!stem.v.empty()) arc+=std::hypot(v.x-stem.v.back().x,v.z-stem.v.back().z);
+                    v.s = arc;
                     stem.v.push_back(v);
                 }
-                arc += length;
             }
-            if (!raw.empty()) { raw.back().s = arc; stem.v.push_back(raw.back()); }
+            if (!raw.empty()) {
+                if (!stem.v.empty()) arc+=std::hypot(raw.back().x-stem.v.back().x,raw.back().z-stem.v.back().z);
+                raw.back().s = arc; stem.v.push_back(raw.back());
+            }
             // Extend the exported outlet cell to the subcell coastline, keeping the upstream path fixed.
             if (stem.mouth && stem.v.size() >= 2) {
                 auto a = stem.v[stem.v.size()-2], end = stem.v.back();
