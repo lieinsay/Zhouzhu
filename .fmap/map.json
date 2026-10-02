@@ -561,9 +561,9 @@
     {
       "id": "world-terrain",
       "label": "连续地形",
-      "detail": "任意 (x, z) 上的有没有地、顶面、岛底、地表。大形听栅格（v3 起高程已含生成器下切的河谷），细节噪声按地表 × 地形区调幅；岛底是崖壁 + 倒锥（见 island-body）；河按河网的横断面凿；地表给各类的份额（地表过渡场，地皮与散布共用）。",
+      "detail": "任意 (x,z) 的陆地、顶面、岛底与地表查询，地面显示、碰撞和玩法共用。v6 岸线直接取 coast_dist_m=0，取消旧的岸线噪声偏移；河槽按源床高、宽深与左右漫滩取样，多核岛底读取源 cores。仍有最多 ±3 m 的既有地表细节噪声和岛底视觉起伏，不能视为生成器给出的精细几何。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest world_terrain：确定、连续、岸线进退在噪声幅度内",
+      "evidence": "2026-10-02 完整核心回归 1774 项通过；river_contract 与 edit_patch 检查源河道剖面、斜向窄河槽的实际三角形覆盖和地形编辑。岸缘缺少更细形态时保留源轮廓，见 docs/RIVER-DATA.md。",
       "sources": [
         "src/world_terrain.h",
         "src/world_terrain.cpp",
@@ -575,9 +575,9 @@
     {
       "id": "terrain-tile",
       "label": "分块地面",
-      "detail": "TileLayout：盖住整个栅格的四叉树，叶 128 m、每块 64 格，按离焦点的距离细分，只选可能有地的块；build_tile_mesh：顶面（按地表份额着色）、崖壁、岛底（整块是地时隔 4 格）、块边裙边，叶块带碰撞面。",
+      "detail": "按四叉树铺顶面、崖壁、岛底、块边裙边与叶块碰撞；顶面颜色读取同一地表过渡场。近处河槽随源宽局部细分：平岸宽 <2 m 的槽到 0.125 m，2–12 m 的槽到 0.5 m，接缝与碰撞同步，避免地面三角形盖住真实浅溪；不放大水宽或抬高水位。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest terrain_tile：互不重叠、全覆盖、叶块碰撞；邑治处 274 块",
+      "evidence": "a401987：斜向细溪回归修复前 16/16 点被盖住、修复后 16/16 点露出水面；地形编辑回归通过。远处粗 LOD 对细溪仍可能采样不足，不能将近处修复当作全部距离验收。",
       "sources": [
         "src/terrain_tile.h",
         "src/terrain_tile.cpp"
@@ -623,7 +623,7 @@
     {
       "id": "world-2051-scene",
       "label": "世界场景 world_seed42",
-      "detail": "Expedition + World（缺省是开局那群：开局配置 src/story_start.h，PLAN-LAND P0 起 #6329）+ Player + 云海 + 日光 + 行星那一套；出发码头 #1（邑治旁）、目的码头 #28（岛 #13，23 km）；2026-09-29 以前叫 world_2051.tscn、开局是 #2051。",
+      "detail": "world_seed42 是现有剧情世界场景：Expedition、World/GroupStream、Player、日光与行星画面共用；开局配置来自 src/story_start.h，当前出生群 #6329、开局日 85、出发码头 #1、目的码头 #11。2026-10-02 场景重构改接 v6 地貌、源河网与聚落数据，沿用原场景和玩法编排；2026-09-29 以前叫 world_2051.tscn、开局是 #2051。",
       "tag": "场景",
       "sources": [
         "game/world_seed42.tscn"
@@ -715,9 +715,9 @@
     {
       "id": "world-sites",
       "label": "岛群落点与整群规划",
-      "detail": "sites.tsv 解析；岛群的码头 / 勘察 / 导航适配器（外法线 = 岸距负梯度，禁区 = 溪涧、河湖、码头坪）；plan_world_docks、plan_world_village。游戏与体检工具走同一条路径。",
+      "detail": "解析 sites.tsv，统一码头、勘察与导航的岸距/禁区查询并规划村落。v6 常住中转站纳入站点和人口账；季节采场与无人使用点保留用途，不凭景观标记增加常住人口。游戏和体检工具复用这份规划。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "单测：91 码头落地、#7/#2 压平后等高、村152 与邑治不压坪不上陡坡",
+      "evidence": "更新后的 #6329 包校验 7330 户、42 个码头落点；world_e2e 与 world_features_e2e 通过。旧 #2051 的码头数量不再作为当前开局证据。",
       "sources": [
         "src/world_sites.h",
         "src/world_sites.cpp",
@@ -784,13 +784,14 @@
     {
       "id": "world-dock",
       "label": "WorldDock 码头",
-      "detail": "一个码头的栈桥与碰撞，放在岸缘点；地面已由地形压平。",
+      "detail": "沿实际岸缘搭栈桥与碰撞，坡道连接栈桥和岸上地面，供玩家上下船。坡道使用地形落点，不把悬空平台当成已经接岸。",
       "tag": "场景角色",
       "sources": [
         "src/world_village.h",
         "src/world_village.cpp"
       ],
-      "since": "e14"
+      "since": "e14",
+      "evidence": "875e7c6：接岸坡道修复；world_features_e2e 验证开局码头步行、入坞改船与返回泊位。"
     },
     {
       "id": "site-stream",
@@ -1253,7 +1254,7 @@
     {
       "id": "world-terrain-zones",
       "label": "地形区起伏",
-      "detail": "细节噪声幅度 = 地表类幅度 × 地形区倍率（高山 2.2、山地 1.8、丘陵 1.3、台地 0.8、河谷 0.6），山地另加 700 m 一道的岩梁（14 / 9 / 4 m）。",
+      "detail": "旧包按地表类和地形区调节细节噪声，山地另加岩梁；v6 已有生成器侵蚀地形，关闭附加岩梁，剩余地表细节限制在 ±3 m。它只补现有显示细节，不提供源数据缺失的河道曲流或岸缘缺口。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest terrain v3：细节起伏均值山地 2.5 m、台地 0.5 m",
       "sources": [
@@ -1265,9 +1266,9 @@
     {
       "id": "world-terrain-body",
       "label": "厚岛体（浮山）",
-      "detail": "island_body：龙骨 = 25·√最深岸距（主岛 3.3 km），崖壁 = 龙骨的 12%（30–160 m，与生成器崖高取大），岛底 = 岸缘 − 崖壁 − 龙骨·√向内 + 岩棱；lowest_bottom 给云海定下限；岛底（连岩棱）不低于云带顶之上 1000 m，超了收短龙骨（world-terrain-body-floor）。浮高计划 Z2 起不再与生成器的 keel_m 取大——那是崖脚的高程、随浮高平移，岛体厚度与浮高无关。",
+      "detail": "根据岸缘、崖高和最深岸距构造岛体；有源 cores 时读取各核位置、面积和深度，组合岛底分布，无 cores 时保留旧单体形状。崖脚高程 keel_m 不当作厚度；岛底净空使用数据包的云带顶与 clearance，岩棱和细起伏仍属既有视觉表达。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest terrain v3：主岛岛心厚 3.6 km，全群最低 −3465 m；island_floor：2051 #24 浮高 +1325 m 前后龙骨 889 m、崖壁不变（旧式会拿崖脚高程 1478 m 当龙骨）",
+      "evidence": "核心检查覆盖多核岛底、浮高不改变厚度与垂直基准；#6329 源 cores 为空的岛仍走兼容形状，不宣称每座岛已具有源多核几何。",
       "sources": [
         "src/world_terrain.h",
         "src/world_terrain.cpp"
@@ -1595,7 +1596,7 @@
     {
       "id": "terrain-tile-ground",
       "label": "地皮着色",
-      "detail": "每个顶点按 WorldTerrain::cover(x, z, 格距) 混各类颜色；陡坡露岩门槛按 14 m 细噪声进退成岩斑；有河网时河道类画成湿草（水面由河的网格画）；再按河漫滩、河床染色。",
+      "detail": "地皮与散布共用 WorldTerrain::cover 的地表份额；岩性、rockwall 与坡度影响露岩色，源 D50 区分河床材质，河漫滩与河床各自染色。异色河沟只是地表表现，水面由独立河流网格绘制，验收须区分两者。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "叶块跨可耕地 | 林地相邻 2 m 顶点色差 ≤ 0.06（一刀切 0.3）；cover_shots、terrain_shots 目视",
       "sources": [
@@ -3094,22 +3095,24 @@
     {
       "id": "planet-frame-datum",
       "label": "垂直结构（云带、海面、R）",
-      "detail": "VerticalDatum：云带顶 −5000、云带底 −6200、海面 −6800（游戏 y；浮高计划 F4 起整体下移 1200 m，原来 −3800 / −5000 / −5600），岛底最低线 ISLAND_BOTTOM_MIN_Y = 云带顶 + 1000；PLANET_DEFAULT_R = 海面 6371 km + 6.8 km = 6,377,800 m。着色器 planet_sky / planet_sea 的 PS_* 与 project.godot 的 planet_curve_radius 初值各抄一份。气温照旧 y < 0 取 y = 0。",
+      "detail": "从行星数据包读取海面、云带底/顶与岛底净空，GroupWorld 建岛体前先应用，PlanetView 同步 C++ 和着色器共用参数，投影半径由海面半径和基准高差计算。旧值 −6800/−6200/−5000 m、净空 1000 m 和 R=6377800 m 仅作无包默认，不再描述为所有场景固定值。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest：云带厚 1.2 km、云底下 600 m、R = 海面 + 6800 m；sea_descent_e2e 停在 −6785.07、各层读数与下移前一样；god_sea_e2e 37.7 s 到海面之上 2 m",
+      "evidence": "e487124 与完整核心回归：导出、解析、岛体构造与着色器使用同一份包内垂直结构。",
       "sources": [
         "src/planet_frame.h",
+        "src/planet_data.cpp",
+        "src/planet_view.cpp",
+        "src/world.cpp",
         "game/shaders/planet_sky.gdshaderinc",
-        "game/shaders/planet_sea.gdshaderinc",
-        "game/project.godot"
+        "game/shaders/planet_sea.gdshaderinc"
       ],
       "since": "e104",
       "parent": "planet-frame"
     },
     {
       "id": "world-terrain-body-floor",
-      "label": "岛底离云带顶一千米（夹龙骨）",
-      "detail": "island_body 末尾：岸缘 − 崖壁 − 龙骨 × 1.07（岩棱）− 8 m（起伏）≥ ISLAND_BOTTOM_MIN_Y，超了收短龙骨；崖壁照未收短的龙骨定。island_lowest 给出一座岛岛底最深能到哪，lowest_bottom 用它。far_group_mesh 照抄（远处不画岩棱，龙骨照样收）。",
+      "label": "岛底遵守数据包净空",
+      "detail": "island_body 在云带顶 + clearance 以上限制最深岛底，超出时收短龙骨；净空来自行星包，1000 m 仅为无包时的旧默认值。GroupWorld 在建岛体前应用该基准，PlanetView 再向画面同步，避免场景加载顺序使用旧常量。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest island_floor（Z2 起确定的）：仓库里 2051、2050 每座岛；进程内现场生成 4684、4981、4855（seed42 的 config.tsv）主岛各收短一座、连岩棱停在 −4000；粗版低模同样。本机生成过的群改用 zhouzhu_site_survey --island-floor 查（43 群 1,431 座，收短 7 座）",
       "sources": [
@@ -3613,9 +3616,9 @@
     {
       "id": "world-landscape",
       "label": "地貌与聚落景观",
-      "detail": "近处流式铺峰林、天生桥、岸缘泉线/崖瀑、水利、轮值中转站、遗迹与季节使用点；大尺度地貌来自栅格。常住建筑由村落流式系统负责。",
+      "detail": "GroupWorld 读取 landscape 后挂载景观职责，近处流式呈现源峰林、天生桥、泉线/崖瀑、水利、遗迹与季节使用点；常住建筑仍由村落流式系统负责。它是现有世界场景重构中新增的景观职责，复用已有地形、河流和聚落节点。",
       "tag": "场景角色",
-      "evidence": "31/31 Godot 回归通过，开局与跨群加载无脚本错误；Vulkan Forward+ 集中检查码头、河流、岸线三张实机截图，无着色器报错。罕见地貌尚未逐类巡检。",
+      "evidence": "接入阶段 31/31 Godot 回归通过；后续开局修复再验 12 个月 GPU 水面与 river/world/world_features/earthworks 四项回归。罕见地貌未逐类视觉验收，全行星 2 km 粗包未全部更新，不能标为全场景视觉完成。",
       "sources": [
         "game/landscape_view.gd",
         "game/shaders/spring_water.gdshader",
@@ -9956,49 +9959,61 @@
     },
     {
       "id": "generator-natural-world",
-      "title": "新版生成器接入：自然地貌、河网与聚落",
-      "story": "玩家走到真实岸线和河滩，沿着涨落的河水探索地貌、水利与村落，再飞往其他岛群靠泊落地。",
+      "title": "场景重构：world_seed42 的地貌、河流与聚落",
+      "story": "玩家进入 #6329，在同一座岛上沿岸走到溪边，随日期推进看到水面涨落，经过地貌与村落，再沿接岸坡道上船飞往另一座岛。",
       "date": "2026-10-02",
       "color": "#b8a12a",
       "steps": [
         {
-          "text": "世界载入新版生成器的地形、河网、聚落与垂直结构",
+          "text": "进入世界 seed42，出生在 #6329 的主码头旁，岛体、云海与海面按世界数据中的高度摆放",
           "nodes": [
+            "world-2051-scene",
             "gen-core",
             "gen-export",
             "world-grid",
+            "planet-frame-datum",
             "planet-view"
           ]
         },
         {
-          "text": "玩家踩在切到真实岸线的地面上，看到多核岛底、岩壁和近处地貌",
+          "text": "走向岸边：地面和碰撞沿同一岸线落地，岩壁与岛底按已有地貌数据呈现",
           "nodes": [
+            "world-node",
             "world-terrain",
             "world-terrain-body",
-            "world-node",
-            "world-landscape"
+            "terrain-tile",
+            "terrain-tile-ground"
           ]
         },
         {
-          "text": "河道保留原来的流路，水面按所属流域的逐日径流涨落",
+          "text": "走到河边：沿生成器给出的河道看到实际水面，河床颜色与水面分开，细溪保持源宽度",
           "nodes": [
             "world-river-net",
+            "world-terrain",
+            "terrain-tile",
+            "world-river-water"
+          ]
+        },
+        {
+          "text": "日期推进，或用 F6 逐月拨时：每条河按所属流域的逐日水量改变水宽和水深，开局浅溪有水时能看见水面",
+          "nodes": [
             "world-river-regime",
             "world-river-water"
           ]
         },
         {
-          "text": "常住中转站有居民，季节采场与无人使用点保留自身用途",
+          "text": "经过地貌和聚落：常住中转站有人居住，季节采场和无人使用点保留各自用途",
           "nodes": [
-            "world-sites",
-            "world-landscape"
+            "world-landscape",
+            "world-sites"
           ]
         },
         {
-          "text": "玩家沿码头坡道上下船，飞往新岛群，也能落在无人岛的自然落点",
+          "text": "沿接岸坡道走上空艇，飞往其他岛群，加载当地地形和落点后靠泊下船",
           "nodes": [
             "world-dock",
-            "group-stream"
+            "group-stream",
+            "world-node"
           ]
         }
       ],
@@ -10016,9 +10031,15 @@
         "world-river-water",
         "world-sites",
         "world-dock",
-        "group-stream"
+        "group-stream",
+        "world-2051-scene",
+        "planet-frame-datum",
+        "terrain-tile",
+        "terrain-tile-ground",
+        "river-e2e",
+        "world-e2e"
       ],
-      "commits": "875e7c6..a401987"
+      "commits": "f043711..9ab9d09"
     }
   ],
   "events": [
@@ -13240,10 +13261,11 @@
     },
     {
       "id": "e122",
-      "type": "slice",
+      "type": "extend",
       "date": "2026-10-02",
-      "title": "切片：新版生成器接入：自然地貌、河网与聚落",
-      "summary": "玩家走到真实岸线和河滩，沿着涨落的河水探索地貌、水利与村落，再飞往其他岛群靠泊落地。",
+      "title": "场景重构：world_seed42 的地貌、河流与聚落",
+      "summary": "重构现有世界场景，复用地形、河流、码头与跨群加载节点，新增景观职责；按职责扩展记录，不是新玩法切片，也没有合并功能节点。此前游戏重建河网、叠加岸线偏移并在多处使用固定高度；现在 v6 保留源中心线和岸线，逐日流域水量驱动 CPU/GPU 的宽深，场景与着色器共用包内垂直基准。开局浅溪另修地面遮挡、旧水深阈值和透明度，完整核心 1774 项、12 个月 GPU 水面与 4 项玩法回归通过。全行星粗包和罕见地貌逐类验收未完成；缺少细岸缘、曲流和分汊几何时保留数据缺口。",
+      "commits": "f043711..9ab9d09",
       "chain": "generator-natural-world",
       "nodes": [
         "gen-export",
@@ -13262,6 +13284,13 @@
         "group-stream"
       ],
       "info": {
+        "task_kind": "scene-refactor",
+        "node": "world-node",
+        "children": [],
+        "adopted": [],
+        "peers": [
+          "world-landscape"
+        ],
         "created": [
           "world-landscape"
         ],
