@@ -3673,6 +3673,21 @@
         "docs/RIVER-MODEL-AUDIT.md"
       ],
       "since": "e127"
+    },
+    {
+      "id": "river-geometry-audit-scale-budget",
+      "label": "河网尺度与水账诊断",
+      "detail": "按连接边河长、真实 Strahler 级序及汇水面积统计水宽、水深和断流；检查逐日上下来水差额、地下水终点账和文献断面敏感性。只读预览或在内存生成，不改正式生成规则；日差额是待解释的蓄泄或交换要求，不冒充全年损失。",
+      "tag": "工具",
+      "evidence": "2026-10-05：3 项独立小图测试通过；3 个 seed、12 群、379267 点研究完成。四群内存复算与现用预览的分组及交接诊断一致；文献试算回代 Q 相对误差容差 1e-11。仅验证诊断计算，尚未完成新模型或游戏加宽验收。",
+      "sources": [
+        "tools/audit_river_scale.py",
+        "tools/run_river_scale_study.py",
+        "tools/test_audit_river_scale.py",
+        "docs/RIVER-MODEL-AUDIT.md"
+      ],
+      "since": "e128",
+      "parent": "river-geometry-audit"
     }
   ],
   "edges": [
@@ -13760,6 +13775,25 @@
         "updated": [
           "river-e2e"
         ]
+      }
+    },
+    {
+      "id": "e128",
+      "type": "extend",
+      "date": "2026-10-05",
+      "title": "拓展：河网尺度与沿河水账诊断",
+      "summary": "在断面一致性检查之外，增加跨气候与岛屿尺度的河网诊断；全河网合理加宽仍待方案确定和实施。",
+      "nodes": [
+        "river-geometry-audit",
+        "river-geometry-audit-scale-budget"
+      ],
+      "info": {
+        "node": "river-geometry-audit",
+        "children": [
+          "river-geometry-audit-scale-budget"
+        ],
+        "adopted": [],
+        "peers": []
       }
     }
   ],
