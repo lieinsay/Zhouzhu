@@ -59,6 +59,8 @@ def main():
     ap.add_argument('--samples', type=Path, default=Path('build/river-scale-study.json'))
     ap.add_argument('--out', type=Path, default=Path('build/river-core-exchange.json'))
     ap.add_argument('--times', type=float, nargs='+', default=[8., 4., 2.])
+    ap.add_argument('--footprint-scale', type=float, default=0.)
+    ap.add_argument('--res-m', type=float)
     args = ap.parse_args()
     if not all(t > 0 and np.isfinite(t) for t in args.times):
         ap.error('exchange times must be positive and finite')
@@ -71,7 +73,9 @@ def main():
     samples = json.loads(args.samples.read_text(encoding='utf-8'))['samples']
     result = dict(status='isolated candidate, NOT adopted production model',
                   exchange_times_days=args.times,
-                  inherited_terms='core volume/height footprint, annual rain ceiling, annual core input, river eligibility and hydraulic geometry',
+                  footprint_scale=args.footprint_scale, res_m=args.res_m,
+                  inherited_terms=('annual core input, old river eligibility and hydraulic geometry' if args.footprint_scale else
+                      'core volume/height footprint, annual rain ceiling, annual core input, river eligibility and hydraulic geometry'),
                   source='Fresh seasonal model column; paired ocean evaporation is a prescribed boundary, not a solved ocean circulation.',
                   native_sha256=hashlib.sha256(Path(_core.__file__).read_bytes()).hexdigest(), seeds={}, nodes={})
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -89,7 +93,9 @@ def main():
             node = item['node']
             records, base, rain_signature = {}, None, None
             for tau in [0.]+args.times:
-                g = generate(ctx, node, sets=[f'island.water.core_exchange_days={tau}'], write=False, log=lambda _: None)
+                g = generate(ctx, node, sets=[f'island.water.core_exchange_days={tau}',
+                    f'island.water.core_footprint_scale={args.footprint_scale if tau else 0}'],
+                    write=False, log=lambda _: None, **({'res_m': args.res_m} if args.res_m else {}))
                 doc = rivers_doc(g)
                 doc['res_m'] = g['res_km']*1000
                 metrics = daily_scales(doc)
@@ -101,6 +107,10 @@ def main():
                 record = audit(doc, g, dict(seed=seed, node=node, exchange_days=tau, weather_year=0))
                 land = g['island_id'] >= 0
                 volume = float(g['condense_mm'][land].sum(dtype=float)*g['res_km']**2*1000)
+                main = g['island_id'] == 0
+                record['main_supply'] = dict(
+                    core_m3s=float(g['condense_mm'][main].sum(dtype=float)*g['res_km']**2*1000/g['year_s']),
+                    rain_runoff_m3s=float((g['runoff_mm'][main].astype(float)-g['condense_mm'][main]).sum()*g['res_km']**2*1000/g['year_s']))
                 record['paired_budget'] = dict(condensation_m3_year=volume, ocean_evaporation_m3_year=volume,
                     latent_heat_to_island_MW=volume*1000*2.45e6/g['year_s']/1e6,
                     note='Equal prescribed source/sink obligations, NOT simulated ocean transport or proof of local heat balance.')
