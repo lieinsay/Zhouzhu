@@ -153,11 +153,6 @@ bool PlanetData::parse_planet(const uint8_t *p_data, size_t p_size, std::string 
             ls >> band_tops_deg[0] >> band_tops_deg[1] >> band_tops_deg[2] >> band_tops_deg[3];
         } else if (key == "g_storm") {
             ls >> g_lat >> g_lon >> g_radius_deg;
-        } else if (key == "vertical") {
-            ls >> vertical.sea >> vertical.base >> vertical.top >> vertical.clearance >> vertical.pressure >> vertical.scale_km >> vertical.oxygen;
-            if (!ls || !(vertical.sea < vertical.base && vertical.base < vertical.top) || !(vertical.clearance > 0 && vertical.pressure > 0 && vertical.scale_km > 0 && vertical.oxygen > 0 && vertical.oxygen < 1)) {
-                r_error = "planet.bin 垂直结构无效"; return false;
-            }
         } else if (key == "source") {
             std::getline(ls, source);
             source.erase(0, source.find_first_not_of(' '));

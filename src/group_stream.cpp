@@ -1294,32 +1294,7 @@ bool GroupStream::find_landing(Group &r_group) {
         }
     }
     if (!seat) {
-        // Uninhabited groups are valid in the new settlement model. Developer
-        // jumps land on natural ground without fabricating a dock or village.
-        const auto &terrain=w->get_terrain();
-        const auto &grid=terrain.get_grid();
-        size_t best=grid.height.size();
-        double score=-1;
-        for(size_t k=0;k<grid.height.size();k++) {
-            if(grid.shore[k]<0.5*grid.res || grid.island[k]!=0) continue;
-            const double x=grid.x0+double(k%size_t(grid.cols))*grid.res;
-            const double z=grid.z0+double(k/size_t(grid.cols))*grid.res;
-            const double candidate=grid.shore[k]/(1+std::hypot(x,z)/grid.res);
-            if(candidate<=score) continue;
-            const auto p=terrain.sample(x,z);
-            if(!p.land || p.bank>0) continue;
-            const double dx=terrain.sample(x+2,z).top-terrain.sample(x-2,z).top;
-            const double dz=terrain.sample(x,z+2).top-terrain.sample(x,z-2).top;
-            if(std::hypot(dx,dz)>2.0) continue;
-            if(candidate>score) { score=candidate; best=k; }
-        }
-        if(best==grid.height.size()) return false;
-        const double x=grid.x0+double(best%size_t(grid.cols))*grid.res;
-        const double z=grid.z0+double(best/size_t(grid.cols))*grid.res;
-        jump_spawn=Transform3D(Basis(),Vector3(real_t(x),real_t(terrain.sample(x,z).top),real_t(z)));
-        jump_has_berth=false;
-        jump_where=String(U"无人岛自然落点");
-        return true;
+        return false;
     }
     // 村心可能正是堂屋：往外挪到第一块没有房子的平地（按地面高、离村心 30–120 m）
     Vector3 at(real_t(seat->x), 0.0f, real_t(seat->z));

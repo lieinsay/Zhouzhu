@@ -7,21 +7,16 @@
 //   zhouzhu_gen world --config <config.tsv> --seed N --world <世界目录>
 //   zhouzhu_gen planet --config <config.tsv> --seed N --out <目录>   （只写 planet.bin / lods.bin / weather.bin，同新建世界时的行星包）
 //   zhouzhu_gen near-lods --config <config.tsv> --seed N --lods <lods.bin> --near N [--near-res 500] [--near-radius 600] [--out <lods.bin>]
-//   zhouzhu_gen refresh-lods --config <config.tsv> --seed N --lods <lods.bin> --nodes a,b --out <lods.bin>
-//     （按原有分辨率更新指定岛群，保留其余条目的原始数据。）
-//   zhouzhu_gen refresh-weather --config <config.tsv> --seed N --lods <lods.bin> --out <weather.bin> [--fine-root <groups目录>]
 //     （换行星包里「开局周围那一圈」的细一档粗版（D11）：留下每群的第一条（全行星那一档），丢掉后面的（旧的一圈），
 //       再给 --near 那一群 --near-radius km 内（群心之间的大圆距离）的每一群生成 --near-res 米一档、按节点排在后面——
 //       同 tools/export_planet.py --near N --near-res 500 --near-radius 600 写出的 lods.bin；--out 缺省就地改写）
 // 输出（stdout）一行一件：节点、各段用时（秒）。
 #include <chrono>
-#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -30,8 +25,6 @@
 #include "py_format.h"
 #include "scipy_edt.h"
 #include "skyisle/grid.hpp"
-#include "skyisle/island/climate.hpp"
-#include "skyisle/planet/view.hpp"
 
 namespace {
 
@@ -57,7 +50,7 @@ std::vector<int64_t> parse_nodes(const std::string &p_s) {
 }
 
 int usage() {
-    std::fprintf(stderr, "zhouzhu_gen group|lods|world|planet|near-lods|refresh-lods|refresh-weather --config <config.tsv> --seed N ...（见 tools/zhouzhu_gen.cpp 开头）\n");
+    std::fprintf(stderr, "zhouzhu_gen group|lods|world|planet|near-lods --config <config.tsv> --seed N ...（见 tools/zhouzhu_gen.cpp 开头）\n");
     return 2;
 }
 
@@ -198,7 +191,8 @@ int main(int argc, char **argv) {
         if (!gen_core::write_file(out + "/planet.bin", gen_export::planet_bin(ps->world, ps->society, seed, source), error) ||
                 !gen_core::write_file(out + "/lods.bin", gen_export::lods_bin({}), error) ||
                 !gen_core::write_file(out + "/weather.bin",
-                        gen_export::weather_bin({}, {0.0,cfg.planet.get("s04.climate.precip_mm_ref",4000.0),1.0},
+                        gen_export::weather_bin({}, { cfg.island.get("climate.precip_mm_min", 150.0), cfg.island.get("climate.precip_mm_max", 4000.0),
+                                                            cfg.island.get("climate.precip_mm_exp", 1.3) },
                                 source),
                         error)) {
             std::fprintf(stderr, "%s\n", error.c_str());
@@ -222,73 +216,6 @@ int main(int argc, char **argv) {
         }
         std::printf("done %.2f s\n", now_s() - t0);
         return failed ? 1 : 0;
-    }
-    if (cmd=="refresh-weather") {
-        std::string bytes; std::vector<gen_export::LodEntry> lods;
-        if (!gen_core::read_file(a["--lods"],bytes) || !parse_lods(bytes,lods,error)) { std::fprintf(stderr,"%s\n",error.c_str());return 1; }
-        std::map<int64_t,double> rims, resolutions;
-        for(const auto &l:lods) if(l.n_islands && (!rims.count(l.node) || l.res_m<resolutions[l.node])) {
-            float rim=0; std::memcpy(&rim,l.blob.data()+8,4); rims[l.node]=rim; resolutions[l.node]=l.res_m;
-        }
-        if (a.count("--fine-root")) for (auto &kv:rims) {
-            std::string sites;
-            if (!gen_core::read_file(a["--fine-root"]+"/"+std::to_string(kv.first)+"/sites.tsv",sites)) continue;
-            std::istringstream rows(sites); std::string line;
-            while (std::getline(rows,line)) {
-                std::istringstream row(line); std::string kind; int id; double rim;
-                if ((row>>kind>>id>>rim) && kind=="island" && id==0) { kv.second=rim; break; }
-            }
-        }
-        std::vector<gen_export::WeatherEntry> entries;
-        for (const auto &kv:rims) {
-            skyisle::island::Group g;
-            g.inp=skyisle::planet::node_inputs(ps->world.islands,ps->world.climate,kv.first,seed,cfg.planet);
-            g.P_mm=g.inp.precip_mm_ref*std::clamp(g.inp.precip,0.0,1.0);
-            g.islands.resize(1); g.islands[0].rim_j=kv.second;
-            g.clim=skyisle::island::build_climate(g.inp,ps->view,cfg.island);
-            g.daily=skyisle::island::daily_curves(g.clim,g.inp);
-            g.wparams=skyisle::island::season_params(g.clim,cfg.island);
-            auto rng=skyisle::island::part_rng(g.inp,"weather:0");
-            g.weather=skyisle::island::simulate_year(rng,g.clim,g.daily,g.wparams,g.inp.height_m,cfg.island,kv.second,g.inp.lapse_c_per_km);
-            gen_export::GroupMeta m; m.node=kv.first; m.seed=seed;
-            m.snow_temp_c=cfg.island.get("weather.snow_temp_c",0.5);
-            m.fog_surface_max_m=cfg.island.get("weather.fog_surface_max_m",800.0);
-            entries.push_back(gen_export::weather_entry(kv.first,g,m));
-        }
-        if(!gen_core::write_file(a["--out"],gen_export::weather_bin(entries,{0,cfg.planet.get("s04.climate.precip_mm_ref",4000),1},ps->run+" "+gen_core::generator_commit()),error))return 1;
-        std::printf("weather %zu groups %.2f s\n",entries.size(),now_s()-t0);return 0;
-    }
-    if (cmd == "refresh-lods") {
-        if (!a.count("--lods") || !a.count("--out") || !a.count("--nodes")) return usage();
-        std::string bytes;
-        std::vector<gen_export::LodEntry> entries;
-        if (!gen_core::read_file(a["--lods"], bytes) || !parse_lods(bytes, entries, error)) {
-            std::fprintf(stderr, "LOD read failed: %s\n", error.c_str());
-            return 1;
-        }
-        const auto nodes = parse_nodes(a["--nodes"]);
-        for (const auto node : nodes) {
-            bool found = false;
-            for (auto &entry : entries) {
-                if (entry.node != node) continue;
-                gen_export::LodEntry fresh;
-                gen_export::WeatherEntry weather;
-                gen_core::lod_only(*ps, node, fresh, weather, entry.res_m);
-                entry = std::move(fresh);
-                found = true;
-                std::printf("refresh-lods %lld %.0f m\n", static_cast<long long>(node), entry.res_m);
-                std::fflush(stdout);
-            }
-            if (!found) {
-                std::fprintf(stderr, "No existing LOD for node %lld\n", static_cast<long long>(node));
-                return 1;
-            }
-        }
-        if (!gen_core::write_file(a["--out"], gen_export::lods_bin(entries), error)) {
-            std::fprintf(stderr, "%s\n", error.c_str());
-            return 1;
-        }
-        return 0;
     }
     if (cmd == "near-lods") {
         const std::string in_path = a["--lods"];

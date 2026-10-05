@@ -102,7 +102,6 @@ public:
     const PlanetData *get_planet() const { return planet.get(); }
     // 按需生成的一群粗版（lods.bin 同格式）加进行星包（行星计划 P4）：远处的岛群、行星贴图按 lod_generation 自己跟上。读不了返回 false
     bool add_lod_file(const godot::String &p_path);
-    int get_lod_count() const { return planet ? planet->lod_count() : 0; }
     std::shared_ptr<const PlanetData> share_planet() const { return planet; }
     // 行星天气场（行星计划 P5）：后台建好之前是空的
     std::shared_ptr<PlanetWeather> get_planet_weather() const { return weather; }

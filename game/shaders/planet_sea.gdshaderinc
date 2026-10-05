@@ -6,8 +6,7 @@
 //   - 云底网格（cloud_base.gdshader）、海面网格（sea.gdshader）跟着相机走（SeaSurface 建），顶点走 planet_curve 弯曲，颜色与这里同一份光（Atmosphere 给的 under_*）。
 // 海面：几道 Gerstner 顶点波（近处，浪高、波长按当地的风：src/sea_state.* 的 sea_waves）+ 两层按风错开平移的法线贴图（远处按 mipmap 渐平）+ 白沫（浪尖、风起的白头）+ 白礁（planet_reef）。
 
-global uniform float planet_cloud_base_y;
-#define PS_BASE_Y planet_cloud_base_y // D13：云带底
+const float PS_BASE_Y = -6200.0; // D13：云带底
 
 // 天与光（Atmosphere）每帧设：头顶的云底多亮（云底是光源：透下来的光）、霾（= 引擎的雾色）、海水漫射的那一份、霾的浓淡（= 引擎的雾，每米）
 uniform float under_band = 0.0; // 相机在云带顶以下多少（0..1）：天换成从下往上看

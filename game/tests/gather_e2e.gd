@@ -296,53 +296,29 @@ func _fly_to(target: Vector3, p_radius: float) -> bool:
 	_hold("descend", climb < -1.5)
 	# 想要的前进速度：离得越近越慢
 	var want := clampf(0.35 * (flat - 0.5 * p_radius), 0.0, 40.0) if absf(bearing) < 50.0 else 0.0
-	_hold("move_forward", forward_speed < want - minf(0.5, p_radius * 0.1) and climb < 8.0)
+	_hold("move_forward", forward_speed < want - 0.5)
 	_hold("move_back", forward_speed > want + 1.5)
 	return flat <= p_radius and Vector2(speed.x, speed.z).length() < 1.2 and absf(climb) < 3.0
 
 
-## 按实际树干位置找林间落点：地面本身能停船，随后靠真实碰撞验证树干阻止野泊。
-## 固定圆环只是搜索起点；新气候下树木较疏，不再用旧包的林木密度假定落点。
+## 离主码头几百米外找一片林子：12 m 内至少 4 棵树、地面本身野泊得下（远处还没挂树干的碰撞，probe 只看到地面）
+## 开局那群 #6329 的主码头在海岸平原上（码头 3 km 内一半是可耕地、两成草坡），林子要往外找到两三公里
 func _pick_forest() -> bool:
 	var dock := world.get_dock_position(world.find_dock(main.origin_dock))
-	var reasons := {}
-	var dense := 0
 	for r in FOREST_RINGS:
-		for k in 72:
-			var a := TAU * k / 72.0
+		for k in 24:
+			var a := TAU * k / 24.0
 			var p: Vector3 = dock + Vector3(cos(a), 0, sin(a)) * r
-			var trunk: Dictionary = world.find_scatter_near(p.x, p.z, 75.0, "broadleaf")
-			if trunk.is_empty():
-				trunk = world.find_scatter_near(p.x, p.z, 75.0, "conifer")
-			if trunk.is_empty():
-				continue
-			p = trunk["position"]
 			var ground: float = world.get_surface_height(p.x, p.z)
 			if is_nan(ground) or ship.global_position.distance_to(Vector3(p.x, ground, p.z)) < 250.0:
 				continue
-			dense += 1
-			var to := p - ship.global_position
-			var arrival_yaw := atan2(-to.x, -to.z)
-			var probe: Dictionary = main.probe_wild(Vector3(p.x, ground + HOVER_CLEARANCE, p.z), arrival_yaw)
-			reasons[str(probe["why"])] = int(reasons.get(str(probe["why"]), 0)) + 1
-			if bool(probe["ok"]) or str(probe["why"]).contains("树"):
-				# 按实际进场方向找落点，并以 1 m 精度进场；不要求树林里的
-				# 每个位置、每种朝向都适合停船。
-				var level := true
-				for offset in [Vector3.ZERO, Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
-					for yaw in [arrival_yaw - 0.1, arrival_yaw, arrival_yaw + 0.1]:
-						var nearby: Dictionary = main.probe_wild(Vector3(p.x, ground + HOVER_CLEARANCE, p.z) + offset, yaw)
-						if not bool(nearby["ok"]) and not str(nearby["why"]).contains("树"):
-							level = false
-							break
-					if not level:
-						break
-				if not level:
-					continue
+			if world.get_scatter_count_near(p.x, p.z, 12.0, true) < 4:
+				continue
+			var probe: Dictionary = main.probe_wild(Vector3(p.x, ground + HOVER_CLEARANCE, p.z), 0.0)
+			if probe["ok"]:
 				forest = Vector3(p.x, ground, p.z)
 				_log("林子：主码头外 %.0f m（%s），12 m 内 %d 棵树" % [r, forest, world.get_scatter_count_near(p.x, p.z, 12.0, true)])
 				return true
-	_log("林子候选 %d，野泊原因 %s" % [dense, reasons])
 	return false
 
 
@@ -400,7 +376,7 @@ func _physics_process(delta: float) -> void:
 							farthest = d
 							village_id = vid
 				if farthest < 0.0:
-					if in_phase > SETTLE_TIMEOUT:
+					if in_phase > 5.0:
 						_finish(false, "近处该有铺出来的村")
 					return
 				_log("土坑 #%d %s 采掘面 %s、堆场 %s、泊地 %s（%.0f m），存 %.0f / %d；灌丛 %s；村%03d 挑的民居 %s" % [site_id, site["name"], face, pile,
@@ -562,21 +538,13 @@ func _physics_process(delta: float) -> void:
 		Phase.FLY_FOREST:
 			# 路上离地 40 m（树高十来米），到了降到甲板离地 16 m
 			var far := Vector2(forest.x - ship.global_position.x, forest.z - ship.global_position.z).length() > 20.0
-			var cruise := forest.y + (40.0 if far else HOVER_CLEARANCE)
-			if far:
-				var direction := (forest - ship.global_position).normalized()
-				for distance in [0.0, 30.0, 60.0, 100.0]:
-					var ahead: Vector3 = ship.global_position + direction * float(distance)
-					var y: float = world.get_surface_height(ahead.x, ahead.z)
-					if is_finite(y):
-						cruise = maxf(cruise, y + 40.0)
-			if _fly_to(Vector3(forest.x, cruise, forest.z), 1.0):
+			if _fly_to(forest + Vector3(0, 40.0 if far else HOVER_CLEARANCE, 0), 4.0):
 				_release_all()
 				_goto(Phase.OVER_FOREST)
 			elif in_phase > 200.0:
 				_finish(false, "200 s 没飞到林子上空（离 %.0f m）" % Vector2(forest.x - ship.global_position.x, forest.z - ship.global_position.z).length())
 		Phase.OVER_FOREST:
-			_fly_to(forest + Vector3(0, HOVER_CLEARANCE, 0), 1.0)
+			_fly_to(forest + Vector3(0, HOVER_CLEARANCE, 0), 4.0)
 			if in_phase < 0.5:
 				return
 			if main.has_wild_berth() or not main.get_prompt().contains("野泊不了") or not main.get_wild_note().contains("树"):

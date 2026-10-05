@@ -26,7 +26,6 @@ struct GroupMeta {
     double lapse_c_per_km = 6.0; // [s04.climate] lapse_c_per_km
     double snow_temp_c = 0.5; // [island.weather] snow_temp_c
     double fog_surface_max_m = 800.0; // [island.weather] fog_surface_max_m
-    double core_root_ratio = 5.0;
 };
 
 // 岛群包的五份（export_skyisle.export）

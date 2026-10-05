@@ -24,8 +24,7 @@ planet.bin —— 行星层：
     u32  版本 = 1
     u32  seed, 节点数 N, 列数, 场数, 头文本字节数
     头文本（UTF-8）：一行一条「键 值…」——radius_km、rotation_hr、tilt_deg、calendar（year_days seasons months_per_season days_per_month solstice_n）、
-                     bands（eq trades calm west 的带顶纬度）、g_storm（lat lon radius_deg）、source（run 目录名、生成器提交号）、
-                     vertical（海面、云底、云顶、岛底净空 m，基准压强 atm、标高 km、氧份额）；缺省头仍读旧版默认值
+                     bands（eq trades calm west 的带顶纬度）、g_storm（lat lon radius_deg）、source（run 目录名、生成器提交号）
     列（每个节点一个值）：u8 名字长、名字（UTF-8）、u8 类型（0 f32、1 i32、2 i16、3 u8）、N 个值
         名字 = 来源.字段：s03.lat、s03.area_km2……（islands.npz 的逐节点数组）、s04.precip……（climate_islands.npz）、
         s09.pop / s09.state / s09.polity（polity.npz）、lod.peak_m / lod.rim_m（粗版量出的主岛峰高、岸缘）、
@@ -287,9 +286,9 @@ def precip_formula_of(run: Path):
         isl = cfg.get("island", {})
         cl = isl.get("climate", {}) if isinstance(isl.get("climate"), dict) else {}
         pick = lambda k, d: float(cl.get(k, isl.get(k, d)))
-        return (0.0, float(cfg.get("s04", {}).get("climate", {}).get("precip_mm_ref", 4000.0)), 1.0)
+        return (pick("precip_mm_min", 150.0), pick("precip_mm_max", 4000.0), pick("precip_mm_exp", 1.3))
     except Exception:
-        return (0.0, 4000.0, 1.0)
+        return (150.0, 4000.0, 1.3)
 
 
 def config_tables(run: Path, generator: Path | None = None) -> dict:
@@ -458,9 +457,6 @@ def export_planet(run: Path, dst: Path, opt: dict) -> int:
         f"g_storm {g.get('lat', 37.5)} {g.get('lon', -10.0)} {g.get('radius_deg', 4.0)}",
         f"source {run.name} {commit}",
     ]
-    vertical = planet.get("vertical")
-    if vertical:
-        head.append("vertical " + " ".join(str(float(vertical[k])) for k in ("sea_level_m", "cloud_base_m", "cloud_top_m", "keel_gap_m", "datum_pressure_atm", "scale_height_km", "o2_fraction")))
     head_b = ("\n".join(head) + "\n").encode("utf-8")
 
     with open(dst / "planet.bin", "wb") as f:

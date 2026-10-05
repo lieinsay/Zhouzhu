@@ -56,10 +56,8 @@ const float ATMO_MIE_E = 4.40e-3;
 const float ATMO_MIE_H = 1.2;
 const float ATMO_MIE_G = 0.8;
 const vec3 ATMO_OZONE = vec3(0.650e-3, 1.881e-3, 0.085e-3);
-global uniform float planet_sea_y;
-#define PS_SEA_Y planet_sea_y // D13（浮高计划 F4 起整体下移 1200 m），同 src/planet_frame.h 的 VerticalDatum
-global uniform float planet_cloud_top_y;
-#define PS_BAND_Y planet_cloud_top_y
+const float PS_SEA_Y = -6800.0; // D13（浮高计划 F4 起整体下移 1200 m），同 src/planet_frame.h 的 VerticalDatum
+const float PS_BAND_Y = -5000.0;
 const float PS_CLOUD_Y = 2800.0;
 
 // ---- 求交：相机在局部系 (0, r0, 0)（离星心 r0），沿单位方向 d 到半径 rs 的球面

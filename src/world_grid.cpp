@@ -6,8 +6,8 @@
 
 namespace {
 
-constexpr uint32_t VERSION = 7; // v7 增加供水类型及独立事件径流；仍兼容 v1–v6
-constexpr const char *FIELD_KEYS[WorldGrid::FIELD_COUNT] = { "ore", "sulfur", "placer", "clay", "gravel", "stone", "salt" };
+constexpr uint32_t VERSION = 5; // 最新版；1（没有水文）、2（没有河道与地形区）、3（高程是 u16 厘米，封顶 655 m）、4（没有资源栅格）也读
+constexpr const char *FIELD_KEYS[WorldGrid::FIELD_COUNT] = { "ore", "sulfur", "placer", "clay", "gravel", "stone" };
 constexpr double HEIGHT_SCALE = 100.0; // v1–v3 的高程：u16 = 米 × 100
 
 struct Reader {
@@ -141,8 +141,8 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
     g.rows = int(rows);
     g.cols = int(cols);
     const size_t n = size_t(rows) * size_t(cols);
-    const size_t payload = n * (version >= 6 ? 66 : version >= 5 ? 19 + 6 + 2 : version >= 4 ? 19 : version >= 3 ? 17 : version >= 2 ? 12 : 7);
-    if (in.size - in.at < payload || (version < 6 && in.size - in.at != payload)) {
+    const size_t payload = n * (version >= 5 ? 19 + WorldGrid::FIELD_COUNT + 2 : version >= 4 ? 19 : version >= 3 ? 17 : version >= 2 ? 12 : 7);
+    if (in.size - in.at != payload) {
         r_error = "terrain.bin 长度不对：应有 " + std::to_string(payload) + " 字节数据，实有 " + std::to_string(in.size - in.at);
         return false;
     }
@@ -159,8 +159,7 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         height.resize(n);
         in.take(height.data(), n * 2);
     }
-    g.shore.resize(n);
-    if (version >= 6) { in.take(g.shore.data(), n * 4); } else { in.take(shore.data(), n * 2); }
+    in.take(shore.data(), n * 2);
     in.take(g.island.data(), n);
     in.take(g.landcover.data(), n);
     in.take(g.stream.data(), n);
@@ -184,63 +183,16 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         }
     }
     if (version >= 5) {
-        g.field.resize(n * WorldGrid::FIELD_COUNT, 0);
+        g.field.resize(n * WorldGrid::FIELD_COUNT);
         g.patch.resize(n);
-        in.take(g.field.data(), n * (version >= 6 ? WorldGrid::FIELD_COUNT : 6));
+        in.take(g.field.data(), n * WorldGrid::FIELD_COUNT);
         in.take(g.patch.data(), n * 2);
-    }
-    if (version >= 6) {
-        for (auto *v : { &g.cultivable, &g.cultivated, &g.fallow_years, &g.natural_cover, &g.landuse, &g.lith, &g.cloud_forest, &g.rockwall_dir }) {
-            v->resize(n); in.take(v->data(), n);
-        }
-        for (auto *v : { &g.rockwall, &g.rain, &g.runoff, &g.bed_height, &g.water_table, &g.condense }) {
-            v->resize(n); in.take(v->data(), n * 4);
-        }
-        g.polder.resize(n); in.take(g.polder.data(), n * 4);
-        uint32_t count = 0;
-        auto fail = [&]() { r_error = "terrain.bin 河网残缺或索引越界"; return false; };
-        if (!in.u32(count) || count > (in.size - in.at) / 24) return fail();
-        g.river_sources.resize(count);
-        const size_t point_bytes = version >= 7 ? 84 : 80;
-        for (auto &r : g.river_sources) {
-            uint32_t size = 0;
-            if (!in.take(&r.island, 4) || !in.take(&r.down, 4) || !in.take(&r.join, 4) || !in.take(&r.exit, 4) || !in.take(&r.basin, 4) || !in.u32(size)
-                    || size > (in.size - in.at) / point_bytes || r.down < -1 || r.down >= int(count) || r.island < 0 || r.exit < 0 || r.exit > 3) return fail();
-            r.points.resize(size);
-            for (auto &p : r.points) {
-                p[20] = -1;
-                if (!in.take(p.data(), point_bytes)) return fail();
-                if (version >= 7 && p[20] != 0 && p[20] != 1) return fail();
-            }
-            for (const auto &p : r.points) {
-                if (!std::isfinite(p[0]) || !std::isfinite(p[1]) || p[0] < 0 || p[0] >= rows || p[1] < 0 || p[1] >= cols
-                        || !std::isfinite(p[3]) || p[3] < 0 || !std::isfinite(p[4]) || p[4] < 0 || !std::isfinite(p[5]) || p[5] < 0
-                        || !std::isfinite(p[6]) || p[6] < 0 || !std::isfinite(p[7]) || p[7] < 0 || !std::isfinite(p[10]) || !std::isfinite(p[11])) return fail();
-            }
-        }
-        if (!in.u32(count) || count > (in.size - in.at) / 4) return fail();
-        if (version >= 7 && count % 2 != 0) return fail();
-        g.event_basin_offset = version >= 7 ? int(count / 2) : 0;
-        g.basin_runoff.resize(count);
-        for (auto &b : g.basin_runoff) {
-            uint32_t size = 0;
-            if (!in.u32(size) || size > 3660 || size > (in.size - in.at) / 4) return fail();
-            b.resize(size);
-            if (!in.take(b.data(), size_t(size) * 4)) return fail();
-            for (float v : b) if (!std::isfinite(v) || v < 0) return fail();
-        }
-        for (const auto &r : g.river_sources) {
-            if (version >= 7 ? (r.basin < 0 || r.basin >= g.event_basin_offset) : (r.basin < -1 || r.basin >= int(count))) return fail();
-            if (r.down >= 0 && (r.join < 0 || r.join >= int(g.river_sources[size_t(r.down)].points.size()))) return fail();
-        }
-        if (in.at != in.size) return fail();
-        g.authoritative_rivers = true;
     }
     g.height.resize(n);
     g.shore.resize(n);
     for (size_t k = 0; k < n; k++) {
         g.height[k] = version >= 4 ? height_m[k] : float(height[k] / HEIGHT_SCALE);
-        if (version < 6) g.shore[k] = float(shore[k]);
+        g.shore[k] = float(shore[k]);
     }
     r_grid = std::move(g);
     return true;

@@ -534,20 +534,24 @@
     {
       "id": "skyisle-export",
       "label": "岛群导出脚本",
-      "detail": "tools/export_skyisle.py 导出 terrain v7、world/sites/resources/weather；验证新供水字段后才写入二进制，拒绝旧河网输入。",
+      "detail": "tools/export_skyisle.py：skyisle-gen 岛群产物 → terrain.bin（v4：高程 f32 米，含下切河谷；流向按生成器汇流反推、河宽水深、地形区）、weather.tsv、world.json、sites.tsv、resources.tsv。村 = 生成器的村（镇的市户并进来）+ 专业聚落（接着村号编）；码头从泊场推（子节点）。--terrain-only 只换地形、点位沿用旧的。",
       "tag": "工具",
-      "evidence": "Python/C++ v7 terrain.bin 逐字节一致；保留 terrain-only 路径。",
+      "evidence": "2051：1012×837 格、陆地格数与 skyisle-gen 一致（ctest）；浮高重导后 32 岛、61 码头、206 村 + 970 散户，gen_seed42 与进程内逐字节相同",
       "sources": [
-        "tools/export_skyisle.py"
+        "tools/export_skyisle.py",
+        "game/worlds/2051/terrain.bin",
+        "game/worlds/2051/world.json",
+        "game/worlds/2051/sites.tsv",
+        "game/worlds/2051/resources.tsv"
       ],
       "since": "e11"
     },
     {
       "id": "world-grid",
       "label": "岛群栅格",
-      "detail": "读取 terrain v1–v6；新版附带自然地貌、岩性、岩壁、耕地、水文、盐类、来源河网及逐日流域指数。校验长度与索引边界。",
+      "detail": "岛群 100 m 栅格（terrain.bin v1–v5）：高程、岸距、岛号、地表、水文、河道、地形区；v5 起另有赋存场（field_at 双线性品位）与片号（patch_at）。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "1754 项核心测试通过，含矩形岸距、v6 往返和来源河网核对。",
+      "evidence": "ctest world_grid / world 2051",
       "sources": [
         "src/world_grid.h",
         "src/world_grid.cpp"
@@ -557,9 +561,9 @@
     {
       "id": "world-terrain",
       "label": "连续地形",
-      "detail": "任意 (x,z) 的陆地、顶面、岛底与地表查询，地面显示、碰撞和玩法共用。v6 岸线直接取 coast_dist_m=0，取消旧的岸线噪声偏移；河槽按源床高、宽深与左右漫滩取样，多核岛底读取源 cores。仍有最多 ±3 m 的既有地表细节噪声和岛底视觉起伏，不能视为生成器给出的精细几何。",
+      "detail": "任意 (x, z) 上的有没有地、顶面、岛底、地表。大形听栅格（v3 起高程已含生成器下切的河谷），细节噪声按地表 × 地形区调幅；岛底是崖壁 + 倒锥（见 island-body）；河按河网的横断面凿；地表给各类的份额（地表过渡场，地皮与散布共用）。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "2026-10-02 完整核心回归 1774 项通过；river_contract 与 edit_patch 检查源河道剖面、斜向窄河槽的实际三角形覆盖和地形编辑。岸缘缺少更细形态时保留源轮廓，见 docs/RIVER-DATA.md。",
+      "evidence": "ctest world_terrain：确定、连续、岸线进退在噪声幅度内",
       "sources": [
         "src/world_terrain.h",
         "src/world_terrain.cpp",
@@ -571,9 +575,9 @@
     {
       "id": "terrain-tile",
       "label": "分块地面",
-      "detail": "按四叉树铺顶面、崖壁、岛底、块边裙边与叶块碰撞；顶面颜色读取同一地表过渡场。近处河槽随源宽局部细分：平岸宽 <2 m 的槽到 0.125 m，2–12 m 的槽到 0.5 m，接缝与碰撞同步，避免地面三角形盖住真实浅溪；不放大水宽或抬高水位。",
+      "detail": "TileLayout：盖住整个栅格的四叉树，叶 128 m、每块 64 格，按离焦点的距离细分，只选可能有地的块；build_tile_mesh：顶面（按地表份额着色）、崖壁、岛底（整块是地时隔 4 格）、块边裙边，叶块带碰撞面。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "34432c4：斜向细溪回归修复前 16/16 点被盖住、修复后 16/16 点露出水面；地形编辑回归通过。远处粗 LOD 对细溪仍可能采样不足，不能将近处修复当作全部距离验收。",
+      "evidence": "ctest terrain_tile：互不重叠、全覆盖、叶块碰撞；邑治处 274 块",
       "sources": [
         "src/terrain_tile.h",
         "src/terrain_tile.cpp"
@@ -619,7 +623,7 @@
     {
       "id": "world-2051-scene",
       "label": "世界场景 world_seed42",
-      "detail": "world_seed42 是现有剧情世界场景：Expedition、World/GroupStream、Player、日光与行星画面共用；开局配置来自 src/story_start.h，当前出生群 #6329、开局日 85、出发码头 #1、目的码头 #11。2026-10-02 场景重构改接 v6 地貌、源河网与聚落数据，沿用原场景和玩法编排；2026-09-29 以前叫 world_2051.tscn、开局是 #2051。",
+      "detail": "Expedition + World（缺省是开局那群：开局配置 src/story_start.h，PLAN-LAND P0 起 #6329）+ Player + 云海 + 日光 + 行星那一套；出发码头 #1（邑治旁）、目的码头 #28（岛 #13，23 km）；2026-09-29 以前叫 world_2051.tscn、开局是 #2051。",
       "tag": "场景",
       "sources": [
         "game/world_seed42.tscn"
@@ -711,9 +715,9 @@
     {
       "id": "world-sites",
       "label": "岛群落点与整群规划",
-      "detail": "解析 sites.tsv，统一码头、勘察与导航的岸距/禁区查询并规划村落。v6 常住中转站纳入站点和人口账；季节采场与无人使用点保留用途，不凭景观标记增加常住人口。游戏和体检工具复用这份规划。",
+      "detail": "sites.tsv 解析；岛群的码头 / 勘察 / 导航适配器（外法线 = 岸距负梯度，禁区 = 溪涧、河湖、码头坪）；plan_world_docks、plan_world_village。游戏与体检工具走同一条路径。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "更新后的 #6329 包校验 7330 户、42 个码头落点；world_e2e 与 world_features_e2e 通过。旧 #2051 的码头数量不再作为当前开局证据。",
+      "evidence": "单测：91 码头落地、#7/#2 压平后等高、村152 与邑治不压坪不上陡坡",
       "sources": [
         "src/world_sites.h",
         "src/world_sites.cpp",
@@ -780,14 +784,13 @@
     {
       "id": "world-dock",
       "label": "WorldDock 码头",
-      "detail": "沿实际岸缘搭栈桥与碰撞，坡道连接栈桥和岸上地面，供玩家上下船。坡道使用地形落点，不把悬空平台当成已经接岸。",
+      "detail": "一个码头的栈桥与碰撞，放在岸缘点；地面已由地形压平。",
       "tag": "场景角色",
       "sources": [
         "src/world_village.h",
         "src/world_village.cpp"
       ],
-      "since": "e14",
-      "evidence": "f6d0bd4：接岸坡道修复；world_features_e2e 验证开局码头步行、入坞改船与返回泊位。"
+      "since": "e14"
     },
     {
       "id": "site-stream",
@@ -1143,9 +1146,9 @@
     {
       "id": "world-river-net",
       "label": "河网",
-      "detail": "权威河点采用固定源点的有界 Hermite 插值，平滑 D8 折角；汇流点不移动，床高与宽深、流量仍从相邻来源点插值。v7 的临时/常驻曲线索引保留。",
+      "detail": "按汇流建河网（干流 + 支流、磨圆摆开、河口截在岸线）；栅格 v3 时宽深与生成器取大、平岸水面不高于生成器的 河床 + 水深。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "a5d45ae；90° 折角回归先失败后通过，river_contract/world_rivers 共 6544 项检查通过。",
+      "evidence": "ctest world_rivers：588 条、1160 km，水面顺流不升、支流接干流、越往下越宽",
       "sources": [
         "src/world_river.h",
         "src/world_river.cpp"
@@ -1156,9 +1159,9 @@
     {
       "id": "world-river-regime",
       "label": "水情",
-      "detail": "Q=q_mean×所选日曲线；v7 按供水类型选择常驻或事件曲线，零 Q 时宽深归零。日间、年末连续插值，指定年份按年循环；不重算玩家改地后的水路。",
+      "detail": "weather.tsv 的逐日降水进快慢两个线性水库 → 径流指数（1 = 年均）；river_stage 按渗漏门槛（小溪先干）与水力几何给此刻的水深、水位、水面半宽，没过平岸就漫滩。着色器用同一公式。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "25 个开局临时河点干湿数值一致；12 个月 GPU 验证 5 次湿、7 次干。",
+      "evidence": "ctest：年均 = 1、0.15..6.7、小溪 0.5 时断流、大水漫滩不出滩",
       "sources": [
         "src/world_river.h",
         "src/world_river.cpp"
@@ -1169,17 +1172,14 @@
     {
       "id": "world-river-water",
       "label": "河的水面",
-      "detail": "按来源床高与当前宽深绘制水面；同一河道小段的所有 GPU 顶点使用同一供水曲线，与 CPU 一致。近处细溪保持 0.125 m 河槽细分，有水显示、零 Q 隐藏，干河床保留。",
+      "detail": "水面按 512 m 块切成带子（river_mesh 纯算法），焦点 4 km 内挂上，共用 river.gdshader 材质；每帧由 GameClock 算径流设进去；河口挂跌水帘；runoff_override / calendar_offset 调试用。",
       "tag": "场景角色",
-      "evidence": "v7 最近临时溪 12 月 GPU 验证：湿时 177–1149 水面像素，干时 0；正常材质截图 build/river-v7-shots。",
+      "evidence": "river_e2e：年均 / 枯水 / 大水三档水深水面宽涨落、小溪断流、换日子水情变；开窗截图目视",
       "sources": [
         "src/river_mesh.h",
         "src/river_mesh.cpp",
         "src/world.cpp",
-        "src/terrain_tile.cpp",
-        "game/shaders/river.gdshader",
-        "game/tests/river_opening_render.gd",
-        "docs/RIVER-DATA.md"
+        "game/shaders/river.gdshader"
       ],
       "since": "e24",
       "parent": "world-node"
@@ -1187,16 +1187,12 @@
     {
       "id": "river-e2e",
       "label": "河 e2e",
-      "detail": "数值回归检查流量、宽深、Q=vwd、零流量边界、逐日变化和水面块挂载；开局溪流必须实际查足至少 20 点，不能提前结束后误通过。GPU 回归独立运行：使用 F6 同接口逐月拨时，对最近溪流检测通过生产水位/裁切/深度测试的水面像素，保存正常材质截图。",
+      "detail": "岛群大河河滩上 HUD 报河宽水深、河心地面是河床、三档水情涨落、小溪断流、换日子水情变、河口跌水、上空看河。",
       "tag": "测试",
       "sources": [
-        "game/tests/river_e2e.gd",
-        "game/tests/river_opening_render.gd",
-        "game/tools/river_data_shots.gd",
-        "tests/core_tests.cpp"
+        "game/tests/river_e2e.gd"
       ],
-      "since": "e24",
-      "evidence": "本次无头 E2E 通过；隐藏 GPU 从实际开局逐月推进，4 湿/8 干均与源状态相符。42 项断面与平滑契约检查通过。"
+      "since": "e24"
     },
     {
       "id": "land-berth",
@@ -1250,7 +1246,7 @@
     {
       "id": "world-terrain-zones",
       "label": "地形区起伏",
-      "detail": "旧包按地表类和地形区调节细节噪声，山地另加岩梁；v6 已有生成器侵蚀地形，关闭附加岩梁，剩余地表细节限制在 ±3 m。它只补现有显示细节，不提供源数据缺失的河道曲流或岸缘缺口。",
+      "detail": "细节噪声幅度 = 地表类幅度 × 地形区倍率（高山 2.2、山地 1.8、丘陵 1.3、台地 0.8、河谷 0.6），山地另加 700 m 一道的岩梁（14 / 9 / 4 m）。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest terrain v3：细节起伏均值山地 2.5 m、台地 0.5 m",
       "sources": [
@@ -1262,9 +1258,9 @@
     {
       "id": "world-terrain-body",
       "label": "厚岛体（浮山）",
-      "detail": "根据岸缘、崖高和最深岸距构造岛体；有源 cores 时读取各核位置、面积和深度，组合岛底分布，无 cores 时保留旧单体形状。崖脚高程 keel_m 不当作厚度；岛底净空使用数据包的云带顶与 clearance，岩棱和细起伏仍属既有视觉表达。",
+      "detail": "island_body：龙骨 = 25·√最深岸距（主岛 3.3 km），崖壁 = 龙骨的 12%（30–160 m，与生成器崖高取大），岛底 = 岸缘 − 崖壁 − 龙骨·√向内 + 岩棱；lowest_bottom 给云海定下限；岛底（连岩棱）不低于云带顶之上 1000 m，超了收短龙骨（world-terrain-body-floor）。浮高计划 Z2 起不再与生成器的 keel_m 取大——那是崖脚的高程、随浮高平移，岛体厚度与浮高无关。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "核心检查覆盖多核岛底、浮高不改变厚度与垂直基准；#6329 源 cores 为空的岛仍走兼容形状，不宣称每座岛已具有源多核几何。",
+      "evidence": "ctest terrain v3：主岛岛心厚 3.6 km，全群最低 −3465 m；island_floor：2051 #24 浮高 +1325 m 前后龙骨 889 m、崖壁不变（旧式会拿崖脚高程 1478 m 当龙骨）",
       "sources": [
         "src/world_terrain.h",
         "src/world_terrain.cpp"
@@ -1592,7 +1588,7 @@
     {
       "id": "terrain-tile-ground",
       "label": "地皮着色",
-      "detail": "地皮与散布共用 WorldTerrain::cover 的地表份额；岩性、rockwall 与坡度影响露岩色，源 D50 区分河床材质，河漫滩与河床各自染色。异色河沟只是地表表现，水面由独立河流网格绘制，验收须区分两者。",
+      "detail": "每个顶点按 WorldTerrain::cover(x, z, 格距) 混各类颜色；陡坡露岩门槛按 14 m 细噪声进退成岩斑；有河网时河道类画成湿草（水面由河的网格画）；再按河漫滩、河床染色。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "叶块跨可耕地 | 林地相邻 2 m 顶点色差 ≤ 0.06（一刀切 0.3）；cover_shots、terrain_shots 目视",
       "sources": [
@@ -2969,7 +2965,7 @@
     {
       "id": "skyisle-core",
       "label": "生成器核心库（子模块）",
-      "detail": "extern/skyisle-gen 提供行星层与岛群生成算法；Zhouzhu 编译同一 core 静态库并读取生成器权威数据。当前版本以 Git 子模块记录为准；水文、断面与水汽输入修复由下列子节点分别记录，不把早期未修改上游的结论当作现状。",
+      "detail": "extern/skyisle-gen 子模块（URL GitHub，指向本地分支 island-rivers-resources-settle 的 ef3525a，还没推送：先推它再推 Zhouzhu），CMake 只编 core/ 的静态库 skyisle_core：行星层 ①–⑨（planet::run、run_society、planet_view、node_inputs、apply_polity）与第三层（island::generate、block_reduce）；浮点照它自己的 /fp:precise、不开 AVX2，它 PUBLIC 的编译选项不传给游戏；Debug 配置下也 /O2。生成器的代码一行没改。",
       "tag": "外部：skyisle-gen",
       "evidence": "ctest skyisle_core_selftest（随机流对 numpy 的参考值）；seed42 行星层与 2051 / 2050 与仓库里的包逐字节相同",
       "sources": [
@@ -3018,13 +3014,13 @@
     {
       "id": "gen-export",
       "label": "生成器产物 → 游戏文件（C++）",
-      "detail": "C++ 与 Python 同步导出 terrain v7：66 字节栅格、21 列河点（含 flow_regime），曲线前半持续供水、后半事件径流。",
+      "detail": "export_skyisle.py、export_planet.py 连同生成器前端的拼装与译码移成 C++：terrain.bin（按汇流反推流向、虚空格取最近陆地）、world.json、sites.tsv、resources.tsv、weather.tsv、lods.bin、weather.bin / .wx（zlib 1.3.1 level 9）、planet.bin（as_column 的收窄照抄）；与 Python 那条路逐字节相同。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "#6329 v7 terrain.bin 两路 SHA256 完全一致；完整核心 8219 项通过。",
+      "evidence": "97 群 × 7 份、3 个新世界、游戏里生成的 42 份与 Python 那条路比，0 份不同；Debug 与 Release 相同",
       "sources": [
+        "src/gen_export.h",
         "src/gen_export.cpp",
-        "tools/export_skyisle.py",
-        "tools/export_planet.py"
+        "extern/zlib"
       ],
       "since": "e101"
     },
@@ -3091,24 +3087,22 @@
     {
       "id": "planet-frame-datum",
       "label": "垂直结构（云带、海面、R）",
-      "detail": "从行星数据包读取海面、云带底/顶与岛底净空，GroupWorld 建岛体前先应用，PlanetView 同步 C++ 和着色器共用参数，投影半径由海面半径和基准高差计算。旧值 −6800/−6200/−5000 m、净空 1000 m 和 R=6377800 m 仅作无包默认，不再描述为所有场景固定值。",
+      "detail": "VerticalDatum：云带顶 −5000、云带底 −6200、海面 −6800（游戏 y；浮高计划 F4 起整体下移 1200 m，原来 −3800 / −5000 / −5600），岛底最低线 ISLAND_BOTTOM_MIN_Y = 云带顶 + 1000；PLANET_DEFAULT_R = 海面 6371 km + 6.8 km = 6,377,800 m。着色器 planet_sky / planet_sea 的 PS_* 与 project.godot 的 planet_curve_radius 初值各抄一份。气温照旧 y < 0 取 y = 0。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "5fda64d 与完整核心回归：导出、解析、岛体构造与着色器使用同一份包内垂直结构。",
+      "evidence": "ctest：云带厚 1.2 km、云底下 600 m、R = 海面 + 6800 m；sea_descent_e2e 停在 −6785.07、各层读数与下移前一样；god_sea_e2e 37.7 s 到海面之上 2 m",
       "sources": [
         "src/planet_frame.h",
-        "src/planet_data.cpp",
-        "src/planet_view.cpp",
-        "src/world.cpp",
         "game/shaders/planet_sky.gdshaderinc",
-        "game/shaders/planet_sea.gdshaderinc"
+        "game/shaders/planet_sea.gdshaderinc",
+        "game/project.godot"
       ],
       "since": "e104",
       "parent": "planet-frame"
     },
     {
       "id": "world-terrain-body-floor",
-      "label": "岛底遵守数据包净空",
-      "detail": "island_body 在云带顶 + clearance 以上限制最深岛底，超出时收短龙骨；净空来自行星包，1000 m 仅为无包时的旧默认值。GroupWorld 在建岛体前应用该基准，PlanetView 再向画面同步，避免场景加载顺序使用旧常量。",
+      "label": "岛底离云带顶一千米（夹龙骨）",
+      "detail": "island_body 末尾：岸缘 − 崖壁 − 龙骨 × 1.07（岩棱）− 8 m（起伏）≥ ISLAND_BOTTOM_MIN_Y，超了收短龙骨；崖壁照未收短的龙骨定。island_lowest 给出一座岛岛底最深能到哪，lowest_bottom 用它。far_group_mesh 照抄（远处不画岩棱，龙骨照样收）。",
       "tag": "纯算法（不含 Godot 头）",
       "evidence": "ctest island_floor（Z2 起确定的）：仓库里 2051、2050 每座岛；进程内现场生成 4684、4981、4855（seed42 的 config.tsv）主岛各收短一座、连岩棱停在 −4000；粗版低模同样。本机生成过的群改用 zhouzhu_site_survey --island-floor 查（43 群 1,431 座，收短 7 座）",
       "sources": [
@@ -3608,71 +3602,6 @@
       ],
       "since": "e121",
       "parent": "zhouzhu-gen-cli"
-    },
-    {
-      "id": "world-landscape",
-      "label": "地貌与聚落景观",
-      "detail": "GroupWorld 读取 landscape 后挂载景观职责，近处流式呈现源峰林、天生桥、泉线/崖瀑、水利、遗迹与季节使用点；常住建筑仍由村落流式系统负责。它是现有世界场景重构中新增的景观职责，复用已有地形、河流和聚落节点。",
-      "tag": "场景角色",
-      "evidence": "接入阶段 31/31 Godot 回归通过；后续开局修复再验 12 个月 GPU 水面与 river/world/world_features/earthworks 四项回归。罕见地貌未逐类视觉验收，全行星 2 km 粗包未全部更新，不能标为全场景视觉完成。",
-      "sources": [
-        "game/landscape_view.gd",
-        "game/shaders/spring_water.gdshader",
-        "src/world.cpp"
-      ],
-      "since": "e122"
-    },
-    {
-      "id": "skyisle-river-supply",
-      "label": "河流供水类型",
-      "detail": "逐点 flow_regime 分开常驻和临时事件供水，增强凝结不增加河网资格。此次按画面倒推的宽度系数 5→15 与 core_gain 1→10 已撤回；20–40 m 干流目标尚无充分成因依据，未宣称完成。",
-      "tag": "外部：skyisle-gen",
-      "evidence": "原供水回归见 9accce7；ba5dc00 撤回无依据标定，游戏数据和预览恢复。",
-      "sources": [
-        "extern/skyisle-gen/core/src/island/hydro.cpp",
-        "extern/skyisle-gen/core/src/island/rivernet.cpp"
-      ],
-      "since": "e123",
-      "parent": "skyisle-core"
-    },
-    {
-      "id": "skyisle-river-inspector",
-      "label": "生成器河段查看器",
-      "detail": "河段绘制与拾取共享固定源点的曲线缓存；仍按日期显示真实宽深和 Q，支流末点不借用下游流量。",
-      "tag": "界面",
-      "evidence": "4d956c7；Node 检查通过，最大相邻转角 0.270 rad，源点、水文属性及汇流保持。",
-      "sources": [
-        "extern/skyisle-gen/skyisle_gen/web/static/island.html",
-        "extern/skyisle-gen/skyisle_gen/web/server.py"
-      ],
-      "since": "e123"
-    },
-    {
-      "id": "skyisle-channel-geometry",
-      "label": "河槽断面与深度口径",
-      "detail": "由幂函数断面积积分区分 A/W 与中心最大深度；切槽与河点使用同一静态几何。参考流量倍数仍为待校准的工程近似，未宣称坡度、阻力与水沙过程已闭合。",
-      "tag": "外部：skyisle-gen",
-      "evidence": "生成器积分自检与跨年份/切槽导出/临时断流/核心候选隔离检查通过。",
-      "sources": [
-        "extern/skyisle-gen/core/include/skyisle/island/channel_geometry.hpp",
-        "extern/skyisle-gen/core/src/island/river.cpp",
-        "extern/skyisle-gen/core/src/island/rivernet.cpp",
-        "docs/RIVER-MODEL-AUDIT.md"
-      ],
-      "since": "e126",
-      "parent": "skyisle-core"
-    },
-    {
-      "id": "river-geometry-audit",
-      "label": "全河网断面审计",
-      "detail": "比较多个流域和汇水等级，分开统计有水日宽深与全年断流比例；核对水输入、分类、年均流量和断面闭合。日常水宽未统一放大。",
-      "tag": "工具",
-      "evidence": "四群抽样、两现用群水账逐值相同、Python/C++ 地形包逐字节一致；6538 项源点/实包检查通过。",
-      "sources": [
-        "tools/audit_river_geometry.py",
-        "docs/RIVER-MODEL-AUDIT.md"
-      ],
-      "since": "e127"
     }
   ],
   "edges": [
@@ -5092,11 +5021,7 @@
     {
       "from": "world-river-net",
       "to": "world-grid",
-      "label": "类型和流域曲线",
-      "chains": [
-        "generator-natural-world",
-        "river-supply-separation"
-      ]
+      "label": "流向 / 汇流"
     },
     {
       "from": "world-river-regime",
@@ -5116,11 +5041,7 @@
     {
       "from": "world-river-water",
       "to": "world-river-regime",
-      "label": "日流量与湿断面积",
-      "chains": [
-        "river-supply-separation",
-        "river-cross-section"
-      ]
+      "label": "径流指数"
     },
     {
       "from": "world-river-water",
@@ -5129,11 +5050,7 @@
     },
     {
       "from": "river-e2e",
-      "to": "world-river-water",
-      "label": "数值与真实水面像素",
-      "chains": [
-        "river-supply-separation"
-      ]
+      "to": "world-river-water"
     },
     {
       "from": "building-parts",
@@ -7747,88 +7664,6 @@
       "from": "zhouzhu-gen-near-lods",
       "to": "export-planet",
       "label": "同样的 lods.bin"
-    },
-    {
-      "from": "world-node",
-      "to": "world-landscape",
-      "label": "景观数据与流式焦点",
-      "chains": [
-        "generator-natural-world"
-      ]
-    },
-    {
-      "from": "world-river-regime",
-      "to": "world-grid",
-      "label": "逐日径流指数",
-      "chains": [
-        "generator-natural-world"
-      ]
-    },
-    {
-      "from": "skyisle-river-inspector",
-      "to": "skyisle-river-supply",
-      "label": "逐点河道属性与当天水量"
-    },
-    {
-      "from": "gen-export",
-      "to": "skyisle-river-supply",
-      "label": "供水类型与两种日曲线",
-      "chains": [
-        "river-supply-separation"
-      ]
-    },
-    {
-      "from": "skyisle-export",
-      "to": "skyisle-river-supply",
-      "label": "rivers.json 供水类型与日曲线",
-      "chains": [
-        "river-supply-separation"
-      ]
-    },
-    {
-      "from": "world-grid",
-      "to": "gen-export",
-      "label": "terrain.bin v7",
-      "chains": [
-        "river-supply-separation"
-      ]
-    },
-    {
-      "from": "skyisle-channel-geometry",
-      "to": "skyisle-river-supply",
-      "label": "原供水与分类"
-    },
-    {
-      "from": "gen-export",
-      "to": "skyisle-channel-geometry",
-      "label": "同源宽深与床高",
-      "chains": [
-        "river-cross-section"
-      ]
-    },
-    {
-      "from": "world-river-net",
-      "to": "gen-export",
-      "label": "源几何",
-      "chains": [
-        "river-cross-section"
-      ]
-    },
-    {
-      "from": "river-geometry-audit",
-      "to": "gen-export",
-      "label": "实包核对",
-      "chains": [
-        "river-cross-section"
-      ]
-    },
-    {
-      "from": "skyisle-river-inspector",
-      "to": "skyisle-channel-geometry",
-      "label": "同一断面",
-      "chains": [
-        "river-cross-section"
-      ]
     }
   ],
   "chains": [
@@ -10078,248 +9913,6 @@
         "building-mesh",
         "placed-props",
         "world-2051-scene"
-      ]
-    },
-    {
-      "id": "generator-natural-world",
-      "title": "场景重构：world_seed42 的地貌、河流与聚落",
-      "story": "玩家进入 #6329，在同一座岛上沿岸走到溪边，随日期推进看到水面涨落，经过地貌与村落，再沿接岸坡道上船飞往另一座岛。",
-      "date": "2026-10-02",
-      "color": "#b8a12a",
-      "steps": [
-        {
-          "text": "进入世界 seed42，出生在 #6329 的主码头旁，岛体、云海与海面按世界数据中的高度摆放",
-          "nodes": [
-            "world-2051-scene",
-            "gen-core",
-            "gen-export",
-            "world-grid",
-            "planet-frame-datum",
-            "planet-view"
-          ]
-        },
-        {
-          "text": "走向岸边：地面和碰撞沿同一岸线落地，岩壁与岛底按已有地貌数据呈现",
-          "nodes": [
-            "world-node",
-            "world-terrain",
-            "world-terrain-body",
-            "terrain-tile",
-            "terrain-tile-ground"
-          ]
-        },
-        {
-          "text": "走到河边：沿生成器给出的河道看到实际水面，河床颜色与水面分开，细溪保持源宽度",
-          "nodes": [
-            "world-river-net",
-            "world-terrain",
-            "terrain-tile",
-            "world-river-water"
-          ]
-        },
-        {
-          "text": "日期推进，或用 F6 逐月拨时：每条河按所属流域的逐日水量改变水宽和水深，开局浅溪有水时能看见水面",
-          "nodes": [
-            "world-river-regime",
-            "world-river-water"
-          ]
-        },
-        {
-          "text": "经过地貌和聚落：常住中转站有人居住，季节采场和无人使用点保留各自用途",
-          "nodes": [
-            "world-landscape",
-            "world-sites"
-          ]
-        },
-        {
-          "text": "沿接岸坡道走上空艇，飞往其他岛群，加载当地地形和落点后靠泊下船",
-          "nodes": [
-            "world-dock",
-            "group-stream",
-            "world-node"
-          ]
-        }
-      ],
-      "nodes": [
-        "gen-export",
-        "world-grid",
-        "world-river-net",
-        "world-river-regime",
-        "world-landscape",
-        "gen-core",
-        "planet-view",
-        "world-terrain",
-        "world-terrain-body",
-        "world-node",
-        "world-river-water",
-        "world-sites",
-        "world-dock",
-        "group-stream",
-        "world-2051-scene",
-        "planet-frame-datum",
-        "terrain-tile",
-        "terrain-tile-ground",
-        "river-e2e",
-        "world-e2e"
-      ],
-      "commits": "55e733e..162015e"
-    },
-    {
-      "id": "river-supply-separation",
-      "title": "常驻河与临时流水：生成器查数到游戏干湿",
-      "story": "开发者在生成器中点选河段、调整日期核对宽深与水源，玩家在游戏里看到同一水路随供水出现或干涸。",
-      "date": "2026-10-02",
-      "color": "#8d7bea",
-      "steps": [
-        {
-          "text": "生成岛群，已有河网分清常驻供水与雨雪事件汇流",
-          "nodes": [
-            "skyisle-core",
-            "skyisle-river-supply"
-          ]
-        },
-        {
-          "text": "在生成器地图点击河流，拖动日期查看当天宽深、流量与干湿",
-          "nodes": [
-            "skyisle-river-inspector"
-          ]
-        },
-        {
-          "text": "导出岛群包，游戏读取河段的供水类型与对应逐日曲线",
-          "nodes": [
-            "gen-export",
-            "skyisle-export",
-            "world-grid",
-            "world-river-net"
-          ]
-        },
-        {
-          "text": "游戏时间推进：临时水路排水后变干，有雨雪汇流时恢复真实宽深的水面",
-          "nodes": [
-            "world-river-regime",
-            "world-river-water",
-            "world-node"
-          ]
-        },
-        {
-          "text": "玩家在地图和脚下提示中辨认临时水路",
-          "nodes": [
-            "map-image",
-            "world-map",
-            "world-node"
-          ]
-        }
-      ],
-      "nodes": [
-        "gen-export",
-        "skyisle-export",
-        "world-river-net",
-        "world-river-regime",
-        "world-river-water",
-        "river-e2e",
-        "skyisle-core",
-        "skyisle-river-supply",
-        "skyisle-river-inspector",
-        "world-grid",
-        "world-node",
-        "map-image",
-        "world-map"
-      ],
-      "commits": "66046e3（生成器 9accce7、aa6468c）"
-    },
-    {
-      "id": "river-curve-scale-audit",
-      "title": "修复河流折线并核对真实尺度",
-      "story": "玩家查看河流时恢复平滑弯曲，米制与人物比例有实测依据；缺乏依据的大河倍率已撤回。",
-      "date": "2026-10-03",
-      "color": "#d97a9f",
-      "commits": "a5d45ae, a00fa7c",
-      "steps": [
-        {
-          "text": "生成器预览沿保留源点的曲线画河，点击同一曲线查询数据",
-          "nodes": [
-            "skyisle-river-inspector"
-          ]
-        },
-        {
-          "text": "游戏按相同平滑定义建立河床和水面，汇流点与源宽深保留",
-          "nodes": [
-            "world-river-net",
-            "world-terrain",
-            "world-river-water"
-          ]
-        },
-        {
-          "text": "按真实开局核对水面与人物米制，不用倍率凑出大河",
-          "nodes": [
-            "world-river-water",
-            "skyisle-river-supply"
-          ]
-        }
-      ],
-      "nodes": [
-        "world-river-net",
-        "skyisle-river-inspector",
-        "skyisle-river-supply",
-        "world-terrain",
-        "world-river-water"
-      ]
-    },
-    {
-      "id": "river-cross-section",
-      "title": "修复：各级河槽与真实湿断面积一致",
-      "story": "玩家沿河看到与源断面一致的水深和水流，小溪随实际雨雪事件变湿、干涸，河槽在断流时保留。",
-      "date": "2026-10-03",
-      "color": "#6c9a3b",
-      "commits": "66336bd（生成器 dfc07a2）",
-      "steps": [
-        {
-          "text": "生成器按原供水形成干流、支流和小溪的同口径断面",
-          "nodes": [
-            "skyisle-channel-geometry",
-            "skyisle-river-supply"
-          ]
-        },
-        {
-          "text": "细包保留河床高程精度，并同步更新相应岛群远景",
-          "nodes": [
-            "gen-export",
-            "skyisle-export",
-            "skyisle-lod"
-          ]
-        },
-        {
-          "text": "游戏沿保留源点和汇流锚点的平滑中线还原河床",
-          "nodes": [
-            "world-river-net"
-          ]
-        },
-        {
-          "text": "逐日水量通过实际湿断面积决定平均流速，事件退水后小溪归零",
-          "nodes": [
-            "world-river-regime",
-            "world-river-water"
-          ]
-        },
-        {
-          "text": "生成器查看器展示同口径的当前宽度、中心深度和流速",
-          "nodes": [
-            "skyisle-river-inspector"
-          ]
-        }
-      ],
-      "nodes": [
-        "river-geometry-audit",
-        "river-e2e",
-        "skyisle-channel-geometry",
-        "skyisle-river-supply",
-        "gen-export",
-        "skyisle-export",
-        "skyisle-lod",
-        "world-river-net",
-        "world-river-regime",
-        "world-river-water",
-        "skyisle-river-inspector"
       ]
     }
   ],
@@ -13538,228 +13131,6 @@
         ],
         "adopted": [],
         "peers": []
-      }
-    },
-    {
-      "id": "e122",
-      "type": "extend",
-      "date": "2026-10-02",
-      "title": "场景重构：world_seed42 的地貌、河流与聚落",
-      "summary": "重构现有世界场景，复用地形、河流、码头与跨群加载节点，新增景观职责；按职责扩展记录，不是新玩法切片，也没有合并功能节点。此前游戏重建河网、叠加岸线偏移并在多处使用固定高度；现在 v6 保留源中心线和岸线，逐日流域水量驱动 CPU/GPU 的宽深，场景与着色器共用包内垂直基准。开局浅溪另修地面遮挡、旧水深阈值和透明度，完整核心 1774 项、12 个月 GPU 水面与 4 项玩法回归通过。全行星粗包和罕见地貌逐类验收未完成；缺少细岸缘、曲流和分汊几何时保留数据缺口。",
-      "commits": "55e733e..162015e",
-      "chain": "generator-natural-world",
-      "nodes": [
-        "gen-export",
-        "world-grid",
-        "world-river-net",
-        "world-river-regime",
-        "world-landscape",
-        "gen-core",
-        "planet-view",
-        "world-terrain",
-        "world-terrain-body",
-        "world-node",
-        "world-river-water",
-        "world-sites",
-        "world-dock",
-        "group-stream"
-      ],
-      "info": {
-        "task_kind": "scene-refactor",
-        "node": "world-node",
-        "children": [],
-        "adopted": [],
-        "peers": [
-          "world-landscape"
-        ],
-        "created": [
-          "world-landscape"
-        ],
-        "reused": [
-          "gen-export",
-          "world-grid",
-          "world-river-net",
-          "world-river-regime",
-          "gen-core",
-          "planet-view",
-          "world-terrain",
-          "world-terrain-body",
-          "world-node",
-          "world-river-water",
-          "world-sites",
-          "world-dock",
-          "group-stream"
-        ],
-        "updated": [
-          "gen-export",
-          "world-grid",
-          "world-river-net",
-          "world-river-regime"
-        ]
-      }
-    },
-    {
-      "id": "e123",
-      "type": "extend",
-      "date": "2026-10-02",
-      "title": "拓展：常驻河与临时流水分开供水",
-      "summary": "集水核增强既有河流；临时流路按雨雪事件退水，网页可点选查看当天宽深流量。",
-      "nodes": [
-        "skyisle-core",
-        "skyisle-river-supply",
-        "skyisle-river-inspector"
-      ],
-      "info": {
-        "node": "skyisle-core",
-        "children": [
-          "skyisle-river-supply"
-        ],
-        "adopted": [],
-        "peers": [
-          "skyisle-river-inspector"
-        ]
-      }
-    },
-    {
-      "id": "e124",
-      "type": "slice",
-      "date": "2026-10-02",
-      "title": "切片：常驻河与临时流水：生成器查数到游戏干湿",
-      "summary": "开发者在生成器中点选河段、调整日期核对宽深与水源，玩家在游戏里看到同一水路随供水出现或干涸。",
-      "chain": "river-supply-separation",
-      "nodes": [
-        "gen-export",
-        "skyisle-export",
-        "world-river-net",
-        "world-river-regime",
-        "world-river-water",
-        "river-e2e",
-        "skyisle-core",
-        "skyisle-river-supply",
-        "skyisle-river-inspector",
-        "world-grid",
-        "world-node",
-        "map-image",
-        "world-map"
-      ],
-      "info": {
-        "created": [],
-        "reused": [
-          "gen-export",
-          "skyisle-export",
-          "world-river-net",
-          "world-river-regime",
-          "world-river-water",
-          "river-e2e",
-          "skyisle-core",
-          "skyisle-river-supply",
-          "skyisle-river-inspector",
-          "world-grid",
-          "world-node",
-          "map-image",
-          "world-map"
-        ],
-        "updated": [
-          "gen-export",
-          "skyisle-export",
-          "world-river-net",
-          "world-river-regime",
-          "world-river-water",
-          "river-e2e"
-        ]
-      }
-    },
-    {
-      "id": "e125",
-      "type": "slice",
-      "date": "2026-10-03",
-      "title": "切片：修复河流折线并核对真实尺度",
-      "summary": "玩家查看河流时恢复平滑弯曲，米制与人物比例有实测依据；缺乏依据的大河倍率已撤回。",
-      "commits": "a5d45ae, a00fa7c",
-      "chain": "river-curve-scale-audit",
-      "nodes": [
-        "world-river-net",
-        "skyisle-river-inspector",
-        "skyisle-river-supply",
-        "world-terrain",
-        "world-river-water"
-      ],
-      "info": {
-        "created": [],
-        "reused": [
-          "world-river-net",
-          "skyisle-river-inspector",
-          "skyisle-river-supply",
-          "world-terrain",
-          "world-river-water"
-        ],
-        "updated": [
-          "world-river-net",
-          "skyisle-river-inspector",
-          "skyisle-river-supply"
-        ]
-      }
-    },
-    {
-      "id": "e126",
-      "type": "extend",
-      "date": "2026-10-03",
-      "title": "拓展：统一各级河槽的断面口径",
-      "summary": "干流、支流和小溪共用静态参考断面，将平均水深换成中心最大深度，取消临时槽额外减半；供水与常驻分类不放大。",
-      "commits": "66336bd（生成器 dfc07a2）",
-      "nodes": [
-        "skyisle-core",
-        "skyisle-channel-geometry"
-      ],
-      "info": {
-        "node": "skyisle-core",
-        "children": [
-          "skyisle-channel-geometry"
-        ],
-        "adopted": [],
-        "peers": []
-      }
-    },
-    {
-      "id": "e127",
-      "type": "slice",
-      "date": "2026-10-03",
-      "title": "切片：修复：各级河槽与真实湿断面积一致",
-      "summary": "玩家沿河看到与源断面一致的水深和水流，小溪随实际雨雪事件变湿、干涸，河槽在断流时保留。",
-      "commits": "66336bd（生成器 dfc07a2）",
-      "chain": "river-cross-section",
-      "nodes": [
-        "river-geometry-audit",
-        "river-e2e",
-        "skyisle-channel-geometry",
-        "skyisle-river-supply",
-        "gen-export",
-        "skyisle-export",
-        "skyisle-lod",
-        "world-river-net",
-        "world-river-regime",
-        "world-river-water",
-        "skyisle-river-inspector"
-      ],
-      "info": {
-        "created": [
-          "river-geometry-audit"
-        ],
-        "reused": [
-          "river-e2e",
-          "skyisle-channel-geometry",
-          "skyisle-river-supply",
-          "gen-export",
-          "skyisle-export",
-          "skyisle-lod",
-          "world-river-net",
-          "world-river-regime",
-          "world-river-water",
-          "skyisle-river-inspector"
-        ],
-        "updated": [
-          "river-e2e"
-        ]
       }
     }
   ],

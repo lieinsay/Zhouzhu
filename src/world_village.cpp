@@ -393,7 +393,7 @@ void WorldVillage::host_nav_window(const SettlementLayout &p_layout, const NavRu
     village_nav_window(p_layout, p_rules, NAV_MARGIN_M, r_x0, r_z0, r_cols, r_rows);
 }
 
-void WorldDock::setup(const DockPlan &p_plan, int p_index, int p_id, double p_approach_y) {
+void WorldDock::setup(const DockPlan &p_plan, int p_index, int p_id) {
     index = p_index;
     dock_id = p_id;
     set_name(vformat("Dock%d", p_id));
@@ -404,5 +404,5 @@ void WorldDock::setup(const DockPlan &p_plan, int p_index, int p_id, double p_ap
     dock_builder::build_pier(this, local, [](Node3D *p_parent, Node *p_node, const char *p_name) {
         p_node->set_name(p_name);
         p_parent->add_child(p_node);
-    }, p_approach_y);
+    });
 }

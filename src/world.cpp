@@ -1,5 +1,4 @@
 #include "world.h"
-#include <godot_cpp/classes/image.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -119,7 +118,6 @@ void GroupWorld::_bind_methods() {
     ClassDB::bind_method(D_METHOD("prepare_at", "point", "radius"), &GroupWorld::prepare_at, DEFVAL(160.0));
     ClassDB::bind_method(D_METHOD("is_ready_at", "point"), &GroupWorld::is_ready_at);
     ClassDB::bind_method(D_METHOD("get_surface_height", "x", "z"), &GroupWorld::get_surface_height);
-    ClassDB::bind_method(D_METHOD("get_landscape_at", "x", "z"), &GroupWorld::get_landscape_at);
     ClassDB::bind_method(D_METHOD("get_island_at", "x", "z"), &GroupWorld::get_island_at);
     ClassDB::bind_method(D_METHOD("get_cover_at", "x", "z"), &GroupWorld::get_cover_at);
     ClassDB::bind_method(D_METHOD("get_info"), &GroupWorld::get_info);
@@ -370,21 +368,7 @@ void GroupWorld::install() {
             river_material->set_shader_parameter("floodplain_slope", rr.floodplain_slope);
             river_material->set_shader_parameter("bed_flat", rr.bed_flat);
             river_material->set_shader_parameter("wet_depth", rr.wet_depth_m);
-            if (grid.authoritative_rivers && !grid.basin_runoff.empty()) {
-                const int width = int(grid.basin_runoff.front().size()), height = int(grid.basin_runoff.size());
-                PackedByteArray bytes; bytes.resize(int64_t(width) * height * 4);
-                for (int y=0;y<height;y++) for(int x=0;x<width;x++) {
-                    const float value = x < int(grid.basin_runoff[y].size()) ? grid.basin_runoff[y][x] : 1.0f;
-                    std::memcpy(bytes.ptrw() + (y*width+x)*4, &value, 4);
-                }
-                if (width > 0) {
-                    const Ref<Image> image = Image::create_from_data(width,height,false,Image::FORMAT_RF,bytes);
-                    river_material->set_shader_parameter("basin_index", ImageTexture::create_from_image(image));
-                    river_material->set_shader_parameter("basin_count", height);
-                    river_material->set_shader_parameter("index_days", width);
-                }
-            }
-
+            river_material->set_shader_parameter("fall_length", river_mesh_rules.fall_m);
         } else {
             ERR_PRINT(String("World: 读不了水面着色器 ") + RIVER_SHADER + String(U"，河只凿河道、不画水"));
         }
@@ -397,16 +381,6 @@ void GroupWorld::install() {
         player_works = std::make_shared<GroundWorks>(); // 场景里单独摆的 World（没有 GroupStream 交账）：自己一份，只在这一局
     }
     adopt_player_works();
-    if (info.has("landscape")) {
-        const Ref<Resource> script=ResourceLoader::get_singleton()->load("res://landscape_view.gd");
-        if (script.is_valid()) {
-            Node3D *view=memnew(Node3D);
-            view->set_name("Landscape");
-            view->set_script(script);
-            add_child(view);
-            view->call("configure",this);
-        }
-    }
 }
 
 void GroupWorld::track_shading(const Ref<Material> &p_material) {
@@ -466,23 +440,6 @@ void GroupWorld::update_shading() {
 }
 
 bool GroupWorld::load_data(std::string &r_error) {
-    // Scene children may load World before PlanetView. Apply the package datum
-    // before constructing island bodies, so their clearance uses this planet.
-    const String planet_path=data_dir.get_base_dir().get_base_dir().path_join("planet.bin");
-    if(FileAccess::file_exists(planet_path)) {
-        const PackedByteArray package=FileAccess::get_file_as_bytes(planet_path);
-        PlanetData planet;
-        std::string error;
-        if(!planet.parse_planet(package.ptr(),size_t(package.size()),error)) {
-            r_error=error;
-            return false;
-        }
-        VerticalDatum::SEA_Y=planet.vertical.sea;
-        VerticalDatum::CLOUD_BASE_Y=planet.vertical.base;
-        VerticalDatum::CLOUD_TOP_Y=planet.vertical.top;
-        VerticalDatum::ISLAND_CLEARANCE_M=planet.vertical.clearance;
-        VerticalDatum::ISLAND_BOTTOM_MIN_Y=planet.vertical.top+planet.vertical.clearance;
-    }
     const PackedByteArray bytes = FileAccess::get_file_as_bytes(data_dir.path_join("terrain.bin"));
     std::string error;
     if (bytes.is_empty() || !parse_world_grid(bytes.ptr(), size_t(bytes.size()), grid, error)) {
@@ -495,14 +452,6 @@ bool GroupWorld::load_data(std::string &r_error) {
         return false;
     }
     info = parsed;
-    const Array falls = Dictionary(info.get("landscape", Dictionary())).get("falls", Array());
-    for (int64_t k=0; k<falls.size(); k++) {
-        const Dictionary fall = falls[k];
-        const int seg = int(fall.get("seg", -1));
-        if (int(fall.get("kind", -1)) == 0 && seg >= 0 && seg < int(grid.river_sources.size())) {
-            grid.river_sources[size_t(seg)].outlet_drop = std::max(0.0, double(fall.get("drop_m", 0.0)));
-        }
-    }
     node_id = int(Dictionary(info.get("source", Dictionary())).get("node", -1));
     std::vector<WorldIsland> islands;
     const Array rows = info.get("islands", Array());
@@ -514,11 +463,6 @@ bool GroupWorld::load_data(std::string &r_error) {
         isl.cliff_m = double(row.get("cliff_m", 20.0));
         isl.keel_m = double(row.get("keel_m", 100.0));
         isl.max_shore_m = double(row.get("max_shore_m", 1000.0));
-        const Array cores=row.get("cores",Array());
-        for (int64_t i=0;i<cores.size();i++) {
-            const Dictionary c=cores[i]; const Array p=c.get("pos",Array());
-            if (p.size()==2) isl.cores.push_back({double(p[0]),double(p[1]),double(c.get("area_km2",0.0)),double(c.get("depth_m",0.0))});
-        }
         islands.push_back(isl);
     }
     // 河的水情与天气：weather.tsv（没有就常年一个样、常年晴）；年降水与一年几天也给河网定尺度
@@ -542,7 +486,6 @@ bool GroupWorld::load_data(std::string &r_error) {
     } else {
         regime = RiverRegime::steady();
     }
-    if (grid.authoritative_rivers && !grid.basin_runoff.empty()) regime = RiverRegime::from_index(grid.basin_runoff.front());
     terrain = WorldTerrain(grid, islands, uint64_t(terrain_seed), river_rules);
     layout = TileLayout(grid);
     // 天气模型：慢变量（积雪、冰、物候）按海拔分箱，箱从岛群最低的地到最高的峰
@@ -596,7 +539,6 @@ void GroupWorld::set_runoff_override(double p_value) {
 }
 
 void GroupWorld::update_runoff() {
-    const WorldClock *clock = WorldClock::get_singleton();
     if (runoff_override >= 0.0) {
         runoff = runoff_override;
     } else {
@@ -605,8 +547,6 @@ void GroupWorld::update_runoff() {
     }
     if (river_material.is_valid()) {
         river_material->set_shader_parameter("runoff", runoff);
-        river_material->set_shader_parameter("calendar_day", clock ? clock->get_calendar_day() : 0.0);
-        river_material->set_shader_parameter("runoff_override", runoff_override);
     }
 }
 
@@ -633,8 +573,6 @@ JobPool::Work GroupWorld::river_job(const RiverChunkKey &p_key) const {
         }
         out->custom0 = float32s(m.custom0);
         out->custom1 = float32s(m.custom1);
-        out->custom2 = float32s(m.custom2);
-        out->custom3 = float32s(m.custom3);
         out->indices = int32s(m.indices);
         return out;
     };
@@ -664,21 +602,17 @@ void GroupWorld::adopt_river(std::unique_ptr<RiverArrays> p_river) {
     arrays[Mesh::ARRAY_TEX_UV] = m.uvs;
     arrays[Mesh::ARRAY_CUSTOM0] = m.custom0;
     arrays[Mesh::ARRAY_CUSTOM1] = m.custom1;
-    arrays[Mesh::ARRAY_CUSTOM2] = m.custom2;
-    arrays[Mesh::ARRAY_CUSTOM3] = m.custom3;
     arrays[Mesh::ARRAY_INDEX] = m.indices;
     const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) |
-            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT) |
-            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM2_SHIFT) |
-            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM3_SHIFT);
+            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT);
     Ref<ArrayMesh> mesh;
     mesh.instantiate();
     mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
     mesh->surface_set_material(0, river_material);
-    // min_y 已包括源数据的瀑布落差；水面不再根据相机距离升高。
+    // 顶点的 y 是河床；着色器往上抬到水位（远处再抬一点），跌水帘往下垂：包围盒两头放宽
     const double chunk = river_mesh_rules.chunk_m;
-    mesh->set_custom_aabb(AABB(Vector3(-40.0f, real_t(m.min_y - 5.0), -40.0f),
-            Vector3(real_t(chunk + 80.0), real_t(m.max_y - m.min_y + 35.0), real_t(chunk + 80.0))));
+    mesh->set_custom_aabb(AABB(Vector3(-40.0f, real_t(m.min_y - river_mesh_rules.fall_m - 5.0), -40.0f),
+            Vector3(real_t(chunk + 80.0), real_t(m.max_y - m.min_y + river_mesh_rules.fall_m + 30.0), real_t(chunk + 80.0))));
     MeshInstance3D *view = memnew(MeshInstance3D);
     view->set_name(vformat("River_%d_%d", m.key.ix, m.key.iz));
     view->set_mesh(mesh);
@@ -776,15 +710,10 @@ double GroupWorld::get_snow_line() const {
 Dictionary GroupWorld::get_river_at(double p_x, double p_z) const {
     Dictionary out;
     RiverHit hit;
-    if (!loaded || !terrain.has_rivers() || !terrain.get_rivers().nearest(p_x, p_z, 1e9, hit) || hit.distance > hit.at.core_at(hit.side)) {
+    if (!loaded || !terrain.has_rivers() || !terrain.get_rivers().nearest(p_x, p_z, 1e9, hit) || hit.distance > hit.at.core()) {
         return out;
     }
-    double local_runoff = runoff;
-    const WorldClock *clock = WorldClock::get_singleton();
-    if (runoff_override < 0 && hit.at.basin >= 0 && hit.at.basin < int(grid.basin_runoff.size())) {
-        local_runoff = river_runoff_index(grid.basin_runoff[size_t(hit.at.basin)], clock ? clock->get_calendar_day() : 0.0);
-    }
-    const RiverStage st = river_stage(hit.at, local_runoff, terrain.get_rivers().get_rules());
+    const RiverStage st = river_stage(hit.at, runoff, terrain.get_rivers().get_rules());
     out["distance"] = hit.distance;
     out["bankfull_width"] = hit.at.width;
     out["bankfull_depth"] = hit.at.depth;
@@ -792,30 +721,8 @@ Dictionary GroupWorld::get_river_at(double p_x, double p_z) const {
     out["bed"] = hit.at.bed();
     out["level"] = st.level;
     out["depth"] = st.depth;
-    out["width"] = st.wet ? st.half_left + st.half_right : 0.0;
-    out["half_width_left"] = st.half_left;
-    out["half_width_right"] = st.half_right;
-    out["speed_m_s"] = st.speed;
-    out["wet_area_m2"] = st.area;
-    out["source_surface"] = hit.at.source_surface;
-    out["bankfull_surface_error_m"] = hit.at.surface - hit.at.source_surface;
+    out["width"] = st.wet ? 2.0 * st.half_width : 0.0;
     out["flow"] = st.flow;
-    out["discharge_m3_s"] = st.discharge;
-    out["mean_discharge_m3_s"]=hit.at.mean_flow;
-    out["bankfull_discharge_m3_s"]=hit.at.bankfull_flow;
-    out["runoff_index"]=local_runoff;
-    out["basin"]=hit.at.basin;
-    out["flow_regime"]=hit.at.flow_regime;
-    out["temporary_flow"]=hit.at.flow_regime == 0;
-    out["floodplain_left"]=hit.at.floodplain_left;
-    out["floodplain_right"]=hit.at.floodplain_right;
-    out["slope"]=hit.at.slope;
-    out["river_level"]=hit.at.level;
-    out["bed_class"]=hit.at.bed_class;
-    out["d50_mm"]=hit.at.d50_mm;
-    out["ssc_mg_l"]=hit.at.ssc_mg_l;
-    out["planform"]=hit.at.planform;
-    out["confine"]=hit.at.confine;
     out["wet"] = st.wet;
     out["acc_km2"] = hit.at.acc;
     return out;
@@ -841,11 +748,6 @@ Dictionary GroupWorld::find_river_near(double p_x, double p_z, double p_radius, 
             out["dir_z"] = (w.z - v.z) / len;
             out["width"] = v.width;
             out["floodplain"] = v.floodplain;
-            out["floodplain_left"] = v.floodplain_left;
-            out["floodplain_right"] = v.floodplain_right;
-            out["basin"] = v.basin;
-            out["mean_discharge_m3_s"] = v.mean_flow;
-            out["bankfull_discharge_m3_s"] = v.bankfull_flow;
             out["acc_km2"] = v.acc;
             out["mouth"] = stem.mouth;
             const RiverVertex &last = stem.v.back(), &before = stem.v[stem.v.size() - 2];
@@ -1311,20 +1213,6 @@ bool GroupWorld::is_ready_at(const Vector3 &p_point) const {
     }
     const auto found = tiles.find(layout.leaf_at(p_point.x, p_point.z).packed());
     return found != tiles.end() && found->second.parts_left == 0;
-}
-
-Dictionary GroupWorld::get_landscape_at(double x,double z) const {
-    Dictionary out;
-    if (!loaded) return out;
-    const auto s=terrain.sample(x,z); const size_t k=grid.nearest_cell(x,z);
-    out["land"]=s.land; out["shore"]=s.shore; out["top"]=s.top; out["bottom"]=s.bottom;
-    out["lith"]=s.lith; out["rockwall"]=s.rockwall; out["cloud_forest"]=s.cloud_forest;
-    if (!grid.cultivable.empty()) {
-        out["cultivable"]=grid.cultivable[k]; out["cultivated"]=grid.cultivated[k];
-        out["fallow_years"]=grid.fallow_years[k]; out["landuse"]=grid.landuse[k];
-        out["natural_cover"]=grid.natural_cover[k]; out["rain_mm"]=grid.rain[k];
-    }
-    return out;
 }
 
 double GroupWorld::get_surface_height(double p_x, double p_z) const {
@@ -2226,7 +2114,6 @@ String GroupWorld::map_location_text(const Vector3 &p_global) const {
                 : flow > 0.6                     ? String(U"水大")
                 : flow < 0.15                    ? String(U"水浅")
                                                  : String(U"水平");
-        text += bool(river["temporary_flow"]) ? String(U" · 临时流水") : String(U" · 河流");
         text += vformat(String(U" · 河宽 %s m（平岸 %s m）· 水深 %s m · %s"), String::num(double(river["width"]), 1),
                 String::num(double(river["bankfull_width"]), 1), String::num(double(river["depth"]), 2), state);
     }

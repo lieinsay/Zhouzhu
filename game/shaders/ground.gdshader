@@ -69,12 +69,6 @@ void fragment() {
 
 	// 雨后：压暗、反光
 	float wet = wx_wet * (1.0 - cover);
-	// World-aligned three-plane rock grain: no stretched UVs on a vertical wall.
-	vec3 weights = pow(abs(v_up), vec3(4.0));
-	weights /= max(dot(weights, vec3(1.0)), 0.0001);
-	vec3 grain = vec3(wx_blotch(v_group.yz / 1.8), wx_blotch(v_group.xz / 1.8), wx_blotch(v_group.xy / 1.8));
-	float bare = clamp(1.0 - herb - field - shrub - forest, 0.0, 1.0);
-	base *= 1.0 + bare * (dot(grain, weights) - 0.5) * 0.18;
 	base *= 1.0 - 0.32 * wet;
 	ALBEDO = base;
 	ROUGHNESS = mix(mix(1.0, 0.5, wet), 0.75, cover);

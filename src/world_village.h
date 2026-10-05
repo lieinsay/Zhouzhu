@@ -171,7 +171,7 @@ protected:
 
 public:
     // 进树之前调
-    void setup(const DockPlan &p_plan, int p_index, int p_id, double p_approach_y);
+    void setup(const DockPlan &p_plan, int p_index, int p_id);
     int get_index() const { return index; }
     int get_dock_id() const { return dock_id; }
 };

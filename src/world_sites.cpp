@@ -65,7 +65,6 @@ std::vector<WorldIsland> WorldSites::terrain_islands() const {
     for (const SiteIsland &isl : islands) {
         WorldIsland w;
         w.id = isl.id;
-        w.cores = isl.cores;
         w.rim_m = isl.rim_m;
         w.cliff_m = isl.cliff_m;
         w.keel_m = isl.keel_m;
@@ -96,11 +95,6 @@ bool parse_world_sites(const std::string &p_text, WorldSites &r_sites, std::stri
             SiteIsland isl;
             ok = to_int(f[1], isl.id) && to_number(f[2], isl.rim_m) && to_number(f[3], isl.cliff_m) && to_number(f[4], isl.keel_m) && to_number(f[5], isl.max_shore_m);
             r_sites.islands.push_back(isl);
-        } else if (f[0]=="core" && f.size()==6) {
-            int id=0; IslandCore c;
-            ok=to_int(f[1],id) && to_number(f[2],c.x) && to_number(f[3],c.z) && to_number(f[4],c.area_km2) && to_number(f[5],c.depth_m);
-            auto it=std::find_if(r_sites.islands.begin(),r_sites.islands.end(),[&](const SiteIsland &i){return i.id==id;});
-            if (it==r_sites.islands.end() || c.area_km2<=0 || c.depth_m<0) ok=false; else it->cores.push_back(c);
         } else if (f[0] == "dock" && f.size() >= 6) {
             SiteDock d;
             int main = 0;

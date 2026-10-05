@@ -16,7 +16,7 @@ add_library(zhouzhu_gen STATIC
 )
 target_include_directories(zhouzhu_gen PUBLIC ${ZHOUZHU_SRC})
 target_link_libraries(zhouzhu_gen PUBLIC skyisle_core zhouzhu_zlib)
-target_compile_definitions(zhouzhu_gen PRIVATE ZHOUZHU_GENERATOR_COMMIT="${ZHOUZHU_GENERATOR_COMMIT}" ZHOUZHU_GENERATOR_DIRTY=${ZHOUZHU_GENERATOR_DIRTY})
+target_compile_definitions(zhouzhu_gen PRIVATE ZHOUZHU_GENERATOR_COMMIT="${ZHOUZHU_GENERATOR_COMMIT}")
 set_target_properties(zhouzhu_gen PROPERTIES CXX_STANDARD 17 CXX_EXTENSIONS OFF POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
     target_compile_options(zhouzhu_gen PRIVATE /utf-8)

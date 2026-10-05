@@ -462,9 +462,7 @@ func _physics_process(delta: float) -> void:
 			var berth: Transform3D = host.get_dock_berth_by_id(_host_dock(TARGET, target_dock_id))
 			var flat := Vector2(berth.origin.x - ship.global_position.x, berth.origin.z - ship.global_position.z).length()
 			var want_y := berth.origin.y + (8.0 if flat < 400.0 else 40.0)
-			# 新聚落可在主泊位 40 m 内另设船台；进入主泊位近处后再按 E，
-			# 否则最近泊位选择会正确地把船靠到那座船台。
-			if _fly_toward(berth.origin, want_y, 12.0):
+			if _fly_toward(berth.origin, want_y, main.get_dock_range() - 5.0):
 				_release_all()
 				_shot("5_approach")
 				_tap("interact")
@@ -473,7 +471,6 @@ func _physics_process(delta: float) -> void:
 				_finish(false, "180 s 没飞到 #%d 的泊位（还差 %.0f m）" % [TARGET, flat])
 		Phase.MOORING:
 			if main.get_state() == 0:
-				_release_all()
 				var id := _host_dock(TARGET, target_dock_id)
 				var berth: Transform3D = host.get_dock_berth_by_id(id)
 				waypoints = [ship.global_position, berth.origin + berth.basis.x * 0.8, host.get_dock_spawn_by_id(id).origin]
@@ -492,11 +489,7 @@ func _physics_process(delta: float) -> void:
 				elif in_phase > 20.0:
 					_finish(false, "走完了路点还没站稳（%s）" % player.global_position)
 			elif in_phase > 60.0:
-				var hits := []
-				for k in player.get_slide_collision_count():
-					var hit := player.get_slide_collision(k)
-					hits.append([str(hit.get_collider().get_path()), hit.get_normal()])
-				_finish(false, "60 s 没走下船：玩家 %s，路点 %s，碰撞 %s" % [player.global_position, waypoints, hits])
+				_finish(false, "60 s 没走下船")
 		Phase.CHECK:
 			var status := main.get_status_text()
 			if step == 0:

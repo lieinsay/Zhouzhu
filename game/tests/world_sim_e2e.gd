@@ -14,7 +14,7 @@ extends Node
 const SCENE := preload("res://world_seed42.tscn")
 const TIMEOUT := 2400.0  # 模拟秒
 const START_HOUR := 5.75
-const STAY_UNTIL_HOUR := 12.0  # 新跨岛目的码头更近：待到正午，往返仍覆盖至少八个钟头与午饭结算。
+const STAY_UNTIL_HOUR := 11.0  # 在目的码头快进待到这个钟点再飞回去（船 20 m/s，疾档回程三个多钟头，得赶在收工前回到村里）
 # 村 A：主码头 2–6 km、主岛上户数最多的村（不算邑治：它就在主码头旁）；村 B：主码头 7–13 km、户数最多的村，这一趟一直在远处
 const A_MIN_M := 2000.0
 const A_MAX_M := 6000.0
@@ -511,9 +511,6 @@ func _physics_process(delta: float) -> void:
 			var a_span: float = float(far_a_last["clock"]) - float(far_a_first["clock"])
 			var b_done: int = int(b_last["done"]) - int(b_first["done"])
 			var b_span: float = float(b_last["clock"]) - float(b_first["clock"])
-			# 快进刚停时，1922 处聚落仍在分帧补账；等这两本追上停钟时刻再验证收成。
-			if minf(float(far_a_last["clock"]), float(b_last["clock"])) < STAY_UNTIL_HOUR * GameClock.get_day_seconds() / 24.0 and in_phase < 90.0:
-				return
 			_log("在远处待到 %s：村%03d 的账从 %.0f s 记到 %.0f s，收 +%d、吃 +%d、水缸 %.1f；村 B 的账推进了 %.0f s（%d 人），干完 +%d 件活；账房 %s" % [
 				GameClock.get_clock_text(), VILLAGE_A, far_a_first["clock"], far_a_last["clock"], a_gain, a_ate, far_a_last["water"],
 				b_span, b_last["people"], b_done, hinterland.get_stats()])

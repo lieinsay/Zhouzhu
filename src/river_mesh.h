@@ -9,12 +9,10 @@
 //
 // 每段一条横断面五列的带子：−core、−平岸半宽、中线、+平岸半宽、+core（core = 平岸半宽 + 河漫滩）。
 // 顶点的 y 是河床（只给包围盒用），真正的水位在着色器里按径流指数算（公式同 river_stage）：
-//   custom0 = (河床 y, 平岸深, v6 为负 Q_bf/Q_mean、旧版为渗漏门槛, 平岸半宽)，
-//   custom1 = (侧滩宽, 瀑布下降米数, 旧版流速, basin+1)，custom2 = (Q_mean, SSC, D50, 比降)，
-//   custom3 = (左滩宽, 右滩宽, 顺流 x, 顺流 z)，
+//   custom0 = (河床 y, 平岸深, 渗漏门槛, 平岸半宽)，custom1 = (河漫滩宽, 跌水, 流速系数, 0)，
 //   uv = (顺水弧长, 离中线的横距，左正右负)。着色器丢掉横距超出此刻水面半宽的片元——水面宽窄随水情变，且不会漫出河谷。
 // 近岸处带子收窄到离岸线的距离（河口一带岸线斜切过河，不收就伸到云海上空）。
-// 河口只在提供 falls.drop_m 时建跌水帘；custom1.y 为下降米数。旧版保留固定落差兼容。
+// 河口多一道跌水帘：顶边接水面、底边往下垂（custom1.y = 1 的顶点由着色器往下拉），水跌进云海。
 // 船坞坪上不画（坪凿平了，选坪时已避开河道与河漫滩）；停机坪照画——坪让给河，河从码头边流过去。
 
 struct RiverChunkKey {
@@ -30,8 +28,6 @@ struct RiverMesh {
     std::vector<float> uvs; // uv
     std::vector<float> custom0; // rgba
     std::vector<float> custom1; // rgba
-    std::vector<float> custom2; // q_mean, ssc_mgl, d50_mm, slope
-    std::vector<float> custom3; // fp_left, fp_right, 顺流单位向量 x/z
     std::vector<int32_t> indices; // 正面顺时针（Godot 约定），从上往下看
     double min_y = 0.0, max_y = 0.0; // 河床的高低（包围盒）
 

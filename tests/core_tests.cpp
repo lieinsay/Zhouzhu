@@ -22,9 +22,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#ifdef _WIN32
-extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned long);
-#endif
 
 #include "build_pieces.h"
 #include "ship_cabins.h"
@@ -101,7 +98,6 @@ extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned l
 #include "py_format.h"
 #include "scipy_edt.h"
 #include "skyisle/island/generate.hpp"
-#include "skyisle/island/coast.hpp"
 #include "skyisle/planet/view.hpp"
 #include "story_start.h"
 
@@ -1932,10 +1928,10 @@ void test_world_start() {
     check(g.rows == 1312 && g.cols == 1243 && g.res == 100.0, "1312 × 1243 格、100 m");
     check(g.land_count() == 513994, "陆地格数与生成器一致（" + std::to_string(g.land_count()) + "）");
     // 邑治（村001，主岛东岸的海岸平原，主码头 #1 往西南 1.2 km）
-    const SiteSettlement *seat = sites.village_by_id(19);
-    check(seat && seat->seat, "村019 是邑治");
+    const SiteSettlement *seat = sites.village_by_id(1);
+    check(seat && seat->seat, "村001 是邑治");
     const double sx = seat ? seat->x : 0.0, sz = seat ? seat->z : 0.0;
-    check(g.shore[g.nearest_cell(sx, sz)] > 0 && std::abs(g.height_at(sx, sz) - 572.0) < 8.0, "邑治在陆地上、高约 572 m（" + std::to_string(g.height_at(sx, sz)) + "）");
+    check(g.shore[g.nearest_cell(sx, sz)] > 0 && std::abs(g.height_at(sx, sz) - 621.0) < 8.0, "邑治在陆地上、高约 621 m（" + std::to_string(g.height_at(sx, sz)) + "）");
     check(g.island[g.nearest_cell(sx, sz)] == 0, "邑治在主岛");
     const WorldTerrain t(g, { sites.terrain_islands().front() }, START);
     double y = 0.0;
@@ -1996,11 +1992,11 @@ void test_terrain_v3_start() {
         }
     }
     std::printf("  河道格 %d，最宽 %.1f m，顺流上坡 %d 格、流出河道 %d 格；流进湖 %d 格\n", chan, widest, uphill, off_channel, into_lake);
-    check(chan > 10000 && widest > 12.0 && widest < 14.0, "新版真实河道格上万，年均最宽约 13 m");
-    check(chan_small > 0 && g.authoritative_rivers, "局地降水与地下水允许 1 km² 以下的细沟，由生成器河网给出");
+    check(chan > 10000 && widest > 50.0 && widest < 80.0, "河道格上万、常年河最宽六七十米");
+    check(chan_small == 0, "河道格的汇流都到了 1 km² 的溪涧门槛");
     check(uphill < chan / 1000, "河床顺流几乎处处不升（" + std::to_string(uphill) + " 格例外）");
     check(off_channel == 0, "河道格顺流总流到下一个河道格或湖（流向按生成器的汇流反推）");
-    check(into_lake == 0, "开局新版没有湖，入湖格数（" + std::to_string(into_lake) + " 格）");
+    check(into_lake > 0 && into_lake < 100, "有河流进湖（" + std::to_string(into_lake) + " 格）");
 
     // 地形区：山里比台地崎岖
     const WorldTerrain t(g, sites.terrain_islands(), START);
@@ -2061,7 +2057,7 @@ void test_terrain_v3_start() {
     check(near_edge > 0 && near_ok == near_edge, "近岸处厚度 = 崖壁再多一点（" + std::to_string(near_ok) + " / " + std::to_string(near_edge) + "）");
 
     // 河用生成器的河道：中线落在河道格上的点，平岸宽不窄于生成器的一半（源头渐宽）、水面不高于生成器的 河床 + 水深
-    int on = 0, narrow = 0, source_points = 0, wrong_bed = 0;
+    int on = 0, narrow = 0, above = 0;
     for (const RiverStem &stem : t.get_rivers().get_stems()) {
         for (size_t i = 1; i + 1 < stem.v.size(); i++) {
             const RiverVertex &v = stem.v[i];
@@ -2071,20 +2067,13 @@ void test_terrain_v3_start() {
             }
             on++;
             narrow += v.width < 0.7 * g.river_width[k] ? 1 : 0;
-            // Resampled points interpolate two source cells; a nearest-cell bank
-            // height is not their bed, especially on steep mountain channels.
-            const double cx=g.x0+double(k%size_t(g.cols))*g.res;
-            const double cz=g.z0+double(k/size_t(g.cols))*g.res;
-            if (std::hypot(v.x-cx,v.z-cz)<0.01 && std::isfinite(g.bed_height[k])) {
-                source_points++;
-                wrong_bed+=std::abs(v.bed()-double(g.bed_height[k]))>0.15;
-            }
+            above += v.surface > double(g.height[k]) + g.river_depth[k] + 1.5 ? 1 : 0;
         }
     }
-    std::printf("  河道格上的中线点 %d：过窄 %d；源格中心 %d 个，河床不符 %d 个\n", on, narrow, source_points, wrong_bed);
+    std::printf("  河中线落在河道格上的点 %d：比生成器窄三成以上 %d、水面高出生成器 1.5 m 以上 %d\n", on, narrow, above);
     check(on > 10000, "河网的中线大都走在生成器的河道上");
     check(narrow < on / 50, "平岸宽跟得上生成器的河宽");
-    check(source_points>1000 && wrong_bed==0, "源格中心的河床等于生成器的 bed_height");
+    check(above < on / 20, "水面贴着生成器下切出的河床");
 }
 
 // ---------------------------------------------------------------- 码头几何与铺村（两边共用的纯算法）
@@ -2253,9 +2242,9 @@ void test_world_sites() {
     std::string err;
     check(parse_world_grid(bin.data(), bin.size(), g, err), "terrain.bin 能解析");
     check(parse_world_sites(tsv, sites, err), "sites.tsv 能解析：" + err);
-    check(sites.islands.size() == 38 && sites.docks.size() == 42 && sites.settlements.size() == 1919, "38 岛、42 码头、214 常住村（含驿站）+ 1705 散户");
-    const SiteSettlement *seat = sites.village_by_id(19);
-    check(seat && seat->seat && seat->households == 102 && seat->name == "村019", "村019 是邑治、102 户（农户与邑里的市户）");
+    check(sites.islands.size() == 38 && sites.docks.size() == 59 && sites.settlements.size() == 1474, "38 岛、59 码头、239 村（含专业聚落 51）+ 1235 散户");
+    const SiteSettlement *seat = sites.village_by_id(1);
+    check(seat && seat->seat && seat->households == 486 && seat->name == "村001", "村001 是邑治、486 户（农户与邑里的市户）");
     const SiteDock *main_dock = sites.dock_by_id(1);
     check(main_dock && main_dock->main && main_dock->island == 0, "主码头 #1 在主岛");
     WorldSites bad;
@@ -2268,7 +2257,7 @@ void test_world_sites() {
     for (const DockPlan &d : docks) {
         ok += d.ok;
     }
-    check(ok == int(sites.docks.size()), "所有码头都找到岸缘（" + std::to_string(ok) + "）");
+    check(ok == int(sites.docks.size()), "59 个码头都找到岸缘（" + std::to_string(ok) + "）");
     // 主码头 #1 与岛 #13 上的目的码头 #28（场景里配的 destination_dock，离主码头 23 km）：压平后泊位附近的地面等高（这两处没有河从坪上过；有河的坪让给河）
     for (int id : { 1, 28 }) {
         size_t k = 0;
@@ -2285,23 +2274,14 @@ void test_world_sites() {
                 const double x = d.x + along * d.out_x - side * d.out_z, z = d.z + along * d.out_z + side * d.out_x;
                 const TerrainSample s = t.sample(x, z);
                 if (s.land && std::hypot(x - d.x, z - d.z) <= 0.5 * d.apron_m) {
-                    const auto raw=t.sample_raw(x,z);
-                    double expected=raw.top+dock_pad_weight(d,x,z)*(1.0-double(raw.bank))*(d.y-raw.top);
-                    for (const auto &yard:t.get_yards()) {
-                        if (yard.outside_distance(x,z)<=WorldTerrain::YARD_REACH_M)
-                            expected=yard_carve(yard,world_yard_rules(),x,z,expected);
-                    }
-                    worst = std::max(worst, std::abs(s.top - expected));
+                    worst = std::max(worst, std::abs(s.top - d.y));
                     samples++;
                 }
             }
         }
-        check(samples > 20 && worst < 1e-6, tag + "：坪、河岸与船坞填挖混合正确（最大差 " + std::to_string(worst) + " m）");
+        check(samples > 20 && worst < 1e-6, tag + "：栈桥根到岛内半个坪半径，地面与坪同高（最大差 " + std::to_string(worst) + " m）");
         double y = 0.0;
-        const double spawn_x=d.x-12*d.out_x, spawn_z=d.z-12*d.out_z;
-        const auto spawn_raw=t.sample_raw(spawn_x,spawn_z);
-        const double spawn_top=spawn_raw.top+dock_pad_weight(d,spawn_x,spawn_z)*(1.0-double(spawn_raw.bank))*(d.y-spawn_raw.top);
-        check(t.surface(spawn_x,spawn_z,y) && std::abs(y-spawn_top)<1e-6,tag+"：出生点按坪与河岸的混合高度落地");
+        check(t.surface(d.x - 12.0 * d.out_x, d.z - 12.0 * d.out_z, y) && std::abs(y - d.y) < 1e-6, tag + "：出生点（岸缘内 12 m）在坪上");
         const TerrainSample raw = t.sample_raw(d.x + (d.pier_m + 0.15) * d.out_x, d.z + (d.pier_m + 0.15) * d.out_z);
         check(!raw.land, tag + "：泊位在岸外");
         const double rim = sites.islands[size_t(sites.docks[k].island)].rim_m; // 浮高以后各岛的岸缘高低不同（主岛 611 m、岛 #13 464 m）
@@ -2498,11 +2478,23 @@ void test_map_grounds() {
     b.pad_z = -0.5 * dock.apron_m * dock.out_z;
     b.yard_x = yard.x - dock.x;
     b.yard_z = yard.z - dock.z;
+    // 离码头最近的一处溪涧（格心在陆地上、四周也是地、不是河道湖泊）
     double best = 1e18;
-    for (const auto &stem:t.get_rivers().get_stems()) for (const auto &v:stem.v) {
-        const double d=std::hypot(v.x-dock.x,v.z-dock.z);
-        if (d>=best || !river_stage(v,1.0,t.get_rivers().get_rules()).wet || !t.is_land(v.x+60,v.z) || !t.is_land(v.x-60,v.z) || !t.is_land(v.x,v.z+60) || !t.is_land(v.x,v.z-60)) continue;
-        best=d; b.water_x=v.x-dock.x; b.water_z=v.z-dock.z;
+    for (int r = 1; r < g.rows - 1; r++) {
+        for (int c = 1; c < g.cols - 1; c++) {
+            const size_t k = g.index(r, c);
+            const double x = g.x0 + c * g.res, z = g.z0 + r * g.res;
+            const double d = std::hypot(x - dock.x, z - dock.z);
+            if (!g.stream[k] || d >= best || !t.is_land(x, z) || !t.is_land(x + 60, z) || !t.is_land(x - 60, z) || !t.is_land(x, z + 60) || !t.is_land(x, z - 60)) {
+                continue;
+            }
+            if (world.fertile(x - dock.x, z - dock.z) || world.water_at(x - dock.x, z - dock.z) != WaterKind::STREAM) {
+                continue;
+            }
+            best = d;
+            b.water_x = x - dock.x;
+            b.water_z = z - dock.z;
+        }
     }
     check(best < 1e17, "岛群：找得到一处溪涧");
     // 离水远的生地：码头往岛内 200 m 起找
@@ -2603,7 +2595,7 @@ void test_world_rivers() {
     // 水情
     RiverRegime regime;
     check(RiverRegime::parse(weather, regime, err), "weather.tsv 能解析：" + err);
-    check(regime.get_daily().size() == 336 && std::abs(regime.precip_mm() - 510.0) < 1.0, "一年 336 天、年降水 510 mm");
+    check(regime.get_daily().size() == 336 && std::abs(regime.precip_mm() - 810.0) < 1.0, "一年 336 天、年降水 810 mm");
     double mean = 0.0, lo = 1e9, hi = 0.0;
     for (double r : regime.get_daily()) {
         mean += r / double(regime.get_daily().size());
@@ -2652,44 +2644,15 @@ void test_world_rivers() {
     }
     check(stems > 400 && mouths > 100, "河 " + std::to_string(stems) + " 条、出岸缘 " + std::to_string(mouths) + " 条");
     check(rivers.total_length() > 900e3, "河网总长 > 900 km（" + std::to_string(int(rivers.total_length() / 1000)) + " km）");
-    check(g.authoritative_rivers && !g.river_sources.empty(), "新版岸上高程来自生成器，不把它当作平水位单调化");
-    int source_points=0, source_mismatch=0;
-    for (size_t si=0;si<g.river_sources.size();si++) {
-        const auto &source=g.river_sources[si];
-        const auto &stem=rivers.get_stems()[si];
-        size_t cursor=0;
-        for (size_t pi=0;pi<source.points.size();pi++) {
-            const auto &point=source.points[pi];
-            if (cursor>=stem.v.size()) { source_mismatch++; break; }
-            const auto &vertex=stem.v[cursor];
-            source_points++;
-            source_mismatch+=std::hypot(vertex.x-(g.x0+point[1]*g.res),vertex.z-(g.z0+point[0]*g.res))>1e-5
-                    || std::abs(vertex.bed()-point[11])>1e-5 || std::abs(vertex.width-point[6])>1e-5
-                    || std::abs(vertex.mean_flow-point[4])>1e-5 || std::abs(vertex.bankfull_flow-point[5])>1e-5;
-            source_mismatch+=std::abs(vertex.source_surface-point[10])>1e-5 || vertex.level!=int(point[2]) || vertex.bed_class!=int(point[14]);
-            const auto stage=river_stage(vertex,1.0,rules);
-            source_mismatch+=std::abs(stage.depth-point[9])>0.02 || std::abs(stage.half_width*2-point[8])>0.04;
-            if (pi+1<source.points.size()) {
-                const auto &next=source.points[pi+1];
-                cursor+=size_t(std::max(1,int(std::ceil(std::hypot(next[1]-point[1],next[0]-point[0])*g.res/rules.step_m))));
-            }
-        }
-    }
-    check(source_points>40000 && source_mismatch==0,"生成器每个河点的中线、河床、真实宽深与流量均保留（"+std::to_string(source_mismatch)+" 处差异）");
-    for (const auto &basin:g.basin_runoff) {
-        double average=0; for (float index:basin) average+=index/basin.size();
-        check(basin.size()==336 && std::abs(average-1)<0.002,"流域径流指数一年 336 天，年均为 1");
-        check_near(river_runoff_index(basin,10.5),basin[10],1e-8,"流域径流正午对齐日值");
-        check_near(river_runoff_index(basin,346.5),basin[10],1e-8,"流域径流跨年循环");
-    }
+    check(rising == 0, "平岸水面顺流不升（" + std::to_string(rising) + " 处）");
     check(drying_acc == 0, "汇流面积顺流不减（" + std::to_string(drying_acc) + " 处）");
     check(off_parent == 0, "支流末点都落在干流中线上（" + std::to_string(off_parent) + " 条没有）");
     // 最大的河：下游宽过上游，宽窄在一条河里有变化
     const RiverVertex &src = trunk->v.front(), &end = trunk->v.back();
     check(end.width > 2.0 * src.width && end.depth > src.depth, "干流越往下越宽越深（" + std::to_string(src.width) + " → " + std::to_string(end.width) + " m）");
-    check(end.dry==0 && src.dry==0, "新版径流已经包含地下水，不再扣游戏的渗漏门槛");
+    check(end.dry < src.dry, "大河的渗漏门槛低于源头");
     check(trunk->mouth, "干流从岸缘跌下去");
-    check(std::abs(t.get_grid().shore_at(end.x, end.z)) < 1.0, "河口截在岸线上");
+    check(t.get_grid().shore_at(end.x, end.z) + WorldTerrain::COAST_AMP_M * t.coast_noise(end.x, end.z) < 1.0, "河口截在岸线上");
 
     // 凿河道：中线上的地面就是河床；年均水位时水面半宽内低于水位、外高于水位
     int bed_off = 0, dry_bank = 0, samples = 0;
@@ -2729,11 +2692,11 @@ void test_world_rivers() {
     check(dry_bank == 0, "年均水位时水面半宽内是水、外是岸（" + std::to_string(dry_bank) + " 处不对）");
 
     // 水情落到一点上：小溪先干、大河旱季也有水、涨水漫滩
-    check(river_stage(src, 0.25, rules).wet && river_stage(end, 0.25, rules).wet, "源数据仍给出正流量，浅溪与干流都保留水面");
+    check(!river_stage(src, 0.25, rules).wet && river_stage(end, 0.25, rules).wet, "径流 0.25（旱季）：源头的溪干了、干流还有水");
     check(river_stage(end, 0.15, rules).wet, "全年最枯时干流也有水");
-    const RiverStage low = river_stage(end, 0.5, rules), high = river_stage(end, 3.0, rules), flood = river_stage(end, 20.0, rules);
+    const RiverStage low = river_stage(end, 0.5, rules), high = river_stage(end, 3.0, rules), flood = river_stage(end, 6.5, rules);
     check(low.level < high.level && low.half_width < high.half_width, "水涨了：水位高、水面宽");
-    check(flood.half_width >= end.half() && flood.half_width <= end.core() + 1e-9, "大水漫上河漫滩、不出滩");
+    check(flood.half_width > end.half() && flood.half_width <= end.core() + 1e-9, "大水漫上河漫滩、不出滩");
 
     // 地面问水：河槽是水、滩上不是水但不盖房；挑水线沿河
     const WorldGround ground(t, 0.0, 0.0);
@@ -2764,8 +2727,7 @@ void test_world_rivers() {
     const RiverMesh mesh = build_river_mesh(t, key);
     const size_t verts = mesh.positions.size() / 3;
     check(!mesh.empty() && mesh.indices.size() % 3 == 0, "干流所在的块有水面");
-    check(mesh.normals.size() == verts * 3 && mesh.uvs.size() == verts * 2 && mesh.custom0.size() == verts * 4 && mesh.custom1.size() == verts * 4
-            && mesh.custom2.size() == verts * 4 && mesh.custom3.size() == verts * 4, "顶点属性一一对上，含流量、悬沙、粒径、比降与左右滩宽");
+    check(mesh.normals.size() == verts * 3 && mesh.uvs.size() == verts * 2 && mesh.custom0.size() == verts * 4 && mesh.custom1.size() == verts * 4, "顶点属性一一对上");
     int bad_index = 0;
     for (int32_t ix : mesh.indices) {
         bad_index += ix < 0 || size_t(ix) >= verts;
@@ -2777,176 +2739,7 @@ void test_world_rivers() {
     for (size_t k = 1; k < mouth_mesh.custom1.size(); k += 4) {
         fall = fall || mouth_mesh.custom1[k] > 0.5f;
     }
-    check(!fall, "只读 terrain.bin 而未读 falls 时不编造河口瀑布高度");
-}
-
-void test_river_contract() {
-    std::printf("river_contract\n");
-    RiverRules rules;
-    RiverVertex p;
-    p.surface=102; p.source_surface=102; p.depth=2; p.width=10;
-    p.mean_flow=2; p.bankfull_flow=10; p.floodplain_left=2; p.floodplain_right=20; p.floodplain=20;
-    const auto bank=river_stage(p,5,rules), low=river_stage(p,0.2,rules), mean=river_stage(p,1,rules);
-    check_near(bank.level,102,1e-9,"平岸水面与源数据闭合时逐米吻合");
-    check_near(bank.area,400.0/33.0,1e-9,"10 m 宽、2 m 中心深的曲面湿断面积为 400/33 m²");
-    check_near(bank.speed,0.825,1e-9,"按真实湿断面积计算流速，不按矩形截面");
-    check_near(low.discharge,0.4,1e-9,"枯水流量来自年均乘当日指数");
-    check(low.speed<mean.speed && mean.speed<bank.speed,"真实断面下流速随当天流量变化");
-    check_near(mean.speed*mean.area,2,1e-9,"流量与湿断面积、流速守恒");
-    const auto flood=river_stage(p,20,rules);
-    check_near(flood.discharge,40,1e-9,"源数据流量不被旧 flood_max 偷截成 30");
-    check_near(flood.half_left,7,1e-9,"左滩只有 2 m，不使用右滩 20 m 的上限");
-    check(flood.half_right>flood.half_left,"漫滩左右保持不对称");
-    for (double index : {0.0, 0.0001, 0.2, 1.0, 5.0, 5.01, 20.0, 200.0}) {
-        const auto water = river_stage(p,index,rules);
-        double integral = 0.0;
-        constexpr int count = 20000;
-        const double dx = (water.half_left + water.half_right) / count;
-        for (int i=0;i<count;++i) {
-            const double x=-water.half_right+(i+0.5)*dx;
-            integral += std::max(0.0,water.level-river_profile(p,x,rules))*dx;
-        }
-        check_near(water.area,integral,1e-5,"低水、满槽和非对称漫滩面积与地形数值积分一致");
-        check_near(water.speed*water.area,water.discharge,1e-9,"包括洪水与断流在内的 Q=VA 闭合");
-    }
-    check_near(river_profile(p,12,rules),102.08,1e-9,"左滩剖面在源宽度处截止");
-    check_near(river_profile(p,-12,rules),102.28,1e-9,"右滩按右侧宽度计算");
-    const std::vector<float> daily{0.2f,1.0f,5.0f,0.4f};
-    check_near(river_runoff_index(daily,1.0),0.6,1e-7,"相邻日平滑过渡");
-    check_near(river_runoff_index(daily,0.0),0.3,1e-7,"年末至年初也平滑过渡");
-    auto dry_source=p; dry_source.authoritative=true; dry_source.mean_flow=0; dry_source.bankfull_flow=0; dry_source.acc=100;
-    const auto zero=river_stage(dry_source,5,rules);
-    check(zero.discharge==0 && zero.depth==0 && zero.speed==0 && !zero.wet,"生成器零流量不回退成按面积猜流量的旧河");
-    auto brook=p; brook.width=0.62; brook.depth=0.11; brook.surface=100.11;
-    brook.mean_flow=0.004; brook.bankfull_flow=0.0536;
-    const auto shallow=river_stage(brook,0.23,rules);
-    check(shallow.depth>0 && shallow.depth<0.03 && shallow.wet,
-            "源数据仍有流量的厘米级溪水不能被旧 3 cm 断流阈值隐藏");
-    const auto dried=river_stage(brook,0,rules);
-    check(!dried.wet && dried.depth==0 && dried.discharge==0 && dried.half_width==0,
-            "临时路径的零事件指数必须得到真实断流，而不是全年显示水沟");
-
-    WorldGrid g; g.rows=5; g.cols=5; g.res=100; g.authoritative_rivers=true;
-    g.height.assign(25,102); g.shore.assign(25,500); g.island.assign(25,0);
-    for(int row=0;row<5;row++) for(int col=0;col<5;col++) g.shore[size_t(row*5+col)]=float(250-col*100);
-    g.landcover.assign(25,6); g.stream.assign(25,1); g.basin_runoff={daily};
-    WorldGrid::RiverSource r; r.exit=1; r.basin=0;
-    r.points={{{1,1,1,4,2,10,10,2,6.58f,1.05f,102,100,.03f,64,3,0,120,2,20,1}},
-              {{1,2,1,4,2,10,10,2,6.58f,1.05f,101,99,.03f,64,3,0,120,2,20,1}}};
-    r.outlet_drop=44.7; g.river_sources={r};
-    {
-        auto curved=g; curved.shore.assign(25,500);
-        auto &source=curved.river_sources[0]; source.exit=0;
-        source.points={r.points[0],r.points[0],r.points[0],r.points[0]};
-        const float positions[4][2]={{1,1},{1,2},{2,2},{3,3}};
-        for(int i=0;i<4;i++) { source.points[i][0]=positions[i][0]; source.points[i][1]=positions[i][1]; }
-        WorldTerrain curve(curved,{WorldIsland()},42,rules);
-        const auto &v=curve.get_rivers().get_stems()[0].v;
-        double max_turn=0; bool anchors=true, attributes=true;
-        for(size_t i=1;i+1<v.size();i++) {
-            const double ax=v[i].x-v[i-1].x,az=v[i].z-v[i-1].z,bx=v[i+1].x-v[i].x,bz=v[i+1].z-v[i].z;
-            max_turn=std::max(max_turn,std::acos(std::clamp((ax*bx+az*bz)/(std::hypot(ax,az)*std::hypot(bx,bz)),-1.0,1.0)));
-        }
-        for(const auto &p:source.points) {
-            double closest=1e9;
-            for(const auto &q:v) closest=std::min(closest,std::hypot(q.x-p[1]*100,q.z-p[0]*100));
-            anchors &= closest<1e-6;
-        }
-        for(const auto &q:v) attributes &= q.width==10 && q.mean_flow==2 && q.basin==0 && q.bed()==100;
-        check(max_turn<0.35,"新河网的 90 度格点转弯恢复连续曲线（最大转角 "+std::to_string(max_turn)+" rad）");
-        check(anchors && attributes,"平滑通过所有源点和汇流锚点，保持原宽深、流量、河床与流域");
-    }
-    {
-        auto mixed=g;
-        mixed.event_basin_offset=1;
-        mixed.basin_runoff={{1,1,1,1},{0,2,2,0}};
-        auto &source=mixed.river_sources[0]; source.exit=0;
-        source.points[0][20]=0; source.points[1][20]=1;
-        auto tail=source.points[1]; tail[1]=3; source.points.push_back(tail);
-        WorldTerrain flow_types(mixed,{WorldIsland()},42,rules);
-        const auto &vertices=flow_types.get_rivers().get_stems()[0].v;
-        check(vertices.front().flow_regime==0 && vertices.front().basin==1 && vertices.back().flow_regime==1 && vertices.back().basin==0,
-                "同一段上游临时流路和下游常驻河分别使用事件曲线与基流曲线");
-        check(!river_stage(vertices.front(),river_runoff_index(mixed.basin_runoff[1],0.5),rules).wet
-                && river_stage(vertices.back(),river_runoff_index(mixed.basin_runoff[0],0.5),rules).wet,
-                "干天临时支流归零，下游常驻河保持供水");
-        const auto mm=build_river_mesh(flow_types,{0,0}); bool separate=!mm.empty();
-        for(size_t i=0;i+2<mm.indices.size();i+=3) {
-            const auto a=mm.custom1[size_t(mm.indices[i])*4+3];
-            separate &= a==mm.custom1[size_t(mm.indices[i+1])*4+3] && a==mm.custom1[size_t(mm.indices[i+2])*4+3];
-        }
-        check(separate,"GPU 每个三角形使用同一供水曲线，不把常驻河水插值到干支流");
-    }
-    WorldTerrain terrain(g,{WorldIsland()},42,rules);
-    const auto mesh=build_river_mesh(terrain,{0,0});
-    bool has_fall=false, attrs_ok=!mesh.empty(), has_side_normal=false;
-    for(size_t i=0;i<mesh.custom1.size();i+=4) {
-        const double drop=mesh.custom1[i+1];
-        has_fall|=std::abs(drop-44.7)<1e-4;
-        attrs_ok &= drop<1e-6 || std::abs(drop-44.7)<1e-4;
-        attrs_ok &= mesh.custom2[i]==2 && mesh.custom2[i+1]==120 && mesh.custom2[i+2]==64;
-        attrs_ok &= mesh.custom3[i]==2 && mesh.custom3[i+1]==20;
-        if(drop>0) has_side_normal |= std::abs(mesh.normals[(i/4)*3+1])<1e-6;
-    }
-    check(has_fall && attrs_ok,"GPU 收到原始流量/SSC/粒径/左右滩宽以及 44.7 m 的源瀑布，非固定 150 m");
-    check(has_side_normal,"瀑布水帘法线朝侧面");
-    check(mesh.min_y<60,"瀑布真实落差包含在包围盒里");
-
-    // A one-metre channel between the old 2 m grid rows must remain visible at low stage.
-    // Check the rendered/collision triangles, not just the continuous height function.
-    g.height.assign(25,100.25f);
-    r.exit=0; r.outlet_drop=0;
-    for(auto &pt:r.points) { pt[0]=1.003f; pt[4]=0.2f; pt[5]=1; pt[6]=1; pt[7]=0.25f; pt[10]=100.25f; pt[11]=100; }
-    g.river_sources={r};
-    WorldTerrain narrow(g,{WorldIsland()},42,rules);
-    TileLayout layout(g);
-    const double px=150.25,pz=double(r.points[0][0])*g.res;
-    const auto tile=build_tile_mesh(narrow,layout,layout.leaf_at(px,pz));
-    double rendered=-1e9;
-    for(size_t i=0;i+8<tile.collision.size();i+=9) {
-        const auto *a=&tile.collision[i], *b=&tile.collision[i+3], *c=&tile.collision[i+6];
-        const double ax=a[0]+tile.origin_x,az=a[2]+tile.origin_z;
-        const double bx=b[0]+tile.origin_x,bz=b[2]+tile.origin_z;
-        const double cx=c[0]+tile.origin_x,cz=c[2]+tile.origin_z;
-        const double det=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);
-        if(std::abs(det)<1e-9) continue;
-        const double u=((bz-cz)*(px-cx)+(cx-bx)*(pz-cz))/det;
-        const double v=((cz-az)*(px-cx)+(ax-cx)*(pz-cz))/det;
-        if(u>=-1e-6 && v>=-1e-6 && u+v<=1+1e-6) rendered=std::max(rendered,u*a[1]+v*b[1]+(1-u-v)*c[1]);
-    }
-    RiverHit nh; narrow.get_rivers().nearest(px,pz,10,nh);
-    const auto dry_stage=river_stage(nh.at,0.5,rules);
-    check(rendered>99.9 && rendered<dry_stage.level,"枯水细溪在实际地面/碰撞网格上连续露出，不靠抬高水面");
-
-    // Opening brook: 0.62 m bankfull width, 2--7 cm seasonal depth, diagonal
-    // and offset from grid vertices. A 0.5 m mesh can roof over this entire flow.
-    g.height.assign(25,100.11f); g.shore.assign(25,500);
-    for(size_t k=0;k<r.points.size();k++) {
-        auto &pt=r.points[k]; pt[0]=float(1+k)+0.003f; pt[1]=float(1+k);
-        pt[4]=0.004f; pt[5]=0.0536f; pt[6]=0.62f; pt[7]=0.11f; pt[10]=100.11f; pt[11]=100;
-    }
-    g.river_sources={r};
-    WorldTerrain opening(g,{WorldIsland()},42,rules);
-    const auto opening_tile=build_tile_mesh(opening,layout,layout.leaf_at(150,150));
-    int submerged=0;
-    for(int sample=0;sample<16;sample++) {
-        const double x=145.07+sample*0.17, z=x+double(r.points[0][0]-1)*g.res;
-        double top=-1e9;
-        for(size_t i=0;i+8<opening_tile.collision.size();i+=9) {
-            const auto *a=&opening_tile.collision[i], *b=&opening_tile.collision[i+3], *c=&opening_tile.collision[i+6];
-            const double ax=a[0]+opening_tile.origin_x,az=a[2]+opening_tile.origin_z;
-            const double bx=b[0]+opening_tile.origin_x,bz=b[2]+opening_tile.origin_z;
-            const double cx=c[0]+opening_tile.origin_x,cz=c[2]+opening_tile.origin_z;
-            const double det=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);
-            if(std::abs(det)<1e-9) continue;
-            const double u=((bz-cz)*(x-cx)+(cx-bx)*(z-cz))/det;
-            const double v=((cz-az)*(x-cx)+(ax-cx)*(z-cz))/det;
-            if(u>=-1e-6 && v>=-1e-6 && u+v<=1+1e-6) top=std::max(top,u*a[1]+v*b[1]+(1-u-v)*c[1]);
-        }
-        RiverHit hit; opening.get_rivers().nearest(x,z,1,hit);
-        submerged+=top>99.9 && top<river_stage(hit.at,0.23,rules).level;
-    }
-    check(submerged==16,"开局宽 0.62 m 的斜溪在枯月实际网格中连续有水（"+std::to_string(submerged)+"/16）");
+    check(fall, "河口块有跌水帘");
 }
 
 // ---------------------------------------------------------------- 金标：地图宿主重构前后逐位一致
@@ -3093,7 +2886,7 @@ void test_goldens() {
     // 拓展「按点 / 片 / 散生成资源」换了生成器新版的地表（村周开垦、采场格改裸岩；细节起伏按地表调幅）与码头，又记了一次；
     // 浮高计划 Z2 按生成器的浮高重导（岛 #1、#2 整座上下平移，村号跟着户数重排、户数也变了：村026 55 → 80 户），同一处地方的村重记；
     // 地貌与聚落 P0 开局从 #2051 换到 #6329，换成这一群里的四处重记）
-    report_golden("岛群远离主码头的村", villages.h, 0x7744abf7882a3e22ull);
+    report_golden("岛群远离主码头的村", villages.h, 0x13d186e4cea19352ull);
 }
 
 // ---------------------------------------------------------------- 村落的账本与推进（远近同源）
@@ -3629,9 +3422,8 @@ void test_freight() {
     for (size_t k = 0; k < world_ports.size(); k++) {
         from = world_ports[k].site_id == FROM_ID ? int(k) : from;
     }
-    check(from >= 0 && world_ports.size() == size_t(std::count_if(sites.settlements.begin(),sites.settlements.end(),[](const SiteSettlement &s) { return !s.hamlet; })), "所有常住村都能托运，散户不算");
+    check(from >= 0 && world_ports.size() == 239, "239 个村都能托运（含专业聚落，散户不算）");
     const SiteSettlement *v29 = sites.village_by_id(FROM_ID);
-    if (from < 0 || !v29) return;
     const WorldGround land_ground(t, 0.0, 0.0);
     const FarmModel land(&land_ground, land_ground.plot_lattice(), FarmRules());
     WorldLedgerSpec spec;
@@ -3649,18 +3441,11 @@ void test_freight() {
     if (o.valid()) {
         const FreightPort &to = world_ports[size_t(o.to)];
         std::printf("  村003 → %s（村号 %d，岛 #%d，%.1f km）%d 箱，运费 %d\n", to.name.c_str(), to.site_id, to.island, o.km, o.crates, o.fee);
-        bool nearest=to.island!=world_ports[size_t(from)].island;
-        for (const auto &port:world_ports) {
-            if (port.island==world_ports[size_t(from)].island) continue;
-            nearest=nearest && std::hypot(port.x-world_ports[size_t(from)].x,port.z-world_ports[size_t(from)].z)/1000.0>=o.km-1e-6;
-        }
-        check(nearest && o.crates==2, "两箱运到别岛最近的常住村");
-        const SiteSettlement *destination = sites.village_by_id(to.site_id);
-        check(destination!=nullptr, "委托目的地是有效村庄");
-        if (destination) {
-            const VillagePlan plan = plan_world_village(t, *destination, START, WorldVillageRules());
-            check(freight_post_building(plan.layout) >= 0, "目的村有船台");
-        }
+        check(to.site_id == 238 && to.island == 3, "开到别的岛上最近的烧炭营50（岛 #3，岸缘 1430 m：比主岛高八百来米）");
+        check(o.crates == 2 && o.km > 12.0 && o.km < 13.0, "两箱，十二公里多");
+        const SiteSettlement *v238 = sites.village_by_id(238);
+        const VillagePlan p238 = plan_world_village(t, *v238, START, WorldVillageRules());
+        check(freight_post_building(p238.layout) >= 0, "烧炭营50 也有船台");
     }
 }
 
@@ -3684,11 +3469,11 @@ void test_gather() {
             others_ok = others_ok && item.empty();
         }
     }
-    check(workings == 7 && products_ok, "七种散的有采场（石料、黏土、砂砾、砂金、金属矿、硫磺、盐）：产物在物品表里、不是种子、有货箱色、有工时与存量");
-    check(landmarks == 5 && patches == 4 && others_ok, "点（泉眼、温泉、洞穴、盐泉、化石）与片（林木、泥炭芦苇、浮石、鸟粪）没有采场");
+    check(workings == 6 && products_ok, "六种散的有采场（石料、黏土、砂砾、砂金、金属矿、硫磺）：产物在物品表里、不是种子、有货箱色、有工时与存量");
+    check(landmarks == 3 && patches == 4 && others_ok, "点（泉眼、温泉、洞穴）与片（林木、泥炭芦苇、浮石、鸟粪）没有采场");
     check(!deposits::kind("quarry") && deposits::kind("stone") && deposits::kind("stone")->form == DepositForm::FIELD, "石料的键是 stone（生成器改名：石料是赋存，采石场是采场）");
     const DepositKind &ore = *deposits::kind("ore"), &stone = *deposits::kind("stone"), &clay = *deposits::kind("clay");
-    check(deposits::product_of(ore, "铜") == "copper_ore" && deposits::product_of(ore, "锡") == "tin_ore" && catalog::item_name("copper_ore") == "铜矿石", "矿坑按矿种出矿石");
+    check(deposits::product_of(ore, "铜") == "copper_ore" && deposits::product_of(ore, "锡钨") == "tin_ore" && catalog::item_name("copper_ore") == "铜矿石", "矿坑按矿种出矿石");
     check(deposits::site_name(stone, "安山岩 / 凝灰岩") == "采石场（安山岩 / 凝灰岩）" && deposits::site_name(ore, "铜") == "铜矿坑" &&
                     deposits::site_name(clay, "溪边黏土") == "土坑（溪边黏土）" && deposits::site_name(*deposits::kind("cave"), "崖洞") == "洞穴（崖洞）",
             "采场与地标的名字");
@@ -3797,8 +3582,8 @@ void test_gather() {
     river_rules.year_days = regime.year_days();
     const bool parsed = parse_resources(res, data, err);
     std::printf("  点与片 %zu、赋存区 %zu、采场 %zu\n", data.deposits.size(), data.occurrences.size(), data.workings.size());
-    check(parsed && data.deposits.size() == 870 && data.occurrences.size() == 826 && data.workings.size() == 418,
-            "开局那群：点与片 870（片 514 + 点 356）、赋存区 826、采场 418（" + std::to_string(data.workings.size()) + "）");
+    check(parsed && data.deposits.size() == 1183 && data.occurrences.size() == 1041 && data.workings.size() == 365,
+            "开局那群：点与片 1183（片 910 + 点 273）、赋存区 1041、采场 365（" + std::to_string(data.workings.size()) + "）");
     // 栅格的片号与清单对得上：片的代表格在自己的片里（点可以落在片里：林子里的泉眼、洞）
     bool patches_ok = grid.has_resources();
     int patch_count = 0, points_in_patch = 0;
@@ -3811,7 +3596,7 @@ void test_gather() {
             points_in_patch += at >= 0 ? 1 : 0;
         }
     }
-    check(patches_ok && patch_count == 514, "片号：514 片的代表格都在自己的片里（另有 " + std::to_string(points_in_patch) + " 个点在林子这类片里）");
+    check(patches_ok && patch_count == 910, "片号：910 片的代表格都在自己的片里（另有 " + std::to_string(points_in_patch) + " 个点在林子这类片里）");
     // 赋存区的峰值格品位够门槛；采场那一格的品位与清单一致（u8 量化）
     bool fields_ok = true;
     for (const ResourceOccurrence &o : data.occurrences) {
@@ -3832,8 +3617,8 @@ void test_gather() {
     check(int(plan.sites.size()) + plan.merged + plan.in_village + int(plan.failed.size()) == working_count, "每一处采场都有下落");
     check(plan.sites.size() >= 320 && int(plan.failed.size()) * 50 <= working_count, "绝大多数采场落了地（落不了的不过 2%）");
     std::printf("  地标：摆了 %zu、落不了 %zu、岛底的洞 %d\n", plan.landmarks.size(), plan.landmarks_failed.size(), plan.underside);
-    check(plan.underside == 26 && plan.landmarks.size() + plan.landmarks_failed.size() + 26 == 356 && plan.landmarks_failed.size() * 20 <= plan.landmarks.size(),
-            "点 356 处（泉眼、洞穴、温泉、盐泉、化石）：岛底的洞 26 处不摆，其余绝大多数摆得出样子");
+    check(plan.underside == 26 && plan.landmarks.size() + plan.landmarks_failed.size() + 26 == 273 && plan.landmarks_failed.size() * 20 <= plan.landmarks.size(),
+            "点 273 处（泉眼、洞穴、温泉）：岛底的洞 26 处不摆，其余绝大多数摆得出样子");
     bool spots_ok = true, piles_ok = true, site_fields_ok = true;
     for (const ResourceSite &s : plan.sites) {
         const ResourceWorking &w = data.workings[size_t(s.working)];
@@ -4817,7 +4602,7 @@ void test_village_prep_start() {
     check(parse_world_grid(bin.data(), bin.size(), g, err) && parse_world_sites(tsv, sites, err), "读得了开局那群：" + err);
     WorldTerrain terrain(g, sites.terrain_islands(), START);
     lay_world_works(terrain, sites);
-    const SiteSettlement *seat = sites.village_by_id(19);
+    const SiteSettlement *seat = sites.village_by_id(1);
     check(seat != nullptr, "有村001");
     if (!seat) {
         return;
@@ -4994,15 +4779,15 @@ void test_climate() {
         return;
     }
     check(c.days.size() == 336 && std::abs(c.calendar.latitude_deg - 34.2321) < 1e-3 && c.calendar.tilt_deg == 34.0 && c.ref_m == 755.5 &&
-                    std::abs(c.rim_m - 528.2) < 1e-9 && c.season_names.size() == 4 && c.season_names[0] == "冷季" && c.calendar.days_per_month == 28,
-            "开局那群：336 天、北纬 34.23°、交角 34°、台面 755.5 m、岸缘 528.2 m、四季名（冷季起头）");
-    check(c.days[0].kind == WeatherKind::CLEAR && c.days[0].wind_from_deg == 258.0 && std::abs(c.days[0].wind_ms - 3.7) < 1e-9 && c.days[0].sailable,
-            "第 0 天：晴、风从 258° 来 3.7 m/s、能出航");
+                    std::abs(c.rim_m - 610.9) < 1e-9 && c.season_names.size() == 4 && c.season_names[0] == "冷季" && c.calendar.days_per_month == 28,
+            "开局那群：336 天、北纬 34.23°、交角 34°、台面 755.5 m、岸缘 610.9 m、四季名（冷季起头）");
+    check(c.days[0].kind == WeatherKind::CLEAR && c.days[0].wind_from_deg == 259.0 && std::abs(c.days[0].wind_ms - 4.2) < 1e-9 && c.days[0].sailable,
+            "第 0 天：晴、风从 259° 来 4.2 m/s、能出航");
     int no_sail = 0;
     for (const ClimateDay &day : c.days) {
         no_sail += day.sailable ? 0 : 1;
     }
-    check(no_sail == 61, "禁航 61 天（生成器的数）");
+    check(no_sail == 59, "禁航 59 天（生成器的数）");
     check(wind_name(1.0, 0.0) == "西风" && wind_name(0.0, 1.0) == "北风" && wind_name(-1.0, -1.0) == "东南风" && wind_name(0.1, 0.1) == "无风", "风向的叫法：风从哪来");
 }
 
@@ -6295,7 +6080,7 @@ void test_weather_pack() {
     }
     std::printf("  全行星一年：晴 %.1f%%、多云 %.1f%%、小雨 %.1f%%、大雨 %.1f%%、云海漫顶 %.1f%%、风暴 %.1f%%、小雪 %.1f%%、大雪 %.1f%%、暴风雪 %.1f%%\n", 100 * share[0],
             100 * share[1], 100 * share[2], 100 * share[3], 100 * share[4], 100 * share[5], 100 * share[6], 100 * share[7], 100 * share[8]);
-    check(pk.precip_min==0 && pk.precip_max==4000 && pk.precip_exp==1 && share[0]>0.4 && share[0]<0.6 && share[5]>0.03 && share[5]<0.1, "新版年雨采用 0–4000 mm 线性换算，全球天气构成在合理范围");
+    check(std::abs(share[0] - 0.479) < 0.002 && std::abs(share[5] - 0.054) < 0.002, "全行星的构成与生成器报的一样（晴 47.9%、风暴 5.4%）");
 }
 
 // 行星天气场
@@ -6672,8 +6457,8 @@ void test_island_floor() {
             }
             const std::vector<WorldIsland> isls = sites.terrain_islands();
             const WorldIsland &m = isls[0];
-            check(std::abs(m.rim_m - grp.islands[0].rim_j) < 0.051 && std::abs(m.cliff_m - grp.islands[0].cliff_j) < 0.051 && m.cores.size()==grp.islands[0].cores.size(),
-                    std::string("现场生成的 ") + g.group + " 主岛：岸缘、崖高、集水核数量与本次生成器相同");
+            check(std::abs(m.rim_m - g.rim) < 0.05 && std::abs(m.cliff_m - g.cliff) < 0.05 && std::abs(m.max_shore_m - g.shore) < 0.05,
+                    std::string("现场生成的 ") + g.group + " 主岛：岸缘、崖高、最深岸距同上面照抄的");
             double low = 0.0, low_before = 0.0, rim_lo = 1e9;
             int clamped = 0;
             for (const WorldIsland &isl : isls) {
@@ -6697,8 +6482,8 @@ void test_sea_descent() {
     std::printf("[sea_descent]\n");
     const CloudBandRules rules;
     // 按垂直结构取高（浮高计划 F4 起整体下移 1200 m：云带 −5000…−6200、海面 −6800）
-    const double TOP = VerticalDatum::CLOUD_TOP_Y, BASE = VerticalDatum::CLOUD_BASE_Y, SEA = VerticalDatum::SEA_Y;
-    const double ABOVE = TOP + 800.0, MID = 0.5 * (TOP + BASE), UNDER = BASE - 300.0, FLOOR = SEA + 15.0;
+    constexpr double TOP = VerticalDatum::CLOUD_TOP_Y, BASE = VerticalDatum::CLOUD_BASE_Y, SEA = VerticalDatum::SEA_Y;
+    constexpr double ABOVE = TOP + 800.0, MID = 0.5 * (TOP + BASE), UNDER = BASE - 300.0, FLOOR = SEA + 15.0;
     check(TOP - BASE == 1200.0 && BASE - SEA == 600.0, "云带厚 1.2 km、云底以下 600 m 净空（相对海面不变）");
     check_near(PlanetShape().radius() - PlanetShape().sea_radius_m, -SEA, 1e-9, "基准球 R = 海面半径 + 6800 m");
     {
@@ -6908,12 +6693,6 @@ std::string lf(const std::string &p_s) {
 
 void test_gen_format() {
     std::printf("[gen_format]\n");
-    // Rectangular, off-centre coast: a centred square would conceal an axis swap.
-    skyisle::GridD phi(7,11,0.0);
-    for (int r=0;r<phi.H;r++) for (int c=0;c<phi.W;c++) phi(r,c)=3.25-c;
-    const auto coast=skyisle::island::coast_distance(phi,100.0);
-    check_near(coast(5,1),225.0,1e-8,"亚格岸距：陆地到竖直岸线 225 m");
-    check_near(coast(1,7),-375.0,1e-8,"亚格岸距：岸外为负，距离 375 m");
     // Python 的 repr / format(x, "g") / round（与 Python 逐字对过 90 万个值，这里留几个边界）
     const std::pair<double, const char *> reprs[] = { { 0.0, "0.0" }, { -0.0, "-0.0" }, { 1.0, "1.0" }, { 0.1, "0.1" }, { 1e16, "1e+16" },
         { 1e15, "1000000000000000.0" }, { 1e-4, "0.0001" }, { 1e-5, "1e-05" }, { 1.0 / 3.0, "0.3333333333333333" }, { 123456.789, "123456.789" },
@@ -6992,16 +6771,10 @@ void test_gen_seed42() {
     const auto t0 = std::chrono::steady_clock::now();
     const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(cfg, 42);
     const double planet_s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
-    // Reproduce the fixture with its recorded export provenance. A later source
-    // commit must not force rewriting historical asset metadata or mask data changes.
-    // Only lod.* differs: a new world has no coarse entries yet.
+    // planet.bin：除了粗版量的 lod.* 五列（新建世界时没有粗版；仓库里的包是全行星粗版量的）逐字节相同，头里 source 行的提交号是子模块的
     {
+        const std::string mine = gen_export::planet_bin(ps->world, ps->society, 42, "seed42 " + std::string(gen_core::generator_commit()));
         const std::string repo = read_bytes(root + "/game/planet/seed42/planet.bin");
-        PlanetData fixture;
-        const bool parsed=fixture.parse_planet(reinterpret_cast<const uint8_t *>(repo.data()),repo.size(),error);
-        check(parsed && !fixture.source.empty(), "planet.bin：历史导出来源可读（"+error+"）");
-        if (!parsed) return;
-        const std::string mine = gen_export::planet_bin(ps->world, ps->society, 42, fixture.source);
         auto split = [](const std::string &b, size_t &r_lod_begin, size_t &r_lod_end) {
             uint32_t n = 0, ncol = 0, hb = 0;
             std::memcpy(&n, b.data() + 12, 4);
@@ -7026,8 +6799,8 @@ void test_gen_seed42() {
         size_t a0 = 0, a1 = 0, b0 = 0, b1 = 0;
         split(mine, a0, a1);
         split(repo, b0, b1);
-        check(a0 > 0 && a0 == b0 && mine.compare(0, a0, repo, 0, b0) == 0, "planet.bin：头与 lod.* 之前的 39 列逐字节相同");
-        check(mine.size() - a1 == repo.size() - b1 && mine.compare(a1, std::string::npos, repo, b1, std::string::npos) == 0, "planet.bin：31 张场逐字节相同");
+        check(a0 > 0 && a0 == b0 && mine.compare(0, a0, repo, 0, b0) == 0, "planet.bin：头与 lod.* 之前的 36 列逐字节相同");
+        check(mine.size() - a1 == repo.size() - b1 && mine.compare(a1, std::string::npos, repo, b1, std::string::npos) == 0, "planet.bin：30 张场逐字节相同");
     }
     auto meta = [&](int node) {
         gen_export::GroupMeta m;
@@ -7049,7 +6822,6 @@ void test_gen_seed42() {
             // 拆开来一步一步生成（为了在水系之后取粗版）与生成器的 island::generate 逐字节相同；顺带的粗版与单跑粗版（同 skyisle island lod）逐字节相同
             isl::NodeInputs x = skyisle::planet::node_inputs(ps->world.islands, ps->world.climate, node, 42, cfg.planet);
             skyisle::planet::apply_polity(ps->society.polity, node, cfg.planet, x);
-            skyisle::planet::apply_routes(ps->world.islands, ps->society.routes, node, x);
             const gen_export::GroupFiles f2 = gen_export::group_files(isl::generate(x, ps->view, cfg.island, 0, 5, 0.0, cfg.threads()), meta(node));
             check(f.terrain_bin == f2.terrain_bin && f.world_json == f2.world_json && f.sites_tsv == f2.sites_tsv && f.resources_tsv == f2.resources_tsv &&
                             f.weather_tsv == f2.weather_tsv,
@@ -7739,10 +7511,6 @@ void test_dev_manual() {
 }
 
 int main(int argc, char **argv) {
-#ifdef _WIN32
-    SetErrorMode(0x0001 | 0x0002); // fail critical errors and report crashes without a JIT dialog
-#endif
-    std::setvbuf(stdout, nullptr, _IONBF, 0);
     // 只跑几段（开发时用）：zhouzhu_core_tests inflate weather_pack planet_weather
     if (argc > 1) {
         const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
@@ -7753,7 +7521,7 @@ int main(int argc, char **argv) {
             // 读开局那群的几段（换开局、重导时逐段重记金标）
             { "almanac", test_almanac }, { "climate", test_climate }, { "local_season", test_local_season }, { "village_seasons", test_village_seasons },
             { "world_start", test_world_start }, { "village_prep", test_village_prep_start }, { "terrain_v3", test_terrain_v3_start },
-            { "world_sites", test_world_sites }, { "world_rivers", test_world_rivers }, { "river_contract", test_river_contract }, { "map_grounds", test_map_grounds }, { "freight", test_freight },
+            { "world_sites", test_world_sites }, { "world_rivers", test_world_rivers }, { "map_grounds", test_map_grounds }, { "freight", test_freight },
             { "gather", test_gather }, { "scatter", test_scatter }, { "goldens", test_goldens }, { "planet_data", test_planet_data },
             { "planet_add_lods", test_planet_add_lods }, { "planet_frame", test_planet_frame }, { "far_group_mesh", test_far_group_mesh },
             { "planet_surface", test_planet_surface } };
@@ -7813,7 +7581,6 @@ int main(int argc, char **argv) {
     test_village_plan();
     test_world_sites();
     test_world_rivers();
-    test_river_contract();
     test_map_grounds();
     test_layout_edits();
     test_house_templates();

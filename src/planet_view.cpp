@@ -69,7 +69,6 @@ void PlanetView::_bind_methods() {
     ClassDB::bind_method(D_METHOD("drop_at", "distance"), &PlanetView::drop_at);
 
     ClassDB::bind_method(D_METHOD("add_lod_file", "path"), &PlanetView::add_lod_file);
-    ClassDB::bind_method(D_METHOD("get_lod_count"), &PlanetView::get_lod_count);
     ClassDB::bind_method(D_METHOD("is_weather_ready"), &PlanetView::is_weather_ready);
     ClassDB::bind_method(D_METHOD("flat_of_latlon", "lat", "lon"), &PlanetView::flat_of_latlon);
     ClassDB::bind_method(D_METHOD("node_latlon", "node"), &PlanetView::node_latlon);
@@ -139,14 +138,6 @@ bool PlanetView::load_planet() {
         planet.reset();
         return false;
     }
-    VerticalDatum::SEA_Y = planet->vertical.sea;
-    VerticalDatum::CLOUD_BASE_Y = planet->vertical.base;
-    VerticalDatum::CLOUD_TOP_Y = planet->vertical.top;
-    VerticalDatum::ISLAND_CLEARANCE_M = planet->vertical.clearance;
-    VerticalDatum::ISLAND_BOTTOM_MIN_Y = planet->vertical.top+planet->vertical.clearance;
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_sea_y",VerticalDatum::SEA_Y);
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_cloud_base_y",VerticalDatum::CLOUD_BASE_Y);
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_cloud_top_y",VerticalDatum::CLOUD_TOP_Y);
     const PackedByteArray lb = FileAccess::get_file_as_bytes(planet_dir.path_join("lods.bin"));
     if (lb.is_empty() || !planet->parse_lods(lb.ptr(), size_t(lb.size()), error)) {
         ERR_PRINT(String(U"PlanetView：读不了粗版 ") + planet_dir + String(U"/lods.bin：") + String::utf8(error.c_str()) + String(U"——远处的岛群画不出来"));
@@ -306,14 +297,6 @@ bool PlanetView::try_anchor() {
         set_process(false);
         return false;
     }
-    VerticalDatum::SEA_Y = planet->vertical.sea;
-    VerticalDatum::CLOUD_BASE_Y = planet->vertical.base;
-    VerticalDatum::CLOUD_TOP_Y = planet->vertical.top;
-    VerticalDatum::ISLAND_CLEARANCE_M = planet->vertical.clearance;
-    VerticalDatum::ISLAND_BOTTOM_MIN_Y = planet->vertical.top + planet->vertical.clearance;
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_sea_y", VerticalDatum::SEA_Y);
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_cloud_base_y", VerticalDatum::CLOUD_BASE_Y);
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_cloud_top_y", VerticalDatum::CLOUD_TOP_Y);
     PlanetShape shape;
     shape.sea_radius_m = planet->radius_km * 1000.0;
     anchor = GroupFrame(double(source["lat"]), double(source["lon"]), shape);
@@ -337,14 +320,6 @@ void PlanetView::set_anchor_world(const GroupWorld *p_world) {
     if (!source.has("lat") || !source.has("lon")) {
         return;
     }
-    VerticalDatum::SEA_Y = planet->vertical.sea;
-    VerticalDatum::CLOUD_BASE_Y = planet->vertical.base;
-    VerticalDatum::CLOUD_TOP_Y = planet->vertical.top;
-    VerticalDatum::ISLAND_CLEARANCE_M = planet->vertical.clearance;
-    VerticalDatum::ISLAND_BOTTOM_MIN_Y = planet->vertical.top + planet->vertical.clearance;
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_sea_y", VerticalDatum::SEA_Y);
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_cloud_base_y", VerticalDatum::CLOUD_BASE_Y);
-    RenderingServer::get_singleton()->global_shader_parameter_set("planet_cloud_top_y", VerticalDatum::CLOUD_TOP_Y);
     PlanetShape shape;
     shape.sea_radius_m = planet->radius_km * 1000.0;
     anchor = GroupFrame(double(source["lat"]), double(source["lon"]), shape);

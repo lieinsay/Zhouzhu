@@ -370,7 +370,7 @@ void WorldMap::_notification(int p_what) {
 
     // 标题与提示
     text(Vector2(28, 40), title, 24, TEXT);
-    String hint = String(U"滚轮缩放 · 右键拖动 · M 合上 · 褐色细线：临时流水路径");
+    String hint = String(U"滚轮缩放 · 右键拖动 · M 合上");
     if (teleport_enabled) {
         hint = String(U"左键瞬移（开发者）· ") + hint;
     }

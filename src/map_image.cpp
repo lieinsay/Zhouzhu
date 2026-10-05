@@ -9,7 +9,6 @@
 namespace {
 
 constexpr GroundColor STREAM{ 0.30f, 0.52f, 0.72f };
-constexpr GroundColor TEMPORARY_PATH{ 0.55f, 0.42f, 0.28f };
 constexpr GroundColor COAST{ 0.16f, 0.14f, 0.13f };
 constexpr double RELIEF_EXAGGERATION = 6.0; // 100 m 一格坡都很缓，山影要夸大才看得出
 
@@ -36,7 +35,7 @@ MapImage build_map_image(const WorldGrid &g) {
             const float shade = float(std::clamp(0.35 + 0.85 * lambert, 0.3, 1.25));
             GroundColor col = landcover_color(g.landcover[k]);
             if (g.stream[k]) {
-                col = g.event_basin_offset > 0 ? TEMPORARY_PATH : STREAM;
+                col = STREAM;
             }
             if (g.shore[k] < g.res) {
                 col = COAST; // 岸线描一道深边

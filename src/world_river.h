@@ -11,11 +11,6 @@
 
 // 岛群的河：河网（河在哪、多宽多深、水面多高）与水情（今天水多大）。不含 Godot 头，建好之后只读。
 //
-// v6+：读取生成器中线及水文属性，格点间作保留源点/汇流锚点的平滑插值；不额外添加随机曲流或渗漏门槛。
-// 当天 Q=Q_mean*index，d=d_bf*(Q/Q_bf)^0.40，w=w_bf*(Q/Q_bf)^0.26，流速 Q/(w*d)。
-// 左右漫滩分别限宽；source_surface 单独保留 surf_m，便于发现源水位与 bed+d_bf 的口径差。
-// 下面的 D8 推导、放大、噪声与降水水库只服务旧版兼容资产。
-//
 // 河网：栅格的 D8 流向是一棵树（每岛一片，出口是岸缘），汇流面积到 min_acc_km2 的格是河道。
 //   从每个出口逆流而上，每到一格挑汇流最大的上游格接着走，就是一条「主干」；其余上游格各自开一条支流，
 //   支流的末点落在干流上。格心连成的折线先抽稀（Douglas–Peucker）、再用 Chaikin 磨圆、按 step_m 重采样，再左右摆（两头不摆）：
@@ -73,22 +68,11 @@ struct RiverVertex {
     double x = 0.0, z = 0.0;
     double s = 0.0; // 从源头起的弧长
     double surface = 0.0; // 平岸水面
-    double source_surface = 0.0; // 生成器 surf_m，独立保留，不拿 bed + d_bf 覆盖它
     double width = 0.0; // 平岸宽
-    double depth = 0.0; // 参考满槽的中心最大深度，非断面平均深度
+    double depth = 0.0; // 平岸深
     double floodplain = 0.0; // 河漫滩宽（单侧）
     double acc = 0.0; // 汇流面积 km²
     double dry = 0.0; // 渗漏门槛
-    double mean_flow = 0.0, bankfull_flow = 0.0;
-    bool authoritative = false;
-    bool source_data() const { return authoritative || bankfull_flow > 0.0; }
-    double slope=0.0, d50_mm=0.0, ssc_mg_l=0.0;
-    int level=0, bed_class=0, planform=0, confine=0;
-    double floodplain_left=0.0,floodplain_right=0.0;
-    double floodplain_at(double side) const { return source_data() ? (side>=0 ? floodplain_left : floodplain_right) : floodplain; }
-    double core_at(double side) const { return half()+floodplain_at(side); }
-    int basin = -1;
-    int flow_regime = -1; // -1 旧数据未知；0 临时路径；1 常驻河
 
     double half() const { return 0.5 * width; }
     double core() const { return 0.5 * width + floodplain; } // 河道 + 滩（地形全按横断面）
@@ -100,7 +84,6 @@ struct RiverStem {
     int parent = -1; // 汇入哪一条（−1 = 自己流出岸缘，或流进洼地）
     bool mouth = false; // 末点在岸缘上，水从这里跌下去
     int island = 0;
-    double outlet_drop = 0.0; // 导出的崖瀑落差；未提供时不补固定高度的瀑布
 };
 
 struct RiverHit {
@@ -113,19 +96,14 @@ struct RiverHit {
 
 // 某一刻的水：水深、水位、水面半宽
 struct RiverStage {
-    double depth = 0.0; // 当前中心最大深度
+    double depth = 0.0;
     double level = 0.0; // 水面 y
     double half_width = 0.0;
-    double half_left = 0.0, half_right = 0.0;
-    double area = 0.0; // 实际湿断面积 m²（中心最大深度 × 水宽并不等于面积）
-    double discharge = 0.0, speed = 0.0; // m³/s、m/s，Q / area
     double flow = 0.0; // 流量 / 平岸流量
     bool wet = false;
 };
 
 // 横断面：离中线 p_d 米处地面该多高（平底河床 → 岸坡 → 平岸 → 河漫滩），p_d 超过 core 按 core 算
-double river_runoff_index(const std::vector<float> &p_index,double p_day);
-
 double river_profile(const RiverVertex &p_at, double p_d, const RiverRules &p_rules);
 // 径流指数为 p_runoff 时这一点的水
 RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRules &p_rules);
@@ -174,7 +152,6 @@ class RiverRegime {
     double days = 336.0;
 
 public:
-    static RiverRegime from_index(const std::vector<float> &p_index);
     // 解析 weather.tsv（格式见 export_skyisle.py）；失败返回 false
     static bool parse(const std::string &p_text, RiverRegime &r_regime, std::string &r_error);
     // 逐日降水（mm）→ 径流指数：快、慢两个线性水库，先空转三年到周期稳态再取一年

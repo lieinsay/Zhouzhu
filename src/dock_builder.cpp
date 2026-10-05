@@ -1,7 +1,5 @@
 #include "dock_builder.h"
 
-#include <cmath>
-
 #include <godot_cpp/classes/box_mesh.hpp>
 #include <godot_cpp/classes/box_shape3d.hpp>
 #include <godot_cpp/classes/collision_shape3d.hpp>
@@ -44,7 +42,7 @@ Transform3D spawn(const DockPlan &p_plan) {
     return Transform3D(Basis::looking_at(out, Vector3(0, 1, 0)), point(p_plan, -SPAWN_INLAND, 0.0));
 }
 
-void build_pier(Node3D *p_parent, const DockPlan &p_plan, Adopt p_adopt, double p_approach_y) {
+void build_pier(Node3D *p_parent, const DockPlan &p_plan, Adopt p_adopt) {
     // 栈桥：x 轴沿伸出方向
     const Vector3 out(real_t(p_plan.out_x), 0, real_t(p_plan.out_z));
     const Basis pier_basis(out, Vector3(0, 1, 0), out.cross(Vector3(0, 1, 0)));
@@ -67,33 +65,6 @@ void build_pier(Node3D *p_parent, const DockPlan &p_plan, Adopt p_adopt, double 
     pier_collider->set_shape(pier_shape);
     pier_collider->set_transform(pier_xf);
     p_adopt(p_parent, pier_collider, "PierShape");
-
-    // A river bank may remain below the apron. Join its actual surface with a
-    // ramp: CharacterBody3D cannot walk over even a small vertical box edge.
-    constexpr double run = 4.0;
-    const double foot = (std::isfinite(p_approach_y) ? p_approach_y : p_plan.y) - 0.08;
-    const double top = p_plan.y + PIER_LIFT;
-    const double rise = top - foot;
-    const Basis ramp_basis = pier_basis * Basis(Vector3(0,0,1), real_t(std::atan2(rise,run)));
-    const Vector3 ramp_size(real_t(std::hypot(run,rise)), real_t(PIER_THICKNESS), real_t(PIER_WIDTH));
-    const Vector3 center = point(p_plan,-PIER_INLAND-0.5*run,0.5*(foot+top)-p_plan.y)
-            - ramp_basis.get_column(1)*real_t(0.5*PIER_THICKNESS);
-    const Transform3D ramp_xf(ramp_basis,center);
-    Ref<BoxMesh> ramp_mesh;
-    ramp_mesh.instantiate();
-    ramp_mesh->set_size(ramp_size);
-    ramp_mesh->set_material(pier_mesh->get_material());
-    MeshInstance3D *ramp=memnew(MeshInstance3D);
-    ramp->set_mesh(ramp_mesh);
-    ramp->set_transform(ramp_xf);
-    p_adopt(p_parent,ramp,"PierApproach");
-    Ref<BoxShape3D> ramp_shape;
-    ramp_shape.instantiate();
-    ramp_shape->set_size(ramp_size);
-    CollisionShape3D *ramp_collider=memnew(CollisionShape3D);
-    ramp_collider->set_shape(ramp_shape);
-    ramp_collider->set_transform(ramp_xf);
-    p_adopt(p_parent,ramp_collider,"PierApproachShape");
 
     // 栈桥头的两根系缆桩（只是样子）
     Ref<CylinderMesh> post_mesh;

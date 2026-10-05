@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -31,20 +30,6 @@ struct WorldGrid {
     // 资源（v5 才有；旧版为空）：散的赋存场（每类一层、品位 × 255，可叠）与片号（deposit id + 1，0 = 不在片里）
     std::vector<uint8_t> field; // FIELD_COUNT 层，层内行主序
     std::vector<uint16_t> patch;
-    // v6: authoritative natural and human landscapes; shore is a float subcell distance.
-    std::vector<uint8_t> cultivable, cultivated, fallow_years, natural_cover, landuse, lith, cloud_forest, rockwall_dir;
-    std::vector<float> rockwall, rain, runoff, bed_height, water_table, condense;
-    std::vector<int32_t> polder;
-    struct RiverSource {
-        int island = 0, down = -1, join = -1, exit = 0, basin = -1;
-        double outlet_drop = 0.0; // world.json landscape.falls 的 kind=0 崖瀑
-        // rivers.json COLS, preserved in generator order (row/col identify cell centres).
-        std::vector<std::array<float, 21>> points; // 第21列 flow_regime；旧格式为 -1（未知）
-    };
-    std::vector<RiverSource> river_sources;
-    std::vector<std::vector<float>> basin_runoff;
-    int event_basin_offset = 0; // v7：后半是临时流水的事件曲线；v6=0
-    bool authoritative_rivers = false;
 
     // 赋存场的层（同 export_skyisle.py 的 FIELD_KINDS、生成器的 res_field）
     enum Field : int {
@@ -54,7 +39,6 @@ struct WorldGrid {
         FIELD_CLAY,
         FIELD_GRAVEL,
         FIELD_STONE,
-        FIELD_SALT,
         FIELD_COUNT,
     };
     static const char *field_key(int p_field); // 生成器的键：ore / sulfur / placer / clay / gravel / stone
