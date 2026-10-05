@@ -245,6 +245,7 @@ public:
     bool is_ready_at(const godot::Vector3 &p_point) const;
     // 地面高度；没有地返回 NAN
     double get_surface_height(double p_x, double p_z) const;
+    godot::Dictionary get_landscape_at(double p_x, double p_z) const;
     // 该处最近的岛号（没有地也给最近的那座）；未加载返回 -1
     int get_island_at(double p_x, double p_z) const;
     // 该处（世界 xz）的地表份额（与地皮、散布同一份，见 cover_blend.h）：

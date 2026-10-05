@@ -6,8 +6,8 @@
 
 namespace {
 
-constexpr uint32_t VERSION = 5; // 最新版；1（没有水文）、2（没有河道与地形区）、3（高程是 u16 厘米，封顶 655 m）、4（没有资源栅格）也读
-constexpr const char *FIELD_KEYS[WorldGrid::FIELD_COUNT] = { "ore", "sulfur", "placer", "clay", "gravel", "stone" };
+constexpr uint32_t VERSION = 8; // 最新版；1（没有水文）、2（没有河道与地形区）、3（高程是 u16 厘米，封顶 655 m）、4（没有资源栅格）也读
+constexpr const char *FIELD_KEYS[WorldGrid::FIELD_COUNT] = { "ore", "sulfur", "placer", "clay", "gravel", "stone", "salt" };
 constexpr double HEIGHT_SCALE = 100.0; // v1–v3 的高程：u16 = 米 × 100
 
 struct Reader {
@@ -130,7 +130,7 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         r_error = "不是 terrain.bin（开头应为 ZZWG）";
         return false;
     }
-    if (!in.u32(version) || version < 1 || version > VERSION) {
+    if (!in.u32(version) || version < 1 || version > VERSION || version == 6 || version == 7) {
         r_error = "terrain.bin 版本不对：" + std::to_string(version);
         return false;
     }
@@ -141,7 +141,7 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
     g.rows = int(rows);
     g.cols = int(cols);
     const size_t n = size_t(rows) * size_t(cols);
-    const size_t payload = n * (version >= 5 ? 19 + WorldGrid::FIELD_COUNT + 2 : version >= 4 ? 19 : version >= 3 ? 17 : version >= 2 ? 12 : 7);
+    const size_t payload = n * (version == 8 ? 36 : version >= 5 ? 19 + 6 + 2 : version >= 4 ? 19 : version >= 3 ? 17 : version >= 2 ? 12 : 7);
     if (in.size - in.at != payload) {
         r_error = "terrain.bin 长度不对：应有 " + std::to_string(payload) + " 字节数据，实有 " + std::to_string(in.size - in.at);
         return false;
@@ -159,7 +159,9 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         height.resize(n);
         in.take(height.data(), n * 2);
     }
-    in.take(shore.data(), n * 2);
+    g.shore.resize(n);
+    if (version == 8) in.take(g.shore.data(), n * 4);
+    else in.take(shore.data(), n * 2);
     in.take(g.island.data(), n);
     in.take(g.landcover.data(), n);
     in.take(g.stream.data(), n);
@@ -183,16 +185,32 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         }
     }
     if (version >= 5) {
-        g.field.resize(n * WorldGrid::FIELD_COUNT);
+        g.field.resize(n * WorldGrid::FIELD_COUNT, 0);
         g.patch.resize(n);
-        in.take(g.field.data(), n * WorldGrid::FIELD_COUNT);
+        in.take(g.field.data(), n * (version == 8 ? WorldGrid::FIELD_COUNT : 6));
         in.take(g.patch.data(), n * 2);
+    }
+    if (version == 8) {
+        g.source_landscape = true;
+        g.lith.resize(n);
+        g.rockwall_dir.resize(n);
+        g.rockwall.resize(n);
+        in.take(g.lith.data(), n);
+        in.take(g.rockwall_dir.data(), n);
+        in.take(g.rockwall.data(), n * 4);
+        for (size_t k = 0; k < n; ++k) {
+            if (!std::isfinite(g.shore[k]) || !std::isfinite(g.rockwall[k]) ||
+                    g.rockwall[k] < 0 || g.lith[k] > 5 || (g.rockwall_dir[k] > 15 && g.rockwall_dir[k] != 255)) {
+                r_error = "terrain.bin 地貌字段无效";
+                return false;
+            }
+        }
     }
     g.height.resize(n);
     g.shore.resize(n);
     for (size_t k = 0; k < n; k++) {
         g.height[k] = version >= 4 ? height_m[k] : float(height[k] / HEIGHT_SCALE);
-        g.shore[k] = float(shore[k]);
+        if (version != 8) g.shore[k] = float(shore[k]);
     }
     r_grid = std::move(g);
     return true;

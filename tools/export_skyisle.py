@@ -20,12 +20,12 @@
 
 terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北向南）：
     char[4]  "ZZWG"
-    u32      版本 = 5（1 没有水文；2 没有河道与地形区；3 的高程是 u16 厘米、封顶 655 m；4 没有最后两段资源栅格；游戏各版都读）
+    u32      版本 = 8（无地貌字段的旧来源写 v5；游戏兼容 v1–v5；v6/v7 属于已撤回实验，不复用）
     u32      rows, cols
     f64      res_m（格距）
     f64      x0, z0（格 (0, 0) 格心的游戏坐标，米）
     f32[rows·cols]  高程：云带顶以上的米数（v4；v1–v3 是 u16 厘米，生成器有了真山以后装不下）；虚空格填最近陆地格的值（插值到岸外不跳变）
-    i16[rows·cols]  岸距：到岸线的有符号距离（米），陆地为正、虚空为负
+    f32[rows·cols]  岸距：源 coast_dist_m（米），陆正虚空负；v1–v5 为 i16
     u8 [rows·cols]  最近的岛号（陆地即本岛；虚空取最近陆地格的岛）
     u8 [rows·cols]  地表类（island.json landcover.classes 的下标，0 = 虚空）
     u8 [rows·cols]  1 = 溪涧
@@ -35,8 +35,11 @@ terrain.bin —— 栅格，小端，行主序（行号随 z 增大，即自北�
     u16[rows·cols]  河宽（v3）：分米；生成器 river.py 的水力几何（夸张后的数；溪涧为湿季值），非河道格为 0
     u16[rows·cols]  水深（v3）：厘米，同上。河道格的高程是河床（生成器已下切），水面 = 河床 + 水深
     u8 [rows·cols]  地形区（v3）：resources.py 的 ZONE_NAMES 下标（0 虚空 1 高山 2 山地 3 丘陵 4 台地平原 5 河谷 6 崖缘 7 水域）
-    u8 [6][rows·cols] 赋存场（v5）：生成器的 res_field，每类一层、品位 × 255，各类可叠在同一格；层序 = FIELD_KINDS（金属矿、硫磺、砂金、黏土、砂砾、石料）
+    u8 [7][rows·cols] 赋存场：res_field，层序 = FIELD_KINDS（v5 只有前六层；v8 追加岩盐）
     u16[rows·cols]  片号（v5）：生成器的 patch_id + 1（片 = 林木 / 泥炭芦苇 / 浮石露头 / 鸟粪石，即 resources.tsv 里 form = patch 的 deposit id）；0 = 不在片里
+    u8 [rows·cols]  出露岩性（v8）：lith，0 虚空，1–5 见生成器 strat.hpp
+    u8 [rows·cols]  崖层方向（v8）：rockwall_dir，0–15 十六方位，255 无
+    f32[rows·cols]  崖层高度（v8）：rockwall_m，米
 
     流向由生成器的汇流面积（flowacc_km2）反推：挨着虚空的格同生成器一律流出去（河口）；其余格按汇流守恒配给下游——生成器的 D8 走在它自己的「路由面」上（填平面 + 弯曲噪声 + 朝岸缘微倾，
     河道据此下切），导出的高程上重算的 D8 会把整片流域改道。下游格的汇流 = 本格 + 各上游格的汇流，所以按汇流从大到小，
@@ -87,8 +90,8 @@ from pathlib import Path
 import numpy as np
 from scipy import ndimage
 
-VERSION = 5
-FIELD_KINDS = ["ore", "sulfur", "placer", "clay", "gravel", "stone"]  # terrain.bin 赋存场的层序（同生成器的 res_field）
+VERSION = 8
+FIELD_KINDS = ["ore", "sulfur", "placer", "clay", "gravel", "stone", "salt"]  # terrain.bin 赋存场的层序（同生成器的 res_field）
 
 
 # D8 流向的邻格（行、列偏移），下标 + 1 即 terrain.bin 里的流向码
@@ -313,30 +316,42 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
     # 各岛最深处的岸距：岛底按「向内程度」垂下去要用
     max_shore = ndimage.maximum(inside, labels=island + 1, index=np.arange(1, island.max() + 2))
 
+    landscape_keys = ("coast_dist_m", "lith", "rockwall_m", "rockwall_dir")
+    landscape = all(k in terrain for k in landscape_keys)
+    if any(k in terrain for k in landscape_keys) and not landscape:
+        raise ValueError("地貌字段不完整，拒绝补造缺失数据")
+    if landscape:
+        for key in landscape_keys:
+            assert terrain[key].shape == (rows, cols), key
     dst.mkdir(parents=True, exist_ok=True)
     with open(dst / "terrain.bin", "wb") as f:
         f.write(b"ZZWG")
-        f.write(struct.pack("<III", VERSION, rows, cols))
+        f.write(struct.pack("<III", VERSION if landscape else 5, rows, cols))
         f.write(struct.pack("<ddd", res, x0, z0))
         f.write(height.astype("<f4").tobytes())
-        f.write(np.clip(np.round(shore), -32767, 32767).astype("<i2").tobytes())
+        f.write(terrain["coast_dist_m"].astype("<f4").tobytes() if landscape else np.clip(np.round(shore), -32767, 32767).astype("<i2").tobytes())
         f.write(nearest.astype(np.uint8).tobytes())
         f.write(terrain["landcover"].astype(np.uint8).tobytes())
         f.write((terrain["stream"] > 0).astype(np.uint8).tobytes())
         f.write(flow.tobytes())
         f.write(np.where(land, ref, 0.0).astype("<f4").tobytes())  # 写生成器的汇流：河道格与它的溪涧 / 河一一对应；反推重算的只拿来对照
-        f.write(np.clip(np.round(np.where(land, terrain["river_width_m"], 0) * 10.0), 0, 65535).astype("<u2").tobytes())
-        f.write(np.clip(np.round(np.where(land, terrain["river_depth_m"], 0) * 100.0), 0, 65535).astype("<u2").tobytes())
+        f.write(np.clip(np.round(np.where(land, terrain["w_ch_m" if "w_ch_m" in terrain else "river_width_m"], 0) * 10.0), 0, 65535).astype("<u2").tobytes())
+        f.write(np.clip(np.round(np.where(land, terrain["d_ch_m" if "d_ch_m" in terrain else "river_depth_m"], 0) * 100.0), 0, 65535).astype("<u2").tobytes())
         f.write(np.where(land, terrain["terrain_zone"], 0).astype(np.uint8).tobytes())
         # v5：赋存场（6 层品位）与片号
         kinds = json.loads((src / "resources.json").read_text(encoding="utf-8"))["fields"]["kinds"]
-        assert kinds == FIELD_KINDS, kinds
+        expected_kinds = FIELD_KINDS if landscape else FIELD_KINDS[:6]
+        assert kinds == expected_kinds, kinds
         field = terrain["res_field"]
-        assert field.shape == (len(FIELD_KINDS), rows, cols)
+        assert field.shape == (len(expected_kinds), rows, cols)
         f.write(np.where(land[None, :, :], field, 0).astype(np.uint8).tobytes())
         patch = terrain["patch_id"].astype(np.int64)
         assert patch.max() < 65535
         f.write(np.where(land & (patch >= 0), patch + 1, 0).astype("<u2").tobytes())
+        if landscape:
+            f.write(terrain["lith"].astype("u1").tobytes())
+            f.write(terrain["rockwall_dir"].astype("u1").tobytes())
+            f.write(terrain["rockwall_m"].astype("<f4").tobytes())
 
     write_weather(src, info, dst, run)
 
@@ -405,6 +420,8 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
         "bridgeheads": places("bridgeheads", ["to", "gap_km"]),
         "population": settle.get("population"),
     }
+    if landscape:
+        world["landscape"] = {"landforms": info.get("landforms", [])}
     if terrain_only:
         # 点位沿用已有的：游戏里的码头、村落、存档与测试路线都认它们（生成器的聚落层另有演进，换点位是另一件事）
         old = json.loads((dst / "world.json").read_text(encoding="utf-8"))

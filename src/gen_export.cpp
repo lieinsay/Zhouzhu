@@ -11,6 +11,7 @@
 
 #include "skyisle/grid.hpp"
 #include "skyisle/island/resources.hpp"
+#include "skyisle/island/landforms.hpp"
 
 #include "py_format.h"
 #include "scipy_edt.h"
@@ -31,7 +32,7 @@ const int LANDCOVER_PALETTE[12][3] = { { 20, 24, 40 }, { 90, 80, 75 }, { 150, 15
     { 190, 200, 110 }, { 230, 200, 90 }, { 210, 170, 60 }, { 90, 160, 150 }, { 40, 90, 200 }, { 30, 60, 170 } };
 const char *const CLASS_ZH[4] = { "密接群岛", "中疏诸岛", "稀疏岛链", "孤悬散岛" };
 const char *const WEATHER_TYPES[9] = { "晴", "多云", "小雨", "大雨", "云海漫顶", "风暴", "小雪", "大雪", "暴风雪" };
-const char *const FIELD_KINDS[6] = { "ore", "sulfur", "placer", "clay", "gravel", "stone" };
+const char *const FIELD_KINDS[7] = { "ore", "sulfur", "placer", "clay", "gravel", "stone", "salt" };
 
 std::string age_zh(isl::AgeKind p_kind) {
     return p_kind == isl::YOUNG ? "新岛" : (p_kind == isl::OLD ? "老岛" : "中年");
@@ -85,6 +86,20 @@ const std::map<std::string, std::string> &subtype_table() {
         { "stream_clay", "溪边黏土" },
         { "river_gravel", "河滩砂砾" },
         { "placer_gold", "砂金" },
+        { "skeleton_void", "骨架空洞" },
+        { "goldsilver", "金银" },
+        { "chromium", "铬" },
+        { "nickel", "镍" },
+        { "hydrothermal", "热泉硫磺" },
+        { "marine_limestone", "海相石灰岩" },
+        { "gabbro", "辉长岩" },
+        { "serpentinite", "蛇纹岩" },
+        { "salt_dome", "盐丘" },
+        { "karst_spring", "岩溶泉" },
+        { "contact_spring", "接触泉" },
+        { "fissure_spring", "裂隙泉" },
+        { "seep_spring", "渗水泉" },
+        { "core_hotspring", "核山温泉" },
     };
     return t;
 }
@@ -110,6 +125,7 @@ std::string special_zh(const std::string &p_code) {
         { "kiln_village", "窑村" },
         { "charcoal_camp", "烧炭营" },
         { "hotspring", "温泉地" },
+        { "salt_village", "盐井村" },
     };
     const auto it = t.find(p_code);
     if (it == t.end()) {
@@ -162,6 +178,11 @@ std::string name_zh(const std::string &p_code) {
         const size_t b = rest.find(':');
         return special_zh(rest.substr(0, b)) + pad_int(std::stoll(rest.substr(b + 1)), 2);
     }
+    if (p_code == "seat") return "邑治";
+    if (kind == "town") return "镇" + pad_int(std::stoll(rest), 2);
+    if (kind == "ruin") return "废村" + pad_int(std::stoll(rest), 2);
+    if (kind == "relay") return "中转站" + pad_int(std::stoll(rest), 2);
+    if (kind == "line") return "航船" + pad_int(std::stoll(rest), 2);
     throw std::runtime_error("不认识的名字代码 " + p_code);
 }
 
@@ -549,9 +570,13 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
         r_inside[q] = in_d[q] * R.res;
     }
     std::string out;
-    out.reserve(n * 30 + 64);
+    const bool landscape = g.coast_dist.size() == n && g.lith.size() == n &&
+            g.rockwall_m.size() == n && g.rockwall_dir.size() == n;
+    if (!landscape && (g.coast_dist.size() || g.lith.size() || g.rockwall_m.size() || g.rockwall_dir.size()))
+        throw std::runtime_error("地貌字段不完整，拒绝补造缺失数据");
+    out.reserve(n * (landscape ? 36 : 27) + 40);
     out += "ZZWG";
-    put<uint32_t>(out, 5u);
+    put<uint32_t>(out, landscape ? 8u : 5u);
     put<uint32_t>(out, uint32_t(R.rows));
     put<uint32_t>(out, uint32_t(R.cols));
     put<double>(out, R.res);
@@ -567,7 +592,8 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
         const double shore = land[q] ? inside - 0.5 * R.res : -(outside - 0.5 * R.res);
         double v = std::nearbyint(shore);
         v = v < -32767.0 ? -32767.0 : (v > 32767.0 ? 32767.0 : v);
-        put<int16_t>(out, int16_t(v));
+        if (landscape) put<float>(out, float(g.coast_dist.v[q]));
+        else put<int16_t>(out, int16_t(v));
     }
     for (size_t q = 0; q < n; q++) {
         const size_t src = size_t(ri[q]) * size_t(W) + size_t(ci[q]);
@@ -599,7 +625,7 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
     for (size_t q = 0; q < n; q++) {
         put<uint8_t>(out, land[q] ? g.zone.v[q] : uint8_t(0));
     }
-    for (int f = 0; f < 6; f++) {
+    for (int f = 0; f < (landscape ? 7 : 6); f++) {
         for (size_t q = 0; q < n; q++) {
             put<uint8_t>(out, land[q] ? g.res_field[f].v[q] : uint8_t(0));
         }
@@ -607,6 +633,11 @@ std::string terrain_bin(const isl::Group &g, const Raster &R, const std::vector<
     for (size_t q = 0; q < n; q++) {
         const int32_t p = g.patch_id.v[q];
         put<uint16_t>(out, uint16_t(land[q] && p >= 0 ? p + 1 : 0));
+    }
+    if (landscape) {
+        for (size_t q = 0; q < n; q++) put<uint8_t>(out, g.lith.v[q]);
+        for (size_t q = 0; q < n; q++) put<uint8_t>(out, g.rockwall_dir.v[q]);
+        for (size_t q = 0; q < n; q++) put<float>(out, float(g.rockwall_m.v[q]));
     }
     return out;
 }
@@ -931,11 +962,16 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
     }
     world.set("outposts", outposts);
     Json bridgeheads = Json::arr();
-    for (const Json &b : field(S, "bridgeheads").items()) {
+    if (has_key(S, "bridgeheads")) for (const Json &b : field(S, "bridgeheads").items()) {
         bridgeheads.push(place_row(b, { "to", "gap_km" }, false));
     }
     world.set("bridgeheads", bridgeheads);
     world.set("population", has_key(S, "population") ? field(S, "population") : Json());
+    Json landscape = Json::obj(), landforms = Json::arr();
+    for (size_t i = 0; i < g.landforms.size(); ++i)
+        landforms.push(isl::landform_json(g, g.landforms[i], int(i)));
+    landscape.set("landforms", landforms);
+    world.set("landscape", landscape);
 #ifdef _WIN32
     const bool crlf = true; // Python 的 Path.write_text 在 Windows 上把 \n 写成 \r\n
 #else

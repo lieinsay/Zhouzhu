@@ -104,7 +104,7 @@ WorldTerrain::WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIslan
         bodies[k] = island_body(islands[k]);
     }
     rivers = WorldRivers::build(p_grid, p_river_rules, p_seed, [this](double x, double z) {
-        return grid->shore_at(x, z) + COAST_AMP_M * coast_noise(x, z);
+        return grid->shore_at(x, z) + (grid->source_landscape ? 0.0 : COAST_AMP_M) * coast_noise(x, z);
     });
 }
 
@@ -156,23 +156,25 @@ double WorldTerrain::detail(double p_x, double p_z) const {
         return a + (b - a) * tr;
     };
     double out = bilinear(amp) * hash_fbm(seed ^ STREAM_DETAIL, p_x, p_z, DETAIL_FEATURE_M, DETAIL_OCTAVES);
-    if (zoned) {
+    if (zoned && !g.source_landscape) {
         const double rm = bilinear(ridge);
         if (rm > 0.0) {
             out += rm * hash_fbm(seed ^ STREAM_RIDGE, p_x, p_z, RIDGE_FEATURE_M, 3);
         }
     }
-    return out;
+    return g.source_landscape ? std::clamp(out, -3.0, 3.0) : out;
 }
 
 TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     TerrainSample s;
     const WorldGrid &g = *grid;
-    s.shore = g.shore_at(p_x, p_z) + COAST_AMP_M * coast_noise(p_x, p_z);
+    s.shore = g.shore_at(p_x, p_z) + (grid->source_landscape ? 0.0 : COAST_AMP_M) * coast_noise(p_x, p_z);
     const size_t cell = g.nearest_cell(p_x, p_z);
     s.island = g.island[cell];
     s.landcover = g.landcover[cell];
     s.stream = g.stream[cell] != 0;
+    if (!g.lith.empty()) s.lith = g.lith[cell];
+    if (!g.rockwall.empty()) s.rockwall = g.rockwall[cell];
     s.land = s.shore > 0.0;
     RiverHit hits[WorldRivers::MAX_HITS];
     const int n_hits = rivers ? rivers->near(p_x, p_z, hits, WorldRivers::MAX_HITS) : 0;
@@ -285,7 +287,7 @@ void WorldTerrain::set_yards(const std::vector<YardPlan> &p_yards, const YardRul
 }
 
 bool WorldTerrain::is_land(double p_x, double p_z) const {
-    return grid->shore_at(p_x, p_z) + COAST_AMP_M * coast_noise(p_x, p_z) > 0.0;
+    return grid->shore_at(p_x, p_z) + (grid->source_landscape ? 0.0 : COAST_AMP_M) * coast_noise(p_x, p_z) > 0.0;
 }
 
 bool WorldTerrain::surface(double p_x, double p_z, double &r_y) const {

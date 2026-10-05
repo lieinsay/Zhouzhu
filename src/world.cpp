@@ -118,6 +118,7 @@ void GroupWorld::_bind_methods() {
     ClassDB::bind_method(D_METHOD("prepare_at", "point", "radius"), &GroupWorld::prepare_at, DEFVAL(160.0));
     ClassDB::bind_method(D_METHOD("is_ready_at", "point"), &GroupWorld::is_ready_at);
     ClassDB::bind_method(D_METHOD("get_surface_height", "x", "z"), &GroupWorld::get_surface_height);
+    ClassDB::bind_method(D_METHOD("get_landscape_at", "x", "z"), &GroupWorld::get_landscape_at);
     ClassDB::bind_method(D_METHOD("get_island_at", "x", "z"), &GroupWorld::get_island_at);
     ClassDB::bind_method(D_METHOD("get_cover_at", "x", "z"), &GroupWorld::get_cover_at);
     ClassDB::bind_method(D_METHOD("get_info"), &GroupWorld::get_info);
@@ -1230,6 +1231,22 @@ bool GroupWorld::is_ready_at(const Vector3 &p_point) const {
     }
     const auto found = tiles.find(layout.leaf_at(p_point.x, p_point.z).packed());
     return found != tiles.end() && found->second.parts_left == 0;
+}
+
+Dictionary GroupWorld::get_landscape_at(double p_x, double p_z) const {
+    Dictionary out;
+    if (!loaded) return out;
+    const auto sample = terrain.sample(p_x, p_z);
+    out["source_landscape"] = grid.source_landscape;
+    out["land"] = sample.land;
+    out["shore"] = sample.shore;
+    out["top"] = sample.top;
+    out["bottom"] = sample.bottom;
+    if (grid.source_landscape) {
+        out["lith"] = sample.lith;
+        out["rockwall_m"] = sample.rockwall;
+    }
+    return out;
 }
 
 double GroupWorld::get_surface_height(double p_x, double p_z) const {

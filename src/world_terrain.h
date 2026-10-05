@@ -52,6 +52,8 @@ IslandBody island_body(const WorldIsland &p_island);
 double island_lowest(const WorldIsland &p_island, const IslandBody &p_body);
 
 struct TerrainSample {
+    uint8_t lith = 0;
+    float rockwall = 0;
     bool land = false;
     double top = 0.0; // 顶面 y
     double bottom = 0.0; // 岛底 y

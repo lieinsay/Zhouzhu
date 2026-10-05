@@ -1,4 +1,5 @@
 #include "gen_core.h"
+#include "skyisle/island/landforms.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -130,6 +131,7 @@ isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_expor
         *r_lod = gen_export::lod_entry(p_node, g, isl::block_reduce(g, gen_export::lod_factor(g.res_km * 1000.0)));
     }
     isl::build_resources(g, cfg.island);
+    isl::detect_landforms(g, cfg.island);
     g.clim = isl::build_climate(g.inp, p_planet.view, cfg.island);
     g.daily = isl::daily_curves(g.clim, g.inp);
     g.has_climate = true;
@@ -376,7 +378,7 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         run.set("island_sha1", cfg.island_sha1);
         stamp.set("run", run);
         Json exp = Json::obj();
-        exp.set("terrain_version", 5);
+        exp.set("terrain_version", 8);
         exp.set("exporter", "src/gen_export.cpp");
         stamp.set("export", exp);
         std::vector<std::pair<std::string, double>> secs = { { "generate", r_times.generate }, { "write", r_times.write } };
