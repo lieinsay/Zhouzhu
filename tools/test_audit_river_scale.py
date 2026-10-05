@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 
 from audit_river_scale import audit, topology
+from probe_river_moisture import probe_node
 
 
 def fixture():
@@ -26,6 +27,23 @@ def fixture():
 
 
 class RiverScaleAuditTests(unittest.TestCase):
+    def test_moisture_projection_and_volume_units(self):
+        class ConstantGrid:
+            @staticmethod
+            def grid_interp(field, *args):
+                return float(field[0, 0])
+        budget = dict(lats=np.array([0., 1.]), lons=np.array([0., 1.]),
+                      water_column_mm=np.full((2, 2, 2), 10.),
+                      wind_u_ms=np.stack([np.full((2, 2), 2.), np.zeros((2, 2))]),
+                      wind_v_ms=np.stack([np.zeros((2, 2)), np.full((2, 2), 2.)]))
+        # A 20 x 20 m island: four 10 m cells, not four full-width fronts.
+        g = dict(island_id=np.zeros((2, 2)), res_km=.01, year_s=336*86400.,
+                 condense_mm=np.full((2, 2), 100.), rain_mm=np.full((2, 2), 500.))
+        result = probe_node(ConstantGrid(), budget, g, 0., 0.)
+        self.assertEqual(result['projected_main_width_m_by_season'], [20., 20.])
+        np.testing.assert_allclose(result['full_column_envelope_m3s_by_season'], [.4, .4])
+        self.assertAlmostEqual(result['current_condensation_m3s']*g['year_s'], 40.)
+
     def test_connectors_and_strahler(self):
         doc, _ = fixture()
         _, down, _, _, weights, order, indegree = topology(doc)

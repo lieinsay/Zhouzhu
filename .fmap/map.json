@@ -2969,7 +2969,7 @@
     {
       "id": "skyisle-core",
       "label": "生成器核心库（子模块）",
-      "detail": "extern/skyisle-gen 子模块（URL GitHub，指向本地分支 island-rivers-resources-settle 的 ef3525a，还没推送：先推它再推 Zhouzhu），CMake 只编 core/ 的静态库 skyisle_core：行星层 ①–⑨（planet::run、run_society、planet_view、node_inputs、apply_polity）与第三层（island::generate、block_reduce）；浮点照它自己的 /fp:precise、不开 AVX2，它 PUBLIC 的编译选项不传给游戏；Debug 配置下也 /O2。生成器的代码一行没改。",
+      "detail": "extern/skyisle-gen 提供行星层与岛群生成算法；Zhouzhu 编译同一 core 静态库并读取生成器权威数据。当前版本以 Git 子模块记录为准；水文、断面与水汽输入修复由下列子节点分别记录，不把早期未修改上游的结论当作现状。",
       "tag": "外部：skyisle-gen",
       "evidence": "ctest skyisle_core_selftest（随机流对 numpy 的参考值）；seed42 行星层与 2051 / 2050 与仓库里的包逐字节相同",
       "sources": [
@@ -3677,17 +3677,33 @@
     {
       "id": "river-geometry-audit-scale-budget",
       "label": "河网尺度与水账诊断",
-      "detail": "按连接边河长、真实 Strahler 级序及汇水面积统计水宽、水深和断流；检查逐日上下来水差额、地下水终点账和文献断面敏感性。只读预览或在内存生成，不改正式生成规则；日差额是待解释的蓄泄或交换要求，不冒充全年损失。",
+      "detail": "按连接边河长、级序及汇水面积统计宽深与断流，检查逐日水账、地下水终点与断面关系；新增分季节水汽输送上界筛查。用户已确认海洋蒸发补充核心凝结，无补充的整柱输送上界不能当作新设定的产水上限。",
       "tag": "工具",
-      "evidence": "2026-10-05：3 项独立小图测试通过；3 个 seed、12 群、379267 点研究完成。四群内存复算与现用预览的分组及交接诊断一致；文献试算回代 Q 相对误差容差 1e-11。仅验证诊断计算，尚未完成新模型或游戏加宽验收。",
+      "evidence": "2026-10-05：4 项独立图与单位测试通过；3 种子、12 群、379267 点尺度研究及水汽筛查完成。当前气候不变；诊断计算通过不等于全网加宽完成。",
       "sources": [
         "tools/audit_river_scale.py",
         "tools/run_river_scale_study.py",
+        "tools/probe_river_moisture.py",
         "tools/test_audit_river_scale.py",
         "docs/RIVER-MODEL-AUDIT.md"
       ],
       "since": "e128",
       "parent": "river-geometry-audit"
+    },
+    {
+      "id": "skyisle-core-moisture-budget",
+      "label": "分季节水汽预算",
+      "detail": "保留求解格水柱、源汇和风场，沿现有降雨标尺换算单位。旧缓存缺少时明确返回空；模型水柱不等于近地湿度或核心可取水量。",
+      "tag": "外部：skyisle-gen",
+      "evidence": "生成器 fec9a62：2 项直接相关测试通过；seed42/7/2026 原有气候数组与改动前哈希一致。全球各季源汇相对残差约 8.2e-6–2.13e-5。未宣称真实湿度或核心产水强度已验证。",
+      "sources": [
+        "extern/skyisle-gen/core/src/planet/stage4.cpp",
+        "extern/skyisle-gen/core/python/bind_planet.cpp",
+        "extern/skyisle-gen/skyisle_gen/stages/s04_climate.py",
+        "extern/skyisle-gen/docs/DATA-GUIDE.md"
+      ],
+      "since": "e129",
+      "parent": "skyisle-core"
     }
   ],
   "edges": [
@@ -7844,6 +7860,11 @@
       "chains": [
         "river-cross-section"
       ]
+    },
+    {
+      "from": "river-geometry-audit-scale-budget",
+      "to": "skyisle-core-moisture-budget",
+      "label": "有单位的源汇与风场"
     }
   ],
   "chains": [
@@ -13791,6 +13812,25 @@
         "node": "river-geometry-audit",
         "children": [
           "river-geometry-audit-scale-budget"
+        ],
+        "adopted": [],
+        "peers": []
+      }
+    },
+    {
+      "id": "e129",
+      "type": "extend",
+      "date": "2026-10-05",
+      "title": "拓展：保留分季节水汽原量用于核心供水核算",
+      "summary": "生成器新增有单位的水汽源汇数据，三种子原有气候输出不变；补齐供水方案输入，尚未改变河宽。",
+      "nodes": [
+        "skyisle-core",
+        "skyisle-core-moisture-budget"
+      ],
+      "info": {
+        "node": "skyisle-core",
+        "children": [
+          "skyisle-core-moisture-budget"
         ],
         "adopted": [],
         "peers": []
