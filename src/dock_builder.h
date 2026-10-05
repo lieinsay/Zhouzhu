@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
 
@@ -25,6 +27,6 @@ godot::Transform3D spawn(const DockPlan &p_plan);
 
 // 往 p_parent（须是 CollisionObject3D 才有碰撞）下挂栈桥、碰撞与两根系缆桩；p_adopt 给每个新节点起名、打标记、add_child
 using Adopt = void (*)(godot::Node3D *p_parent, godot::Node *p_node, const char *p_name);
-void build_pier(godot::Node3D *p_parent, const DockPlan &p_plan, Adopt p_adopt);
+void build_pier(godot::Node3D *p_parent, const DockPlan &p_plan, Adopt p_adopt, double p_approach_y = std::numeric_limits<double>::quiet_NaN());
 
 } // namespace dock_builder
