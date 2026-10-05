@@ -1,8 +1,8 @@
 """Replay actual generated weather through snow, groundwater and surface flow.
 
 Explicit homogeneous K/Sy are material scenarios, not adopted lithologies.
-Start at constant-core equilibrium with no snow, carry all storage between
-weather years, and report initialization drift. No discharge renormalization,
+Start at a specified recharge equilibrium, optionally spin up a repeated
+weather year, carry storage between years, and report initialization drift. No discharge renormalization,
 river classification update, channel regeneration or game export is performed.
 """
 import argparse
@@ -28,6 +28,8 @@ def main():
     ap.add_argument('--footprint-scale', type=float, default=0.)
     ap.add_argument('--first-year', type=int, default=-1)
     ap.add_argument('--years', type=int, default=2)
+    ap.add_argument('--initial-recharge', choices=['core', 'total'], default='total')
+    ap.add_argument('--spinup-cycles', type=int, default=0)
     ap.add_argument('--out', type=Path, required=True)
     args = ap.parse_args()
     if args.years < 1:
@@ -73,16 +75,41 @@ def main():
     rr, cc = np.indices(shape)
     length = np.where(valid & (ri != rr) & (rj != cc), np.sqrt(2), 1)*args.res_m
     km, sy = np.full(shape, args.k_m_day/86400.), np.full(shape, args.sy)
-    initial = _core.solve_aquifer_balance(top, base, km, cond, mask, args.res_m)
+    initial_recharge = cond.copy()
+    initial_snow = np.zeros(shape)
+    if args.initial_recharge == 'total':
+        if args.spinup_cycles:
+            # Equilibrate to the actual repeated year's recharge, not the
+            # climatological annual rain (which can differ from this year).
+            IE.weather_year_cpp(ctx, args.node, ctx.cfg['island'], g, year=args.first_year-1, log=lambda _: None)
+            warm_weather = g['weather']['arrays']
+            warm_dt = g['year_s']/len(warm_weather['precip_mm'])
+            for cycle in range(2):
+                mean_rain = np.zeros(shape)
+                for p, t in zip(warm_weather['precip_mm'], warm_weather['temp_c']):
+                    water = _core.spring_rain_step(pscale, fraction, offset, initial_snow, mask,
+                        float(p), float(t), args.res_m, warm_dt,
+                        rain_cfg['snow_t_c'], rain_cfg['melt_t_c'], rain_cfg['ddf_mm'])
+                    initial_snow = water['snowpack_mm']
+                    mean_rain += water['liquid_runoff_ms']/len(warm_weather['precip_mm'])
+            initial_recharge += mean_rain*bfi
+        else:
+            initial_recharge += annual_rain_yield*bfi/(1000*g['year_s'])
+    initial = _core.solve_aquifer_balance(top, base, km, initial_recharge, mask, args.res_m)
     if not initial['converged']:
-        raise RuntimeError('Initial core equilibrium did not converge')
-    head, snow = initial['head_m'], np.zeros(shape)
+        raise RuntimeError('Initial recharge equilibrium did not converge')
+    head, snow = initial['head_m'], initial_snow
     report = dict(status='actual weather replay with explicit material scenario; no adopted river geometry',
         args={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         config_sha256=hashlib.sha256((args.run/'config.resolved.toml').read_bytes()).hexdigest(),
-        native_sha256=hashlib.sha256(Path(_core.__file__).read_bytes()).hexdigest(), years=[])
+        native_sha256=hashlib.sha256(Path(_core.__file__).read_bytes()).hexdigest(),
+        spinup=[], spinup_converged=None, years=[])
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    for year in range(args.first_year, args.first_year+args.years):
+    runs = [(args.first_year-1, True)]*args.spinup_cycles + [(y, False) for y in range(args.first_year, args.first_year+args.years)]
+    previous_cycle_q = None
+    for year, is_spinup in runs:
+        if is_spinup and report['spinup_converged']:
+            continue
         IE.weather_year_cpp(ctx, args.node, ctx.cfg['island'], g, year=year, log=lambda _: None)
         weather = g['weather']['arrays']
         nd = len(weather['precip_mm'])
@@ -108,7 +135,7 @@ def main():
             total['surface_outlet_m3'] += routed['surface_outlet_m3s']*dt
             total['coast_m3'] += float(aq['coast_m3s'].sum())*dt
             total['absolute_cell_error_m3'] += float(np.abs(aq['residual_m3s']).sum())*dt
-            if (day+1) % 84 == 0:
+            if not is_spinup and (day+1) % 84 == 0:
                 print(args.node, 'year', year, 'day', day+1, 'seconds', round(time.perf_counter()-started, 1), flush=True)
         supply = total['precipitation_m3']+total['core_m3']
         accounted = sum(total[k] for k in ['nonrunoff_m3', 'snow_change_m3', 'groundwater_change_m3', 'surface_outlet_m3', 'coast_m3'])
@@ -129,6 +156,20 @@ def main():
             seconds=time.perf_counter()-started, budget=total, relative_balance_error=error/max(1., supply),
             head_change_p10_p50_p90_m=np.quantile((head-start_head)[mask], [.1, .5, .9]).tolist(),
             stored_snow_end_m3=float(snow[mask].sum()*args.res_m**2/1000), per_area=groups)
+        if is_spinup:
+            head_error = float(np.max(np.abs((head-start_head)[mask])))
+            snow_error = float(np.max(np.abs((snow-start_snow)[mask])))
+            q_error = float(np.max(np.abs(day_q-previous_cycle_q))/max(1e-12, day_q.max())) if previous_cycle_q is not None else None
+            # Numerical initialization criteria, unrelated to any target width.
+            converged = head_error < .01 and snow_error < .01 and q_error is not None and q_error < 1e-4
+            record.update(max_cycle_head_change_m=head_error, max_cycle_snow_change_mm=snow_error,
+                          relative_cycle_q_change=q_error, converged=converged)
+            report['spinup'].append(record)
+            report['spinup_converged'] = converged
+            previous_cycle_q = day_q
+            args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False)+'\n', encoding='utf-8')
+            print(args.node, 'spinup', len(report['spinup']), 'head', head_error, 'snow', snow_error, 'q', q_error, flush=True)
+            continue
         report['years'].append(record)
         args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False)+'\n', encoding='utf-8')
         np.savez_compressed(args.out.with_name(args.out.stem+f'-y{year}.npz'), q_m3s=day_q,
