@@ -44,6 +44,8 @@ def main():
     ap.add_argument('--crystalline-m-day', type=float, required=True,
         help='Explicit comparison only; generic crystalline values are not an ophiolite default')
     ap.add_argument('--max-iterations', type=int, default=50000)
+    ap.add_argument('--core-activity-per-km-day', type=float,
+        help='Use whole-mountain supply with this explicit ability instead of the old footprint')
     ap.add_argument('--shallow-depth-m', type=float, default=0.)
     ap.add_argument('--shallow-gabbro-ms', type=float, nargs='+')
     ap.add_argument('--shallow-serpentinite-ms', type=float)
@@ -60,12 +62,15 @@ def main():
     world = _core.planet_run(_core.make_config(E.planet_config(ctx.cfg)), ctx.seed, 4, 4, False)
     for i, obj in enumerate(world, 1):
         E.put_part(ctx, i, obj)
+    core_config = dict(exchange_days=4, footprint_scale=2) if args.core_activity_per_km_day is None else dict(
+        mountain_domain=True, activity_per_km_day=args.core_activity_per_km_day, exchange_days=0, footprint_scale=0)
+    sets = [f'island.water.core_{key}={str(value).lower()}' for key, value in core_config.items()]
     report = dict(seed=args.seed, status='conditional layered aquifer scenario, not adopted defaults',
-        core=dict(exchange_days=4, footprint_scale=2), res_m=300,
+        core=core_config, res_m=300,
         native_sha256=hashlib.sha256(Path(_core.__file__).read_bytes()).hexdigest(), nodes={})
     for node in args.nodes:
         g = generate(ctx, node, res_m=300, steps=2, write=False, log=lambda _: None,
-            sets=['island.water.core_exchange_days=4', 'island.water.core_footprint_scale=2'])
+            sets=sets)
         full = g['island_id'] == 0
         rows, cols = np.where(full)
         r0, c0, r1, c1 = rows.min(), cols.min(), rows.max()+1, cols.max()+1

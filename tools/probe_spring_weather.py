@@ -32,6 +32,7 @@ def main():
     ap.add_argument('--res-m', type=float, default=300.)
     ap.add_argument('--exchange-days', type=float, default=0.)
     ap.add_argument('--footprint-scale', type=float, default=0.)
+    ap.add_argument('--core-activity-per-km-day', type=float)
     ap.add_argument('--first-year', type=int, default=-1)
     ap.add_argument('--years', type=int, default=2)
     ap.add_argument('--initial-recharge', choices=['core', 'total'], default='total')
@@ -44,12 +45,14 @@ def main():
         ap.error('The homogeneous material requires --sy')
     if args.layered_study and args.sy is not None:
         ap.error('Layered storage comes from the recorded material case, not --sy')
+    if args.core_activity_per_km_day is not None and (args.exchange_days or args.footprint_scale):
+        ap.error('Whole-mountain ability cannot be mixed with old exchange/footprint modes')
     sys.path.insert(0, str(Path('extern/skyisle-gen').resolve()))
     from skyisle_gen.cli import _ctx_from_run
     from skyisle_gen.island import generate, engine as IE
     from skyisle_gen import _core, engine as E
     ctx = _ctx_from_run(str(args.run.resolve()))
-    if args.exchange_days:
+    if args.exchange_days or args.core_activity_per_km_day is not None:
         E.clear_cache()
         IE._PLANET_OBJ.clear()
         world = _core.planet_run(_core.make_config(E.planet_config(ctx.cfg)), ctx.seed, 4, 4, False)
@@ -57,6 +60,9 @@ def main():
             E.put_part(ctx, i, obj)
     sets = [f'island.water.core_exchange_days={args.exchange_days}',
             f'island.water.core_footprint_scale={args.footprint_scale}']
+    if args.core_activity_per_km_day is not None:
+        sets += ['island.water.core_mountain_domain=true',
+                 f'island.water.core_activity_per_km_day={args.core_activity_per_km_day}']
     g = generate(ctx, args.node, res_m=args.res_m, steps=4, write=False, log=lambda _: None, sets=sets)
     inp = IE.inputs(ctx, args.node, g['inp'])
     rain_cfg = ctx.cfg['island']['rivers']
@@ -126,11 +132,21 @@ def main():
     if not initial['converged']:
         raise RuntimeError('Initial recharge equilibrium did not converge')
     head, snow = initial['head_m'], initial_snow
+    core_floor = None
+    if args.initial_recharge == 'core':
+        # A separate dry-climate equilibrium is evidence of sustained supply
+        # under the stated constant-core boundary, independent of rain spinup.
+        core_floor = _core.route_surface_water(np.ascontiguousarray(initial['surface_m3s']),
+            mask, receiver.ravel())['river_m3s'][channel]
     report = dict(status='actual weather replay with explicit material scenario; no adopted river geometry',
         args={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         config_sha256=hashlib.sha256((args.run/'config.resolved.toml').read_bytes()).hexdigest(),
         native_sha256=hashlib.sha256(Path(_core.__file__).read_bytes()).hexdigest(),
-        material_case=material_record, spinup=[], spinup_converged=None, years=[])
+        material_case=material_record, spinup=[], spinup_converged=None, years=[],
+        core_equilibrium_floor=dict(input_m3s=initial['input_m3s'],
+            absolute_residual_m3s=initial['absolute_residual_m3s'],
+            meaning='Sustained dry-climate source under constant core ability; not mature seasonal rainfall storage')
+            if core_floor is not None else None)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     runs = [(args.first_year-1, True)]*args.spinup_cycles + [(y, False) for y in range(args.first_year, args.first_year+args.years)]
     previous_cycle_q = None
@@ -201,6 +217,13 @@ def main():
             numerical_flow_floor_max_m3s=float(numerical_floor.max()),
             head_change_p10_p50_p90_m=np.quantile((head-start_head)[head_pick], [.1, .5, .9]).tolist(),
             stored_snow_end_m3=float(snow[mask].sum()*args.res_m**2/1000), per_area=groups)
+        if core_floor is not None:
+            tolerance = numerical_floor[:, None]+initial['absolute_residual_m3s']
+            deficit = np.maximum(core_floor[None, :]-day_q, 0)
+            record['core_floor_violations'] = int(np.count_nonzero(deficit > tolerance))
+            record['max_core_floor_deficit_m3s'] = float(deficit.max()) if deficit.size else 0.
+            if record['core_floor_violations']:
+                raise RuntimeError('Rain-added replay falls below the steady dry-climate core supply')
         if is_spinup:
             head_error = float(np.max(np.abs((head-start_head)[head_pick])))
             snow_error = float(np.max(np.abs((snow-start_snow)[mask])))
