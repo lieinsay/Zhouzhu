@@ -17,6 +17,24 @@ import numpy as np
 from audit_river_scale import quantiles
 
 
+def equilibrate(model, recharge, max_iterations=50000, label='equilibrium'):
+    """Observe native iteration progress; do not change its equations/tolerance."""
+    head, count, started = None, 0, time.perf_counter()
+    if max_iterations < 1:
+        raise ValueError('Positive equilibrium iteration limit required')
+    while count < max_iterations:
+        solved = model.solve(np.ascontiguousarray(recharge),
+            max_iterations=min(1000, max_iterations-count), initial_head=head)
+        count += solved['iterations']
+        head = solved['head_m']
+        print(label, 'iterations', count, 'residual', solved['absolute_residual_m3s'],
+              'seconds', round(time.perf_counter()-started, 1), flush=True)
+        if solved['converged']:
+            break
+    solved['iterations'] = count
+    return solved
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--seed', type=int, default=42)
@@ -79,7 +97,7 @@ def main():
             for source_name, recharge, quick in [('core', cond, np.zeros(mask.shape)),
                                                 ('total', cond+rain*bfi, rain*(1-bfi)*300**2)]:
                 started = time.perf_counter()
-                solved = model.solve(np.ascontiguousarray(recharge), max_iterations=args.max_iterations)
+                solved = equilibrate(model, recharge, args.max_iterations, f'{node} {source_name}')
                 record = dict(source=source_name, material_horizontal_ms=km, material_vertical_ms=km,
                     shallow_profile=profile,
                     specific_yield=[.01]*5, specific_storage_per_m=[1e-6]*5,

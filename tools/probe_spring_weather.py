@@ -1,6 +1,7 @@
 """Replay actual generated weather through snow, groundwater and surface flow.
 
-Explicit homogeneous K/Sy are material scenarios, not adopted lithologies.
+Explicit homogeneous K/Sy or a recorded layered case are material scenarios,
+not adopted lithologies.
 Start at a specified recharge equilibrium, optionally spin up a repeated
 weather year, carry storage between years, and report initialization drift. No discharge renormalization,
 river classification update, channel regeneration or game export is performed.
@@ -15,14 +16,19 @@ import time
 import numpy as np
 
 from audit_river_scale import quantiles
+from probe_layered_aquifer import equilibrate
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--run', type=Path, default=Path('build/river-preview/seed42'))
     ap.add_argument('--node', type=int, required=True)
-    ap.add_argument('--k-m-day', type=float, required=True)
-    ap.add_argument('--sy', type=float, required=True)
+    materials = ap.add_mutually_exclusive_group(required=True)
+    materials.add_argument('--k-m-day', type=float)
+    materials.add_argument('--layered-study', type=Path,
+        help='Reuse an explicit material case from probe_layered_aquifer output')
+    ap.add_argument('--layered-case', type=int, default=0)
+    ap.add_argument('--sy', type=float)
     ap.add_argument('--res-m', type=float, default=300.)
     ap.add_argument('--exchange-days', type=float, default=0.)
     ap.add_argument('--footprint-scale', type=float, default=0.)
@@ -34,6 +40,10 @@ def main():
     args = ap.parse_args()
     if args.years < 1:
         ap.error('At least one year is required')
+    if args.k_m_day is not None and args.sy is None:
+        ap.error('The homogeneous material requires --sy')
+    if args.layered_study and args.sy is not None:
+        ap.error('Layered storage comes from the recorded material case, not --sy')
     sys.path.insert(0, str(Path('extern/skyisle-gen').resolve()))
     from skyisle_gen.cli import _ctx_from_run
     from skyisle_gen.island import generate, engine as IE
@@ -74,7 +84,23 @@ def main():
     channel = mask & ((g['river'][sl] > 0) | (g['stream'][sl] > 0)) & ~g['lake'][sl].astype(bool)
     rr, cc = np.indices(shape)
     length = np.where(valid & (ri != rr) & (rj != cc), np.sqrt(2), 1)*args.res_m
-    km, sy = np.full(shape, args.k_m_day/86400.), np.full(shape, args.sy)
+    layered, material_record = None, None
+    if args.layered_study:
+        study = json.loads(args.layered_study.read_text(encoding='utf-8'))
+        if study['seed'] != ctx.seed or study['res_m'] != args.res_m:
+            raise ValueError('Layered study seed/resolution mismatch')
+        material_record = study['nodes'][str(args.node)][args.layered_case]
+        if not material_record['converged']:
+            raise ValueError('Unconverged material case cannot initialize a replay')
+        layered = _core.make_layered_aquifer(top,
+            np.ascontiguousarray(g['strat_top'][sl], dtype=float), base, mask, g['strat_raw'][0],
+            material_record['material_horizontal_ms'], material_record['material_vertical_ms'],
+            material_record['specific_yield'], material_record['specific_storage_per_m'], args.res_m,
+            **material_record['shallow_profile'])
+        head_pick = np.ones(len(layered.node_cells), dtype=bool)
+    else:
+        km, sy = np.full(shape, args.k_m_day/86400.), np.full(shape, args.sy)
+        head_pick = mask
     initial_recharge = cond.copy()
     initial_snow = np.zeros(shape)
     if args.initial_recharge == 'total':
@@ -95,7 +121,8 @@ def main():
             initial_recharge += mean_rain*bfi
         else:
             initial_recharge += annual_rain_yield*bfi/(1000*g['year_s'])
-    initial = _core.solve_aquifer_balance(top, base, km, initial_recharge, mask, args.res_m)
+    initial = equilibrate(layered, initial_recharge, label=f'{args.node} initial') if layered else \
+        _core.solve_aquifer_balance(top, base, km, initial_recharge, mask, args.res_m)
     if not initial['converged']:
         raise RuntimeError('Initial recharge equilibrium did not converge')
     head, snow = initial['head_m'], initial_snow
@@ -103,7 +130,7 @@ def main():
         args={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
         config_sha256=hashlib.sha256((args.run/'config.resolved.toml').read_bytes()).hexdigest(),
         native_sha256=hashlib.sha256(Path(_core.__file__).read_bytes()).hexdigest(),
-        spinup=[], spinup_converged=None, years=[])
+        material_case=material_record, spinup=[], spinup_converged=None, years=[])
     args.out.parent.mkdir(parents=True, exist_ok=True)
     runs = [(args.first_year-1, True)]*args.spinup_cycles + [(y, False) for y in range(args.first_year, args.first_year+args.years)]
     previous_cycle_q = None
@@ -115,6 +142,7 @@ def main():
         nd = len(weather['precip_mm'])
         dt = g['year_s']/nd
         day_q = np.zeros((nd, np.count_nonzero(channel)))
+        numerical_floor = np.zeros(nd)
         total = dict(precipitation_m3=0., core_m3=0., nonrunoff_m3=0., snow_change_m3=0.,
                      groundwater_change_m3=0., surface_outlet_m3=0., coast_m3=0., absolute_cell_error_m3=0.)
         start_head, start_snow, started = head.copy(), snow.copy(), time.perf_counter()
@@ -122,9 +150,20 @@ def main():
             water = _core.spring_rain_step(pscale, fraction, offset, snow, mask,
                 float(weather['precip_mm'][day]), float(weather['temp_c'][day]), args.res_m, dt,
                 rain_cfg['snow_t_c'], rain_cfg['melt_t_c'], rain_cfg['ddf_mm'])
-            routed = _core.step_spring_routing(top, base, km, water['liquid_runoff_ms'], cond,
-                bfi, mask, receiver.ravel(), head, sy, args.res_m, dt)
-            aq = routed['aquifer']
+            if layered:
+                rain = water['liquid_runoff_ms']
+                aq = layered.step(np.ascontiguousarray(cond+rain*bfi), head, dt)
+                if not aq['converged']:
+                    raise RuntimeError(f'Layered daily state did not converge: year {year}, day {day}')
+                routed = _core.route_surface_water(np.ascontiguousarray(aq['surface_m3s']+
+                    rain*(1-bfi)*args.res_m**2), mask, receiver.ravel())
+                routed['core_input_m3s'] = float(cond[mask].sum()*args.res_m**2)
+                routed['surface_outlet_m3s'] = routed['outlet_m3s']
+            else:
+                routed = _core.step_spring_routing(top, base, km, water['liquid_runoff_ms'], cond,
+                    bfi, mask, receiver.ravel(), head, sy, args.res_m, dt)
+                aq = routed['aquifer']
+            numerical_floor[day] = max(1e-12, float(np.abs(aq['residual_m3s']).sum()))
             day_q[day] = routed['river_m3s'][channel]
             head, snow = aq['head_m'], water['snowpack_mm']
             total['precipitation_m3'] += water['precipitation_m3']
@@ -135,29 +174,35 @@ def main():
             total['surface_outlet_m3'] += routed['surface_outlet_m3s']*dt
             total['coast_m3'] += float(aq['coast_m3s'].sum())*dt
             total['absolute_cell_error_m3'] += float(np.abs(aq['residual_m3s']).sum())*dt
-            if not is_spinup and (day+1) % 84 == 0:
-                print(args.node, 'year', year, 'day', day+1, 'seconds', round(time.perf_counter()-started, 1), flush=True)
+            if (day+1) % 84 == 0:
+                print(args.node, 'spinup' if is_spinup else 'year',
+                      len(report['spinup'])+1 if is_spinup else year, 'day', day+1,
+                      'seconds', round(time.perf_counter()-started, 1), flush=True)
         supply = total['precipitation_m3']+total['core_m3']
         accounted = sum(total[k] for k in ['nonrunoff_m3', 'snow_change_m3', 'groundwater_change_m3', 'surface_outlet_m3', 'coast_m3'])
         error = supply-accounted
         if abs(error) > total['absolute_cell_error_m3']+max(1e-5, supply*1e-10):
             raise RuntimeError('Combined weather/groundwater/river ledger did not close')
         groups = {}
-        qmin, qmed, qmean = day_q.min(axis=0), np.median(day_q, axis=0), day_q.mean(axis=0)
+        qmed, qmean = np.median(day_q, axis=0), day_q.mean(axis=0)
+        # A positive discharge below the whole-solve absolute residual is not
+        # resolved evidence of perennial flow. This floor is numerical only.
+        resolved_continuous = np.all(day_q > numerical_floor[:, None], axis=0)
         weights, areas = length[channel], area[channel]
         for lo, hi in [(.3, 1), (1, 10), (10, 50), (50, np.inf)]:
             sel = (areas >= lo) & (areas < hi)
             den = weights[sel].sum()
             groups[f'{lo:g}-{hi:g}'] = dict(length_km=float(den/1000),
-                continuously_supplied_share=float(weights[sel & (qmin > 1e-10)].sum()/den) if den else None,
+                continuously_supplied_share=float(weights[sel & resolved_continuous].sum()/den) if den else None,
                 annual_median_flow_m3s=quantiles(qmed[sel], weights[sel]) if den else None,
                 annual_mean_flow_m3s=quantiles(qmean[sel], weights[sel]) if den else None)
         record = dict(year=year, weather_precip_mm=float(np.sum(weather['precip_mm'])),
             seconds=time.perf_counter()-started, budget=total, relative_balance_error=error/max(1., supply),
-            head_change_p10_p50_p90_m=np.quantile((head-start_head)[mask], [.1, .5, .9]).tolist(),
+            numerical_flow_floor_max_m3s=float(numerical_floor.max()),
+            head_change_p10_p50_p90_m=np.quantile((head-start_head)[head_pick], [.1, .5, .9]).tolist(),
             stored_snow_end_m3=float(snow[mask].sum()*args.res_m**2/1000), per_area=groups)
         if is_spinup:
-            head_error = float(np.max(np.abs((head-start_head)[mask])))
+            head_error = float(np.max(np.abs((head-start_head)[head_pick])))
             snow_error = float(np.max(np.abs((snow-start_snow)[mask])))
             q_error = float(np.max(np.abs(day_q-previous_cycle_q))/max(1e-12, day_q.max())) if previous_cycle_q is not None else None
             # Numerical initialization criteria, unrelated to any target width.
@@ -173,7 +218,8 @@ def main():
         report['years'].append(record)
         args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False)+'\n', encoding='utf-8')
         np.savez_compressed(args.out.with_name(args.out.stem+f'-y{year}.npz'), q_m3s=day_q,
-            cell=np.flatnonzero(channel), shape=shape, crop_origin_rc=[r0, c0], head=head, snow_mm=snow)
+            cell=np.flatnonzero(channel), shape=shape, crop_origin_rc=[r0, c0], head=head, snow_mm=snow,
+            numerical_flow_floor_m3s=numerical_floor)
         print('completed', args.node, year, 'relative error', record['relative_balance_error'], groups, flush=True)
 
 
