@@ -768,7 +768,7 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         Json row = Json::obj();
         row.set("a", l.a);
         row.set("b", l.b);
-        row.set("kind", l.bridge ? "bridge" : "ferry");
+        row.set("kind", "ferry"); // 生成器 P5（9 月 29 日）起岛间连接统一为短渡。
         row.set("gap_km", pyround(l.gap, 3));
         links.push(row);
     }
