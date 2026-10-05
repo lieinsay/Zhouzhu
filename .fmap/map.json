@@ -534,9 +534,9 @@
     {
       "id": "skyisle-export",
       "label": "岛群导出脚本",
-      "detail": "tools/export_skyisle.py：skyisle-gen 岛群产物 → terrain.bin（v4：高程 f32 米，含下切河谷；流向按生成器汇流反推、河宽水深、地形区）、weather.tsv、world.json、sites.tsv、resources.tsv。村 = 生成器的村（镇的市户并进来）+ 专业聚落（接着村号编）；码头从泊场推（子节点）。--terrain-only 只换地形、点位沿用旧的。",
+      "detail": "Python 岛群导出脚本，支持源地貌 v8 与旧来源 v5；地貌字段不完整时报错，不补造。开局包保持原样。",
       "tag": "工具",
-      "evidence": "2051：1012×837 格、陆地格数与 skyisle-gen 一致（ctest）；浮高重导后 32 岛、61 码头、206 村 + 970 散户，gen_seed42 与进程内逐字节相同",
+      "evidence": "387d8b7；tests/test_nonriver_export.py 通过：字段位置、精度、地貌记录和缺失字段拒收。",
       "sources": [
         "tools/export_skyisle.py",
         "game/worlds/2051/terrain.bin",
@@ -561,9 +561,9 @@
     {
       "id": "world-terrain",
       "label": "连续地形",
-      "detail": "任意 (x, z) 上的有没有地、顶面、岛底、地表。大形听栅格（v3 起高程已含生成器下切的河谷），细节噪声按地表 × 地形区调幅；岛底是崖壁 + 倒锥（见 island-body）；河按河网的横断面凿；地表给各类的份额（地表过渡场，地皮与散布共用）。",
+      "detail": "连续顶面、岛底、地表和原有河道取样。旧包保留旧路径；v8 直接使用源岸距及出露岩性，停用额外大型岩梁，表面细节限制在 ±3 米。get_landscape_at 明确是否具有源地貌字段。河流水量、宽深规则本轮未恢复或调整。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest world_terrain：确定、连续、岸线进退在噪声幅度内",
+      "evidence": "387d8b7；旧 v5 包读取与新 v8 源字段逐格核对通过。",
       "sources": [
         "src/world_terrain.h",
         "src/world_terrain.cpp",
@@ -740,13 +740,14 @@
     {
       "id": "dock-builder",
       "label": "栈桥与泊位（共用）",
-      "detail": "栈桥、系缆桩、碰撞的搭法，泊位接触线与出生位姿；Island 与 WorldDock 共用。",
+      "detail": "共用栈桥、系缆桩、泊位、碰撞与出生位姿。恢复 4 米接岸坡道，坡脚取实际地面，坡顶连接栈桥；显示与碰撞使用相同变换。",
       "tag": "引擎构件",
       "sources": [
         "src/dock_builder.h",
         "src/dock_builder.cpp"
       ],
-      "since": "e14"
+      "since": "e14",
+      "evidence": "33743aa；dock_approach_e2e 无头检查通过：真实玩家从岸上走过坡道登上旧开局码头。"
     },
     {
       "id": "settlement-host",
@@ -784,13 +785,14 @@
     {
       "id": "world-dock",
       "label": "WorldDock 码头",
-      "detail": "一个码头的栈桥与碰撞，放在岸缘点；地面已由地形压平。",
+      "detail": "岛群码头栈桥与碰撞；SiteStream 取实际岸上高程传入共用接岸坡道。",
       "tag": "场景角色",
       "sources": [
         "src/world_village.h",
         "src/world_village.cpp"
       ],
-      "since": "e14"
+      "since": "e14",
+      "evidence": "33743aa；旧 seed42 开局包无头步行登岸通过。"
     },
     {
       "id": "site-stream",
@@ -1271,9 +1273,9 @@
     {
       "id": "terrain-tile-cliff",
       "label": "崖壁与岛底网格",
-      "detail": "崖壁每 5 m（粗块按格距）一段、顶点按自己的高度取岩层色；岛底三角进碰撞（船撞得上），内部块隔 4 格铺，接缝翘边按格距放高、不超过岛体厚度。",
+      "detail": "岛缘崖壁与岛底网格。有源岸距的 v8 包按零线裁切边界三角形，顶面、岛底和碰撞共用岸线。旧包保留旧路径。没有完整三维层界数据，旧装饰分层不能解释成真实层序。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "terrain_shots 目视：岛底无裂缝；邑治处 2.77 M 三角面",
+      "evidence": "387d8b7；解析斜岸的边界与碰撞检查通过；未进行可见窗口美术验收。",
       "sources": [
         "src/terrain_tile.cpp"
       ],
@@ -1296,9 +1298,9 @@
     {
       "id": "deposit-kinds",
       "label": "资源种类表",
-      "detail": "生成器的资源种类在游戏里是什么：形态（点 / 片 / 散）、采场名、工时、存量（按品位）、回满钟头、样子；物品表加了柴。",
+      "detail": "资源形态、采场、产物、采集工时与显示表。恢复铬、镍、岩盐，以及盐泉和化石标记；金/金银、锡钨/锡均兼容。保留旧开局资源，不补造新矿点。",
       "tag": "原语",
-      "evidence": "core_tests gather：十种能采、产物在物品表、存量按品位面积",
+      "evidence": "387d8b7；nonriver_restore 核对矿种对应物品、旧名称与盐层读取。",
       "sources": [
         "src/deposit_kinds.h",
         "src/deposit_kinds.cpp"
@@ -1588,9 +1590,9 @@
     {
       "id": "terrain-tile-ground",
       "label": "地皮着色",
-      "detail": "每个顶点按 WorldTerrain::cover(x, z, 格距) 混各类颜色；陡坡露岩门槛按 14 m 细噪声进退成岩斑；有河网时河道类画成湿草（水面由河的网格画）；再按河漫滩、河床染色。",
+      "detail": "地表过渡、陡坡露岩及原有河床着色。v8 露岩使用源 lith 区分石灰岩、泥灰岩、辉长岩、蛇纹岩和浮石；旧开局没有 lith，保持原显示。不随机补画峰林或编造三维岩层。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "叶块跨可耕地 | 林地相邻 2 m 顶点色差 ≤ 0.06（一刀切 0.3）；cover_shots、terrain_shots 目视",
+      "evidence": "387d8b7；编译和原生源岩性取样检查通过；旧开局包不能展示新增岩性字段，尚未做新包可见美术验收。",
       "sources": [
         "src/terrain_tile.cpp"
       ],
@@ -2965,9 +2967,9 @@
     {
       "id": "skyisle-core",
       "label": "生成器核心库（子模块）",
-      "detail": "extern/skyisle-gen 子模块（URL GitHub，指向本地分支 island-rivers-resources-settle 的 ef3525a，还没推送：先推它再推 Zhouzhu），CMake 只编 core/ 的静态库 skyisle_core：行星层 ①–⑨（planet::run、run_society、planet_view、node_inputs、apply_polity）与第三层（island::generate、block_reduce）；浮点照它自己的 /fp:precise、不开 AVX2，它 PUBLIC 的编译选项不传给游戏；Debug 配置下也 /O2。生成器的代码一行没改。",
+      "detail": "extern/skyisle-gen 提供行星与岛群 C++ 核心。2026-10-05 撤回后保留十月一日 103fea1 的实现，独立恢复岸线 Seg 坐标顺序修复 adda738。已撤回的河流扩水、地下水和岛屿形成实验不属于现状。",
       "tag": "外部：skyisle-gen",
-      "evidence": "ctest skyisle_core_selftest（随机流对 numpy 的参考值）；seed42 行星层与 2051 / 2050 与仓库里的包逐字节相同",
+      "evidence": "生成器 MSVC Release 构建与 core_selftest 通过；新增 5×9 非方形水平/竖直海岸解析距离检查。",
       "sources": [
         "extern/skyisle-gen/core/CMakeLists.txt",
         "CMakeLists.txt"
@@ -3014,9 +3016,9 @@
     {
       "id": "gen-export",
       "label": "生成器产物 → 游戏文件（C++）",
-      "detail": "export_skyisle.py、export_planet.py 连同生成器前端的拼装与译码移成 C++：terrain.bin（按汇流反推流向、虚空格取最近陆地）、world.json、sites.tsv、resources.tsv、weather.tsv、lods.bin、weather.bin / .wx（zlib 1.3.1 level 9）、planet.bin（as_column 的收窄照抄）；与 Python 那条路逐字节相同。",
+      "detail": "生成器产物转换为游戏数据。新增独立 ZZWG v8：源浮点岸距、岩性、崖层方向/高度及第七层盐赋存；保存原始地貌记录。v1–v5 继续读取，撤回的河流 v6/v7 不复用。补齐盐井村、中转站等已有源名称映射；不重生成现有开局包。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "97 群 × 7 份、3 个新世界、游戏里生成的 42 份与 Python 那条路比，0 份不同；Debug 与 Release 相同",
+      "evidence": "387d8b7；24 项原生恢复检查与 Python 导出契约检查通过。当前结论是对应字段逐格一致，不沿用历史整包逐字节一致的结论。显示范围和配置版本限制见 docs/NONRIVER-DATA.md。",
       "sources": [
         "src/gen_export.h",
         "src/gen_export.cpp",
@@ -3087,9 +3089,9 @@
     {
       "id": "planet-frame-datum",
       "label": "垂直结构（云带、海面、R）",
-      "detail": "VerticalDatum：云带顶 −5000、云带底 −6200、海面 −6800（游戏 y；浮高计划 F4 起整体下移 1200 m，原来 −3800 / −5000 / −5600），岛底最低线 ISLAND_BOTTOM_MIN_Y = 云带顶 + 1000；PLANET_DEFAULT_R = 海面 6371 km + 6.8 km = 6,377,800 m。着色器 planet_sky / planet_sea 的 PS_* 与 project.godot 的 planet_curve_radius 初值各抄一份。气温照旧 y < 0 取 y = 0。",
+      "detail": "海面、云底、云顶和岛底净空读取 planet.bin 可选 vertical 头，并同步到地形、行星视图和着色器。旧包使用云顶 −5000、云底 −6200、海面 −6800 米与净空 1000 米；切换回旧包重置默认值。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest：云带厚 1.2 km、云底下 600 m、R = 海面 + 6800 m；sea_descent_e2e 停在 −6785.07、各层读数与下移前一样；god_sea_e2e 37.7 s 到海面之上 2 m",
+      "evidence": "6272394；自定义包头、旧包回退、无效顺序拒收、planet_data 与 sea_descent 原生检查通过；旧开局无头启动通过。",
       "sources": [
         "src/planet_frame.h",
         "game/shaders/planet_sky.gdshaderinc",
