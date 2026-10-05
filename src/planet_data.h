@@ -103,6 +103,10 @@ class PlanetData {
 
 public:
     int seed = 0;
+    struct Vertical {
+        double sea = -6800, base = -6200, top = -5000, clearance = 1000;
+        double pressure = 1, scale_km = 8, oxygen = 0.2095;
+    } vertical;
     double radius_km = 6371.0;
     double rotation_hr = 24.0;
     double tilt_deg = 34.0;

@@ -457,6 +457,9 @@ def export_planet(run: Path, dst: Path, opt: dict) -> int:
         f"g_storm {g.get('lat', 37.5)} {g.get('lon', -10.0)} {g.get('radius_deg', 4.0)}",
         f"source {run.name} {commit}",
     ]
+    vertical = planet.get("vertical")
+    if vertical:
+        head.append("vertical " + " ".join(str(float(vertical[k])) for k in ("sea_level_m", "cloud_base_m", "cloud_top_m", "keel_gap_m", "datum_pressure_atm", "scale_height_km", "o2_fraction")))
     head_b = ("\n".join(head) + "\n").encode("utf-8")
 
     with open(dst / "planet.bin", "wb") as f:

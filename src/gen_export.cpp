@@ -1461,6 +1461,11 @@ std::string planet_bin(const skyisle::planet::World &w, const skyisle::planet::S
         "g_storm " + pyfmt::repr(w.winds.g.lat) + " " + pyfmt::repr(w.winds.g.lon) + " " + pyfmt::repr(w.winds.g.radius_deg),
         "source " + p_source,
     };
+    if (pl.vert.present) {
+        const auto &v = pl.vert;
+        head.push_back("vertical " + pyfmt::repr(v.sea_level_m) + " " + pyfmt::repr(v.cloud_base_m) + " " + pyfmt::repr(v.cloud_top_m) + " " +
+            pyfmt::repr(v.keel_gap_m) + " " + pyfmt::repr(v.datum_pressure_atm) + " " + pyfmt::repr(v.scale_height_km) + " " + pyfmt::repr(v.o2_fraction));
+    }
     std::string head_b;
     for (size_t k = 0; k < head.size(); k++) {
         head_b += head[k];

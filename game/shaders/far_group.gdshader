@@ -6,6 +6,7 @@
 //   x 雪线（以上积雪）、y 枯黄线（以上草枯、灌丛发褐、田休耕）、z 阔叶的秋色 0..1、w 阔叶的叶量 0..1。
 // 与地皮的换季同一套颜色（ground.gdshader），只是没有碎斑、没有雨后。
 shader_type spatial;
+global uniform float planet_cloud_top_y;
 render_mode cull_back, specular_schlick_ggx, world_vertex_coords;
 
 #include "res://shaders/weather.gdshaderinc"
@@ -38,7 +39,7 @@ void vertex() {
 void fragment() {
 	// 岛底的倒锥最深离云带顶还有一千米（浮高计划 F3，far_group_mesh 夹过龙骨）；万一有到云带顶（−5000）以下的一截照旧剪掉——
 	// P2 起高空看到的云带是天空着色器画的，网格在它前面，不剪会从云里戳出来
-	if (v_alt < -5000.0) {
+	if (v_alt < planet_cloud_top_y) {
 		discard;
 	}
 	vec3 base = COLOR.rgb;
