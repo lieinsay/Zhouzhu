@@ -10,8 +10,13 @@ func require(ok: bool, message: String) -> void:
 		assert(ok, message)
 
 func _run() -> void:
-	var main = load("res://world_seed42.tscn").instantiate()
-	root.add_child(main)
+	require(change_scene_to_file(ProjectSettings.get_setting("application/run/main_scene"))==OK,"项目默认启动场景加载失败")
+	var start_deadline: int=Time.get_ticks_msec()+120000
+	while (current_scene==null or not current_scene is Expedition) and Time.get_ticks_msec()<start_deadline:
+		await process_frame
+	var main = current_scene
+	require(main is Expedition,"项目默认启动没有进入真实世界")
+	require(main.get_node("GroupProvider").get_world_dir()=="user://worlds/seed42-reach-v1-6431746","新开局未隔离旧缓存")
 	var world = main.get_node("World")
 	var player = main.get_node("Player")
 	var clock = root.get_node("GameClock")
@@ -38,6 +43,16 @@ func _run() -> void:
 		samples.append([floori(clock.get_calendar_day()),state.width,state.depth,state.discharge_m3s,state.basin])
 	require(samples[0][1] != samples[2][1], "不同日期水情没有变化")
 	var saved_day: float = clock.get_calendar_day()
+	var split: float = world.get_split()
+	var lod_counts: Array = []
+	for factor in [split*0.5,split*2.0]:
+		world.set_split(factor)
+		await create_timer(1.0).timeout
+		lod_counts.append(world.get_tile_count())
+		var lod_state: Dictionary = world.get_river_at(river.x,river.z)
+		require(abs(lod_state.width-samples[-1][1])<0.01, "地面LOD切换后水情改变")
+	world.set_split(split)
+	print("seed42_rivers_e2e: LOD counts=%s" % [lod_counts])
 	clock.shift_days(20)
 	await process_frame
 	clock.set_date(int(saved_day),12)
@@ -62,6 +77,7 @@ func _run() -> void:
 	require(abs(returned.width-restored.width)<0.01, "跨岛及细版重载后日期水情改变")
 	main.queue_free()
 	await process_frame
+	require(root.get_node("DeveloperTools").prepare_world("user://worlds/seed42-reach-v1-6431746"), "世界存档元数据加载失败")
 	main=load("res://world_seed42.tscn").instantiate()
 	root.add_child(main)
 	world=main.get_node("World")

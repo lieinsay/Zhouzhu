@@ -1,6 +1,6 @@
 extends Node
-## 导出的游戏包的开局（project.godot 里 run/main_scene.template）：直接进剧情世界 seed42，
-## 同 F2 选「世界 seed42」一条路（存档目录 user://worlds/seed42）。编辑器里跑照旧是 main.tscn。
+## Rider、编辑器及导出包使用同一开局入口，直接进剧情世界seed42。
+## 同F2选「世界seed42」一条路，版本缓存目录由WorldSession::story_config统一决定。
 
 
 func _ready() -> void:
