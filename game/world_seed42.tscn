@@ -34,6 +34,7 @@ size = Vector2(240000, 240000)
 [node name="WorldSeed42" type="Expedition"]
 map = NodePath("PlanetHost")
 origin_dock = 1
+story_land_spawn = true
 destination_dock = 28
 kill_altitude = -40.0
 recall_distance = 200.0

@@ -1,4 +1,6 @@
 #include "expedition.h"
+#include "story_start.h"
+#include "group_provider.h"
 
 #include <cmath>
 #include <limits>
@@ -204,6 +206,9 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_player_path"), &Expedition::get_player_path);
     ClassDB::bind_method(D_METHOD("set_origin_dock", "value"), &Expedition::set_origin_dock);
     ClassDB::bind_method(D_METHOD("get_origin_dock"), &Expedition::get_origin_dock);
+    ClassDB::bind_method(D_METHOD("set_story_land_spawn","value"), &Expedition::set_story_land_spawn);
+    ClassDB::bind_method(D_METHOD("get_story_land_spawn"), &Expedition::get_story_land_spawn);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL,"story_land_spawn"),"set_story_land_spawn","get_story_land_spawn");
     ClassDB::bind_method(D_METHOD("set_destination_dock", "value"), &Expedition::set_destination_dock);
     ClassDB::bind_method(D_METHOD("get_destination_dock"), &Expedition::get_destination_dock);
     ClassDB::bind_method(D_METHOD("set_helm_range", "value"), &Expedition::set_helm_range);
@@ -307,6 +312,17 @@ void Expedition::_ready() {
         player->set_global_position(spawn.origin + Vector3(0, 0.1f, 0));
         player->set_look_yaw(yaw_of(spawn));
         player->set_facing_yaw(yaw_of(spawn));
+    }
+    const GroupProvider *provider=Object::cast_to<GroupProvider>(get_node_or_null("GroupProvider"));
+    if(story_land_spawn && (!provider || provider->get_story())) {
+        Vector3 at(real_t(story_start::SPAWN_X),0,real_t(story_start::SPAWN_Z));
+        const double ground=map->map_surface(at);
+        if(std::isfinite(ground) && map->map_island_at(at)>=0) {
+            at.y=real_t(ground+0.1); map->map_prepare(at);
+            player->set_global_position(at);
+            player->set_look_yaw(real_t(story_start::SPAWN_YAW));
+            player->set_facing_yaw(real_t(story_start::SPAWN_YAW));
+        } else ERR_PRINT(String(U"剧情出生坐标没有真实地面"));
     }
     spawn_point = player->get_global_position();
     player->get_camera()->make_current();

@@ -70,6 +70,7 @@ private:
     godot::NodePath ship_path = "Ship"; // 可以不接：那就只能走
     godot::NodePath player_path = "Player";
     int origin_dock = 0; // 地图的码头号
+    bool story_land_spawn = false;
     int destination_dock = 1;
     double helm_range = 2.2; // 离舵多近能上舵；离画样台多近能改船
     double dock_range = 45.0; // 离泊位多近能叫靠泊
@@ -351,6 +352,8 @@ public:
     godot::NodePath get_player_path() const { return player_path; }
     void set_origin_dock(int p_value) { origin_dock = p_value; }
     int get_origin_dock() const { return origin_dock; }
+    void set_story_land_spawn(bool value) { story_land_spawn=value; }
+    bool get_story_land_spawn() const { return story_land_spawn; }
     // 运行中改目的码头：重新找下标、没到过（测试与开发者用；地图宿主的码头号，跨群的带群号）
     void set_destination_dock(int p_value);
     int get_destination_dock() const { return destination_dock; }

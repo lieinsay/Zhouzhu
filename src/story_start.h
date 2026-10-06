@@ -10,10 +10,12 @@
 namespace story_start {
 
 constexpr int SEED = 42; // 世界种子（行星包 game/planet/seed42，存档目录 user://worlds/seed42）
-constexpr int SPAWN_NODE = 6329; // 出生的岛群（L5：地区 1，北纬 34.2°、东经 27.8°，年降水 810 mm；2026-09-29 以前是 #2051）
-constexpr int CLOCK_NODE = 6329; // 钟点 = 这一群的地方时（D10）
+constexpr int SPAWN_NODE = 6068; // 当前三轮地形竞争 + 连续河段水沙试验的剧情岛群
+constexpr int CLOCK_NODE = 6068; // 钟点 = 这一群的地方时（D10）
+constexpr double SPAWN_X = 24790.0, SPAWN_Z = -32330.0; // 村026旁、主干河岸；高度从真实地面取
+constexpr double SPAWN_YAW = 1.570796326794897; // 朝西望河
 constexpr int CALENDAR_START = 85; // 开局是一年里的第几天（L5：四月初二，开春第一个晴天；#2051 时是 3）
-constexpr int NEIGHBOR_NODE = 6327; // 仓库里另带细版的邻群：离开局那群最近（群心之间的大圆距离 84 km，同当初 2050 离 2051 114 km 的量法）
+constexpr int NEIGHBOR_NODE = 6067; // 新开局群心大圆距离最近的邻群
 
 constexpr const char *PLANET_DIR = "res://planet/seed42"; // 行星包（planet.bin、lods.bin、weather.bin、config.tsv）
 constexpr const char *GROUPS_DIR = "res://planet/seed42/groups"; // 仓库里带的岛群细版：<GROUPS_DIR>/<节点>/（同存档目录里的 groups/<节点>/）

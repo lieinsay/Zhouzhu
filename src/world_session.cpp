@@ -48,7 +48,8 @@ WorldConfig WorldSession::story_config() {
     WorldConfig c;
     c.name = STORY_NAME;
     c.mode = "story";
-    c.world_dir = String(WORLDS_DIR).path_join(STORY_NAME);
+    // 新地形不能复用旧群包、LOD 或以旧地形为基准的改造与库存；旧目录完整保留。
+    c.world_dir = String(WORLDS_DIR).path_join("seed42-reach-v1-6431746");
     c.planet_dir = story_start::PLANET_DIR;
     c.story = true;
     c.seed = story_start::SEED;
