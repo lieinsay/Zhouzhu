@@ -44,6 +44,17 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git/modules/extern/skyisle-gen/HEAD")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/.git/modules/extern/skyisle-gen/HEAD")
 endif()
+# HEAD 在分支快进时内容不变；同时监视实际分支引用，避免产物沿用旧提交戳。
+execute_process(COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}/extern/skyisle-gen" symbolic-ref -q HEAD
+    OUTPUT_VARIABLE ZHOUZHU_GENERATOR_REF OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(ZHOUZHU_GENERATOR_REF)
+    execute_process(COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}/extern/skyisle-gen" rev-parse --git-path "${ZHOUZHU_GENERATOR_REF}"
+        OUTPUT_VARIABLE ZHOUZHU_GENERATOR_REF_PATH OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    get_filename_component(ZHOUZHU_GENERATOR_REF_PATH "${ZHOUZHU_GENERATOR_REF_PATH}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extern/skyisle-gen")
+    if(EXISTS "${ZHOUZHU_GENERATOR_REF_PATH}")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${ZHOUZHU_GENERATOR_REF_PATH}")
+    endif()
+endif()
 
 # 生成器的 C++ 核心库（行星计划 P6e，D16）：skyisle-gen 作子模块（extern/skyisle-gen），只编它的 core/——静态库 skyisle_core，
 # 不要 Python 扩展、不要它的自检。浮点照它自己的 CMakeLists（MSVC 默认 /fp:precise、不开 /arch:AVX2：乘加不合并成 FMA，与 numpy 逐位对得上），
