@@ -1148,12 +1148,13 @@
     {
       "id": "world-river-net",
       "label": "河网",
-      "detail": "按汇流建河网（干流 + 支流、磨圆摆开、河口截在岸线）；栅格 v3 时宽深与生成器取大、平岸水面不高于生成器的 河床 + 水深。",
+      "detail": "rivers.tsv v1直接还原源中心线、down/join、米制浮点固定宽深和左右谷底；源包不走旧倍率、补造曲流或供水。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest world_rivers：588 条、1160 km，水面顺流不升、支流接干流、越往下越宽",
+      "evidence": "6068源数据34758点原值一致；2743河段、1867接点；source_rivers36638项通过。",
       "sources": [
-        "src/world_river.h",
-        "src/world_river.cpp"
+        "src/world_river.cpp",
+        "src/world_grid.cpp",
+        "src/gen_export.cpp"
       ],
       "since": "e23",
       "parent": "world-terrain"
@@ -1161,12 +1162,13 @@
     {
       "id": "world-river-regime",
       "label": "水情",
-      "detail": "weather.tsv 的逐日降水进快慢两个线性水库 → 径流指数（1 = 年均）；river_stage 按渗漏门槛（小溪先干）与水力几何给此刻的水深、水位、水面半宽，没过平岸就漫滩。着色器用同一公式。",
+      "detail": "源basin/rest第0年336日日指数及island.html溪涧开闭模型；区分固定河槽和当天水面，单年最大值不作为已标定平岸流量。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest：年均 = 1、0.15..6.7、小溪 0.5 时断流、大水漫滩不出滩",
+      "evidence": "默认故事入口五日变化、日期恢复、LOD切换137→175块、6067往返及世界元数据加载后重入无头通过；多年预测与演化未实现。",
       "sources": [
-        "src/world_river.h",
-        "src/world_river.cpp"
+        "src/world_river.cpp",
+        "src/world.cpp",
+        "game/shaders/river.gdshader"
       ],
       "since": "e23",
       "parent": "world-terrain"
@@ -3560,13 +3562,13 @@
     {
       "id": "world-session-start",
       "label": "开局配置",
-      "detail": "src/story_start.h（不含 Godot 头）：出生的群 6329、钟的群 6329（D10）、开局日 85（四月初二）、仓库里另带细版的邻群 6327、行星包与细版目录（game/planet/seed42、它底下 groups/<节点>）。WorldSession、GroupProvider、GroupStream、PlanetView、WorldClock、World、SiteStream、WorldLedgerSpec 的缺省读它；GDScript 读 StoryStart 类的静态方法；剧情世界的存档目录不再被 world.json 里的旧 spawn 钉住。",
+      "detail": "故事世界节点6068、邻群6067、第85日；村026附近河岸出生，独立版本缓存保留旧世界恢复路径。生存世界使用自己的落点。",
       "tag": "引擎构件",
-      "evidence": "ctest 5/5（core 1712 项）；dev_tools_e2e 按 F2 进剧情世界：出生在 #6329 主码头 #1 旁 0 m、HUD「群 #6329」、四月初二（第 85 天）、纬度 34.23°、地方时差 1.5 分钟",
+      "evidence": "项目默认boot入口进入6068及新缓存；出生24790,1226.61,-32330；碰撞、相机、85日、存档元数据加载通过。",
       "sources": [
         "src/story_start.h",
-        "src/story_start_api.h",
-        "src/story_start_api.cpp"
+        "src/world_session.cpp",
+        "src/expedition.cpp"
       ],
       "since": "e120",
       "parent": "world-session"
@@ -5023,7 +5025,10 @@
     {
       "from": "world-river-net",
       "to": "world-grid",
-      "label": "流向 / 汇流"
+      "label": "浮点源河网契约",
+      "chains": [
+        "seed42-source-rivers-6068"
+      ]
     },
     {
       "from": "world-river-regime",
@@ -5043,7 +5048,10 @@
     {
       "from": "world-river-water",
       "to": "world-river-regime",
-      "label": "径流指数"
+      "label": "当天逐流域水情",
+      "chains": [
+        "seed42-source-rivers-6068"
+      ]
     },
     {
       "from": "world-river-water",
@@ -7015,9 +7023,10 @@
     {
       "from": "gen-export",
       "to": "skyisle-core",
-      "label": "Group / World 的数",
+      "label": "源河段与日指数",
       "chains": [
-        "planet"
+        "planet",
+        "seed42-source-rivers-6068"
       ]
     },
     {
@@ -7666,6 +7675,14 @@
       "from": "zhouzhu-gen-near-lods",
       "to": "export-planet",
       "label": "同样的 lods.bin"
+    },
+    {
+      "from": "expedition",
+      "to": "world-session-start",
+      "label": "真实出生落点",
+      "chains": [
+        "seed42-source-rivers-6068"
+      ]
     }
   ],
   "chains": [
@@ -9915,6 +9932,76 @@
         "building-mesh",
         "placed-props",
         "world-2051-scene"
+      ]
+    },
+    {
+      "id": "seed42-source-rivers-6068",
+      "title": "源河网与6068河岸开局",
+      "story": "玩家在6068村落附近真实河岸出生，观察随日期变化的河水，跨岛后回来仍看到对应日期的水情。",
+      "date": "2026-10-06",
+      "color": "#b8a12a",
+      "commits": "20a5efe..e09661a",
+      "steps": [
+        {
+          "text": "从明确启用的当前生成器生成seed42世界和源河网",
+          "nodes": [
+            "skyisle-core",
+            "gen-core",
+            "export-planet-config"
+          ]
+        },
+        {
+          "text": "把真实河槽、支流接点和每日流域水情交给游戏",
+          "nodes": [
+            "gen-export",
+            "world-grid",
+            "world-river-net",
+            "world-river-regime"
+          ]
+        },
+        {
+          "text": "玩家在6068村026附近河岸真实地面出生",
+          "nodes": [
+            "world-session-start",
+            "expedition",
+            "player",
+            "world-terrain",
+            "terrain-tile"
+          ]
+        },
+        {
+          "text": "日期推进改变水面宽深，固定河槽保持源几何",
+          "nodes": [
+            "world-clock",
+            "world-river-regime",
+            "world-river-water"
+          ]
+        },
+        {
+          "text": "跨岛返回或重新进入后恢复对应日期的河水",
+          "nodes": [
+            "world-node",
+            "world-river-net",
+            "world-river-water"
+          ]
+        }
+      ],
+      "nodes": [
+        "world-river-net",
+        "world-river-regime",
+        "world-session-start",
+        "skyisle-core",
+        "gen-core",
+        "export-planet-config",
+        "gen-export",
+        "world-grid",
+        "expedition",
+        "player",
+        "world-terrain",
+        "terrain-tile",
+        "world-clock",
+        "world-river-water",
+        "world-node"
       ]
     }
   ],
@@ -13133,6 +13220,156 @@
         ],
         "adopted": [],
         "peers": []
+      }
+    },
+    {
+      "id": "e122",
+      "type": "slice",
+      "date": "2026-10-06",
+      "title": "切片：源河网与6068河岸开局",
+      "summary": "玩家在6068村落附近真实河岸出生，观察随日期变化的河水，跨岛后回来仍看到对应日期的水情。",
+      "commits": "20a5efe..43f072d",
+      "chain": "seed42-source-rivers-6068",
+      "nodes": [
+        "world-river-net",
+        "world-river-regime",
+        "world-session-start",
+        "skyisle-core",
+        "gen-core",
+        "export-planet-config",
+        "gen-export",
+        "world-grid",
+        "expedition",
+        "player",
+        "world-terrain",
+        "terrain-tile",
+        "world-clock",
+        "world-river-water",
+        "world-node"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "world-river-net",
+          "world-river-regime",
+          "world-session-start",
+          "skyisle-core",
+          "gen-core",
+          "export-planet-config",
+          "gen-export",
+          "world-grid",
+          "expedition",
+          "player",
+          "world-terrain",
+          "terrain-tile",
+          "world-clock",
+          "world-river-water",
+          "world-node"
+        ],
+        "updated": [
+          "world-river-net",
+          "world-river-regime",
+          "world-session-start"
+        ]
+      }
+    },
+    {
+      "id": "e123",
+      "type": "slice",
+      "date": "2026-10-06",
+      "title": "重画链路：源河网与6068河岸开局",
+      "summary": "玩家在6068村落附近真实河岸出生，观察随日期变化的河水，跨岛后回来仍看到对应日期的水情。",
+      "commits": "20a5efe..9230333",
+      "chain": "seed42-source-rivers-6068",
+      "nodes": [
+        "world-river-net",
+        "world-river-regime",
+        "world-session-start",
+        "skyisle-core",
+        "gen-core",
+        "export-planet-config",
+        "gen-export",
+        "world-grid",
+        "expedition",
+        "player",
+        "world-terrain",
+        "terrain-tile",
+        "world-clock",
+        "world-river-water",
+        "world-node"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "world-river-net",
+          "world-river-regime",
+          "world-session-start",
+          "skyisle-core",
+          "gen-core",
+          "export-planet-config",
+          "gen-export",
+          "world-grid",
+          "expedition",
+          "player",
+          "world-terrain",
+          "terrain-tile",
+          "world-clock",
+          "world-river-water",
+          "world-node"
+        ],
+        "updated": [
+          "world-river-regime"
+        ]
+      }
+    },
+    {
+      "id": "e124",
+      "type": "slice",
+      "date": "2026-10-06",
+      "title": "重画链路：源河网与6068河岸开局",
+      "summary": "玩家在6068村落附近真实河岸出生，观察随日期变化的河水，跨岛后回来仍看到对应日期的水情。",
+      "commits": "20a5efe..e09661a",
+      "chain": "seed42-source-rivers-6068",
+      "nodes": [
+        "world-river-net",
+        "world-river-regime",
+        "world-session-start",
+        "skyisle-core",
+        "gen-core",
+        "export-planet-config",
+        "gen-export",
+        "world-grid",
+        "expedition",
+        "player",
+        "world-terrain",
+        "terrain-tile",
+        "world-clock",
+        "world-river-water",
+        "world-node"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "world-river-net",
+          "world-river-regime",
+          "world-session-start",
+          "skyisle-core",
+          "gen-core",
+          "export-planet-config",
+          "gen-export",
+          "world-grid",
+          "expedition",
+          "player",
+          "world-terrain",
+          "terrain-tile",
+          "world-clock",
+          "world-river-water",
+          "world-node"
+        ],
+        "updated": [
+          "world-river-regime",
+          "world-session-start"
+        ]
       }
     }
   ],

@@ -1,0 +1,342 @@
+{
+  "generator_branch": "codex/fix-coast-coordinates",
+  "generator_commit": "6431746",
+  "old_backup": {
+    "config.tsv": {
+      "bytes": 27828,
+      "sha256": "c1757916a5d487e51a91d081299ba4fa7fca5efe21320bb615efea19f223a954"
+    },
+    "lods.bin": {
+      "bytes": 45862090,
+      "sha256": "6b396f8cf8b77ed6c1ff5651815b01ecf84ed1de7d58e30bf7029c547b883ac9"
+    },
+    "planet.bin": {
+      "bytes": 7981060,
+      "sha256": "cb8cab3f3ea9c65863329ad746675141abf00ade9f68f93395a89bd09073738b"
+    },
+    "weather.bin": {
+      "bytes": 9523381,
+      "sha256": "16b9330d89a7cc1ad8e0a6ab41cd3beba71320662e261d52376607809ecca2e6"
+    },
+    "groups/6327/resources.tsv": {
+      "bytes": 137285,
+      "sha256": "b9938d53d68545c1f1f1bf60270c00f72dca4236ce1a9de4f2dcdd894cc0c8ed"
+    },
+    "groups/6327/sites.tsv": {
+      "bytes": 38719,
+      "sha256": "8703594f85c7601455783f9948e6f448e6b2a48c5d8bcfb6c3bc9a5e1797d75a"
+    },
+    "groups/6327/stamp.json": {
+      "bytes": 517,
+      "sha256": "4b5b0c67250245ed924af5a688a7533f4ffe3df022cfa0e01f9802b6866b0e95"
+    },
+    "groups/6327/terrain.bin": {
+      "bytes": 31989694,
+      "sha256": "f2f107b30727c07cc8f065de023773447c457c9a3ac27f36445a6e28c4d15e85"
+    },
+    "groups/6327/weather.tsv": {
+      "bytes": 10740,
+      "sha256": "e0e2121c2c810ddde59d62102c8d4d5259393eecd8326cfbe436c21a242351e0"
+    },
+    "groups/6327/world.json": {
+      "bytes": 168987,
+      "sha256": "325e4e485d39c9228c6b45ec000a36d664820edaa45931a204810c45b435175f"
+    },
+    "groups/6329/resources.tsv": {
+      "bytes": 182384,
+      "sha256": "30c0d92bc47e4593594bbc1e43ddcb4ae8ae5e026aeda9e93e41fa702e4379dc"
+    },
+    "groups/6329/sites.tsv": {
+      "bytes": 68975,
+      "sha256": "bdd8f4f25fc0c992c3ffbdf3c4a0a43be193fa3cfa5d2c8e7544c3171c878225"
+    },
+    "groups/6329/stamp.json": {
+      "bytes": 516,
+      "sha256": "7b915aaf0f608597b0a3e6564f826bd14c36187673458920ce292c7fdf1b03a7"
+    },
+    "groups/6329/terrain.bin": {
+      "bytes": 44032072,
+      "sha256": "add42046b8f9220ead7aaeffc40b97bddfcdf2710676d9c5b05012298130d463"
+    },
+    "groups/6329/weather.tsv": {
+      "bytes": 10791,
+      "sha256": "ab928ee6113bbdfc19eb94595041b3136f171504519f6d8b3b34f7af74add4b4"
+    },
+    "groups/6329/world.json": {
+      "bytes": 269608,
+      "sha256": "6acd8ddfd8e09b58181f3e3c8f92590d2cbbc3a4aaf47a81ad39adfed26edee5"
+    }
+  },
+  "source": {
+    "points": 34758,
+    "segments": 2743,
+    "basins": 45,
+    "days": 336,
+    "backup_files": 16,
+    "backup_bytes": 140304647,
+    "config_migration": {
+      "added": 355,
+      "removed": 38,
+      "changed": 2
+    },
+    "source_meta": {
+      "age": 0.36235007643699646,
+      "age_zh": "中年",
+      "boundary_axis_deg": -86.2,
+      "boundary_kernel": 0.671,
+      "boundary_type": "汇聚",
+      "capture_model": "topographic-v1",
+      "capture_passes": 3,
+      "channel_model": "reach-gravel-v1",
+      "cls": "medium",
+      "cls_zh": "中疏诸岛",
+      "engine": "cpp",
+      "generator": "skyisle_gen.island",
+      "island_version": "9",
+      "lat": 31.797464063288004,
+      "layer": "第三层（按需生成，不回灌）",
+      "layered": false,
+      "lon": 23.037380069834285,
+      "node": 6068,
+      "plate": 18,
+      "res_m": 100.0,
+      "run": "seed42",
+      "seconds": 6.48,
+      "seed": 42,
+      "stamp": "2281a0de34c39e74"
+    }
+  },
+  "date": "2026-10-06",
+  "export_output": [
+    "build\\seed42-refresh\\package\\planet.bin: 8000 群、44 列、31 张场，8.3 MB；生成器 6431746",
+    "build\\seed42-refresh\\package\\lods.bin: 16026 条粗版（2000 m, 1000 m；近邻 500 m），177.2 MB；没有粗版的群 0",
+    "build\\seed42-refresh\\package\\weather.bin: 8000 群的逐日天气，9.4 MB；没有天气的群 0；合计 195.0 MB",
+    "  细版 6067：类型逐日相同 336/336（100.0%），整行相同 336/336",
+    "  细版 6068：类型逐日相同 336/336（100.0%），整行相同 336/336",
+    "  细版 6327：类型逐日相同 336/336（100.0%），整行相同 336/336",
+    "  细版 6329：类型逐日相同 336/336（100.0%），整行相同 336/336"
+  ],
+  "data_commit": "9230333",
+  "package": {
+    "planet_nodes": 8000,
+    "territory_violations": {
+      "343": 13.977999687194824,
+      "374": 3.4240000247955322,
+      "417": 6.067999839782715,
+      "532": 2.194999933242798,
+      "561": 4.817999839782715,
+      "640": 4.241000175476074,
+      "658": 2.0769999027252197,
+      "672": 2.062000036239624,
+      "674": 0.746999979019165,
+      "772": 3.555000066757202,
+      "830": 2.6649999618530273,
+      "880": 7.554999828338623,
+      "901": 1.065999984741211,
+      "902": 2.5199999809265137,
+      "991": 1.6920000314712524,
+      "1005": 6.197999954223633,
+      "1065": 1.4079999923706055,
+      "1232": 0.3619999885559082,
+      "1344": 4.196000099182129,
+      "1435": 2.6679999828338623,
+      "1606": 3.7929999828338623,
+      "2127": 5.7179999351501465,
+      "2259": 1.4819999933242798,
+      "2262": 1.3899999856948853,
+      "2263": 0.43299999833106995,
+      "3075": 2.5759999752044678,
+      "3944": 3.9830000400543213,
+      "4340": 2.0390000343322754,
+      "4545": 1.5369999408721924,
+      "4609": 3.5199999809265137,
+      "5430": 1.0390000343322754,
+      "5571": 3.109999895095825,
+      "5654": 0.5640000104904175,
+      "5685": 0.3840000033378601,
+      "5761": 4.890999794006348,
+      "5792": 0.9089999794960022,
+      "5823": 1.649999976158142,
+      "5824": 0.6650000214576721,
+      "6032": 2.121000051498413,
+      "6070": 4.632999897003174,
+      "6364": 2.76200008392334,
+      "6515": 9.1850004196167,
+      "6592": 2.180999994277954,
+      "7232": 0.14100000262260437,
+      "7250": 0.2280000001192093,
+      "7277": 1.4459999799728394,
+      "7454": 3.390000104904175,
+      "7460": 1.7309999465942383,
+      "7690": 3.734999895095825
+    },
+    "lod_entries": 16026,
+    "lod_nodes_by_resolution": {
+      "2000": 8000,
+      "1000": 7996,
+      "800": 4,
+      "500": 25,
+      "400": 1
+    },
+    "weather_nodes": 8000,
+    "weather_days": 336,
+    "files": {
+      "config.tsv": {
+        "bytes": 39746,
+        "sha256": "c32fb664d8d277eb232b9e84c657bb7f04dd63ad846ea95d92c13543b0f5860b"
+      },
+      "lods.bin": {
+        "bytes": 177214468,
+        "sha256": "f90d46c7dba0e99dbd97714903aa892030033399eda6628757bfe69ef26d7bdf"
+      },
+      "planet.bin": {
+        "bytes": 8336413,
+        "sha256": "7e2b5c5397b30c71eb317e70518363499c7d69fa572ac6e727436e8e3e3a20c6"
+      },
+      "weather.bin": {
+        "bytes": 9401931,
+        "sha256": "2c9ce2e29688582305f8a3f1db39f2052bb5e6df8a009b56e75ca51782804fb0"
+      },
+      "groups/6067/resources.tsv": {
+        "bytes": 89896,
+        "sha256": "725240990b558af83c187bbe1d45f0c8d3f5dfe8360e11c5532429d82d719959"
+      },
+      "groups/6067/rivers.tsv": {
+        "bytes": 3572766,
+        "sha256": "690edfa551a5dd4e33a5c4d7e68faa3519125d9edbf7139d488013a5e056d2f2"
+      },
+      "groups/6067/sites.tsv": {
+        "bytes": 36926,
+        "sha256": "4e594a7a392359c8d064c1e033bc0613c6a68a1d91bf55d7c328ed424e3cc9a8"
+      },
+      "groups/6067/stamp.json": {
+        "bytes": 550,
+        "sha256": "9daa0bc6e94f452449df38d00ed16713c23e1963f866d0cb7613695dd7f7c299"
+      },
+      "groups/6067/terrain.bin": {
+        "bytes": 21915400,
+        "sha256": "09b68dd45c5f746ea1a5afef46ddb9545777e8df5722b42d843f5e9385f6a67f"
+      },
+      "groups/6067/weather.tsv": {
+        "bytes": 10361,
+        "sha256": "1f8fde532811c842a2c893d6327ecb339e06696a802097d0ab025e3c89ea8d0f"
+      },
+      "groups/6067/world.json": {
+        "bytes": 170840,
+        "sha256": "a42f49284919241c163245afc2b5a9d1ce3ca298c78f3da348d74c0f29cdd49f"
+      },
+      "groups/6068/resources.tsv": {
+        "bytes": 128734,
+        "sha256": "13d03188bae3c0dba4e909e03466d43250d44542e249297b2e6bca512e1b5a75"
+      },
+      "groups/6068/rivers.tsv": {
+        "bytes": 6642502,
+        "sha256": "1ade0e5df85828250445ee484d20987e3f5c109e8245569b107f1c54f40f58be"
+      },
+      "groups/6068/sites.tsv": {
+        "bytes": 64824,
+        "sha256": "5a31abad7a645765f741a543388771bbc4f8de47b9bf7f362db2b08c0657c589"
+      },
+      "groups/6068/stamp.json": {
+        "bytes": 550,
+        "sha256": "71d244b95bb2401dbda7b3f638f36ec43e219deddbec56fe830019d8954aac4d"
+      },
+      "groups/6068/terrain.bin": {
+        "bytes": 53416948,
+        "sha256": "2845a638672a64562f4ed144376b06b5606046621dc026674625a7a0e6f231b3"
+      },
+      "groups/6068/weather.tsv": {
+        "bytes": 10257,
+        "sha256": "10e4d5758a230cdb83e3b2a76d90a3a23b7009f52ad1bfe5920cb64a8304ca5e"
+      },
+      "groups/6068/world.json": {
+        "bytes": 261690,
+        "sha256": "e264d841969106ec1d33aa3fab9b3fcfb40c0006969ea5f481de131f6a520e32"
+      },
+      "groups/6327/resources.tsv": {
+        "bytes": 149980,
+        "sha256": "68818cadcf8ab7dc66c3d05733ed9027afb68315630317f3b389cd50572a19e7"
+      },
+      "groups/6327/rivers.tsv": {
+        "bytes": 7680907,
+        "sha256": "f5bfa5685b368b5d0eee066130e0032fcfce565c770c4112da666f014a439399"
+      },
+      "groups/6327/sites.tsv": {
+        "bytes": 36713,
+        "sha256": "cb2fc17646128f90f1f92b4164747fc31a40caa0ea73ba5f3be2dbef877bb9e0"
+      },
+      "groups/6327/stamp.json": {
+        "bytes": 550,
+        "sha256": "0edd198a884e23a8ef71df2585f31c5ea0919e749a3f7405fa6167696212042d"
+      },
+      "groups/6327/terrain.bin": {
+        "bytes": 42652912,
+        "sha256": "d063fe0a323d554488efca41053e21bf8469364aa64e6c3cf7866bb8fab7f38c"
+      },
+      "groups/6327/weather.tsv": {
+        "bytes": 10392,
+        "sha256": "9a46d1a1431ebdb749f7651d2b476b272c68cd80e6f234ca2d2c13eb10f3a2bc"
+      },
+      "groups/6327/world.json": {
+        "bytes": 166331,
+        "sha256": "c93e6975eefdb290015afc8383e2d65f01bc64e96393cd7d30a8e2a4a9a6b91e"
+      },
+      "groups/6329/resources.tsv": {
+        "bytes": 141619,
+        "sha256": "1d4346706cecd67934c0a0a2813d7fbd3fdf30a36f3c6c6a03a7dae3771ea473"
+      },
+      "groups/6329/rivers.tsv": {
+        "bytes": 10291574,
+        "sha256": "e413f2fb371ebe6aa0280830ee7cf904b399c3027533746808e328c411a12661"
+      },
+      "groups/6329/sites.tsv": {
+        "bytes": 91162,
+        "sha256": "f42bafa09b58bb586825d2d9f96e0f86c4dd135c510e25400c21642f28f03efe"
+      },
+      "groups/6329/stamp.json": {
+        "bytes": 549,
+        "sha256": "73f3872d2ec7d94a7c68d7712a5e0b34b142a597a8aaccab72fb3a3a63c57734"
+      },
+      "groups/6329/terrain.bin": {
+        "bytes": 58709416,
+        "sha256": "98ea6a97d7f136c0af4bd114ff6406df4a1fcea3d1f20f1e7f28095ce5e7d763"
+      },
+      "groups/6329/weather.tsv": {
+        "bytes": 10394,
+        "sha256": "ebc308bcf04864a6fc7a75089a77accffca21ed90c3ab299a3b726dbbea46b0f"
+      },
+      "groups/6329/world.json": {
+        "bytes": 352369,
+        "sha256": "6c33959ec3af020715310f7e8e428c9b6cbe07e6c056161f8a8386a7f8422b3b"
+      }
+    }
+  },
+  "headless_output": [
+    "Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org",
+    "",
+    "PlanetView：行星天气场好了——8000 群有逐日天气，后台 873 ms",
+    "seed42_rivers_e2e: LOD counts=[137, 175]",
+    "seed42_rivers_e2e: jump=6067 ms=1067.554",
+    "seed42_rivers_e2e: jump=6068 ms=165.549",
+    "seed42_rivers_e2e: PASS node=6068 spawn=(24790.0, 1226.61, -32330.0) camera=true date_start=85 river={ \"x\": 24750.0, \"z\": -32350.0, \"dir_x\": -0.70710678118655, \"dir_z\": 0.70710678118655, \"width\": 17.6632270812988, \"floodplain\": 62.0, \"acc_km2\": 114.970001220703, \"mouth\": true, \"mouth_x\": 20550.0, \"mouth_z\": -34250.0, \"mouth_dir_x\": 0.0, \"mouth_dir_z\": -1.0 } samples=[[346, 6.46914758801994, 0.20121553352078, 0.47876013994217, 1], [421, 18.4747823801792, 1.01108595350144, 27.0978239207268, 1], [436, 12.4216321639555, 0.54897969527518, 5.88646991109848, 1], [536, 15.1984880587697, 0.74878809535731, 12.7897351670265, 1], [636, 8.26975075192875, 0.29358326128981, 1.23109750270844, 1]] restored=8.269751"
+  ],
+  "source_checks": [
+    "[source_rivers]",
+    "6068: stems=2743 joins=1867 max_width=21.665562 spawn=(24790.0,1226.601555,-32330.0) island=1 river_distance=42.426407 channel=17.677327",
+    "36638 项检查，0 项失败"
+  ],
+  "headless": {
+    "exit_code": 0,
+    "seconds": 10.531999999991967,
+    "timeout": 180,
+    "args": [
+      "D:/Program Files/Godot/Godot_v4.4.1-stable_win64.exe",
+      "--headless",
+      "--path",
+      "game",
+      "--script",
+      "res://tests/seed42_rivers_e2e.gd"
+    ]
+  },
+  "startup_commit": "e09661a"
+}

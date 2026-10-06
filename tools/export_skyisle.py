@@ -14,7 +14,9 @@
 （build/Debug/zhouzhu_gen.exe group --config game/planet/seed42/config.tsv --seed 42 --nodes 6329,6327 --out-root game/planet/seed42/groups，
 与这里逐字节相同，见 tools/zhouzhu_gen.cpp），这个脚本留作对照。
 
-读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json，写五份文件。
+读 terrain.npz / island.json / settlements.json / weather_y0.csv / resources.json / rivers.json，写六份文件。
+新增 rivers.tsv v1 保存未按分米/厘米取整的源河槽、接点和流域日指数；C++路线直接读核心数组，
+本脚本的均流/均值几何受 rivers.json 的显示精度限制，不能把新增河网文件声称为逐字节一致。
 生成器（台面口径那一版起）的 height_m 是主岛陆地高程的中位数，峰由第三层长出来；聚落层没有码头、只有泊场——
 码头由这里从泊场推出来（docks_from_landings），村里并进镇的非农户与专业聚落（见 export）：
 

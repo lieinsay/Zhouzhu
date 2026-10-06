@@ -1,4 +1,5 @@
 // 岛群的河的水面（src/river_mesh.* 建的带子，World 挂上、每帧设 runoff）。
+// rivers.tsv源包按CUSTOM2中的均值宽深、basin逐日指数和溪涧开闭算水面；下列平岸公式仅供旧包兼容。
 // 水位按径流指数在顶点里算——与 src/world_river.cpp 的 river_stage 同一个公式，改一处要改两处：
 //   流量 / 平岸流量 = min(max(0, r − 门槛) / ((1 − 门槛) · bankfull_ratio), flood_max)
 //   水深 = 平岸深 · (流量 / 平岸流量)^stage_exp；水位 = 河床 + 水深
