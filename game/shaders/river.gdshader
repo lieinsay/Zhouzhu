@@ -15,6 +15,11 @@ render_mode blend_mix, cull_disabled, depth_draw_always, specular_schlick_ggx;
 #include "res://shaders/planet_curve.gdshaderinc"
 
 uniform float runoff = 1.0;
+uniform bool source_rivers = false;
+uniform float basin_runoff[256];
+uniform float stream_threshold = 0.3;
+uniform float station_width_exp = 0.26;
+uniform float station_depth_exp = 0.40;
 uniform float bankfull_ratio = 3.0;
 uniform float stage_exp = 0.4;
 uniform float flood_max = 3.0;
@@ -40,6 +45,7 @@ varying float v_along;
 varying float v_fall;
 varying float v_speed;
 varying float v_ice;
+varying float v_runoff;
 
 void vertex() {
 	float bed = CUSTOM0.x;
@@ -53,10 +59,17 @@ void vertex() {
 	float half_w = depth <= 0.0 ? 0.0
 			: depth <= bank_depth ? flat_half + (half_bank - flat_half) * sqrt(depth / bank_depth)
 								  : min(half_bank + (depth - bank_depth) / floodplain_slope, half_bank + floodplain);
+	if (source_rivers) {
+		float wet = CUSTOM2.w > 0.5 ? round(4.0 * smoothstep(0.75, 1.25, CUSTOM0.z / max(stream_threshold, 1e-6))) / 4.0 : 1.0;
+		flow = max(0.0, basin_runoff[clamp(int(CUSTOM2.z), 0, 255)]) * wet;
+		depth = CUSTOM2.y * pow(flow, station_depth_exp);
+		half_w = 0.5 * CUSTOM2.x * pow(flow, station_width_exp);
+	}
 	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float lift = max(0.0, length(world.xz - CAMERA_POSITION_WORLD.xz) - far_lift_start) * far_lift;
 	VERTEX.y = bed + depth + lift - CUSTOM1.y * fall_length;
 	v_depth = depth;
+	v_runoff = source_rivers ? flow : runoff;
 	v_half = half_w;
 	v_lateral = UV.y;
 	v_along = UV.x;
@@ -73,7 +86,7 @@ void vertex() {
 }
 
 void fragment() {
-	if (v_depth < wet_depth || abs(v_lateral) > v_half) {
+	if (v_depth <= (source_rivers ? 0.0 : wet_depth) || abs(v_lateral) > v_half) {
 		discard;
 	}
 	float t = TIME * v_speed;
@@ -84,7 +97,7 @@ void fragment() {
 	float deep = clamp(v_depth / 1.2, 0.0, 1.0);
 	float edge = 1.0 - smoothstep(0.0, 0.5 + 0.3 * v_half, v_half - abs(v_lateral));
 	vec3 col = mix(shallow_color, deep_color, deep);
-	col = mix(col, muddy_color, smoothstep(turbid_from, turbid_full, runoff) * 0.7);
+	col = mix(col, muddy_color, smoothstep(turbid_from, turbid_full, v_runoff) * 0.7);
 	col = mix(col, foam_color, clamp(edge * 0.35 + v_fall * 0.7 + max(0.0, w2) * 0.06 * v_speed, 0.0, 1.0));
 	NORMAL_MAP = mix(NORMAL_MAP, vec3(0.5, 0.5, 1.0), v_ice);
 	ALBEDO = mix(col, ice_color, v_ice);

@@ -363,6 +363,9 @@ void GroupWorld::install() {
             const RiverRules &rr = terrain.get_rivers().get_rules();
             river_material.instantiate();
             river_material->set_shader(shader);
+            river_material->set_shader_parameter("source_rivers",grid.source_rivers);
+            river_material->set_shader_parameter("station_width_exp",grid.station_width_exp);
+            river_material->set_shader_parameter("station_depth_exp",grid.station_depth_exp);
             river_material->set_shader_parameter("bankfull_ratio", rr.bankfull_ratio);
             river_material->set_shader_parameter("stage_exp", rr.stage_exp);
             river_material->set_shader_parameter("flood_max", rr.flood_max);
@@ -470,6 +473,13 @@ bool GroupWorld::load_data(std::string &r_error) {
         return false;
     }
     info = parsed;
+    const String rivers_path=data_dir.path_join("rivers.tsv");
+    if(FileAccess::file_exists(rivers_path)) {
+        const auto text=FileAccess::get_file_as_string(rivers_path).utf8();
+        if(!parse_source_rivers(std::string(text.get_data(),size_t(text.length())),grid,r_error)) return false;
+    } else if(int(Dictionary(info.get("hydro",Dictionary())).get("river_contract",0))>0) {
+        r_error="缺少 rivers.tsv，拒绝从栅格补造河流"; return false;
+    }
     node_id = int(Dictionary(info.get("source", Dictionary())).get("node", -1));
     std::vector<WorldIsland> islands;
     const Array rows = info.get("islands", Array());
@@ -561,10 +571,26 @@ void GroupWorld::update_runoff() {
         runoff = runoff_override;
     } else {
         const WorldClock *clock = WorldClock::get_singleton();
-        runoff = regime.runoff(clock ? clock->get_calendar_day() : 0.0);
+        const double day=clock?clock->get_calendar_day():0;
+        if(grid.source_rivers) {
+            RiverVertex rest; rest.basin=int(grid.basin_daily.size())-1;
+            runoff=terrain.get_rivers().daily_index(rest,day);
+        } else runoff = regime.runoff(day);
     }
     if (river_material.is_valid()) {
         river_material->set_shader_parameter("runoff", runoff);
+        if(grid.source_rivers) {
+            const WorldClock *clock=WorldClock::get_singleton();
+            const double day=clock?clock->get_calendar_day():0;
+            PackedFloat32Array indices;
+            indices.resize(256);
+            for(size_t b=0;b<grid.basin_daily.size();++b) {
+                RiverVertex v; v.basin=int(b);
+                indices.set(int64_t(b),real_t(runoff_override>=0?runoff_override:terrain.get_rivers().daily_index(v,day)));
+            }
+            river_material->set_shader_parameter("basin_runoff",indices);
+            river_material->set_shader_parameter("stream_threshold",terrain.get_rivers().stream_threshold(day));
+        }
     }
 }
 
@@ -591,6 +617,7 @@ JobPool::Work GroupWorld::river_job(const RiverChunkKey &p_key) const {
         }
         out->custom0 = float32s(m.custom0);
         out->custom1 = float32s(m.custom1);
+        out->custom2 = float32s(m.custom2);
         out->indices = int32s(m.indices);
         return out;
     };
@@ -620,9 +647,11 @@ void GroupWorld::adopt_river(std::unique_ptr<RiverArrays> p_river) {
     arrays[Mesh::ARRAY_TEX_UV] = m.uvs;
     arrays[Mesh::ARRAY_CUSTOM0] = m.custom0;
     arrays[Mesh::ARRAY_CUSTOM1] = m.custom1;
+    arrays[Mesh::ARRAY_CUSTOM2] = m.custom2;
     arrays[Mesh::ARRAY_INDEX] = m.indices;
     const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) |
-            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT);
+            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT) |
+            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM2_SHIFT);
     Ref<ArrayMesh> mesh;
     mesh.instantiate();
     mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
@@ -731,7 +760,12 @@ Dictionary GroupWorld::get_river_at(double p_x, double p_z) const {
     if (!loaded || !terrain.has_rivers() || !terrain.get_rivers().nearest(p_x, p_z, 1e9, hit) || hit.distance > hit.at.core()) {
         return out;
     }
-    const RiverStage st = river_stage(hit.at, runoff, terrain.get_rivers().get_rules());
+    const WorldClock *clock=WorldClock::get_singleton();
+    const RiverStage st = grid.source_rivers?terrain.get_rivers().stage(hit.at,clock?clock->get_calendar_day():0,runoff_override):river_stage(hit.at, runoff, terrain.get_rivers().get_rules());
+    out["source_rivers"]=grid.source_rivers;
+    out["basin"]=hit.at.basin;
+    out["discharge_m3s"]=hit.at.q_mean*st.flow;
+    out["runoff_index"]=st.flow;
     out["distance"] = hit.distance;
     out["bankfull_width"] = hit.at.width;
     out["bankfull_depth"] = hit.at.depth;
@@ -740,7 +774,8 @@ Dictionary GroupWorld::get_river_at(double p_x, double p_z) const {
     out["level"] = st.level;
     out["depth"] = st.depth;
     out["width"] = st.wet ? 2.0 * st.half_width : 0.0;
-    out["flow"] = st.flow;
+    // 保持旧查询的 flow = 流量 / 假设成槽流量；年最大指数另无平岸含义。
+    out["flow"] = grid.source_rivers ? std::pow(st.depth/std::max(1e-12,hit.at.depth),1.0/grid.station_depth_exp) : st.flow;
     out["wet"] = st.wet;
     out["acc_km2"] = hit.at.acc;
     return out;

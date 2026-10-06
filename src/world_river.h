@@ -10,6 +10,8 @@
 #include "world_grid.h"
 
 // 岛群的河：河网（河在哪、多宽多深、水面多高）与水情（今天水多大）。不含 Godot 头，建好之后只读。
+// rivers.tsv v1 优先：直接读取源中心线、down/join、固定河槽、左右谷底及 basin/rest 日指数。
+// 没有这份契约的旧包才走下述历史还原；源包不使用旧宽深倍率、最小宽度、曲流或供水公式。
 //
 // 河网：栅格的 D8 流向是一棵树（每岛一片，出口是岸缘），汇流面积到 min_acc_km2 的格是河道。
 //   从每个出口逆流而上，每到一格挑汇流最大的上游格接着走，就是一条「主干」；其余上游格各自开一条支流，
@@ -65,6 +67,11 @@ struct RiverRules {
 };
 
 struct RiverVertex {
+    bool source = false;
+    int basin = -1, level = 0;
+    double mean_width = 0, mean_depth = 0, q_mean = 0;
+    double left = 0, right = 0;
+    double profile_exp = 0.40 / 0.26;
     double x = 0.0, z = 0.0;
     double s = 0.0; // 从源头起的弧长
     double surface = 0.0; // 平岸水面
@@ -76,6 +83,7 @@ struct RiverVertex {
 
     double half() const { return 0.5 * width; }
     double core() const { return 0.5 * width + floodplain; } // 河道 + 滩（地形全按横断面）
+    double core(double side) const { return source ? half() + (side >= 0 ? left : right) : core(); }
     double bed() const { return surface - depth; }
 };
 
@@ -110,6 +118,11 @@ RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRule
 
 class WorldRivers {
 public:
+    double daily_index(const RiverVertex &at, double day) const;
+    double stream_threshold(double day) const;
+    RiverStage stage(const RiverVertex &at, double day, double override_index = -1) const;
+    bool from_source() const { return source; }
+    const std::vector<std::vector<double>> &daily_basins() const { return basin_daily; }
     static constexpr double BUCKET_M = 64.0;
     static constexpr int MAX_HITS = 8;
 
@@ -134,6 +147,10 @@ public:
     double total_length() const;
 
 private:
+    bool source = false;
+    double width_exp=0.26, depth_exp=0.40;
+    std::vector<std::vector<double>> basin_daily;
+    std::vector<double> stream_daily;
     RiverRules rules;
     std::vector<RiverStem> stems;
     std::vector<uint32_t> seg_stem; // 段号 → 河

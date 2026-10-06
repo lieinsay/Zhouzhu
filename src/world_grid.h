@@ -12,6 +12,20 @@
 // 格 (r, c) 的格心在 (x0 + c·res, z0 + r·res)。
 
 struct WorldGrid {
+    struct SourcePoint {
+        double x=0, z=0, surface=0, bed=0, width=0, depth=0;
+        double mean_width=0, mean_depth=0, acc=0, q_mean=0, left=0, right=0;
+        int level=0;
+    };
+    struct SourceStem {
+        int down=-1, join=-1, basin=-1, island=0, exit=0;
+        std::vector<SourcePoint> points;
+    };
+    bool source_rivers = false;
+    double station_width_exp=0.26, station_depth_exp=0.40;
+    std::vector<SourceStem> source_stems;
+    std::vector<std::vector<double>> basin_daily;
+    std::vector<double> stream_min_daily;
     int rows = 0, cols = 0;
     double res = 100.0;
     double x0 = 0.0, z0 = 0.0;
@@ -79,6 +93,9 @@ struct WorldGrid {
     int patch_at(double p_x, double p_z) const;
     int patch_cell(size_t p_index) const { return patch.empty() ? -1 : int(patch[p_index]) - 1; }
 };
+
+// rivers.tsv v1：源中心线、固定河槽、年均水面和按流域的日指数。失败不回退补造河流。
+bool parse_source_rivers(const std::string &text, WorldGrid &grid, std::string &error);
 
 // 地表类的颜色（sRGB 0..1，地图底图与地面网格共用一套）
 struct GroundColor {

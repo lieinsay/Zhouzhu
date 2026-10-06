@@ -62,7 +62,7 @@ struct RiverArrays : JobResult {
     double min_y = 0.0, max_y = 0.0;
     godot::PackedVector3Array vertices, normals;
     godot::PackedVector2Array uvs;
-    godot::PackedFloat32Array custom0, custom1;
+    godot::PackedFloat32Array custom0, custom1, custom2;
     godot::PackedInt32Array indices;
 
     bool empty() const { return indices.is_empty(); }

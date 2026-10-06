@@ -185,14 +185,14 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
         const RiverRules &rr = rivers->get_rules();
         double fade = 1.0;
         for (int k = 0; k < n_hits; k++) {
-            fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core()) / rr.blend_m));
+            fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core(hits[k].side)) / rr.blend_m));
         }
         const double natural = g.height_at(p_x, p_z) + fade * detail(p_x, p_z);
         double top = 1e18;
         for (int k = 0; k < n_hits; k++) {
             const RiverHit &h = hits[k];
             const double target = river_profile(h.at, h.distance, rr);
-            const double w = 1.0 - smooth01((h.distance - h.at.core()) / rr.blend_m);
+            const double w = 1.0 - smooth01((h.distance - h.at.core(h.side)) / rr.blend_m);
             top = std::min(top, natural + w * (target - natural));
             s.bed = std::max(s.bed, float(1.0 - smooth01((h.distance - h.at.half()) / 1.5)));
             s.bank = std::max(s.bank, float(w));

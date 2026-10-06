@@ -26,11 +26,14 @@ struct GroupMeta {
     double lapse_c_per_km = 6.0; // [s04.climate] lapse_c_per_km
     double snow_temp_c = 0.5; // [island.weather] snow_temp_c
     double fog_surface_max_m = 800.0; // [island.weather] fog_surface_max_m
+    double stream_min_km2 = 0.3, station_width_exp = 0.26, station_depth_exp = 0.40;
+    bool capture_topographic = false, reach_geometry = false;
+    int capture_passes = 1;
 };
 
 // 岛群包的五份（export_skyisle.export）
 struct GroupFiles {
-    std::string terrain_bin, world_json, sites_tsv, resources_tsv, weather_tsv;
+    std::string terrain_bin, world_json, sites_tsv, resources_tsv, weather_tsv, rivers_tsv;
 };
 GroupFiles group_files(const skyisle::island::Group &p_group, const GroupMeta &p_meta);
 

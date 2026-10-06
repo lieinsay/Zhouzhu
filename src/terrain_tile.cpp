@@ -400,6 +400,57 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
 
     // 裙边垂多深：比相邻两级精度之差大就行
     const float skirt = float(2.0 + step);
+    // 近处网格沿源河心与河岸切分；亚格细河无需放宽，也不会被一张跨河三角形盖住。
+    struct RiverCut { RiverVertex a,b; };
+    std::vector<RiverCut> river_cuts;
+    if(p_terrain.get_grid().source_rivers && p_terrain.has_rivers() && step<=32) {
+        p_terrain.get_rivers().segments_in(mesh.origin_x,mesh.origin_z,mesh.origin_x+N*step,mesh.origin_z+N*step,
+            [&](int si,int vi) { const auto &v=p_terrain.get_rivers().get_stems()[size_t(si)].v; river_cuts.push_back({v[size_t(vi)],v[size_t(vi)+1]}); });
+    }
+    auto river_quad=[&](int i,int j) {
+        struct P { double x,z; };
+        const double x=mesh.origin_x+j*step,z=mesh.origin_z+i*step;
+        std::vector<std::vector<P>> polygons{{{x,z},{x+step,z},{x+step,z+step},{x,z+step}}};
+        bool changed=false;
+        for(const auto &cut:river_cuts) {
+            const auto &a=cut.a,&c=cut.b;
+            const double margin=std::max(a.half(),c.half());
+            if(std::max(a.x,c.x)+margin<x || std::min(a.x,c.x)-margin>x+step || std::max(a.z,c.z)+margin<z || std::min(a.z,c.z)-margin>z+step) continue;
+            const double dx=c.x-a.x,dz=c.z-a.z,len=std::hypot(dx,dz);
+            if(len<1e-6) continue;
+            for(double offset:{-1.0,-0.5,0.0,0.5,1.0}) {
+                auto side=[&](const P &p) {
+                    const double t=((p.x-a.x)*dx+(p.z-a.z)*dz)/(len*len);
+                    return ((p.z-a.z)*dx-(p.x-a.x)*dz)/len-offset*(a.half()+t*(c.half()-a.half()));
+                };
+                std::vector<std::vector<P>> next;
+                for(const auto &poly:polygons) {
+                    std::vector<P> lo,hi;
+                    for(size_t k=0;k<poly.size();++k) {
+                        const P p=poly[k],q=poly[(k+1)%poly.size()]; const double fp=side(p),fq=side(q);
+                        if(fp<=1e-9) lo.push_back(p); if(fp>=-1e-9) hi.push_back(p);
+                        if((fp<0 && fq>0)||(fp>0 && fq<0)) {
+                            const double t=fp/(fp-fq); P r{p.x+t*(q.x-p.x),p.z+t*(q.z-p.z)}; lo.push_back(r); hi.push_back(r);
+                        }
+                    }
+                    if(lo.size()>=3 && hi.size()>=3) { next.push_back(std::move(lo)); next.push_back(std::move(hi)); changed=true; }
+                    else next.push_back(poly);
+                }
+                polygons=std::move(next);
+            }
+        }
+        if(!changed) return false;
+        for(const auto &poly:polygons) {
+            std::vector<int> ids;
+            for(const auto &p:poly) {
+                const auto sample=p_terrain.sample(p.x,p.z); GroundSeason season;
+                const GroundColor color=ground_color(p_terrain,sample,p.x,p.z,1,step,season);
+                ids.push_back(b.vertex(float(p.x-mesh.origin_x),float(sample.top),float(p.z-mesh.origin_z),0,1,0,color,season));
+            }
+            for(size_t k=1;k+1<ids.size();++k) b.triangle(ids[0],ids[k],ids[k+1],true);
+        }
+        return true;
+    };
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             if (!solid(i, j)) {
@@ -414,8 +465,10 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             const bool hole = holed(i, j);
             // 从上往下看：x 向右、z 向下，(i,j) → (i,j+1) → (i+1,j) 是顺时针
             if (!hole) {
-                b.triangle(top_id[k00], top_id[k01], top_id[k10], true);
-                b.triangle(top_id[k01], top_id[k11], top_id[k10], true);
+                if(!river_quad(i,j)) {
+                    b.triangle(top_id[k00], top_id[k01], top_id[k10], true);
+                    b.triangle(top_id[k01], top_id[k11], top_id[k10], true);
+                }
             }
             if (i % bottom_stride == 0 && j % bottom_stride == 0) {
                 const int d = bottom_stride;

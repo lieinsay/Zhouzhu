@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <sstream>
 
 namespace {
 
@@ -213,5 +214,52 @@ bool parse_world_grid(const uint8_t *p_data, size_t p_size, WorldGrid &r_grid, s
         if (version != 8) g.shore[k] = float(shore[k]);
     }
     r_grid = std::move(g);
+    return true;
+}
+
+bool parse_source_rivers(const std::string &text, WorldGrid &g, std::string &error) {
+    std::vector<WorldGrid::SourceStem> stems;
+    std::vector<std::vector<double>> basins;
+    std::vector<double> threshold;
+    double we=0.26,de=0.4;
+    std::istringstream input(text);
+    std::string line,key;
+    bool header=false;
+    auto fail=[&]() { error="rivers.tsv 契约、索引或数值无效"; return false; };
+    while(std::getline(input,line)) {
+        std::istringstream row(line);
+        if(!(row>>key) || key[0]=='#') continue;
+        if(key=="rivers") { int v=0; if(header || !(row>>v) || v!=1) return fail(); header=true; }
+        else if(!header) return fail();
+        else if(key=="exponents") { if(!(row>>we>>de) || !(we>0 && de>0 && we<1 && de<1)) return fail(); }
+        else if(key=="basin" || key=="threshold") {
+            if(key=="basin") { int id=-1; if(!(row>>id) || id!=int(basins.size()) || id>=256) return fail(); basins.emplace_back(); }
+            auto &values=key=="basin"?basins.back():threshold;
+            double value;
+            while(row>>value) { if(!std::isfinite(value) || value<0) return fail(); values.push_back(value); }
+            if(values.empty() || !row.eof()) return fail();
+        } else if(key=="stem") {
+            int id=-1; WorldGrid::SourceStem stem;
+            if(!(row>>id>>stem.down>>stem.join>>stem.basin>>stem.island>>stem.exit) || id!=int(stems.size())) return fail();
+            stems.push_back(stem);
+        } else if(key=="point") {
+            if(stems.empty()) return fail();
+            WorldGrid::SourcePoint p;
+            if(!(row>>p.x>>p.z>>p.surface>>p.bed>>p.width>>p.depth>>p.mean_width>>p.mean_depth>>p.acc>>p.q_mean>>p.left>>p.right>>p.level)) return fail();
+            const double numbers[]={p.x,p.z,p.surface,p.bed,p.width,p.depth,p.mean_width,p.mean_depth,p.acc,p.q_mean,p.left,p.right};
+            for(double v:numbers) if(!std::isfinite(v)) return fail();
+            if(p.width<=0 || p.depth<=0 || p.mean_width<0 || p.mean_depth<0 || p.acc<0 || p.q_mean<0 || p.left<0 || p.right<0 || p.level<0 || p.level>3) return fail();
+            stems.back().points.push_back(p);
+        } else return fail();
+    }
+    if(!header || basins.empty() || threshold.empty()) return fail();
+    for(const auto &b:basins) if(b.size()!=threshold.size()) return fail();
+    for(size_t i=0;i<stems.size();++i) {
+        const auto &s=stems[i];
+        if(s.points.empty() || s.basin < -1 || s.basin>=int(basins.size()) || s.down < -1 || s.down>=int(i) ||
+                (s.down>=0 && (s.join<0 || s.join>=int(stems[size_t(s.down)].points.size())))) return fail();
+    }
+    g.source_rivers=true; g.station_width_exp=we; g.station_depth_exp=de;
+    g.source_stems=std::move(stems); g.basin_daily=std::move(basins); g.stream_min_daily=std::move(threshold);
     return true;
 }

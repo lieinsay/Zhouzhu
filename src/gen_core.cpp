@@ -14,6 +14,7 @@
 #include "skyisle/island/generate.hpp"
 #include "skyisle/island/resources.hpp"
 #include "skyisle/island/settle.hpp"
+#include "skyisle/island/rivernet.hpp"
 #include "skyisle/planet/view.hpp"
 
 #include "gen_export.h"
@@ -97,6 +98,12 @@ gen_export::GroupMeta meta_of(const PlanetState &p_planet, int64_t p_node) {
     m.lapse_c_per_km = p_planet.config.planet.get("s04.climate.lapse_c_per_km", 6.0);
     m.snow_temp_c = p_planet.config.island.get("weather.snow_temp_c", 0.5);
     m.fog_surface_max_m = p_planet.config.island.get("weather.fog_surface_max_m", 800.0);
+    m.stream_min_km2 = p_planet.config.island.get("hydro.stream_min_km2", 0.3);
+    m.station_width_exp = p_planet.config.island.get("hydro.at_station_width_b", 0.26);
+    m.station_depth_exp = p_planet.config.island.get("hydro.at_station_depth_f", 0.40);
+    m.capture_topographic = p_planet.config.island.get("hydro.capture_topographic_v1", 0) != 0;
+    m.capture_passes = int(p_planet.config.island.get("hydro.capture_topographic_passes", 1));
+    m.reach_geometry = p_planet.config.island.get("hydro.reach_geometry_v1", 0) != 0;
     return m;
 }
 
@@ -144,6 +151,7 @@ isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_expor
         *r_weather = gen_export::weather_entry(p_node, g, meta_of(p_planet, p_node));
     }
     isl::build_settlements(g, p_planet.view, cfg.island);
+    isl::build_rivernet(g, cfg.island);
     return g;
 }
 
@@ -345,8 +353,8 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
             r_error = "建不了目录 " + tmp.u8string() + "：" + ec.message();
             return false;
         }
-        const std::pair<const char *, const std::string *> parts[5] = { { "terrain.bin", &files.terrain_bin }, { "weather.tsv", &files.weather_tsv },
-            { "world.json", &files.world_json }, { "sites.tsv", &files.sites_tsv }, { "resources.tsv", &files.resources_tsv } };
+        const std::pair<const char *, const std::string *> parts[] = { { "terrain.bin", &files.terrain_bin }, { "weather.tsv", &files.weather_tsv },
+            { "world.json", &files.world_json }, { "sites.tsv", &files.sites_tsv }, { "resources.tsv", &files.resources_tsv }, { "rivers.tsv", &files.rivers_tsv } };
         for (const auto &p : parts) {
             std::ofstream f(tmp / p.first, std::ios::binary | std::ios::trunc);
             f.write(p.second->data(), std::streamsize(p.second->size()));
@@ -379,6 +387,7 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         stamp.set("run", run);
         Json exp = Json::obj();
         exp.set("terrain_version", 8);
+        exp.set("river_version", 1);
         exp.set("exporter", "src/gen_export.cpp");
         stamp.set("export", exp);
         std::vector<std::pair<std::string, double>> secs = { { "generate", r_times.generate }, { "write", r_times.write } };

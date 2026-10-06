@@ -40,8 +40,9 @@ struct Emit {
         mesh.positions.insert(mesh.positions.end(), { float(x - mesh.origin_x), float(y), float(z - mesh.origin_z) });
         mesh.normals.insert(mesh.normals.end(), { 0.0f, 1.0f, 0.0f });
         mesh.uvs.insert(mesh.uvs.end(), { float(u), float(v) });
-        mesh.custom0.insert(mesh.custom0.end(), { float(p_at.bed()), float(p_at.depth), float(p_at.dry), float(p_at.half()) });
+        mesh.custom0.insert(mesh.custom0.end(), { float(p_at.bed()), float(p_at.depth), float(p_at.source?p_at.acc:p_at.dry), float(p_at.half()) });
         mesh.custom1.insert(mesh.custom1.end(), { float(p_at.floodplain), float(p_fall), float(p_speed), 0.0f });
+        mesh.custom2.insert(mesh.custom2.end(), {float(p_at.mean_width),float(p_at.mean_depth),float(p_at.basin),float(p_at.level==0)});
         if (mesh.positions.size() == 3) {
             mesh.min_y = mesh.max_y = y;
         } else {
@@ -112,7 +113,9 @@ RiverMesh build_river_mesh(const WorldTerrain &p_terrain, const RiverChunkKey &p
             // 近岸处带子收窄到离岸线的距离：河口一带岸线斜着切过河，整幅带子会伸到云海上空
             const double room = std::max(0.5, p_terrain.sample_raw(v.x, v.z).shore - p_rules.coast_margin_m);
             const double half = std::min(v.half(), room), core = std::min(v.core(), std::max(half, room));
-            const double offs[5] = { -core, -half, 0.0, half, core };
+            const double left=v.source?std::min(half+v.left,std::max(half,room)):core;
+            const double right=v.source?std::min(half+v.right,std::max(half,room)):core;
+            const double offs[5] = { -right, -half, 0.0, half, left };
             for (int k = 0; k < 5; k++) {
                 row[e][k] = emit.vertex(v.x + lx * offs[k], v.bed(), v.z + lz * offs[k], v.s, offs[k], v, 0.0, speed);
             }

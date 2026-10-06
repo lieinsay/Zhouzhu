@@ -728,6 +728,50 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
     std::vector<double> inside;
     F.terrain_bin = terrain_bin(g, R, island, inside);
 
+    // 源河网独立于栅格量化；q_bf 的单年最大值不用于固定河槽。
+    if (!g.has_rnet || g.rnet.basins.empty()) throw std::runtime_error("缺少源河网及逐日流域数据");
+    {
+        const auto &net = g.rnet;
+        auto num = [](double v) { return pyfmt::repr(v); };
+        std::string s = "rivers 1\nexponents " + num(m.station_width_exp) + " " + num(m.station_depth_exp) + "\n";
+        for (size_t i=0; i<net.basins.size(); ++i) {
+            s += "basin " + std::to_string(i);
+            for (double v : net.basins[i].index) s += " " + num(pyround(v, 3));
+            s += "\n";
+        }
+        // 与 island.html dayTab 的溪涧开闭模型同式，同一年跑两遍。
+        const size_t D = g.weather.day.size();
+        double snow=0, store=0;
+        const double decay=std::exp(-1.0/30.0), ref=(1000.0/D)/(1-decay);
+        std::vector<double> threshold(D);
+        for (int pass=0; pass<2; ++pass) for (size_t d=0; d<D; ++d) {
+            const double t=pyround(g.weather.temp_c[d],1), p=pyround(g.weather.precip_mm[d],1);
+            double liquid=0;
+            if(t<=0.5) snow+=p; else liquid+=p;
+            const double melt=t>0?std::min(snow,3*t):0;
+            snow-=melt; liquid+=melt; store=store*decay+liquid;
+            threshold[d]=std::min(g.river_thr,std::max(m.stream_min_km2,ref/std::max(store,1e-6)));
+        }
+        s += "threshold";
+        for(double v:threshold) s += " " + num(v);
+        s += "\n";
+        for(size_t i=0;i<net.segs.size();++i) {
+            const auto &seg=net.segs[i];
+            s += "stem " + std::to_string(i)+" "+std::to_string(seg.down)+" "+std::to_string(seg.join)+" "+std::to_string(seg.basin)+" "+std::to_string(seg.island)+" "+std::to_string(seg.exit)+"\n";
+            for(int j=0;j<seg.n;++j) {
+                const size_t k=size_t(seg.start+j), cell=size_t(net.cell[k]);
+                s += "point";
+                const double values[]={ R.ox_km*1000+(cell%g.W+0.5)*R.res, -R.oy_km*1000+(cell/g.W+0.5)*R.res,
+                    double(float(g.height.v[cell])),double(float(g.bed_m.v[cell])),double(float(g.width_m.v[cell])),double(float(g.depth_m.v[cell])),
+                    double(net.w_mean[k]),double(net.d_mean[k]),double(net.acc[k]),double(net.q_mean[k]),
+                    pyround(net.fp_l[k],0),pyround(net.fp_r[k],0),double(net.level[k]) };
+                for(double v:values) s += " " + num(v);
+                s += "\n";
+            }
+        }
+        F.rivers_tsv=s;
+    }
+
     // ---- weather.tsv
     F.weather_tsv = weather_tsv(g, m, R);
 
@@ -759,6 +803,13 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         src.set("lat", g.inp.lat);
         src.set("lon", g.inp.lon);
         world.set("source", src);
+        Json hydro=Json::obj();
+        hydro.set("river_contract",1);
+        hydro.set("capture_topographic_v1",m.capture_topographic);
+        hydro.set("capture_topographic_passes",m.capture_passes);
+        hydro.set("reach_geometry_v1",m.reach_geometry);
+        hydro.set("sediment_evolution","mass_only");
+        world.set("hydro",hydro);
         Json grid = Json::obj();
         grid.set("rows", R.rows);
         grid.set("cols", R.cols);

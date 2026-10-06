@@ -136,6 +136,12 @@ void closest_on_segment(double p_px, double p_pz, double p_ax, double p_az, doub
 
 RiverVertex lerp_vertex(const RiverVertex &a, const RiverVertex &b, double t) {
     RiverVertex v;
+    v.source=a.source; v.basin=a.basin; v.level=a.level;
+    v.profile_exp=a.profile_exp;
+    v.mean_width=a.mean_width+(b.mean_width-a.mean_width)*t;
+    v.mean_depth=a.mean_depth+(b.mean_depth-a.mean_depth)*t;
+    v.q_mean=a.q_mean+(b.q_mean-a.q_mean)*t;
+    v.left=a.left+(b.left-a.left)*t; v.right=a.right+(b.right-a.right)*t;
     v.x = a.x + (b.x - a.x) * t;
     v.z = a.z + (b.z - a.z) * t;
     v.s = a.s + (b.s - a.s) * t;
@@ -174,6 +180,11 @@ double RiverRules::dry_threshold(double p_acc_km2) const {
 }
 
 double river_profile(const RiverVertex &p_at, double p_d, const RiverRules &p_rules) {
+    if(p_at.source) {
+        const double half=std::max(1e-6,p_at.half()), d=std::abs(p_d);
+        if(d<=half) return p_at.bed()+p_at.depth*std::pow(d/half,p_at.profile_exp);
+        return p_at.surface; // C2 已雕刻的谷底为平滩，不再添加游戏侧横坡。
+    }
     const double b = std::max(1e-3, p_at.half());
     const double flat = p_rules.bed_flat * b;
     const double d = std::abs(p_d);
@@ -206,6 +217,32 @@ RiverStage river_stage(const RiverVertex &p_at, double p_runoff, const RiverRule
 std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const RiverRules &p_rules, uint64_t p_seed, const ShoreFn &p_shore) {
     auto net = std::make_shared<WorldRivers>();
     net->rules = p_rules;
+    if(g.source_rivers) {
+        net->source=true; net->width_exp=g.station_width_exp; net->depth_exp=g.station_depth_exp;
+        net->basin_daily=g.basin_daily; net->stream_daily=g.stream_min_daily;
+        for(const auto &s:g.source_stems) {
+            RiverStem stem; stem.parent=s.down; stem.mouth=s.exit==1; stem.island=s.island;
+            for(const auto &p:s.points) {
+                RiverVertex v; v.source=true; v.basin=s.basin<0?int(g.basin_daily.size())-1:s.basin; v.level=p.level;
+                v.profile_exp=g.station_depth_exp/g.station_width_exp;
+                v.x=p.x; v.z=p.z; v.surface=p.bed+p.depth; v.width=p.width; v.depth=p.depth;
+                v.mean_width=p.mean_width; v.mean_depth=p.mean_depth; v.q_mean=p.q_mean; v.acc=p.acc;
+                v.left=p.left; v.right=p.right; // 源 fp_left/right 是河岸外的谷底宽。
+                v.floodplain=std::max(v.left,v.right);
+                if(!stem.v.empty()) v.s=stem.v.back().s+std::hypot(v.x-stem.v.back().x,v.z-stem.v.back().z);
+                stem.v.push_back(v);
+            }
+            // 源 segments 的末点不含下游接点；join 明确指定那条 D8 连接边。
+            if(s.down>=0) {
+                RiverVertex join=net->stems[size_t(s.down)].v[size_t(s.join)];
+                join.s=stem.v.back().s+std::hypot(join.x-stem.v.back().x,join.z-stem.v.back().z);
+                stem.v.push_back(join);
+            }
+            net->stems.push_back(std::move(stem));
+        }
+        net->index_segments();
+        return net;
+    }
     if (!g.has_hydro()) {
         return net;
     }
@@ -458,6 +495,30 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
     }
     net->index_segments();
     return net;
+}
+
+namespace {
+double day_value(const std::vector<double> &values,double day) {
+    if(values.empty()) return 0;
+    int d=int(std::floor(day))%int(values.size()); if(d<0) d+=int(values.size());
+    return values[size_t(d)]; // island.html 按整数日取值；不跨日插值，循环第 0 年。
+}
+}
+double WorldRivers::daily_index(const RiverVertex &v,double day) const {
+    return source && v.basin>=0 && v.basin<int(basin_daily.size()) ? day_value(basin_daily[size_t(v.basin)],day) : 1;
+}
+double WorldRivers::stream_threshold(double day) const { return day_value(stream_daily,day); }
+RiverStage WorldRivers::stage(const RiverVertex &v,double day,double override_index) const {
+    if(!v.source) return river_stage(v,override_index>=0?override_index:1,rules);
+    double wet=1;
+    if(v.level==0) wet=std::round(4*smoothstep((v.acc/std::max(1e-6,stream_threshold(day))-0.75)/0.5))/4;
+    const double index=(override_index>=0?override_index:daily_index(v,day))*wet;
+    RiverStage out;
+    out.flow=index; out.depth=v.mean_depth*std::pow(std::max(0.0,index),depth_exp);
+    out.level=v.bed()+out.depth;
+    out.half_width=0.5*v.mean_width*std::pow(std::max(0.0,index),width_exp);
+    out.wet=index>0 && out.depth>0 && out.half_width>0;
+    return out;
 }
 
 void WorldRivers::index_segments() {

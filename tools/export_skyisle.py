@@ -354,6 +354,8 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
             f.write(terrain["rockwall_m"].astype("<f4").tobytes())
 
     write_weather(src, info, dst, run)
+    if (src / "rivers.json").exists():
+        write_rivers(src, info, terrain, dst)
 
     islands = []
     for isl in info["islands"]:
@@ -427,6 +429,12 @@ def export(src: Path, dst: Path, terrain_only: bool = False, run: Path | None = 
         old = json.loads((dst / "world.json").read_text(encoding="utf-8"))
         for key in ("villages", "hamlets", "docks", "outposts", "bridgeheads", "population"):
             world[key] = old.get(key)
+    if (src / "rivers.json").exists():
+        world["hydro"] = {"river_contract":1,
+            "capture_topographic_v1": info.get("meta",{}).get("capture_model") == "topographic-v1",
+            "capture_topographic_passes": info.get("meta",{}).get("capture_passes",1),
+            "reach_geometry_v1":info.get("meta",{}).get("channel_model") == "reach-gravel-v1",
+            "sediment_evolution":"mass_only"}
     (dst / "world.json").write_text(json.dumps(world, ensure_ascii=False, indent=1), encoding="utf-8")
     write_sites(world, dst)
     if (src / "resources.json").exists():
@@ -488,6 +496,58 @@ def write_sites(world: dict, dst: Path) -> None:
             row = (kind, v["id"], v["island"], v["pos"][0], v["pos"][1], v["households"], 1 if v.get("seat") else 0, v.get("name", ""))
             lines.append("\t".join(str(x) for x in row))
     (dst / "sites.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
+def write_rivers(src: Path, info: dict, terrain: dict, dst: Path) -> None:
+    """rivers.tsv v1；固定河槽读浮点栅格，年最大字段不作平岸流量。"""
+    path = src / "rivers.json"
+    if not path.exists():
+        raise ValueError("缺少 rivers.json，不能补造源河网")
+    net = json.loads(path.read_text(encoding="utf-8"))
+    columns = {k: i for i, k in enumerate(net["cols"])}
+    cfg = {}
+    if (src.parent.parent / "config.resolved.toml").exists():
+        import tomllib
+        cfg = tomllib.loads((src.parent.parent / "config.resolved.toml").read_text(encoding="utf-8"))["island"]["hydro"]
+    we, de = cfg.get("at_station_width_b", .26), cfg.get("at_station_depth_f", .4)
+    lines = ["rivers 1", f"exponents {we} {de}"]
+    for i, basin in enumerate(net["basins"]):
+        lines.append("basin " + str(i) + " " + " ".join(map(str, basin["index"])))
+    wx = (dst / "weather.tsv").read_text(encoding="utf-8").splitlines()
+    days = [row.split("\t") for row in wx if row and not row.startswith("#")]
+    decay = np.exp(-1 / 30)
+    reference = (1000 / len(days)) / (1 - decay)
+    snow = store = 0.
+    threshold = []
+    for repeat in range(2):
+        threshold = []
+        for row in days:
+            p, t = float(row[1]), float(row[2])
+            liquid = 0.
+            if t <= .5: snow += p
+            else: liquid += p
+            melt = min(snow, 3*t) if t > 0 else 0.
+            snow -= melt
+            store = store*decay + liquid + melt
+            threshold.append(min(info["hydro"]["river_threshold_km2"], max(info["hydro"]["stream_min_km2"], reference / max(store, 1e-6))))
+    lines.append("threshold " + " ".join(map(str, threshold)))
+    raster = info["raster"]
+    ox, oy = raster["origin_km"]
+    res = raster["res_m"]
+    for i, seg in enumerate(net["segments"]):
+        exit_code = ["汇入", "崖边", "湖", "没入地里"].index(seg["exit"])
+        lines.append(f"stem {i} {seg['down']} {seg['join']} {seg['basin']} {seg['island']} {exit_code}")
+        for point in seg["pts"]:
+            p = {key: point[ix] for key, ix in columns.items()}
+            r, c = int(p["row"]), int(p["col"])
+            values = [ox*1000+(c+.5)*res, -oy*1000+(r+.5)*res,
+                      float(terrain["height"][r,c]), float(terrain["bed_m"][r,c]),
+                      float(terrain["w_ch_m"][r,c]), float(terrain["d_ch_m"][r,c]),
+                      float(np.float32(terrain["w_ch_m"][r,c] / cfg.get("bf_ratio_channel",5)**we)) if cfg.get("reach_geometry_v1") else p["w_mean_m"],
+                      float(np.float32(terrain["d_ch_m"][r,c] / cfg.get("bf_ratio_channel",5)**de)) if cfg.get("reach_geometry_v1") else p["d_mean_m"],
+                      p["acc_km2"], p["q_mean"], p["fp_left_m"], p["fp_right_m"], p["level"]]
+            lines.append("point " + " ".join(map(str, values)))
+    (dst / "rivers.tsv").write_text("\n".join(lines)+"\n", encoding="utf-8")
 
 
 def write_resources(src: Path, dst: Path) -> None:

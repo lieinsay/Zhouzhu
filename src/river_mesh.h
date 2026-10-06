@@ -28,6 +28,7 @@ struct RiverMesh {
     std::vector<float> uvs; // uv
     std::vector<float> custom0; // rgba
     std::vector<float> custom1; // rgba
+    std::vector<float> custom2; // 源河：年均宽、年均深、流域号、溪涧标志
     std::vector<int32_t> indices; // 正面顺时针（Godot 约定），从上往下看
     double min_y = 0.0, max_y = 0.0; // 河床的高低（包围盒）
 
