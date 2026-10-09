@@ -1,0 +1,1 @@
+- [ME Pro access](mepro-access.md) — ssh mepro, repo ~/dev/skyisle-gen, venv ~/.venvs/skyisle, detached serve command

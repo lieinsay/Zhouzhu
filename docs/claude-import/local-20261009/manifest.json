@@ -1,0 +1,270 @@
+{
+  "date": "2026-10-09",
+  "sources": [
+    "C:/Users/Liein/.claude/projects/D--Project-Zhouzhu/memory",
+    "C:/Users/Liein/.claude/projects/D--Project-skyisle-gen/memory",
+    "extern/skyisle-gen/CLAUDE.md"
+  ],
+  "files": [
+    {
+      "path": "zhouzhu-memory/commit-split-by-topic.md",
+      "sha256": "1a5f6beb43f61c8f16c7e888a1642eb803ceef6215735bdd9e54451cc848c246",
+      "bytes": 1020
+    },
+    {
+      "path": "zhouzhu-memory/commit-without-asking.md",
+      "sha256": "6173ca47ff34c811dc9333a402f8fbacc21e3ade0e5586ca82f7ab23a49b1149",
+      "bytes": 1001
+    },
+    {
+      "path": "zhouzhu-memory/dev-machines.md",
+      "sha256": "1d779d27bf9e6c97e3aebbce096a588b85e205c4a5f2fe423e9725dfc69c47f1",
+      "bytes": 2299
+    },
+    {
+      "path": "zhouzhu-memory/feedback-generator-before-game.md",
+      "sha256": "3c8db260c07954b30accd125e522caf6cc45fdbba1b77fdf2c0bf0c552e8cd53",
+      "bytes": 1868
+    },
+    {
+      "path": "zhouzhu-memory/feedback-no-long-carry-walks.md",
+      "sha256": "7e9dcb6521026afb0f5d91c044a21a41cff0d9afaa98610c47be047f12b4d04a",
+      "bytes": 1019
+    },
+    {
+      "path": "zhouzhu-memory/feedback-reply-in-chinese.md",
+      "sha256": "28a83295985c0dd7eb25569bb6159d78a7607058fc2fdd43d708b0d6bfeb4710",
+      "bytes": 513
+    },
+    {
+      "path": "zhouzhu-memory/feedback-skyisle-main-follows.md",
+      "sha256": "9103392e63cf719672c6f81ef3e3329575414c53e63e20a46bfac3b085f031c1",
+      "bytes": 1108
+    },
+    {
+      "path": "zhouzhu-memory/fmap-remote-access.md",
+      "sha256": "cc450a72138b844113357d5c3895f95d3976f9f5d4eaf8ba60ba81bc29ed62de",
+      "bytes": 1287
+    },
+    {
+      "path": "zhouzhu-memory/godot-cpp-chinese-literals.md",
+      "sha256": "a946b0a8b1815365b46581688c1e7fa13829b9ae2cd451e6d87751dbd5087a50",
+      "bytes": 1939
+    },
+    {
+      "path": "zhouzhu-memory/godot-rider-debug-setup.md",
+      "sha256": "784a2be9960539ceb0283fd7aa0ce20534892ea7277ac9f7ff4322c4775c27a2",
+      "bytes": 2121
+    },
+    {
+      "path": "zhouzhu-memory/MEMORY.md",
+      "sha256": "ee22f81d140ba2ea1ea50bed1da9304ba80ea893c0d8e0dc9473af35487d5041",
+      "bytes": 10630
+    },
+    {
+      "path": "zhouzhu-memory/planet-generator-split-out.md",
+      "sha256": "df98096a67ced6ac35d3767321abea55df2fbbba38b9d4bf48782a8db90ebb5f",
+      "bytes": 3087
+    },
+    {
+      "path": "zhouzhu-memory/rider-ninja-stale-deps.md",
+      "sha256": "f240dc5646f2b410fab20e08c514e572658411aa72c8987125bddf1bb1a9505d",
+      "bytes": 2029
+    },
+    {
+      "path": "zhouzhu-memory/user-language.md",
+      "sha256": "67bda14fc7e65771bd3dd471afc36a495beed7dbb816dc6309492b0894ecf1fd",
+      "bytes": 570
+    },
+    {
+      "path": "zhouzhu-memory/work-on-main.md",
+      "sha256": "ceab579fc536b7c674266b2f82585d04f9dc63c493ab602cb67cf433c4a0c8f9",
+      "bytes": 1190
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-console-utf8.md",
+      "sha256": "8a40b2634c242c2d71da1e3db4fec1afcbdb57cc71a9261337bbcb99dfcfe4f6",
+      "bytes": 1732
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-core-architecture.md",
+      "sha256": "5259d24260648982a68dc880d7fec4b7c922ac05210bd15fe4b388f7244746f0",
+      "bytes": 2461
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-export-package.md",
+      "sha256": "c98834e7b2fddd6448e5efbb7baa31e3551f10fa17624996247719f550c5a9ac",
+      "bytes": 2780
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-cover-blend.md",
+      "sha256": "6a82dd523483305eb74f74b3dc20d6e44501c34cdfabac89cef3d4e15c2ab279",
+      "bytes": 2696
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-interiors.md",
+      "sha256": "9959d407c0f02ee2c77062ecad54d26f3f0264a82a3db2efa1843776d0e083f3",
+      "bytes": 2231
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-resource-fields.md",
+      "sha256": "d3d281905abc1dc8d7c5df995a6b3e7db478e68447a3b662f10997e0c04d0223",
+      "bytes": 3375
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-rivers.md",
+      "sha256": "b1cdfe6b0de7e83f1ec75c398f61169615af88b8bc40fc79754b098a19a5f101",
+      "bytes": 1984
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-scale.md",
+      "sha256": "fd029acad6421d720b4bbf8f7d6adda0b1013bec8229f3bbacd37f0df286ed55",
+      "bytes": 3049
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-seasons-weather.md",
+      "sha256": "f0a2973116f4ae295a2a25d27058425b2d8deb7afa37f4dfbffa4713412c851c",
+      "bytes": 3404
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-ship-3d.md",
+      "sha256": "a0b8ac961bebfd842d044876382ff53803c4769432550540ce1f41603c356f29",
+      "bytes": 3116
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-extend-terrain-v3.md",
+      "sha256": "9f99e7085031482a4f05eb68ef6ec7266b3bd7144088d03d41618b0caabf011d",
+      "bytes": 2182
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-fix-god-orbit.md",
+      "sha256": "3d1bd791460bf4dd11d8ccb3d19024fc3dc20902fb1d750eba2e9bf780f7173c",
+      "bytes": 1861
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-headless-screenshot.md",
+      "sha256": "3446c64b32a16d5ed6456834bb2d61732ed25b28fe571fa0bf6fd088045fd957",
+      "bytes": 3126
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-mepro-dev.md",
+      "sha256": "0066241443280069d3f5d8557b7346f3e1713ae1ad405586439d2d81c9bfc159",
+      "bytes": 1330
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-plan-float.md",
+      "sha256": "dee57a704fa475122192124be4450397ca2f7011107c811fe42afb8f0ff648c4",
+      "bytes": 2915
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-plan-land-p0.md",
+      "sha256": "4ce1866a6de92eceac6d784c767b9d2b3941744472b3d8a08a911ebd50611eea",
+      "bytes": 1332
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-plan-land.md",
+      "sha256": "1a90cdbbd1d5a32f41d54f24d8fb6107d3d039c5ca4b2bd5f0d302adc3611feb",
+      "bytes": 3550
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-plan-planet.md",
+      "sha256": "82af53b1eae368dc20c2a72651918ffb7274f14dc76c0ca16d3be578173518f9",
+      "bytes": 12546
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-refactor-map-host.md",
+      "sha256": "51bef92092f1f0cc736f738f5cd27c5c603d4553ecabb05b32d65999560a2b77",
+      "bytes": 1646
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-refactor-relief-2051.md",
+      "sha256": "de6193a29202fa4d926a86eb813b75b30ae6abf94bdd396b44ec4bbd179cc7c0",
+      "bytes": 3097
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-refactor-stream-loading.md",
+      "sha256": "11b4afb71a132f550cf580eacc806351be4976cd2739717f76e78e379ed28f76",
+      "bytes": 2853
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-refactor-world-2051.md",
+      "sha256": "06e55098a5d470f73e6e80d824f02bdd13b88d695a02454414e5e1450b424223",
+      "bytes": 2991
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-repo-restarted.md",
+      "sha256": "33024082d3bb349a4a37831848a32b9f8b25b2b31d6da181f01b2e0d0f983a83",
+      "bytes": 2720
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice1-voyage.md",
+      "sha256": "07a01e68914903d6fd0c3566c42a40db9d32a0160d46d9c746afb9c0f4c6176f",
+      "bytes": 2601
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice10-craft.md",
+      "sha256": "eb54553967c4cd263484a9a153fdfad2ebb05b34a9f1c67491b71a59d6530b2a",
+      "bytes": 2281
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice11-build.md",
+      "sha256": "ae2db8f4bd38ad79d49bff7a8a79641261498288aa009115b6056d66a5f551c3",
+      "bytes": 3839
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice2-farming.md",
+      "sha256": "002a9c35cbc7f9042d1cf806230f6e76d9f2853f8ac6f14f61fd8e27e1902790",
+      "bytes": 3120
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice3-shipyard.md",
+      "sha256": "186190bbab253716f9c55566c96964c0f11111e7f4514f2f9f91cc600d0066e0",
+      "bytes": 2840
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice4-settlement.md",
+      "sha256": "f775245b08eba5c9bcb31c635b3fceb0b0b7efc7fb2349a46409a9dbd7ff4fcd",
+      "bytes": 3506
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice5-villagers.md",
+      "sha256": "8eb5358bf473f6fe29979fa88f7d94f51ede752bb8a5493a6bf58251e1193bdb",
+      "bytes": 2207
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice6-world-voyage.md",
+      "sha256": "6200159e69e6ec4a01e0a7a656f931c4d108b904623b6633247c48fa03f9d00c",
+      "bytes": 1788
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice7-world-sim.md",
+      "sha256": "919e92d0a714e862266cb2b3eb8c8d7c86290229ff78d0affb0d093b27e155d0",
+      "bytes": 1707
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice8-freight.md",
+      "sha256": "32f5c0f391fc54a1388eab9330e806be6e3db27df7c723381ae0041c0eda1082",
+      "bytes": 1646
+    },
+    {
+      "path": "zhouzhu-memory/zhouzhu-slice9-gather.md",
+      "sha256": "1a76bcebfac477987561d045066e3c05941ea88e9e11956196b52032711117c5",
+      "bytes": 2442
+    },
+    {
+      "path": "skyisle-memory/MEMORY.md",
+      "sha256": "d3d3082ea5a39bc1d3c3afe3aa44bf239b63e9b4f5397c5ddb4a4d7f969c9202",
+      "bytes": 120
+    },
+    {
+      "path": "skyisle-memory/mepro-access.md",
+      "sha256": "da65b9e79d2fa180b4e587c24e7e0d95782bce54953b984076585fde9c0e95ab",
+      "bytes": 1179
+    },
+    {
+      "path": "skyisle-CLAUDE.md",
+      "sha256": "c292404964dfe699deda0e1dba7f4b777e105412188d000af9b08c0780893ff7",
+      "bytes": 82351
+    }
+  ]
+}

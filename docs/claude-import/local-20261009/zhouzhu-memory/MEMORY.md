@@ -1,0 +1,47 @@
+- [User language](user-language.md) — 用户全程中文
+- [Zhouzhu CLI from Bash: PYTHONUTF8=1 + explicit Python312 exe](zhouzhu-console-utf8.md) — GBK crashes check on ↔; `python3` store alias silently eats heredoc scripts; never run pipeline alongside serve
+- [Zhouzhu headless screenshot recipe](zhouzhu-headless-screenshot.md) — Edge headless: delay load via /slow img; virtual-time hangs on viewer.html
+- [Commit without asking](commit-without-asking.md) — 做完并验过就直接提交（现在就是提交在 main 上）；推送不在此列
+- [直接在 main 上工作](work-on-main.md) — 2026-09-26 起新任务不开功能分支；推送仍等用户开口；backup/pre-reset-2026-09-24 是旧历史备份别删
+- [Split commits by topic](commit-split-by-topic.md) — several clear commits; never `commit -a` with unrelated changes; stage mixed files via hash-object
+- [Zhouzhu 后端在 ME Pro 上开发](zhouzhu-mepro-dev.md) — WG + ssh liein@10.8.0.12；claude.ai 直连被区域封锁，必须走 mihomo；git hub 在 /srv/git/zhouzhu.git
+- [Zhouzhu 仓库已推倒重开](zhouzhu-repo-restarted.md) — Godot 4.4.1 + C++ GDExtension 骨架已搭好；旧设定在标签 archive/v1；main 已强推到 GitHub 与 mepro
+- [（作废存档）游戏底层架构曾拍板](zhouzhu-core-architecture.md) — 前后端分离、纯 C++ core、UE 3D 前端、整数 Placement；属于被推倒的那一版，引用前先确认
+- [行星生成器已迁出并改名 空岛行星生成器](planet-generator-split-out.md) — D:\Project\My\skyisle-gen，包 skyisle_gen / 命令 skyisle；带 53 条历史；规格快照在 docs/spec/
+- [Godot C++ 里的中文字面量](godot-cpp-chinese-literals.md) — /utf-8 与 U"..." 两头都要；排查必须看字节，控制台输出不可信
+- [Rider 调试 GDExtension 的配置与坑](godot-rider-debug-setup.md) — 别把调试器指向 Godot 的 _console.exe（启动壳，DLL 在子进程里）；Rider 实为 2026.1.3
+- [切片三：地面船坞 + 模块化空艇（已落地）](zhouzhu-slice3-shipyard.md) — 2026-09-22 在 slice-2-farming 上 8 个提交未推送；船原点 = 舷门；坪凿在 island_field 里；e2e 路线别从船坞直奔桥头
+- [切片二：河边开垦播种收获（已落地）+ 拓展：背包选种](zhouzhu-slice2-farming.md) — 2026-09-21 切片已推送未并入 main；2026-09-22 拓展（背包/粟菽/Tab 选种）9 个提交在 slice-2-farming 未推送；岛缘全是陡坡，要走到的地方得修路
+- [切片一：走上空艇飞到另一座岛（已落地）](zhouzhu-slice1-voyage.md) — 2026-09-21 已提交并推送在分支 slice-1-voyage，未并入 main；CLI 构建用 build/；无头 e2e 配方；用户已许可参考 skyisle-gen 做岛屿生成
+- [拓展：船三维格子 + 装配视角改船（已落地）](zhouzhu-extend-ship-3d.md) — 2026-09-22 在 slice-2-farming 上 9 个提交 d8a3060..d80e306 未推送；布局 x/y/z ≤12、梯子、接触线泊位、RefitOverlay；e2e 路点要查高度；$TMP 不是 scratchpad
+- [切片四：开发者布置模式放建筑（已落地）](zhouzhu-slice4-settlement.md) — 2026-09-22 在 slice-2-farming 上 9 个提交未推送；村子在河对岸；yaw 约定；用 survey 字符图探地形
+- [拓展：建筑与空艇按人的尺度重定比例（已落地）](zhouzhu-extend-scale.md) — 2026-09-22 在 slice-2-farming 上未推送；民居 11×6.5、船格 7×7×3.8、坪 60×28 + 坞墩块；「只做摆设、进不去」已被 extend-interiors 推翻；e2e 别正对着坞墩块推
+- [切片五：村民（已落地）](zhouzhu-slice5-villagers.md) — 2026-09-22 在 slice-2-farming 上 7 个提交未推送；Villagers 要排在 Settlement 后；挑水送堂屋；Godot 测试一律套 timeout
+- [重构：真实比例岛群 world_2051 + 开发者工具（已落地）](zhouzhu-refactor-world-2051.md) — 2026-09-22 2026-09-22 已快进并入 main（77ad0fb）并推送 origin 与 mepro；切片一至五也都在 main 里；新场景、旧功能未迁；F2 换地图 / F3 god；autoload 名别和类同名；无头要设 root.size
+- [切片六：岛群跑船 + 码头村落全自动落地（已落地）](zhouzhu-slice6-world-voyage.md) — 2026-09-23 已随切片七并入 main 并推送；用户要工具不要手摆；GDScript 解析错会空转到超时
+- [切片七：全局世界时钟 + 远近分层村落模拟（已落地）](zhouzhu-slice7-world-sim.md) — 2026-09-23 已快进并入 main（6e9a505）并推送 origin 与 mepro（含切片六与地图宿主重构）；GameClock autoload；跳钟人会瞬移；预算用 Release 量；含 \n 的串用 Edit 改
+- [重构：地图宿主（已落地）](zhouzhu-refactor-map-host.md) — 2026-09-23 已随切片七并入 main 并推送；Expedition 唯一编排；FlatMap≠FlatIsland；is_edited=未存；主码头坪直走会顶坞墩/门架
+- [拓展：房子能进去 + 房屋模板与室内编辑（已落地）](zhouzhu-extend-interiors.md) — 2026-09-23 已快进并入 main（e8764d7）并推送 origin 与 mepro；屋里不揭顶、相机拉近；kind/style 清单行；梯前停 1.2 m 再爬
+- [拓展：岛群的河（已落地）](zhouzhu-extend-rivers.md) — 2026-09-23 已快进并入 main（fcb2b86）并推送 origin 与 mepro；游戏尺度 ×3 宽、平底河床；水位公式 C++ 与 shader 各一份；坪让给河；验收按真实开局拍
+- [别让人长途抱货走](feedback-no-long-carry-walks.md) — 用户嫌抱着货箱走 1 km 太扯；搬运只走几十米，远路交给船 / 建筑
+- [切片八：跑货 + 拓展船台（已落地）](zhouzhu-slice8-freight.md) — 2026-09-24 在 slice-8-freight 上未推送；每个村都有船台、没有港口村；邑治 274 座；HUD 晚一帧
+- [用中文回复](feedback-reply-in-chinese.md) — 汇报、总结、提问都用中文；用户说过「说中文」
+- [拓展：按新版生成器优化岛群地形（已落地）](zhouzhu-extend-terrain-v3.md) — 2026-09-24 已快进并入 main（64bed89）并推送 origin 与 mepro；流向按生成器汇流反推；云海 −3800；safe_margin 1 cm 治斜面卡死
+- [切片九：采集 + 野泊（已落地）](zhouzhu-slice9-gather.md) — 2026-09-25 已随切片十并入 main 并推送；野泊不用船台；resolved toml 中文键要加引号；梯顶齐甲板边
+- [重构：按生成器台面口径的真实起伏重做 2051（已落地）](zhouzhu-refactor-relief-2051.md) — 2026-09-25 已随切片十并入 main 并推送；terrain.bin v4 f32；码头从泊场推（主码头 #1、目的 #26）；资源点要够得着船；出港先升过门架；Bash 工具吞 `\`
+- [切片十：合成与摆放（已落地）](zhouzhu-slice10-craft.md) — 2026-09-25 已快进并入 main（4536385）并推送 origin 与 mepro；配方清单+设施、船舱 12 格/储存区、只摆地上；E：绿虚影摆>开木箱工作台>堆场；窗口模式真鼠标盖掉悬停
+- [Rider 的 Ninja 只改头文件不重编](rider-ninja-stale-deps.md) — cmake-build-debug 首建的 .obj 没记头文件依赖（#deps 0）+ 与 Rider 同时构建弄坏 .ninja_deps；删 .ninja_deps 单独全量重编
+- [拓展：资源按点 / 片 / 散长出来（已落地）](zhouzhu-extend-resource-fields.md) — 2026-09-26 已随地貌过渡并入 main（a7a9055）并推送；满山树灌丛石块一株一块都能采；泊地不长树；看着什么采什么；--check-only 先查 GDScript
+- [拓展：地貌交界的过渡（已落地）](zhouzhu-extend-cover-blend.md) — 2026-09-26 已快进并入 main（a7a9055）并推送 origin 与 mepro；CoverBlend 软最近格、地皮与散布同一份额；river_e2e 的 NaN 报错是原有的
+- [重构：流式加载不卡（已落地）](zhouzhu-refactor-stream-loading.md) — 2026-09-26 在 main 上 5bc7bbc..48c1104 已推送 origin 与 mepro；卡点是村子不是植被；任务池 + 村子三层分帧挂 + 散布着色器 LOD；Bash 吞反斜杠用 Write 写补丁脚本
+- [行星计划（全部完成并已推送）](zhouzhu-plan-planet.md) — docs/PLAN-PLANET.md P0–P7、P6a–e 2026-09-27 做完；⑨ 附庸已修；Zhouzhu d083be2 / skyisle-gen b96b83a 已推送；升子模块要重导行星包头；Mellos 页 plan-planet
+- [FeatureMap 可从 10.8.0.3 访问](fmap-remote-access.md) — 用户环境变量 FMAP_HOST=10.8.0.3；featuremap 02f3967、4c45414 未推送；输出里没有「别的机器」那行就先设 $env:FMAP_HOST 再 open
+- [拓展：时令与天气（已落地）](zhouzhu-extend-seasons-weather.md) — 2026-09-26 在 main 上 35d1bea..b09d58d 已推送（2026-09-27）；一游戏日=一历日是我定的默认；着色器全局参数要进 project.godot；DevTools 只在变了时推覆盖；避雨测「都往家走」
+- [浮高计划（已完成并推送）](zhouzhu-plan-float.md) — 同群岛按岛龄高低错落、岛底 ≥ 云带顶 + 1000 m、云带与海下移 1200 m、索桥只在 100 m 内；Zhouzhu fd56c10 / skyisle-gen 8a2f12b；待定：运费算不算爬升
+- [修：god 高空绕行星后落地场景乱](zhouzhu-fix-god-orbit.md) — 2026-09-28 锚跟人走、对跖点规范化、低模/碰撞段泄漏、生成队列；已推送；高空巡航根治待用户拍板
+- [切片十一：改地形与搭建（已落地）](zhouzhu-slice11-build.md) — 2026-09-28 main 上未推送；方格台阶 + 搭建件吸附 + 样式 + works/<群>.txt；留洞补丁；surface_natural；人不上坎→门外台阶；码头边土薄
+- [skyisle-gen 推送时 main 一起跟上](feedback-skyisle-main-follows.md) — 推工作分支时同一次快进 GitHub main，不再问；非祖先就停下问，别强推
+- [地貌与聚落计划（这一轮做完、已推送）](zhouzhu-plan-land.md) — 2026-09-30；生成器 P3–P7 + PS + P6 修订在 skyisle-gen main（5659acd）、P0 开局 #6329 在 Zhouzhu main（2505ec2）；游戏跟生成器要按 out/p3–p7-handoff.md 改导出
+- [先做生成器、少启动游戏、开窗口先问](feedback-generator-before-game.md) — 游戏只做不改地形地貌的；e2e 无头成批顺序跑；要开游戏窗口先问（09-30 用户关了我又开）
+- [地貌与聚落 P0：开局换到 #6329（已落地）](zhouzhu-plan-land-p0.md) — 2026-09-29 main 上未推送；开局配置只在 src/story_start.h；细版在 planet/seed42/groups；e2e 无头成批顺序跑、窗口活最后一次做
+- [打 Windows 游戏包](zhouzhu-export-package.md) — 2026-09-30；build-release/ 编 Release DLL；模板只装了 windows_release；导出版开局 boot.tscn 直进剧情；res:// 在 pck 里别 globalize
