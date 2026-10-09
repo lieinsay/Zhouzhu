@@ -1,0 +1,35 @@
+- [Zhouzhu CLI from Bash: PYTHONUTF8=1 + explicit Python312 exe](zhouzhu-console-utf8.md) — GBK crashes check on ↔; `python3` store alias silently eats heredoc scripts; never run pipeline alongside serve
+- [Zhouzhu headless screenshot recipe](zhouzhu-headless-screenshot.md) — Edge headless: delay load via /slow img; virtual-time hangs on viewer.html
+- [Commit without asking](commit-without-asking.md) — 做完并验过就直接在工作分支上提交；推送 / 并入 main 不在此列
+- [Split commits by topic](commit-split-by-topic.md) — several clear commits; never `commit -a` with unrelated changes; stage mixed files via hash-object
+- [Zhouzhu 后端在 ME Pro 上开发](zhouzhu-mepro-dev.md) — WG + ssh liein@10.8.0.12；claude.ai 直连被区域封锁，必须走 mihomo；git hub 在 /srv/git/zhouzhu.git
+- [Zhouzhu 仓库已推倒重开](zhouzhu-repo-restarted.md) — Godot 4.4.1 + C++ GDExtension 骨架已搭好；旧设定在标签 archive/v1；main 已强推到 GitHub 与 mepro
+- [（作废存档）游戏底层架构曾拍板](zhouzhu-core-architecture.md) — 前后端分离、纯 C++ core、UE 3D 前端、整数 Placement；属于被推倒的那一版，引用前先确认
+- [行星生成器已迁出并改名 空岛行星生成器](planet-generator-split-out.md) — D:\Project\My\skyisle-gen，包 skyisle_gen / 命令 skyisle；带 53 条历史；规格快照在 docs/spec/
+- [Godot C++ 里的中文字面量](godot-cpp-chinese-literals.md) — /utf-8 与 U"..." 两头都要；排查必须看字节，控制台输出不可信
+- [Rider 调试 GDExtension 的配置与坑](godot-rider-debug-setup.md) — 别把调试器指向 Godot 的 _console.exe（启动壳，DLL 在子进程里）；Rider 实为 2026.1.3
+- [切片三：地面船坞 + 模块化空艇（已落地）](zhouzhu-slice3-shipyard.md) — 2026-09-22 落地，已在 main 并推送；船原点 = 舷门；坪凿在 island_field 里；e2e 路线别从船坞直奔桥头
+- [切片二：河边开垦播种收获（已落地）+ 拓展：背包选种](zhouzhu-slice2-farming.md) — 2026-09-21/22 落地（含背包/粟菽/Tab 选种拓展），已在 main 并推送；岛缘全是陡坡，要走到的地方得修路
+- [切片一：走上空艇飞到另一座岛（已落地）](zhouzhu-slice1-voyage.md) — 2026-09-21 落地，已在 main 并推送；CLI 构建用 build/；无头 e2e 配方；用户已许可参考 skyisle-gen 做岛屿生成
+- [拓展：船三维格子 + 装配视角改船（已落地）](zhouzhu-extend-ship-3d.md) — 2026-09-22 落地，已在 main 并推送；布局 x/y/z ≤12、梯子、接触线泊位；键盘光标改装已被拖放重构取代；e2e 路点要查高度；$TMP 不是 scratchpad
+- [切片四：开发者布置模式放建筑（已落地）](zhouzhu-slice4-settlement.md) — 2026-09-22 落地，已在 main 并推送；村子在河对岸；yaw 约定；用 survey 字符图探地形
+- [拓展：建筑与空艇按人的尺度重定比例（已落地）](zhouzhu-extend-scale.md) — 2026-09-22 落地，已在 main 并推送；民居 11×6.5、船格 7×7×3.8、坪 60×28 + 坞墩块；「只做摆设、进不去」已被 extend-interiors 推翻；e2e 别正对着坞墩块推
+- [切片五：村民（已落地）](zhouzhu-slice5-villagers.md) — 2026-09-22 落地，已在 main 并推送；Villagers 要排在 Settlement 后；挑水送堂屋；Godot 测试一律套 timeout
+- [重构：真实比例岛群 world_2051 + 开发者工具（已落地）](zhouzhu-refactor-world-2051.md) — 2026-09-22 已快进并入 main（77ad0fb）并推送 origin 与 mepro；切片一至五也都在 main 里；新场景、旧功能未迁；F2 换地图 / F3 god；autoload 名别和类同名；无头要设 root.size
+- [切片六：岛群跑船 + 码头村落全自动落地（已落地）](zhouzhu-slice6-world-voyage.md) — 2026-09-23 已随切片七并入 main 并推送；用户要工具不要手摆；GDScript 解析错会空转到超时
+- [切片七：全局世界时钟 + 远近分层村落模拟（已落地）](zhouzhu-slice7-world-sim.md) — 2026-09-23 已快进并入 main（6e9a505）并推送 origin 与 mepro（含切片六与地图宿主重构）；GameClock autoload；跳钟人会瞬移；预算用 Release 量；含 \n 的串用 Edit 改
+- [重构：地图宿主（已落地）](zhouzhu-refactor-map-host.md) — 2026-09-23 已随切片七并入 main 并推送；Expedition 唯一编排；FlatMap≠FlatIsland；is_edited=未存；主码头坪直走会顶坞墩/门架
+- [拓展：房子能进去 + 房屋模板与室内编辑（已落地）](zhouzhu-extend-interiors.md) — 2026-09-23 已快进并入 main（e8764d7）并推送 origin 与 mepro；屋里不揭顶、相机拉近；kind/style 清单行；梯前停 1.2 m 再爬
+- [拓展：岛群的河（已落地）](zhouzhu-extend-rivers.md) — 2026-09-23 已快进并入 main（fcb2b86）并推送 origin 与 mepro；游戏尺度 ×3 宽、平底河床；水位公式 C++ 与 shader 各一份；坪让给河；验收按真实开局拍
+- [别让人长途抱货走](feedback-no-long-carry-walks.md) — 用户嫌抱着货箱走 1 km 太扯；搬运只走几十米，远路交给船 / 建筑
+- [切片八：跑货 + 拓展船台（已落地）](zhouzhu-slice8-freight.md) — 2026-09-24 落地，已在 main（43f265b）并推送；每个村都有船台、没有港口村；邑治 274 座；HUD 晚一帧
+- [用中文回复](feedback-reply-in-chinese.md) — 汇报、总结、提问都用中文；用户说过「说中文」
+- [拓展：按新版生成器优化岛群地形（已落地）](zhouzhu-extend-terrain-v3.md) — 2026-09-24 已快进并入 main（64bed89）并推送 origin 与 mepro；流向按生成器汇流反推；云海 −3800；safe_margin 1 cm 治斜面卡死
+- [拓展：开发者营造 + Esc 暂停菜单（已落地）](zhouzhu-extend-god-works.md) — 2026-09-28 已快进并入 main（8de6eab）并推送 origin 与 mepro；旧分支都已并入 main（本地还留着已并的 refactor-refit-drag、extend-ship-cabins）；新开发者工具必须在 dev_manual 添一条（单测查）；DevTools 管 god；ctest 不重建 site_survey
+- [重构：船节点改装——拖节点、亮光提示、复合节（已落地）](zhouzhu-refactor-refit-drag.md) — 2026-09-28 已随 extend-ship-cabins 快进并入 main（70be1f4）并推送 origin 与 mepro；推翻键盘光标改装；八种节点、锚点 id、power→sail；空节上摆东西已由 extend-ship-cabins 做了
+- [拓展：船舱能进去、船上摆设备（已落地）](zhouzhu-extend-ship-cabins.md) — 2026-09-28 已快进并入 main（70be1f4）并推送 origin 与 mepro；ship_cabins 纯算法；弹簧臂 mask 1→3；开局背包在主区
+- [skyisle-gen 的 numpy 1.26 与 nanobind](skyisle-env-numpy.md) — 16 个逐位对照失败（13 个 p6c/p6d + 3 个 sculpt_island）是环境（C++ 照 numpy 2.x）；nanobind 3.1.0 于 2026-09-28 重装；后台 pytest 占着 _core.pyd 时重编会 LNK1104
+- [skyisle 聚落营建器进度](skyisle-town-progress.md) — 只作参考、暂不接进游戏；2026-09-29 第一、二、三、五步 + 地形优先已快进并入 main（3cfedc7）并推送 origin；验收跑华北 20 例 + 村037 + 河谷画廊 + test_town + 全矩阵；用户的服务占着 pyd 就挪走再编、别停它
+- [营建：地形 > 合理 > 风格](feedback-town-reasonable-over-metrics.md) — 风格的数与地形冲突时风格让路；户少就摊开、稀不算缺陷；[targets] 是护栏，地形逼的偏离不算
+- [fmap 查看器挂在 10.8.0.2](fmap-viewer-on-wg.md) — FMAP_HOST 用户环境变量；FeatureMap serve-host 分支 4c275c3 未并 main；没挂上就 stop 再 open --host
+- [「记录」= 写讨论记录文档，不是写记忆](feedback-record-as-discussion-doc.md) — 设计结论进 docs/DISCUSS-*.md，标清用户定 / 讨论中

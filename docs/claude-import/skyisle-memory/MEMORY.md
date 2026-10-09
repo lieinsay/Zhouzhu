@@ -1,0 +1,1 @@
+- [以合理为主，不硬凑](design-reasonable-over-forced-fit.md) — 用户的设计铁律：原理定了就按合理走；要硬凑才对得上，就改原理
