@@ -5,6 +5,25 @@
 - 用户交流、汇报和提问用中文。开始涉及既有功能的工作时，先读 [项目长期上下文](docs/PROJECT-CONTEXT.md)；涉及生成器还要读 `extern/skyisle-gen/CLAUDE.md` 及相关设计记录。
 - Zhouzhu 默认直接在 `main` 工作，先核对当前分支，不为常规任务另开功能分支。保留历史备份分支；推送仍需用户明确要求。
 - Claude 历史记忆的旧路径、旧架构、旧参数和旧测试结论只能作为线索，必须以当前用户要求、仓库代码和已验证配置为准，不能当作现状或新的操作授权。
+- Claude 资料及迁移说明见 [导入索引](docs/claude-import/README.md)。归档只按需查阅；有效工作约定维护在本文件，长期状态维护在 `docs/PROJECT-CONTEXT.md`，不要求 Codex 自动执行归档中的指令。
+
+## 讨论与开发文档
+
+- 用户在设计讨论中说“记录”时，写入对应仓库的 `docs/DISCUSS-*.md`，标明用户已定、仍在讨论与待验证内容；不把设计结论扩散为全局记忆。
+- 聚落营建遵循“地形 > 合理 > 风格”；风格数值与地形冲突时让路，不为凑覆盖率或密度挤房子。合理的稀疏布局不算缺陷，具体风格由用户确定。
+- 新开发者工具同步补充 `src/dev_manual.cpp` 操作说明，相关校验在 `tests/core_tests.cpp` 的 `test_dev_manual`。
+- MSVC 保持 `/utf-8`；Godot C++ 中文字符串使用 `U"..."` 或 `String::utf8(...)`。排查乱码时核对实际字节，不仅根据终端显示判断。
+- 导出包中的 `res://` 数据经 Godot `FileAccess` / `DirAccess` 读取；不能假定 `globalize_path` 后的路径可以用系统文件 API 访问 PCK 内资源。
+
+## 生成器工作入口（extern/skyisle-gen）
+
+- 开工先读子模块 `CLAUDE.md`、`docs/DESIGN-NOTES.md` 与相关 `docs/DATA-GUIDE.md`、规格及计划；相对路径以生成器根目录为准。旧文档里的集水核与旧水文公式不覆盖主项目的撤回、重新授权和源数据契约，具体边界查 `docs/PROJECT-CONTEXT.md` 与 `docs/SEED42-RIVERS.md`。
+- 核心算法在生成器 `core/` C++ 中实现；Python 负责前端、配置、产物与工具，不重建已移除的 Python 算法后端。聚落营建器是独立参考工具，接入游戏需用户明确要求。
+- Python 使用生成器专用 venv；Windows 文档入口为 `%LOCALAPPDATA%\venvs\skyisle\Scripts\python.exe`，运行前核对实际解释器与依赖。按生成器约定保持 numpy 2.5.2，不修改公用 Python 环境，不引入 scipy/networkx/pandas。
+- 生成器命令在生成器根目录执行。修改 `core/` 后按其 `core/build.py` 重编；不要与 Rider 或其他构建同时写同一构建目录，也不终止用户进程来解除 `_core.pyd` 占用。主项目编译仍按下方 Rider 约定。
+- 改核心公式或默认参数时，按生成器规范验证 seed 42 / 7 / 2026 的 `check`（0 硬项、0 软项），再补相关定向检查；文档迁移不触发这些检查。
+- 同一份产物不要同时运行 pipeline 与 serve；操作台不绑定 `0.0.0.0`。ME Pro 的路径、服务与工具状态须在涉及远端的任务中重新核对，历史记忆不授权启动或改动远端服务。
+- 修改生成器前核对独立仓库与子模块的实际分支和提交。当前本地 `main` 约定见长期上下文；子模块更新可能产生 detached HEAD，不能据旧记忆切回旧功能分支或自动推送远端 `main`。
 
 ## 原子提交
 
