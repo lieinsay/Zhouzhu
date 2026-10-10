@@ -24,6 +24,8 @@
 #include <godot_cpp/core/math.hpp>
 
 #include "atmosphere.h"
+#include "dev_tools.h"
+#include "map_browser.h"
 #include "planet_view.h"
 #include "farm.h"
 #include "input_actions.h"
@@ -117,6 +119,9 @@ void Expedition::_bind_methods() {
     ClassDB::bind_method(D_METHOD("on_teleport_requested", "position"), &Expedition::on_teleport_requested);
     ClassDB::bind_method(D_METHOD("is_map_open"), &Expedition::is_map_open);
     ClassDB::bind_method(D_METHOD("get_map"), &Expedition::get_map);
+    ClassDB::bind_method(D_METHOD("get_map_browser"), &Expedition::get_map_browser);
+    ClassDB::bind_method(D_METHOD("_set_map_open", "open"), &Expedition::set_map_open);
+    ClassDB::bind_method(D_METHOD("_on_map_group_jump", "node"), &Expedition::on_map_group_jump);
     ClassDB::bind_method(D_METHOD("get_map_node"), &Expedition::get_map_node);
     ClassDB::bind_method(D_METHOD("is_working"), &Expedition::is_working);
     ClassDB::bind_method(D_METHOD("is_gathering"), &Expedition::is_gathering);
@@ -260,6 +265,7 @@ void Expedition::_ready() {
     if (Engine::get_singleton()->is_editor_hint()) {
         set_process(false);
         set_physics_process(false);
+        set_process_input(false);
         set_process_unhandled_input(false);
         return;
     }
@@ -410,7 +416,20 @@ void Expedition::build_hud() {
         map_panel->set_name("Map");
         map_panel->set_anchors_preset(Control::PRESET_FULL_RECT);
         map_panel->set_visible(false);
-        layer->add_child(map_panel);
+        const PlanetView *pv = Object::cast_to<PlanetView>(get_node_or_null("PlanetView"));
+        if (pv && pv->get_planet()) {
+            map_browser = memnew(MapBrowser);
+            map_browser->set_name("MapBrowser");
+            map_browser->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
+            layer->add_child(map_browser);
+            map_browser->setup(map_panel, pv->share_planet(), get_tree()->get_first_node_in_group(GroupProvider::GROUP));
+            map_browser->connect("close_requested", Callable(this, "_set_map_open").bind(false));
+            map_browser->connect("jump_requested", Callable(this, "_on_map_group_jump"));
+            map_browser->connect("course_requested", Callable(this, "set_planet_course"));
+            map_browser->set_visible(false);
+        } else {
+            layer->add_child(map_panel);
+        }
         map_panel->set_destination_dock(destination_dock);
         map_panel->set_teleport_enabled(dev_tools);
         map_panel->connect("teleport_requested", Callable(this, "on_teleport_requested"));
@@ -1010,8 +1029,20 @@ void Expedition::set_map_open(bool p_open) {
     if (!map_panel || map_open == p_open) {
         return;
     }
+    DevTools *tools = Object::cast_to<DevTools>(get_node_or_null("/root/DeveloperTools"));
+    if (tools) {
+        // 先合上叠加工具，再按地图最终状态恢复输入，避免它们留下旧的地图输入锁。
+        tools->close_menu();
+        tools->close_planet_map();
+        tools->set_weather_open(false);
+        tools->set_orbit(false);
+    }
     map_open = p_open;
-    map_panel->set_visible(map_open);
+    if (map_browser) {
+        map_browser->set_visible(map_open);
+    } else {
+        map_panel->set_visible(map_open);
+    }
     status_label->set_visible(!map_open && !pack.is_open() && !refit.is_open()); // 地图自己有标题，底下那行别透上来
     prompt_label->set_visible(!map_open && !pack.is_open());
     player->set_input_blocked(map_open || pack.is_open() || refit.is_open() || build.is_open() || interior.is_open());
@@ -1022,18 +1053,60 @@ void Expedition::set_map_open(bool p_open) {
     if (map_open) {
         const Vector3 at = player->get_global_position();
         map->map_refresh_panel(map_panel);
+        if (map_browser) {
+            refresh_map_browser();
+            map_browser->open_local();
+        }
         map_panel->look_at_world(at.x, at.z, map_viewed ? 0.0 : MAP_FIRST_VIEW_M); // 之后再开沿用上次的缩放
         map_viewed = true;
         map_panel->set_player(at, player->get_look_yaw());
     }
 }
 
+void Expedition::refresh_map_browser() {
+    const PlanetView *pv = Object::cast_to<PlanetView>(get_node_or_null("PlanetView"));
+    if (!map_browser || !pv || !player) {
+        return;
+    }
+    const Vector2 ll = pv->latlon_at(player->get_global_position());
+    map_browser->set_context(ll.x, ll.y, pv->get_anchor_node(), dev_tools && helm.get_state() == Helm::ON_FOOT && jump_stage == JUMP_IDLE);
+    map_browser->set_course(course_node);
+    map_browser->set_jump(jump_node, jump_progress, jump_text);
+}
+
+void Expedition::on_map_group_jump(int p_node) {
+    if (!request_planet_jump(p_node) && map_browser) {
+        const String why = get_notice();
+        map_browser->show_error(why.is_empty() ? String(U"暂时不能跳转到这个岛群") : why);
+    }
+}
+
 // ---------------------------------------------------------------- 输入与每帧
+
+void Expedition::_input(const Ref<InputEvent> &p_event) {
+    if (!map_open || get_tree()->is_paused() || p_event->is_echo()) {
+        return;
+    }
+    const DevTools *tools = Object::cast_to<DevTools>(get_node_or_null("/root/DeveloperTools"));
+    if (tools && (tools->is_menu_open() || tools->is_planet_open() || tools->is_weather_open())) {
+        return; // F2 / 天气面板叠在 M 上时先交给它们关闭
+    }
+    if (p_event->is_action_pressed(input_actions::MAP) || p_event->is_action_pressed("ui_cancel")) {
+        set_map_open(false); // 编号输入框有焦点也只需按一次 M / Esc
+        get_viewport()->set_input_as_handled();
+    }
+}
 
 void Expedition::_unhandled_input(const Ref<InputEvent> &p_event) {
     Input *input = Input::get_singleton();
+    const DevTools *tools = Object::cast_to<DevTools>(get_node_or_null("/root/DeveloperTools"));
+    if (map_open && tools && (tools->is_menu_open() || tools->is_planet_open() || tools->is_weather_open()) &&
+            (p_event->is_action_pressed(input_actions::MAP) || p_event->is_action_pressed("ui_cancel"))) {
+        return; // 叠加工具先接关闭键，M 地图继续留在下面
+    }
     if (map_panel && p_event->is_action_pressed(input_actions::MAP)) {
         set_map_open(!map_open);
+        get_viewport()->set_input_as_handled();
         return;
     }
     if (p_event->is_action_pressed("ui_cancel")) {
@@ -1536,6 +1609,7 @@ void Expedition::_process(double) {
     map->map_focus(focus_point());
     if (map_open) {
         map_panel->set_player(player->get_global_position(), player->get_look_yaw());
+        refresh_map_browser();
     }
 }
 

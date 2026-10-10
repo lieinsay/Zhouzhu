@@ -318,6 +318,8 @@ target_sources(
         src/aim.h
         src/map_host.cpp
         src/map_host.h
+        src/map_browser.cpp
+        src/map_browser.h
         src/pack_hand.cpp
         src/pack_hand.h
         src/piece_hand.cpp

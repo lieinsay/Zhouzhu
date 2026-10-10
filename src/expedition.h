@@ -31,6 +31,7 @@
 class StylePanel;
 class DevWorksPanel;
 class WorksView;
+class MapBrowser;
 
 // 玩家编排：哪张地图都是它（甲乙两岛 main.tscn、世界 seed42 的 world_seed42.tscn、平板岛测试图），场景只配属性。
 // 地图只认地图宿主（MapHost，map 属性指过去）：地面、码头、船坞、农田、脚下的聚落、流式焦点、岛群地图面板都问它。
@@ -48,7 +49,7 @@ class WorksView;
 // 准星：拿着搭建件、锹镐、土时屏幕中心一个点，相机往前的射线打到的第一样东西就是准星落点（每帧打一回交给搭建与挖垒）。
 // 背包（Tab）照 MC：36 格、前 9 格是快捷栏（1–9 / 滚轮选，拿在手上的就是选中那格）；人在船上时船舱（每节储存区 12 格，账在这里）列在背包上面，
 // 开着木箱时是木箱；右边是配方，身边 3 m 有工作台 / 窑就多几条能合。开着背包时鼠标放出来，点法照 MC，键盘也能全做。
-// 另外：开局把船停在出发码头的泊位上、人放在它的停机坪上；HUD（位置、目标、背包、钟点、提示）；M 开合岛群地图、开发者点图瞬移；
+// 另外：开局把船停在出发码头的泊位上、人放在它的停机坪上；HUD（位置、目标、背包、钟点、提示）；M 开合地图，当前岛群 / 行星总览、开发者点图瞬移与跨群跳转；
 // 站稳记落脚点、掉进云海回位并召回漂远的船；到了目的码头那座岛就算到了（arrived），之后目标改指回程；接了托运时目标改指目的村的船台。
 // 泊位候选：地图的码头、船坞，加上各处聚落里盖好的船台（Settlement 组里找，船停不下的带着原因）；都够不着时，
 // 船下是块落得下的平地就多一个「野泊」（wild_landing 按地图的地面算、船身压不压着房子问 Ship），落下后放舷梯、上舵时收起。
@@ -143,6 +144,7 @@ private:
     godot::Label *prompt_label = nullptr;
     godot::Label *notice_label = nullptr;
     WorldMap *map_panel = nullptr;
+    MapBrowser *map_browser = nullptr;
 
     Say say_fn() {
         return [this](const godot::String &p_text) { say(p_text); };
@@ -172,6 +174,8 @@ private:
     void refresh_dev_works_panel();
     void dev_works_browse(bool p_interact);
     void set_map_open(bool p_open);
+    void refresh_map_browser();
+    void on_map_group_jump(int p_node);
     void on_foot(double p_delta, bool p_interact);
     void toggle_interior(const godot::Vector3 &p_at);
     std::vector<Berth> berths();
@@ -225,6 +229,7 @@ public:
     void _ready() override;
     void _process(double p_delta) override;
     void _physics_process(double p_delta) override;
+    void _input(const godot::Ref<godot::InputEvent> &p_event) override;
     void _unhandled_input(const godot::Ref<godot::InputEvent> &p_event) override;
 
     // 把玩家放到该处（全局 xz；落在地面上）。落点没有地就找最近的陆地；都找不到返回 false
@@ -251,6 +256,7 @@ public:
     godot::Transform3D get_destination_berth() const;
     bool is_map_open() const { return map_open; }
     WorldMap *get_map() const { return map_panel; }
+    MapBrowser *get_map_browser() const { return map_browser; }
     godot::Node3D *get_map_node() const { return map ? map->map_node() : nullptr; }
     bool is_working() const { return farm_hand.is_working(); }
     // 采集与野泊（给测试查）

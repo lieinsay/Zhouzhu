@@ -62,8 +62,11 @@ void PlanetMap::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_color_mode"), &PlanetMap::get_color_mode);
     ClassDB::bind_method(D_METHOD("request_jump"), &PlanetMap::request_jump);
     ClassDB::bind_method(D_METHOD("request_course"), &PlanetMap::request_course);
+    ClassDB::bind_method(D_METHOD("set_compact", "enabled"), &PlanetMap::set_compact);
+    ClassDB::bind_method(D_METHOD("zoom_by", "factor"), &PlanetMap::zoom_by);
     ADD_SIGNAL(MethodInfo("jump_requested", PropertyInfo(Variant::INT, "node")));
     ADD_SIGNAL(MethodInfo("course_requested", PropertyInfo(Variant::INT, "node")));
+    ADD_SIGNAL(MethodInfo("selection_changed", PropertyInfo(Variant::INT, "node")));
     BIND_ENUM_CONSTANT(COLOR_CLASS);
     BIND_ENUM_CONSTANT(COLOR_CLIMATE);
     BIND_ENUM_CONSTANT(COLOR_STATE);
@@ -137,8 +140,28 @@ void PlanetMap::look_at_node(int p_node) {
 }
 
 void PlanetMap::select(int p_node) {
-    selected = planet && p_node >= 0 && p_node < planet->node_count() ? p_node : -1;
+    const int next = planet && p_node >= 0 && p_node < planet->node_count() ? p_node : -1;
+    if (next == selected) {
+        return;
+    }
+    selected = next;
     queue_redraw();
+    emit_signal("selection_changed", selected);
+}
+
+void PlanetMap::set_compact(bool p_value) {
+    if (compact != p_value) {
+        compact = p_value;
+        set_clip_contents(p_value);
+        queue_redraw();
+    }
+}
+
+void PlanetMap::zoom_by(double p_factor) {
+    if (std::isfinite(p_factor) && p_factor > 0.0) {
+        zoom = std::clamp(zoom * p_factor, 0.8, 60.0);
+        queue_redraw();
+    }
 }
 
 void PlanetMap::set_color_mode(int p_mode) {
@@ -324,8 +347,13 @@ void PlanetMap::draw_globe() {
     }
     const View v = view();
     // 海（云带）与边
+    if (compact) {
+        draw_circle(v.center, real_t(v.radius + 9.0), Color(0.16f, 0.29f, 0.42f, 0.12f));
+        draw_circle(v.center, real_t(v.radius + 4.0), Color(0.22f, 0.4f, 0.52f, 0.12f));
+    }
     draw_circle(v.center, real_t(v.radius), Color(0.08f, 0.14f, 0.26f));
-    draw_arc(v.center, real_t(v.radius), 0.0f, real_t(2.0 * PI), 128, Color(0.45f, 0.65f, 0.95f, 0.8f), 2.0f, true);
+    draw_arc(v.center, real_t(v.radius), 0.0f, real_t(2.0 * PI), 128,
+            compact ? Color(0.4f, 0.57f, 0.68f, 0.7f) : Color(0.45f, 0.65f, 0.95f, 0.8f), 2.0f, true);
     // 经纬网：每 30°
     const Color grid(0.4f, 0.5f, 0.7f, 0.25f);
     auto polyline = [&](auto p_point, int p_steps) {
@@ -359,9 +387,19 @@ void PlanetMap::draw_globe() {
             continue;
         }
         const double r = px * (0.9 + 2.2 * std::sqrt(planet->node(int(k)).area_km2 / max_area));
-        draw_rect(Rect2(s - Vector2(real_t(r), real_t(r)), Vector2(real_t(2 * r), real_t(2 * r))), node_color(int(k)));
+        Color color = node_color(int(k));
+        const float edge = compact ? float(0.3 + 0.7 * std::sqrt(std::max(0.0, dot(dirs[k], v.f)))) : 1.0f;
+        if (compact) {
+            color = color.lerp(Color(0.5f, 0.6f, 0.66f), 0.3f);
+            color.r *= edge;
+            color.g *= edge;
+            color.b *= edge;
+            draw_circle(s, real_t(r), color);
+        } else {
+            draw_rect(Rect2(s - Vector2(real_t(r), real_t(r)), Vector2(real_t(2 * r), real_t(2 * r))), color);
+        }
         if (k < available.size() && available[k]) {
-            draw_arc(s, real_t(r + 2.5), 0.0f, real_t(2.0 * PI), 16, Color(1, 1, 1, 0.85f), 1.2f, true);
+            draw_arc(s, real_t(r + 2.5), 0.0f, real_t(2.0 * PI), 16, Color(1, 1, 1, 0.85f * edge), 1.2f, true);
         }
     }
     // 航向：你到那一群的大圆（虚线）
@@ -390,7 +428,11 @@ void PlanetMap::draw_globe() {
     // 锚群、你
     Vector2 s;
     if (anchor_node >= 0 && anchor_node < int(dirs.size()) && project(v, dirs[size_t(anchor_node)], s)) {
-        draw_arc(s, 12.0f, 0.0f, real_t(2.0 * PI), 24, Color(1.0f, 0.9f, 0.2f), 2.0f, true);
+        const Color anchor_color = compact ? Color(1.0f, 0.79f, 0.38f) : Color(1.0f, 0.9f, 0.2f);
+        draw_arc(s, 12.0f, 0.0f, real_t(2.0 * PI), 24, anchor_color, 2.0f, true);
+        if (compact) {
+            draw_arc(s, 16.0f, 0.0f, real_t(2.0 * PI), 32, Color(anchor_color, 0.45f), 1.0f, true);
+        }
     }
     if (has_player && project(v, planet_unit(player_lat, player_lon), s)) {
         draw_circle(s, 4.0f, Color(1.0f, 0.25f, 0.2f));
@@ -399,11 +441,29 @@ void PlanetMap::draw_globe() {
     if (jump_node >= 0 && jump_node < int(dirs.size()) && project(v, dirs[size_t(jump_node)], s)) {
         draw_arc(s, 15.0f, 0.0f, real_t(2.0 * PI * std::max(0.05, jump_progress)), 32, Color(0.4f, 1.0f, 0.6f), 3.0f, true);
     }
-    if (selected >= 0 && project(v, dirs[size_t(selected)], s)) {
+    if (selected >= 0 && selected < int(dirs.size()) && project(v, dirs[size_t(selected)], s)) {
         draw_arc(s, 10.0f, 0.0f, real_t(2.0 * PI), 24, Color(0.4f, 1.0f, 1.0f), 2.5f, true);
     }
-    if (hover >= 0 && hover != selected && project(v, dirs[size_t(hover)], s)) {
+    if (hover >= 0 && hover < int(dirs.size()) && hover != selected && project(v, dirs[size_t(hover)], s)) {
         draw_arc(s, 8.0f, 0.0f, real_t(2.0 * PI), 24, Color(1, 1, 1, 0.9f), 1.5f, true);
+    }
+    if (compact) {
+        // 标注限制在地图绘图区，缩放后移出视野的节点不把文字钉到边缘。
+        auto marker_label = [&](int p_node, const String &p_label, const Color &p_color, const Vector2 &p_offset) {
+            Vector2 at;
+            if (p_node < 0 || p_node >= int(dirs.size()) || !project(v, dirs[size_t(p_node)], at)
+                    || !Rect2(Vector2(), size).has_point(at)) {
+                return;
+            }
+            const Vector2 label_size = font->get_string_size(p_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15);
+            at += p_offset;
+            at.x = std::clamp(at.x, real_t(12), std::max(real_t(12), size.x - label_size.x - 12));
+            at.y = std::clamp(at.y, real_t(27), std::max(real_t(27), size.y - 12));
+            text(at, p_label, 15, p_color);
+        };
+        marker_label(anchor_node, vformat(String(U"当前位置 #%d"), anchor_node), Color(1.0f, 0.79f, 0.38f), Vector2(20, -16));
+        marker_label(selected, vformat(String(U"目标 #%d"), selected), Color(0.4f, 1.0f, 1.0f), Vector2(18, 25));
+        return; // M 地图壳提供目标卡、图例和操作提示。
     }
     // 标题、图例、读数、选中与进度
     static const char *const MODES[3] = { "类（橙 密接 · 绿 中疏 · 蓝 稀疏 · 紫 孤悬）", "气候（台面年均温：蓝 冷 → 红 热）", "邦（一邦一色，灰 = 船团 / 部落）" };
@@ -445,16 +505,14 @@ void PlanetMap::_gui_input(const Ref<InputEvent> &p_event) {
     const Ref<InputEventMouseButton> button = p_event;
     if (button.is_valid()) {
         if (button->get_button_index() == MOUSE_BUTTON_WHEEL_UP && button->is_pressed()) {
-            zoom = std::min(60.0, zoom * 1.2);
-            queue_redraw();
+            zoom_by(1.2);
         } else if (button->get_button_index() == MOUSE_BUTTON_WHEEL_DOWN && button->is_pressed()) {
-            zoom = std::max(0.8, zoom / 1.2);
-            queue_redraw();
+            zoom_by(1.0 / 1.2);
         } else if (button->get_button_index() == MOUSE_BUTTON_LEFT && button->is_pressed()) {
             const int p = pick(button->get_position());
             if (p >= 0) {
                 select(p);
-                if (button->is_double_click()) {
+                if (button->is_double_click() && !compact) {
                     request_jump();
                 }
             } else {
@@ -478,7 +536,12 @@ void PlanetMap::_gui_input(const Ref<InputEvent> &p_event) {
                 set_color_mode(color_mode + 1);
                 break;
             case KEY_T:
+                request_jump();
+                break;
             case KEY_ENTER:
+                if (compact) {
+                    return;
+                }
                 request_jump();
                 break;
             case KEY_H:

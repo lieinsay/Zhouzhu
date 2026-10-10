@@ -7512,18 +7512,20 @@ void test_dev_manual() {
     check(filled, "每条都有键、名字、在哪儿、说明");
     check(keys.size() == dev_manual().size() && titles.size() == dev_manual().size(), "键、名字不重复");
     check(!dev_manual_intro().empty() && dev_manual_covers("god_mode") && !dev_manual_covers("interact"), "开头几行；查得到 god、不认玩法动作");
-    std::string switch_map_help;
+    std::string map_help;
     for (const DevManualEntry &e : dev_manual()) {
-        if (std::string(e.action) == input_actions::SWITCH_MAP) {
+        if (std::string(e.keys) == "M") {
             for (const std::string &l : e.lines) {
-                switch_map_help += l + "\n";
+                map_help += l + "\n";
             }
         }
     }
-    check(switch_map_help.find("岛群跳转") != std::string::npos && switch_map_help.find("#3980") != std::string::npos && switch_map_help.find("Enter") != std::string::npos,
-            "F2 说明含岛群编号跳转、输入示例与确认方法");
-    check(switch_map_help.find("有效编号范围") != std::string::npos && switch_map_help.find("没有行星数据时禁用") != std::string::npos,
-            "F2 说明含岛群跳转的适用范围与编号限制");
+    check(map_help.find("行星总览") != std::string::npos && map_help.find("#3980") != std::string::npos && map_help.find("Enter") != std::string::npos &&
+                    map_help.find("只定位并选中") != std::string::npos && map_help.find("跳转到此岛群") != std::string::npos,
+            "M 地图说明含行星总览、编号定位与选中、明确的跨群跳转入口");
+    check(map_help.find("当前岛群") != std::string::npos && map_help.find("开发者模式") != std::string::npos &&
+                    map_help.find("没有行星数据") != std::string::npos && map_help.find("掌舵时先下船") != std::string::npos,
+            "M 地图说明含当前岛群、开发者权限与无行星数据及掌舵限制");
 }
 
 #include "nonriver_restore_checks.inc"

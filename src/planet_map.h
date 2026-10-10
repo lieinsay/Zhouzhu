@@ -49,6 +49,7 @@ private:
     bool dragging = false;
     godot::Vector2 last_mouse;
     bool teleport_enabled = true;
+    bool compact = false; // M 地图壳负责标题、详情与操作按钮；旧开发者面板沿用完整绘制。
 
     struct View {
         PlanetVec f, e, n; // 朝着看的方向（屏幕里）、东、北
@@ -77,6 +78,8 @@ public:
     void set_course(int p_node);
     void set_jump(int p_node, double p_progress, const godot::String &p_text);
     void set_teleport_enabled(bool p_value) { teleport_enabled = p_value; }
+    void set_compact(bool p_value);
+    void zoom_by(double p_factor);
 
     // 给脚本（测试）
     void look_at_node(int p_node); // 把这一群转到正中

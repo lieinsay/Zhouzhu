@@ -2590,6 +2590,16 @@
       "since": "e81"
     },
     {
+      "id": "map-browser",
+      "label": "M地图：当前岛群与行星总览",
+      "detail": "MapBrowser组合现有WorldMap细图与PlanetMap地球仪，M默认当前群详情，页签切到全行星。点击选群或编号定位只选择；目标卡用已有LOD原始陆地/地表/高程绘制粗图，展示距离、经纬、人口、气候与准备状态。明确跳转按钮请求宿主跨群；900×700时侧卡转为下栏，普通模式可看图不可跳。",
+      "tag": "界面",
+      "evidence": "2026-10-10：MSVC/Ninja Debug构建通过；M无头流程、真实LOD预览、宽窄窗口控件范围、点选/定位/按钮与权限通过。未做可见窗口像素验收，待用户开窗许可。",
+      "sources": ["src/map_browser.h", "src/map_browser.cpp", "src/expedition.cpp"],
+      "since": "e126",
+      "parent": "expedition"
+    },
+    {
       "id": "planet-map",
       "label": "行星地图（地球仪）",
       "detail": "正射投影，8000 群按类 / 气候 / 邦着色，悬停读数（含包在哪），选中 T 瞬移、H 设航向；只发信号，不读游戏状态。",
@@ -2604,9 +2614,9 @@
     {
       "id": "planet-jump-e2e",
       "label": "跨群瞬移端到端测试",
-      "detail": "planet_jump_e2e 验证按需生成、载入与跨群落地。dev_group_jump_e2e 从当前6068开局，用 M→F2→编号3980→Enter 落地，再输入 #6068 点击按钮返回；覆盖地面碰撞、锚、HUD、相机、行走恢复、非法与超长编号、数字快捷键隔离、焦点下 Esc/F2、无行星数据与开发者权限。",
+      "detail": "planet_jump_e2e 验证按需生成、载入与跨群落地。dev_group_jump_e2e 从6068开局，M→当前群细图→行星总览→编号只定位与鼠标点选3980→目标卡按钮跳转→M返回6068；查真实LOD粗图、900×700布局、碰撞/锚/HUD/行走恢复、F2叠层关闭、焦点M/Esc、非法编号及开发者权限。",
       "tag": "验收",
-      "evidence": "2026-10-10：dev_group_jump_e2e 无头 exit 0，真实19.3秒；3980首次生成并落地15.8秒，返回6068约0.12秒。未做可见窗口像素验收。",
+      "evidence": "2026-10-10：真正M地图流程无头exit 0，真实19.9秒；3980首次生成并落地15.8秒，返回6068约0.11秒；Enter/鼠标单击只选中，跳转按钮才跳转。failure-only定向检查exit 0，生成不可用时在地图内显示真实原因并保持6068。",
       "sources": [
         "game/tests/planet_jump_e2e.gd",
         "game/tests/dev_group_jump_e2e.gd"
@@ -2665,10 +2675,10 @@
     },
     {
       "id": "dev-tools-planet",
-      "label": "F2：岛群跳转、行星与新建世界",
-      "detail": "固定的「岛群跳转」行显示当前群与编号范围，输入3980或#3980，Enter/按钮直达；非法编号保留菜单并提示，无行星数据禁用。与行星地图共用后台生成、载入、安全落地与HUD进度；M地图叠加F2后正确恢复输入，输入焦点不触发数字换地图，一次Esc/F2关闭。另保留行星图、新建与继续世界、换场景/关窗存账。",
+      "label": "F2：行星与新建世界",
+      "detail": "F2保留场景切换、旧行星图、新建与继续世界、换场景/关窗存账。已移除入口理解偏差所加的编号跳转行；跨岛群浏览与选择在M地图完成。F2叠在M上关闭时保持地图鼠标可见，M关闭/跳转时先关闭工具叠层再恢复输入。",
       "tag": "界面",
-      "evidence": "2026-10-10：MSVC/Ninja Debug zhouzhu构建通过；dev_group_jump_e2e无头exit 0，6068→3980→6068及输入/权限边界通过。",
+      "evidence": "2026-10-10：M地图定向无头exit 0，F2无编号跳转行；M→F2→地图关闭按钮同时关闭两层，真实行走恢复。",
       "sources": [
         "src/dev_tools.cpp"
       ],
@@ -3455,7 +3465,7 @@
       "label": "开发者工具说明表",
       "detail": "每样开发者工具：动作名、键、名字、在哪儿能用、几行说明。单测扫 input_actions.h，注释写着「开发者：」的动作都得有一条。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "2026-10-10：zhouzhu_core_tests dev_manual，8项检查、0失败；F2说明包含编号示例、Enter/按钮及编号/行星数据限制。",
+      "evidence": "2026-10-10：zhouzhu_core_tests dev_manual，8项检查、0失败；M说明包含行星总览、定位/点选、粗图与明确跳转，以及地图与权限范围。",
       "sources": [
         "src/dev_manual.cpp",
         "src/dev_manual.h"
@@ -13379,8 +13389,8 @@
       "id": "e125",
       "type": "extend",
       "date": "2026-10-10",
-      "title": "拓展：开发者按岛群编号直接跳转",
-      "summary": "此前F2只列场景，跨岛群需打开行星图点选；现在F2输入3980（可带#）并回车或点按钮即可从6068直达。复用既有生成、流式载入和安全落地，不修改生成规则或世界数据。MSVC/Ninja Debug构建通过；dev_manual 8项0失败；无头验收6068→3980→6068、M地图叠加、输入恢复与权限/编号边界通过（exit 0）。未做可见窗口像素验收。",
+      "title": "已替换：F2编号跳转入口",
+      "summary": "7fb5010把用户要求的地图内跨岛群选择误做成F2编号入口，用户明确不认可这一实现。后续e126移除此入口并实现M地图的岛群/行星两层浏览；本事件保留为改动追溯，不表示当前入口或用户已验收。",
       "nodes": [
         "dev-tools-node",
         "dev-tools-planet",
@@ -13408,6 +13418,19 @@
           "dev-tools-manual",
           "planet-jump-e2e"
         ]
+      }
+    },
+    {
+      "id": "e126",
+      "type": "extend",
+      "date": "2026-10-10",
+      "title": "拓展：M地图内浏览与跳转其他岛群",
+      "summary": "此前M只显示当前岛群，跨群目标无法直接在M里选择；现在同一地图提供当前群细图与行星总览两个尺度，球图点选/编号定位配合真实粗图目标卡，明确按钮才发起跳转。撤除错误F2编号入口，保留既有局部瞬移和跨群后台生成、载入、安全落地。Debug构建和dev_manual 8项0失败；M完整无头6068→3980→6068、真实预览、900×700布局、叠层与输入恢复、编号/权限限制通过（exit 0）；失败提示定向检查通过，目标不可生成时保留地图并显示真实原因。",
+      "nodes": ["map-browser", "world-map", "planet-map", "expedition-jump", "group-stream", "group-provider", "dev-tools-planet", "dev-tools-manual", "planet-jump-e2e"],
+      "info": {
+        "created": ["map-browser"],
+        "reused": ["world-map", "planet-map", "expedition-jump", "group-stream", "group-provider", "dev-tools-planet", "dev-tools-manual", "planet-jump-e2e"],
+        "updated": ["planet-map", "dev-tools-planet", "dev-tools-manual", "planet-jump-e2e"]
       }
     }
   ],
