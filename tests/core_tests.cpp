@@ -34,6 +34,7 @@ extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned l
 #include "piece_mesh.h"
 #include "structure_styles.h"
 #include "dev_manual.h"
+#include "input_actions.h"
 #include "god_works.h"
 #include "terrain_edits.h"
 #include "group_memory.h"
@@ -7511,6 +7512,18 @@ void test_dev_manual() {
     check(filled, "每条都有键、名字、在哪儿、说明");
     check(keys.size() == dev_manual().size() && titles.size() == dev_manual().size(), "键、名字不重复");
     check(!dev_manual_intro().empty() && dev_manual_covers("god_mode") && !dev_manual_covers("interact"), "开头几行；查得到 god、不认玩法动作");
+    std::string switch_map_help;
+    for (const DevManualEntry &e : dev_manual()) {
+        if (std::string(e.action) == input_actions::SWITCH_MAP) {
+            for (const std::string &l : e.lines) {
+                switch_map_help += l + "\n";
+            }
+        }
+    }
+    check(switch_map_help.find("岛群跳转") != std::string::npos && switch_map_help.find("#3980") != std::string::npos && switch_map_help.find("Enter") != std::string::npos,
+            "F2 说明含岛群编号跳转、输入示例与确认方法");
+    check(switch_map_help.find("有效编号范围") != std::string::npos && switch_map_help.find("没有行星数据时禁用") != std::string::npos,
+            "F2 说明含岛群跳转的适用范围与编号限制");
 }
 
 #include "nonriver_restore_checks.inc"

@@ -16,9 +16,11 @@
 class Atmosphere;
 class Player;
 class PlanetMap;
+namespace godot { class LineEdit; }
 
 // 全局开发者工具（autoload，见 game/dev_tools.tscn），哪张地图里都在：
 //   F2 开合「换地图」清单（maps：场景路径 → 名字），点一项或按数字键就换过去；
+//      有行星数据时，可在「岛群跳转」输入编号，Enter / 按钮直接去那一群；
 //   F3 开关 god 模式——当前场景里的 Player 能飞、飞得快（Player::set_god_mode），换了地图照样开着；
 //   F4 开关时间快进——全局的世界时钟（WorldClock）按它的 fast_scale 倍走，近处远处的村子、农田都跟着快；
 //   F6 开合「时间与天气」面板——读出此时此地的日期、日出日落、天气、雪线；拨钟点（往回拨是日历退一天、钟往前走）、拨日子 / 月 / 季、
@@ -62,6 +64,9 @@ class DevTools : public godot::Node {
     godot::Label *notice = nullptr;
     godot::PanelContainer *menu = nullptr;
     godot::VBoxContainer *menu_rows = nullptr;
+    godot::LineEdit *group_node_input = nullptr;
+    godot::Button *group_jump_button = nullptr;
+    godot::Label *group_jump_hint = nullptr;
     godot::PanelContainer *weather_panel = nullptr;
     godot::Label *weather_text = nullptr;
     std::vector<godot::Button *> menu_buttons;
@@ -98,6 +103,10 @@ class DevTools : public godot::Node {
     void build_ui();
     void build_weather_panel(godot::Node *p_layer);
     void refresh_menu();
+    void refresh_group_jump();
+    void submit_group_jump();
+    void on_group_node_submitted(const godot::String &p_text);
+    void show_group_jump_error(const godot::String &p_text);
     void set_menu_open(bool p_open);
     void refresh_weather_panel();
     void push_weather();
@@ -112,6 +121,7 @@ protected:
 public:
     void _ready() override;
     void _process(double p_delta) override;
+    void _input(const godot::Ref<godot::InputEvent> &p_event) override;
     void _unhandled_input(const godot::Ref<godot::InputEvent> &p_event) override;
     void _notification(int p_what);
 
@@ -132,6 +142,7 @@ public:
     // F2 清单的第 p_index 项（地图、行星、新建世界、继续某个世界）
     void menu_pick(int p_index);
     godot::PackedStringArray get_menu_entries(); // 清单每一项的字（给测试看）
+    bool jump_to_group(int p_node); // F2 按编号跳岛群，与行星地图共用生成、载入与落地流程
     // 行星地图（F2「行星」）
     void open_planet_map();
     void close_planet_map() { set_planet_open(false); }

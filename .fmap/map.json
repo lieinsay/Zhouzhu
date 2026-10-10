@@ -2604,10 +2604,12 @@
     {
       "id": "planet-jump-e2e",
       "label": "跨群瞬移端到端测试",
-      "detail": "2051 → #6449（没生成过）→ #7997（北纬 78°）→ #6449（有缓存）→ 密接群 #162，再摆到 #163 的地上空看换锚；查能走的用时、最慢帧、锚、HUD、村子、纬度与季节；没有 Python 报 SKIP。",
+      "detail": "planet_jump_e2e 验证按需生成、载入与跨群落地。dev_group_jump_e2e 从当前6068开局，用 M→F2→编号3980→Enter 落地，再输入 #6068 点击按钮返回；覆盖地面碰撞、锚、HUD、相机、行走恢复、非法与超长编号、数字快捷键隔离、焦点下 Esc/F2、无行星数据与开发者权限。",
       "tag": "验收",
+      "evidence": "2026-10-10：dev_group_jump_e2e 无头 exit 0，真实19.3秒；3980首次生成并落地15.8秒，返回6068约0.12秒。未做可见窗口像素验收。",
       "sources": [
-        "game/tests/planet_jump_e2e.gd"
+        "game/tests/planet_jump_e2e.gd",
+        "game/tests/dev_group_jump_e2e.gd"
       ],
       "since": "e81"
     },
@@ -2663,9 +2665,10 @@
     },
     {
       "id": "dev-tools-planet",
-      "label": "F2：行星与新建世界",
-      "detail": "「行星」开 PlanetMap（有行星数据的场景）；「新建世界（随机种子）」→ WorldMaker → 换进去；「继续：世界 seedN」；换到「岛群 #2051」走剧情世界；换场景、关窗前 save_world。",
+      "label": "F2：岛群跳转、行星与新建世界",
+      "detail": "固定的「岛群跳转」行显示当前群与编号范围，输入3980或#3980，Enter/按钮直达；非法编号保留菜单并提示，无行星数据禁用。与行星地图共用后台生成、载入、安全落地与HUD进度；M地图叠加F2后正确恢复输入，输入焦点不触发数字换地图，一次Esc/F2关闭。另保留行星图、新建与继续世界、换场景/关窗存账。",
       "tag": "界面",
+      "evidence": "2026-10-10：MSVC/Ninja Debug zhouzhu构建通过；dev_group_jump_e2e无头exit 0，6068→3980→6068及输入/权限边界通过。",
       "sources": [
         "src/dev_tools.cpp"
       ],
@@ -3452,7 +3455,7 @@
       "label": "开发者工具说明表",
       "detail": "每样开发者工具：动作名、键、名字、在哪儿能用、几行说明。单测扫 input_actions.h，注释写着「开发者：」的动作都得有一条。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "core_tests dev_manual",
+      "evidence": "2026-10-10：zhouzhu_core_tests dev_manual，8项检查、0失败；F2说明包含编号示例、Enter/按钮及编号/行星数据限制。",
       "sources": [
         "src/dev_manual.cpp",
         "src/dev_manual.h"
@@ -13369,6 +13372,41 @@
         "updated": [
           "world-river-regime",
           "world-session-start"
+        ]
+      }
+    },
+    {
+      "id": "e125",
+      "type": "extend",
+      "date": "2026-10-10",
+      "title": "拓展：开发者按岛群编号直接跳转",
+      "summary": "此前F2只列场景，跨岛群需打开行星图点选；现在F2输入3980（可带#）并回车或点按钮即可从6068直达。复用既有生成、流式载入和安全落地，不修改生成规则或世界数据。MSVC/Ninja Debug构建通过；dev_manual 8项0失败；无头验收6068→3980→6068、M地图叠加、输入恢复与权限/编号边界通过（exit 0）。未做可见窗口像素验收。",
+      "nodes": [
+        "dev-tools-node",
+        "dev-tools-planet",
+        "planet-map",
+        "expedition-jump",
+        "group-stream",
+        "group-provider",
+        "dev-tools-manual",
+        "planet-jump-e2e"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "dev-tools-node",
+          "dev-tools-planet",
+          "planet-map",
+          "expedition-jump",
+          "group-stream",
+          "group-provider",
+          "dev-tools-manual",
+          "planet-jump-e2e"
+        ],
+        "updated": [
+          "dev-tools-planet",
+          "dev-tools-manual",
+          "planet-jump-e2e"
         ]
       }
     }

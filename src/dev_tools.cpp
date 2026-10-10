@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
+#include <godot_cpp/classes/line_edit.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/style_box_flat.hpp>
 #include <godot_cpp/classes/viewport.hpp>
@@ -72,6 +73,9 @@ void DevTools::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_weather_text"), &DevTools::get_weather_text);
     ClassDB::bind_method(D_METHOD("menu_pick", "index"), &DevTools::menu_pick);
     ClassDB::bind_method(D_METHOD("get_menu_entries"), &DevTools::get_menu_entries);
+    ClassDB::bind_method(D_METHOD("jump_to_group", "node"), &DevTools::jump_to_group);
+    ClassDB::bind_method(D_METHOD("_submit_group_jump"), &DevTools::submit_group_jump);
+    ClassDB::bind_method(D_METHOD("_on_group_node_submitted", "text"), &DevTools::on_group_node_submitted);
     ClassDB::bind_method(D_METHOD("set_menu_open_for_tests", "open"), &DevTools::set_menu_open_for_tests);
     ClassDB::bind_method(D_METHOD("open_planet_map"), &DevTools::open_planet_map);
     ClassDB::bind_method(D_METHOD("close_planet_map"), &DevTools::close_planet_map);
@@ -139,6 +143,7 @@ void DevTools::build_ui() {
     layer->add_child(menu);
 
     menu_rows = memnew(VBoxContainer);
+    menu_rows->set_name("Rows");
     menu_rows->add_theme_constant_override("separation", 8);
     menu->add_child(menu_rows);
     Label *title = make_label(22, Color(0.95f, 0.9f, 0.75f));
@@ -147,6 +152,32 @@ void DevTools::build_ui() {
     Label *hint = make_label(15, Color(0.66f, 0.66f, 0.62f));
     hint->set_text(String(U"点一项或按数字键 · F2 / Esc 合上"));
     menu_rows->add_child(hint);
+
+    HBoxContainer *group_row = memnew(HBoxContainer);
+    group_row->set_name("GroupJumpRow");
+    group_row->add_theme_constant_override("separation", 8);
+    menu_rows->add_child(group_row);
+    Label *group_label = make_label(19, Color(0.95f, 0.9f, 0.75f));
+    group_label->set_text(String(U"岛群跳转"));
+    group_row->add_child(group_label);
+    group_node_input = memnew(LineEdit);
+    group_node_input->set_name("GroupNode");
+    group_node_input->set_placeholder(String(U"输入编号，如 3980"));
+    group_node_input->set_custom_minimum_size(Vector2(220, 0));
+    group_node_input->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+    group_node_input->add_theme_font_size_override("font_size", 19);
+    group_node_input->set_keep_editing_on_text_submit(true);
+    group_node_input->connect("text_submitted", Callable(this, "_on_group_node_submitted"));
+    group_row->add_child(group_node_input);
+    group_jump_button = memnew(Button);
+    group_jump_button->set_name("GroupJumpButton");
+    group_jump_button->set_text(String(U"跳转"));
+    group_jump_button->add_theme_font_size_override("font_size", 19);
+    group_jump_button->connect("pressed", Callable(this, "_submit_group_jump"));
+    group_row->add_child(group_jump_button);
+    group_jump_hint = make_label(15, Color(0.66f, 0.66f, 0.62f));
+    group_jump_hint->set_name("GroupJumpHint");
+    menu_rows->add_child(group_jump_hint);
 
     build_weather_panel(layer);
 
@@ -443,6 +474,7 @@ void DevTools::refresh_menu() {
     }
     menu_buttons.clear();
     build_entries();
+    refresh_group_jump();
     for (size_t k = 0; k < entries.size(); k++) {
         Button *button = memnew(Button);
         button->set_text(vformat("%d   %s", int(k) + 1, entries[k].text));
@@ -453,6 +485,107 @@ void DevTools::refresh_menu() {
         menu_rows->add_child(button);
         menu_buttons.push_back(button);
     }
+}
+
+void DevTools::refresh_group_jump() {
+    const PlanetView *pv = PlanetView::active_view();
+    const Expedition *e = Object::cast_to<Expedition>(get_tree()->get_first_node_in_group(Expedition::MAP_GROUP));
+    const bool enabled = allowed() && e && e->get_dev_tools() && pv && pv->get_planet();
+    group_node_input->set_editable(enabled);
+    group_jump_button->set_disabled(!enabled);
+    group_jump_hint->add_theme_color_override("font_color", Color(0.66f, 0.66f, 0.62f));
+    group_jump_hint->set_text(enabled
+                    ? vformat(String(U"当前群 #%d · 编号 0–%d · 输入后按 Enter 或点「跳转」"), pv->get_anchor_node(), pv->get_planet()->node_count() - 1)
+                    : String(U"这张地图不能跳岛群；请先换到有行星数据的世界"));
+}
+
+void DevTools::show_group_jump_error(const String &p_text) {
+    group_jump_hint->add_theme_color_override("font_color", Color(1.0f, 0.7f, 0.45f));
+    group_jump_hint->set_text(p_text);
+    show_notice(p_text);
+}
+
+void DevTools::on_group_node_submitted(const String &) {
+    submit_group_jump();
+}
+
+void DevTools::submit_group_jump() {
+    String text = group_node_input->get_text().strip_edges();
+    if (text.begins_with("#")) {
+        text = text.substr(1).strip_edges();
+    }
+    if (text.is_empty()) {
+        show_group_jump_error(String(U"请输入岛群编号，如 3980"));
+        return;
+    }
+    for (int64_t k = 0; k < text.length(); k++) {
+        if (text[k] < U'0' || text[k] > U'9') {
+            show_group_jump_error(String(U"岛群编号须为非负整数，如 3980 或 #3980"));
+            return;
+        }
+    }
+    const PlanetView *pv = PlanetView::active_view();
+    if (!pv || !pv->get_planet()) {
+        show_group_jump_error(String(U"这张地图没有行星数据"));
+        return;
+    }
+    const int count = pv->get_planet()->node_count();
+    int node = 0;
+    for (int64_t k = 0; k < text.length(); k++) {
+        // 每一位都按实际行星节点数检查，任意长的粘贴也不会溢出。
+        const int digit = int(text[k] - U'0');
+        const int64_t next = int64_t(node) * 10 + digit;
+        if (next >= count) {
+            show_group_jump_error(vformat(String(U"没有这个岛群；有效编号为 0–%d"), count - 1));
+            return;
+        }
+        node = int(next);
+    }
+    jump_to_group(node);
+}
+
+bool DevTools::jump_to_group(int p_node) {
+    if (!allowed() || get_tree()->is_paused()) {
+        show_group_jump_error(String(U"当前不能使用开发者岛群跳转"));
+        return false;
+    }
+    Expedition *e = Object::cast_to<Expedition>(get_tree()->get_first_node_in_group(Expedition::MAP_GROUP));
+    const PlanetView *pv = PlanetView::active_view();
+    if (!e || !e->get_dev_tools() || !pv || !pv->get_planet()) {
+        show_group_jump_error(String(U"这张地图不能跳岛群"));
+        return false;
+    }
+    const int count = pv->get_planet()->node_count();
+    if (p_node < 0 || p_node >= count) {
+        show_group_jump_error(vformat(String(U"没有群 #%d；有效编号为 0–%d"), p_node, count - 1));
+        return false;
+    }
+    if (int(e->get_jump_state()["stage"]) != 0) {
+        show_group_jump_error(String(U"正在准备岛群跳转，请稍候"));
+        return false;
+    }
+    // 先放回菜单叠加前的输入状态，再让瞬移关闭岛群地图。
+    // 否则从 M 地图上打开 F2 时，会在关闭地图后恢复已经过期的输入锁。
+    const bool had_menu = menu_open, had_planet = planet_open;
+    const bool had_focus = group_node_input->has_focus();
+    const int selected = planet_map->get_selected();
+    set_menu_open(false);
+    set_planet_open(false);
+    if (!e->request_planet_jump(p_node)) {
+        const String why = e->get_notice();
+        set_menu_open(had_menu);
+        set_planet_open(had_planet);
+        if (had_planet) {
+            planet_map->select(selected);
+        }
+        if (had_menu && had_focus) {
+            group_node_input->grab_focus();
+        }
+        show_group_jump_error(why.is_empty() ? String(U"暂时不能跳转到这个岛群") : why);
+        return false;
+    }
+    show_notice(vformat(String(U"瞬移去群 #%d……"), p_node));
+    return true;
 }
 
 PackedStringArray DevTools::get_menu_entries() {
@@ -503,6 +636,7 @@ void DevTools::set_menu_open(bool p_open) {
         }
         Input::get_singleton()->set_mouse_mode(Input::MOUSE_MODE_VISIBLE);
     } else {
+        group_node_input->release_focus();
         if (player) {
             player->set_input_blocked(blocked_before_menu);
         }
@@ -705,15 +839,7 @@ void DevTools::feed_planet_map() {
 }
 
 void DevTools::on_planet_jump(int p_node) {
-    Expedition *e = Object::cast_to<Expedition>(get_tree()->get_first_node_in_group(Expedition::MAP_GROUP));
-    if (!e) {
-        show_notice(String(U"这张地图瞬移不了"));
-        return;
-    }
-    if (e->request_planet_jump(p_node)) {
-        set_planet_open(false); // 合上看进度（HUD 第二行）
-        show_notice(vformat(String(U"瞬移去群 #%d……"), p_node));
-    }
+    jump_to_group(p_node);
 }
 
 void DevTools::on_planet_course(int p_node) {
@@ -810,6 +936,15 @@ void DevTools::_notification(int p_what) {
     }
 }
 
+void DevTools::_input(const Ref<InputEvent> &p_event) {
+    // LineEdit 会消费 Esc；在 GUI 输入之前合上菜单，保持 F2 / Esc 一次关闭。
+    if (menu_open && allowed() && !get_tree()->is_paused() &&
+            (p_event->is_action_pressed(input_actions::SWITCH_MAP) || p_event->is_action_pressed("ui_cancel"))) {
+        set_menu_open(false);
+        get_viewport()->set_input_as_handled();
+    }
+}
+
 void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
     if (!allowed() || get_tree()->is_paused()) {
         return; // 暂停菜单开着（树暂停）：开发者工具的键都不理，Esc 归暂停菜单
@@ -876,6 +1011,9 @@ void DevTools::_unhandled_input(const Ref<InputEvent> &p_event) {
             return;
         }
         const Ref<InputEventKey> key = p_event;
+        if (group_node_input->has_focus()) {
+            return; // 编号输入中的数字不能触发换地图快捷键。
+        }
         if (key.is_valid() && key->is_pressed() && !key->is_echo()) {
             const int64_t code = int64_t(key->get_physical_keycode());
             if (code >= KEY_1 && code <= KEY_9) {
