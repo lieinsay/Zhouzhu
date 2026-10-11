@@ -51,5 +51,14 @@ void test_terrain_island_height() {
                 axis + "单岛内部仍保留原有双三次曲面");
         WorldGrid no_ids = g; no_ids.island.clear();
         check(height(no_ids, 50.0) == height(old, 50.0), axis + "未提供岛号的旧输入保留既有高程读取");
+        WorldGrid curved = g;
+        for (int r = 0; r < g.rows; ++r) for (int c = 0; c < g.cols; ++c) {
+            const double tangent = (along_z ? g.x0+c*g.res : g.z0+r*g.res)/g.res;
+            curved.height[g.index(r,c)] = float((curved.island[g.index(r,c)] == 0 ? 300.0 : 800.0)+0.2*tangent*tangent*tangent);
+        }
+        // 最近岛号始终为0，但4x4支持在-100m原格线处首次纳入邻岛的零权重外圈。
+        const double before = height(curved, -100.0-1e-5, 25.0), after = height(curved, -100.0+1e-5, 25.0);
+        std::printf("  axis=%s same_island_support_jump=%.9f m\n", along_z ? "z" : "x", std::abs(before-after));
+        check(std::abs(before-after) < 1e-6, axis + "跨岛插值支持进出时，本岛沿岸曲面仍连续");
     }
 }

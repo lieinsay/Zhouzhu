@@ -89,13 +89,20 @@ double WorldGrid::height_at(double p_x, double p_z) const {
         }
         if (!one_island) {
             // 虚空高程按最近陆格外推；另一岛的延拓不属于本岛岸坡。
-            // 只在跨岛的插值窗口内改用同岛四角，保持原格锚点与沿岸变化。
+            // 对同岛的 Catmull-Rom 权重归一；外圈以零权重进出支持，
+            // 保持原格锚点和本岛曲面的连续性，不因切换插值阶数留下格线。
             const double tx = fc - c, tz = fr - r;
+            double wx[4], wz[4];
+            for (int k = 0; k < 4; ++k) {
+                wx[k] = catmull_rom(k == 0, k == 1, k == 2, k == 3, tx);
+                wz[k] = catmull_rom(k == 0, k == 1, k == 2, k == 3, tz);
+            }
             double sum = 0.0, weight = 0.0;
-            for (int dz = 0; dz <= 1; ++dz) for (int dx = 0; dx <= 1; ++dx) {
-                const size_t k = cell(r + dz, c + dx);
+            for (int dz = 0; dz < 4; ++dz) for (int dx = 0; dx < 4; ++dx) {
+                const size_t k = cell(r + dz - 1, c + dx - 1);
                 if (island[k] != id) continue;
-                const double w = (dx ? tx : 1.0 - tx) * (dz ? tz : 1.0 - tz);
+                const double w = wx[dx] * wz[dz];
+                if (w == 0.0) continue;
                 sum += w * height[k];
                 weight += w;
             }
