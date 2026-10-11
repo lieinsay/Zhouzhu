@@ -74,6 +74,34 @@ GroundColor landcover_color(int p_class) {
 }
 
 double WorldGrid::height_at(double p_x, double p_z) const {
+    if (source_landscape && island.size() == height.size() && !island.empty()) {
+        const double fc = col_of(p_x), fr = row_of(p_z);
+        const int c = int(std::floor(fc)), r = int(std::floor(fr));
+        const uint8_t id = island[nearest_cell(p_x, p_z)];
+        auto cell = [&](int rr, int cc) {
+            return index(std::clamp(rr, 0, rows - 1), std::clamp(cc, 0, cols - 1));
+        };
+        bool one_island = true;
+        for (int rr = r - 1; rr <= r + 2 && one_island; ++rr) {
+            for (int cc = c - 1; cc <= c + 2; ++cc) {
+                if (island[cell(rr, cc)] != id) { one_island = false; break; }
+            }
+        }
+        if (!one_island) {
+            // 虚空高程按最近陆格外推；另一岛的延拓不属于本岛岸坡。
+            // 只在跨岛的插值窗口内改用同岛四角，保持原格锚点与沿岸变化。
+            const double tx = fc - c, tz = fr - r;
+            double sum = 0.0, weight = 0.0;
+            for (int dz = 0; dz <= 1; ++dz) for (int dx = 0; dx <= 1; ++dx) {
+                const size_t k = cell(r + dz, c + dx);
+                if (island[k] != id) continue;
+                const double w = (dx ? tx : 1.0 - tx) * (dz ? tz : 1.0 - tz);
+                sum += w * height[k];
+                weight += w;
+            }
+            return weight > 0.0 ? sum / weight : height[nearest_cell(p_x, p_z)];
+        }
+    }
     return bicubic(*this, height, p_x, p_z);
 }
 

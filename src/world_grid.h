@@ -80,7 +80,7 @@ struct WorldGrid {
     double col_of(double p_x) const { return (p_x - x0) / res; }
     double row_of(double p_z) const { return (p_z - z0) / res; }
 
-    // Catmull-Rom 双三次，出界按边缘格取
+    // Catmull-Rom 双三次，出界按边缘格取；v8 跨岛高程窗口只插值本岛的延拓。
     double height_at(double p_x, double p_z) const;
     double shore_at(double p_x, double p_z) const;
     // 最近的格（出界夹到边上）
