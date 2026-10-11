@@ -1,0 +1,964 @@
+{
+  "date": "2026-10-10",
+  "generator_commit": "1fad421ea67f1dbdc7584e5f4b3e713bd3c2e78d",
+  "island_version": 11,
+  "game_fix_commits": [
+    "4c8c3f0",
+    "595409c",
+    "5df8219"
+  ],
+  "story_cache_key": "seed42-valley-v2-1fad421",
+  "old_story_cache_key_preserved": "seed42-reach-v1-6431746",
+  "scope": {
+    "fine_groups": [
+      6068,
+      6067,
+      6329,
+      6327
+    ],
+    "lod_records_total": 16026,
+    "lod_records_replaced": 10,
+    "lod_records_preserved": 16016,
+    "weather_records_total": 8000,
+    "weather_records_preserved": 7996,
+    "planet_node_summaries_updated": [
+      6068,
+      6067,
+      6329,
+      6327
+    ],
+    "full_planet_regenerated": false
+  },
+  "source_hashes": {
+    "config_sha256": "5be2b668ddbc601c39bc1b6bc85a67998ecc8ef2c3f620652b461fb9030fe11f",
+    "core_module_sha256": "36992db9d7c8851057b196dcc1a3f3f73ed955e16f7323dbdab8bf3fb8724dae",
+    "river_cpp_sha256": "d3267fe300b7e5c48b28b920e56e2c6b163434a92c10345c6cd3180ae484d86d",
+    "valley_profile_hpp_sha256": "b3507a394678a3340e4aff5cac15c1d3a966da0c1c90b69b96cf87df7721f1dd"
+  },
+  "generator_validation": {
+    "ctest_passed": 1,
+    "ctest_total": 1,
+    "pytest_passed": 3,
+    "pytest_seconds": 7.19,
+    "seeds": [
+      42,
+      7,
+      2026
+    ],
+    "seed_hard_failures": 0,
+    "seed_soft_failures": 0,
+    "seed_warnings": 0,
+    "checks_per_fine_group": 32,
+    "fine_group_repeat_product_hashes_equal": true,
+    "fine_group_weather_years": 600,
+    "barrier_fixture_extra_cut_m": 0,
+    "comparison_baseline": "d4b172d",
+    "comparison": [
+      {
+        "node": 6068,
+        "checks": 32,
+        "hard_failures": 0,
+        "soft_failures": 0,
+        "bank_check": {
+          "width_depth_ok": true,
+          "below_banks": 0.9967,
+          "river_water_ok": true
+        },
+        "unchanged_arrays": {
+          "island_id": true,
+          "river": true,
+          "stream": true,
+          "w_ch_m": true,
+          "d_ch_m": true,
+          "floor_w_m": true,
+          "recv_i": true,
+          "recv_j": true,
+          "flowacc_km2_float32_product": true
+        },
+        "land_cells": 357219,
+        "source_channel_cells": 34758,
+        "main_island_recenter_m": -1.51727294921875,
+        "channel_height_max_local_change_m": 0.00002178600482238835,
+        "channel_bed_max_local_change_m": 0.00006103515625,
+        "channel_width_max_change_m": 0,
+        "channel_depth_max_change_m": 0,
+        "changed_land_cells_001m": 128452,
+        "local_delta_quantiles_m_0_1_10_50_90_99_100": [
+          -498.5592175656343,
+          -41.9316605512791,
+          -5.595454124645447,
+          0,
+          1.9913500266560291,
+          131.06388890655404,
+          855.9455165941749
+        ],
+        "fixed_height_step_counts": {
+          "baseline": 8054,
+          "final": 285
+        },
+        "height_step_count_definition": "adjacent row/column native cells on same land island; abs height difference within 0.02m of 100,100*sqrt(2),100*(sqrt(2)-1)"
+      },
+      {
+        "node": 6067,
+        "checks": 32,
+        "hard_failures": 0,
+        "soft_failures": 0,
+        "bank_check": {
+          "width_depth_ok": true,
+          "below_banks": 0.9994,
+          "river_water_ok": true
+        },
+        "unchanged_arrays": {
+          "island_id": true,
+          "river": true,
+          "stream": true,
+          "w_ch_m": true,
+          "d_ch_m": true,
+          "floor_w_m": true,
+          "recv_i": true,
+          "recv_j": true,
+          "flowacc_km2_float32_product": true
+        },
+        "land_cells": 206462,
+        "source_channel_cells": 18663,
+        "main_island_recenter_m": 0.49786376953125,
+        "channel_height_max_local_change_m": 0.000011487043138913577,
+        "channel_bed_max_local_change_m": 0.00006103515625,
+        "channel_width_max_change_m": 0,
+        "channel_depth_max_change_m": 0,
+        "changed_land_cells_001m": 65060,
+        "local_delta_quantiles_m_0_1_10_50_90_99_100": [
+          -357.7913633639283,
+          -36.394316012486584,
+          -3.969008411011134,
+          0,
+          0.7631162105520695,
+          92.18500988470309,
+          609.3293503204591
+        ],
+        "fixed_height_step_counts": {
+          "baseline": 4434,
+          "final": 200
+        },
+        "height_step_count_definition": "adjacent row/column native cells on same land island; abs height difference within 0.02m of 100,100*sqrt(2),100*(sqrt(2)-1)"
+      },
+      {
+        "node": 6329,
+        "checks": 32,
+        "hard_failures": 0,
+        "soft_failures": 0,
+        "bank_check": {
+          "width_depth_ok": true,
+          "below_banks": 0.9988,
+          "river_water_ok": true
+        },
+        "unchanged_arrays": {
+          "island_id": true,
+          "river": true,
+          "stream": true,
+          "w_ch_m": true,
+          "d_ch_m": true,
+          "floor_w_m": true,
+          "recv_i": true,
+          "recv_j": true,
+          "flowacc_km2_float32_product": true
+        },
+        "land_cells": 513994,
+        "source_channel_cells": 54017,
+        "main_island_recenter_m": -3.80877685546875,
+        "channel_height_max_local_change_m": 0.000026115940272575244,
+        "channel_bed_max_local_change_m": 0.00006103515625,
+        "channel_width_max_change_m": 0,
+        "channel_depth_max_change_m": 0,
+        "changed_land_cells_001m": 209894,
+        "local_delta_quantiles_m_0_1_10_50_90_99_100": [
+          -308.613841003028,
+          -34.214294925082044,
+          -6.01041684038679,
+          -0.00002611594004520157,
+          1.939957640990579,
+          81.59207911584113,
+          902.6606001882408
+        ],
+        "fixed_height_step_counts": {
+          "baseline": 18482,
+          "final": 518
+        },
+        "height_step_count_definition": "adjacent row/column native cells on same land island; abs height difference within 0.02m of 100,100*sqrt(2),100*(sqrt(2)-1)"
+      },
+      {
+        "node": 6327,
+        "checks": 32,
+        "hard_failures": 0,
+        "soft_failures": 0,
+        "bank_check": {
+          "width_depth_ok": true,
+          "below_banks": 1,
+          "river_water_ok": true
+        },
+        "unchanged_arrays": {
+          "island_id": true,
+          "river": true,
+          "stream": true,
+          "w_ch_m": true,
+          "d_ch_m": true,
+          "floor_w_m": true,
+          "recv_i": true,
+          "recv_j": true,
+          "flowacc_km2_float32_product": true
+        },
+        "land_cells": 398925,
+        "source_channel_cells": 40021,
+        "main_island_recenter_m": 0.765350341796875,
+        "channel_height_max_local_change_m": 0.000005384896667237626,
+        "channel_bed_max_local_change_m": 0.000030517578125,
+        "channel_width_max_change_m": 0,
+        "channel_depth_max_change_m": 0,
+        "changed_land_cells_001m": 126224,
+        "local_delta_quantiles_m_0_1_10_50_90_99_100": [
+          -158.30218338855468,
+          -22.157841467045717,
+          -3.381696978909599,
+          0,
+          0.16480059519095816,
+          47.34300082777926,
+          462.1419538751883
+        ],
+        "fixed_height_step_counts": {
+          "baseline": 4220,
+          "final": 133
+        },
+        "height_step_count_definition": "adjacent row/column native cells on same land island; abs height difference within 0.02m of 100,100*sqrt(2),100*(sqrt(2)-1)"
+      }
+    ],
+    "guard_6068": {
+      "old": 18342,
+      "blend": 7192,
+      "full": 211361,
+      "active": 236895,
+      "no_profile": 120324,
+      "total": 357219,
+      "fractions_all_land": {
+        "old": 0.05134665289360309,
+        "blend": 0.020133307578824193,
+        "full": 0.5916846528320162,
+        "no_profile": 0.3368353866955565
+      },
+      "fractions_active": {
+        "old": 0.07742670803520547,
+        "blend": 0.030359441946854093,
+        "full": 0.8922138500179404
+      },
+      "fixed_height_steps": 285,
+      "baseline_height_steps": 8054
+    }
+  },
+  "packages": {
+    "base": "game/planet/seed42",
+    "file_count": 31,
+    "total_bytes": 401486461,
+    "installed_sha256_verified": true,
+    "copy_manifest_sha256": "799940fb8141cf4582c773d50a3b62f790117f986ed38acaa755b56e351c1a7b",
+    "planet": {
+      "preserved_old": {
+        "columns_sha256": "d7650b502488c28580f2520841d392b2f9abcf28d51e9a94419da1d93f025b41",
+        "grids_sha256": "f464e3e06d20b885678e61b0dd01c90995382881c3fbd4f3927e3cd7090aface",
+        "nodes": 8000,
+        "columns": 44
+      },
+      "preserved_new": {
+        "columns_sha256": "d7650b502488c28580f2520841d392b2f9abcf28d51e9a94419da1d93f025b41",
+        "grids_sha256": "f464e3e06d20b885678e61b0dd01c90995382881c3fbd4f3927e3cd7090aface",
+        "nodes": 8000,
+        "columns": 44
+      },
+      "updated_summaries": {
+        "6067": {
+          "lod.peak_m": {
+            "old": 1489.5999755859375,
+            "new": 1490,
+            "changed": true
+          },
+          "lod.rim_m": {
+            "old": 538.9000244140625,
+            "new": 539.2999877929688,
+            "changed": true
+          },
+          "lod.violation_km": {
+            "old": -0.17100000381469727,
+            "new": -0.17100000381469727,
+            "changed": false
+          },
+          "lod.constrained": {
+            "old": 1,
+            "new": 1,
+            "changed": false
+          },
+          "lod.extent_km": {
+            "old": 60.98991775512695,
+            "new": 60.98991775512695,
+            "changed": false
+          }
+        },
+        "6068": {
+          "lod.peak_m": {
+            "old": 2227.10009765625,
+            "new": 2225.60009765625,
+            "changed": true
+          },
+          "lod.rim_m": {
+            "old": 697.7999877929688,
+            "new": 696.2999877929688,
+            "changed": true
+          },
+          "lod.violation_km": {
+            "old": -4.807000160217285,
+            "new": -4.807000160217285,
+            "changed": false
+          },
+          "lod.constrained": {
+            "old": 1,
+            "new": 1,
+            "changed": false
+          },
+          "lod.extent_km": {
+            "old": 98.3696060180664,
+            "new": 98.3696060180664,
+            "changed": false
+          }
+        },
+        "6327": {
+          "lod.peak_m": {
+            "old": 1090.300048828125,
+            "new": 1091,
+            "changed": true
+          },
+          "lod.rim_m": {
+            "old": 166.3000030517578,
+            "new": 167,
+            "changed": true
+          },
+          "lod.violation_km": {
+            "old": -0.1469999998807907,
+            "new": -0.1469999998807907,
+            "changed": false
+          },
+          "lod.constrained": {
+            "old": 1,
+            "new": 1,
+            "changed": false
+          },
+          "lod.extent_km": {
+            "old": 65.83168029785156,
+            "new": 65.83168029785156,
+            "changed": false
+          }
+        },
+        "6329": {
+          "lod.peak_m": {
+            "old": 2143.89990234375,
+            "new": 2140.10009765625,
+            "changed": true
+          },
+          "lod.rim_m": {
+            "old": 526.2999877929688,
+            "new": 522.5,
+            "changed": true
+          },
+          "lod.violation_km": {
+            "old": -0.23199999332427979,
+            "new": -0.23199999332427979,
+            "changed": false
+          },
+          "lod.constrained": {
+            "old": 1,
+            "new": 1,
+            "changed": false
+          },
+          "lod.extent_km": {
+            "old": 78.08796691894531,
+            "new": 78.08796691894531,
+            "changed": false
+          }
+        }
+      }
+    },
+    "manifest": [
+      {
+        "path": "groups/6067/resources.tsv",
+        "sha256": "47e8fd921a28f1f78ee456b34d96feb141d23f928d1e76e466295d321000c2ac",
+        "bytes": 90639
+      },
+      {
+        "path": "groups/6067/rivers.tsv",
+        "sha256": "859901bd5838cf0ece2a8548e54f927f8fe1892bb7394ef406508ffbcdbc45a2",
+        "bytes": 3573304
+      },
+      {
+        "path": "groups/6067/sites.tsv",
+        "sha256": "97a50f2fe124b1a8acc789a72cad72566e3315125a37a00c26448d877783c688",
+        "bytes": 34338
+      },
+      {
+        "path": "groups/6067/stamp.json",
+        "sha256": "43a6d8362be92dc194a0f4e2f0e06a7937533787dc6040cfd0c5ca0499ce4282",
+        "bytes": 540
+      },
+      {
+        "path": "groups/6067/terrain.bin",
+        "sha256": "86874cdd38b5929d86cd3728a0e553e7267ffd2c2238a8bd2e6cf42c309fb87b",
+        "bytes": 21915400
+      },
+      {
+        "path": "groups/6067/weather.tsv",
+        "sha256": "cd5ed4b9201659f744cc4757fb94b45c5df29503a46bf0888cbc2a058331ab07",
+        "bytes": 10361
+      },
+      {
+        "path": "groups/6067/world.json",
+        "sha256": "8c3cb7661e5a3041dc9bfd6b980000013ecdf469ca380faf1c6602f64ae492af",
+        "bytes": 161233
+      },
+      {
+        "path": "groups/6068/resources.tsv",
+        "sha256": "109c220f6907f4e02836a4459edfd1e12cc7b9a42aa3d4902668266a70a2af54",
+        "bytes": 130277
+      },
+      {
+        "path": "groups/6068/rivers.tsv",
+        "sha256": "c06961dbd27c00e05f18b9ba960e7dae52ee159ad058e80ad6fa14587566a005",
+        "bytes": 6642087
+      },
+      {
+        "path": "groups/6068/sites.tsv",
+        "sha256": "ceac47b27d4bc65cb8fc543bc9011838272e124caf927ef3f94a0fce53888d13",
+        "bytes": 60728
+      },
+      {
+        "path": "groups/6068/stamp.json",
+        "sha256": "72b28268e0f59789e60a4a200409232ac7e6e54ef7815e643ae32ac8bae20c41",
+        "bytes": 540
+      },
+      {
+        "path": "groups/6068/terrain.bin",
+        "sha256": "1511ec7093ea399464e32c9ef0f363d9c051e9c9df5bd716c5ed5da014d4aab0",
+        "bytes": 53416948
+      },
+      {
+        "path": "groups/6068/weather.tsv",
+        "sha256": "41eeecbf271590a0ed0864b683d92c77dffe27f0d4b368d78a63120e2b9625ce",
+        "bytes": 10257
+      },
+      {
+        "path": "groups/6068/world.json",
+        "sha256": "754d3633ac3453024c4f4b4c6128968f2b832431f175991a7ec62f8f30225e2e",
+        "bytes": 247414
+      },
+      {
+        "path": "groups/6327/resources.tsv",
+        "sha256": "8f36c1716f7f435b94411984e1b762ff10591b94771eb2e59b650dfb3e5f9614",
+        "bytes": 149588
+      },
+      {
+        "path": "groups/6327/rivers.tsv",
+        "sha256": "25bb9334ebcb605e15252afe9f0f096897970dd49414cffc79914c0998684714",
+        "bytes": 7680891
+      },
+      {
+        "path": "groups/6327/sites.tsv",
+        "sha256": "e77aabdb737ba5d79fdbaae3953d5800f49154c4d8ede5f51901395c596d3d22",
+        "bytes": 34505
+      },
+      {
+        "path": "groups/6327/stamp.json",
+        "sha256": "32b8d20904e67092301852a69d829f0d62e6783ab686ebc096a78112dad2cdb1",
+        "bytes": 540
+      },
+      {
+        "path": "groups/6327/terrain.bin",
+        "sha256": "deb6374e89d574397b04f44b173e80ca4e900ccb5012dc29ea669f51a9763493",
+        "bytes": 42652912
+      },
+      {
+        "path": "groups/6327/weather.tsv",
+        "sha256": "54b699c612aa726ef6f1e38a06836bf37bd10ef5f6536d9a8f79311170c9f800",
+        "bytes": 10390
+      },
+      {
+        "path": "groups/6327/world.json",
+        "sha256": "a155ea3f888fa728c546ce87233ace3829680d8ea6fee5c25be110eb22d6019d",
+        "bytes": 158074
+      },
+      {
+        "path": "groups/6329/resources.tsv",
+        "sha256": "285841810db4f721e0c8e6a46f37df996831461c043ecd0ba36fb04030273817",
+        "bytes": 134732
+      },
+      {
+        "path": "groups/6329/rivers.tsv",
+        "sha256": "aa0ff3194c04883dd6ccee923744680f4476e92aba45ba9a869e7a645eae54a6",
+        "bytes": 10291121
+      },
+      {
+        "path": "groups/6329/sites.tsv",
+        "sha256": "f32a9a6bd3189644f180594e27a30272becfb0b9dd128c08f8956c251384cbc4",
+        "bytes": 82802
+      },
+      {
+        "path": "groups/6329/stamp.json",
+        "sha256": "f87699e5ab51872ee350e76724b8c2fc05f7656531958df7f6a828d733c79462",
+        "bytes": 540
+      },
+      {
+        "path": "groups/6329/terrain.bin",
+        "sha256": "7807629ee0605df5813d4d8ca4c2c7ac67e13ec3fcecc24a44b3263a47ae5953",
+        "bytes": 58709416
+      },
+      {
+        "path": "groups/6329/weather.tsv",
+        "sha256": "6af4a66c0fe25080558a93f27f5aa47cad9a3c192ce1342a482e675f6e6fd9b6",
+        "bytes": 10391
+      },
+      {
+        "path": "groups/6329/world.json",
+        "sha256": "5311323a805b268d2f2f332c3b1921c26e4b1f68b2b9788425c8c69443a07e8b",
+        "bytes": 323491
+      },
+      {
+        "path": "lods.bin",
+        "sha256": "a048dbdeede7257353d00ca31c4d7c91c419ff4f4b6bf2f8ae781903e318dd1e",
+        "bytes": 177214468
+      },
+      {
+        "path": "planet.bin",
+        "sha256": "139dbb3382c5146304d9c318874a737cebdc219d62ea80fc85afef59f2d475ed",
+        "bytes": 8336508
+      },
+      {
+        "path": "weather.bin",
+        "sha256": "538310ce2fae35d7d387d00b68c83ddf9989d87cf2e2f1169b14b61351841473",
+        "bytes": 9402026
+      }
+    ],
+    "lod_preserved_old": {
+      "count": 16016,
+      "sha256": "3664267f8d528cdfef7ed8b5bb0d7a71f640670e0fbe62e9f197c65e0b91c2bc"
+    },
+    "lod_preserved_new": {
+      "count": 16016,
+      "sha256": "3664267f8d528cdfef7ed8b5bb0d7a71f640670e0fbe62e9f197c65e0b91c2bc"
+    },
+    "weather_preserved_old": {
+      "count": 7996,
+      "sha256": "add6326777eaf2158771cc75b25ffbdac89ee6ccb041c875152eae1c28cfc758"
+    },
+    "weather_preserved_new": {
+      "count": 7996,
+      "sha256": "add6326777eaf2158771cc75b25ffbdac89ee6ccb041c875152eae1c28cfc758"
+    },
+    "weather_updates": {
+      "6067": {
+        "index_changed": true,
+        "index_changes": {
+          "rim_m": {
+            "old": 538.9000244140625,
+            "new": 539.2999877929688
+          }
+        },
+        "daily_changes": {
+          "kind": 0,
+          "rain": 0,
+          "events": 0,
+          "temp": 0,
+          "direction": 0,
+          "speed": 0
+        },
+        "climate": {
+          "ref_m": 665.2,
+          "lapse_c_per_km": 6,
+          "rim_m": 539.3,
+          "fog_surface_max_m": 800,
+          "fog_rise_m": 153.7,
+          "snow_temp_c": 0.5,
+          "heavy_rain_mm": 15,
+          "sail_wind_max_ms": 14
+        }
+      },
+      "6068": {
+        "index_changed": true,
+        "index_changes": {
+          "rim_m": {
+            "old": 697.7999877929688,
+            "new": 696.2999877929688
+          }
+        },
+        "daily_changes": {
+          "kind": 0,
+          "rain": 0,
+          "events": 0,
+          "temp": 0,
+          "direction": 0,
+          "speed": 0
+        },
+        "climate": {
+          "ref_m": 904,
+          "lapse_c_per_km": 6,
+          "rim_m": 696.3,
+          "fog_surface_max_m": 800,
+          "fog_rise_m": 120,
+          "snow_temp_c": 0.5,
+          "heavy_rain_mm": 15,
+          "sail_wind_max_ms": 14
+        }
+      },
+      "6327": {
+        "index_changed": true,
+        "index_changes": {
+          "rim_m": {
+            "old": 166.3000030517578,
+            "new": 167
+          }
+        },
+        "daily_changes": {
+          "kind": 0,
+          "rain": 0,
+          "events": 0,
+          "temp": 0,
+          "direction": 0,
+          "speed": 0
+        },
+        "climate": {
+          "ref_m": 250.1,
+          "lapse_c_per_km": 6,
+          "rim_m": 167,
+          "fog_surface_max_m": 800,
+          "fog_rise_m": 257.475,
+          "snow_temp_c": 0.5,
+          "heavy_rain_mm": 15,
+          "sail_wind_max_ms": 14
+        }
+      },
+      "6329": {
+        "index_changed": true,
+        "index_changes": {
+          "rim_m": {
+            "old": 526.2999877929688,
+            "new": 522.5
+          }
+        },
+        "daily_changes": {
+          "kind": 1,
+          "rain": 0,
+          "events": 0,
+          "temp": 0,
+          "direction": 0,
+          "speed": 0
+        },
+        "climate": {
+          "ref_m": 755.5,
+          "lapse_c_per_km": 6,
+          "rim_m": 522.5,
+          "fog_surface_max_m": 800,
+          "fog_rise_m": 131.125,
+          "snow_temp_c": 0.5,
+          "heavy_rain_mm": 15,
+          "sail_wind_max_ms": 14
+        }
+      }
+    },
+    "lod_replaced": [
+      {
+        "node": 6067,
+        "res_m": 2000,
+        "old_sha256": "06770061321cfb1e753f87f334744af128937902e431965997cf511a3bedfd81",
+        "new_sha256": "4ea70d212f6913d1bf48cdb63a597228153773ba06d3472c312b1e18954ba7a7"
+      },
+      {
+        "node": 6068,
+        "res_m": 2000,
+        "old_sha256": "364686fcdd17c27381c1ee71653ae16ac1838efe01b5c23153acc2b0a833fc3d",
+        "new_sha256": "ff66177d6dc8aa08d21d0b4e87287a47538f690ca1129930f98a67e7579f95f6"
+      },
+      {
+        "node": 6327,
+        "res_m": 2000,
+        "old_sha256": "c8181c4205d2d56a24bdd80a782d72bfa5004917cdc4b9abea164accd34f4394",
+        "new_sha256": "622dfe0e6a2c340d4dad112b8f0b7fdb3d19ff647429163c63098f42667c220d"
+      },
+      {
+        "node": 6329,
+        "res_m": 2000,
+        "old_sha256": "2702a475b5b3335d95f2fa7ad1bc94b14fd352114d7e6b6217709ee8f9a4ecda",
+        "new_sha256": "5a8805bc40a42b00fb5419f3af151787180279b12e6a44042f1f8fa84aa0ccd0"
+      },
+      {
+        "node": 6067,
+        "res_m": 1000,
+        "old_sha256": "db736637228bff981a8d10fad99191e7cffc59b59ec323e90197fdf05f04b371",
+        "new_sha256": "dab52599d092907aeb9cd574b71b65bf39a7597e03c81ac3b926fd0e75423c5f"
+      },
+      {
+        "node": 6068,
+        "res_m": 1000,
+        "old_sha256": "d992b5948b8a983b76311bf0c8aad507d2cb2d5aed315923671deda383ab409e",
+        "new_sha256": "0bcf45e1f5bc654b239a313717ce3ee83e410d75b032df54c184305d550c590d"
+      },
+      {
+        "node": 6327,
+        "res_m": 1000,
+        "old_sha256": "d28bd79fffccbfd266815b940eb7ccaca2a48d3fec9a83335355bbb4f2a43868",
+        "new_sha256": "d4d52cfc4b90c84d104a228487c3cc04bcbd14df09c12eeff3359e79dd2d55ac"
+      },
+      {
+        "node": 6329,
+        "res_m": 1000,
+        "old_sha256": "e52b9266836288f4699b244a35190fb26f576d6e32c1094b2a03ba7ac5c929ac",
+        "new_sha256": "3e37eae5ec887a832ea17a0003d0c9f1aefdc5505632d13e4a4d28c53cd1c485"
+      },
+      {
+        "node": 6067,
+        "res_m": 500,
+        "old_sha256": "305ffed75b1c6296e50c72226976987f742fa9477204e56f30b342b25dc582fe",
+        "new_sha256": "b6664bb4ba52860cb9ad87002eec06b97addbe58b6c202ee8717c34dad4ec33a"
+      },
+      {
+        "node": 6068,
+        "res_m": 500,
+        "old_sha256": "c64914f1ab73d47ccb1fd38ab9c6731b3f6549da4563d913603c457ddad89374",
+        "new_sha256": "6f402c03c9ed4b708a14b1ede3140e98c1f3c4a01fc6fb6f431b51169c5b3fb5"
+      }
+    ],
+    "fine_contract": {
+      "metric_note": "各节点source_exact、river_points、receiver_segments、weather均为mismatch（不一致）数量，0表示检查结果全部一致，不表示检查0个点；checks.*.mismatch同样为不一致数量。",
+      "checked_cells": 4908181,
+      "checked_source_points": 147459,
+      "river_fields_per_point": 13,
+      "checked_river_field_values": 1916967,
+      "checked_counts_by_node": {
+        "6067": { "cells": 608760, "source_points": 18663, "river_field_values": 242619 },
+        "6068": { "cells": 1483803, "source_points": 34758, "river_field_values": 451854 },
+        "6327": { "cells": 1184802, "source_points": 40021, "river_field_values": 520273 },
+        "6329": { "cells": 1630816, "source_points": 54017, "river_field_values": 702221 }
+      },
+      "top_keys": [
+        "source",
+        "nodes",
+        "copy_files",
+        "copy_manifest_sha256",
+        "seconds",
+        "provenance",
+        "execution"
+      ],
+      "nodes": {
+        "6067": {
+          "terrain": "86874cdd38b5929d86cd3728a0e553e7267ffd2c2238a8bd2e6cf42c309fb87b",
+          "checks": {
+            "height": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "coast": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "width_dm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "depth_cm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flowacc_km2": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flow_exporter_contract": {
+              "mismatch": 0,
+              "max_error": 0
+            }
+          },
+          "source_exact": 0,
+          "river_points": 0,
+          "receiver_segments": 0,
+          "weather": 0
+        },
+        "6068": {
+          "terrain": "1511ec7093ea399464e32c9ef0f363d9c051e9c9df5bd716c5ed5da014d4aab0",
+          "checks": {
+            "height": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "coast": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "width_dm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "depth_cm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flowacc_km2": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flow_exporter_contract": {
+              "mismatch": 0,
+              "max_error": 0
+            }
+          },
+          "source_exact": 0,
+          "river_points": 0,
+          "receiver_segments": 0,
+          "weather": 0
+        },
+        "6327": {
+          "terrain": "deb6374e89d574397b04f44b173e80ca4e900ccb5012dc29ea669f51a9763493",
+          "checks": {
+            "height": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "coast": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "width_dm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "depth_cm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flowacc_km2": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flow_exporter_contract": {
+              "mismatch": 0,
+              "max_error": 0
+            }
+          },
+          "source_exact": 0,
+          "river_points": 0,
+          "receiver_segments": 0,
+          "weather": 0
+        },
+        "6329": {
+          "terrain": "7807629ee0605df5813d4d8ca4c2c7ac67e13ec3fcecc24a44b3263a47ae5953",
+          "checks": {
+            "height": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "coast": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "width_dm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "depth_cm": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flowacc_km2": {
+              "mismatch": 0,
+              "max_error": 0
+            },
+            "flow_exporter_contract": {
+              "mismatch": 0,
+              "max_error": 0
+            }
+          },
+          "source_exact": 0,
+          "river_points": 0,
+          "receiver_segments": 0,
+          "weather": 0
+        }
+      },
+      "execution": {
+        "check_exit_code": 0,
+        "check_seconds": 36.203000000008615,
+        "wrapper_exit_code": 1,
+        "wrapper_error": "GBK stdout was decoded as UTF-8 during display; original check result and JSON artifacts were successful",
+        "raw_stdout_encoding": "gbk",
+        "raw_stdout_sha256": "5a16fb3f19dacf99301cd754857ea7e68a310a312c3c424d06b89a5e954c0846",
+        "normalized_log": "adapter-fine-contract-final-utf8.log"
+      }
+    }
+  },
+  "game_validation": {
+    "boundary_checks": 36662,
+    "boundary_result": {
+      "exit_code": 0,
+      "seconds": 0.8120000000053551,
+      "timeout": 180,
+      "args": [
+        "cmake-build-debug/zhouzhu_core_tests.exe",
+        "source_rivers",
+        "terrain_normals"
+      ]
+    },
+    "frozen_old_source_switch": {
+      "x": 24612.476604718,
+      "z": -32356,
+      "sample_span_m": 0.00002,
+      "height_delta_m": 0.000016766074
+    },
+    "final_package_switch": {
+      "sample_span_m": 0.00002,
+      "height_delta_m": 9.3278e-8
+    },
+    "final_package_original_2m_pair_delta_m": 0.009130542,
+    "headless_result": {
+      "exit_code": 0,
+      "seconds": 11.10899999999674,
+      "timeout": 300,
+      "args": [
+        "D:/Program Files/Godot/Godot_v4.4.1-stable_win64.exe",
+        "--headless",
+        "--path",
+        "game",
+        "--script",
+        "res://tests/seed42_rivers_e2e.gd"
+      ]
+    },
+    "headless_pass": {
+      "node": 6068,
+      "spawn": [
+        24790,
+        1226.611,
+        -32330
+      ],
+      "on_floor": true,
+      "camera": true,
+      "start_day": 85,
+      "date_change_and_restore": true,
+      "lod_tile_counts": [
+        106,
+        141
+      ],
+      "cross_node": [
+        6067,
+        6068
+      ],
+      "metadata_reload_and_scene_reentry": true
+    },
+    "visible_pixel_acceptance_performed": false
+  },
+  "logs": {
+    "generator": "build/terrain-artifacts/generator-followup",
+    "adapter_report": "build/terrain-artifacts/adapter-report.json",
+    "adapter_fine_contract": "build/terrain-artifacts/adapter-fine-contract.json",
+    "installed_manifest": "build/terrain-artifacts/main-installed-manifest.json",
+    "boundary": "build/terrain-artifacts/main-final-boundary-tests.log",
+    "headless": "build/terrain-artifacts/main-final-e2e.log"
+  }
+}

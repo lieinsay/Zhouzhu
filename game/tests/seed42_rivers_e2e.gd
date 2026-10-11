@@ -16,7 +16,7 @@ func _run() -> void:
 		await process_frame
 	var main = current_scene
 	require(main is Expedition,"项目默认启动没有进入真实世界")
-	require(main.get_node("GroupProvider").get_world_dir()=="user://worlds/seed42-reach-v1-6431746","新开局未隔离旧缓存")
+	require(main.get_node("GroupProvider").get_world_dir()=="user://worlds/seed42-valley-v2-1fad421","新开局未隔离旧缓存")
 	var world = main.get_node("World")
 	var player = main.get_node("Player")
 	var clock = root.get_node("GameClock")
@@ -77,7 +77,7 @@ func _run() -> void:
 	require(abs(returned.width-restored.width)<0.01, "跨岛及细版重载后日期水情改变")
 	main.queue_free()
 	await process_frame
-	require(root.get_node("DeveloperTools").prepare_world("user://worlds/seed42-reach-v1-6431746"), "世界存档元数据加载失败")
+	require(root.get_node("DeveloperTools").prepare_world("user://worlds/seed42-valley-v2-1fad421"), "世界存档元数据加载失败")
 	main=load("res://world_seed42.tscn").instantiate()
 	root.add_child(main)
 	world=main.get_node("World")

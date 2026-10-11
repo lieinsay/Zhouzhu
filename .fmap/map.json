@@ -561,26 +561,28 @@
     {
       "id": "world-terrain",
       "label": "连续地形",
-      "detail": "连续顶面、岛底、地表和原有河道取样。旧包保留旧路径；v8 直接使用源岸距及出露岩性，停用额外大型岩梁，表面细节限制在 ±3 米。get_landscape_at 明确是否具有源地貌字段。河流水量、宽深规则本轮未恢复或调整。",
+      "detail": "连续顶面、岛底、地表和源河槽取样。v8使用源岸距及出露岩性，细节限制在±3米。源河河心与单段断面保留；离河心的同河重叠断面按连续归一权重合成，不因候选进出立起断墙。旧包保留旧路径，水量及宽深仍直接读取源数据。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "387d8b7；旧 v5 包读取与新 v8 源字段逐格核对通过。",
+      "evidence": "4c8c3f0、5df8219；最终源河/法线36662项0失败。冻结旧断面仍触发原切换，微跨界差0.000016766米；正式新包同处0.000000093米。默认入口无头通过，保留连续坡度。",
       "sources": [
         "src/world_terrain.h",
         "src/world_terrain.cpp",
         "src/world_river.h",
-        "src/world_river.cpp"
+        "src/world_river.cpp",
+        "tests/source_river_checks.inc"
       ],
       "since": "e11"
     },
     {
       "id": "terrain-tile",
       "label": "分块地面",
-      "detail": "TileLayout：盖住整个栅格的四叉树，叶 128 m、每块 64 格，按离焦点的距离细分，只选可能有地的块；build_tile_mesh：顶面（按地表份额着色）、崖壁、岛底（整块是地时隔 4 格）、块边裙边，叶块带碰撞面。",
+      "detail": "TileLayout四叉树分块顶面、崖壁、岛底、裙边与叶块碰撞。源河亚格切分后的顶点从真实连续地面取差分单位法线，厘米级河槽使用相应小尺度，保留纵横坡；法线修复不改顶点位置或碰撞几何。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest terrain_tile：互不重叠、全覆盖、叶块碰撞；邑治处 274 块",
+      "evidence": "595409c；20米/0.02米源河切分网格纵横坡、单位法线及位置/碰撞8项通过，最终联合36662项0失败。正式包LOD106↔141与跨群无头通过，像素验收尚未做。",
       "sources": [
         "src/terrain_tile.h",
-        "src/terrain_tile.cpp"
+        "src/terrain_tile.cpp",
+        "tests/terrain_normal_checks.inc"
       ],
       "since": "e11"
     },
@@ -1148,9 +1150,9 @@
     {
       "id": "world-river-net",
       "label": "河网",
-      "detail": "rivers.tsv v1直接还原源中心线、down/join、米制浮点固定宽深和左右谷底；源包不走旧倍率、补造曲流或供水。",
+      "detail": "rivers.tsv v1直接还原源中心线、down/join、米制固定宽深和左右谷底。最近河段查询保留物理语义；地形另以同河重叠断面连续合成，零权重候选进出及不对称谷宽端帽不突跳。不补造曲流、供水或宽深倍率。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "6068源数据34758点原值一致；2743河段、1867接点；source_rivers36638项通过。",
+      "evidence": "4c8c3f0、5df8219；冻结旧断面、源连接/原值、重叠断面及最终6068包联合36662项0失败；四包147459源点×13字段一致，日期水情与恢复无头通过。",
       "sources": [
         "src/world_river.cpp",
         "src/world_grid.cpp",
@@ -1592,9 +1594,9 @@
     {
       "id": "terrain-tile-ground",
       "label": "地皮着色",
-      "detail": "地表过渡、陡坡露岩及原有河床着色。v8 露岩使用源 lith 区分石灰岩、泥灰岩、辉长岩、蛇纹岩和浮石；旧开局没有 lith，保持原显示。不随机补画峰林或编造三维岩层。",
+      "detail": "地表份额、陡坡露岩及河床着色。v8露岩使用源lith；河道切分颜色使用真实连续坡面法线的坡度，不以粗格平坡取代。缺少的三维岩层仍不补造。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "387d8b7；编译和原生源岩性取样检查通过；旧开局包不能展示新增岩性字段，尚未做新包可见美术验收。",
+      "evidence": "595409c；河道真实纵横坡法线检查通过，地表着色与真实坡度共用；尚未做本轮可见像素验收。",
       "sources": [
         "src/terrain_tile.cpp"
       ],
@@ -1994,9 +1996,9 @@
     {
       "id": "weather-shaders",
       "label": "天空、地皮与共用着色器",
-      "detail": "sky.gdshader（昼夜晨昏、日月星、云层、阴沉、雨雾、闪电）、ground.gdshader（换季、盖雪、雨后变深）、weather.gdshaderinc（云团噪声与海拔表取样、全局参数声明）。",
+      "detail": "sky.gdshader昼夜日月、云雨雾；ground.gdshader换季、积雪、雨后变深。积雪坡度与背阴使用插值后归一化的地面方向，避免法线长度造成条纹。weather.gdshaderinc共用天气噪声和海拔表。",
       "tag": "资产",
-      "evidence": "weather_shots 目视",
+      "evidence": "595409c；插值积雪方向归一化及真实坡面法线检查通过。最终正式包无头通过；可见像素验收尚未做。",
       "sources": [
         "game/shaders/sky.gdshader",
         "game/shaders/ground.gdshader",
@@ -2595,7 +2597,11 @@
       "detail": "MapBrowser组合现有WorldMap细图与PlanetMap地球仪，M默认当前群详情，页签切到全行星。点击选群或编号定位只选择；目标卡用已有LOD原始陆地/地表/高程绘制粗图，展示距离、经纬、人口、气候与准备状态。明确跳转按钮请求宿主跨群；900×700时侧卡转为下栏，普通模式可看图不可跳。",
       "tag": "界面",
       "evidence": "2026-10-10：MSVC/Ninja Debug构建通过；M无头流程、真实LOD预览、宽窄窗口控件范围、点选/定位/按钮与权限通过。未做可见窗口像素验收，待用户开窗许可。",
-      "sources": ["src/map_browser.h", "src/map_browser.cpp", "src/expedition.cpp"],
+      "sources": [
+        "src/map_browser.h",
+        "src/map_browser.cpp",
+        "src/expedition.cpp"
+      ],
       "since": "e126",
       "parent": "expedition"
     },
@@ -2982,12 +2988,15 @@
     {
       "id": "skyisle-core",
       "label": "生成器核心库（子模块）",
-      "detail": "extern/skyisle-gen 提供行星与岛群 C++ 核心。2026-10-05 撤回后保留十月一日 103fea1 的实现，独立恢复岸线 Seg 坐标顺序修复 adda738。已撤回的河流扩水、地下水和岛屿形成实验不属于现状。",
+      "detail": "extern/skyisle-gen提供行星与岛群C++核心。1fad421（ISLAND_VERSION11）以源线段欧氏谷距和连续参数场减少D8折角；支持圆guard连续回退双线性masked地面，阻止跨湖/虚空，复杂岸界保留部分D8误差。岸侵蚀不低于原对应源平岸水面；原src/dist保留河/溪涧分类、床高及宽深，汇流/receiver不变。此次正式接入范围四细版与10相关LOD，未恢复已撤回实验。",
       "tag": "外部：skyisle-gen",
-      "evidence": "生成器 MSVC Release 构建与 core_selftest 通过；新增 5×9 非方形水平/竖直海岸解析距离检查。",
+      "evidence": "1fad421/版本11；自检1/1、四群各32项全过及重复产物哈希/600年天气、三seed全0、pytest3项通过。6068固定步差8054→285；屏障801→0米，原源宽深/分类/汇流契约保留。",
       "sources": [
         "extern/skyisle-gen/core/CMakeLists.txt",
-        "CMakeLists.txt"
+        "CMakeLists.txt",
+        "extern/skyisle-gen/core/src/island/river.cpp",
+        "extern/skyisle-gen/core/src/island/valley_profile.hpp",
+        "extern/skyisle-gen/core/tests/selftest.cpp"
       ],
       "since": "e99"
     },
@@ -3575,9 +3584,9 @@
     {
       "id": "world-session-start",
       "label": "开局配置",
-      "detail": "故事世界节点6068、邻群6067、第85日；村026附近河岸出生，独立版本缓存保留旧世界恢复路径。生存世界使用自己的落点。",
+      "detail": "故事世界节点6068、邻群6067、第85日；村026附近河岸出生。故事缓存seed42-valley-v2-1fad421隔离新版地形，旧seed42-reach-v1-6431746目录保留；生存世界使用自己的落点。",
       "tag": "引擎构件",
-      "evidence": "项目默认boot入口进入6068及新缓存；出生24790,1226.61,-32330；碰撞、相机、85日、存档元数据加载通过。",
+      "evidence": "最终正式包无头11.109秒、exit0：真实6068出生、地面碰撞/相机、85日、日期水情恢复、LOD106↔141、6067往返、元数据加载与场景重入全过。31文件安装SHA及源导出契约通过。",
       "sources": [
         "src/story_start.h",
         "src/world_session.cpp",
@@ -9956,7 +9965,7 @@
       "commits": "20a5efe..e09661a",
       "steps": [
         {
-          "text": "从明确启用的当前生成器生成seed42世界和源河网",
+          "text": "按明确启用的源规则生成河网，并在四细版及10相关LOD接入连续谷距修复",
           "nodes": [
             "skyisle-core",
             "gen-core",
@@ -9973,7 +9982,7 @@
           ]
         },
         {
-          "text": "玩家在6068村026附近河岸真实地面出生",
+          "text": "玩家在6068村026附近真实河岸出生，重叠河谷坡面连续衔接，切分地面保留真实坡向",
           "nodes": [
             "world-session-start",
             "expedition",
@@ -13426,11 +13435,37 @@
       "date": "2026-10-10",
       "title": "拓展：M地图内浏览与跳转其他岛群",
       "summary": "此前M只显示当前岛群，跨群目标无法直接在M里选择；现在同一地图提供当前群细图与行星总览两个尺度，球图点选/编号定位配合真实粗图目标卡，明确按钮才发起跳转。撤除错误F2编号入口，保留既有局部瞬移和跨群后台生成、载入、安全落地。Debug构建和dev_manual 8项0失败；M完整无头6068→3980→6068、真实预览、900×700布局、叠层与输入恢复、编号/权限限制通过（exit 0）；失败提示定向检查通过，目标不可生成时保留地图并显示真实原因。",
-      "nodes": ["map-browser", "world-map", "planet-map", "expedition-jump", "group-stream", "group-provider", "dev-tools-planet", "dev-tools-manual", "planet-jump-e2e"],
+      "nodes": [
+        "map-browser",
+        "world-map",
+        "planet-map",
+        "expedition-jump",
+        "group-stream",
+        "group-provider",
+        "dev-tools-planet",
+        "dev-tools-manual",
+        "planet-jump-e2e"
+      ],
       "info": {
-        "created": ["map-browser"],
-        "reused": ["world-map", "planet-map", "expedition-jump", "group-stream", "group-provider", "dev-tools-planet", "dev-tools-manual", "planet-jump-e2e"],
-        "updated": ["planet-map", "dev-tools-planet", "dev-tools-manual", "planet-jump-e2e"]
+        "created": [
+          "map-browser"
+        ],
+        "reused": [
+          "world-map",
+          "planet-map",
+          "expedition-jump",
+          "group-stream",
+          "group-provider",
+          "dev-tools-planet",
+          "dev-tools-manual",
+          "planet-jump-e2e"
+        ],
+        "updated": [
+          "planet-map",
+          "dev-tools-planet",
+          "dev-tools-manual",
+          "planet-jump-e2e"
+        ]
       }
     }
   ],
