@@ -1,0 +1,1115 @@
+# 由 tools/export_skyisle.py 从 resources.json 导出，别手改。格式见那个脚本开头。
+deposit	0	timber	0	24450.0	4050.0	498.19	上	阔叶林	patch
+deposit	1	timber	0	31650.0	7150.0	21.8	上	针阔混交林	patch
+deposit	2	timber	0	16150.0	13450.0	6.29	中	针阔混交林	patch
+deposit	3	timber	0	26650.0	14350.0	3.37	中	针阔混交林	patch
+deposit	4	timber	0	36750.0	3450.0	2.51	中	针阔混交林	patch
+deposit	5	spring	0	18350.0	-2650.0	0.01	上	岩溶泉	point
+deposit	6	spring	0	27350.0	-13750.0	0.01	上	岩溶泉	point
+deposit	7	spring	0	24650.0	28350.0	0.01	上	岩溶泉	point
+deposit	8	spring	0	32550.0	-2150.0	0.01	上	岩溶泉	point
+deposit	9	spring	0	29050.0	20750.0	0.01	上	岩溶泉	point
+deposit	10	spring	0	18250.0	24950.0	0.01	上	岩溶泉	point
+deposit	11	spring	0	24350.0	-13550.0	0.01	上	岩溶泉	point
+deposit	12	spring	0	35350.0	-8950.0	0.01	上	岩溶泉	point
+deposit	13	spring	0	22250.0	31150.0	0.01	上	岩溶泉	point
+deposit	14	spring	0	29450.0	-10850.0	0.01	上	岩溶泉	point
+deposit	15	spring	0	21850.0	29950.0	0.01	上	岩溶泉	point
+deposit	16	spring	0	20850.0	-17650.0	0.01	上	岩溶泉	point
+deposit	17	spring	0	38250.0	16550.0	0.01	上	岩溶泉	point
+deposit	18	spring	0	24050.0	-10250.0	0.01	上	岩溶泉	point
+deposit	19	spring	0	16750.0	18950.0	0.01	上	裂隙泉	point
+deposit	20	spring	0	35450.0	2750.0	0.01	上	岩溶泉	point
+deposit	21	spring	0	32650.0	150.0	0.01	上	岩溶泉	point
+deposit	22	spring	0	36050.0	-3050.0	0.01	上	岩溶泉	point
+deposit	23	spring	0	29950.0	28350.0	0.01	上	岩溶泉	point
+deposit	24	spring	0	16250.0	28550.0	0.01	上	岩溶泉	point
+deposit	25	spring	0	19350.0	25950.0	0.01	上	岩溶泉	point
+deposit	26	peat	0	22950.0	-19750.0	0.01	上	芦苇荡	patch
+deposit	27	peat	0	30950.0	-11050.0	0.01	上	芦苇荡	patch
+deposit	28	peat	0	20750.0	-12350.0	0.02	上	芦苇荡	patch
+deposit	29	floatstone	0	24550.0	-24850.0	0.08	中	崖面露头	patch
+deposit	30	floatstone	0	26950.0	-24350.0	0.69	中	崖面露头	patch
+deposit	31	floatstone	0	20750.0	-24350.0	0.65	中	崖面露头	patch
+deposit	32	floatstone	0	23150.0	-24350.0	0.42	中	崖面露头	patch
+deposit	33	floatstone	0	18450.0	-23750.0	0.09	中	崖面露头	patch
+deposit	34	floatstone	0	16750.0	-22550.0	0.54	中	崖面露头	patch
+deposit	35	floatstone	0	15050.0	-20850.0	0.42	中	崖面露头	patch
+deposit	36	floatstone	0	32850.0	-21350.0	0.09	中	崖面露头	patch
+deposit	37	floatstone	0	34650.0	-20150.0	0.83	中	崖面露头	patch
+deposit	38	floatstone	0	14650.0	-18950.0	0.37	中	崖面露头	patch
+deposit	39	floatstone	0	35950.0	-18150.0	0.37	中	崖面露头	patch
+deposit	40	floatstone	0	14450.0	-17850.0	0.04	中	崖面露头	patch
+deposit	41	floatstone	0	35950.0	-12850.0	0.62	中	崖面露头	patch
+deposit	42	floatstone	0	14650.0	-12550.0	0.54	中	崖面露头	patch
+deposit	43	floatstone	0	35750.0	-10450.0	0.08	中	崖面露头	patch
+deposit	44	floatstone	0	14250.0	-9250.0	0.07	中	崖面露头	patch
+deposit	45	floatstone	0	36150.0	-7850.0	0.16	中	崖面露头	patch
+deposit	46	floatstone	0	13650.0	-6950.0	0.34	中	崖面露头	patch
+deposit	47	floatstone	0	37050.0	-6350.0	0.2	中	崖面露头	patch
+deposit	48	floatstone	0	37350.0	-5150.0	0.27	中	崖面露头	patch
+deposit	49	floatstone	0	13550.0	-3650.0	0.85	中	崖面露头	patch
+deposit	50	floatstone	0	37650.0	-2650.0	0.04	中	崖面露头	patch
+deposit	51	floatstone	0	13050.0	-350.0	0.48	中	崖面露头	patch
+deposit	52	floatstone	0	39150.0	1150.0	0.31	中	崖面露头	patch
+deposit	53	floatstone	0	11950.0	3050.0	0.76	中	崖面露头	patch
+deposit	54	floatstone	0	40150.0	3950.0	0.27	中	崖面露头	patch
+deposit	55	floatstone	0	40150.0	6150.0	0.33	中	崖面露头	patch
+deposit	56	floatstone	0	10350.0	7350.0	0.67	中	崖面露头	patch
+deposit	57	floatstone	0	40150.0	7150.0	0.06	中	崖面露头	patch
+deposit	58	floatstone	0	40250.0	7650.0	0.07	中	崖面露头	patch
+deposit	59	floatstone	0	40350.0	8050.0	0.06	中	崖面露头	patch
+deposit	60	floatstone	0	40850.0	10350.0	0.29	中	崖面露头	patch
+deposit	61	floatstone	0	9250.0	10850.0	0.44	中	崖面露头	patch
+deposit	62	floatstone	0	40150.0	12550.0	0.9	中	崖面露头	patch
+deposit	63	floatstone	0	9750.0	12750.0	0.06	中	崖面露头	patch
+deposit	64	floatstone	0	39550.0	14550.0	0.02	中	崖面露头	patch
+deposit	65	floatstone	0	10250.0	16850.0	0.42	中	崖面露头	patch
+deposit	66	floatstone	0	37850.0	17450.0	0.65	中	崖面露头	patch
+deposit	67	floatstone	0	34850.0	21050.0	1.1	中	崖面露头	patch
+deposit	68	floatstone	0	9750.0	24150.0	0.15	中	崖面露头	patch
+deposit	69	floatstone	0	32750.0	25050.0	0.36	中	崖面露头	patch
+deposit	70	floatstone	0	9750.0	25050.0	0.02	中	崖面露头	patch
+deposit	71	floatstone	0	32150.0	27050.0	0.12	中	崖面露头	patch
+deposit	72	floatstone	0	31050.0	30050.0	1.16	中	崖面露头	patch
+deposit	73	floatstone	0	11550.0	27850.0	0.02	中	崖面露头	patch
+deposit	74	floatstone	0	12850.0	29250.0	0.19	中	崖面露头	patch
+deposit	75	floatstone	0	13350.0	29650.0	0.03	中	崖面露头	patch
+deposit	76	floatstone	0	13650.0	30850.0	0.02	中	崖面露头	patch
+deposit	77	floatstone	0	16150.0	32750.0	0.05	中	崖面露头	patch
+deposit	78	floatstone	0	28950.0	33250.0	0.41	中	崖面露头	patch
+deposit	79	floatstone	0	17150.0	33450.0	0.15	中	崖面露头	patch
+deposit	80	floatstone	0	20150.0	35050.0	1.62	中	崖面露头	patch
+deposit	81	floatstone	0	26050.0	35150.0	0.79	中	崖面露头	patch
+deposit	82	floatstone	0	24850.0	36350.0	0.31	中	崖面露头	patch
+deposit	83	floatstone	0	19750.0	-23950.0	0.04	中	峡谷露头	patch
+deposit	84	floatstone	0	21750.0	-23950.0	0.02	中	峡谷露头	patch
+deposit	85	floatstone	0	21150.0	-23550.0	0.03	中	峡谷露头	patch
+deposit	86	floatstone	0	26850.0	-23650.0	0.03	中	峡谷露头	patch
+deposit	87	floatstone	0	18950.0	-23250.0	0.02	中	峡谷露头	patch
+deposit	88	floatstone	0	19150.0	-23050.0	0.03	中	峡谷露头	patch
+deposit	89	floatstone	0	17450.0	-22650.0	0.02	中	峡谷露头	patch
+deposit	90	floatstone	0	30950.0	-22250.0	0.02	中	峡谷露头	patch
+deposit	91	floatstone	0	17850.0	-21750.0	0.02	中	峡谷露头	patch
+deposit	92	floatstone	0	16450.0	-12050.0	0.02	中	峡谷露头	patch
+deposit	93	floatstone	0	15750.0	-11450.0	0.02	中	峡谷露头	patch
+deposit	94	floatstone	0	16450.0	-11050.0	0.06	中	峡谷露头	patch
+deposit	95	floatstone	0	16750.0	-10650.0	0.03	中	峡谷露头	patch
+deposit	96	floatstone	0	16050.0	-10350.0	0.04	中	峡谷露头	patch
+deposit	97	floatstone	0	35150.0	-9750.0	0.03	中	峡谷露头	patch
+deposit	98	floatstone	0	18850.0	-8450.0	0.02	中	峡谷露头	patch
+deposit	99	floatstone	0	31850.0	-8450.0	0.04	中	峡谷露头	patch
+deposit	100	floatstone	0	35150.0	-8150.0	0.11	中	峡谷露头	patch
+deposit	101	floatstone	0	32350.0	-7850.0	0.03	中	峡谷露头	patch
+deposit	102	floatstone	0	34150.0	-7850.0	0.03	中	峡谷露头	patch
+deposit	103	floatstone	0	34550.0	-7750.0	0.02	中	峡谷露头	patch
+deposit	104	floatstone	0	31450.0	-7450.0	0.02	中	峡谷露头	patch
+deposit	105	floatstone	0	14150.0	-7150.0	0.02	中	峡谷露头	patch
+deposit	106	floatstone	0	13750.0	-850.0	0.04	中	峡谷露头	patch
+deposit	107	floatstone	0	13250.0	250.0	0.03	上	峡谷露头	patch
+deposit	108	floatstone	0	12850.0	250.0	0.02	上	峡谷露头	patch
+deposit	109	floatstone	0	12050.0	3450.0	0.02	中	峡谷露头	patch
+deposit	110	floatstone	0	11150.0	6150.0	0.03	中	峡谷露头	patch
+deposit	111	floatstone	0	39850.0	6050.0	0.02	中	峡谷露头	patch
+deposit	112	floatstone	0	11250.0	6450.0	0.03	中	峡谷露头	patch
+deposit	113	floatstone	0	39450.0	6350.0	0.02	中	峡谷露头	patch
+deposit	114	floatstone	0	11250.0	6850.0	0.07	中	峡谷露头	patch
+deposit	115	floatstone	0	39850.0	7050.0	0.02	中	峡谷露头	patch
+deposit	116	floatstone	0	10850.0	7350.0	0.07	中	峡谷露头	patch
+deposit	117	floatstone	0	12250.0	7550.0	0.03	中	峡谷露头	patch
+deposit	118	floatstone	0	11850.0	7950.0	0.04	中	峡谷露头	patch
+deposit	119	floatstone	0	10250.0	8250.0	0.06	中	峡谷露头	patch
+deposit	120	floatstone	0	10550.0	8350.0	0.07	中	峡谷露头	patch
+deposit	121	floatstone	0	40150.0	8150.0	0.02	中	峡谷露头	patch
+deposit	122	floatstone	0	9450.0	10450.0	0.02	中	峡谷露头	patch
+deposit	123	floatstone	0	40650.0	10650.0	0.03	中	峡谷露头	patch
+deposit	124	floatstone	0	9450.0	11050.0	0.03	中	峡谷露头	patch
+deposit	125	floatstone	0	39850.0	12350.0	0.03	上	峡谷露头	patch
+deposit	126	floatstone	0	39550.0	12850.0	0.02	中	峡谷露头	patch
+deposit	127	floatstone	0	10450.0	16650.0	0.02	上	峡谷露头	patch
+deposit	128	floatstone	0	37550.0	17050.0	0.03	上	峡谷露头	patch
+deposit	129	floatstone	0	37350.0	17550.0	0.04	中	峡谷露头	patch
+deposit	130	floatstone	0	37750.0	17350.0	0.02	上	峡谷露头	patch
+deposit	131	floatstone	0	35150.0	19250.0	0.08	中	峡谷露头	patch
+deposit	132	floatstone	0	34850.0	19450.0	0.02	中	峡谷露头	patch
+deposit	133	floatstone	0	34950.0	19650.0	0.06	中	峡谷露头	patch
+deposit	134	floatstone	0	33450.0	19750.0	0.02	中	峡谷露头	patch
+deposit	135	floatstone	0	33950.0	20050.0	0.04	上	峡谷露头	patch
+deposit	136	floatstone	0	34550.0	20050.0	0.02	上	峡谷露头	patch
+deposit	137	floatstone	0	33450.0	20250.0	0.04	中	峡谷露头	patch
+deposit	138	floatstone	0	34850.0	20550.0	0.02	中	峡谷露头	patch
+deposit	139	floatstone	0	33950.0	20750.0	0.04	中	峡谷露头	patch
+deposit	140	floatstone	0	33350.0	21150.0	0.02	中	峡谷露头	patch
+deposit	141	floatstone	0	34150.0	21650.0	0.02	中	峡谷露头	patch
+deposit	142	floatstone	0	33350.0	22350.0	0.02	中	峡谷露头	patch
+deposit	143	floatstone	0	32250.0	24950.0	0.04	中	峡谷露头	patch
+deposit	144	floatstone	0	10950.0	25650.0	0.02	中	峡谷露头	patch
+deposit	145	floatstone	0	11550.0	25950.0	0.02	中	峡谷露头	patch
+deposit	146	floatstone	0	11750.0	26250.0	0.02	中	峡谷露头	patch
+deposit	147	floatstone	0	12650.0	27150.0	0.02	中	峡谷露头	patch
+deposit	148	floatstone	0	12850.0	27350.0	0.02	中	峡谷露头	patch
+deposit	149	floatstone	0	29750.0	28150.0	0.02	中	峡谷露头	patch
+deposit	150	floatstone	0	14750.0	28250.0	0.02	中	峡谷露头	patch
+deposit	151	floatstone	0	15050.0	28450.0	0.02	中	峡谷露头	patch
+deposit	152	floatstone	0	31250.0	28550.0	0.03	中	峡谷露头	patch
+deposit	153	floatstone	0	13250.0	28750.0	0.02	中	峡谷露头	patch
+deposit	154	floatstone	0	14050.0	29050.0	0.06	上	峡谷露头	patch
+deposit	155	floatstone	0	13550.0	29250.0	0.02	中	峡谷露头	patch
+deposit	156	floatstone	0	13850.0	29250.0	0.02	上	峡谷露头	patch
+deposit	157	floatstone	0	16450.0	29350.0	0.03	中	峡谷露头	patch
+deposit	158	floatstone	0	14650.0	29550.0	0.03	中	峡谷露头	patch
+deposit	159	floatstone	0	16350.0	29850.0	0.02	中	峡谷露头	patch
+deposit	160	floatstone	0	19150.0	29850.0	0.02	上	峡谷露头	patch
+deposit	161	floatstone	0	19050.0	30150.0	0.02	上	峡谷露头	patch
+deposit	162	floatstone	0	18650.0	30250.0	0.04	中	峡谷露头	patch
+deposit	163	floatstone	0	16250.0	30550.0	0.03	中	峡谷露头	patch
+deposit	164	floatstone	0	15950.0	31450.0	0.02	中	峡谷露头	patch
+deposit	165	floatstone	0	30050.0	31650.0	0.02	中	峡谷露头	patch
+deposit	166	floatstone	0	16650.0	31750.0	0.05	中	峡谷露头	patch
+deposit	167	floatstone	0	21150.0	34350.0	0.03	中	峡谷露头	patch
+deposit	168	floatstone	0	21250.0	34750.0	0.02	中	峡谷露头	patch
+deposit	169	cave	0	25450.0	-24550.0	0.01	上	骨架空洞	point
+deposit	170	cave	0	26950.0	-24250.0	0.01	上	骨架空洞	point
+deposit	171	cave	0	22950.0	-24150.0	0.01	上	骨架空洞	point
+deposit	172	cave	0	35150.0	-4550.0	0.01	上	峡谷岩洞	point
+deposit	173	cave	0	16550.0	19150.0	0.01	上	峡谷岩洞	point
+deposit	174	cave	0	12650.0	5550.0	0.01	上	峡谷岩洞	point
+deposit	175	cave	0	18550.0	11650.0	0.01	上	峡谷岩洞	point
+deposit	176	cave	0	15650.0	31150.0	0.01	上	峡谷岩洞	point
+deposit	177	cave	0	24650.0	17650.0	0.01	上	峡谷岩洞	point
+deposit	178	cave	0	24650.0	1050.0	0.01	上	峡谷岩洞	point
+deposit	179	cave	0	33650.0	4950.0	0.01	上	峡谷岩洞	point
+deposit	180	cave	0	20150.0	-9350.0	0.01	上	峡谷岩洞	point
+deposit	181	cave	0	11150.0	19150.0	0.01	上	峡谷岩洞	point
+deposit	182	cave	0	35350.0	-9350.0	0.01	上	峡谷岩洞	point
+deposit	183	cave	0	23150.0	34050.0	0.01	上	峡谷岩洞	point
+deposit	184	cave	0	32150.0	2650.0	0.01	上	峡谷岩洞	point
+deposit	185	cave	0	28150.0	28050.0	0.01	上	峡谷岩洞	point
+deposit	186	cave	0	20850.0	-22850.0	0.01	上	峡谷岩洞	point
+deposit	187	cave	0	15650.0	-9350.0	0.01	上	峡谷岩洞	point
+deposit	188	cave	0	12650.0	5650.0	0.01	上	裂隙洞	point
+deposit	189	cave	0	35150.0	-4450.0	0.01	上	裂隙洞	point
+deposit	190	cave	0	16450.0	19150.0	0.01	上	裂隙洞	point
+deposit	191	cave	0	18650.0	11650.0	0.01	上	裂隙洞	point
+deposit	192	cave	0	25350.0	-24650.0	0.01	上	崖洞	point
+deposit	193	cave	0	35950.0	-9350.0	0.01	上	崖洞	point
+deposit	194	cave	0	26750.0	-24350.0	0.01	上	崖洞	point
+deposit	195	cave	0	24150.0	-24650.0	0.01	上	崖洞	point
+deposit	196	cave	0	25450.0	-24650.0	0.01	上	底面洞	point
+deposit	197	cave	0	35950.0	-9250.0	0.01	上	底面洞	point
+deposit	198	cave	0	14550.0	-11250.0	0.01	上	瀑布后洞	point
+deposit	199	cave	0	12550.0	450.0	0.01	上	瀑布后洞	point
+deposit	200	timber	1	59650.0	3150.0	77.81	上	阔叶林	patch
+deposit	201	spring	1	56650.0	-4550.0	0.01	上	岩溶泉	point
+deposit	202	spring	1	66650.0	3450.0	0.01	上	岩溶泉	point
+deposit	203	spring	1	65250.0	2150.0	0.01	上	岩溶泉	point
+deposit	204	floatstone	1	57850.0	-5650.0	0.33	中	崖面露头	patch
+deposit	205	floatstone	1	59650.0	-5650.0	0.04	中	崖面露头	patch
+deposit	206	floatstone	1	54750.0	-3250.0	1.44	中	崖面露头	patch
+deposit	207	floatstone	1	62250.0	-5050.0	0.03	中	崖面露头	patch
+deposit	208	floatstone	1	64050.0	-3950.0	0.41	中	崖面露头	patch
+deposit	209	floatstone	1	65250.0	-3450.0	0.03	中	崖面露头	patch
+deposit	210	floatstone	1	66350.0	1050.0	0.66	中	崖面露头	patch
+deposit	211	floatstone	1	51950.0	2150.0	0.07	中	崖面露头	patch
+deposit	212	floatstone	1	52050.0	3150.0	0.27	中	崖面露头	patch
+deposit	213	floatstone	1	66650.0	4450.0	0.42	中	崖面露头	patch
+deposit	214	floatstone	1	52650.0	4250.0	0.08	中	崖面露头	patch
+deposit	215	floatstone	1	53350.0	6150.0	0.77	中	崖面露头	patch
+deposit	216	floatstone	1	65150.0	6950.0	0.39	中	崖面露头	patch
+deposit	217	floatstone	1	58050.0	9950.0	1.58	中	崖面露头	patch
+deposit	218	floatstone	1	63550.0	9450.0	0.08	中	崖面露头	patch
+deposit	219	floatstone	1	61850.0	10850.0	0.1	中	崖面露头	patch
+deposit	220	floatstone	1	57650.0	-4150.0	0.02	中	峡谷露头	patch
+deposit	221	floatstone	1	64850.0	2350.0	0.04	中	峡谷露头	patch
+deposit	222	floatstone	1	64450.0	2650.0	0.02	中	峡谷露头	patch
+deposit	223	floatstone	1	54150.0	4650.0	0.03	中	峡谷露头	patch
+deposit	224	floatstone	1	53550.0	4850.0	0.02	中	峡谷露头	patch
+deposit	225	cave	1	59850.0	-5650.0	0.01	上	骨架空洞	point
+deposit	226	cave	1	56550.0	-4550.0	0.01	上	骨架空洞	point
+deposit	227	cave	1	63850.0	3750.0	0.01	上	峡谷岩洞	point
+deposit	228	cave	1	63950.0	3750.0	0.01	上	裂隙洞	point
+deposit	229	timber	2	14550.0	44750.0	37.75	上	针阔混交林	patch
+deposit	230	timber	2	14650.0	43250.0	2.24	中	针阔混交林	patch
+deposit	231	spring	2	15450.0	47250.0	0.01	上	岩溶泉	point
+deposit	232	spring	2	13950.0	42650.0	0.01	上	裂隙泉	point
+deposit	233	floatstone	2	13450.0	37550.0	0.58	中	崖面露头	patch
+deposit	234	floatstone	2	10350.0	39850.0	0.69	中	崖面露头	patch
+deposit	235	floatstone	2	16450.0	40250.0	0.57	中	崖面露头	patch
+deposit	236	floatstone	2	10050.0	42050.0	0.29	中	崖面露头	patch
+deposit	237	floatstone	2	18050.0	43250.0	0.24	中	崖面露头	patch
+deposit	238	floatstone	2	10250.0	43150.0	0.06	中	崖面露头	patch
+deposit	239	floatstone	2	11150.0	45150.0	0.32	中	崖面露头	patch
+deposit	240	floatstone	2	18050.0	45150.0	0.06	中	崖面露头	patch
+deposit	241	floatstone	2	18550.0	46250.0	0.43	中	崖面露头	patch
+deposit	242	floatstone	2	11750.0	46750.0	0.12	中	崖面露头	patch
+deposit	243	floatstone	2	11950.0	47750.0	0.05	中	崖面露头	patch
+deposit	244	floatstone	2	19150.0	48150.0	0.26	中	崖面露头	patch
+deposit	245	floatstone	2	13350.0	49850.0	0.94	中	崖面露头	patch
+deposit	246	floatstone	2	18750.0	48850.0	0.08	中	崖面露头	patch
+deposit	247	floatstone	2	17250.0	50450.0	0.28	中	崖面露头	patch
+deposit	248	floatstone	2	13550.0	38350.0	0.02	中	峡谷露头	patch
+deposit	249	floatstone	2	10850.0	39250.0	0.03	中	峡谷露头	patch
+deposit	250	floatstone	2	10750.0	39450.0	0.03	中	峡谷露头	patch
+deposit	251	floatstone	2	15650.0	40750.0	0.06	中	峡谷露头	patch
+deposit	252	floatstone	2	10950.0	41050.0	0.07	中	峡谷露头	patch
+deposit	253	floatstone	2	16450.0	41150.0	0.04	中	峡谷露头	patch
+deposit	254	floatstone	2	10550.0	41450.0	0.05	中	峡谷露头	patch
+deposit	255	floatstone	2	10250.0	41650.0	0.03	中	峡谷露头	patch
+deposit	256	floatstone	2	15650.0	41850.0	0.02	中	峡谷露头	patch
+deposit	257	floatstone	2	15450.0	42050.0	0.04	中	峡谷露头	patch
+deposit	258	floatstone	2	15950.0	42350.0	0.03	上	峡谷露头	patch
+deposit	259	floatstone	2	16250.0	42650.0	0.02	中	峡谷露头	patch
+deposit	260	floatstone	2	17350.0	43850.0	0.04	中	峡谷露头	patch
+deposit	261	floatstone	2	17550.0	44450.0	0.03	中	峡谷露头	patch
+deposit	262	floatstone	2	17050.0	44650.0	0.04	中	峡谷露头	patch
+deposit	263	floatstone	2	17850.0	45350.0	0.02	中	峡谷露头	patch
+deposit	264	floatstone	2	12050.0	46450.0	0.05	中	峡谷露头	patch
+deposit	265	floatstone	2	18150.0	46650.0	0.02	中	峡谷露头	patch
+deposit	266	floatstone	2	12150.0	47650.0	0.02	中	峡谷露头	patch
+deposit	267	floatstone	2	17950.0	47850.0	0.02	中	峡谷露头	patch
+deposit	268	floatstone	2	13450.0	48950.0	0.12	中	峡谷露头	patch
+deposit	269	floatstone	2	18150.0	48450.0	0.02	中	峡谷露头	patch
+deposit	270	floatstone	2	13250.0	49150.0	0.02	上	峡谷露头	patch
+deposit	271	floatstone	2	17250.0	49750.0	0.04	中	峡谷露头	patch
+deposit	272	floatstone	2	14350.0	49950.0	0.02	中	峡谷露头	patch
+deposit	273	floatstone	2	17050.0	50150.0	0.02	中	峡谷露头	patch
+deposit	274	cave	2	12650.0	47650.0	0.01	上	峡谷岩洞	point
+deposit	275	cave	2	14150.0	41950.0	0.01	上	峡谷岩洞	point
+deposit	276	cave	2	12650.0	47750.0	0.01	上	裂隙洞	point
+deposit	277	cave	2	19250.0	47650.0	0.01	下	崖洞	point
+deposit	278	timber	3	31650.0	40550.0	32.38	上	针阔混交林	patch
+deposit	279	spring	3	28550.0	40350.0	0.01	上	岩溶泉	point
+deposit	280	floatstone	3	32650.0	35850.0	0.02	中	崖面露头	patch
+deposit	281	floatstone	3	30950.0	36350.0	0.49	中	崖面露头	patch
+deposit	282	floatstone	3	28550.0	38250.0	0.91	中	崖面露头	patch
+deposit	283	floatstone	3	34350.0	38450.0	0.34	中	崖面露头	patch
+deposit	284	floatstone	3	35050.0	42250.0	0.23	中	崖面露头	patch
+deposit	285	floatstone	3	27850.0	42250.0	0.03	中	崖面露头	patch
+deposit	286	floatstone	3	33650.0	43850.0	0.64	中	崖面露头	patch
+deposit	287	floatstone	3	29150.0	44750.0	0.64	中	崖面露头	patch
+deposit	288	floatstone	3	31650.0	44850.0	0.34	中	崖面露头	patch
+deposit	289	timber	4	6950.0	30750.0	21.76	上	阔叶林	patch
+deposit	290	floatstone	4	7550.0	27150.0	0.52	中	崖面露头	patch
+deposit	291	floatstone	4	9850.0	29350.0	0.68	中	崖面露头	patch
+deposit	292	floatstone	4	3950.0	28950.0	0.27	中	崖面露头	patch
+deposit	293	floatstone	4	3350.0	30050.0	0.07	中	崖面露头	patch
+deposit	294	floatstone	4	4350.0	33050.0	0.76	中	崖面露头	patch
+deposit	295	floatstone	4	10050.0	32250.0	0.16	中	崖面露头	patch
+deposit	296	floatstone	4	9350.0	33250.0	0.33	中	崖面露头	patch
+deposit	297	floatstone	4	7150.0	34250.0	0.27	中	崖面露头	patch
+deposit	298	cave	4	5250.0	28550.0	0.01	上	峡谷岩洞	point
+deposit	299	cave	4	6650.0	28150.0	0.01	中	峡谷岩洞	point
+deposit	300	cave	4	5050.0	28050.0	0.01	上	崖洞	point
+deposit	301	timber	5	42850.0	-13950.0	16.2	上	阔叶林	patch
+deposit	302	floatstone	5	41250.0	-16950.0	0.35	中	崖面露头	patch
+deposit	303	floatstone	5	43050.0	-17350.0	0.33	中	崖面露头	patch
+deposit	304	floatstone	5	45350.0	-16150.0	0.4	中	崖面露头	patch
+deposit	305	floatstone	5	40750.0	-13950.0	0.35	中	崖面露头	patch
+deposit	306	floatstone	5	45050.0	-12850.0	0.1	中	崖面露头	patch
+deposit	307	floatstone	5	40650.0	-12850.0	0.02	中	崖面露头	patch
+deposit	308	floatstone	5	45050.0	-11950.0	0.13	中	崖面露头	patch
+deposit	309	floatstone	5	41250.0	-11150.0	0.5	中	崖面露头	patch
+deposit	310	floatstone	5	44850.0	-10950.0	0.16	中	崖面露头	patch
+deposit	311	floatstone	5	43850.0	-9850.0	0.38	中	崖面露头	patch
+deposit	312	cave	5	45450.0	-13850.0	0.01	上	崖洞	point
+deposit	313	cave	5	44350.0	-10350.0	0.01	中	崖洞	point
+deposit	314	timber	6	65750.0	14350.0	12.71	上	阔叶林	patch
+deposit	315	floatstone	6	66250.0	11950.0	0.82	中	崖面露头	patch
+deposit	316	floatstone	6	62950.0	13950.0	0.31	中	崖面露头	patch
+deposit	317	floatstone	6	68250.0	14050.0	0.31	中	崖面露头	patch
+deposit	318	floatstone	6	62850.0	15350.0	0.18	中	崖面露头	patch
+deposit	319	floatstone	6	67750.0	16150.0	0.61	中	崖面露头	patch
+deposit	320	floatstone	6	63450.0	16450.0	0.03	中	崖面露头	patch
+deposit	321	floatstone	6	64350.0	17350.0	0.15	中	崖面露头	patch
+deposit	322	cave	6	64750.0	17350.0	0.01	中	骨架空洞	point
+deposit	323	cave	6	66450.0	16350.0	0.01	中	骨架空洞	point
+deposit	324	cave	6	65950.0	15850.0	0.01	中	裂隙洞	point
+deposit	325	timber	7	60250.0	-9650.0	4.22	中	针叶林	patch
+deposit	326	timber	7	62050.0	-12050.0	2.49	中	针叶林	patch
+deposit	327	floatstone	7	62250.0	-13250.0	0.29	中	崖面露头	patch
+deposit	328	floatstone	7	60850.0	-12750.0	0.46	中	崖面露头	patch
+deposit	329	floatstone	7	63350.0	-11950.0	0.25	中	崖面露头	patch
+deposit	330	floatstone	7	59650.0	-11850.0	0.18	中	崖面露头	patch
+deposit	331	floatstone	7	63850.0	-10250.0	0.55	中	崖面露头	patch
+deposit	332	floatstone	7	58850.0	-9750.0	0.04	中	崖面露头	patch
+deposit	333	floatstone	7	60350.0	-8050.0	0.91	中	崖面露头	patch
+deposit	334	floatstone	7	62050.0	-12850.0	0.03	上	峡谷露头	patch
+deposit	335	floatstone	7	60750.0	-12150.0	0.03	中	峡谷露头	patch
+deposit	336	floatstone	7	63750.0	-9850.0	0.02	中	峡谷露头	patch
+deposit	337	floatstone	7	59850.0	-9750.0	0.02	中	峡谷露头	patch
+deposit	338	floatstone	7	59850.0	-8850.0	0.03	中	峡谷露头	patch
+deposit	339	floatstone	7	60750.0	-8650.0	0.02	中	峡谷露头	patch
+deposit	340	floatstone	7	60750.0	-8150.0	0.03	中	峡谷露头	patch
+deposit	341	floatstone	7	61250.0	-7950.0	0.05	中	峡谷露头	patch
+deposit	342	timber	8	24750.0	47150.0	12.94	上	阔叶林	patch
+deposit	343	floatstone	8	25150.0	43750.0	0.06	中	崖面露头	patch
+deposit	344	floatstone	8	26450.0	45150.0	0.73	中	崖面露头	patch
+deposit	345	floatstone	8	24250.0	44450.0	0.2	中	崖面露头	patch
+deposit	346	floatstone	8	23150.0	46050.0	0.37	中	崖面露头	patch
+deposit	347	floatstone	8	25850.0	48750.0	0.75	中	崖面露头	patch
+deposit	348	floatstone	8	22750.0	47650.0	0.03	中	崖面露头	patch
+deposit	349	floatstone	8	23750.0	50150.0	0.12	中	崖面露头	patch
+deposit	350	cave	8	26150.0	47250.0	0.01	中	崖洞	point
+deposit	351	cave	8	25550.0	44250.0	0.01	中	崖洞	point
+deposit	352	cave	8	26250.0	47250.0	0.01	中	底面洞	point
+deposit	353	timber	9	26650.0	-35650.0	8.93	上	针阔混交林	patch
+deposit	354	floatstone	9	27650.0	-37850.0	0.08	中	崖面露头	patch
+deposit	355	floatstone	9	26050.0	-37650.0	0.4	中	崖面露头	patch
+deposit	356	floatstone	9	28350.0	-36950.0	0.21	中	崖面露头	patch
+deposit	357	floatstone	9	25250.0	-36850.0	0.12	中	崖面露头	patch
+deposit	358	floatstone	9	28350.0	-35150.0	0.1	中	崖面露头	patch
+deposit	359	floatstone	9	24450.0	-34850.0	0.02	中	崖面露头	patch
+deposit	360	floatstone	9	28350.0	-34250.0	0.16	中	崖面露头	patch
+deposit	361	floatstone	9	25250.0	-33550.0	0.59	中	崖面露头	patch
+deposit	362	floatstone	9	27650.0	-33550.0	0.07	中	崖面露头	patch
+deposit	363	floatstone	9	26950.0	-33150.0	0.19	中	崖面露头	patch
+deposit	364	cave	9	27550.0	-33550.0	0.01	上	崖洞	point
+deposit	365	timber	10	43350.0	-24350.0	9.84	上	针阔混交林	patch
+deposit	366	floatstone	10	42950.0	-26750.0	1.12	中	崖面露头	patch
+deposit	367	floatstone	10	44850.0	-25750.0	0.04	中	崖面露头	patch
+deposit	368	floatstone	10	44950.0	-24050.0	0.1	中	崖面露头	patch
+deposit	369	floatstone	10	44750.0	-23450.0	0.05	中	崖面露头	patch
+deposit	370	floatstone	10	42150.0	-22150.0	0.31	中	崖面露头	patch
+deposit	371	floatstone	10	44050.0	-22050.0	0.22	中	崖面露头	patch
+deposit	372	cave	10	41850.0	-22450.0	0.01	中	崖洞	point
+deposit	373	timber	11	61050.0	18850.0	9.38	上	阔叶林	patch
+deposit	374	floatstone	11	60650.0	16750.0	0.61	中	崖面露头	patch
+deposit	375	floatstone	11	61950.0	16950.0	0.13	中	崖面露头	patch
+deposit	376	floatstone	11	62150.0	17550.0	0.11	中	崖面露头	patch
+deposit	377	floatstone	11	59550.0	18150.0	0.12	中	崖面露头	patch
+deposit	378	floatstone	11	62350.0	20150.0	0.67	中	崖面露头	patch
+deposit	379	floatstone	11	59550.0	19550.0	0.08	中	崖面露头	patch
+deposit	380	floatstone	11	60250.0	21250.0	0.03	中	崖面露头	patch
+deposit	381	cave	11	59750.0	19350.0	0.01	上	骨架空洞	point
+deposit	382	cave	11	59750.0	19250.0	0.01	上	崖洞	point
+deposit	383	cave	11	59750.0	19150.0	0.01	上	底面洞	point
+deposit	384	timber	12	40750.0	30550.0	5.45	中	阔叶林	patch
+deposit	385	floatstone	12	42650.0	29150.0	0.11	中	崖面露头	patch
+deposit	386	floatstone	12	40650.0	29150.0	0.03	下	崖面露头	patch
+deposit	387	floatstone	12	40250.0	29350.0	0.04	下	崖面露头	patch
+deposit	388	floatstone	12	43650.0	30250.0	0.4	中	崖面露头	patch
+deposit	389	floatstone	12	39350.0	30050.0	0.24	中	崖面露头	patch
+deposit	390	floatstone	12	42050.0	31450.0	0.62	中	崖面露头	patch
+deposit	391	floatstone	12	39850.0	31850.0	0.35	中	崖面露头	patch
+deposit	392	cave	12	39150.0	30450.0	0.01	中	峡谷岩洞	point
+deposit	393	cave	12	38550.0	30450.0	0.01	上	崖洞	point
+deposit	394	cave	12	38550.0	31450.0	0.01	中	崖洞	point
+deposit	395	cave	12	42350.0	28950.0	0.01	中	崖洞	point
+deposit	396	cave	12	43350.0	30550.0	0.01	中	崖洞	point
+deposit	397	cave	12	43450.0	29050.0	0.01	中	崖洞	point
+deposit	398	timber	13	18750.0	-29650.0	7.66	中	阔叶林	patch
+deposit	399	floatstone	13	18750.0	-31250.0	0.78	中	崖面露头	patch
+deposit	400	floatstone	13	20550.0	-29750.0	0.14	中	崖面露头	patch
+deposit	401	floatstone	13	18750.0	-27950.0	0.65	中	崖面露头	patch
+deposit	402	cave	13	20850.0	-30050.0	0.01	中	底面洞	point
+deposit	403	cave	13	20150.0	-31250.0	0.01	中	底面洞	point
+deposit	404	cave	13	17150.0	-29850.0	0.01	中	底面洞	point
+deposit	405	timber	14	72350.0	6150.0	5.52	中	针阔混交林	patch
+deposit	406	floatstone	14	73050.0	4250.0	0.47	中	崖面露头	patch
+deposit	407	floatstone	14	71450.0	4350.0	0.29	中	崖面露头	patch
+deposit	408	floatstone	14	71250.0	5750.0	0.24	中	崖面露头	patch
+deposit	409	floatstone	14	73450.0	6150.0	0.31	中	崖面露头	patch
+deposit	410	floatstone	14	72650.0	8350.0	0.56	中	崖面露头	patch
+deposit	411	floatstone	14	72650.0	7150.0	0.03	中	峡谷露头	patch
+deposit	412	timber	15	43550.0	14150.0	6.35	中	阔叶林	patch
+deposit	413	floatstone	15	43350.0	12150.0	0.21	中	崖面露头	patch
+deposit	414	floatstone	15	42650.0	12350.0	0.02	中	崖面露头	patch
+deposit	415	floatstone	15	42150.0	12650.0	0.14	中	崖面露头	patch
+deposit	416	floatstone	15	42250.0	13650.0	0.19	中	崖面露头	patch
+deposit	417	floatstone	15	44950.0	14950.0	0.54	中	崖面露头	patch
+deposit	418	floatstone	15	42850.0	15050.0	0.4	中	崖面露头	patch
+deposit	419	floatstone	15	43950.0	16450.0	0.05	中	崖面露头	patch
+deposit	420	timber	16	53850.0	13150.0	5.52	中	针阔混交林	patch
+deposit	421	floatstone	16	53950.0	11650.0	0.67	中	崖面露头	patch
+deposit	422	floatstone	16	52450.0	12750.0	0.02	下	崖面露头	patch
+deposit	423	floatstone	16	52950.0	14350.0	0.65	中	崖面露头	patch
+deposit	424	floatstone	16	55450.0	13250.0	0.02	下	崖面露头	patch
+deposit	425	cave	16	53950.0	14550.0	0.01	中	峡谷岩洞	point
+deposit	426	cave	16	54250.0	14650.0	0.01	中	崖洞	point
+deposit	427	cave	16	52750.0	11850.0	0.01	中	崖洞	point
+deposit	428	timber	17	11250.0	58550.0	5.68	中	针叶林	patch
+deposit	429	floatstone	17	9950.0	57750.0	0.65	中	崖面露头	patch
+deposit	430	floatstone	17	11150.0	56750.0	0.12	中	崖面露头	patch
+deposit	431	floatstone	17	12450.0	58550.0	0.4	中	崖面露头	patch
+deposit	432	floatstone	17	10750.0	59750.0	0.43	中	崖面露头	patch
+deposit	433	cave	17	10050.0	58350.0	0.01	中	峡谷岩洞	point
+deposit	434	cave	17	10050.0	57850.0	0.01	中	裂隙洞	point
+deposit	435	cave	17	12650.0	59750.0	0.01	中	崖洞	point
+deposit	436	timber	18	47550.0	26050.0	4.27	中	针阔混交林	patch
+deposit	437	spring	18	47450.0	27250.0	0.01	上	岩溶泉	point
+deposit	438	floatstone	18	47050.0	24550.0	0.48	中	崖面露头	patch
+deposit	439	floatstone	18	48550.0	25150.0	0.19	中	崖面露头	patch
+deposit	440	floatstone	18	47850.0	27550.0	0.68	中	崖面露头	patch
+deposit	441	cave	18	48450.0	26650.0	0.01	中	骨架空洞	point
+deposit	442	timber	19	53950.0	-19950.0	4.55	中	阔叶林	patch
+deposit	443	floatstone	19	53150.0	-21350.0	0.32	中	崖面露头	patch
+deposit	444	floatstone	19	54450.0	-20950.0	0.23	中	崖面露头	patch
+deposit	445	floatstone	19	55250.0	-19650.0	0.35	中	崖面露头	patch
+deposit	446	floatstone	19	53750.0	-18550.0	0.33	中	崖面露头	patch
+deposit	447	cave	19	52750.0	-20550.0	0.01	中	崖洞	point
+deposit	448	timber	20	70250.0	15450.0	3.73	中	针阔混交林	patch
+deposit	449	floatstone	20	70750.0	13750.0	0.55	中	崖面露头	patch
+deposit	450	floatstone	20	69350.0	15250.0	0.07	中	崖面露头	patch
+deposit	451	floatstone	20	69350.0	16350.0	0.22	中	崖面露头	patch
+deposit	452	floatstone	20	71050.0	16150.0	0.1	中	崖面露头	patch
+deposit	453	floatstone	20	70250.0	16950.0	0.35	中	崖面露头	patch
+deposit	454	timber	21	74650.0	25950.0	3.47	中	阔叶林	patch
+deposit	455	floatstone	21	75250.0	24750.0	0.66	中	崖面露头	patch
+deposit	456	floatstone	21	73650.0	27150.0	0.12	中	崖面露头	patch
+deposit	457	floatstone	21	75050.0	27450.0	0.41	中	崖面露头	patch
+deposit	458	cave	21	75650.0	25950.0	0.01	上	崖洞	point
+deposit	459	cave	21	74150.0	25150.0	0.01	中	崖洞	point
+deposit	460	timber	22	68450.0	21650.0	4.12	中	针阔混交林	patch
+deposit	461	floatstone	22	68050.0	20250.0	0.88	中	崖面露头	patch
+deposit	462	floatstone	22	69350.0	22250.0	0.28	中	崖面露头	patch
+deposit	463	floatstone	22	67950.0	23050.0	0.15	中	崖面露头	patch
+deposit	464	timber	23	37350.0	35650.0	3.76	中	针叶林	patch
+deposit	465	floatstone	23	37550.0	34650.0	0.68	中	崖面露头	patch
+deposit	466	floatstone	23	36450.0	35950.0	0.35	中	崖面露头	patch
+deposit	467	floatstone	23	37550.0	37150.0	0.12	中	崖面露头	patch
+deposit	468	timber	24	7750.0	16550.0	3.09	中	阔叶林	patch
+deposit	469	floatstone	24	9150.0	15450.0	0.35	中	崖面露头	patch
+deposit	470	floatstone	24	6850.0	16350.0	0.51	下	崖面露头	patch
+deposit	471	floatstone	24	8550.0	16550.0	0.03	下	崖面露头	patch
+deposit	472	floatstone	24	7550.0	17550.0	0.31	中	崖面露头	patch
+deposit	473	floatstone	24	6450.0	17850.0	0.02	下	崖面露头	patch
+deposit	474	cave	24	7650.0	15550.0	0.01	中	崖洞	point
+deposit	475	timber	25	38050.0	-12050.0	3.26	中	针阔混交林	patch
+deposit	476	floatstone	25	38050.0	-13650.0	0.24	中	崖面露头	patch
+deposit	477	floatstone	25	38850.0	-11950.0	0.35	中	崖面露头	patch
+deposit	478	floatstone	25	37850.0	-10650.0	0.47	中	崖面露头	patch
+deposit	479	timber	26	44250.0	5850.0	2.88	中	针阔混交林	patch
+deposit	480	floatstone	26	44850.0	4850.0	0.21	中	崖面露头	patch
+deposit	481	floatstone	26	45150.0	5950.0	0.28	中	崖面露头	patch
+deposit	482	floatstone	26	43250.0	6450.0	0.26	中	崖面露头	patch
+deposit	483	floatstone	26	44250.0	7050.0	0.24	中	崖面露头	patch
+deposit	484	cave	26	44150.0	6950.0	0.01	中	骨架空洞	point
+deposit	485	timber	27	47350.0	-28650.0	3.03	中	针阔混交林	patch
+deposit	486	floatstone	27	47050.0	-29850.0	0.35	中	崖面露头	patch
+deposit	487	floatstone	27	47750.0	-29950.0	0.06	中	崖面露头	patch
+deposit	488	floatstone	27	48050.0	-28350.0	0.18	中	崖面露头	patch
+deposit	489	floatstone	27	47350.0	-27250.0	0.43	中	崖面露头	patch
+deposit	490	cave	27	48050.0	-28050.0	0.01	中	崖洞	point
+deposit	491	timber	28	32250.0	-26950.0	2.63	中	阔叶林	patch
+deposit	492	floatstone	28	31950.0	-27950.0	0.71	中	崖面露头	patch
+deposit	493	floatstone	28	33050.0	-26650.0	0.23	中	崖面露头	patch
+deposit	494	cave	28	32850.0	-27250.0	0.01	中	裂隙洞	point
+deposit	495	guano	28	33050.0	-27350.0	0.44	上		patch
+deposit	496	fossil	0	27850.0	-14050.0	0.01	上		point
+deposit	497	fossil	0	12550.0	5650.0	0.01	上		point
+deposit	498	fossil	0	29150.0	20550.0	0.01	上		point
+deposit	499	fossil	0	35250.0	-4350.0	0.01	上		point
+deposit	500	fossil	0	31950.0	22050.0	0.01	上		point
+deposit	501	fossil	0	24750.0	17750.0	0.01	上		point
+deposit	502	fossil	0	11150.0	19250.0	0.01	上		point
+deposit	503	fossil	0	20250.0	-9450.0	0.01	上		point
+deposit	504	fossil	0	15650.0	-9250.0	0.01	上		point
+deposit	505	fossil	0	16550.0	19550.0	0.01	上		point
+deposit	506	fossil	0	23950.0	1350.0	0.01	上		point
+deposit	507	fossil	0	17950.0	18750.0	0.01	上		point
+deposit	508	fossil	0	28150.0	27950.0	0.01	上		point
+deposit	509	fossil	0	35250.0	8950.0	0.01	上		point
+deposit	510	fossil	0	38150.0	8750.0	0.01	上		point
+deposit	511	fossil	0	29250.0	-3250.0	0.01	上		point
+deposit	512	fossil	0	14750.0	28150.0	0.01	上		point
+deposit	513	fossil	0	33850.0	4750.0	0.01	上		point
+deposit	514	fossil	0	32150.0	-350.0	0.01	上		point
+deposit	515	fossil	0	12850.0	11750.0	0.01	上		point
+deposit	516	fossil	0	23650.0	-9250.0	0.01	上		point
+deposit	517	fossil	0	24550.0	28150.0	0.01	上		point
+deposit	518	fossil	0	24850.0	-13750.0	0.01	上		point
+deposit	519	fossil	0	23150.0	-15450.0	0.01	上		point
+deposit	520	fossil	0	22850.0	31350.0	0.01	上		point
+deposit	521	fossil	0	17850.0	25150.0	0.01	上		point
+deposit	522	fossil	1	64150.0	4050.0	0.01	上		point
+deposit	523	fossil	1	62950.0	6450.0	0.01	上		point
+deposit	524	fossil	18	47050.0	25850.0	0.01	上		point
+deposit	525	fossil	0	23150.0	32750.0	0.01	中		point
+deposit	526	fossil	8	25950.0	47450.0	0.01	上		point
+occurrence	0	ore	0	18750.0	11650.0	0.41	上	铜	1.46	93.0
+occurrence	1	ore	0	24650.0	17650.0	0.82	上	铜	2.09	92.0
+occurrence	2	ore	0	33650.0	4850.0	0.71	上	铅锌	2.17	96.0
+occurrence	3	ore	0	26150.0	7150.0	1.17	上	铜	2.29	93.0
+occurrence	4	ore	0	16450.0	19150.0	1.24	上	金银	2.47	94.0
+occurrence	5	ore	0	11150.0	19150.0	3.72	上	金银	4.61	93.0
+occurrence	6	ore	0	24450.0	1150.0	1.05	上	铅锌	3.28	94.0
+occurrence	7	ore	1	61550.0	5650.0	2.32	上	铜	3.17	93.0
+occurrence	8	ore	2	12650.0	47650.0	1.34	上	铜	2.36	97.0
+occurrence	9	sulfur	14	72250.0	4850.0	0.11	上	热泉硫磺	0.4	45.0
+occurrence	10	stone	9	27850.0	-34950.0	0.22	上	海相石灰岩	2.0	178.0
+occurrence	11	stone	9	27150.0	-34750.0	0.07	上	辉长岩	1.79	7.0
+occurrence	12	stone	13	18150.0	-29450.0	0.18	中	海相石灰岩	1.98	18.0
+occurrence	13	stone	27	47250.0	-28950.0	0.25	中	辉长岩	1.51	91.0
+occurrence	14	stone	13	18650.0	-28150.0	0.06	中	海相石灰岩	0.5	24.0
+occurrence	15	stone	28	32350.0	-27250.0	0.17	上	海相石灰岩	1.23	179.0
+occurrence	16	stone	28	32250.0	-27250.0	0.15	上	辉长岩	0.6	7.0
+occurrence	17	stone	10	44250.0	-24350.0	1.22	上	海相石灰岩	2.74	48.0
+occurrence	18	stone	10	43850.0	-24550.0	0.34	上	辉长岩	1.6	2.0
+occurrence	19	stone	0	23350.0	-22550.0	0.15	上	海相石灰岩	1.04	49.0
+occurrence	20	stone	0	20250.0	-22850.0	0.38	中	海相石灰岩	3.12	170.0
+occurrence	21	stone	0	24750.0	-21550.0	0.13	中	海相石灰岩	1.75	158.0
+occurrence	22	stone	0	19750.0	-22050.0	0.09	上	海相石灰岩	1.18	35.0
+occurrence	23	stone	0	20050.0	-21350.0	0.48	上	海相石灰岩	3.33	162.0
+occurrence	24	stone	0	26750.0	-21250.0	0.05	中	海相石灰岩	0.76	12.0
+occurrence	25	stone	19	53850.0	-19850.0	0.15	上	海相石灰岩	2.58	110.0
+occurrence	26	stone	19	53450.0	-20550.0	0.08	中	辉长岩	0.67	133.0
+occurrence	27	stone	0	26650.0	-20050.0	0.21	中	海相石灰岩	1.73	129.0
+occurrence	28	stone	0	27550.0	-20250.0	0.07	下	海相石灰岩	1.01	74.0
+occurrence	29	stone	19	54150.0	-20650.0	0.1	上	海相石灰岩	0.94	134.0
+occurrence	30	stone	19	52950.0	-20250.0	0.05	中	海相石灰岩	0.92	90.0
+occurrence	31	stone	0	29450.0	-19150.0	0.16	中	海相石灰岩	1.94	149.0
+occurrence	32	stone	0	30550.0	-18850.0	0.16	上	海相石灰岩	1.64	127.0
+occurrence	33	stone	0	21750.0	-18850.0	0.05	中	海相石灰岩	0.88	10.0
+occurrence	34	stone	0	16050.0	-18350.0	0.07	下	海相石灰岩	1.09	174.0
+occurrence	35	stone	0	27050.0	-18450.0	0.05	中	海相石灰岩	0.84	8.0
+occurrence	36	stone	0	35250.0	-18150.0	0.05	中	海相石灰岩	1.22	90.0
+occurrence	37	stone	0	33850.0	-17950.0	0.16	中	海相石灰岩	1.86	143.0
+occurrence	38	stone	0	21050.0	-17450.0	0.06	下	海相石灰岩	0.89	71.0
+occurrence	39	stone	0	19250.0	-16750.0	0.11	中	海相石灰岩	1.46	95.0
+occurrence	40	stone	0	27850.0	-14050.0	3.94	上	海相石灰岩	5.48	23.0
+occurrence	41	stone	0	35150.0	-4450.0	198.68	上	海相石灰岩	51.54	82.0
+occurrence	42	stone	0	18550.0	11650.0	69.77	上	辉长岩	24.51	50.0
+occurrence	43	stone	0	21350.0	-16150.0	0.11	下	海相石灰岩	0.84	166.0
+occurrence	44	stone	5	42350.0	-15750.0	0.06	上	海相石灰岩	0.86	104.0
+occurrence	45	stone	5	44350.0	-15450.0	0.38	上	海相石灰岩	2.62	154.0
+occurrence	46	stone	5	44650.0	-13850.0	1.49	上	海相石灰岩	5.38	151.0
+occurrence	47	stone	5	44050.0	-13650.0	0.66	上	辉长岩	1.82	98.0
+occurrence	48	stone	0	25850.0	-14750.0	0.17	下	海相石灰岩	1.72	28.0
+occurrence	49	stone	0	18050.0	-12550.0	0.3	上	海相石灰岩	2.48	79.0
+occurrence	50	stone	0	21150.0	-13950.0	0.05	下	海相石灰岩	0.66	108.0
+occurrence	51	stone	0	34950.0	-12650.0	0.21	中	海相石灰岩	1.91	134.0
+occurrence	52	stone	25	37450.0	-13050.0	0.08	中	海相石灰岩	1.05	53.0
+occurrence	53	stone	25	37750.0	-12850.0	0.05	中	辉长岩	0.84	31.0
+occurrence	54	stone	7	63250.0	-9350.0	5.73	上	海相石灰岩	4.99	48.0
+occurrence	55	stone	0	29650.0	-12250.0	0.06	中	海相石灰岩	0.5	15.0
+occurrence	56	stone	25	38150.0	-11950.0	0.15	中	辉长岩	1.13	16.0
+occurrence	57	stone	0	28650.0	-10950.0	0.21	中	海相石灰岩	2.5	99.0
+occurrence	58	stone	0	34050.0	-10450.0	0.37	上	海相石灰岩	1.95	69.0
+occurrence	59	stone	0	31150.0	-6650.0	0.32	上	海相石灰岩	1.36	79.0
+occurrence	60	stone	0	14350.0	-6950.0	0.09	上	海相石灰岩	0.95	69.0
+occurrence	61	stone	0	21850.0	-5050.0	0.06	下	海相石灰岩	1.38	164.0
+occurrence	62	stone	1	64150.0	4050.0	16.28	上	海相石灰岩	18.94	111.0
+occurrence	63	stone	1	57650.0	4450.0	18.22	上	辉长岩	11.25	107.0
+occurrence	64	stone	1	58950.0	1050.0	0.05	上	蛇纹岩	1.49	83.0
+occurrence	65	stone	1	54850.0	-2750.0	0.12	中	海相石灰岩	1.03	50.0
+occurrence	66	stone	0	25150.0	-3150.0	0.05	中	海相石灰岩	0.65	141.0
+occurrence	67	stone	0	28050.0	-2450.0	0.09	上	海相石灰岩	0.72	63.0
+occurrence	68	stone	1	63150.0	-2250.0	0.45	中	海相石灰岩	3.47	137.0
+occurrence	69	stone	0	19950.0	-1750.0	0.08	下	海相石灰岩	0.84	146.0
+occurrence	70	stone	0	38050.0	750.0	0.45	上	海相石灰岩	2.01	144.0
+occurrence	71	stone	1	53850.0	1950.0	0.38	上	海相石灰岩	1.8	28.0
+occurrence	72	stone	0	37350.0	1750.0	0.06	上	海相石灰岩	0.75	34.0
+occurrence	73	stone	0	17250.0	2050.0	0.07	上	海相石灰岩	0.99	48.0
+occurrence	74	stone	0	39450.0	3150.0	0.17	上	海相石灰岩	1.14	75.0
+occurrence	75	stone	14	71850.0	4150.0	1.64	上	海相石灰岩	4.07	93.0
+occurrence	76	stone	26	44150.0	5550.0	0.05	中	海相石灰岩	0.55	145.0
+occurrence	77	stone	16	53850.0	14450.0	1.67	上	海相石灰岩	2.66	81.0
+occurrence	78	stone	6	66750.0	12650.0	0.09	中	海相石灰岩	0.57	164.0
+occurrence	79	stone	6	65650.0	13350.0	0.05	中	海相石灰岩	1.11	141.0
+occurrence	80	stone	6	67050.0	13550.0	0.06	中	海相石灰岩	0.92	103.0
+occurrence	81	stone	6	66650.0	13550.0	0.15	上	辉长岩	0.74	178.0
+occurrence	82	stone	15	43650.0	15450.0	0.05	下	海相石灰岩	0.92	138.0
+occurrence	83	stone	15	43450.0	14750.0	0.38	上	辉长岩	1.79	60.0
+occurrence	84	stone	6	65250.0	14050.0	0.05	下	海相石灰岩	1.84	93.0
+occurrence	85	stone	6	65650.0	14350.0	0.07	上	辉长岩	0.65	90.0
+occurrence	86	stone	6	66950.0	14250.0	0.15	上	辉长岩	0.89	158.0
+occurrence	87	stone	20	70050.0	14850.0	0.19	上	辉长岩	0.75	26.0
+occurrence	88	stone	6	66850.0	15850.0	0.18	中	海相石灰岩	2.01	30.0
+occurrence	89	stone	6	65850.0	15850.0	0.1	中	海相石灰岩	1.39	150.0
+occurrence	90	stone	24	7350.0	17250.0	0.21	上	海相石灰岩	1.8	80.0
+occurrence	91	stone	24	7550.0	16650.0	0.37	上	辉长岩	0.95	51.0
+occurrence	92	stone	11	60050.0	19150.0	0.38	上	海相石灰岩	3.27	57.0
+occurrence	93	stone	11	60950.0	18250.0	0.26	上	辉长岩	1.35	39.0
+occurrence	94	stone	11	61550.0	19050.0	0.1	上	海相石灰岩	0.76	58.0
+occurrence	95	stone	11	61250.0	18950.0	0.11	上	辉长岩	1.13	64.0
+occurrence	96	stone	11	60950.0	20450.0	0.08	下	海相石灰岩	1.18	49.0
+occurrence	97	stone	22	69250.0	21850.0	0.05	中	海相石灰岩	0.61	75.0
+occurrence	98	stone	22	68150.0	22150.0	0.11	上	海相石灰岩	0.59	131.0
+occurrence	99	stone	18	47050.0	25850.0	1.82	上	海相石灰岩	3.24	68.0
+occurrence	100	stone	18	47350.0	25750.0	0.16	上	辉长岩	0.67	72.0
+occurrence	101	stone	0	20050.0	26750.0	0.09	下	海相石灰岩	0.85	116.0
+occurrence	102	stone	4	6550.0	28150.0	3.55	上	海相石灰岩	5.86	75.0
+occurrence	103	stone	4	5750.0	29050.0	1.5	上	辉长岩	3.72	85.0
+occurrence	104	stone	0	23650.0	28750.0	0.05	下	海相石灰岩	0.67	103.0
+occurrence	105	stone	4	9150.0	28950.0	0.09	中	海相石灰岩	0.88	80.0
+occurrence	106	stone	12	40750.0	29550.0	0.07	中	海相石灰岩	0.62	114.0
+occurrence	107	stone	12	42450.0	29550.0	0.06	中	海相石灰岩	0.6	168.0
+occurrence	108	stone	12	39950.0	30650.0	0.12	中	海相石灰岩	2.35	175.0
+occurrence	109	stone	12	40650.0	30750.0	0.33	上	辉长岩	0.86	32.0
+occurrence	110	stone	12	41450.0	30450.0	0.05	中	海相石灰岩	0.94	104.0
+occurrence	111	stone	0	21650.0	30750.0	0.16	上	海相石灰岩	1.2	167.0
+occurrence	112	stone	0	23150.0	32750.0	0.17	中	海相石灰岩	1.4	72.0
+occurrence	113	stone	4	6150.0	33750.0	0.12	中	海相石灰岩	1.26	15.0
+occurrence	114	stone	23	37850.0	36050.0	0.1	中	辉长岩	0.92	172.0
+occurrence	115	stone	3	31150.0	41650.0	4.68	上	海相石灰岩	7.36	75.0
+occurrence	116	stone	3	31250.0	38650.0	1.61	上	辉长岩	4.26	100.0
+occurrence	117	stone	2	11850.0	38450.0	0.07	中	海相石灰岩	0.79	101.0
+occurrence	118	stone	2	14150.0	42050.0	10.9	上	海相石灰岩	11.43	108.0
+occurrence	119	stone	2	14050.0	42250.0	0.91	上	辉长岩	5.23	105.0
+occurrence	120	stone	2	11050.0	40650.0	0.12	上	海相石灰岩	0.55	176.0
+occurrence	121	stone	2	10350.0	41150.0	0.07	上	海相石灰岩	0.87	101.0
+occurrence	122	stone	3	32150.0	43950.0	0.56	上	海相石灰岩	2.27	31.0
+occurrence	123	stone	3	31350.0	42750.0	0.19	中	海相石灰岩	1.49	61.0
+occurrence	124	stone	2	17550.0	43450.0	0.16	上	海相石灰岩	1.82	131.0
+occurrence	125	stone	2	17350.0	44650.0	0.1	中	海相石灰岩	0.89	79.0
+occurrence	126	stone	8	25950.0	47450.0	0.53	上	海相石灰岩	4.38	107.0
+occurrence	127	stone	8	25750.0	47650.0	1.67	上	辉长岩	2.96	74.0
+occurrence	128	stone	8	26250.0	46150.0	0.06	中	海相石灰岩	0.83	93.0
+occurrence	129	stone	8	23250.0	48850.0	0.07	下	海相石灰岩	0.79	114.0
+occurrence	130	stone	2	17650.0	49650.0	0.06	中	海相石灰岩	1.73	62.0
+occurrence	131	stone	2	15950.0	49050.0	0.08	中	海相石灰岩	0.92	157.0
+occurrence	132	stone	8	23650.0	49450.0	0.05	下	海相石灰岩	0.73	32.0
+occurrence	133	stone	2	16850.0	50350.0	0.06	下	海相石灰岩	1.12	5.0
+occurrence	134	stone	17	11350.0	57050.0	0.05	上	海相石灰岩	0.45	135.0
+occurrence	135	stone	17	10150.0	58250.0	0.16	上	海相石灰岩	1.19	120.0
+occurrence	136	clay	9	26150.0	-37150.0	1.37	中	溪边黏土	3.69	178.0
+occurrence	137	clay	9	27450.0	-34950.0	0.05	下	溪边黏土	0.37	56.0
+occurrence	138	clay	9	27550.0	-33750.0	0.9	中	溪边黏土	4.13	174.0
+occurrence	139	clay	9	27050.0	-33450.0	0.16	中	溪边黏土	0.74	32.0
+occurrence	140	clay	13	20050.0	-31150.0	1.45	中	溪边黏土	3.5	18.0
+occurrence	141	clay	28	32750.0	-27450.0	0.05	中	溪边黏土	1.04	86.0
+occurrence	142	clay	27	46750.0	-27650.0	0.05	中	溪边黏土	0.71	113.0
+occurrence	143	clay	10	43350.0	-26050.0	0.06	中	溪边黏土	0.98	139.0
+occurrence	144	clay	10	42050.0	-24350.0	0.08	中	溪边黏土	1.17	83.0
+occurrence	145	clay	0	20850.0	-9350.0	103.06	上	溪边黏土	28.14	68.0
+occurrence	146	clay	10	42250.0	-22250.0	0.11	中	溪边黏土	1.6	88.0
+occurrence	147	clay	19	55050.0	-19950.0	0.59	中	溪边黏土	2.44	71.0
+occurrence	148	clay	5	42650.0	-10450.0	5.0	上	溪边黏土	9.47	87.0
+occurrence	149	clay	0	27750.0	-7350.0	0.06	中	溪边黏土	1.07	86.0
+occurrence	150	clay	0	13550.0	-5950.0	0.06	下	溪边黏土	0.87	86.0
+occurrence	151	clay	1	62850.0	-350.0	9.14	上	溪边黏土	10.54	144.0
+occurrence	152	clay	0	37350.0	-4050.0	0.11	中	溪边黏土	1.23	96.0
+occurrence	153	clay	0	28950.0	-3450.0	0.06	中	溪边黏土	0.7	167.0
+occurrence	154	clay	1	59750.0	-3350.0	0.06	中	溪边黏土	0.48	103.0
+occurrence	155	clay	0	29150.0	-3050.0	0.96	中	溪边黏土	3.91	26.0
+occurrence	156	clay	1	54250.0	4950.0	7.37	上	溪边黏土	17.93	121.0
+occurrence	157	clay	1	55850.0	-1850.0	0.07	下	溪边黏土	0.39	60.0
+occurrence	158	clay	0	31950.0	-1450.0	0.05	中	溪边黏土	1.06	47.0
+occurrence	159	clay	1	57750.0	-750.0	0.06	中	溪边黏土	0.81	161.0
+occurrence	160	clay	0	38850.0	4550.0	1.19	中	溪边黏土	7.7	107.0
+occurrence	161	clay	1	59250.0	750.0	0.18	中	溪边黏土	2.36	77.0
+occurrence	162	clay	0	28050.0	250.0	0.3	中	溪边黏土	2.59	106.0
+occurrence	163	clay	0	30750.0	650.0	0.09	中	溪边黏土	1.16	10.0
+occurrence	164	clay	1	60650.0	2950.0	0.83	中	溪边黏土	5.47	162.0
+occurrence	165	clay	0	20850.0	1050.0	0.06	中	溪边黏土	0.73	135.0
+occurrence	166	clay	0	34850.0	1550.0	0.06	下	溪边黏土	0.85	64.0
+occurrence	167	clay	1	63650.0	3050.0	3.76	上	溪边黏土	7.15	72.0
+occurrence	168	clay	0	20050.0	1850.0	0.26	中	溪边黏土	3.17	175.0
+occurrence	169	clay	0	18150.0	3050.0	0.4	中	溪边黏土	3.25	54.0
+occurrence	170	clay	0	32150.0	2850.0	0.07	中	溪边黏土	1.1	73.0
+occurrence	171	clay	0	34750.0	2750.0	0.28	中	溪边黏土	3.28	134.0
+occurrence	172	clay	0	29250.0	2650.0	0.05	中	溪边黏土	1.11	146.0
+occurrence	173	clay	1	55750.0	3050.0	0.1	中	溪边黏土	1.22	92.0
+occurrence	174	clay	0	11650.0	7550.0	1.02	上	溪边黏土	7.28	43.0
+occurrence	175	clay	0	22750.0	3750.0	0.1	中	溪边黏土	1.6	175.0
+occurrence	176	clay	0	28750.0	3850.0	0.19	中	溪边黏土	2.41	178.0
+occurrence	177	clay	0	12450.0	5450.0	0.59	中	溪边黏土	3.66	36.0
+occurrence	178	clay	0	22450.0	4550.0	0.3	中	溪边黏土	1.44	134.0
+occurrence	179	clay	0	37050.0	3950.0	0.13	中	溪边黏土	1.01	23.0
+occurrence	180	clay	0	29250.0	3850.0	0.05	中	溪边黏土	0.78	8.0
+occurrence	181	clay	0	20550.0	3850.0	0.05	中	溪边黏土	1.24	159.0
+occurrence	182	clay	1	57650.0	4050.0	0.16	中	溪边黏土	0.69	151.0
+occurrence	183	clay	0	23250.0	4850.0	0.08	中	溪边黏土	1.05	129.0
+occurrence	184	clay	0	33550.0	4850.0	0.05	中	溪边黏土	1.41	138.0
+occurrence	185	clay	1	56950.0	4850.0	0.1	中	溪边黏土	0.69	162.0
+occurrence	186	clay	0	18850.0	4750.0	0.21	中	溪边黏土	1.11	164.0
+occurrence	187	clay	1	61050.0	4950.0	0.08	中	溪边黏土	1.56	172.0
+occurrence	188	clay	0	19750.0	4750.0	0.08	中	溪边黏土	0.42	163.0
+occurrence	189	clay	1	61650.0	5250.0	0.11	中	溪边黏土	0.63	108.0
+occurrence	190	clay	0	15550.0	5550.0	0.46	中	溪边黏土	2.32	44.0
+occurrence	191	clay	0	35950.0	5150.0	0.17	中	溪边黏土	2.22	95.0
+occurrence	192	clay	1	56950.0	5950.0	0.73	中	溪边黏土	3.86	152.0
+occurrence	193	clay	0	31850.0	6050.0	0.14	下	溪边黏土	1.63	160.0
+occurrence	194	clay	1	62750.0	6350.0	0.17	中	溪边黏土	1.23	24.0
+occurrence	195	clay	0	33750.0	5950.0	0.05	中	溪边黏土	0.96	129.0
+occurrence	196	clay	0	27450.0	6950.0	0.56	中	溪边黏土	3.44	91.0
+occurrence	197	clay	0	30150.0	6550.0	0.18	下	溪边黏土	1.6	163.0
+occurrence	198	clay	26	43750.0	6450.0	0.05	中	溪边黏土	0.84	98.0
+occurrence	199	clay	0	24050.0	6350.0	0.06	中	溪边黏土	0.34	135.0
+occurrence	200	clay	0	39750.0	13150.0	2.34	上	溪边黏土	8.22	86.0
+occurrence	201	clay	0	25150.0	6850.0	0.05	中	溪边黏土	1.41	65.0
+occurrence	202	clay	0	34750.0	6450.0	0.05	中	溪边黏土	0.49	111.0
+occurrence	203	clay	0	37550.0	6550.0	0.07	中	溪边黏土	1.01	110.0
+occurrence	204	clay	0	32050.0	6650.0	0.12	中	溪边黏土	1.88	179.0
+occurrence	205	clay	0	10850.0	6850.0	0.33	上	溪边黏土	4.01	82.0
+occurrence	206	clay	0	26150.0	7150.0	0.17	中	溪边黏土	1.51	35.0
+occurrence	207	clay	0	30050.0	7550.0	0.11	中	溪边黏土	0.83	131.0
+occurrence	208	clay	0	34750.0	7050.0	0.08	中	溪边黏土	0.86	40.0
+occurrence	209	clay	14	73050.0	7650.0	0.37	中	溪边黏土	1.48	57.0
+occurrence	210	clay	0	23550.0	8050.0	0.34	中	溪边黏土	1.4	6.0
+occurrence	211	clay	1	59550.0	8050.0	0.25	中	溪边黏土	3.12	166.0
+occurrence	212	clay	0	13150.0	8250.0	0.05	中	溪边黏土	1.5	171.0
+occurrence	213	clay	1	62450.0	8250.0	0.07	中	溪边黏土	0.98	131.0
+occurrence	214	clay	0	37850.0	8050.0	0.08	中	溪边黏土	0.57	171.0
+occurrence	215	clay	0	11450.0	8550.0	0.07	下	溪边黏土	0.92	146.0
+occurrence	216	clay	0	40450.0	9050.0	0.14	中	溪边黏土	1.5	97.0
+occurrence	217	clay	0	13850.0	8650.0	0.59	中	溪边黏土	2.44	122.0
+occurrence	218	clay	0	34250.0	8450.0	0.06	中	溪边黏土	1.16	5.0
+occurrence	219	clay	0	37650.0	8750.0	0.05	中	溪边黏土	0.78	78.0
+occurrence	220	clay	0	20550.0	9150.0	0.1	中	溪边黏土	0.83	142.0
+occurrence	221	clay	0	23250.0	8750.0	0.05	中	溪边黏土	1.36	122.0
+occurrence	222	clay	0	25650.0	9350.0	0.84	上	溪边黏土	2.34	55.0
+occurrence	223	clay	0	32850.0	10150.0	0.58	上	溪边黏土	2.41	80.0
+occurrence	224	clay	0	29550.0	10350.0	0.2	中	溪边黏土	1.43	61.0
+occurrence	225	clay	0	11950.0	9850.0	0.29	上	溪边黏土	3.06	100.0
+occurrence	226	clay	0	10250.0	10450.0	0.3	中	溪边黏土	1.55	111.0
+occurrence	227	clay	0	36650.0	10050.0	0.08	中	溪边黏土	0.97	33.0
+occurrence	228	clay	0	19850.0	9750.0	0.05	中	溪边黏土	0.83	158.0
+occurrence	229	clay	0	11150.0	10450.0	0.13	中	溪边黏土	1.7	114.0
+occurrence	230	clay	0	24250.0	10350.0	0.09	中	溪边黏土	0.65	142.0
+occurrence	231	clay	1	62850.0	10350.0	0.15	中	溪边黏土	1.37	17.0
+occurrence	232	clay	0	20950.0	10450.0	0.05	中	溪边黏土	0.89	135.0
+occurrence	233	clay	0	13750.0	10750.0	0.05	下	溪边黏土	0.83	112.0
+occurrence	234	clay	0	9750.0	11450.0	0.07	中	溪边黏土	1.24	126.0
+occurrence	235	clay	0	17250.0	11550.0	0.15	中	溪边黏土	1.75	41.0
+occurrence	236	clay	0	18250.0	11950.0	0.08	中	溪边黏土	1.22	131.0
+occurrence	237	clay	0	26450.0	11450.0	0.05	中	溪边黏土	0.8	72.0
+occurrence	238	clay	1	58650.0	11250.0	0.14	中	溪边黏土	0.58	145.0
+occurrence	239	clay	0	10450.0	13050.0	0.28	中	溪边黏土	2.68	46.0
+occurrence	240	clay	0	14150.0	12150.0	0.13	下	溪边黏土	0.5	81.0
+occurrence	241	clay	0	23250.0	12950.0	0.14	中	溪边黏土	2.13	99.0
+occurrence	242	clay	0	12750.0	11950.0	0.07	中	溪边黏土	1.03	82.0
+occurrence	243	clay	0	22750.0	12750.0	0.19	中	溪边黏土	1.33	141.0
+occurrence	244	clay	6	65150.0	16950.0	2.92	中	溪边黏土	6.1	88.0
+occurrence	245	clay	0	37250.0	12150.0	0.11	中	溪边黏土	2.06	56.0
+occurrence	246	clay	15	44050.0	13450.0	0.19	中	溪边黏土	2.6	128.0
+occurrence	247	clay	6	67350.0	13150.0	0.33	中	溪边黏土	3.8	117.0
+occurrence	248	clay	0	26150.0	12850.0	0.17	上	河湖黏土	0.71	158.0
+occurrence	249	clay	0	10850.0	15850.0	0.68	上	溪边黏土	4.71	79.0
+occurrence	250	clay	0	12850.0	14250.0	0.6	中	溪边黏土	4.79	78.0
+occurrence	251	clay	0	18550.0	13250.0	0.07	中	溪边黏土	1.03	139.0
+occurrence	252	clay	0	17350.0	13450.0	0.05	中	溪边黏土	1.11	130.0
+occurrence	253	clay	0	34150.0	13450.0	0.23	中	溪边黏土	1.98	104.0
+occurrence	254	clay	16	54250.0	14550.0	0.08	中	溪边黏土	1.5	57.0
+occurrence	255	clay	0	32850.0	14350.0	0.12	中	溪边黏土	1.94	135.0
+occurrence	256	clay	15	44150.0	16150.0	0.2	中	溪边黏土	3.03	112.0
+occurrence	257	clay	0	36950.0	14950.0	1.14	上	溪边黏土	5.14	31.0
+occurrence	258	clay	0	30250.0	14650.0	0.08	中	溪边黏土	0.89	25.0
+occurrence	259	clay	0	37850.0	15250.0	0.09	中	溪边黏土	1.0	57.0
+occurrence	260	clay	24	8650.0	15850.0	0.14	中	溪边黏土	1.03	76.0
+occurrence	261	clay	0	37950.0	15850.0	0.09	中	溪边黏土	1.3	6.0
+occurrence	262	clay	20	71150.0	15450.0	0.05	中	溪边黏土	1.0	48.0
+occurrence	263	clay	0	23250.0	15850.0	0.14	上	河湖黏土	0.82	101.0
+occurrence	264	clay	6	68250.0	15650.0	0.09	中	溪边黏土	0.9	21.0
+occurrence	265	clay	0	20950.0	15850.0	0.05	中	溪边黏土	0.78	24.0
+occurrence	266	clay	0	18750.0	16050.0	0.66	中	溪边黏土	2.9	56.0
+occurrence	267	clay	0	16050.0	16450.0	0.09	中	溪边黏土	0.91	33.0
+occurrence	268	clay	0	22050.0	16550.0	0.07	中	溪边黏土	1.05	162.0
+occurrence	269	clay	0	28950.0	16950.0	0.11	中	溪边黏土	2.02	167.0
+occurrence	270	clay	0	36650.0	18050.0	0.2	中	溪边黏土	2.36	75.0
+occurrence	271	clay	11	61050.0	16950.0	0.11	中	溪边黏土	1.7	98.0
+occurrence	272	clay	0	32350.0	21450.0	4.54	上	溪边黏土	9.74	40.0
+occurrence	273	clay	0	15250.0	18050.0	0.19	中	溪边黏土	2.04	45.0
+occurrence	274	clay	0	31050.0	17550.0	0.09	中	溪边黏土	1.5	91.0
+occurrence	275	clay	11	59950.0	18550.0	0.11	中	溪边黏土	1.49	65.0
+occurrence	276	clay	0	24950.0	17650.0	0.08	中	溪边黏土	1.47	111.0
+occurrence	277	clay	0	19350.0	19150.0	0.97	中	溪边黏土	3.46	5.0
+occurrence	278	clay	0	22650.0	18250.0	0.07	中	溪边黏土	0.62	76.0
+occurrence	279	clay	0	10750.0	18550.0	0.15	中	溪边黏土	1.63	56.0
+occurrence	280	clay	0	28450.0	18450.0	0.15	中	溪边黏土	1.68	129.0
+occurrence	281	clay	0	11650.0	19150.0	0.25	上	溪边黏土	2.33	83.0
+occurrence	282	clay	0	16350.0	19050.0	0.14	中	溪边黏土	1.68	14.0
+occurrence	283	clay	0	23250.0	19450.0	0.38	中	溪边黏土	2.76	27.0
+occurrence	284	clay	0	14550.0	19850.0	0.31	上	溪边黏土	1.32	143.0
+occurrence	285	clay	11	61850.0	19250.0	0.07	中	溪边黏土	0.71	129.0
+occurrence	286	clay	0	28550.0	28250.0	31.18	上	溪边黏土	22.22	167.0
+occurrence	287	clay	0	20150.0	19750.0	0.19	中	溪边黏土	2.22	79.0
+occurrence	288	clay	11	61250.0	20650.0	0.59	中	溪边黏土	1.81	58.0
+occurrence	289	clay	0	18650.0	19950.0	0.37	中	溪边黏土	1.2	77.0
+occurrence	290	clay	0	13950.0	20850.0	0.22	中	溪边黏土	1.68	171.0
+occurrence	291	clay	0	25550.0	22750.0	0.15	中	溪边黏土	1.21	66.0
+occurrence	292	clay	0	26850.0	21850.0	0.09	下	溪边黏土	1.07	84.0
+occurrence	293	clay	0	17250.0	21950.0	0.08	中	溪边黏土	1.19	167.0
+occurrence	294	clay	0	15750.0	22750.0	0.05	中	溪边黏土	0.88	97.0
+occurrence	295	clay	0	16350.0	22850.0	0.11	中	溪边黏土	1.11	95.0
+occurrence	296	clay	0	22050.0	23150.0	0.1	中	溪边黏土	1.31	47.0
+occurrence	297	clay	0	18550.0	23050.0	0.3	中	溪边黏土	2.95	17.0
+occurrence	298	clay	0	24650.0	23850.0	0.24	中	溪边黏土	2.34	72.0
+occurrence	299	clay	22	68850.0	22950.0	0.17	中	溪边黏土	1.27	161.0
+occurrence	300	clay	0	30650.0	22850.0	0.1	中	溪边黏土	0.58	141.0
+occurrence	301	clay	0	26250.0	23350.0	0.07	下	溪边黏土	0.5	27.0
+occurrence	302	clay	0	27050.0	23750.0	0.21	中	溪边黏土	1.03	5.0
+occurrence	303	clay	0	14650.0	24950.0	0.21	中	溪边黏土	1.62	70.0
+occurrence	304	clay	0	22250.0	24250.0	0.17	中	溪边黏土	1.24	4.0
+occurrence	305	clay	0	17850.0	24350.0	0.06	中	溪边黏土	0.64	136.0
+occurrence	306	clay	0	13550.0	24250.0	0.05	中	溪边黏土	0.63	0.0
+occurrence	307	clay	0	18250.0	24950.0	0.07	中	溪边黏土	1.16	150.0
+occurrence	308	clay	21	75350.0	25150.0	0.37	中	溪边黏土	1.41	150.0
+occurrence	309	clay	0	23150.0	25650.0	0.14	中	溪边黏土	1.2	100.0
+occurrence	310	clay	0	20650.0	25250.0	0.14	中	溪边黏土	0.97	7.0
+occurrence	311	clay	0	18850.0	25550.0	0.14	上	河湖黏土	1.37	115.0
+occurrence	312	clay	0	10250.0	25850.0	0.05	中	溪边黏土	1.04	98.0
+occurrence	313	clay	0	29250.0	25950.0	0.11	中	溪边黏土	0.7	107.0
+occurrence	314	clay	18	48050.0	27050.0	0.13	中	溪边黏土	1.53	40.0
+occurrence	315	clay	21	74750.0	27150.0	0.33	中	溪边黏土	1.14	176.0
+occurrence	316	clay	4	8350.0	32250.0	5.02	上	溪边黏土	7.72	122.0
+occurrence	317	clay	12	43450.0	30350.0	0.95	中	溪边黏土	3.22	29.0
+occurrence	318	clay	4	7750.0	30350.0	0.05	中	溪边黏土	1.11	111.0
+occurrence	319	clay	4	3550.0	30350.0	0.05	中	溪边黏土	0.35	108.0
+occurrence	320	clay	12	38850.0	30950.0	0.2	中	溪边黏土	1.07	161.0
+occurrence	321	clay	4	4750.0	33250.0	0.05	中	溪边黏土	1.28	150.0
+occurrence	322	clay	23	36850.0	34850.0	0.47	中	溪边黏土	1.66	76.0
+occurrence	323	clay	3	28350.0	39850.0	8.35	中	溪边黏土	9.89	54.0
+occurrence	324	clay	2	16450.0	40950.0	5.39	上	溪边黏土	16.72	95.0
+occurrence	325	clay	2	11450.0	37850.0	0.06	中	溪边黏土	0.85	11.0
+occurrence	326	clay	3	32850.0	39450.0	0.11	中	溪边黏土	1.46	77.0
+occurrence	327	clay	2	11950.0	42850.0	0.66	中	溪边黏土	3.52	100.0
+occurrence	328	clay	2	12750.0	43450.0	0.18	中	溪边黏土	2.43	42.0
+occurrence	329	clay	3	31850.0	42550.0	0.11	中	溪边黏土	1.1	110.0
+occurrence	330	clay	8	25050.0	44350.0	0.14	中	溪边黏土	0.74	25.0
+occurrence	331	clay	2	12450.0	44750.0	0.09	中	溪边黏土	1.44	112.0
+occurrence	332	clay	8	26350.0	45150.0	0.27	中	溪边黏土	1.76	129.0
+occurrence	333	clay	2	13950.0	45250.0	0.05	中	溪边黏土	0.73	42.0
+occurrence	334	clay	8	23550.0	45850.0	0.14	中	溪边黏土	1.19	45.0
+occurrence	335	clay	2	18650.0	47950.0	0.57	中	溪边黏土	2.52	93.0
+occurrence	336	clay	8	23150.0	48850.0	0.39	中	溪边黏土	2.76	119.0
+occurrence	337	clay	17	12550.0	59650.0	0.69	中	溪边黏土	1.76	20.0
+occurrence	338	gravel	0	17450.0	-22350.0	0.87	中	河滩砂砾	4.21	167.0
+occurrence	339	gravel	0	22950.0	-20250.0	0.23	中	河滩砂砾	3.05	155.0
+occurrence	340	gravel	0	33550.0	-19050.0	0.62	中	河滩砂砾	3.82	61.0
+occurrence	341	gravel	0	19450.0	-19150.0	0.1	中	河滩砂砾	1.77	112.0
+occurrence	342	gravel	0	20750.0	-17450.0	0.14	中	河滩砂砾	1.42	144.0
+occurrence	343	gravel	0	22350.0	-16750.0	0.08	中	河滩砂砾	1.08	116.0
+occurrence	344	gravel	0	30550.0	-15650.0	0.05	中	河滩砂砾	0.95	47.0
+occurrence	345	gravel	0	15250.0	-15050.0	0.1	中	河滩砂砾	1.32	46.0
+occurrence	346	gravel	0	31850.0	-14950.0	0.06	中	河滩砂砾	0.99	123.0
+occurrence	347	gravel	0	22050.0	-11750.0	0.06	中	河滩砂砾	0.77	136.0
+occurrence	348	gravel	0	14850.0	-11650.0	0.54	上	河滩砂砾	2.18	147.0
+occurrence	349	gravel	0	19550.0	-9850.0	1.97	中	河滩砂砾	8.48	76.0
+occurrence	350	gravel	0	20850.0	-9350.0	0.83	中	河滩砂砾	4.76	121.0
+occurrence	351	gravel	5	42650.0	-10450.0	0.05	中	河滩砂砾	0.4	0.0
+occurrence	352	gravel	0	32350.0	-9450.0	0.05	中	河滩砂砾	0.76	73.0
+occurrence	353	gravel	0	35750.0	-8950.0	0.1	中	河滩砂砾	1.44	29.0
+occurrence	354	gravel	0	32450.0	-7950.0	1.28	中	河滩砂砾	5.17	48.0
+occurrence	355	gravel	0	25150.0	-6950.0	0.26	中	河滩砂砾	2.23	155.0
+occurrence	356	gravel	1	58650.0	-5350.0	0.05	中	河滩砂砾	0.49	21.0
+occurrence	357	gravel	0	19150.0	-3350.0	1.15	中	河滩砂砾	7.46	109.0
+occurrence	358	gravel	0	32050.0	-2650.0	0.31	中	河滩砂砾	1.88	99.0
+occurrence	359	gravel	0	31350.0	-2550.0	0.06	中	河滩砂砾	0.51	45.0
+occurrence	360	gravel	0	20650.0	-2250.0	0.16	中	河滩砂砾	1.94	146.0
+occurrence	361	gravel	0	22050.0	-550.0	0.08	中	河滩砂砾	1.3	85.0
+occurrence	362	gravel	1	63050.0	-450.0	0.19	中	河滩砂砾	2.27	137.0
+occurrence	363	gravel	1	64050.0	350.0	0.07	中	河滩砂砾	1.26	171.0
+occurrence	364	gravel	1	65350.0	950.0	0.16	中	河滩砂砾	1.83	11.0
+occurrence	365	gravel	1	63650.0	3050.0	0.07	中	河滩砂砾	0.98	40.0
+occurrence	366	gravel	1	52750.0	3950.0	0.08	中	河滩砂砾	0.9	141.0
+occurrence	367	gravel	1	54250.0	4950.0	0.11	中	河滩砂砾	1.35	166.0
+occurrence	368	gravel	0	10850.0	6850.0	0.07	中	河滩砂砾	0.55	134.0
+occurrence	369	gravel	0	11650.0	7550.0	0.12	中	河滩砂砾	0.93	7.0
+occurrence	370	gravel	0	12050.0	9950.0	0.15	中	河滩砂砾	0.9	88.0
+occurrence	371	gravel	0	39150.0	12450.0	0.06	中	河滩砂砾	0.47	5.0
+occurrence	372	gravel	0	39750.0	13150.0	0.05	中	河滩砂砾	0.86	73.0
+occurrence	373	gravel	0	36950.0	14950.0	0.21	中	河滩砂砾	1.09	79.0
+occurrence	374	gravel	0	37250.0	16250.0	0.05	中	河滩砂砾	0.53	99.0
+occurrence	375	gravel	0	10550.0	16850.0	0.06	中	河滩砂砾	1.43	163.0
+occurrence	376	gravel	0	31950.0	18150.0	0.06	中	河滩砂砾	0.61	74.0
+occurrence	377	gravel	0	35050.0	19850.0	0.85	中	河滩砂砾	4.79	162.0
+occurrence	378	gravel	0	32350.0	21450.0	0.11	中	河滩砂砾	1.18	46.0
+occurrence	379	gravel	0	19050.0	25850.0	0.14	中	河滩砂砾	1.34	120.0
+occurrence	380	gravel	0	14450.0	28250.0	0.19	中	河滩砂砾	1.98	129.0
+occurrence	381	gravel	0	18550.0	29750.0	1.48	中	河滩砂砾	5.27	36.0
+occurrence	382	gravel	0	24150.0	27750.0	0.11	中	河滩砂砾	1.39	172.0
+occurrence	383	gravel	0	28350.0	28050.0	0.13	中	河滩砂砾	2.46	1.0
+occurrence	384	gravel	0	29950.0	28550.0	0.14	中	河滩砂砾	1.41	167.0
+occurrence	385	gravel	0	16550.0	29750.0	0.09	中	河滩砂砾	2.57	144.0
+occurrence	386	gravel	0	16350.0	31550.0	0.85	上	河滩砂砾	3.36	46.0
+occurrence	387	gravel	4	8350.0	33250.0	0.14	中	河滩砂砾	1.45	94.0
+occurrence	388	gravel	2	16450.0	41850.0	0.07	中	河滩砂砾	0.96	72.0
+occurrence	389	gravel	2	17650.0	43950.0	0.05	中	河滩砂砾	0.77	167.0
+working	0	ore	0	18750.0	11650.0	0	0.966	铜	-
+working	1	ore	0	24650.0	17650.0	1	0.963	铜	103
+working	2	ore	0	24650.0	17350.0	1	0.874	铜	103
+working	3	ore	0	24650.0	17950.0	1	0.847	铜	103
+working	4	ore	0	33650.0	4850.0	2	0.961	铅锌	104
+working	5	ore	0	33650.0	4550.0	2	0.871	铅锌	104
+working	6	ore	0	33650.0	5150.0	2	0.846	铅锌	104
+working	7	ore	0	26150.0	7150.0	3	0.957	铜	105
+working	8	ore	0	16450.0	19150.0	4	0.968	金银	106
+working	9	ore	0	16450.0	18850.0	4	0.888	金银	106
+working	10	ore	0	11150.0	19150.0	5	0.954	金银	107
+working	11	ore	0	11250.0	19450.0	5	0.884	金银	107
+working	12	ore	0	11250.0	18850.0	5	0.874	金银	107
+working	13	ore	0	10950.0	18850.0	5	0.824	金银	107
+working	14	ore	0	11150.0	18550.0	5	0.811	金银	107
+working	15	ore	0	24450.0	1150.0	6	0.954	铅锌	108
+working	16	ore	0	24450.0	1550.0	6	0.827	铅锌	108
+working	17	ore	0	24550.0	750.0	6	0.825	铅锌	108
+working	18	ore	1	61550.0	5650.0	7	0.931	铜	109
+working	19	ore	1	61450.0	5350.0	7	0.865	铜	109
+working	20	ore	2	12650.0	47650.0	8	0.968	铜	110
+working	21	ore	2	12750.0	47950.0	8	0.877	铜	110
+working	22	ore	2	12650.0	47350.0	8	0.867	铜	110
+working	23	ore	2	12650.0	48250.0	8	0.784	铜	110
+working	24	ore	2	12450.0	47950.0	8	0.712	铜	110
+working	25	sulfur	14	72250.0	4850.0	9	0.906	热泉硫磺	-
+working	26	stone	0	21650.0	-5450.0	61	0.42	海相石灰岩	1,23
+working	27	stone	0	25650.0	31750.0	41	0.851	海相石灰岩	2
+working	28	stone	0	21750.0	-18850.0	33	0.514	海相石灰岩	3
+working	29	stone	0	19850.0	30850.0	41	0.545	海相石灰岩	4,10
+working	30	stone	0	19850.0	-9650.0	41	0.941	海相石灰岩	5
+working	31	stone	0	17050.0	1250.0	41	0.929	海相石灰岩	6,94
+working	32	stone	0	24250.0	-8850.0	41	0.843	海相石灰岩	7,41
+working	33	stone	0	11450.0	24950.0	41	0.867	海相石灰岩	8
+working	34	stone	0	18250.0	-3750.0	41	0.922	海相石灰岩	9,12,14
+working	35	stone	0	22050.0	29550.0	41	0.478	海相石灰岩	11
+working	36	stone	0	26550.0	-15350.0	48	0.424	海相石灰岩	13
+working	37	stone	0	24850.0	-11650.0	41	0.918	海相石灰岩	15
+working	38	stone	0	20350.0	-17550.0	41	0.42	海相石灰岩	16,32,78
+working	39	stone	0	18450.0	-13550.0	49	0.537	海相石灰岩	17,51
+working	40	stone	0	16550.0	-18650.0	34	0.404	海相石灰岩	18,56
+working	41	stone	0	16950.0	-13850.0	49	0.408	海相石灰岩	19,79
+working	42	stone	0	20950.0	-11350.0	41	0.878	海相石灰岩	20
+working	43	stone	0	17750.0	29250.0	41	0.941	海相石灰岩	21
+working	44	stone	0	19750.0	18350.0	42	0.914	辉长岩	22
+working	45	stone	1	55050.0	5350.0	62	0.894	海相石灰岩	24,87
+working	46	stone	0	14850.0	20450.0	41	0.89	海相石灰岩	25,59
+working	47	stone	0	16550.0	-9450.0	41	0.937	海相石灰岩	26,80
+working	48	stone	0	25550.0	23650.0	41	0.871	海相石灰岩	27
+working	49	stone	0	33450.0	-18050.0	37	0.494	海相石灰岩	28,65
+working	50	stone	0	22150.0	-21950.0	20	0.443	海相石灰岩	29
+working	51	stone	0	16150.0	27550.0	41	0.925	海相石灰岩	30
+working	52	stone	5	43450.0	-12350.0	46	0.827	海相石灰岩	31
+working	53	stone	0	32750.0	-9450.0	41	0.902	海相石灰岩	33
+working	54	stone	0	12750.0	9650.0	41	0.867	海相石灰岩	34,58
+working	55	stone	0	22550.0	34650.0	41	0.447	海相石灰岩	35,74
+working	56	stone	2	15850.0	42350.0	118	0.831	海相石灰岩	36
+working	57	stone	3	29850.0	41650.0	115	0.416	海相石灰岩	37
+working	58	stone	4	4750.0	29850.0	102	0.863	海相石灰岩	38,62
+working	59	stone	0	21250.0	3250.0	41	0.867	海相石灰岩	39
+working	60	stone	0	34050.0	20850.0	41	0.588	海相石灰岩	40
+working	61	stone	0	30550.0	-18850.0	32	0.851	海相石灰岩	42,55
+working	62	stone	0	15150.0	-6950.0	41	0.851	海相石灰岩	43
+working	63	stone	0	22650.0	-2850.0	41	0.878	海相石灰岩	44
+working	64	stone	0	20650.0	1250.0	41	0.855	海相石灰岩	45
+working	65	stone	0	25550.0	27850.0	41	0.812	海相石灰岩	46
+working	66	stone	6	65650.0	14350.0	85	0.847	辉长岩	47,89
+working	67	stone	0	14550.0	11950.0	41	0.816	海相石灰岩	48
+working	68	stone	0	24750.0	33550.0	41	0.447	海相石灰岩	49,99
+working	69	stone	0	14150.0	1450.0	41	0.808	海相石灰岩	50
+working	70	stone	0	23250.0	20650.0	41	0.812	海相石灰岩	52
+working	71	stone	0	31250.0	20350.0	41	0.867	海相石灰岩	53
+working	72	stone	0	22850.0	26050.0	41	0.62	海相石灰岩	54
+working	73	stone	0	22450.0	-9250.0	41	0.933	海相石灰岩	57
+working	74	stone	0	18850.0	23250.0	41	0.886	海相石灰岩	60
+working	75	stone	1	53250.0	-1150.0	62	0.431	海相石灰岩	61,75
+working	76	stone	0	19250.0	-21650.0	22	0.596	海相石灰岩	63
+working	77	stone	0	27050.0	-18450.0	35	0.58	海相石灰岩	64
+working	78	stone	0	17250.0	-11650.0	41	0.851	海相石灰岩	66
+working	79	stone	0	27250.0	-11950.0	41	0.894	海相石灰岩	67
+working	80	stone	0	10950.0	7350.0	41	0.843	海相石灰岩	68
+working	81	stone	0	14550.0	13850.0	41	0.851	海相石灰岩	69
+working	82	stone	0	11550.0	15550.0	41	0.851	海相石灰岩	70
+working	83	stone	0	19650.0	21150.0	41	0.871	海相石灰岩	71
+working	84	stone	0	15850.0	22450.0	41	0.824	海相石灰岩	72
+working	85	stone	0	14750.0	29550.0	41	0.867	海相石灰岩	73
+working	86	stone	9	27150.0	-34750.0	11	0.855	辉长岩	76
+working	87	stone	0	22250.0	-20350.0	23	0.447	海相石灰岩	77
+working	88	stone	0	20450.0	-1350.0	69	0.412	海相石灰岩	81
+working	89	stone	0	16250.0	6450.0	41	0.871	海相石灰岩	82
+working	90	stone	0	14250.0	16650.0	41	0.808	海相石灰岩	83
+working	91	stone	0	13150.0	25750.0	41	0.878	海相石灰岩	84
+working	92	stone	0	27850.0	26450.0	41	0.851	海相石灰岩	85
+working	93	stone	1	54050.0	1750.0	71	0.878	海相石灰岩	86
+working	94	stone	1	60450.0	10550.0	62	0.537	海相石灰岩	88
+working	95	stone	0	33150.0	-11950.0	41	0.851	海相石灰岩	90
+working	96	stone	0	34450.0	-7450.0	41	0.886	海相石灰岩	91
+working	97	stone	0	31950.0	-5950.0	41	0.565	海相石灰岩	92
+working	98	stone	0	18950.0	450.0	41	0.404	海相石灰岩	93
+working	99	stone	0	17750.0	6350.0	41	0.863	海相石灰岩	95
+working	100	stone	0	35350.0	16350.0	41	0.847	海相石灰岩	96
+working	101	stone	0	10450.0	23150.0	41	0.871	海相石灰岩	97
+working	102	stone	0	29450.0	23350.0	41	0.835	海相石灰岩	98
+working	103	stone	0	18650.0	33450.0	41	0.875	海相石灰岩	100
+working	104	stone	3	30350.0	43750.0	115	0.412	海相石灰岩	101
+working	105	stone	4	6750.0	32350.0	102	0.902	海相石灰岩	102
+working	106	clay	0	22850.0	-5850.0	145	0.435	溪边黏土	1,23
+working	107	clay	0	25950.0	31250.0	286	0.533	溪边黏土	2
+working	108	clay	0	22650.0	-19150.0	145	0.471	溪边黏土	3,77
+working	109	clay	0	19850.0	31050.0	286	0.4	溪边黏土	4
+working	110	clay	0	17250.0	1350.0	145	0.525	溪边黏土	6,94
+working	111	clay	0	24750.0	-8550.0	145	0.506	溪边黏土	7,41
+working	112	clay	0	11450.0	25050.0	286	0.471	溪边黏土	8
+working	113	clay	0	17950.0	-3650.0	145	0.51	溪边黏土	9,12,14
+working	114	clay	0	21850.0	29250.0	286	0.529	溪边黏土	10,11
+working	115	clay	0	26650.0	-15250.0	145	0.471	溪边黏土	13
+working	116	clay	0	24250.0	-12150.0	145	0.486	溪边黏土	15
+working	117	clay	0	20250.0	-18050.0	145	0.471	溪边黏土	16,32
+working	118	clay	0	18150.0	-13450.0	145	0.396	溪边黏土	17
+working	119	clay	0	17050.0	-19350.0	145	0.435	溪边黏土	18
+working	120	clay	0	16150.0	-14350.0	145	0.447	溪边黏土	19,79
+working	121	clay	0	20850.0	-11550.0	145	0.494	溪边黏土	20
+working	122	clay	0	19850.0	18450.0	277	0.522	溪边黏土	22
+working	123	clay	0	15250.0	20850.0	290	0.471	溪边黏土	25
+working	124	clay	0	17050.0	-9050.0	145	0.486	溪边黏土	26,80
+working	125	clay	0	25250.0	23450.0	298	0.498	溪边黏土	27
+working	126	clay	0	33350.0	-20450.0	145	0.51	溪边黏土	28
+working	127	clay	0	22150.0	-21650.0	145	0.502	溪边黏土	29
+working	128	clay	5	42950.0	-10450.0	148	0.486	溪边黏土	31
+working	129	clay	0	32450.0	-9350.0	145	0.902	溪边黏土	33
+working	130	clay	0	22450.0	34950.0	286	0.529	溪边黏土	35,74
+working	131	clay	2	16350.0	42550.0	324	0.451	溪边黏土	36
+working	132	clay	3	27750.0	41550.0	323	0.475	溪边黏土	37
+working	133	clay	4	5250.0	29550.0	316	0.467	溪边黏土	38,62
+working	134	clay	0	34450.0	20550.0	272	0.859	溪边黏土	40
+working	135	clay	0	31450.0	-19450.0	145	0.494	溪边黏土	42
+working	136	clay	0	15250.0	-6950.0	145	0.463	溪边黏土	43
+working	137	clay	0	23750.0	-2750.0	145	0.467	溪边黏土	44
+working	138	clay	0	20850.0	-750.0	145	0.463	溪边黏土	45,81
+working	139	clay	0	26050.0	27650.0	286	0.443	溪边黏土	46
+working	140	clay	6	63550.0	15650.0	244	0.463	溪边黏土	47
+working	141	clay	0	24650.0	34250.0	286	0.525	溪边黏土	49,99
+working	142	clay	0	14150.0	750.0	145	0.431	溪边黏土	50
+working	143	clay	0	19350.0	-14850.0	145	0.439	溪边黏土	51
+working	144	clay	0	31750.0	21450.0	272	0.878	溪边黏土	53
+working	145	clay	0	29850.0	-17950.0	145	0.482	溪边黏土	55
+working	146	clay	0	16750.0	-17750.0	145	0.447	溪边黏土	56
+working	147	clay	0	22850.0	-10250.0	145	0.467	溪边黏土	57
+working	148	clay	0	14250.0	19350.0	284	0.502	溪边黏土	59
+working	149	clay	0	18750.0	23450.0	297	0.478	溪边黏土	60,71
+working	150	clay	1	53550.0	-1150.0	156	0.475	溪边黏土	61,75
+working	151	clay	0	19050.0	-22350.0	145	0.459	溪边黏土	63
+working	152	clay	0	25250.0	-18050.0	145	0.514	溪边黏土	64
+working	153	clay	0	33550.0	-16650.0	145	0.529	溪边黏土	65
+working	154	clay	0	16950.0	-12450.0	145	0.467	溪边黏土	66
+working	155	clay	0	27550.0	-11550.0	145	0.467	溪边黏土	67
+working	156	clay	0	13550.0	15250.0	250	0.431	溪边黏土	69,83
+working	157	clay	0	11450.0	15150.0	249	0.451	溪边黏土	70
+working	158	clay	0	14950.0	23650.0	303	0.467	溪边黏土	72
+working	159	clay	0	14450.0	30850.0	286	0.439	溪边黏土	73
+working	160	clay	9	27050.0	-33450.0	139	0.467	溪边黏土	76
+working	161	clay	0	20250.0	-16150.0	145	0.451	溪边黏土	78
+working	162	clay	0	16250.0	6550.0	190	0.471	溪边黏土	82,95
+working	163	clay	0	13150.0	25450.0	286	0.463	溪边黏土	84
+working	164	clay	0	28250.0	26250.0	286	0.494	溪边黏土	85
+working	165	clay	1	56750.0	6250.0	192	0.478	溪边黏土	87
+working	166	clay	1	59450.0	10450.0	156	0.478	溪边黏土	88
+working	167	clay	6	64450.0	13050.0	244	0.463	溪边黏土	89
+working	168	clay	0	33350.0	-13150.0	145	0.455	溪边黏土	90
+working	169	clay	0	35050.0	-7650.0	145	0.475	溪边黏土	91
+working	170	clay	0	31450.0	-5850.0	145	0.843	溪边黏土	92
+working	171	clay	0	18950.0	-50.0	145	0.404	溪边黏土	93
+working	172	clay	0	35350.0	16650.0	257	0.478	溪边黏土	96
+working	173	clay	0	11350.0	22650.0	286	0.431	溪边黏土	97
+working	174	clay	0	29550.0	23050.0	272	0.431	溪边黏土	98
+working	175	clay	0	18750.0	33850.0	286	0.486	溪边黏土	100
+working	176	clay	3	29450.0	44250.0	323	0.478	溪边黏土	101
+working	177	clay	4	8050.0	32550.0	316	0.878	溪边黏土	102
+working	178	gravel	0	23250.0	-20150.0	339	0.549	河滩砂砾	3,77
+working	179	gravel	0	20450.0	29350.0	381	0.573	河滩砂砾	4,10,11
+working	180	gravel	0	20550.0	-11350.0	350	0.557	河滩砂砾	5,20
+working	181	gravel	0	17850.0	-5050.0	357	0.659	河滩砂砾	9,12,14
+working	182	gravel	0	20250.0	-18050.0	342	0.549	河滩砂砾	16,32,78
+working	183	gravel	0	15150.0	-14850.0	345	0.471	河滩砂砾	19,79
+working	184	gravel	0	33550.0	-20050.0	340	0.627	河滩砂砾	28,42
+working	185	gravel	0	22050.0	-21150.0	339	0.522	河滩砂砾	29
+working	186	gravel	0	32550.0	-9650.0	352	0.525	河滩砂砾	33
+working	187	gravel	2	16350.0	42450.0	388	0.475	河滩砂砾	36
+working	188	gravel	0	34450.0	20750.0	377	0.671	河滩砂砾	40
+working	189	gravel	0	27650.0	28250.0	383	0.553	河滩砂砾	46,85
+working	190	gravel	0	32350.0	21450.0	378	0.549	河滩砂砾	53
+working	191	gravel	0	22350.0	-11350.0	347	0.478	河滩砂砾	57
+working	192	gravel	0	17450.0	-22250.0	338	0.655	河滩砂砾	63
+working	193	gravel	0	34650.0	-7850.0	354	0.682	河滩砂砾	91
+working	194	gravel	0	31450.0	-5850.0	354	0.62	河滩砂砾	92
+working	195	gravel	0	37050.0	16050.0	374	0.608	河滩砂砾	96
+working	196	gravel	4	7950.0	32950.0	387	0.518	河滩砂砾	102

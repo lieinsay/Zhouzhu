@@ -1,7 +1,7 @@
 # 由 tools/export_skyisle.py 从 weather_y0.csv / climate.json 导出，别手改。year_days 336  precip_mm 510
 # calendar seasons 4  months_per_season 3  days_per_month 28  solstice_n 126
 # sun lat 34.2321  lon 27.7650  tilt 34
-# climate ref_m 755.5  lapse 6  rim_m 522.5  fog_rise_m 131.1  snow_temp 0.5
+# climate ref_m 755.5  lapse 6  rim_m 500.8  fog_rise_m 131.1  snow_temp 0.5
 # season_names 冷季,暖季,热季,凉季
 0	0.0	-1.0	晴	258	3.7	1	0
 1	0.0	-1.0	晴	263	4.3	1	0
@@ -31,7 +31,7 @@
 25	0.2	2.1	小雨	299	4.8	1	0
 26	1.9	2.6	小雨	349	3.6	1	0
 27	0.0	1.9	晴	317	6.1	1	0
-28	1.4	-1.0	小雪	278	10.0	1	0
+28	1.4	-1.0	小雨	278	10.0	1	0
 29	0.0	1.6	晴	270	7.5	1	0
 30	0.0	0.6	晴	211	3.6	1	0
 31	0.0	-0.3	多云	205	4.5	1	0

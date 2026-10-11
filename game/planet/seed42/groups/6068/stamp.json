@@ -1,9 +1,9 @@
 {
  "node": 6068,
- "created": "2026-10-10T23:08:24",
+ "created": "2026-10-11T03:19:13",
  "generator": {
   "root": "extern/skyisle-gen",
-  "commit": "1fad421",
+  "commit": "6d4b081",
   "dirty": false,
   "backend": "游戏内"
  },
@@ -19,7 +19,8 @@
   "exporter": "src/gen_export.cpp"
  },
  "seconds": {
-  "generate": 4.91,
-  "write": 0.91
+  "generate": 50.76,
+  "write": 0.55,
+  "lod": 0.0
  }
 }
