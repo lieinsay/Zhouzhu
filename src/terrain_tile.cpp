@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <limits>
 
 namespace {
 
@@ -301,7 +302,16 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
         }
     }
     auto solid = [&](int qi, int qj) {
-        return at(qi, qj).land && at(qi, qj + 1).land && at(qi + 1, qj).land && at(qi + 1, qj + 1).land;
+        if (!(at(qi, qj).land && at(qi, qj + 1).land && at(qi + 1, qj).land && at(qi + 1, qj + 1).land)) return false;
+        if (!p_terrain.get_grid().source_landscape) return true;
+        const int id=at(qi,qj).island;
+        if(at(qi,qj+1).island!=id || at(qi+1,qj).island!=id || at(qi+1,qj+1).island!=id) return false;
+        // 粗格可能跨过一整个原生格，不能仅由四角相同就把中间的另一座岛盖住。
+        const auto &g=p_terrain.get_grid();
+        if(step<=g.res) return true;
+        const size_t a=g.nearest_cell(mesh.origin_x+qj*step,mesh.origin_z+qi*step),c=g.nearest_cell(mesh.origin_x+(qj+1)*step,mesh.origin_z+(qi+1)*step);
+        for(int r=int(a/size_t(g.cols));r<=int(c/size_t(g.cols));r++) for(int col=int(a%size_t(g.cols));col<=int(c%size_t(g.cols));col++) if(g.island[g.index(r,col)]!=id) return false;
+        return true;
     };
     // 改过的块里的粗格：顶面与裙边留给补丁画（build_edit_patch）
     const int per_chunk = int(std::lround(EditGrid::CHUNK * EditGrid::CELL_M / step));
@@ -370,45 +380,114 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
         return a + (c - a) * ti;
     };
 
-    // Clip boundary triangles against the continuous coast field; the same edge roots
-    // feed the top, underside and collision wall, so there is no staircase or open seam.
-    auto clipped_triangle = [&](size_t a, size_t c, size_t d) {
-        struct V { double x, z, shore; };
-        auto point = [&](size_t k) { double x=mesh.origin_x+double(k%(N+1))*step, z=mesh.origin_z+double(k/(N+1))*step; return V{x,z,p_terrain.sample(x,z).shore}; };
-        std::vector<V> src = {point(a),point(c),point(d)}, poly, roots;
-        for (size_t k=0;k<3;k++) {
-            const V &u=src[k], &v=src[(k+1)%3];
-            if (u.shore>0) poly.push_back(u);
-            if ((u.shore>0)!=(v.shore>0)) {
-                V lo=u,hi=v;
-                for (int it=0;it<24;it++) {
-                    V mid{(lo.x+hi.x)*0.5,(lo.z+hi.z)*0.5,0}; mid.shore=p_terrain.sample(mid.x,mid.z).shore;
-                    if ((mid.shore>0)==(lo.shore>0)) lo=mid; else hi=mid;
+    struct CoastV { double x,z; };
+    // 底裙边只取本岛实际邻级边线的有限包络，不能拿另一座岛的龙骨高度把缝连成柱。
+    // 包含半格（细邻块）、本格与粗邻块的两种岛底 stride；海岸裁切边也走这里。
+    auto bottom_border = [&](CoastV u,CoastV v,double yu,double yv,int island) {
+        const double size=N*step;
+        const bool along_z=std::abs(u.x-v.x)<1e-6 && (std::abs(u.x-mesh.origin_x)<1e-6 || std::abs(u.x-mesh.origin_x-size)<1e-6);
+        const bool along_x=std::abs(u.z-v.z)<1e-6 && (std::abs(u.z-mesh.origin_z)<1e-6 || std::abs(u.z-mesh.origin_z-size)<1e-6);
+        if(!along_z&&!along_x) return;
+        const double origin=along_z?mesh.origin_z:mesh.origin_x,a=along_z?u.z:u.x,c=along_z?v.z:v.x;
+        if(std::abs(c-a)<1e-6) return;
+        auto at_edge=[&](double s) { return p_terrain.sample(along_z?u.x:s,along_z?s:u.z); };
+        auto range=[&](double s,double own) {
+            double hi=own;
+            for(double stride:{0.5,1.0,2.0,4.0,8.0}) {
+                const double span=step*stride;double s0=origin+std::floor((s-origin)/span)*span,s1=s0+span;
+                auto q0=at_edge(s0),q1=at_edge(s1);
+                if(q0.island!=island || q1.island!=island) continue;
+                if(!q0.land&&!q1.land) continue;
+                if(q0.land!=q1.land) {
+                    double left=s0,right=s1;const bool land_left=q0.land;
+                    for(int it=0;it<24;it++) {double m=.5*(left+right);if(at_edge(m).land==land_left)left=m;else right=m;}
+                    const double root=.5*(left+right);auto q=at_edge(root);if(q.island!=island)continue;
+                    if(land_left){s1=root;q1=q;}else{s0=root;q0=q;}
                 }
-                V root{(lo.x+hi.x)*0.5,(lo.z+hi.z)*0.5,0}; poly.push_back(root); roots.push_back(root);
+                if(s<s0-1e-6 || s>s1+1e-6 || s1-s0<1e-6) continue;
+                const auto mid=at_edge(.5*(s0+s1));if(mid.island!=island || !mid.land)continue;
+                const double y=q0.bottom+(q1.bottom-q0.bottom)*(s-s0)/(s1-s0);hi=std::max(hi,y);
             }
+            const double top=at_edge(s).top;
+            // 保留原裙边的2m数值余量，底脚仍贴真实渲染线，只朝岛内翘而不长出底部尖齿。
+            return std::pair<double,double>{own,std::max(own,std::min(hi+2.0,top-.025))};
+        };
+        // 最细邻块的顶点亦是包络折点；按它分段，不能只在本格两端算裙边。
+        std::vector<double> cuts{a,c};const double fine=step*.5;
+        for(double s=origin+std::ceil((std::min(a,c)-origin)/fine)*fine;s<std::max(a,c)-1e-6;s+=fine)if(s>std::min(a,c)+1e-6)cuts.push_back(s);
+        std::sort(cuts.begin(),cuts.end());
+        for(size_t k=1;k<cuts.size();k++) {
+            const double s0=cuts[k-1],s1=cuts[k],y0=yu+(yv-yu)*(s0-a)/(c-a),y1=yu+(yv-yu)*(s1-a)/(c-a);
+            const auto r0=range(s0,y0),r1=range(s1,y1);
+            auto vertex=[&](double s,double y){return b.vertex(float((along_z?u.x:s)-mesh.origin_x),float(y),float((along_z?s:u.z)-mesh.origin_z),0,-1,0,UNDERSIDE);};
+            const int a0=vertex(s0,r0.first),a1=vertex(s1,r1.first),c1=vertex(s1,r1.second),c0=vertex(s0,r0.second);
+            b.triangle(a0,a1,c1,false);b.triangle(a0,c1,c0,false);b.triangle(a0,c1,a1,false);b.triangle(a0,c0,c1,false);
         }
-        if (poly.size()<3) return;
-        std::vector<int> top,low;
-        for (const V &v:poly) {
-            const auto q=p_terrain.sample(v.x,v.z);
-            const double e=std::max(0.5,step*0.5);
-            const float nx=float(-(p_terrain.sample(v.x+e,v.z).top-p_terrain.sample(v.x-e,v.z).top)/(2*e));
-            const float nz=float(-(p_terrain.sample(v.x,v.z+e).top-p_terrain.sample(v.x,v.z-e).top)/(2*e));
-            const float inv=1/std::sqrt(1+nx*nx+nz*nz);
-            GroundSeason season; const auto color=ground_color(p_terrain,q,v.x,v.z,inv,step,season);
-            top.push_back(b.vertex(float(v.x-mesh.origin_x),float(q.top),float(v.z-mesh.origin_z),nx*inv,inv,nz*inv,color,season));
-            low.push_back(b.vertex(float(v.x-mesh.origin_x),float(q.bottom),float(v.z-mesh.origin_z),0,-1,0,UNDERSIDE));
-        }
-        for (size_t k=1;k+1<poly.size();k++) { b.triangle(top[0],top[k],top[k+1],true); b.triangle(low[0],low[k+1],low[k],true); }
-        if (roots.size()==2) {
-            const auto u=p_terrain.sample(roots[0].x,roots[0].z),v=p_terrain.sample(roots[1].x,roots[1].z);
-            float p0[3]={float(roots[0].x-mesh.origin_x),float(u.top),float(roots[0].z-mesh.origin_z)};
-            float p1[3]={float(roots[1].x-mesh.origin_x),float(v.top),float(roots[1].z-mesh.origin_z)};
-            float p2[3]={p1[0],float(v.bottom),p1[2]},p3[3]={p0[0],float(u.bottom),p0[2]};
-            double x=(roots[0].x+roots[1].x)*0.5,z=(roots[0].z+roots[1].z)*0.5;
-            double nx=-(p_terrain.sample(x+1,z).shore-p_terrain.sample(x-1,z).shore),nz=-(p_terrain.sample(x,z+1).shore-p_terrain.sample(x,z-1).shore);
-            double len=std::hypot(nx,nz); if(len>0) b.cliff(p0,p1,p2,p3,float(nx/len),float(nz/len),true);
+    };
+
+    // 源岸距定义陆地，最近原生岛号定义独立岛体。先按岛身份分开，再裁岸线，
+    // 每片只取自己这一侧的高程/龙骨并闭合边壁，绝不平均两座岛的高度来连桥。
+    auto clipped_triangle = [&](size_t a, size_t c, size_t d) {
+        auto point = [&](size_t k) { return CoastV{mesh.origin_x+double(k%(N+1))*step,mesh.origin_z+double(k/(N+1))*step}; };
+        const std::vector<CoastV> triangle{point(a),point(c),point(d)};
+        const auto &g=p_terrain.get_grid();
+        const double xmin=std::min({triangle[0].x,triangle[1].x,triangle[2].x}),xmax=std::max({triangle[0].x,triangle[1].x,triangle[2].x});
+        const double zmin=std::min({triangle[0].z,triangle[1].z,triangle[2].z}),zmax=std::max({triangle[0].z,triangle[1].z,triangle[2].z});
+        const size_t k0=g.nearest_cell(xmin,zmin),k1=g.nearest_cell(xmax,zmax);
+        const int r0=int(k0/size_t(g.cols)),r1=int(k1/size_t(g.cols)),c0=int(k0%size_t(g.cols)),c1=int(k1%size_t(g.cols)),owner=g.island[k0];
+        bool homogeneous=true;for(int r=r0;r<=r1;r++)for(int col=c0;col<=c1;col++)if(g.island[g.index(r,col)]!=owner)homogeneous=false;
+        // 只让边界的单侧样本在 float 顶点中可区分；这是数值间距，不替代生成器的岛间距。
+        const double inset=std::max(.001,N*step*2*std::numeric_limits<float>::epsilon());
+        auto emit=[&](std::vector<CoastV> src,int island) {
+            std::vector<CoastV> poly,roots;
+            for(size_t k=0;k<src.size();k++) {
+                const auto &u=src[k],&v=src[(k+1)%src.size()];const bool ul=p_terrain.sample(u.x,u.z).land,vl=p_terrain.sample(v.x,v.z).land;
+                if(ul)poly.push_back(u);
+                if(ul!=vl) {auto lo=u,hi=v;for(int it=0;it<24;it++){CoastV mid{.5*(lo.x+hi.x),.5*(lo.z+hi.z)};if(p_terrain.sample(mid.x,mid.z).land==ul)lo=mid;else hi=mid;}CoastV root{.5*(lo.x+hi.x),.5*(lo.z+hi.z)};poly.push_back(root);roots.push_back(root);}
+            }
+            if(poly.size()<3)return;
+            double cx=0,cz=0;for(const auto &v:poly){cx+=v.x;cz+=v.z;}cx/=poly.size();cz/=poly.size();
+            // 角点可能恰在对角另一座岛的 nearest tie 上，取本片内侧极限；源格心不移动。
+            for(auto &v:poly)if(p_terrain.sample(v.x,v.z).island!=island){const double len=std::hypot(cx-v.x,cz-v.z);if(len>0){v.x+=(cx-v.x)/len*inset;v.z+=(cz-v.z)/len*inset;}}
+            std::vector<int> top,low;std::vector<TerrainSample> samples;
+            for (const auto &v:poly) {
+                const auto q=p_terrain.sample(v.x,v.z);
+                const double e=std::max(0.5,step*0.5);
+                auto height=[&](double x,double z){const auto s=p_terrain.sample(x,z);return s.island==island?s.top:q.top;};
+                const float nx=float(-(height(v.x+e,v.z)-height(v.x-e,v.z))/(2*e));
+                const float nz=float(-(height(v.x,v.z+e)-height(v.x,v.z-e))/(2*e));
+                const float inv=1/std::sqrt(1+nx*nx+nz*nz);
+                GroundSeason season; const auto color=ground_color(p_terrain,q,v.x,v.z,inv,step,season);
+                top.push_back(b.vertex(float(v.x-mesh.origin_x),float(q.top),float(v.z-mesh.origin_z),nx*inv,inv,nz*inv,color,season));
+                low.push_back(b.vertex(float(v.x-mesh.origin_x),float(q.bottom),float(v.z-mesh.origin_z),0,-1,0,UNDERSIDE));
+                samples.push_back(q);
+            }
+            for(size_t k=1;k+1<poly.size();k++){b.triangle(top[0],top[k],top[k+1],true);b.triangle(low[0],low[k+1],low[k],true);}
+            auto root=[&](const CoastV &p){return std::any_of(roots.begin(),roots.end(),[&](const CoastV &r){return std::hypot(p.x-r.x,p.z-r.z)<.002;});};
+            for(size_t k=0;k<poly.size();k++) {
+                const size_t j=(k+1)%poly.size();const auto &u=poly[k],&v=poly[j];const double dx=v.x-u.x,dz=v.z-u.z,len=std::hypot(dx,dz);if(len<1e-6)continue;
+                bottom_border(u,v,samples[k].bottom,samples[j].bottom,island);
+                const double ox=dz/len,oz=-dx/len;
+                const auto outside=p_terrain.sample(.5*(u.x+v.x)+ox*inset*4,.5*(u.z+v.z)+oz*inset*4);
+                if(!(root(u)&&root(v)) && outside.island==island)continue;
+                const float p0[3]={float(u.x-mesh.origin_x),float(samples[k].top),float(u.z-mesh.origin_z)},p1[3]={float(v.x-mesh.origin_x),float(samples[j].top),float(v.z-mesh.origin_z)};
+                const float p2[3]={p1[0],float(samples[j].bottom),p1[2]},p3[3]={p0[0],float(samples[k].bottom),p0[2]};b.cliff(p0,p1,p2,p3,float(ox),float(oz),true);
+            }
+        };
+        if(homogeneous){emit(triangle,owner);return;}
+        auto clip=[](std::vector<CoastV> poly,int axis,double bound,bool greater) {
+            std::vector<CoastV> out;if(poly.empty())return out;
+            auto value=[&](const CoastV &v){return (axis==0?v.x:v.z)-bound;};
+            for(size_t k=0;k<poly.size();k++){const auto &u=poly[k],&v=poly[(k+1)%poly.size()];const double a=value(u),c=value(v);const bool in=greater?a>=0:a<=0,other=greater?c>=0:c<=0;if(in)out.push_back(u);if(in!=other){const double t=a/(a-c);out.push_back({u.x+t*(v.x-u.x),u.z+t*(v.z-u.z)});}}return out;
+        };
+        for(int r=r0;r<=r1;r++)for(int col=c0;col<=c1;col++) {
+            const int island=g.island[g.index(r,col)];auto poly=triangle;
+            auto foreign=[&](int rr,int cc){return rr>=0&&cc>=0&&rr<g.rows&&cc<g.cols&&g.island[g.index(rr,cc)]!=island;};
+            if(col>0)poly=clip(std::move(poly),0,g.x0+(col-.5)*g.res+(foreign(r,col-1)?inset:0),true);
+            if(col+1<g.cols)poly=clip(std::move(poly),0,g.x0+(col+.5)*g.res-(foreign(r,col+1)?inset:0),false);
+            if(r>0)poly=clip(std::move(poly),1,g.z0+(r-.5)*g.res+(foreign(r-1,col)?inset:0),true);
+            if(r+1<g.rows)poly=clip(std::move(poly),1,g.z0+(r+.5)*g.res-(foreign(r+1,col)?inset:0),false);
+            if(poly.size()>=3)emit(std::move(poly),island);
         }
     };
 
@@ -536,6 +615,11 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
                     // 岛底也一样：往上（岛里）翘一圈，从下面看不漏天。翘边的底要贴着画出来的岛底（隔格铺时是插值线，不是这一点的真值），
                     // 翘多高按格距放（相邻两块插值的差随跨度长），但不高过这里的岛体厚度，免得从地面上戳出来
                     const float ya = float(rendered_bottom(e.ai, e.aj)), yb = float(rendered_bottom(e.bi, e.bj));
+                    if(p_terrain.get_grid().source_landscape) {
+                        bottom_border({mesh.origin_x+bottom_pos[ka*3],mesh.origin_z+bottom_pos[ka*3+2]},
+                                {mesh.origin_x+bottom_pos[kb*3],mesh.origin_z+bottom_pos[kb*3+2]},ya,yb,at(e.ai,e.aj).island);
+                        continue;
+                    }
                     const float reach = float(2.0 + step * bottom_stride);
                     const float lift_a = std::max(0.5f, std::min(reach, 0.9f * (top_pos[ka * 3 + 1] - ya)));
                     const float lift_b = std::max(0.5f, std::min(reach, 0.9f * (top_pos[kb * 3 + 1] - yb)));
