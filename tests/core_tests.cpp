@@ -7531,6 +7531,7 @@ void test_dev_manual() {
 #include "nonriver_restore_checks.inc"
 #include "source_river_checks.inc"
 #include "terrain_normal_checks.inc"
+#include "terrain_color_checks.inc"
 
 int main(int argc, char **argv) {
 #ifdef _WIN32
@@ -7542,6 +7543,7 @@ int main(int argc, char **argv) {
         const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
             { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent },
             { "nonriver_restore", test_nonriver_restore }, {"source_rivers",test_source_rivers}, { "terrain_normals", test_terrain_normals },
+            { "terrain_colors", test_terrain_colors },
             { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
             { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
             { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works }, { "dev_manual", test_dev_manual },
@@ -7600,6 +7602,7 @@ int main(int argc, char **argv) {
     test_world_terrain();
     test_cover_blend();
     test_terrain_tiles();
+    test_terrain_colors();
     test_map_image();
     test_world_start();
     test_village_prep_start();

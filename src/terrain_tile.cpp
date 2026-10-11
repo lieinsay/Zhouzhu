@@ -43,6 +43,19 @@ GroundColor lith_color(int lith) {
     }
 }
 
+// 源岩性是原生格上的类别。只在格心之间连续重建显示颜色，不能把类别编号当数值插值，
+// 也不能沿用地表份额的坐标扭曲；语义查询、资源与原始岩性栅格仍保持原类别。
+GroundColor surface_rock_color(const WorldGrid &g, double p_x, double p_z) {
+    if (g.lith.empty()) return ROCK;
+    const double fc = g.col_of(p_x), fr = g.row_of(p_z);
+    const int c = int(std::floor(fc)), r = int(std::floor(fr));
+    auto color = [&](int rr, int cc) {
+        return lith_color(g.lith[g.index(std::clamp(rr, 0, g.rows - 1), std::clamp(cc, 0, g.cols - 1))]);
+    };
+    return lerp(lerp(color(r, c), color(r, c + 1), fc - c),
+            lerp(color(r + 1, c), color(r + 1, c + 1), fc - c), fr - r);
+}
+
 // 一个顶点的季相份额（见 TileMesh::season）
 struct GroundSeason {
     uint8_t v[4] = { 0, 0, 0, 0 };
@@ -66,6 +79,7 @@ GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_s
     const CoverBlend &blend = p_terrain.get_cover();
     const CoverStencil st = blend.stencil(p_x, p_z);
     const CoverMix mix = blend.mix(st, p_x, p_z, p_footprint);
+    const GroundColor exposed = surface_rock_color(p_terrain.get_grid(), p_x, p_z);
     // 季相份额：草坡、高山草甸、湿地、崖缘的草、虚空外推的地（当草坡）、有河网时的「河道」滩草都是草；可耕地、梯田是田
     double herb = mix.w[0] + 0.5 * mix.w[COVER_CLIFF_EDGE] + mix.w[COVER_ALPINE] + mix.w[COVER_GRASS] + 0.7 * mix.w[COVER_WETLAND] +
             (p_terrain.has_rivers() ? mix.w[COVER_RIVER] : 0.0);
@@ -76,7 +90,7 @@ GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_s
     for (int k = 0; k < COVER_CLASSES; k++) {
         if (mix.w[k] > 0.0f) {
             // 有河网时水面由河的网格画：「河道」格（一格 100 m，河槽只占其中几米到几十米）的地皮是滩上的湿草，不是水色
-            const GroundColor c = k == 2 && p_sample.lith ? lith_color(p_sample.lith) :
+            const GroundColor c = k == 2 ? exposed :
                     k == COVER_RIVER && p_terrain.has_rivers() ? MEADOW : landcover_color(k);
             out = { out.r + mix.w[k] * c.r, out.g + mix.w[k] * c.g, out.b + mix.w[k] * c.b };
         }
@@ -87,14 +101,14 @@ GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_s
     double bare = std::clamp(rock, 0.0, 1.0); // 露岩、河床不换季
     if (p_terrain.has_rivers()) {
         out = lerp(out, MEADOW, 0.45 * p_sample.bank);
-        out = lerp(out, lith_color(p_sample.lith), rock);
+        out = lerp(out, exposed, rock);
         out = lerp(out, GRAVEL, p_sample.bed); // 河床不论坡度都是卵石
         herb += 0.45 * p_sample.bank * (1.0 - herb);
         bare = 1.0 - (1.0 - bare) * (1.0 - std::clamp(double(p_sample.bed), 0.0, 1.0));
     } else {
         const WorldGrid &g = p_terrain.get_grid();
         out = lerp(out, WET, 0.55 * blend.smooth(st, [&g](size_t k) { return g.stream[k] ? 1.0 : 0.0; }));
-        out = lerp(out, lith_color(p_sample.lith), rock);
+        out = lerp(out, exposed, rock);
     }
     const double keep = 1.0 - bare;
     const double shares[4] = { herb, field, shrub, forest };
