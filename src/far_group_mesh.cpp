@@ -1,6 +1,7 @@
 #include "far_group_mesh.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 
@@ -109,69 +110,88 @@ FarGroupMesh build_far_group_mesh(const PlanetLod &p_lod, double p_radius, const
     auto corner_z = [&](int r) { return -(p_lod.origin_y_km * 1000.0) + r * res; };
 
     const size_t NC = size_t(CR) * size_t(CC);
-    std::vector<uint8_t> kind(NC, 0); // 0 不是陆地 1 岸上（挨着虚空）2 里面
-    std::vector<int> isl(NC, -1);
-    std::vector<double> top(NC, 0.0);
+    // 一个几何角最多挨着四座岛。身份边保留各岛自己的角，不把粗格里已经相接的不同岛体连成斜坡。
+    struct Corner {
+        int row = 0, col = 0, island = -1;
+        uint8_t kind = 1; // 1 岸上（挨着虚空或另一岛）2 里面
+        double top = 0.0, bottom = 0.0, dist = 0.0;
+    };
+    std::vector<std::array<int, 4>> at(NC, { -1, -1, -1, -1 });
+    std::vector<Corner> points;
+    auto same = [&](int r, int c, int island) {
+        return solid(r, c) && int(p_lod.island[p_lod.index(r, c)]) == island;
+    };
+    auto point = [&](int r, int c, int island) {
+        if (r < 0 || c < 0 || r >= CR || c >= CC) return -1;
+        for (int k : at[corner(r, c)]) {
+            if (k >= 0 && points[size_t(k)].island == island) return k;
+        }
+        return -1;
+    };
     for (int r = 0; r < CR; r++) {
         for (int c = 0; c < CC; c++) {
-            int n_solid = 0, first = -1;
-            double sum = 0.0;
             for (int k = 0; k < 4; k++) {
                 const int rr = r - 1 + (k >> 1), cc = c - 1 + (k & 1);
-                if (solid(rr, cc)) {
-                    n_solid++;
-                    sum += p_lod.height[p_lod.index(rr, cc)];
-                    if (first < 0) {
-                        first = p_lod.island[p_lod.index(rr, cc)];
+                if (!solid(rr, cc)) continue;
+                const int island = p_lod.island[p_lod.index(rr, cc)];
+                if (point(r, c, island) >= 0) continue;
+                int n_solid = 0;
+                double sum = 0.0;
+                for (int q = 0; q < 4; q++) {
+                    const int qr = r - 1 + (q >> 1), qc = c - 1 + (q & 1);
+                    if (same(qr, qc, island)) {
+                        n_solid++;
+                        sum += p_lod.height[p_lod.index(qr, qc)];
                     }
                 }
+                Corner p;
+                p.row = r, p.col = c, p.island = island;
+                p.kind = n_solid == 4 ? 2 : 1;
+                p.top = sum / n_solid;
+                p.dist = p.kind == 1 ? 0.0 : 1e18;
+                for (int &slot : at[corner(r, c)]) {
+                    if (slot < 0) { slot = int(points.size()); break; }
+                }
+                points.push_back(p);
             }
-            const size_t k = corner(r, c);
-            if (n_solid == 0) {
-                continue;
-            }
-            kind[k] = n_solid == 4 ? 2 : 1;
-            isl[k] = first;
-            top[k] = sum / n_solid;
         }
     }
     // 离岸多远（角到最近的岸上角，3-4 倒角距离，米）
-    const double INF = 1e18;
-    std::vector<double> dist(NC, INF);
-    for (size_t k = 0; k < NC; k++) {
-        if (kind[k] == 1) {
-            dist[k] = 0.0;
-        }
-    }
     const double d1 = res, d2 = res * 1.41421356;
+    auto relax = [&](Corner &p, int r, int c, double step) {
+        const int k = point(r, c, p.island);
+        if (k >= 0) p.dist = std::min(p.dist, points[size_t(k)].dist + step);
+    };
     for (int r = 0; r < CR; r++) {
         for (int c = 0; c < CC; c++) {
-            double &d = dist[corner(r, c)];
-            if (c > 0) d = std::min(d, dist[corner(r, c - 1)] + d1);
-            if (r > 0) {
-                d = std::min(d, dist[corner(r - 1, c)] + d1);
-                if (c > 0) d = std::min(d, dist[corner(r - 1, c - 1)] + d2);
-                if (c + 1 < CC) d = std::min(d, dist[corner(r - 1, c + 1)] + d2);
+            for (int k : at[corner(r, c)]) {
+                if (k < 0) continue;
+                Corner &p = points[size_t(k)];
+                relax(p, r, c - 1, d1);
+                relax(p, r - 1, c, d1);
+                relax(p, r - 1, c - 1, d2);
+                relax(p, r - 1, c + 1, d2);
             }
         }
     }
     for (int r = CR - 1; r >= 0; r--) {
         for (int c = CC - 1; c >= 0; c--) {
-            double &d = dist[corner(r, c)];
-            if (c + 1 < CC) d = std::min(d, dist[corner(r, c + 1)] + d1);
-            if (r + 1 < CR) {
-                d = std::min(d, dist[corner(r + 1, c)] + d1);
-                if (c + 1 < CC) d = std::min(d, dist[corner(r + 1, c + 1)] + d2);
-                if (c > 0) d = std::min(d, dist[corner(r + 1, c - 1)] + d2);
+            for (int k : at[corner(r, c)]) {
+                if (k < 0) continue;
+                Corner &p = points[size_t(k)];
+                relax(p, r, c + 1, d1);
+                relax(p, r + 1, c, d1);
+                relax(p, r + 1, c + 1, d2);
+                relax(p, r + 1, c - 1, d2);
             }
         }
     }
     // 各岛的最深岸距 → 岛体（同 island_body）
     const int n_isl = int(p_lod.islands.size());
     std::vector<double> max_shore(size_t(std::max(1, n_isl)), 1.0);
-    for (size_t k = 0; k < NC; k++) {
-        if (kind[k] && isl[k] >= 0 && isl[k] < n_isl) {
-            max_shore[size_t(isl[k])] = std::max(max_shore[size_t(isl[k])], dist[k]);
+    for (const Corner &p : points) {
+        if (p.island >= 0 && p.island < n_isl) {
+            max_shore[size_t(p.island)] = std::max(max_shore[size_t(p.island)], p.dist);
         }
     }
     struct Body {
@@ -188,77 +208,67 @@ FarGroupMesh build_far_group_mesh(const PlanetLod &p_lod, double p_radius, const
         // 浮高计划 F3（同 island_body）：岛底连岩棱不低于 bottom_min_y，超了收短龙骨、崖壁不动
         b.keel = std::min(b.keel, std::max(0.0, (b.rim - b.wall - p_rules.underside_amp_m - p_rules.bottom_min_y) / (1.0 + p_rules.rib_share)));
     }
-    auto body_of = [&](size_t k) -> const Body & { return bodies[size_t(std::clamp(isl[k], 0, std::max(0, n_isl - 1)))]; };
-    std::vector<double> bottom(NC, 0.0);
-    for (size_t k = 0; k < NC; k++) {
-        if (!kind[k]) {
-            continue;
+    auto body_of = [&](const Corner &p) -> const Body & { return bodies[size_t(std::clamp(p.island, 0, std::max(0, n_isl - 1)))]; };
+    for (Corner &p : points) {
+        const Body &b = body_of(p);
+        if (p.kind == 1 && n_isl > 0) {
+            p.top = b.rim; // 岸上：岸缘高
         }
-        const Body &b = body_of(k);
-        if (kind[k] == 1 && n_isl > 0) {
-            top[k] = b.rim; // 岸上：岸缘高
-        }
-        const double inward = std::clamp(dist[k] / b.shore, 0.0, 1.0);
-        bottom[k] = std::min(b.rim - b.wall - b.keel * std::sqrt(inward), top[k] - 2.0);
+        const double inward = std::clamp(p.dist / b.shore, 0.0, 1.0);
+        p.bottom = std::min(b.rim - b.wall - b.keel * std::sqrt(inward), p.top - 2.0);
     }
 
     Builder bld{ out, p_radius };
-    std::vector<int> top_id(NC, -1), bottom_id(NC, -1);
-    auto h_at = [&](const std::vector<double> &p_h, int r, int c, size_t p_self) {
-        if (r < 0 || c < 0 || r >= CR || c >= CC || !kind[corner(r, c)]) {
-            return p_h[p_self];
-        }
-        return p_h[corner(r, c)];
+    std::vector<int> top_id(points.size(), -1), bottom_id(points.size(), -1);
+    auto h_at = [&](double Corner::*height, int r, int c, const Corner &p) {
+        const int k = point(r, c, p.island);
+        return k < 0 ? p.*height : points[size_t(k)].*height;
     };
     double peak = -1e18;
-    for (int r = 0; r < CR; r++) {
-        for (int c = 0; c < CC; c++) {
-            const size_t k = corner(r, c);
-            if (!kind[k]) {
+    for (size_t k = 0; k < points.size(); k++) {
+        const Corner &p = points[k];
+        const int r = p.row, c = p.col;
+        const double x = corner_x(c), z = corner_z(r);
+        // 顶面
+        const double gx = (h_at(&Corner::top, r, c + 1, p) - h_at(&Corner::top, r, c - 1, p)) / (2.0 * res);
+        const double gz = (h_at(&Corner::top, r + 1, c, p) - h_at(&Corner::top, r - 1, c, p)) / (2.0 * res);
+        const double nl = std::sqrt(gx * gx + 1.0 + gz * gz);
+        const double ny = 1.0 / nl;
+        GroundColor col{ 0.0f, 0.0f, 0.0f };
+        double share[4] = { 0.0, 0.0, 0.0, 0.0 };
+        int n = 0;
+        for (int q = 0; q < 4; q++) {
+            const int rr = r - 1 + (q >> 1), cc = c - 1 + (q & 1);
+            if (!same(rr, cc, p.island)) {
                 continue;
             }
-            const double x = corner_x(c), z = corner_z(r);
-            // 顶面
-            const double gx = (h_at(top, r, c + 1, k) - h_at(top, r, c - 1, k)) / (2.0 * res);
-            const double gz = (h_at(top, r + 1, c, k) - h_at(top, r - 1, c, k)) / (2.0 * res);
-            const double nl = std::sqrt(gx * gx + 1.0 + gz * gz);
-            const double ny = 1.0 / nl;
-            GroundColor col{ 0.0f, 0.0f, 0.0f };
-            double share[4] = { 0.0, 0.0, 0.0, 0.0 };
-            int n = 0;
-            for (int q = 0; q < 4; q++) {
-                const int rr = r - 1 + (q >> 1), cc = c - 1 + (q & 1);
-                if (!solid(rr, cc)) {
-                    continue;
-                }
-                const int lc = p_lod.landcover[p_lod.index(rr, cc)];
-                const GroundColor pc = landcover_color(lc);
-                col = { col.r + pc.r, col.g + pc.g, col.b + pc.b };
-                double s[4];
-                class_shares(lc, s);
-                for (int j = 0; j < 4; j++) {
-                    share[j] += s[j];
-                }
-                n++;
-            }
-            const float inv = 1.0f / float(std::max(1, n));
-            col = { col.r * inv, col.g * inv, col.b * inv };
-            const double rock = std::clamp((p_rules.rock_slope - ny) / 0.16, 0.0, 1.0);
-            col = mix(col, ROCK, rock);
+            const int lc = p_lod.landcover[p_lod.index(rr, cc)];
+            const GroundColor pc = landcover_color(lc);
+            col = { col.r + pc.r, col.g + pc.g, col.b + pc.b };
+            double s[4];
+            class_shares(lc, s);
             for (int j = 0; j < 4; j++) {
-                share[j] = share[j] / std::max(1, n) * (1.0 - rock);
+                share[j] += s[j];
             }
-            top_id[k] = bld.vertex(x, top[k], z, -gx / nl, ny, -gz / nl, col, share, true);
-            if (top[k] > peak) {
-                peak = top[k];
-                out.peak_x = x, out.peak_y = top[k], out.peak_z = z;
-            }
-            // 岛底（朝下）：崖脚处是崖色的暗端，往里越深越暗
-            const double bx = (h_at(bottom, r, c + 1, k) - h_at(bottom, r, c - 1, k)) / (2.0 * res);
-            const double bz = (h_at(bottom, r + 1, c, k) - h_at(bottom, r - 1, c, k)) / (2.0 * res);
-            const double deep = std::clamp((body_of(k).rim - body_of(k).wall - bottom[k]) / 600.0, 0.0, 1.0);
-            bottom_id[k] = bld.vertex(x, bottom[k], z, bx, -1.0, bz, mix(CLIFF_LOW, UNDERSIDE, deep), nullptr, false);
+            n++;
         }
+        const float inv = 1.0f / float(std::max(1, n));
+        col = { col.r * inv, col.g * inv, col.b * inv };
+        const double rock = std::clamp((p_rules.rock_slope - ny) / 0.16, 0.0, 1.0);
+        col = mix(col, ROCK, rock);
+        for (int j = 0; j < 4; j++) {
+            share[j] = share[j] / std::max(1, n) * (1.0 - rock);
+        }
+        top_id[k] = bld.vertex(x, p.top, z, -gx / nl, ny, -gz / nl, col, share, true);
+        if (p.top > peak) {
+            peak = p.top;
+            out.peak_x = x, out.peak_y = p.top, out.peak_z = z;
+        }
+        // 岛底（朝下）：崖脚处是崖色的暗端，往里越深越暗
+        const double bx = (h_at(&Corner::bottom, r, c + 1, p) - h_at(&Corner::bottom, r, c - 1, p)) / (2.0 * res);
+        const double bz = (h_at(&Corner::bottom, r + 1, c, p) - h_at(&Corner::bottom, r - 1, c, p)) / (2.0 * res);
+        const double deep = std::clamp((body_of(p).rim - body_of(p).wall - p.bottom) / 600.0, 0.0, 1.0);
+        bottom_id[k] = bld.vertex(x, p.bottom, z, bx, -1.0, bz, mix(CLIFF_LOW, UNDERSIDE, deep), nullptr, false);
     }
     // 顶面、岛底：每个实地格两片
     for (int r = 0; r < rows; r++) {
@@ -267,13 +277,14 @@ FarGroupMesh build_far_group_mesh(const PlanetLod &p_lod, double p_radius, const
                 continue;
             }
             out.solid_cells++;
-            const size_t k00 = corner(r, c), k01 = corner(r, c + 1), k10 = corner(r + 1, c), k11 = corner(r + 1, c + 1);
+            const int island = p_lod.island[p_lod.index(r, c)];
+            const int k00 = point(r, c, island), k01 = point(r, c + 1, island), k10 = point(r + 1, c, island), k11 = point(r + 1, c + 1, island);
             // 从上往下看：x 向右、z 向下，(r,c) → (r,c+1) → (r+1,c) 是顺时针
             bld.triangle(top_id[k00], top_id[k01], top_id[k10]);
             bld.triangle(top_id[k01], top_id[k11], top_id[k10]);
             bld.triangle(bottom_id[k00], bottom_id[k10], bottom_id[k01]);
             bld.triangle(bottom_id[k01], bottom_id[k10], bottom_id[k11]);
-            // 崖壁：挨着虚空的边从顶面垂到崖脚（岸上角的岛底就是崖脚）
+            // 崖壁：挨着虚空或另一岛的边，各岛按自己的岸缘与崖脚闭壁。
             struct Edge {
                 int ar, ac, br, bc, qr, qc;
                 double ox, oz;
@@ -285,18 +296,18 @@ FarGroupMesh build_far_group_mesh(const PlanetLod &p_lod, double p_radius, const
                 { r, c + 1, r + 1, c + 1, r, c + 1, 1.0, 0.0 },
             };
             for (const Edge &e : edges) {
-                if (solid(e.qr, e.qc)) {
+                if (same(e.qr, e.qc, island)) {
                     continue;
                 }
-                const size_t ka = corner(e.ar, e.ac), kb = corner(e.br, e.bc);
+                const Corner &a = points[size_t(point(e.ar, e.ac, island))], &b = points[size_t(point(e.br, e.bc, island))];
                 const double ax = corner_x(e.ac), az = corner_z(e.ar), bx = corner_x(e.bc), bz = corner_z(e.br);
-                const int v0 = bld.vertex(ax, top[ka], az, e.ox, 0.0, e.oz, CLIFF_TOP, nullptr, false);
-                const int v1 = bld.vertex(bx, top[kb], bz, e.ox, 0.0, e.oz, CLIFF_TOP, nullptr, false);
-                const int v2 = bld.vertex(bx, bottom[kb], bz, e.ox, 0.0, e.oz, CLIFF_LOW, nullptr, false);
-                const int v3 = bld.vertex(ax, bottom[ka], az, e.ox, 0.0, e.oz, CLIFF_LOW, nullptr, false);
+                const int v0 = bld.vertex(ax, a.top, az, e.ox, 0.0, e.oz, CLIFF_TOP, nullptr, false);
+                const int v1 = bld.vertex(bx, b.top, bz, e.ox, 0.0, e.oz, CLIFF_TOP, nullptr, false);
+                const int v2 = bld.vertex(bx, b.bottom, bz, e.ox, 0.0, e.oz, CLIFF_LOW, nullptr, false);
+                const int v3 = bld.vertex(ax, a.bottom, az, e.ox, 0.0, e.oz, CLIFF_LOW, nullptr, false);
                 // Godot 的面法线 = (a − c) × (a − b)：朝外就照 v0 v1 v2，否则反过来
-                const double px = ax - bx, py = top[ka] - bottom[kb], pz = az - bz; // a − c
-                const double qx = ax - bx, qy = top[ka] - top[kb], qz = az - bz; // a − b
+                const double px = ax - bx, py = a.top - b.bottom, pz = az - bz; // a − c
+                const double qx = ax - bx, qy = a.top - b.top, qz = az - bz; // a − b
                 const double fx = py * qz - pz * qy, fz = px * qy - py * qx;
                 if (fx * e.ox + fz * e.oz < 0.0) {
                     bld.triangle(v0, v2, v1);

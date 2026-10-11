@@ -7534,6 +7534,7 @@ void test_dev_manual() {
 #include "terrain_color_checks.inc"
 #include "terrain_island_checks.inc"
 #include "terrain_seam_checks.inc"
+#include "far_island_checks.inc"
 
 int main(int argc, char **argv) {
 #ifdef _WIN32
@@ -7548,6 +7549,7 @@ int main(int argc, char **argv) {
             { "terrain_colors", test_terrain_colors },
             { "terrain_island_height", test_terrain_island_height },
             { "terrain_seams", test_terrain_seams },
+            { "far_islands", test_far_islands },
             { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
             { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
             { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works }, { "dev_manual", test_dev_manual },
@@ -7609,6 +7611,7 @@ int main(int argc, char **argv) {
     test_terrain_colors();
     test_terrain_island_height();
     test_terrain_seams();
+    test_far_islands();
     test_map_image();
     test_world_start();
     test_village_prep_start();
