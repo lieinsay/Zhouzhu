@@ -131,6 +131,7 @@ void PlanetView::_ready() {
 }
 
 bool PlanetView::load_planet() {
+    loaded_lod_files.clear();
     planet = std::make_shared<PlanetData>();
     std::string error;
     const PackedByteArray pb = FileAccess::get_file_as_bytes(planet_dir.path_join("planet.bin"));
@@ -151,7 +152,7 @@ bool PlanetView::load_planet() {
     if (lb.is_empty() || !planet->parse_lods(lb.ptr(), size_t(lb.size()), error)) {
         ERR_PRINT(String(U"PlanetView：读不了粗版 ") + planet_dir + String(U"/lods.bin：") + String::utf8(error.c_str()) + String(U"——远处的岛群画不出来"));
     }
-    // 按需生成过的粗版（生存模式的世界存档目录 lods/<节点>.bin）：退出再进不重生成；它们的逐日天气（<节点>.wx）交给天气场
+    // 故事与生存世界按需生成过的粗版：退出再进先覆盖包内旧档；同目录 .wx 交给天气场。
     std::vector<String> extra_weather;
     if (!extra_lods_dir.is_empty() && DirAccess::dir_exists_absolute(ProjectSettings::get_singleton()->globalize_path(extra_lods_dir))) {
         const PackedStringArray files = DirAccess::get_files_at(extra_lods_dir);
@@ -263,6 +264,8 @@ Dictionary PlanetView::get_weather_state() const {
 }
 
 bool PlanetView::add_lod_file(const String &p_path) {
+    const std::string key = ProjectSettings::get_singleton()->globalize_path(p_path).simplify_path().utf8().get_data();
+    loaded_lod_files.erase(key);
     if (!planet) {
         return false;
     }
@@ -286,7 +289,14 @@ bool PlanetView::add_lod_file(const String &p_path) {
     if (FileAccess::file_exists(wx)) {
         add_weather_file(wx);
     }
+    loaded_lod_files[key] = std::move(nodes);
     return true;
+}
+
+bool PlanetView::lod_file_loaded(const String &p_path, int p_node) const {
+    const std::string key = ProjectSettings::get_singleton()->globalize_path(p_path).simplify_path().utf8().get_data();
+    const auto found = loaded_lod_files.find(key);
+    return found != loaded_lod_files.end() && std::find(found->second.begin(), found->second.end(), p_node) != found->second.end();
 }
 
 bool PlanetView::try_anchor() {

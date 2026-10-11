@@ -88,6 +88,7 @@ class PlanetData {
     std::vector<std::shared_ptr<const std::vector<uint8_t>>> lod_blobs;
     std::vector<LodEntry> lod_entries;
     std::map<int, std::vector<int>> lods_of; // 节点 → lod_entries 下标（按格距从粗到细）
+    std::map<int, uint64_t> lod_versions; // 某群最后一次替换粗版的代次（同一 bundle 各档一起变）
     mutable std::shared_mutex lod_mutex; // 护着 lod_blobs / lod_entries / lods_of
     std::atomic<uint64_t> lod_gen{ 0 }; // parse_lods / add_lods 一次加一
     // 经纬格分桶（2° × 2°）：找附近的群
@@ -138,10 +139,12 @@ public:
     bool has_lod(int p_node) const;
     // parse_lods / add_lods 做过几回（远处的岛群、行星贴图据此知道该重做了）
     uint64_t lod_generation() const { return lod_gen.load(); }
+    uint64_t lod_generation(int p_node) const;
     // 该群有哪几种格距的粗版（米，从粗到细）
     std::vector<double> lod_resolutions(int p_node) const;
     // 解开一份粗版：格距不超过 p_max_res_m 里最粗的一份（都比它粗就给最细的）；没有粗版返回空的
-    PlanetLod lod(int p_node, double p_max_res_m = 1e9) const;
+    // r_generation 与所选字节在同一把锁下取出，后台网格可以据此丢掉被替换前的结果。
+    PlanetLod lod(int p_node, double p_max_res_m = 1e9, uint64_t *r_generation = nullptr) const;
     // 只要那一份的栅格范围（不解格子）：格距、左上角、行列；没有粗版返回 false
     bool lod_extent(int p_node, double p_max_res_m, double &r_res_m, double &r_origin_x_km, double &r_origin_y_km, int &r_rows, int &r_cols) const;
 };

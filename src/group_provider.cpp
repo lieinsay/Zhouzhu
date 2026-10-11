@@ -300,7 +300,10 @@ String GroupProvider::find_group(int p_node) const {
     }
     if (!world_dir.is_empty()) {
         const String dir = world_dir.path_join("groups").path_join(itos(p_node));
-        if (has_package(dir)) {
+        const String lod = world_dir.path_join("lods").path_join(itos(p_node) + ".bin");
+        const PlanetView *pv = view();
+        // full_lods 故事细版不能搭配尚未载入的新粗包；不消费完整粗版的旧生存/全细场景保留原可用性。
+        if (has_package(dir) && (!full_lods || (FileAccess::file_exists(lod) && pv && pv->lod_file_loaded(lod, p_node)))) {
             return dir;
         }
     }
@@ -316,7 +319,7 @@ PackedInt32Array GroupProvider::available_nodes() const {
         }
         const PackedStringArray names = DirAccess::get_directories_at(p_dir);
         for (int64_t k = 0; k < names.size(); k++) {
-            if (names[k].is_valid_int() && has_package(p_dir.path_join(names[k]))) {
+            if (names[k].is_valid_int() && is_available(int(names[k].to_int()))) {
                 nodes.insert(int(names[k].to_int()));
             }
         }
@@ -361,7 +364,7 @@ int GroupProvider::request(int p_node, int p_priority) {
         return READY;
     }
     Request &r = requests[p_node];
-    if (r.state == RUNNING || r.state == READY) {
+    if (r.state == RUNNING) {
         r.priority = std::min(r.priority, p_priority);
         return r.state;
     }
@@ -622,6 +625,16 @@ void GroupProvider::start_next_group() {
     }
     String error;
     bool started = false;
+    std::vector<double> resolutions;
+    if (full_lods) {
+        if (PlanetView *pv = view()) {
+            resolutions = pv->get_planet()->lod_resolutions(best->node);
+        }
+    }
+    if (resolutions.empty()) {
+        resolutions.push_back(2000.0); // 生存模式保留单档；没有粗版的故事群也从 2 km 开始。
+    }
+    const String lod_dir = abs_path(world_dir.path_join("lods"));
     if (gen_backend_is_python()) {
         PackedStringArray args;
         args.push_back("group");
@@ -633,27 +646,34 @@ void GroupProvider::start_next_group() {
         args.push_back(itos(best->node));
         args.push_back("--out");
         args.push_back(abs_path(world_dir.path_join("groups").path_join(itos(best->node))));
-        if (!full_lods) {
-            args.push_back("--lod-dir");
-            args.push_back(abs_path(world_dir.path_join("lods")));
+        args.push_back("--lod-dir");
+        args.push_back(lod_dir);
+        String res_list;
+        for (double res : resolutions) {
+            if (!res_list.is_empty()) {
+                res_list += ",";
+            }
+            res_list += String::num(res);
         }
+        args.push_back("--lod-resolutions");
+        args.push_back(res_list);
         started = group_job.start_python(gen_settings(), args, world_dir.path_join("logs").path_join(vformat("group_%d.jsonl", best->node)), group_timeout, error);
     } else {
-        // 进程内（P6e）：这个世界的行星层（进程里算过就直接用）→ 生成器第三层 → 岛群包的五份 + stamp.json（生存世界顺带粗版），先写 .tmp 再改名
+        // 进程内（P6e）：同一次原生生成出细包与该群现有全部粗版档，先写 .tmp 再改名。
         const std::shared_ptr<const GenConfig> cfg = gen_cfg();
         const uint64_t seed = world_seed();
         const int64_t node = best->node;
         const std::string out = abs_path(world_dir.path_join("groups").path_join(itos(best->node))).utf8().get_data();
-        const std::string lod = full_lods ? std::string() : std::string(abs_path(world_dir.path_join("lods")).utf8().get_data());
+        const std::string lod = lod_dir.utf8().get_data();
         const std::string cfg_file = abs_path(planet_dir().path_join("config.tsv")).utf8().get_data();
-        started = group_job.start_cpp(jobs(), job_priority(best->priority), [cfg, seed, node, out, lod, cfg_file](gen_core::GenStatus &st) {
+        started = group_job.start_cpp(jobs(), job_priority(best->priority), [cfg, seed, node, out, lod, cfg_file, resolutions](gen_core::GenStatus &st) {
             if (!gen_core::has_planet_state(*cfg, seed)) {
                 st.progress("planet", 0.02, "这个世界的行星层（进程里第一回用，算一次）");
             }
             const std::shared_ptr<const gen_core::PlanetState> ps = gen_core::planet_state(*cfg, seed);
             gen_core::GroupTimes t;
             std::string err;
-            if (!gen_core::make_group(*ps, node, out, lod, cfg_file, &st, 0.1, 1.0, t, err)) {
+            if (!gen_core::make_group(*ps, node, out, lod, cfg_file, &st, 0.1, 1.0, t, err, resolutions)) {
                 st.fail(err);
                 return;
             }
@@ -695,7 +715,21 @@ void GroupProvider::poll_group_job() {
     group_job_node = -1;
     r.finished_at = now_s();
     busy_s += group_job.elapsed_s();
-    if (group_job.is_done() && is_available(node)) {
+    String lod_error;
+    if (group_job.is_done() && has_package(world_dir.path_join("groups").path_join(itos(node)))) {
+        if (PlanetView *pv = view()) {
+            const String lod = world_dir.path_join("lods").path_join(itos(node) + ".bin");
+            if (!FileAccess::file_exists(lod) || !pv->add_lod_file(lod) || !pv->lod_file_loaded(lod, node)) {
+                lod_error = String(U"细包已生成，但同源粗版没有加载成功");
+            } else {
+                lods_added++;
+                PackedInt32Array nodes;
+                nodes.push_back(node);
+                emit_signal("lods_added", nodes);
+            }
+        }
+    }
+    if (group_job.is_done() && is_available(node) && lod_error.is_empty()) {
         r.state = READY;
         r.progress = 1.0;
         r.seconds = Dictionary(group_job.get_result()).get("seconds", Dictionary());
@@ -704,23 +738,11 @@ void GroupProvider::poll_group_job() {
         if (v.get_type() == Variant::DICTIONARY) {
             current_commit = Dictionary(Dictionary(v).get("generator", Dictionary())).get("commit", "");
         }
-        // 生存模式：这一群的粗版一起出来了
-        if (!full_lods) {
-            if (PlanetView *pv = view()) {
-                const String lod = world_dir.path_join("lods").path_join(itos(node) + ".bin");
-                if (FileAccess::file_exists(lod) && pv->add_lod_file(lod)) {
-                    lods_added++;
-                    PackedInt32Array nodes;
-                    nodes.push_back(node);
-                    emit_signal("lods_added", nodes);
-                }
-            }
-        }
         print_line(vformat(String(U"GroupProvider：群 #%d 生成好了，%.1f s（排队 %.1f s）→ %s"), node, r.finished_at - r.started_at, r.started_at - r.queued_at, find_group(node)));
         emit_signal("group_ready", node, find_group(node));
     } else {
         r.state = FAILED;
-        r.error = group_job.is_done() ? String(U"生成器说好了，包却不全") : group_job.get_error();
+        r.error = !lod_error.is_empty() ? lod_error : (group_job.is_done() ? String(U"生成器说好了，包却不全") : group_job.get_error());
         r.text = String(U"生成失败：") + r.error;
         failed++;
         ERR_PRINT(vformat(String(U"GroupProvider：群 #%d 生成失败——%s"), node, r.error));

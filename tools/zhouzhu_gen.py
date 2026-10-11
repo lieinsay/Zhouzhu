@@ -4,13 +4,13 @@
 这个脚本留作开发时的对照：项目设置 zhouzhu/generator/backend = "python" 时游戏照旧调它。
 
     python -X utf8 tools/zhouzhu_gen.py group --generator <skyisle-gen 根> --run <run 目录> --node N --out <岛群包目录>
-                                             [--lod-dir <粗版目录>] --status <状态文件>
+                                             [--lod-dir <粗版目录> --lod-resolutions 2000,1000,500] --status <状态文件>
     python -X utf8 tools/zhouzhu_gen.py lods  --generator <根> --run <run 目录> --nodes a,b,c --lod-dir <粗版目录> --status <状态文件>
     python -X utf8 tools/zhouzhu_gen.py world --generator <根> --seed N --world <世界目录> --status <状态文件>
 
 group：生成器第三层（与 skyisle island <节点> 同一份 island.generate，只是不画预览图）→ tools/export_skyisle.py 的五份文件；
        先写到 <out>.tmp、写好 stamp.json 再改名成 <out>（游戏读不到半截的包）。
-       --lod-dir 给了就顺带出这一群 2 km 的粗版（与 skyisle island lod 同一份 build_lod）→ <lod-dir>/<节点>.bin（lods.bin 同格式、一条），
+       --lod-dir 给了就从同一次原生水系阶段取各档粗版（默认仅 2 km）→ <lod-dir>/<节点>.bin（lods.bin 同格式），
        与它第 0 年的逐日天气 → <lod-dir>/<节点>.wx（weather.bin 同格式、一条；行星计划 P5 的行星天气场读它）。
        stamp.json 是缓存键（计划 4.7）：生成器提交号、run 的 config.resolved.toml 哈希、[island] 段哈希、导出版本（terrain.bin 版本 + 导出脚本哈希）。
        同一个世界里已经生成过的不因换版本重生成——游戏只读它、记下来；要强制重生成就删掉那一群的目录。
@@ -40,7 +40,7 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 sys.dont_write_bytecode = True  # import 本仓库的导出脚本时别在 tools/ 下留 __pycache__
-LOD_RES = 2000.0  # 游戏里按需生成的粗版只要 2 km 一档（行星包里全行星也是 2 km，计划 D11）
+LOD_RES = 2000.0  # 生存模式仍只要 2 km；故事模式传入该群已有的全部档。
 
 _status_file = None
 
@@ -120,7 +120,26 @@ def write_lod_file(ctx, node: int, lod_dir: Path, run: Path | None = None) -> fl
     return time.perf_counter() - t0
 
 
-def make_group(ctx, gen_root: Path, run: Path, node: int, out: Path, lod_dir: Path | None, p0: float = 0.0, p1: float = 1.0) -> dict:
+def write_group_lods(ctx, node: int, g: dict, lod_dir: Path, run: Path) -> None:
+    """打包 C++ 同一次水系阶段取出的粗版，各档共享本群第 0 年天气；不重新生成。"""
+    from skyisle_gen import island as isl
+    from skyisle_gen.island.lod import weather_arrays
+    import export_planet
+    J = g["json"]
+    wx = weather_arrays(g, isl.island_config(ctx, []), 0)
+    entries = []
+    for res, arr in g["lods"].items():
+        rows, cols = arr["land"].shape
+        meta = {"raster": {"res_m": res, "rows": rows, "cols": cols, "origin_km": J["raster"]["origin_km"]},
+                "islands": J["islands"]}
+        entries.append((node, meta, arr))
+    lod_dir.mkdir(parents=True, exist_ok=True)
+    export_planet.write_weather(lod_dir / f"{node}.wx", [(node, export_planet.weather_of(wx))], export_planet.precip_formula_of(run))
+    export_planet.write_lods(lod_dir / f"{node}.bin", entries)
+
+
+def make_group(ctx, gen_root: Path, run: Path, node: int, out: Path, lod_dir: Path | None, p0: float = 0.0, p1: float = 1.0,
+               lod_resolutions: list[float] | None = None) -> dict:
     """生成一个岛群、导出成游戏的包；返回用时。进度在 [p0, p1] 里报。"""
     from skyisle_gen import island as isl
     import export_skyisle
@@ -128,7 +147,7 @@ def make_group(ctx, gen_root: Path, run: Path, node: int, out: Path, lod_dir: Pa
     seconds = {}
     t0 = time.perf_counter()
     progress("generate", p0 + 0.05 * span, f"生成岛群 #{node}：布局、地形、水系、气候、天气、聚落、资源")
-    g = isl.generate(ctx, node, write=False, log=print)
+    g = isl.generate(ctx, node, write=False, log=print, lod_resolutions=(lod_resolutions or [LOD_RES]) if lod_dir is not None else None)
     seconds["generate"] = round(time.perf_counter() - t0, 2)
     # 产物：与 generate(write=True) 写的同一套（不画预览图），写到包旁边的临时目录，导出完就删
     t1 = time.perf_counter()
@@ -154,8 +173,10 @@ def make_group(ctx, gen_root: Path, run: Path, node: int, out: Path, lod_dir: Pa
     export_skyisle.export(raw, tmp, run=run)  # 头里的直减率、雪温、交角按 run 的配置（原先 raw 放在包旁边，上两级找不到 run，一直落到默认值——值一样）
     seconds["export"] = round(time.perf_counter() - t2, 2)
     if lod_dir is not None:
-        progress("lod", p0 + 0.85 * span, f"岛群 #{node}：2 km 粗版")
-        seconds["lod"] = round(write_lod_file(ctx, node, lod_dir, run), 2)
+        t_lod = time.perf_counter()
+        progress("lod", p0 + 0.85 * span, f"岛群 #{node}：同源粗版 {len(g['lods'])} 档")
+        write_group_lods(ctx, node, g, lod_dir, run)
+        seconds["lod"] = round(time.perf_counter() - t_lod, 2)
     stamp = {
         "node": node,
         "created": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -184,7 +205,8 @@ def cmd_group(a: dict) -> dict:
     lod_dir = Path(a["--lod-dir"]) if a.get("--lod-dir") else None
     out = Path(a["--out"])
     out.parent.mkdir(parents=True, exist_ok=True)
-    seconds = make_group(ctx, gen_root, run, node, out, lod_dir)
+    resolutions = [float(x) for x in a.get("--lod-resolutions", "").split(",") if x.strip()]
+    seconds = make_group(ctx, gen_root, run, node, out, lod_dir, lod_resolutions=resolutions)
     return {"node": node, "out": str(out), "seconds": seconds}
 
 

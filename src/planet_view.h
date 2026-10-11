@@ -49,6 +49,7 @@ class PlanetView : public godot::Node3D {
     double near_rise_from = 1000.0, near_rise_to = 6000.0;
 
     std::shared_ptr<PlanetData> planet; // 远处岛群的后台活也拿着一份（场景拆的时候活可能还在做）
+    std::map<std::string, std::vector<int>> loaded_lod_files; // 仅成功载入的缓存粗包可以伴随缓存细包公开。
     // 行星天气场（行星计划 P5）：逐日天气包（weather.bin，解开要几百毫秒）在后台读、建场，好了才有
     std::shared_ptr<PlanetWeather> weather;
     std::future<std::shared_ptr<PlanetWeather>> weather_loading;
@@ -102,6 +103,7 @@ public:
     const PlanetData *get_planet() const { return planet.get(); }
     // 按需生成的一群粗版（lods.bin 同格式）加进行星包（行星计划 P4）：远处的岛群、行星贴图按 lod_generation 自己跟上。读不了返回 false
     bool add_lod_file(const godot::String &p_path);
+    bool lod_file_loaded(const godot::String &p_path, int p_node) const;
     int get_lod_count() const { return planet ? planet->lod_count() : 0; }
     std::shared_ptr<const PlanetData> share_planet() const { return planet; }
     // 行星天气场（行星计划 P5）：后台建好之前是空的

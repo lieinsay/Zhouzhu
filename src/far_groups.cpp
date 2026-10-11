@@ -40,6 +40,7 @@ struct FarGroupArrays : JobResult {
     int tier = 0; // 0 细（500 m）1 粗（2 km）
     double res_m = 0.0;
     bool stand_in = false; // 行星包里没有它的粗版：画的是替身
+    uint64_t lod_gen = 0;
     PackedVector3Array vertices, normals;
     PackedColorArray colors;
     PackedByteArray season;
@@ -143,7 +144,7 @@ void FarGroups::_process(double /* p_delta */) {
     if (moved > reselect_m) {
         select();
     }
-    refresh_stand_ins();
+    refresh_lods();
     adopt_ready();
     place_all();
     update_seasons(false);
@@ -190,7 +191,7 @@ void FarGroups::select() {
     }
 }
 
-void FarGroups::refresh_stand_ins() {
+void FarGroups::refresh_lods() {
     const uint64_t gen = planet->get_planet()->lod_generation();
     if (gen == lod_gen_seen) {
         return;
@@ -199,9 +200,16 @@ void FarGroups::refresh_stand_ins() {
     const PlanetData *pd = planet->get_planet();
     for (auto &it : groups) {
         Group &g = it.second;
-        if (g.stand_in && g.built_res > 0.0 && pd->has_lod(g.node)) {
-            g.built_res = 0.0; // 粗版来了：按同一档重建（挂上以前替身照旧画着）
+        const uint64_t version = pd->lod_generation(g.node);
+        if (g.queued_res == g.want_res && g.queued_lod_gen == version) {
+            continue; // 已在建当前版本，别因其他群的更新撤掉它。
+        }
+        if (g.built_lod_gen != version || (g.queued_res > 0.0 && g.queued_lod_gen != version)) {
+            g.built_res = 0.0; // 同一档的数据也可能被换掉；新网格挂上以前旧网格照旧画着。
             g.queued_res = 0.0;
+            for (int tier = 0; tier < 2; tier++) {
+                pool->cancel(job_key(g.node, tier));
+            }
             submit(g);
         }
     }
@@ -209,24 +217,24 @@ void FarGroups::refresh_stand_ins() {
 
 void FarGroups::submit(Group &p_group) {
     const int tier = p_group.want_res == fine_res ? 0 : 1;
+    const uint64_t version = planet->get_planet()->lod_generation(p_group.node);
     pool->cancel(job_key(p_group.node, 1 - tier));
-    if (p_group.built_res == p_group.want_res) {
+    if (p_group.built_res == p_group.want_res && p_group.built_lod_gen == version) {
         p_group.queued_res = 0.0;
         return;
     }
-    if (p_group.queued_res == p_group.want_res) {
+    if (p_group.queued_res == p_group.want_res && p_group.queued_lod_gen == version) {
         return; // 这一档已经交出去了
     }
-    p_group.queued_res = p_group.want_res;
     const std::shared_ptr<const PlanetData> data = planet->share_planet();
     const int node = p_group.node;
     const double max_res = tier == 0 ? fine_res * 1.2 : 1e9;
     const double radius_m = planet->get_radius();
-    pool->submit(job_key(node, tier), p_group.distance, [data, node, tier, max_res, radius_m]() -> std::unique_ptr<JobResult> {
+    const bool submitted = pool->submit(job_key(node, tier), p_group.distance, [data, node, tier, max_res, radius_m]() -> std::unique_ptr<JobResult> {
         std::unique_ptr<FarGroupArrays> out = std::make_unique<FarGroupArrays>();
         out->node = node;
         out->tier = tier;
-        PlanetLod lod = data->lod(node, max_res);
+        PlanetLod lod = data->lod(node, max_res, &out->lod_gen);
         if (lod.empty()) {
             // 还没有粗版（生存模式）：替身，岸缘取每块陆地最低的格
             lod = surface_stand_in(*data, node, 2000.0);
@@ -273,6 +281,10 @@ void FarGroups::submit(Group &p_group) {
         std::copy(m.indices.begin(), m.indices.end(), out->indices.ptrw());
         return out;
     });
+    if (submitted) {
+        p_group.queued_res = p_group.want_res;
+        p_group.queued_lod_gen = version;
+    }
 }
 
 void FarGroups::adopt_ready() {
@@ -290,10 +302,12 @@ void FarGroups::adopt_ready() {
                                 return true;
                             }
                             const double res = a->tier == 0 ? fine_res : coarse_res;
-                            if (res != found->second.want_res) {
-                                if (found->second.queued_res == res) {
-                                    found->second.queued_res = 0.0;
+                            Group &g = found->second;
+                            if (res != g.want_res || a->lod_gen != planet->get_planet()->lod_generation(a->node)) {
+                                if (g.queued_res == res && g.queued_lod_gen == a->lod_gen) {
+                                    g.queued_res = 0.0;
                                 }
+                                submit(g); // 同键的旧活做完、从池里取走后，才能交新的。
                                 return true;
                             }
                             return false;
@@ -323,8 +337,12 @@ void FarGroups::adopt_ready() {
         }
         Group &g = found->second;
         const double res = a->tier == 0 ? fine_res : coarse_res;
-        if (res != g.want_res) {
-            return; // 档又换了
+        if (res != g.want_res || a->lod_gen != planet->get_planet()->lod_generation(a->node)) {
+            if (g.queued_res == res && g.queued_lod_gen == a->lod_gen) {
+                g.queued_res = 0.0;
+            }
+            submit(g);
+            return; // 档或数据又换了。
         }
         MeshInstance3D *mesh = nullptr;
         AABB true_box;
@@ -364,6 +382,7 @@ void FarGroups::adopt_ready() {
         }
         replaced += g.stand_in && !a->stand_in && g.mesh ? 1 : 0;
         g.built_res = res;
+        g.built_lod_gen = a->lod_gen;
         if (g.queued_res == res) {
             g.queued_res = 0.0;
         }
@@ -475,7 +494,7 @@ bool FarGroups::is_idle() const {
         return false;
     }
     for (const auto &it : groups) {
-        if (it.second.built_res != it.second.want_res) {
+        if (it.second.built_res != it.second.want_res || it.second.built_lod_gen != planet->get_planet()->lod_generation(it.first)) {
             return false;
         }
     }

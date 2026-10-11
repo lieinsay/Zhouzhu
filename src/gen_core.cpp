@@ -1,13 +1,16 @@
 #include "gen_core.h"
 #include "skyisle/island/landforms.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <list>
 #include <sstream>
+#include <stdexcept>
 
 #include "skyisle/island/build.hpp"
 #include "skyisle/island/climate.hpp"
@@ -123,10 +126,28 @@ std::array<double, 3> precip_formula(const GenConfig &p_config) {
         p_config.island.get("climate.precip_mm_exp", 1.3) };
 }
 
-isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry *r_lod, gen_export::WeatherEntry *r_weather) {
+std::vector<gen_export::LodEntry> group_lods(int64_t p_node, const isl::Group &p_group, const std::vector<double> &p_resolutions) {
+    std::vector<int> factors;
+    for (double res : p_resolutions.empty() ? std::vector<double>{ 2000.0 } : p_resolutions) {
+        if (!std::isfinite(res) || res <= 0.0) {
+            throw std::invalid_argument("粗版格距必须为正的有限米数");
+        }
+        factors.push_back(gen_export::lod_factor(p_group.res_km * 1000.0, res));
+    }
+    std::sort(factors.begin(), factors.end(), std::greater<int>());
+    factors.erase(std::unique(factors.begin(), factors.end()), factors.end());
+    std::vector<gen_export::LodEntry> lods;
+    for (int f : factors) {
+        lods.push_back(gen_export::lod_entry(p_node, p_group, isl::block_reduce(p_group, f)));
+    }
+    return lods;
+}
+
+static isl::Group generate_group_impl(const PlanetState &p_planet, int64_t p_node, std::vector<gen_export::LodEntry> *r_lods,
+        gen_export::WeatherEntry *r_weather, const std::vector<double> &p_resolutions) {
     // 与生成器的 island::generate（steps = 5、第 0 年）一步一步同：地形 → 水系 → 资源 → 四季与逐日曲线 → 逐日天气 → 聚落。
     // 拆开来做只为在水系之后取粗版（块降采样读的地表、河湖还没被资源的开采、聚落的开垦改过——同 skyisle island lod 另跑的那一遍），
-    // 省掉生存世界里为粗版再跑一遍地形 + 水系；单测 gen_seed42 查这条路与 island::generate、与单跑粗版逐字节相同。
+    // 生存世界只要 2 km，故事世界覆盖该群的现有各档；都不为粗版再跑一遍地形 + 水系。
     const GenConfig &cfg = p_planet.config;
     const int threads = cfg.threads();
     const isl::NodeInputs x = inputs_of(p_planet, p_node, true);
@@ -134,8 +155,8 @@ isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_expor
     isl::finalize_islands(g);
     isl::build_hydro(g, p_planet.view, cfg.island, threads);
     isl::finalize_islands(g);
-    if (r_lod) {
-        *r_lod = gen_export::lod_entry(p_node, g, isl::block_reduce(g, gen_export::lod_factor(g.res_km * 1000.0)));
+    if (r_lods) {
+        *r_lods = group_lods(p_node, g, p_resolutions);
     }
     isl::build_resources(g, cfg.island);
     isl::detect_landforms(g, cfg.island);
@@ -153,6 +174,20 @@ isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_expor
     isl::build_settlements(g, p_planet.view, cfg.island);
     isl::build_rivernet(g, cfg.island);
     return g;
+}
+
+isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry *r_lod, gen_export::WeatherEntry *r_weather) {
+    std::vector<gen_export::LodEntry> lods;
+    isl::Group g = generate_group_impl(p_planet, p_node, r_lod ? &lods : nullptr, r_weather, {});
+    if (r_lod) {
+        *r_lod = std::move(lods.front());
+    }
+    return g;
+}
+
+isl::Group generate_group(const PlanetState &p_planet, int64_t p_node, std::vector<gen_export::LodEntry> &r_lods,
+        gen_export::WeatherEntry &r_weather, const std::vector<double> &p_resolutions) {
+    return generate_group_impl(p_planet, p_node, &r_lods, &r_weather, p_resolutions);
 }
 
 // 粗版：同 lod.build_lod（cpp 后端）——原生分辨率的地形 + 水系 → 四季、逐日曲线、一年的逐日天气（岸缘取水系之后主岛的 rim_m）→ 块降采样
@@ -180,16 +215,16 @@ void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry 
 
 namespace {
 
-bool write_lod_files(const PlanetState &p_planet, const std::string &p_lod_dir, const gen_export::LodEntry &p_lod, const gen_export::WeatherEntry &p_weather,
+bool write_lod_files(const PlanetState &p_planet, const std::string &p_lod_dir, const std::vector<gen_export::LodEntry> &p_lods, const gen_export::WeatherEntry &p_weather,
         std::string &r_error) {
     std::error_code ec;
     fs::create_directories(upath(p_lod_dir), ec);
-    const std::string base = (upath(p_lod_dir) / std::to_string(p_lod.node)).u8string();
+    const std::string base = (upath(p_lod_dir) / std::to_string(p_weather.node)).u8string();
     // 天气先写：游戏看到 <节点>.bin 就去读 .wx
     if (!write_file(base + ".wx", gen_export::weather_bin({ p_weather }, precip_formula(p_planet.config), std::string()), r_error)) {
         return false;
     }
-    return write_file(base + ".bin", gen_export::lods_bin({ p_lod }), r_error);
+    return write_file(base + ".bin", gen_export::lods_bin(p_lods), r_error);
 }
 
 struct CacheEntry {
@@ -320,7 +355,7 @@ void clear_planet_states() {
 // ---------------------------------------------------------------- 一群
 
 bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &p_out_dir, const std::string &p_lod_dir, const std::string &p_config_file,
-        GenStatus *p_status, double p_p0, double p_p1, GroupTimes &r_times, std::string &r_error) {
+        GenStatus *p_status, double p_p0, double p_p1, GroupTimes &r_times, std::string &r_error, const std::vector<double> &p_lod_resolutions) {
     const GenConfig &cfg = p_planet.config;
     const int64_t n_nodes = int64_t(p_planet.world.islands.n());
     if (p_node < 0 || p_node >= n_nodes) {
@@ -334,9 +369,9 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
             p_status->progress("generate", p_p0 + 0.05 * span, "生成岛群 #" + std::to_string(p_node) + "：布局、地形、水系、气候、天气、聚落、资源");
         }
         const bool want_lod = !p_lod_dir.empty();
-        gen_export::LodEntry lod;
+        std::vector<gen_export::LodEntry> lods;
         gen_export::WeatherEntry wx;
-        const isl::Group g = generate_group(p_planet, p_node, want_lod ? &lod : nullptr, want_lod ? &wx : nullptr);
+        const isl::Group g = generate_group_impl(p_planet, p_node, want_lod ? &lods : nullptr, want_lod ? &wx : nullptr, p_lod_resolutions);
         r_times.generate = now_s() - t0;
         const double t1 = now_s();
         if (p_status) {
@@ -367,9 +402,9 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         if (want_lod) {
             const double t2 = now_s();
             if (p_status) {
-                p_status->progress("lod", p_p0 + 0.85 * span, "岛群 #" + std::to_string(p_node) + "：2 km 粗版");
+                p_status->progress("lod", p_p0 + 0.85 * span, "岛群 #" + std::to_string(p_node) + "：同源粗版 " + std::to_string(lods.size()) + " 档");
             }
-            if (!write_lod_files(p_planet, p_lod_dir, lod, wx, r_error)) {
+            if (!write_lod_files(p_planet, p_lod_dir, lods, wx, r_error)) {
                 return false;
             }
             r_times.lod = now_s() - t2;
@@ -429,7 +464,7 @@ bool make_lod(const PlanetState &p_planet, int64_t p_node, const std::string &p_
         gen_export::LodEntry lod;
         gen_export::WeatherEntry wx;
         lod_only(p_planet, p_node, lod, wx);
-        if (!write_lod_files(p_planet, p_lod_dir, lod, wx, r_error)) {
+        if (!write_lod_files(p_planet, p_lod_dir, { lod }, wx, r_error)) {
             return false;
         }
     } catch (const std::exception &e) {

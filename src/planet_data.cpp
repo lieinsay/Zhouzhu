@@ -245,7 +245,7 @@ bool PlanetData::read_lod_index(const uint8_t *p_data, size_t p_size, int p_blob
         e.offset = r.get<uint64_t>();
         e.bytes = r.get<uint32_t>();
         e.blob = p_blob;
-        if (e.offset + e.bytes > p_size) {
+        if (e.offset > p_size || e.bytes > p_size - size_t(e.offset)) {
             r.ok = false;
         }
         r_entries.push_back(e);
@@ -254,6 +254,31 @@ bool PlanetData::read_lod_index(const uint8_t *p_data, size_t p_size, int p_blob
         r_error = "lods.bin 截断";
         r_entries.clear();
         return false;
+    }
+    // 索引完整不代表格记录可读。先校验整份 bundle，避免坏缓存被标记 loaded 或部分替换旧档。
+    for (const LodEntry &e : r_entries) {
+        Reader cells{ p_data + size_t(e.offset), e.bytes };
+        const size_t island_bytes = size_t(e.n_islands) * 6 * sizeof(float);
+        if (cells.need(island_bytes)) cells.pos = island_bytes;
+        size_t remaining = size_t(e.rows) * size_t(e.cols);
+        while (remaining && cells.ok) {
+            const uint16_t head = cells.get<uint16_t>();
+            const size_t count = head & 0x7FFF;
+            if (!cells.ok || count == 0 || count > remaining) {
+                cells.ok = false;
+                break;
+            }
+            if (head & 0x8000) {
+                const size_t bytes = count * 4; // uint16 高程、uint8 地表/陆占、uint8 岛号
+                if (cells.need(bytes)) cells.pos += bytes;
+            }
+            remaining -= count;
+        }
+        if (!cells.ok || remaining || cells.pos != cells.size || !std::isfinite(e.res_m) || e.res_m <= 0.0) {
+            r_error = "粗版群 " + std::to_string(e.node) + " 格记录截断或计数错误";
+            r_entries.clear();
+            return false;
+        }
     }
     return true;
 }
@@ -272,14 +297,19 @@ bool PlanetData::parse_lods(const uint8_t *p_data, size_t p_size, std::string &r
     lod_blobs.clear();
     lod_blobs.push_back(std::make_shared<const std::vector<uint8_t>>(p_data, p_data + p_size));
     lod_entries = std::move(entries);
+    const uint64_t gen = lod_gen.load() + 1;
+    for (const auto &kv : lods_of) {
+        lod_versions[kv.first] = gen; // 整包重读时，被移除的群也要重建。
+    }
     lods_of.clear();
     for (int k = 0; k < int(lod_entries.size()); k++) {
         lods_of[lod_entries[size_t(k)].node].push_back(k);
     }
     for (auto &kv : lods_of) {
         index_node(kv.first);
+        lod_versions[kv.first] = gen;
     }
-    lod_gen++;
+    lod_gen.store(gen);
     return true;
 }
 
@@ -300,6 +330,8 @@ bool PlanetData::add_lods(const uint8_t *p_data, size_t p_size, std::string &r_e
         }
     }
     lod_blobs.push_back(std::make_shared<const std::vector<uint8_t>>(p_data, p_data + p_size));
+    const uint64_t gen = lod_gen.load() + 1;
+    std::vector<int> updated;
     for (const LodEntry &e : entries) {
         std::vector<int> &list = lods_of[e.node];
         // 同一格距已有的：换成新的（旧条目留在表里、不再有人指它）
@@ -307,11 +339,15 @@ bool PlanetData::add_lods(const uint8_t *p_data, size_t p_size, std::string &r_e
         list.push_back(int(lod_entries.size()));
         lod_entries.push_back(e);
         index_node(e.node);
-        if (r_nodes) {
-            r_nodes->push_back(e.node);
+        lod_versions[e.node] = gen;
+        if (std::find(updated.begin(), updated.end(), e.node) == updated.end()) {
+            updated.push_back(e.node);
         }
     }
-    lod_gen++;
+    if (r_nodes) {
+        r_nodes->insert(r_nodes->end(), updated.begin(), updated.end());
+    }
+    lod_gen.store(gen);
     return true;
 }
 
@@ -328,6 +364,12 @@ bool PlanetData::has_lod(int p_node) const {
     std::shared_lock<std::shared_mutex> lock(lod_mutex);
     const auto it = lods_of.find(p_node);
     return it != lods_of.end() && !it->second.empty();
+}
+
+uint64_t PlanetData::lod_generation(int p_node) const {
+    std::shared_lock<std::shared_mutex> lock(lod_mutex);
+    const auto it = lod_versions.find(p_node);
+    return it == lod_versions.end() ? 0 : it->second;
 }
 
 bool PlanetData::load_files(const std::string &p_dir, std::string &r_error) {
@@ -477,13 +519,17 @@ bool PlanetData::lod_extent(int p_node, double p_max_res_m, double &r_res_m, dou
     return true;
 }
 
-PlanetLod PlanetData::lod(int p_node, double p_max_res_m) const {
+PlanetLod PlanetData::lod(int p_node, double p_max_res_m, uint64_t *r_generation) const {
     PlanetLod out;
     LodEntry e;
     std::shared_ptr<const std::vector<uint8_t>> bytes;
     {
         // 只在挑哪一份时拿锁：条目与那份字节（shared_ptr）抄出来，解格子不拿锁
         std::shared_lock<std::shared_mutex> lock(lod_mutex);
+        if (r_generation) {
+            const auto version = lod_versions.find(p_node);
+            *r_generation = version == lod_versions.end() ? 0 : version->second;
+        }
         const int pick = pick_lod(p_node, p_max_res_m);
         if (pick < 0) {
             return out;

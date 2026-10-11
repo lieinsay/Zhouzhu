@@ -25,7 +25,7 @@ class GroupWorld;
 //   - 不投影、不碰撞（D7：非锚的群只画）；着色器把远处沿视线压近（planet_squeeze），引擎按真位置剔会被远平面剪掉——
 //     包围盒放到极大，每帧按视锥的四个侧面自己剔（侧面过相机，压近不改方向）。
 // 行星计划 P4：还没有粗版的群（生存模式的新世界）画替身——planet_surface 按行星包的数撒的那一团（与行星贴图里的替身同一份），2 km 一档；
-//   行星包加进了它的粗版（lod_generation 变了）就重建，替身换成粗版。
+//   行星包加进或替换某群的粗版（该群 lod_generation 变了）就重建，替身和已有普通网格都刷新。
 class FarGroups : public godot::Node3D {
     GDCLASS(FarGroups, godot::Node3D)
 
@@ -43,6 +43,7 @@ class FarGroups : public godot::Node3D {
         double want_res = 0.0; // 该用哪一档（米）
         double built_res = 0.0; // 挂着的是哪一档（0 = 还没有）
         double queued_res = 0.0; // 交出去、还没挂上也没扔掉的是哪一档（0 = 没有）：做好了取进 ready 以后池里就不算「忙」，靠它才不重复交
+        uint64_t built_lod_gen = 0, queued_lod_gen = 0;
         bool stand_in = false; // 挂着的是替身（行星包里还没有它的粗版）
         godot::MeshInstance3D *mesh = nullptr;
         int triangles = 0;
@@ -59,9 +60,9 @@ class FarGroups : public godot::Node3D {
     double sel_lat = 0.0, sel_lon = 0.0;
     double season_hour = -1e9;
     int adopted = 0; // 挂上过几份网格（统计）
-    uint64_t lod_gen_seen = 0; // 行星包的粗版加到第几回了（变了就把替身换成粗版）
+    uint64_t lod_gen_seen = 0; // 粗版更新后，只重建代次有变的群。
     int replaced = 0; // 替身换成了粗版几回（统计）
-    void refresh_stand_ins();
+    void refresh_lods();
     std::vector<std::unique_ptr<JobResult>> ready; // 做好了等挂的（一帧挂一份：一份上传要几毫秒；走远了、档换了的每帧全扔）
 
     void select();

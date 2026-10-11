@@ -75,6 +75,10 @@ void clear_planet_states();
 // （同 skyisle island lod 另跑一遍地形 + 水系的结果，逐字节相同）
 skyisle::island::Group generate_group(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry *r_lod = nullptr,
         gen_export::WeatherEntry *r_weather = nullptr);
+// 同一遍原生地形与水系出多档粗版，取在资源、聚落之前；空的格距表沿用 2 km。
+std::vector<gen_export::LodEntry> group_lods(int64_t p_node, const skyisle::island::Group &p_group, const std::vector<double> &p_resolutions = {});
+skyisle::island::Group generate_group(const PlanetState &p_planet, int64_t p_node, std::vector<gen_export::LodEntry> &r_lods,
+        gen_export::WeatherEntry &r_weather, const std::vector<double> &p_resolutions);
 // 只出粗版（地形 + 水系 + 四季与一年的逐日天气，不跑资源、聚落：同 skyisle island lod）；p_lod_res_m 是粗版的格距
 // （同 skyisle island lod --lod-res：块边长 round(格距 / 原生格距)，全行星 2000，开局周围那一圈 500）
 void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry &r_lod, gen_export::WeatherEntry &r_weather, double p_lod_res_m = 2000.0);
@@ -82,13 +86,13 @@ void lod_only(const PlanetState &p_planet, int64_t p_node, gen_export::LodEntry 
 std::array<double, 3> precip_formula(const GenConfig &p_config);
 
 // 一群：生成器第三层（地形 → 水系 → 资源 → 四季 → 天气 → 聚落）→ 岛群包的五份 + stamp.json，先写 <out>.tmp、写好再改名成 <out>；
-// p_lod_dir 非空（生存世界）：顺带出这一群 2 km 的粗版 <lod_dir>/<节点>.bin 与第 0 年的逐日天气 <lod_dir>/<节点>.wx（天气先写）。
+// p_lod_dir 非空：顺带出 p_lod_resolutions 中各档粗版到 <lod_dir>/<节点>.bin，以及第 0 年天气 .wx（天气先写）；空表仍只出 2 km。
 // 进度报在 [p0, p1] 里。p_config_file 只记进 stamp.json。
 struct GroupTimes {
     double generate = 0.0, write = 0.0, lod = 0.0, total = 0.0;
 };
 bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &p_out_dir, const std::string &p_lod_dir, const std::string &p_config_file,
-        GenStatus *p_status, double p_p0, double p_p1, GroupTimes &r_times, std::string &r_error);
+        GenStatus *p_status, double p_p0, double p_p1, GroupTimes &r_times, std::string &r_error, const std::vector<double> &p_lod_resolutions = {});
 // 一群的粗版（地形 + 水系 + 四季与一年的逐日天气，不跑资源、聚落：同 skyisle island lod）→ <lod_dir>/<节点>.wx、<节点>.bin
 bool make_lod(const PlanetState &p_planet, int64_t p_node, const std::string &p_lod_dir, double &r_seconds, std::string &r_error);
 
