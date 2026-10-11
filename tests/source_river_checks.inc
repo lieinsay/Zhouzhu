@@ -68,6 +68,27 @@ void test_source_rivers() {
     check(std::abs(turn.sample_raw(0,100).top-93)<1e-9,"弯道共享源点保留真实河床原值");
     check(std::abs(turn.sample_raw(63.999,80).top-turn.sample_raw(64.001,80).top)<.01,
         "跨空间桶边界时零影响候选增减不造成地面突跳");
+    // 冻结分享截图处的旧源断面，避免生成器修正谷宽后，真实旧候选切换病例随正式包一起消失。
+    WorldGrid wall=overlap; wall.height.assign(9,1231.11887335254);
+    check(parse_source_rivers("rivers 1\nexponents .26 .4\nbasin 0 1\nthreshold .3\n"
+        "stem 0 -1 -1 0 0 1\n"
+        "point 24550 -32250 1225.2169189453125 1224.5162353515625 19.031383514404297 .700677216053009 12.523859024047852 .3680696189403534 115.20999908447266 4.565074443817139 61 61 2\n"
+        "point 24450 -32350 1213.926025390625 1213.1014404296875 20.11415672302246 .8246574997901917 13.236392974853516 .43319717049598694 115.25 4.565958023071289 61 146 2\n"
+        "point 24350 -32450 1213.136474609375 1212.4154052734375 20.100780487060547 .721089243888855 13.227590560913086 .3787921965122223 116.62999725341797 4.5989990234375 61 145 2\n",wall,error),"旧6068断墙源断面读取");
+    WorldTerrain frozen_wall(wall,{},42);
+    auto old_segment=[&](double x) {
+        RiverHit hits[WorldRivers::MAX_HITS];
+        const int count=frozen_wall.get_rivers().near(x,-32356,hits,WorldRivers::MAX_HITS);
+        return count ? hits[0].segment : -1;
+    };
+    double lo=24612,hi=24614;
+    const int segment=old_segment(lo);
+    check(segment>=0 && segment!=old_segment(hi),"冻结断面保留旧最近河段切换触发条件");
+    for(int k=0;k<40;++k) {const double mid=(lo+hi)*.5;if(old_segment(mid)==segment)lo=mid;else hi=mid;}
+    const double boundary=(lo+hi)*.5;
+    const double frozen_jump=frozen_wall.sample_raw(boundary+1e-5,-32356).top-frozen_wall.sample_raw(boundary-1e-5,-32356).top;
+    std::printf("frozen 6068 switch x=%.9f new_jump=%.12f m / .00002 m\n",boundary,frozen_jump);
+    check(std::abs(frozen_jump)<.001,"冻结真实宽窄谷断面微跨界没有高度阶跃");
     if(const char *dir=std::getenv("ZHOUZHU_RIVER_PACKAGE")) {
         std::string bytes,text; gen_core::read_file(std::string(dir)+"/terrain.bin",bytes); gen_core::read_file(std::string(dir)+"/rivers.tsv",text);
         WorldGrid actual;
@@ -85,20 +106,6 @@ void test_source_rivers() {
         // 分享截图旁旧逻辑在这一对实包坐标：源地形 +0.079 m，游戏地面 -14.119 m。
         const auto wall_a=world.sample_raw(24612,-32356), wall_b=world.sample_raw(24614,-32356);
         std::printf("6068 wall: source_delta=%.9f terrain_delta=%.9f\n",actual.height_at(24614,-32356)-actual.height_at(24612,-32356),wall_b.top-wall_a.top);
-        auto old_segment=[&](double x) {
-            RiverHit hits[WorldRivers::MAX_HITS];
-            const int count=r.near(x,-32356,hits,WorldRivers::MAX_HITS);
-            for(int k=0;k<count;++k) if(hits[k].stem==116) return hits[k].segment;
-            return -1;
-        };
-        double lo=24612,hi=24614;
-        const int segment=old_segment(lo);
-        check(segment>=0 && segment!=old_segment(hi),"实包回归仍覆盖旧河段切换位置");
-        for(int k=0;k<40;++k) {
-            const double mid=(lo+hi)*.5;
-            if(old_segment(mid)==segment) lo=mid; else hi=mid;
-        }
-        const double boundary=(lo+hi)*.5;
         const double jump=world.sample_raw(boundary+1e-5,-32356).top-world.sample_raw(boundary-1e-5,-32356).top;
         std::printf("6068 old switch x=%.9f new_jump=%.12f m / .00002 m\n",boundary,jump);
         check(std::abs(jump)<.001,"6068实际候选切换点没有高度阶跃，保留连续谷坡");
