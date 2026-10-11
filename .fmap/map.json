@@ -549,12 +549,13 @@
     {
       "id": "world-grid",
       "label": "岛群栅格",
-      "detail": "岛群 100 m 栅格（terrain.bin v1–v5）：高程、岸距、岛号、地表、水文、河道、地形区；v5 起另有赋存场（field_at 双线性品位）与片号（patch_at）。",
+      "detail": "读取terrain.bin v1–v5及v8源地貌的100m栅格：高程、岸距、岛号、地表、水文、河道、地形区及赋存场；field_at双线性品位与patch_at片号查询保持。源高程以查询语义岛ID对应的16点Catmull-Rom权重归一，支持点以零权重进出，保留单岛插值与原格锚点；岸距/岛ID为源字段，虚空延拓不代表新增陆地。旧包保留旧行为。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "ctest world_grid / world 2051",
+      "evidence": "93866a5；terrain_island_height独立原生检查18项0失败，两轴格线支持切换跳差0.028124571→0米；最终主项目18项0失败；44b39dd六细版/45资产与指定三图GPU验收通过，见docs/seed42-geometry-verification.json。",
       "sources": [
         "src/world_grid.h",
-        "src/world_grid.cpp"
+        "src/world_grid.cpp",
+        "tests/terrain_island_checks.inc"
       ],
       "since": "e11"
     },
@@ -576,13 +577,15 @@
     {
       "id": "terrain-tile",
       "label": "分块地面",
-      "detail": "TileLayout四叉树分块顶面、崖壁、岛底、裙边与叶块碰撞。源河亚格切分后的顶点从真实连续地面取差分单位法线，厘米级河槽使用相应小尺度，保留纵横坡；法线修复不改顶点位置或碰撞几何。",
+      "detail": "四叉树分块顶面、崖壁、岛底、裙边与碰撞；保留源河亚格切分的真实单位法线及连续岩性调色。源岛身份边界分别裁切并闭合，粗岛底仅用于完整同岛区域；块边裙边向岛体内覆盖同岛邻级底线的有限包络，不连接异岛或重设原底场。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "595409c；20米/0.02米源河单位法线与位置/碰撞检查通过，最终联合36662项0失败。ef91ef0着色20项与6068指定截图GPU三视角通过。诊断另见近河/跨LOD共享位置法线差，未纳入本次修复。",
+      "evidence": "595409c源河法线与ef91ef0岩性色20项及6068指定GPU三视角已验。7e03e1b的terrain_seams独立原生检查9项由5失败变0；旧6070缓存107块/218边跨岛底面0，最大裸底缝241.798818→0.000030518米。源6d4b081与数据44b39dd已联合验收，三图GPU旧U开口/连接尖柱消失；共享法线差与厘米级顶面裸缝未修复。",
       "sources": [
         "src/terrain_tile.h",
         "src/terrain_tile.cpp",
-        "tests/terrain_normal_checks.inc"
+        "tests/terrain_normal_checks.inc",
+        "tests/terrain_color_checks.inc",
+        "tests/terrain_seam_checks.inc"
       ],
       "since": "e11"
     },
@@ -2045,12 +2048,15 @@
     },
     {
       "id": "skyisle-territory",
-      "label": "势力范围（生成器）",
-      "detail": "skyisle-gen island/territory.py 与 _fit_territory：与每个邻群按等效半径 √(陆地/π) 分界、各退 gap/2（3 km）；照旧摆、越界才重摆；IS-terr（硬）/ IS-terr-gap（软）。没碰到约束的群产物逐字节不变。",
+      "label": "共享群界容量与布局（生成器）",
+      "detail": "C++容量压力共同求解球面成对群界，按真实岛足迹约束领地与适用间距；复用转角/伸缩适配副岛。保留s03面积输入A_i、群心与既有cap/gap，允许布局改变陆格位置和数量；不声称旧新原生掩膜不变。",
       "tag": "外部：skyisle-gen",
-      "evidence": "skyisle-gen 7e5a919：全行星重摆 67%，34 群仍越线；重摆的 IS-area 全达标；2051 产物逐字节不变",
+      "evidence": "6d4b081/版本12；三seed0硬0软0报警，7pytest通过。7226实际导出0源违例；8000/16026粗版全格pre-camera足迹全邻群safe，45资产SHA绑定44b39dd。",
       "sources": [
-        "docs/PLAN-PLANET.md"
+        "extern/skyisle-gen/core/src/island/territory.cpp",
+        "extern/skyisle-gen/core/src/island/layout.cpp",
+        "extern/skyisle-gen/docs/DESIGN-NOTES.md",
+        "docs/seed42-geometry-verification.json"
       ],
       "since": "e63",
       "parent": "skyisle-core"
@@ -2058,11 +2064,14 @@
     {
       "id": "skyisle-lod",
       "label": "岛群粗版（生成器）",
-      "detail": "skyisle island lod：原生分辨率跑布局 + 地形 + 水系，按块降采样（陆地占比、平均高、最高点、岛号与地表众数、水面占比）；不在粗分辨率上生成——布局随分辨率变（2051 1 km 版岛心差中位 24 km）。",
+      "detail": "原生分辨率完成布局、地形和水系后按块降采样陆占比、高程、岛号、地表与水面。可选请求表从同一次native水系结束阶段捕获节点现有全部档位，不重复生成；空请求保留2km。",
       "tag": "外部：skyisle-gen",
-      "evidence": "skyisle-gen 4e4baf7：8000 群 2 km / 1 km 两份，28 进程约两小时；pytest 粗版与原生陆地一样、岛心原样",
+      "evidence": "a4e2ccd原生接口与Python前端各2pytest通过；44b39dd安装14478新源LOD，1548历史LOD语义索引/负载逐字节保留。全8000/16026实地全格足迹safe，非全星球重新生成。",
       "sources": [
-        "docs/PLAN-PLANET.md"
+        "extern/skyisle-gen/core/src/island/generate.cpp",
+        "extern/skyisle-gen/core/include/skyisle/island/generate.hpp",
+        "extern/skyisle-gen/tests/test_lod_capture.py",
+        "docs/seed42-geometry-verification.json"
       ],
       "since": "e63",
       "parent": "skyisle-core"
@@ -2070,26 +2079,28 @@
     {
       "id": "export-planet",
       "label": "行星包导出",
-      "detail": "tools/export_planet.py <run> <输出>：planet.bin（行星参数头文本、③④⑨ 的逐节点列、粗版量的主峰 / 岸缘 / 势力范围 / 群心到最远陆地、30 张 1° 场——第三层要读的都在）、lods.bin（索引 + 各岛表 + 空格行程编码的格子：最高点、陆地占比、地表、岛号）、weather.bin（P5：8000 群第 0 年的逐日天气，按列 zlib、无损）；--fine 与细版 weather.tsv 对照。只依赖 numpy，游戏运行时不需要它。",
+      "detail": "导出planet.bin行星头、节点列与grid，lods.bin语义索引与各档格负载，weather.bin逐日天气。最终合并只刷新S7226的五列LOD摘要与14478条粗版，S外774/1548保留语义索引和负载；未刷新天气保留语义元数据与数组SHA，不声称WX重打包字节固定。",
       "tag": "工具",
-      "evidence": "planet.bin 8.0 MB（41 列、30 张场）、lods.bin 45.9 MB（8025 份：全行星 2 km + #6329 周围 320 km 的 25 份 500 m）、weather.bin 9.5 MB（与细版逐位相同）",
+      "evidence": "44b39dd：45安装文件SHA核对；8000/16026实地全格径向足迹在相机变换前覆盖63992000有向邻群对，0越界/0未证，最小内侧余量0.261276m。指定GPU三图通过，非8000群逐群像素验收。",
       "sources": [
         "tools/export_planet.py",
         "game/planet/seed42/planet.bin",
         "game/planet/seed42/lods.bin",
-        "game/planet/seed42/weather.bin"
+        "game/planet/seed42/weather.bin",
+        "docs/seed42-geometry-verification.json"
       ],
       "since": "e63"
     },
     {
       "id": "planet-data",
       "label": "行星包读取与查询",
-      "detail": "PlanetData：parse_planet / parse_lods（或 load_files）；node(k)、column(名字)、grid(名字).sample(纬, 经)；nearest_node、nodes_within（2° 经纬格分桶）、node_distance_m；lod(节点, 最大格距) 按需解一份（字节留在内存）。",
+      "detail": "无Godot依赖的行星包与粗版读取。先验证整包索引、节点和格记录，再一次替换全部档位；字节快照与节点代次在同一锁内获取，仅目标节点更新代次。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "core：8000 群与历法、开局那群 #6329 的邻群（#6327 84 km）、每群有粗版、开局那群的 500 m 粗版与仓库里的细版是同一个群、500 m 那一圈 25 群",
+      "evidence": "坏格记录RED2失败→GREEN0；三档替换/邻群保留/不可变旧快照/整包拒绝主story_lods22项通过。5d51d9d；最终core四组57项0失败（story_lods22）。同DLL无头25项0失败，exit0/5.560068s/timeout300未触发；限唯一6070 attached普通mesh与缓存行为，不含真实新源GPU像素。",
       "sources": [
         "src/planet_data.h",
-        "src/planet_data.cpp"
+        "src/planet_data.cpp",
+        "tests/story_lod_checks.inc"
       ],
       "since": "e63"
     },
@@ -2206,9 +2217,9 @@
     {
       "id": "planet-view",
       "label": "PlanetView 行星的画面",
-      "detail": "每帧按相机（轨道相机给双精度的位置）用双精度算 c、R_c、δ(c)、相机的经纬度与行星系的局部系，设 planet_curve_* 全局参数；远处的群按双精度摆刚体变换；远近平面与压法随相机的高（P2）。",
+      "detail": "每帧按双精度相机位置计算行星曲率、相机经纬度与局部系，设置planet_curve_*参数、群双精度刚体变换和随高度变化的远近平面/压法。启动读取world/lods；add_lod_file仅在整包成功载入后记录该路径实际更新的节点，缓存可用性以完整bundle成功加载为准。",
       "tag": "场景角色",
-      "evidence": "dev_tools_e2e 在 50 km 高空锚定、经纬度对；planet_shots 全组",
+      "evidence": "同DLL无头目标bundle加载与full_lods extra_lods重入通过。5d51d9d；最终core四组57项0失败（story_lods22）。同DLL无头25项0失败，exit0/5.560068s/timeout300未触发；限唯一6070 attached普通mesh与缓存行为，不含真实新源GPU像素。",
       "sources": [
         "src/planet_view.h",
         "src/planet_view.cpp",
@@ -2231,25 +2242,26 @@
     {
       "id": "far-group-mesh",
       "label": "远处岛群的低模",
-      "detail": "按一份粗版建顶面（角上的高 = 相邻实地格块内最高点的平均，岸上取岸缘）、崖壁、倒锥的岛底（与游戏里的岛体同一式：龙骨 25·√最深岸距，连夹龙骨：岛底不低于云带顶之上 1000 m；粗版的 keel_m 是崖脚高程，不用）；顶点按真球面精确弯好、法线按局部系转，带海拔与季相份额。",
+      "detail": "按粗版实地格建顶面、岸壁与倒锥岛底，顶点按球面弯曲、法线按局部系转。公共几何角保留每座岛独立角点，顶面均值、岸距传播、岛底、法线、颜色和季相只读取本岛；身份边各自闭壁，不平均高低岛或推测粗格内真实缺口。岛底沿用厚岛体与夹龙骨规则。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "core：2049 500 m 7.4 万顶点 12.4 万面、朝外、岛底最深 −2500 以下且在 −4000 以上、按真球面下弯；粗版 4684 岛底 −5172 → −3732",
+      "evidence": "41582a4；far_islands独立原生检查8项由3失败变0，跨岛顶面31→0、底面20→0、身份边壁面三角0→32；单岛全部属性与索引逐字节不变。7226/14478新LOD与774/1548保留语义索引/负载全邻群证书safe，指定三图GPU通过；不代表全行星像素验收。",
       "sources": [
         "src/far_group_mesh.h",
-        "src/far_group_mesh.cpp"
+        "src/far_group_mesh.cpp",
+        "tests/far_island_checks.inc"
       ],
       "since": "e68"
     },
     {
       "id": "far-groups",
       "label": "FarGroups 远处的岛群",
-      "detail": "相机 600 km 内的群（锚除外）在后台（PlanetJobs 的池，通道 0）按粗版建低模，280 km 内 500 m、以外 2 km；每帧按 PlanetView 的刚体变换摆上去、按视锥侧面自己剔；GroupStream 载入了的群、地面挂齐后把低模藏起来；far_group.gdshader 按各群的简化版海拔表换季积雪；不投影、不碰撞。",
+      "detail": "相机 600 km 内的群（锚除外）在后台（PlanetJobs 的池，通道 0）按粗版建低模，280 km 内 500 m、以外 2 km；每帧按 PlanetView 的刚体变换摆上去、按视锥侧面自己剔；GroupStream 载入了的群、地面挂齐后把低模藏起来；far_group.gdshader 按各群的简化版海拔表换季积雪；不投影、不碰撞。按粗版在后台建远景网格。普通网格与替身均按节点代次刷新，保留旧可见网格到新结果接管；丢弃过时代次或档位结果，同键收回后重交，其他节点的当前排队结果不重复取消。",
       "tag": "场景角色",
-      "evidence": "planet_shots：19 群 34.7 万面；主峰上望见 205 km 外的 2049、深冬 2049 积雪；50 km 高空帧时 0.7 ms",
+      "evidence": "attached普通mesh900→300→500、完成旧1700未接管、同键收回后新结果重交通过。节点自动改名已记录，不按名称/高度挑结果。5d51d9d；最终core四组57项0失败（story_lods22）。同DLL无头25项0失败，exit0/5.560068s/timeout300未触发；限唯一6070 attached普通mesh与缓存行为，不含真实新源GPU像素。",
       "sources": [
-        "src/far_groups.h",
+        "game/shaders/far_group.gdshader",
         "src/far_groups.cpp",
-        "game/shaders/far_group.gdshader"
+        "src/far_groups.h"
       ],
       "since": "e68"
     },
@@ -2550,9 +2562,9 @@
     {
       "id": "group-provider",
       "label": "GroupProvider 岛群包从哪来",
-      "detail": "仓库里的细版 res://planet/seed42/groups/<节点>（只算 seed42 的世界；开局那群与邻群）→ 世界存档目录 groups/<节点> → 后台生成（P6e 起在进程内：生成器的 C++ 核心库；backend = python 时照旧起子进程）；同时一件生成岛群的活，瞬移 > 焦点 60 km > 船头 150 km（预取）；缓存键 stamp.json 只读出来；生存世界另补 600 km 内的粗版；进树时把 pending 的世界配到场景各节点。",
+      "detail": "选择仓库或世界目录细包并按需生成。full_lods故事缓存须由PlanetView成功载入含目标节点的完整粗包后才可用，FAILED或旧READY记录不能绕过；非full_lods细版场景保留原规则。正式包优先规则不变，旧故事目录由版本key隔离。",
       "tag": "场景角色",
-      "evidence": "planet_jump_e2e、planet_world_e2e",
+      "evidence": "无头cache gate九项通过：坏头/坏格记录/错节点不开放，成功目标bundle与full_lods重入开放，非full_lods无PV行为保留。5d51d9d；最终core四组57项0失败（story_lods22）。同DLL无头25项0失败，exit0/5.560068s/timeout300未触发；限唯一6070 attached普通mesh与缓存行为，不含真实新源GPU像素。",
       "sources": [
         "src/group_provider.h",
         "src/group_provider.cpp"
@@ -2573,25 +2585,26 @@
     {
       "id": "zhouzhu-gen",
       "label": "生成包装脚本 zhouzhu_gen.py",
-      "detail": "group / lods / world 三个子命令；在自己的进程里 import 生成器与导出脚本、不画预览图、不写字节码；包先写 .tmp 再改名，stamp.json 记缓存键；进度一行一个 JSON；写粗版时顺带写 lods/<节点>.wx。P6e 起游戏默认不调它，留作对照（写出的与进程内逐字节相同）。",
+      "detail": "显式Python前端只配置、调用C++生成器和写产物。透传请求的粗版格距，复用同一次native生成返回的各档和天气，不另跑岛群算法；生存默认2km。",
       "tag": "工具",
-      "evidence": "seed42 #3000 的五份与 skyisle island + export_skyisle 逐字节相同；一群 3.4 s、新世界 4.9 s",
+      "evidence": "真实粗包与天气writer定向2pytest通过，证明一次调用及默认/三档输出。",
       "sources": [
         "tools/zhouzhu_gen.py",
-        "tools/export_planet.py"
+        "tests/test_story_lod_export.py"
       ],
       "since": "e81"
     },
     {
       "id": "world-session",
       "label": "世界与存档目录",
-      "detail": "世界 = 种子 + 生成器版本 + user://worlds/<世界>/（world.json、planet/、gen/、groups/、lods/、memory/、settlements/、logs/）；剧情 seed42 只在 F2 进去时有存档目录；WorldMaker 新建世界。",
+      "detail": "世界 = 种子 + 生成器版本 + user://worlds/<世界>/（world.json、planet/、gen/、groups/、lods/、memory/、settlements/、logs/）；剧情 seed42 只在 F2 进去时有存档目录；WorldMaker 新建世界。当前故事key为seed42-valley-v3-6d4b081，隔离历史细/粗缓存混用，保留用户旧世界目录。",
       "tag": "引擎构件",
       "sources": [
         "src/world_session.h",
         "src/world_session.cpp"
       ],
-      "since": "e81"
+      "since": "e81",
+      "evidence": "44b39dd新key与45安装资产同次提交；缓存加载/重入无头25项通过，未删除用户世界。"
     },
     {
       "id": "map-browser",
@@ -2990,15 +3003,18 @@
     {
       "id": "skyisle-core",
       "label": "生成器核心库（子模块）",
-      "detail": "extern/skyisle-gen提供行星与岛群C++核心。1fad421（ISLAND_VERSION11）以源线段欧氏谷距和连续参数场减少D8折角；支持圆guard连续回退双线性masked地面，阻止跨湖/虚空，复杂岸界保留部分D8误差。岸侵蚀不低于原对应源平岸水面；原src/dist保留河/溪涧分类、床高及宽深，汇流/receiver不变。此次正式接入范围四细版与10相关LOD，未恢复已撤回实验。",
+      "detail": "extern/skyisle-gen提供行星与岛群C++核心。1fad421（ISLAND_VERSION11）以源线段欧氏谷距和连续参数场减少D8折角；支持圆guard连续回退双线性masked地面，阻止跨湖/虚空，复杂岸界保留部分D8误差。岸侵蚀不低于原对应源平岸水面；原src/dist保留河/溪涧分类、床高及宽深，汇流/receiver不变。该谷距历史接入四细版/10LOD。最终6d4b081/版本12新增共享容量群界与真实岛间距校验，仍保留guard边界误差；未恢复撤回实验。",
       "tag": "外部：skyisle-gen",
-      "evidence": "1fad421/版本11；自检1/1、四群各32项全过及重复产物哈希/600年天气、三seed全0、pytest3项通过。6068固定步差8054→285；屏障801→0米，原源宽深/分类/汇流契约保留。",
+      "evidence": "1fad421/版本11；自检1/1、四群各32项全过及重复产物哈希/600年天气、三seed全0、pytest3项通过。6068固定步差8054→285；屏障801→0米，原源宽深/分类/汇流契约保留。最终6d4b081三seed0/0/0、7pytest通过；44b39dd接入六细版和7226节点现有全部LOD。",
       "sources": [
         "extern/skyisle-gen/core/CMakeLists.txt",
         "CMakeLists.txt",
         "extern/skyisle-gen/core/src/island/river.cpp",
         "extern/skyisle-gen/core/src/island/valley_profile.hpp",
-        "extern/skyisle-gen/core/tests/selftest.cpp"
+        "extern/skyisle-gen/core/tests/selftest.cpp",
+        "extern/skyisle-gen/core/src/island/territory.cpp",
+        "extern/skyisle-gen/core/src/island/layout.cpp",
+        "docs/seed42-geometry-verification.json"
       ],
       "since": "e99"
     },
@@ -3029,26 +3045,27 @@
     {
       "id": "gen-core",
       "label": "进程内生成的编排",
-      "detail": "一个世界的行星层（planet::run → run_society，⑧ 跳过 → planet_view）按配置与种子缓存两份（约 50 MB）；make_group：拆开 island::generate 的几步、水系之后顺带取粗版，写五份 + stamp.json（先 .tmp 再改名）；make_lod；make_world：planet/ 四份 → 出生群（⑨ 开局候选 A）→ world.json。",
+      "detail": "游戏与命令行共用的进程内生成编排。同一次原生地形和水系结束后、资源与聚落之前，捕获请求的现有全部粗版档；空格距表保留2km。各档粗版与天气成功写出后才公布细版包。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "单测 gen_seed42：拆开来生成与 island::generate、顺带的粗版与单跑粗版逐字节相同；一群中位 0.80 s、最长 2.43 s（Release、4 线程），新建世界 2 s",
+      "evidence": "a4e2ccd源可选接口与Python导出各2pytest通过。5d51d9d；最终core四组57项0失败（story_lods22）。同DLL无头25项0失败，exit0/5.560068s/timeout300未触发；限唯一6070 attached普通mesh与缓存行为，不含真实新源GPU像素。",
       "sources": [
         "src/gen_core.h",
         "src/gen_core.cpp",
-        "cmake/zhouzhu_gen/CMakeLists.txt"
+        "tests/story_lod_checks.inc"
       ],
       "since": "e101"
     },
     {
       "id": "gen-export",
       "label": "生成器产物 → 游戏文件（C++）",
-      "detail": "生成器产物转换为游戏数据。新增独立 ZZWG v8：源浮点岸距、岩性、崖层方向/高度及第七层盐赋存；保存原始地貌记录。v1–v5 继续读取，撤回的河流 v6/v7 不复用。补齐盐井村、中转站等已有源名称映射；不重生成现有开局包。",
+      "detail": "生成器产物转换为游戏数据。新增独立 ZZWG v8：源浮点岸距、岩性、崖层方向/高度及第七层盐赋存；保存原始地貌记录。v1–v5 继续读取，撤回的河流 v6/v7 不复用。补齐盐井村、中转站等已有源名称映射；当前六细版从新源导出；虚空最近高程/岛号延拓不代表新增陆地，岸距决定实地。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "387d8b7；24 项原生恢复检查与 Python 导出契约检查通过。当前结论是对应字段逐格一致，不沿用历史整包逐字节一致的结论。显示范围和配置版本限制见 docs/NONRIVER-DATA.md。",
+      "evidence": "387d8b7；24 项原生恢复检查与 Python 导出契约检查通过。当前结论是对应字段逐格一致，不沿用历史整包逐字节一致的结论。显示范围和配置版本限制见 docs/NONRIVER-DATA.md。最终六新源/新导出mask、ID与坐标exactmatch；并非旧新源掩膜保留。",
       "sources": [
         "src/gen_export.h",
         "src/gen_export.cpp",
-        "extern/zlib"
+        "extern/zlib",
+        "docs/seed42-geometry-verification.json"
       ],
       "since": "e101"
     },
@@ -3586,13 +3603,14 @@
     {
       "id": "world-session-start",
       "label": "开局配置",
-      "detail": "故事世界节点6068、邻群6067、第85日；村026附近河岸出生。故事缓存seed42-valley-v2-1fad421隔离新版地形，旧seed42-reach-v1-6431746目录保留；生存世界使用自己的落点。",
+      "detail": "故事固定6068岛1(24790,-32330)、邻群6067、初始85日；高度从真实地面取。码头1/28有效，28按新sites为岛8；当前出生不在村026旁。故事key隔离旧缓存，生存落点规则保留。",
       "tag": "引擎构件",
-      "evidence": "最终正式包无头11.109秒、exit0：真实6068出生、地面碰撞/相机、85日、日期水情恢复、LOD106↔141、6067往返、元数据加载与场景重入全过。31文件安装SHA及源导出契约通过。",
+      "evidence": "44b39dd六细版45资产；新源固定出生地面/碰撞支持原生探针exit0，不是玩家物理E2E。先前版本11.109s开局E2E属历史证据；本次source第113天三图GPU范围另列。",
       "sources": [
         "src/story_start.h",
         "src/world_session.cpp",
-        "src/expedition.cpp"
+        "src/expedition.cpp",
+        "docs/seed42-geometry-verification.json"
       ],
       "since": "e120",
       "parent": "world-session"
@@ -4312,17 +4330,19 @@
     {
       "from": "world-terrain",
       "to": "world-grid",
-      "label": "高程 / 岸距 / 地表",
+      "label": "同岛连续高程与源岸距",
       "chains": [
-        "real-scale-world"
+        "real-scale-world",
+        "source-island-closed-mesh"
       ]
     },
     {
       "from": "terrain-tile",
       "to": "world-terrain",
-      "label": "取样",
+      "label": "各岛顶底与边界取样",
       "chains": [
-        "real-scale-world"
+        "real-scale-world",
+        "source-island-closed-mesh"
       ]
     },
     {
@@ -4336,9 +4356,10 @@
     {
       "from": "world-node",
       "to": "terrain-tile",
-      "label": "选块 / 块网格",
+      "label": "粗细地形块与有限裙边",
       "chains": [
-        "real-scale-world"
+        "real-scale-world",
+        "source-island-closed-mesh"
       ]
     },
     {
@@ -6137,9 +6158,10 @@
     {
       "from": "planet-view",
       "to": "planet-data",
-      "label": "行星包",
+      "label": "完整粗包与节点代次",
       "chains": [
-        "planet"
+        "planet",
+        "same-source-story-lods"
       ]
     },
     {
@@ -6185,17 +6207,20 @@
     {
       "from": "far-groups",
       "to": "planet-view",
-      "label": "群心相对相机的刚体变换",
+      "label": "群心相对相机的刚体变换与最新LOD代次",
       "chains": [
-        "planet"
+        "planet",
+        "same-source-story-lods"
       ]
     },
     {
       "from": "far-groups",
       "to": "far-group-mesh",
-      "label": "粗版 → 低模",
+      "label": "最新同源粗版的独立岛体网格",
       "chains": [
-        "planet"
+        "planet",
+        "source-island-closed-mesh",
+        "same-source-story-lods"
       ]
     },
     {
@@ -6209,9 +6234,10 @@
     {
       "from": "far-group-mesh",
       "to": "planet-data",
-      "label": "粗版",
+      "label": "粗版实地格与岛身份",
       "chains": [
-        "planet"
+        "planet",
+        "source-island-closed-mesh"
       ]
     },
     {
@@ -6727,7 +6753,10 @@
     {
       "from": "group-provider",
       "to": "planet-view",
-      "label": "add_lod_file"
+      "label": "整包载入与目标缓存gate",
+      "chains": [
+        "same-source-story-lods"
+      ]
     },
     {
       "from": "far-groups-stand-ins",
@@ -7706,6 +7735,22 @@
       "label": "真实出生落点",
       "chains": [
         "seed42-source-rivers-6068"
+      ]
+    },
+    {
+      "from": "group-provider",
+      "to": "gen-core",
+      "label": "现有全部档位与同源生成",
+      "chains": [
+        "same-source-story-lods"
+      ]
+    },
+    {
+      "from": "far-groups",
+      "to": "planet-data",
+      "label": "同锁粗版快照与代次",
+      "chains": [
+        "same-source-story-lods"
       ]
     }
   ],
@@ -9961,7 +10006,7 @@
     {
       "id": "seed42-source-rivers-6068",
       "title": "源河网与6068河岸开局",
-      "story": "玩家在6068村落附近真实河岸出生，观察随日期变化的河水，跨岛后回来仍看到对应日期的水情。",
+      "story": "玩家在6068岛1固定坐标的真实河岸出生，观察随日期变化的河水，跨岛后回来仍看到对应日期的水情。",
       "date": "2026-10-06",
       "color": "#b8a12a",
       "commits": "20a5efe..ef91ef0",
@@ -9984,7 +10029,7 @@
           ]
         },
         {
-          "text": "玩家在6068村026附近真实河岸出生，河谷连续衔接，切分地面保留真实坡向，露岩颜色跨原格类别连续过渡",
+          "text": "玩家在6068岛1固定坐标真实河岸出生，河谷连续衔接，切分地面保留真实坡向，露岩颜色跨原格类别连续过渡",
           "nodes": [
             "world-session-start",
             "expedition",
@@ -10028,6 +10073,133 @@
         "world-river-water",
         "world-node",
         "terrain-tile-ground"
+      ]
+    },
+    {
+      "id": "source-island-closed-mesh",
+      "title": "切片：独立岛体闭合与岛底接缝",
+      "story": "玩家靠近不同高度的浮空岛时，各岛按自己的地面与岛底分别闭合，远近地形块之间的岛底接缝由同岛裙边覆盖。",
+      "date": "2026-10-11",
+      "color": "#8d7bea",
+      "commits": "93866a5/7e03e1b/41582a4/6d4b081/44b39dd",
+      "steps": [
+        {
+          "text": "世界载入共享群界内合法摆放的源岛，细版与现有各档粗版配套还原",
+          "nodes": [
+            "skyisle-core",
+            "skyisle-territory",
+            "skyisle-lod",
+            "gen-export",
+            "export-planet"
+          ]
+        },
+        {
+          "text": "读入源地貌的高程、岸距和岛身份，连续地面取样保持各岛的独立高度",
+          "nodes": [
+            "world-grid",
+            "world-terrain",
+            "world-terrain-body"
+          ]
+        },
+        {
+          "text": "接近海岸或相邻岛时，各岛分别生成顶面、底面和闭合壁，保持自己的岛体",
+          "nodes": [
+            "terrain-tile",
+            "world-terrain",
+            "world-terrain-body"
+          ]
+        },
+        {
+          "text": "随着玩家移动切换远近地形块，同岛相邻级别的底线由有限裙边覆盖",
+          "nodes": [
+            "world-node",
+            "terrain-tile"
+          ]
+        },
+        {
+          "text": "远处粗版按各岛分别还原顶面、岛底和身份边闭壁，保留各岛的独立高度",
+          "nodes": [
+            "planet-data",
+            "far-group-mesh",
+            "far-groups"
+          ]
+        }
+      ],
+      "nodes": [
+        "world-grid",
+        "terrain-tile",
+        "far-group-mesh",
+        "skyisle-territory",
+        "skyisle-lod",
+        "skyisle-core",
+        "gen-export",
+        "export-planet",
+        "world-terrain",
+        "world-terrain-body",
+        "world-node",
+        "planet-data",
+        "far-groups"
+      ]
+    },
+    {
+      "id": "same-source-story-lods",
+      "title": "切片：故事按需群的细粗地形同源更新",
+      "story": "玩家走近新生成的岛群时，远处轮廓与近处地面一起更新，退出重进后仍加载同一组地形。",
+      "date": "2026-10-11",
+      "color": "#d97a9f",
+      "commits": "a4e2ccd/5d51d9d/44b39dd",
+      "steps": [
+        {
+          "text": "走近尚无细版的群，按该群已经存在的粗版档位排队生成",
+          "nodes": [
+            "group-provider",
+            "gen-core",
+            "zhouzhu-gen"
+          ]
+        },
+        {
+          "text": "一次生成同时交出细版、各档粗版与天气，保留生存模式的单档规则",
+          "nodes": [
+            "gen-core",
+            "zhouzhu-gen"
+          ]
+        },
+        {
+          "text": "该群粗包完整加载成功后，细版才对故事场景可用",
+          "nodes": [
+            "group-provider",
+            "planet-view",
+            "planet-data"
+          ]
+        },
+        {
+          "text": "远处已有地形换成该群的新粗版，后台旧结果不再覆盖新轮廓",
+          "nodes": [
+            "far-groups",
+            "planet-view",
+            "planet-data",
+            "far-group-mesh"
+          ]
+        },
+        {
+          "text": "退出再进时，保存的各档粗版一并读回，与缓存细版继续配套使用",
+          "nodes": [
+            "group-provider",
+            "planet-view",
+            "planet-data"
+          ]
+        }
+      ],
+      "nodes": [
+        "gen-core",
+        "zhouzhu-gen",
+        "group-provider",
+        "planet-view",
+        "planet-data",
+        "far-groups",
+        "world-session",
+        "world-session-start",
+        "far-group-mesh"
       ]
     }
   ],
@@ -13469,6 +13641,102 @@
           "dev-tools-planet",
           "dev-tools-manual",
           "planet-jump-e2e"
+        ]
+      }
+    },
+    {
+      "id": "e127",
+      "type": "slice",
+      "date": "2026-10-11",
+      "title": "切片：独立岛体闭合与岛底接缝",
+      "summary": "玩家靠近不同高度的浮空岛时，各岛按自己的地面与岛底分别闭合，远近地形块之间的岛底接缝由同岛裙边覆盖。",
+      "commits": "93866a5/7e03e1b/41582a4/6d4b081/44b39dd",
+      "chain": "source-island-closed-mesh",
+      "nodes": [
+        "world-grid",
+        "terrain-tile",
+        "far-group-mesh",
+        "skyisle-territory",
+        "skyisle-lod",
+        "skyisle-core",
+        "gen-export",
+        "export-planet",
+        "world-terrain",
+        "world-terrain-body",
+        "world-node",
+        "planet-data",
+        "far-groups"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "world-grid",
+          "terrain-tile",
+          "far-group-mesh",
+          "skyisle-territory",
+          "skyisle-lod",
+          "skyisle-core",
+          "gen-export",
+          "export-planet",
+          "world-terrain",
+          "world-terrain-body",
+          "world-node",
+          "planet-data",
+          "far-groups"
+        ],
+        "updated": [
+          "world-grid",
+          "terrain-tile",
+          "far-group-mesh",
+          "skyisle-territory",
+          "skyisle-lod",
+          "skyisle-core",
+          "gen-export",
+          "export-planet"
+        ]
+      }
+    },
+    {
+      "id": "e128",
+      "type": "slice",
+      "date": "2026-10-11",
+      "title": "切片：故事按需群的细粗地形同源更新",
+      "summary": "玩家走近新生成的岛群时，远处轮廓与近处地面一起更新，退出重进后仍加载同一组地形。",
+      "commits": "a4e2ccd/5d51d9d/44b39dd",
+      "chain": "same-source-story-lods",
+      "nodes": [
+        "gen-core",
+        "zhouzhu-gen",
+        "group-provider",
+        "planet-view",
+        "planet-data",
+        "far-groups",
+        "world-session",
+        "world-session-start",
+        "far-group-mesh"
+      ],
+      "info": {
+        "created": [],
+        "reused": [
+          "gen-core",
+          "zhouzhu-gen",
+          "group-provider",
+          "planet-view",
+          "planet-data",
+          "far-groups",
+          "world-session",
+          "world-session-start",
+          "far-group-mesh"
+        ],
+        "updated": [
+          "gen-core",
+          "zhouzhu-gen",
+          "group-provider",
+          "planet-view",
+          "planet-data",
+          "far-groups",
+          "world-session",
+          "world-session-start"
         ]
       }
     }

@@ -3,8 +3,8 @@
 // 剧情世界（seed42）的开局（地貌与聚落计划 P0，docs/PLAN-LAND.md 第三节 L4、L5；行星计划 D2、D10、D11）：
 // 哪一群出生、钟按哪一群的地方时、开局是一年里的哪天、仓库里带哪几群的细版——都在这一处。
 // 游戏里各节点的缺省（WorldSession、GroupProvider、GroupStream、PlanetView、WorldClock、World、SiteStream、WorldLedger）、
-// 单测、体检工具与 GDScript（StoryStart 类的静态方法）都从这里读；换开局只改这里，再照 README「地貌与聚落 P0」重导仓库里带的包
-// （tools/zhouzhu_gen.cpp 的 group 与 near-lods）、重录 e2e。
+// 单测、体检工具与 GDScript（StoryStart 类的静态方法）都从这里读；变更开局后，
+// 同源刷新仓库细版与各节点现有全部LOD档，再核对相关e2e。
 // 场景 world_seed42.tscn 里的出发码头（开局那群的主码头 #1）、目的码头是这一群的码头号，也跟着开局走。
 // 不含 Godot 头：单测、体检（纯 C++）也用。
 namespace story_start {
@@ -12,7 +12,7 @@ namespace story_start {
 constexpr int SEED = 42; // 世界种子（行星包 game/planet/seed42，存档目录 user://worlds/seed42）
 constexpr int SPAWN_NODE = 6068; // 当前三轮地形竞争 + 连续河段水沙试验的剧情岛群
 constexpr int CLOCK_NODE = 6068; // 钟点 = 这一群的地方时（D10）
-constexpr double SPAWN_X = 24790.0, SPAWN_Z = -32330.0; // 村026旁、主干河岸；高度从真实地面取
+constexpr double SPAWN_X = 24790.0, SPAWN_Z = -32330.0; // 固定剧情出生点；高度从真实地面取
 constexpr double SPAWN_YAW = 1.570796326794897; // 朝西望河
 constexpr int CALENDAR_START = 85; // 开局是一年里的第几天（L5：四月初二，开春第一个晴天；#2051 时是 3）
 constexpr int NEIGHBOR_NODE = 6067; // 新开局群心大圆距离最近的邻群

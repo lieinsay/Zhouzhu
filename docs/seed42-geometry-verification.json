@@ -1,0 +1,1267 @@
+{
+  "schema": "seed42-geometry-verification-v1",
+  "date": "2026-10-11",
+  "status": "verified-for-recorded-geometry-and-render-scope",
+  "source_commit": "6d4b081d30a169b6dbd65e668bd10ad604832dc3",
+  "source_lod_capture_interface_commit": "a4e2ccd9814b47cf0afb4eaecfa52907539a9938",
+  "runtime_commit": "5d51d9db92da0befd08b254f01f4043d5045af43",
+  "game_geometry_commits": [
+    "5fd8354",
+    "93866a5",
+    "7e03e1b",
+    "41582a4"
+  ],
+  "data_commit": "44b39dd8603512a540cc820f1a4de9919d070e3b",
+  "source_rule": {
+    "island_version": 12,
+    "land_frac_cap": 0.35,
+    "summary": "Shared spherical pair boundaries use one jointly solved capacity pressure field. Native physical footprint certification rejects invalid territory/gap layouts; existing turn/stretch can fit otherwise impossible secondary islands. Same native hydro pass supplies all requested existing LOD resolutions.",
+    "preserved_inputs": "s03 land-area allocation A_i, group centres, existing cap and historical applicable gap; not a claim that old/new raster land-cell counts, masks, positions or discrete native area are identical",
+    "source_details": {
+      "path": "extern/skyisle-gen/docs/DESIGN-NOTES.md",
+      "section": "2026-10-11共享群界容量与真实岛内间距（版本12）"
+    }
+  },
+  "refresh_scope": {
+    "status": "complete",
+    "refreshed_nodes": 7226,
+    "refreshed_lod_records": 14478,
+    "preserved_nodes": 774,
+    "preserved_lod_records": 1548,
+    "total_nodes": 8000,
+    "total_lod_records": 16026,
+    "fine_nodes": [
+      6067,
+      6068,
+      6070,
+      6071,
+      6327,
+      6329
+    ],
+    "note": "Only S7226/14478 uses new6d4b081 source. S-outside774/1548 keeps its old payload/index semantics and passes all-neighbour certificates in the new shared domains. The entire planet was not regenerated with6d4b081.",
+    "selection_manifest": {
+      "path": "build/terrain-artifacts/coast-6070/export-manifest.json",
+      "sha256": "27a05ef73b8e0ca7efc074b362f6c967e30fc64e719bdbd01f3e8ccd951cff6b",
+      "bytes": 79586
+    },
+    "source_node_list_sha256": "d539295dc119aa9919c68cd1de50b1ef5ffd65e73e11d01ce49f98c63ef2a52d",
+    "export_run": {
+      "exit_code": 0,
+      "seconds": 5668.719000000012,
+      "timeout_seconds": 14400,
+      "stage": "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-final-6d4b081",
+      "generator_commit": "6d4b081d30a169b6dbd65e668bd10ad604832dc3",
+      "result": {
+        "path": "build/terrain-artifacts/coast-6070/export-final-result.json",
+        "sha256": "d7fa9dece68da03ed47165211cee7c09e9b2af0b6f65028e668aa4837c74a293",
+        "bytes": 247
+      },
+      "log": {
+        "path": "build/terrain-artifacts/coast-6070/export-final.log",
+        "sha256": "eb5a6381d6b727fe6b17b4d1daaadd68839c911098f8b32c96e44ff56f381602",
+        "bytes": 330516
+      }
+    },
+    "stage_verification": {
+      "nodes": 7226,
+      "lod_records": 14478,
+      "fine_nodes": [
+        6067,
+        6068,
+        6070,
+        6071,
+        6327,
+        6329
+      ],
+      "source_territory_violations": 0,
+      "maximum_violation_km": -0.0005575033213851555,
+      "selected_lod_measurement_payloads_unchanged": true,
+      "expected_node_list_sha256": "d539295dc119aa9919c68cd1de50b1ef5ffd65e73e11d01ce49f98c63ef2a52d",
+      "result": {
+        "path": "build/terrain-artifacts/coast-6070/export-final-6d4b081/stage-verification.json",
+        "sha256": "1fc293067d8aa9ef3b11da4265a75b71227a578633812acecb990377ac0a9e4b",
+        "bytes": 380
+      },
+      "run": {
+        "command": [
+          "D:\\Project\\Zhouzhu\\build\\river-python\\Scripts\\python.exe",
+          "-B",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\verify_stage_complete.py",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-final-6d4b081"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "timeout_seconds": 300,
+        "elapsed_seconds": 0.1090000000258442,
+        "metadata": {
+          "path": "build/terrain-artifacts/coast-6070/stage-final-run-result.json",
+          "sha256": "7434a28aba41e7f2a834d243f41b213a7f267b0bd888ba2424762b119290f31d",
+          "bytes": 399
+        }
+      },
+      "verifier": {
+        "path": "build/terrain-artifacts/coast-6070/verify_stage_complete.py",
+        "sha256": "07ce44905964b5bb5175a1813103dfc506f6ab58b4c7257365b4a0c3ca9048b0",
+        "bytes": 1956
+      }
+    }
+  },
+  "generator_checks": {
+    "source_commit": "6d4b081",
+    "seeds": [
+      {
+        "seed": 42,
+        "hard_failures": 0,
+        "soft_failures": 0,
+        "warnings": 0,
+        "exit_code": 0,
+        "log": {
+          "path": "build/terrain-artifacts/coast-generator/generator-final-layout-check-seed42.log",
+          "sha256": "b3fa831f1c705bb54dd10b9bbf0e105902eb2bde5cce90a4b4f952f6a0dbef94",
+          "bytes": 2011
+        }
+      },
+      {
+        "seed": 7,
+        "hard_failures": 0,
+        "soft_failures": 0,
+        "warnings": 0,
+        "exit_code": 0,
+        "log": {
+          "path": "build/terrain-artifacts/coast-generator/generator-final-layout-check-seed7.log",
+          "sha256": "b3fa831f1c705bb54dd10b9bbf0e105902eb2bde5cce90a4b4f952f6a0dbef94",
+          "bytes": 2011
+        }
+      },
+      {
+        "seed": 2026,
+        "hard_failures": 0,
+        "soft_failures": 0,
+        "warnings": 0,
+        "exit_code": 0,
+        "log": {
+          "path": "build/terrain-artifacts/coast-generator/generator-final-layout-check-seed2026.log",
+          "sha256": "b3fa831f1c705bb54dd10b9bbf0e105902eb2bde5cce90a4b4f952f6a0dbef94",
+          "bytes": 2011
+        }
+      }
+    ],
+    "pytest": {
+      "passed": 7,
+      "seconds": 26.51,
+      "log": {
+        "path": "build/terrain-artifacts/coast-generator/generator-final-layout-pytest-green.log",
+        "sha256": "ca874e2324a6e39b1f5a0f2aac2872fcaa030eaae6f0ab06f46030c2f0a08cf2",
+        "bytes": 101
+      }
+    }
+  },
+  "native_runtime": {
+    "exit_code": 0,
+    "seconds": 2.1089999999967404,
+    "timeout_seconds": 300,
+    "tests": [
+      "terrain_island_height",
+      "terrain_seams",
+      "far_islands",
+      "story_lods"
+    ],
+    "exe_sha256": "f43faa0ebd8b606faba1a4b97008fa958a8f1f215fef9254ba3213fa47b9b97c",
+    "checks": 57,
+    "failures": 0,
+    "checks_by_group": {
+      "terrain_island_height": 18,
+      "terrain_seams": 9,
+      "far_islands": 8,
+      "story_lods": 22
+    },
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/core-final-result.json",
+      "sha256": "c37733332b80f43c87f7a5e5e1bf1ab58a197b0b2c2db9883666a983243a01f1",
+      "bytes": 278
+    },
+    "log": {
+      "path": "build/terrain-artifacts/coast-6070/core-final.log",
+      "sha256": "7990c7a1cbd927f172c3224757d7ef7f260553cb7c828b96da8741c5bcea8d41",
+      "bytes": 655
+    }
+  },
+  "headless_runtime": {
+    "exit_code": 0,
+    "elapsed_seconds": 5.560068,
+    "timeout_seconds": 300,
+    "timed_out": false,
+    "dll_sha256": "b784133ac415e67f997ad76d090fb4ef470381b2e991eda5e6fd9c3a85554d3d",
+    "checks": 25,
+    "failures": 0,
+    "scope": "合成6070唯一attached普通MeshInstance3D更新900→300→500，完成旧1700不接管，cache gate九项和重入；测量mesh visible=false，不是GPU像素验收。",
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/story-lod-headless-result.json",
+      "sha256": "b0659ba6028e0ec02e9d4ca8aa339276c6a67fc70d7599d790ed362ff6e136ad",
+      "bytes": 806
+    },
+    "checks_result": {
+      "path": "build/terrain-artifacts/coast-6070/story-lod-probe/result.json",
+      "sha256": "243d59f65897e1b4117421c407ad29a805b4dc9539c3b2ec8c4ce32af826de1c",
+      "bytes": 3719
+    },
+    "log": {
+      "path": "build/terrain-artifacts/coast-6070/story-lod-headless.log",
+      "sha256": "6462068273270a31f7378ea8d40525fa85b5abc1083ed4e354768567f9a37e8f",
+      "bytes": 2114
+    },
+    "godot_log": {
+      "path": "build/terrain-artifacts/coast-6070/story-lod-godot.log",
+      "sha256": "8dcc36dc08f9164cb192fe06cccfef7faa70416161ce76a29f41f3a20a402464",
+      "bytes": 2080
+    }
+  },
+  "source_to_export_identity": {
+    "source_generator": "6d4b081",
+    "nodes": [
+      6070,
+      6071,
+      6068,
+      6067,
+      6329,
+      6327
+    ],
+    "physical_mask_changes_total": 0,
+    "land_identity_changes_total": 0,
+    "mask_definition": "源island_id>=0且height>0；导出shore>0。虚空的最近ID/height外推不算新增陆地。",
+    "coordinate_assertions": {
+      "shape_equal": true,
+      "resolution_abs_tolerance_m": 1e-09,
+      "origin_abs_tolerance_m": 1e-08,
+      "export_center_origin_rule": "x0=1000*origin_x_km+res/2; z0=-1000*origin_y_north_km+res/2"
+    },
+    "records": [
+      {
+        "node": 6070,
+        "rows": 1342,
+        "cols": 933,
+        "land_cells": 309128,
+        "physical_mask_changes": 0,
+        "land_identity_changes": 0,
+        "terrain_sha256": "d0824fcb42ab795584f5fa2ee5a72c605d7fa86e27a0c54f3354cffd47bd03c7",
+        "source_land_mask_sha256": "2554e62d83d567ef0e75f6291fd3b84312fcf7432734a627c0620f2397d5956e",
+        "export_land_mask_sha256": "2554e62d83d567ef0e75f6291fd3b84312fcf7432734a627c0620f2397d5956e"
+      },
+      {
+        "node": 6071,
+        "rows": 1002,
+        "cols": 748,
+        "land_cells": 207253,
+        "physical_mask_changes": 0,
+        "land_identity_changes": 0,
+        "terrain_sha256": "70f0e32121c225bdb1d996b187ef764c1b50e995e4d5d7aa7770a2a4f7444a39",
+        "source_land_mask_sha256": "3409ad5c1e43b105042bf583afd47894e7e1ed908acd3ebe1c478d41a8b5a681",
+        "export_land_mask_sha256": "3409ad5c1e43b105042bf583afd47894e7e1ed908acd3ebe1c478d41a8b5a681"
+      },
+      {
+        "node": 6068,
+        "rows": 1394,
+        "cols": 1028,
+        "land_cells": 357219,
+        "physical_mask_changes": 0,
+        "land_identity_changes": 0,
+        "terrain_sha256": "bb194884aa72a8f1e768b419383a43ebfc1b8cb74475cd62c5df28a69ef2d12d",
+        "source_land_mask_sha256": "8dd1ba1026987007a983c904155678df8785843f7ddd23c0ad00134efcde101b",
+        "export_land_mask_sha256": "8dd1ba1026987007a983c904155678df8785843f7ddd23c0ad00134efcde101b"
+      },
+      {
+        "node": 6067,
+        "rows": 1028,
+        "cols": 660,
+        "land_cells": 206462,
+        "physical_mask_changes": 0,
+        "land_identity_changes": 0,
+        "terrain_sha256": "1a2dd010385e4a8a581860cb8cde5536dd04af3448f68d6545d9a229d1026b8e",
+        "source_land_mask_sha256": "5d9617c8d7d0e5a703be54af8d00ba5c92840b49bf0111c9b473010ff6f0f7b9",
+        "export_land_mask_sha256": "5d9617c8d7d0e5a703be54af8d00ba5c92840b49bf0111c9b473010ff6f0f7b9"
+      },
+      {
+        "node": 6329,
+        "rows": 1220,
+        "cols": 1146,
+        "land_cells": 513545,
+        "physical_mask_changes": 0,
+        "land_identity_changes": 0,
+        "terrain_sha256": "8c4dc06d683af30b308b33dee20f9d4f6997ff077c548ddde1e48a4a5f7f588e",
+        "source_land_mask_sha256": "995d56e90ad55573e319e4cb6e017bb5b525e61ae8eaa67c2832c79691e0e087",
+        "export_land_mask_sha256": "995d56e90ad55573e319e4cb6e017bb5b525e61ae8eaa67c2832c79691e0e087"
+      },
+      {
+        "node": 6327,
+        "rows": 1168,
+        "cols": 1256,
+        "land_cells": 398936,
+        "physical_mask_changes": 0,
+        "land_identity_changes": 0,
+        "terrain_sha256": "082b1d8fdacc305fe94f8ff3dff0390730ce8e6ba601ff9bfc2149f57ec9abce",
+        "source_land_mask_sha256": "55507ae9a87166eb583aecd13b294db927a704115c4591e41ae714c0c225e87f",
+        "export_land_mask_sha256": "55507ae9a87166eb583aecd13b294db927a704115c4591e41ae714c0c225e87f"
+      }
+    ],
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/export-mask-identity.json",
+      "sha256": "b1cf0bb8d87460218dd2208e60cfef19d5c6577fb1e6b0e9116ee552f68e3580",
+      "bytes": 3115
+    },
+    "verifier": {
+      "path": "build/terrain-artifacts/coast-6070/verify_export_masks.py",
+      "sha256": "f37f30c6a2768b319d69f801e74d87ed9730ace40ecac6890eb0cfb14db1e15e",
+      "bytes": 2480
+    }
+  },
+  "source_to_export_identity_note": "Six new native sources compared to their new exported assets; not old-source vs new-source mask preservation.",
+  "native_within_group_gap": {
+    "scope": "Native grid-center distances, not distances between cell footprints or continuous shore roots. All island IDs searched; absent pairs have no center pair within the 2 km search radius.",
+    "records": [
+      {
+        "node": 6070,
+        "minimum_center_distance_m": 700.0,
+        "pairs_lt_300m": 0,
+        "pairs_lt_1000m": 11
+      },
+      {
+        "node": 6071,
+        "minimum_center_distance_m": 600.0,
+        "pairs_lt_300m": 0,
+        "pairs_lt_1000m": 3
+      },
+      {
+        "node": 6068,
+        "minimum_center_distance_m": 728.0109889280518,
+        "pairs_lt_300m": 0,
+        "pairs_lt_1000m": 4
+      },
+      {
+        "node": 6067,
+        "minimum_center_distance_m": 700.0,
+        "pairs_lt_300m": 0,
+        "pairs_lt_1000m": 9
+      },
+      {
+        "node": 6329,
+        "minimum_center_distance_m": 700.0,
+        "pairs_lt_300m": 0,
+        "pairs_lt_1000m": 3
+      },
+      {
+        "node": 6327,
+        "minimum_center_distance_m": 600.0,
+        "pairs_lt_300m": 0,
+        "pairs_lt_1000m": 8
+      }
+    ],
+    "result": {
+      "path": "build/terrain-artifacts/coast-generator/native-gap-six-final.json",
+      "sha256": "7c35a6cddf9bcc9783b781fe1b28bde5b08c2bf9b4f7279c88e26fe96c482c70",
+      "bytes": 70929
+    }
+  },
+  "source_shared_band": {
+    "nodes": [
+      6070,
+      6071
+    ],
+    "sphere_radius_km": 6377.8,
+    "required_gap_km": 3.0,
+    "positive_native_center_separation_lower_bound_km": 3.310817561855322,
+    "physical_margin_km_by_node": {
+      "6070": 0.11723943698554226,
+      "6071": 0.19357812486977935
+    },
+    "metric": "球面AEQD log/exp，公共theta=asin(N dot p)为1-Lipschitz；正原生陆格中心的分离下界。不是精确最小、格面距离或连续岸根间距。",
+    "result": {
+      "path": "build/terrain-artifacts/coast-generator/final-shared-gap6070-6071.json",
+      "sha256": "d0a496f5636b88df5c36b506c75d0e59dd4ae022dfa728a73b59343b0114c27e",
+      "bytes": 1359
+    },
+    "verifier": {
+      "path": "build/terrain-artifacts/coast-generator/final_shared_gap.py",
+      "sha256": "0194e620607de49a02fac8ea8e665d3c51b1fd6edb5fd8e243400bb4b6683910",
+      "bytes": 2593
+    }
+  },
+  "cross_group_lod_footprints": {
+    "nodes": [
+      6070,
+      6071
+    ],
+    "records": 6,
+    "resolutions_m": [
+      2000,
+      1000,
+      500
+    ],
+    "sphere_radius_m": 6377800.0,
+    "summaries": [
+      {
+        "label": "any_positive_land_full_cell",
+        "land_u8_threshold": 1,
+        "combinations": 9,
+        "intersecting_cell_pairs": 0,
+        "positive_area_cell_pairs": 0,
+        "boundary_touch_cell_pairs": 0,
+        "minimum_conservative_spherical_gap_lower_bound_m": 950.6474277833687,
+        "minimum_pair_resolutions_m": [
+          2000.0,
+          2000.0
+        ],
+        "minimum_pair_spherical_gap_interval_m": [
+          950.6474277833687,
+          951.1365527936824
+        ]
+      },
+      {
+        "label": "default_renderer_solid_land_0.5",
+        "land_u8_threshold": 128,
+        "combinations": 9,
+        "intersecting_cell_pairs": 0,
+        "positive_area_cell_pairs": 0,
+        "boundary_touch_cell_pairs": 0,
+        "minimum_conservative_spherical_gap_lower_bound_m": 2945.683503795927,
+        "minimum_pair_resolutions_m": [
+          2000.0,
+          2000.0
+        ],
+        "minimum_pair_spherical_gap_interval_m": [
+          2945.683503795927,
+          2946.5630828992516
+        ]
+      }
+    ],
+    "metric": "实际renderer阈值land_u8>=128的九组合，整格在公共GN投影下相交精确；球面间距用下界/见证上界夹住并包含float32及source→planet框架误差。any-positive完整格包络为另外九组合。",
+    "excludes": "GPU相机相对变换舍入、screen-space squeeze与像素观感。",
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/lod-cross-group-final.json",
+      "sha256": "bbd4948c2122feab71414177398e5af0ef68ababbf34c0128987f5ca11e16ad6",
+      "bytes": 73178
+    },
+    "run": {
+      "command": [
+        "D:\\Project\\Zhouzhu\\build\\river-python\\Scripts\\python.exe",
+        "-B",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\lod_cross_group_probe.py",
+        "--lods",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-final-6d4b081\\6070-6071-lods.bin",
+        "--planet",
+        "D:\\Project\\Zhouzhu\\game\\planet\\seed42\\planet.bin",
+        "--group6070",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-final-6d4b081\\groups\\6070",
+        "--group6071",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-final-6d4b081\\groups\\6071",
+        "--output",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\lod-cross-group-final.json"
+      ],
+      "timeout_seconds": 60,
+      "exit_code": 0,
+      "timed_out": false,
+      "elapsed_seconds": 9.23884210002143,
+      "metadata": {
+        "path": "build/terrain-artifacts/coast-6070/lod-cross-group-final-result.json",
+        "sha256": "2e834d4a0edcdf9c46fed5a94da8c73ca09e6858272cd67437040ee8572520c0",
+        "bytes": 871
+      },
+      "log": {
+        "path": "build/terrain-artifacts/coast-6070/lod-cross-group-final.log",
+        "sha256": "b8111c06407427be82bf00166a19be52cb2db0800482756eb49829fdbcb563f5",
+        "bytes": 3113
+      }
+    }
+  },
+  "retained_lod_traceability": {
+    "checked_node_count": 774,
+    "checked_lod_records": 1548,
+    "checked_payload_set_sha256": "33d95d98252a6cc876124a6833959d7e966f019b6e726c1000b9e585d6a81b91",
+    "payload_and_semantic_metadata_set_sha256": "101941ac8972b6c3c08bd80bec98a06ee0ab54d191bf2133bca04d5b01260be9",
+    "semantic_metadata_definition": "packed LOD index前24字节，保留node/res/origin/rows/cols/islands等语义，排除重排后的动态payload offset/length；聚合按本report records顺序JSON四元组UTF-8（无空白）计算。",
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/retained-lod-boundary-old.json",
+      "sha256": "294e3a335867929488815bb43a5e6c05736c71f6812129b33217b11d14172fcf",
+      "bytes": 4090405
+    },
+    "run": {
+      "command": [
+        "D:\\Project\\Zhouzhu\\build\\river-python\\Scripts\\python.exe",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\retained_lod_boundary_audit.py",
+        "--lods",
+        "D:\\Project\\Zhouzhu\\game\\planet\\seed42\\lods.bin",
+        "--planet",
+        "D:\\Project\\Zhouzhu\\game\\planet\\seed42\\planet.bin",
+        "--canonical",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\generator-seed42\\s03_islands\\islands.npz",
+        "--capacity",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-generator\\capacity-seed42.npz",
+        "--exclude-nodes-json",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-manifest.json",
+        "--output",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\retained-lod-boundary-old.json"
+      ],
+      "timeout_s": 180,
+      "reason": "Add explicit whole-cap worst-pair evidence and conservative near-normal binary64 conditioning allowance.",
+      "exit_code": 0,
+      "timed_out": false,
+      "elapsed_s": 2.1089999999967404,
+      "metadata": {
+        "path": "build/terrain-artifacts/coast-6070/retained-lod-boundary-old-result.json",
+        "sha256": "bc105a436c975bc81a129f3fb5560e2bb24f3faf5b570505ef3975fa0ae18340",
+        "bytes": 1035
+      },
+      "log": {
+        "path": "build/terrain-artifacts/coast-6070/retained-lod-boundary-old.log",
+        "sha256": "ddd3d23f877b21bc6103f787164e541e13d066d38a3b75133a83413e9c6f0638",
+        "bytes": 1841
+      }
+    }
+  },
+  "merge_and_installation": {
+    "status": "verified-and-installed",
+    "report": {
+      "path": "build/terrain-artifacts/coast-6070/merge-final/merge-verification.json",
+      "sha256": "cef142198f71faeb814a7eeb0778b3e0f21121d68c0a2e42a9c26c09987f4aa3",
+      "bytes": 79454
+    },
+    "run": {
+      "command": [
+        "D:\\Project\\Zhouzhu\\build\\river-python\\Scripts\\python.exe",
+        "-B",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\patch_bundles.py",
+        "D:\\Project\\Zhouzhu\\game\\planet\\seed42",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-final-6d4b081\\lods",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\merge-final"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "timeout_seconds": 300,
+      "elapsed_seconds": 7.921999999991385,
+      "metadata": {
+        "path": "build/terrain-artifacts/coast-6070/merge-final-run-result.json",
+        "sha256": "3badbc3ac9c9466e15ca58a7ebe89322bf85e9eff5dc6778804a9fb3b5afe636",
+        "bytes": 527
+      }
+    },
+    "verifier": {
+      "path": "build/terrain-artifacts/coast-6070/patch_bundles.py",
+      "sha256": "51952569f98383a4c8189a2e6f82be0f64ffee0f857068160dd18aae50395f0e",
+      "bytes": 10072
+    },
+    "updated_nodes": 7226,
+    "lod_records_replaced": 14478,
+    "lod_records_total": 16026,
+    "lod_records_preserved": 1548,
+    "outside_lod_payload_and_semantic_metadata_unchanged": true,
+    "unchanged_lod_set_sha256": "014a185aed1a1a6382c1bd1d7c492713f08da8d7113d7deedbba21e3ddde1024",
+    "unchanged_lod_set_sha256_definition": "按原包保留顺序连接完整LOD index（offset置0、length为实际payload长度）与payload后SHA256，消除合并后的动态offset，不宣称index offset原样不动。",
+    "weather_nodes_total": 8000,
+    "weather_nodes_preserved": 774,
+    "weather_preserved_semantic_and_array_sha256": "935d926435ec51ce9239ee88e0890aa3d42f4c07e08cf94cf0b0234fdae03667",
+    "weather_preservation_scope": "未刷新774节点season-name语义、其余metadata字段及六组数组前后一致；名称索引按header解析归一，全量压缩payload重新打包。不声称各节点raw WX块或全文件字节不变。",
+    "weather_digest_definition": "按node升序连接WX metadata（season-name索引置0）、UTF-8名称长度及内容、六组数组原始bytes，SHA256前后相同。",
+    "planetary_inputs_and_grids_unchanged": true,
+    "planet_header_source_and_other_bytes_unchanged": true,
+    "planet_updated_columns": [
+      "lod.peak_m",
+      "lod.rim_m",
+      "lod.violation_km",
+      "lod.constrained",
+      "lod.extent_km"
+    ],
+    "planet_preservation_scope": "patch_bundles保留原完整header/source及全部非目标字节；expected只替换这5列中S节点的字节，再与完整输出planet逐字节相等断言。各5列的S外值也保持。",
+    "extent_summary": "maximum radius of native positive island-ID cell centres (km)",
+    "selected_six_lod_measurement_payloads_unchanged": true,
+    "staged_files": {
+      "planet.bin": {
+        "bytes": 8336508,
+        "sha256": "ef15d1220502c3e5c7bccd6b1081e54b74c9bfbf74fac27f47196181250d22ef"
+      },
+      "lods.bin": {
+        "bytes": 177934692,
+        "sha256": "02746a6f458dbdae46a2ca42a38168faccf422d3877952208bb116ab703bcdb9"
+      },
+      "weather.bin": {
+        "bytes": 9402029,
+        "sha256": "bd4ebee1ddcd0b89c9097b2f52b0f5d1fa64804662f6daf7c83ce553e5fefa4c"
+      }
+    },
+    "global_boundary_certificate": {
+      "status": "safe",
+      "radius_m": 6377800.0,
+      "shared_gap_definition_m": 3000.0,
+      "solid_land_threshold_u8": 128,
+      "checked_node_count": 8000,
+      "checked_lod_records": 16026,
+      "retained_checked_node_count": 774,
+      "new_checked_node_count": 7226,
+      "retained_checked_lod_records": 1548,
+      "new_checked_lod_records": 14478,
+      "true_corner_crossing_lods": 0,
+      "whole_cell_uncertified_lods": 0,
+      "candidate_refresh_nodes": [],
+      "tested_node_neighbor_pairs": 63992000,
+      "source_fingerprints": {
+        "canonical_lat_f64": "8857fd5a76086bc87282a6577af94ea38b26f23a638e125fdcad65301acc218d",
+        "canonical_lon_f64": "dc9e0845aed5e13648d2dd7a599be48b797d2bd8dc064e24d99b26487c9e3c2f",
+        "canonical_area_f32_to_f64": "d3c0a38b4f4aba4f8df90c277e475067b4b3978103acdce9833c8a512a4259ae",
+        "pressure_m_f64": "6f784c34d5151ffce9b093de753efc1d14bee19793357e7496bc7c5f2cb7ec77"
+      },
+      "minimum_whole_cell_inside_margin_m": 0.2612757354140851,
+      "maximum_vertex_f32_spherical_error_m": 0.017606781743255716,
+      "retained_report_sha256": "294e3a335867929488815bb43a5e6c05736c71f6812129b33217b11d14172fcf",
+      "new_report_sha256": "80a3f592980c35a29a4d536b2f852d887fb20ff818afeb1f4f699237b846749a",
+      "manifest_sha256": "27a05ef73b8e0ca7efc074b362f6c967e30fc64e719bdbd01f3e8ccd951cff6b",
+      "merged_lods_sha256": "02746a6f458dbdae46a2ca42a38168faccf422d3877952208bb116ab703bcdb9",
+      "merged_lods_bytes": 177934692,
+      "merged_planet_sha256": "ef15d1220502c3e5c7bccd6b1081e54b74c9bfbf74fac27f47196181250d22ef",
+      "merged_planet_bytes": 8336508,
+      "verified_all_semantic_index_and_payload_hashes": true,
+      "verified_all_actual_planet_frames": true,
+      "verified_record_identity_set_sha256": "bc550253666c0435491f626e7d30ec276c94e65606048cb67ccffb0183228096",
+      "proof_note": "The old/new checked node sets are disjoint and their union is exactly all 8000 nodes. Their source canonical/pressure fingerprints agree with the current exact arrays, and their boundary model constants agree. Every actual merged ZZLD record has the certified SHA256 of its first 24 semantic index bytes (node/res/origin/dimensions/island-count/reserved; payload offset is intentionally excluded) and its complete payload. The merged planet float32 coordinate frames match every certified frame. Every level is safe, with no crossing/uncertified cell, including positive-small-circle full-cell and float32 rounding bounds. Both disjoint audits checked all 7999 other canonical nodes; hence each complete occupied cell is in its common unshrunk pairwise half-domain and different groups cannot have strictly overlapping pre-camera radial footprints. This is a pure-data certificate; no renderer/camera-transform or actual fine geometry behavior is inferred.",
+      "elapsed_s": 0.75,
+      "scope": "actual renderer-solid land_u8>=128 full-cell radial footprints before camera/screen transforms; all 8000 nodes each checked against all 7999 canonical neighbours, not all-planet GPU pixel inspection",
+      "result": {
+        "path": "build/terrain-artifacts/coast-6070/global-lod-boundary-final.json",
+        "sha256": "a8ec0759e140dd6d6a3988e5638dc10d287e38a582ce5a149dc84b4fdd4ebdc4",
+        "bytes": 90229
+      },
+      "run": {
+        "command": [
+          "D:\\Project\\Zhouzhu\\build\\river-python\\Scripts\\python.exe",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\combine_lod_boundary_certificates.py"
+        ],
+        "timeout_s": 300,
+        "log": "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\global-lod-boundary-final.log",
+        "exit_code": 0,
+        "timed_out": false,
+        "elapsed_s": 1.0780000000086147,
+        "metadata": {
+          "path": "build/terrain-artifacts/coast-6070/global-lod-boundary-final-result.json",
+          "sha256": "513f929375067b307be338e11f3c7fb0b3d5e48a79c52c8834c1cac9cc0f97c8",
+          "bytes": 402
+        },
+        "log_reference": {
+          "path": "build/terrain-artifacts/coast-6070/global-lod-boundary-final.log",
+          "sha256": "c79a7f71a064fad7bfc550d9948110a2af0db8901afbcf51dc1d4cc6c9be14a6",
+          "bytes": 322
+        }
+      },
+      "new_report_reference": {
+        "path": "build/terrain-artifacts/coast-6070/new-lod-boundary-final.json",
+        "sha256": "80a3f592980c35a29a4d536b2f852d887fb20ff818afeb1f4f699237b846749a",
+        "bytes": 38161092
+      },
+      "new_run": {
+        "command": [
+          "D:\\Project\\Zhouzhu\\build\\river-python\\Scripts\\python.exe",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\retained_lod_boundary_audit.py",
+          "--lods",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\merge-final\\lods.bin",
+          "--planet",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\merge-final\\planet.bin",
+          "--canonical",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\generator-seed42\\s03_islands\\islands.npz",
+          "--capacity",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-generator\\capacity-seed42.npz",
+          "--nodes-json",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\export-manifest.json",
+          "--output",
+          "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\new-lod-boundary-final.json"
+        ],
+        "cwd": "D:\\Project\\Zhouzhu",
+        "timeout_s": 300.0,
+        "report": "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\new-lod-boundary-final.json",
+        "log": "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\new-lod-boundary-final.log",
+        "new_nodes_selection": "export-manifest.json nodes only; retained nodes not rerun",
+        "exit_code": 0,
+        "timed_out": false,
+        "elapsed_s": 13.828000000008615,
+        "audit_summary": {
+          "status": "safe",
+          "checked_node_count": 7226,
+          "checked_lod_records": 14478,
+          "true_corner_crossing_lods": 0,
+          "whole_cell_uncertified_lods": 0,
+          "candidate_refresh_nodes": [],
+          "minimum_whole_cell_inside_margin_m": 0.4423293667772823
+        },
+        "metadata": {
+          "path": "build/terrain-artifacts/coast-6070/new-lod-boundary-final-result.json",
+          "sha256": "159fbd524e30c3494917265a17238fd02106f7d523772ad73f62143ece7a7cc6",
+          "bytes": 1581
+        },
+        "log_reference": {
+          "path": "build/terrain-artifacts/coast-6070/new-lod-boundary-final.log",
+          "sha256": "51e24039832fee5414a4daf1b3fa90744e44b0338f685ce2999b34d649cf04a0",
+          "bytes": 9371
+        }
+      },
+      "retained_report_reference": {
+        "path": "build/terrain-artifacts/coast-6070/retained-lod-boundary-old.json",
+        "sha256": "294e3a335867929488815bb43a5e6c05736c71f6812129b33217b11d14172fcf",
+        "bytes": 4090405
+      },
+      "verifier": {
+        "path": "build/terrain-artifacts/coast-6070/combine_lod_boundary_certificates.py",
+        "sha256": "423aa27deae8abf218c163660105b05be485993b4963881bcc808a8391f91bfa",
+        "bytes": 11902
+      }
+    },
+    "installation": {
+      "status": "verified",
+      "file_count": 45,
+      "files": {
+        "planet.bin": {
+          "bytes": 8336508,
+          "sha256": "ef15d1220502c3e5c7bccd6b1081e54b74c9bfbf74fac27f47196181250d22ef"
+        },
+        "lods.bin": {
+          "bytes": 177934692,
+          "sha256": "02746a6f458dbdae46a2ca42a38168faccf422d3877952208bb116ab703bcdb9"
+        },
+        "weather.bin": {
+          "bytes": 9402029,
+          "sha256": "bd4ebee1ddcd0b89c9097b2f52b0f5d1fa64804662f6daf7c83ce553e5fefa4c"
+        },
+        "groups/6067/resources.tsv": {
+          "bytes": 92117,
+          "sha256": "6dcba2a31435dd4cc9f933a4f8f7ca9a9d1121c00edcada186389815bdf234e6"
+        },
+        "groups/6067/rivers.tsv": {
+          "bytes": 3565089,
+          "sha256": "7a47d1b7e7fffd2d902056f953d7b540709a0745a9549ebfb9ab09e727407c8d"
+        },
+        "groups/6067/sites.tsv": {
+          "bytes": 35791,
+          "sha256": "f90ce4c58ecc1e844dde2aff6478a6842456e0a6f83b717de50414d416fb8b0e"
+        },
+        "groups/6067/stamp.json": {
+          "bytes": 557,
+          "sha256": "6028b0d89b0d9817b2e25acd5cf9d0b3b128a8dbe3b275cd3138b0e8107e36ce"
+        },
+        "groups/6067/terrain.bin": {
+          "bytes": 24425320,
+          "sha256": "1a2dd010385e4a8a581860cb8cde5536dd04af3448f68d6545d9a229d1026b8e"
+        },
+        "groups/6067/weather.tsv": {
+          "bytes": 10361,
+          "sha256": "8e8611a723ea0fb59acfbca3f433391ff276d93a4fee464841441a2ec35e7145"
+        },
+        "groups/6067/world.json": {
+          "bytes": 163978,
+          "sha256": "1843c94ede37e549b67bdd33db085910d8ba15f12523e7b1f9a5a1650e2977d7"
+        },
+        "groups/6068/resources.tsv": {
+          "bytes": 129219,
+          "sha256": "58ebaca9c299667b5b891849a5afd3b4b89b78de0612ce1049ba94d9a541f196"
+        },
+        "groups/6068/rivers.tsv": {
+          "bytes": 6632160,
+          "sha256": "6841715cb95552977469713e6c46d6c843d2aaece2c512415f2f797fc5968635"
+        },
+        "groups/6068/sites.tsv": {
+          "bytes": 60529,
+          "sha256": "a7b7b79b1268da6b204f00a0a0cfb775e588e2b568058166ca7793f42d775952"
+        },
+        "groups/6068/stamp.json": {
+          "bytes": 556,
+          "sha256": "cf6f9c11208eaf90c1324e8c4e1c33dad59a9b03cdc743e8f303204d1dbc1924"
+        },
+        "groups/6068/terrain.bin": {
+          "bytes": 51589192,
+          "sha256": "bb194884aa72a8f1e768b419383a43ebfc1b8cb74475cd62c5df28a69ef2d12d"
+        },
+        "groups/6068/weather.tsv": {
+          "bytes": 10257,
+          "sha256": "7b6f6a5e1300ff2a3a0b4e3a4899c6d1aa21b5457215fd21c64f7532b096bfa6"
+        },
+        "groups/6068/world.json": {
+          "bytes": 247294,
+          "sha256": "34d5340166ca2e4812a06598e560f84b7bf2e9eb2c577df6381a1949e50c4fff"
+        },
+        "groups/6070/resources.tsv": {
+          "bytes": 168110,
+          "sha256": "133d54803a0e1a48f03099e08e70f0db45274087251b213d64605421974df764"
+        },
+        "groups/6070/rivers.tsv": {
+          "bytes": 6019755,
+          "sha256": "56e93cf88a1dfc8eaf67857ba5b2ca6a148e645ef415d6ac199fd264d3752177"
+        },
+        "groups/6070/sites.tsv": {
+          "bytes": 64366,
+          "sha256": "d591309d4b0f6e9a1e59cec02955fa2c112e688541a2d7a4edfaef8d5c82045c"
+        },
+        "groups/6070/stamp.json": {
+          "bytes": 557,
+          "sha256": "b38f4d9480483ed008e3ad8e2087d2e76fa665002481595b9f9168cd27d47952"
+        },
+        "groups/6070/terrain.bin": {
+          "bytes": 45075136,
+          "sha256": "d0824fcb42ab795584f5fa2ee5a72c605d7fa86e27a0c54f3354cffd47bd03c7"
+        },
+        "groups/6070/weather.tsv": {
+          "bytes": 10387,
+          "sha256": "07e023f5042b41c6ffb92269ac27f83944d49a628f1a54f0201a9e50dde15079"
+        },
+        "groups/6070/world.json": {
+          "bytes": 276536,
+          "sha256": "bf8e6df31fb2eefab4e7b4343deaf04e7d4b94b1f164a165a72c495bfc6f5636"
+        },
+        "groups/6071/resources.tsv": {
+          "bytes": 74710,
+          "sha256": "33d83a2e63ab93e8c774ddd98b487e305aa23941531191e8eb60fb917521a83b"
+        },
+        "groups/6071/rivers.tsv": {
+          "bytes": 3921142,
+          "sha256": "ec4f0e67835c4ace91bdf9d81928d51a794386294fa820e95f01d4053976a661"
+        },
+        "groups/6071/sites.tsv": {
+          "bytes": 48899,
+          "sha256": "46a726f91b40a75ffcf7dc04fe60f8fdb9dc24a725c93120d9d63f3363d51235"
+        },
+        "groups/6071/stamp.json": {
+          "bytes": 557,
+          "sha256": "49ddc037ffa8fe4cdb0c81228c6b9e801281fd672649238bd21fc35c5f0ce1c5"
+        },
+        "groups/6071/terrain.bin": {
+          "bytes": 26981896,
+          "sha256": "70f0e32121c225bdb1d996b187ef764c1b50e995e4d5d7aa7770a2a4f7444a39"
+        },
+        "groups/6071/weather.tsv": {
+          "bytes": 10352,
+          "sha256": "5c5634506488b09febab2438c4184e1c4a7102f4be6d237f50c71a3eb738dfed"
+        },
+        "groups/6071/world.json": {
+          "bytes": 199439,
+          "sha256": "c68abc177b1467560cddc4e99d915c890dbdb10dee53e943d5559435d7116a59"
+        },
+        "groups/6327/resources.tsv": {
+          "bytes": 145279,
+          "sha256": "3c3fe3020c4b5c5d57936bf975e65823949098450bea293034ae0a5c42d8d8b9"
+        },
+        "groups/6327/rivers.tsv": {
+          "bytes": 7682801,
+          "sha256": "9e9023919daa5960f94ffed4f7c7a06c9e5a9a67e0462ca366ece3103db02fc0"
+        },
+        "groups/6327/sites.tsv": {
+          "bytes": 32114,
+          "sha256": "63ac95b62ad1f44929ab7445da3ffc649cd0d3c8adca945af252950dba4cfeef"
+        },
+        "groups/6327/stamp.json": {
+          "bytes": 556,
+          "sha256": "0b9d0a99725c28507abe1d46730bf26b8bc786650842ae7fda80913ef44e5849"
+        },
+        "groups/6327/terrain.bin": {
+          "bytes": 52812328,
+          "sha256": "082b1d8fdacc305fe94f8ff3dff0390730ce8e6ba601ff9bfc2149f57ec9abce"
+        },
+        "groups/6327/weather.tsv": {
+          "bytes": 10392,
+          "sha256": "e3ad671120132b94c12085746ca320d59f0f00ffdec0807632d0659b907b66f3"
+        },
+        "groups/6327/world.json": {
+          "bytes": 148130,
+          "sha256": "d3ff2b048f4d15f22a47bd0413de094db897352e952ac226b1773c14c11a394a"
+        },
+        "groups/6329/resources.tsv": {
+          "bytes": 134935,
+          "sha256": "63e33052729652341ae556604d46e28f9a013ae214984ee6b6502092db7737e4"
+        },
+        "groups/6329/rivers.tsv": {
+          "bytes": 10230151,
+          "sha256": "391df91eae56a3ac751f24bdfc668df5616f33663989fb8d54c683b50d48bdfe"
+        },
+        "groups/6329/sites.tsv": {
+          "bytes": 83584,
+          "sha256": "2781952065f992cba242cc42dcfcbdc65325d8691a59835bf94ad2de45b0b33d"
+        },
+        "groups/6329/stamp.json": {
+          "bytes": 556,
+          "sha256": "348220a3cf8b485138a53eab54586f988e4035c4495043ab5cd8448d1ccc1ccd"
+        },
+        "groups/6329/terrain.bin": {
+          "bytes": 50332360,
+          "sha256": "8c4dc06d683af30b308b33dee20f9d4f6997ff077c548ddde1e48a4a5f7f588e"
+        },
+        "groups/6329/weather.tsv": {
+          "bytes": 10391,
+          "sha256": "aaa3ac3c250831c68b02f16047c6841ce6844193907d5aa2b6ec5bc8102b725c"
+        },
+        "groups/6329/world.json": {
+          "bytes": 326235,
+          "sha256": "0d4ce8ed61322b625563eef43bb3f170d729447502f266e98c6fb60996564276"
+        }
+      },
+      "copy_sha_verified": true,
+      "data_commit": "44b39dd8603512a540cc820f1a4de9919d070e3b",
+      "result": {
+        "path": "build/terrain-artifacts/coast-6070/installed-files.json",
+        "sha256": "f79cfb2a0dac0e1934a1990755e45f1e59026c219b8cbb8192a9929d5faef690",
+        "bytes": 9771
+      },
+      "verifier": {
+        "path": "build/terrain-artifacts/coast-6070/install_verified_stage.py",
+        "sha256": "9bb9669d84cafc2739c2f004c9efb332ed5b28f43fe12c353e714ee5be3a077d",
+        "bytes": 2935
+      },
+      "backup": {
+        "file_count": 31,
+        "directory": "build/terrain-artifacts/coast-6070/baseline-before-install",
+        "sha256_by_path": {
+          "planet.bin": "139dbb3382c5146304d9c318874a737cebdc219d62ea80fc85afef59f2d475ed",
+          "lods.bin": "a048dbdeede7257353d00ca31c4d7c91c419ff4f4b6bf2f8ae781903e318dd1e",
+          "weather.bin": "538310ce2fae35d7d387d00b68c83ddf9989d87cf2e2f1169b14b61351841473",
+          "groups/6067/resources.tsv": "47e8fd921a28f1f78ee456b34d96feb141d23f928d1e76e466295d321000c2ac",
+          "groups/6067/rivers.tsv": "859901bd5838cf0ece2a8548e54f927f8fe1892bb7394ef406508ffbcdbc45a2",
+          "groups/6067/sites.tsv": "97a50f2fe124b1a8acc789a72cad72566e3315125a37a00c26448d877783c688",
+          "groups/6067/stamp.json": "43a6d8362be92dc194a0f4e2f0e06a7937533787dc6040cfd0c5ca0499ce4282",
+          "groups/6067/terrain.bin": "86874cdd38b5929d86cd3728a0e553e7267ffd2c2238a8bd2e6cf42c309fb87b",
+          "groups/6067/weather.tsv": "cd5ed4b9201659f744cc4757fb94b45c5df29503a46bf0888cbc2a058331ab07",
+          "groups/6067/world.json": "8c3cb7661e5a3041dc9bfd6b980000013ecdf469ca380faf1c6602f64ae492af",
+          "groups/6068/resources.tsv": "109c220f6907f4e02836a4459edfd1e12cc7b9a42aa3d4902668266a70a2af54",
+          "groups/6068/rivers.tsv": "c06961dbd27c00e05f18b9ba960e7dae52ee159ad058e80ad6fa14587566a005",
+          "groups/6068/sites.tsv": "ceac47b27d4bc65cb8fc543bc9011838272e124caf927ef3f94a0fce53888d13",
+          "groups/6068/stamp.json": "72b28268e0f59789e60a4a200409232ac7e6e54ef7815e643ae32ac8bae20c41",
+          "groups/6068/terrain.bin": "1511ec7093ea399464e32c9ef0f363d9c051e9c9df5bd716c5ed5da014d4aab0",
+          "groups/6068/weather.tsv": "41eeecbf271590a0ed0864b683d92c77dffe27f0d4b368d78a63120e2b9625ce",
+          "groups/6068/world.json": "754d3633ac3453024c4f4b4c6128968f2b832431f175991a7ec62f8f30225e2e",
+          "groups/6327/resources.tsv": "8f36c1716f7f435b94411984e1b762ff10591b94771eb2e59b650dfb3e5f9614",
+          "groups/6327/rivers.tsv": "25bb9334ebcb605e15252afe9f0f096897970dd49414cffc79914c0998684714",
+          "groups/6327/sites.tsv": "e77aabdb737ba5d79fdbaae3953d5800f49154c4d8ede5f51901395c596d3d22",
+          "groups/6327/stamp.json": "32b8d20904e67092301852a69d829f0d62e6783ab686ebc096a78112dad2cdb1",
+          "groups/6327/terrain.bin": "deb6374e89d574397b04f44b173e80ca4e900ccb5012dc29ea669f51a9763493",
+          "groups/6327/weather.tsv": "54b699c612aa726ef6f1e38a06836bf37bd10ef5f6536d9a8f79311170c9f800",
+          "groups/6327/world.json": "a155ea3f888fa728c546ce87233ace3829680d8ea6fee5c25be110eb22d6019d",
+          "groups/6329/resources.tsv": "285841810db4f721e0c8e6a46f37df996831461c043ecd0ba36fb04030273817",
+          "groups/6329/rivers.tsv": "aa0ff3194c04883dd6ccee923744680f4476e92aba45ba9a869e7a645eae54a6",
+          "groups/6329/sites.tsv": "f32a9a6bd3189644f180594e27a30272becfb0b9dd128c08f8956c251384cbc4",
+          "groups/6329/stamp.json": "f87699e5ab51872ee350e76724b8c2fc05f7656531958df7f6a828d733c79462",
+          "groups/6329/terrain.bin": "7807629ee0605df5813d4d8ca4c2c7ac67e13ec3fcecc24a44b3263a47ae5953",
+          "groups/6329/weather.tsv": "6af4a66c0fe25080558a93f27f5aa47cad9a3c192ce1342a482e675f6e6fd9b6",
+          "groups/6329/world.json": "5311323a805b268d2f2f332c3b1921c26e4b1f68b2b9788425c8c69443a07e8b"
+        }
+      },
+      "data_commit_record": {
+        "path": "build/terrain-artifacts/coast-6070/verified-data-commit.json",
+        "sha256": "3824f56228059e8503591abbd7006e5d43eae3dc527d9eefd9314e71971e3972",
+        "bytes": 2411
+      }
+    }
+  },
+  "gpu_visual": {
+    "status": "passed",
+    "inspected_by": "root visual inspection of all three PNGs",
+    "scope": "Actual installed repo packages; Vulkan Forward+ NVIDIA RTX 4080; hidden/minimized SubViewport; player physics and generation disabled; clock uses source day 113 at the three screenshot times. This is not a boot-scene physics E2E or all-planet pixel inspection.",
+    "observation": "The reproduced 6070 views have closed separated island bodies without the former giant U openings or connecting needle pillars. At the reproduced 6071 frame, 6070 and 6071 have a visible void interval and their edges do not overlap.",
+    "run": {
+      "exit_code": 0,
+      "seconds": 41.53100000001723,
+      "timeout": 300,
+      "args": [
+        "D:/Program Files/Godot/Godot_v4.4.1-stable_win64.exe",
+        "--path",
+        "game",
+        "--minimized",
+        "--audio-driver",
+        "Dummy",
+        "--disable-crash-handler",
+        "--log-file",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\render-after-godot.log",
+        "--script",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\render_probe.gd",
+        "--",
+        "D:\\Project\\Zhouzhu\\build\\terrain-artifacts\\coast-6070\\render-after",
+        "final"
+      ],
+      "dll_sha256": "b784133ac415e67f997ad76d090fb4ef470381b2e991eda5e6fd9c3a85554d3d"
+    },
+    "cases": [
+      {
+        "name": "6070_a_yaw_180",
+        "requested_group_frame": 6070,
+        "local_position_m": [
+          -23440,
+          664,
+          10540
+        ],
+        "calendar_day": 113,
+        "utc_hour": 9.03,
+        "yaw_deg": 180,
+        "pitch_deg": -10,
+        "settled_tile_count": 232,
+        "path": "build/terrain-artifacts/coast-6070/render-after/6070_a_yaw_180.png",
+        "bytes": 559630,
+        "sha256": "153d9036af1df0205c7ae01b5aa6cc12f031bfc10518c63315a7b93a4368bc3a"
+      },
+      {
+        "name": "6070_b_yaw_180",
+        "requested_group_frame": 6070,
+        "local_position_m": [
+          -21840,
+          613,
+          11080
+        ],
+        "calendar_day": 113,
+        "utc_hour": 9.14,
+        "yaw_deg": 180,
+        "pitch_deg": -10,
+        "settled_tile_count": 241,
+        "path": "build/terrain-artifacts/coast-6070/render-after/6070_b_yaw_180.png",
+        "bytes": 761765,
+        "sha256": "83a756a09f1a82f5cccf49dd35de93d9b0d6ee42ce260ad108224f06a3b41d97"
+      },
+      {
+        "name": "6071_overlap_yaw_0",
+        "requested_group_frame": 6071,
+        "local_position_m": [
+          -410,
+          2667,
+          -14800
+        ],
+        "calendar_day": 113,
+        "utc_hour": 9.94,
+        "yaw_deg": 0,
+        "pitch_deg": -50,
+        "settled_tile_count": 153,
+        "path": "build/terrain-artifacts/coast-6070/render-after/6071_overlap_yaw_0.png",
+        "bytes": 848349,
+        "sha256": "2dd7ecb09dc83a119bd948c93083a80b964e4946f06f0c76d58d7993f9c9b940"
+      }
+    ],
+    "installed_data_file_count": 45,
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/final-visual-verification.json",
+      "sha256": "e0a723f38a4692e995edd9dba3f42672387e9a1f4ba594ba2fc84acde152a531",
+      "bytes": 7380
+    },
+    "run_metadata": {
+      "path": "build/terrain-artifacts/coast-6070/render-after-result.json",
+      "sha256": "62ed7dcc7960f5927de9ea429b1d89a56aa91af66970d9278fdcfcd96d761670",
+      "bytes": 579
+    },
+    "log": {
+      "path": "build/terrain-artifacts/coast-6070/render-after.log",
+      "sha256": "9c4679efa20e99187100e6d5d3f94a2638b2897b64087de067ce610b66168f73",
+      "bytes": 1668
+    },
+    "godot_log": {
+      "path": "build/terrain-artifacts/coast-6070/render-after-godot.log",
+      "sha256": "e4a4efe616fccdd33208e02980552a389cfff263f93030a3595784ff7ab7e94b",
+      "bytes": 1653
+    },
+    "probe_source": {
+      "path": "build/terrain-artifacts/coast-6070/render_probe.gd",
+      "sha256": "77f44767ead6f7982c947f4e4613b7e36cc06a51933b1aa4f459d8e439907b6a",
+      "bytes": 4881
+    },
+    "weather_override": false,
+    "installed_assets_binding": "The final-visual record contains the same 45 SHA256 values as installation.files; both records and the complete installation list are preserved here.",
+    "requested_6071_frame_note": "Third case is the requested6071 local frame; legal source packing moved the former occupied region into a void. GroupStream logged anchor6070 after its shift. It does not assert that the final HUD still identifies6071.",
+    "before_image_references": [
+      {
+        "path": "build/terrain-artifacts/coast-6070/render-before/6070_a_yaw_180.png",
+        "sha256": "4377d49950210e349870f0a5ed81feda286afdf800025ceed33207fc05012e1c",
+        "bytes": 563756
+      },
+      {
+        "path": "build/terrain-artifacts/coast-6070/render-before/6070_b_yaw_180.png",
+        "sha256": "43ca6651020c0f49d9a7bc50b8391e33c421d2bcfd12e9902e2e7b68693ad9ac",
+        "bytes": 916970
+      },
+      {
+        "path": "build/terrain-artifacts/coast-6070/render-before/6071_overlap_yaw_0.png",
+        "sha256": "cad4e29c235da6b30033394c1889274e810c38da417fd83e2a6622b016cec4bb",
+        "bytes": 1070016
+      }
+    ]
+  },
+  "spawn_data_collision": {
+    "exit_code": 0,
+    "seconds": 2.4530000000086147,
+    "timeout_seconds": 60,
+    "node": 6068,
+    "island": 1,
+    "position_xz_m": [
+      24790.0,
+      -32330.0
+    ],
+    "calendar_day": 85,
+    "ground_valid": true,
+    "collision_support_and_clearance_valid": true,
+    "ok": true,
+    "surface_y_m": 1228.5830731486021,
+    "highest_collision_y_m": 1228.5831298828125,
+    "surface_minus_collision_m": -5.673421037499793e-05,
+    "lift_m": 0.1,
+    "lifted_spawn_clearance_m": 0.09994326578953405,
+    "covering_upward_faces": 6,
+    "scope": "fresh story terrain; one real leaf tile; no saved edits or physics engine; data/mesh support only, not CharacterBody on_floor or boot-scene E2E",
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/spawn-final.json",
+      "sha256": "04bda13395eb875dc835ddc5962903ae196df48031d4218e0c99f1750d07d29b",
+      "bytes": 3551
+    },
+    "run_metadata": {
+      "path": "build/terrain-artifacts/coast-6070/spawn-final-result.json",
+      "sha256": "28d3bceb72d04f2e76d74330b35ca9b8ce77be1a9bc971faa26dde0a21584d1a",
+      "bytes": 70
+    }
+  },
+  "story_site_references": {
+    "mode": "read-only JSON/TSV identity and production reference review; no terrain or spawn probe rerun",
+    "node_counts_and_sites_sha256": [
+      {
+        "node": 6068,
+        "islands": 39,
+        "docks": 39,
+        "villages": 115,
+        "hamlets": 1217,
+        "errors": [],
+        "sites_sha256": "a7b7b79b1268da6b204f00a0a0cfb775e588e2b568058166ca7793f42d775952",
+        "stamp": {
+          "root": "extern/skyisle-gen",
+          "commit": "6d4b081",
+          "dirty": false,
+          "backend": "游戏内"
+        }
+      },
+      {
+        "node": 6067,
+        "islands": 39,
+        "docks": 25,
+        "villages": 107,
+        "hamlets": 684,
+        "errors": [],
+        "sites_sha256": "f90ce4c58ecc1e844dde2aff6478a6842456e0a6f83b717de50414d416fb8b0e",
+        "stamp": {
+          "root": "extern/skyisle-gen",
+          "commit": "6d4b081",
+          "dirty": false,
+          "backend": "游戏内"
+        }
+      },
+      {
+        "node": 6327,
+        "islands": 47,
+        "docks": 24,
+        "villages": 68,
+        "hamlets": 622,
+        "errors": [],
+        "sites_sha256": "63ac95b62ad1f44929ab7445da3ffc649cd0d3c8adca945af252950dba4cfeef",
+        "stamp": {
+          "root": "extern/skyisle-gen",
+          "commit": "6d4b081",
+          "dirty": false,
+          "backend": "游戏内"
+        }
+      },
+      {
+        "node": 6329,
+        "islands": 38,
+        "docks": 28,
+        "villages": 181,
+        "hamlets": 1672,
+        "errors": [],
+        "sites_sha256": "2781952065f992cba242cc42dcfcbdc65325d8691a59835bf94ad2de45b0b33d",
+        "stamp": {
+          "root": "extern/skyisle-gen",
+          "commit": "6d4b081",
+          "dirty": false,
+          "backend": "游戏内"
+        }
+      },
+      {
+        "node": 6070,
+        "islands": 53,
+        "docks": 49,
+        "villages": 140,
+        "hamlets": 1262,
+        "errors": [],
+        "sites_sha256": "d591309d4b0f6e9a1e59cec02955fa2c112e688541a2d7a4edfaef8d5c82045c",
+        "stamp": {
+          "root": "extern/skyisle-gen",
+          "commit": "6d4b081",
+          "dirty": false,
+          "backend": "游戏内"
+        }
+      },
+      {
+        "node": 6071,
+        "islands": 29,
+        "docks": 20,
+        "villages": 115,
+        "hamlets": 990,
+        "errors": [],
+        "sites_sha256": "46a726f91b40a75ffcf7dc04fe60f8fdb9dc24a725c93120d9d63f3363d51235",
+        "stamp": {
+          "root": "extern/skyisle-gen",
+          "commit": "6d4b081",
+          "dirty": false,
+          "backend": "游戏内"
+        }
+      }
+    ],
+    "broken_references": [],
+    "hardcoded_dock_ids": {
+      "game/world_seed42.tscn": {
+        "origin_dock": 1,
+        "destination_dock": 28
+      }
+    },
+    "origin_dock": {
+      "id": 1,
+      "island": 1,
+      "pos": [
+        23550.0,
+        -36850.0
+      ],
+      "main": true,
+      "landing": 116,
+      "serves": [
+        62
+      ]
+    },
+    "target_dock": {
+      "id": 28,
+      "island": 8,
+      "pos": [
+        -19950.0,
+        -1250.0
+      ],
+      "main": false,
+      "landing": 79,
+      "serves": [
+        79
+      ]
+    },
+    "target_28_still_valid": true,
+    "spawn_xz_m": [
+      24790,
+      -32330
+    ],
+    "spawn_island": 1,
+    "scope": "Confirms exact IDs and coherent source point records; does not exercise dock geometry or settlement placement in Godot.",
+    "decision": "出生常量(24790,-32330)、岛1与码头ID1/28保持。新码头28按当前sites动态解释为岛8；本任务无保留旧岛2路线的要求。村026在新岛3、距出生约28.822km，删除把它作为当前出生旁位置的说明，不改运行常量。",
+    "result": {
+      "path": "build/terrain-artifacts/coast-6070/story-site-reference-audit.json",
+      "sha256": "2153dd4c39ed7f4a9f95704dbfc8bef2613f6c00ff966d22ad187c7496c84a81",
+      "bytes": 7290
+    }
+  },
+  "story_cache": {
+    "key": "seed42-valley-v3-6d4b081",
+    "previous_directories_preserved": true,
+    "scope": "new story key isolates old packed/cached geometry; existing user worlds are not recursively removed or all migrated"
+  },
+  "known_limits": [
+    "Global LOD certification is pre-camera radial geometry, not GPU/camera-squeeze proof and not pixel inspection of8000 groups.",
+    "GPU evidence is only the three recorded requested frames/positions and source day113 times; player physics/generation disabled, not boot-scene physics E2E.",
+    "Spawn test measures native source/mesh support and clearance, not CharacterBody on_floor or default-entry E2E.",
+    "Source shared-band3.31081756km is a positive-native-centre separation lower bound, not an exact minimum, cell-footprint or continuous shoreline distance.",
+    "Renderer-solid nine-LOD lower bound2.945683km uses land>=128; any-positive nine-LOD envelope has its separate0.950647km lower bound.",
+    "Near-river/cross-LOD normals at shared positions and the old-cache approx0.022425m top naked seams remain independent unresolved findings.",
+    "6068 palette ef91ef0 has its earlier specified three-view evidence; this geometry acceptance does not enlarge that scope or remove remaining guarded D8 errors near complex shores."
+  ]
+}
