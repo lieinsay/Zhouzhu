@@ -45,10 +45,13 @@ git lfs pull
 
 本次用同一 `vcvars64.bat`、`VSLANG=2052` 编译独立的 `#include <cstddef>` 探针，`/showIncludes` 输出与当前 Ninja 前缀逐字匹配。当前输出编码是 UTF-8，不要按 CP936 解码成乱码；探针没有修改项目缓存或游戏 DLL。
 
+2026-10-11 再次按原始字节核对，发现语言相同仍可能漏依赖：当时控制台输入代码页为 936、输出代码页为 65001，`rules.ninja` 的中文前缀是 GBK，`cl /showIncludes` 却输出 UTF-8。两个 `CMake*Compiler.cmake` 里的前缀文本已正确，错误发生在 Ninja 文件输出编码。先在同一 MSVC 环境执行 `chcp 65001`，再重配原 `cmake-build-debug`，使前缀与实际编译输出逐字节匹配，并在同一配置完整重建；重建后 `far_groups.cpp.obj` 正确记录166个头文件依赖。不能仅凭某个对象依赖数量少判断损坏，判断依据是实际前缀字节不匹配。此机制也见 [CMake 的 Ninja 前缀编码修复说明](https://gitlab.kitware.com/cmake/cmake/-/merge_requests/5089/pipelines)。后续核对必须比较字节，不能凭终端中文字看起来一致就认定依赖有效。
+
 确认前缀仍为中文后，在 **cmd 或 `.cmd` 脚本**中运行：
 
 ```bat
 cd /d D:\Project\Zhouzhu
+chcp 65001 >nul
 call "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 if errorlevel 1 exit /b %errorlevel%
 set "VSLANG=2052"
