@@ -444,8 +444,19 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
             std::vector<int> ids;
             for(const auto &p:poly) {
                 const auto sample=p_terrain.sample(p.x,p.z); GroundSeason season;
-                const GroundColor color=ground_color(p_terrain,sample,p.x,p.z,1,step,season);
-                ids.push_back(b.vertex(float(p.x-mesh.origin_x),float(sample.top),float(p.z-mesh.origin_z),0,1,0,color,season));
+                // 切分点仍按真实地面求坡度。窄槽的差分不能跨出整条河，
+                // 否则厘米河的两岸会被两米网格平均成朝上的法线。
+                double e=step;
+                RiverHit nearby;
+                const auto &rivers=p_terrain.get_rivers();
+                if(rivers.nearest(p.x,p.z,rivers.max_reach(),nearby) && nearby.at.half()>0 && nearby.distance<=nearby.at.half()+step) {
+                    e=std::max(1e-4,std::min(e,nearby.at.half()*0.25)); // 0.1 mm 仅防数值差分退化，不改河槽。
+                }
+                const float nx=float(-(p_terrain.sample(p.x+e,p.z).top-p_terrain.sample(p.x-e,p.z).top)/(2*e));
+                const float nz=float(-(p_terrain.sample(p.x,p.z+e).top-p_terrain.sample(p.x,p.z-e).top)/(2*e));
+                const float inv=1/std::sqrt(1+nx*nx+nz*nz);
+                const GroundColor color=ground_color(p_terrain,sample,p.x,p.z,inv,step,season);
+                ids.push_back(b.vertex(float(p.x-mesh.origin_x),float(sample.top),float(p.z-mesh.origin_z),nx*inv,inv,nz*inv,color,season));
             }
             for(size_t k=1;k+1<ids.size();++k) b.triangle(ids[0],ids[k],ids[k+1],true);
         }

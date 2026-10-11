@@ -63,8 +63,9 @@ void fragment() {
 	base = mix(base, canopy, forest * broadleaf);
 
 	// 雪：积雪按碎斑进退、陡坡挂不住、背阴坡多留；河床、崖壁（法线水平）自然没有
-	float snow_mm = e0.r * (0.55 + 0.9 * wx_blotch(v_group.xz / 61.0 + vec2(17.0, 5.0))) * (1.0 + 0.5 * v_up.z * wx_hemi());
-	float cover = smoothstep(0.8, 9.0, snow_mm) * smoothstep(0.42, 0.7, v_up.y); // 五十度上下还挂得住
+	vec3 up = normalize(v_up); // 顶点法线插值后长度会缩短，坡度与背阴只取方向。
+	float snow_mm = e0.r * (0.55 + 0.9 * wx_blotch(v_group.xz / 61.0 + vec2(17.0, 5.0))) * (1.0 + 0.5 * up.z * wx_hemi());
+	float cover = smoothstep(0.8, 9.0, snow_mm) * smoothstep(0.42, 0.7, up.y); // 五十度上下还挂得住
 	base = mix(base, snow_color, cover);
 
 	// 雨后：压暗、反光
