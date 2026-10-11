@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-11",
+  "fix_commit": "ef91ef033a93323a5213097a16c11ff6e64ef070",
+  "problem": "6068实际截图中的大片白色/深蓝锯齿硬切带；既有高度统计和无头流程未覆盖该观感",
+  "cause": "100米原格出露岩性类别的最近格取色",
+  "change": "在未扭曲世界坐标下，对原格中心四邻调色板RGB作双线性插值，统一裸岩和两种坡面露岩入口",
+  "preserved": [
+    "生成源与正式包",
+    "最近格语义岩性、资源、采石",
+    "顶点位置、法线、碰撞、季节权重",
+    "原格中心与同类区调色、缺失岩性旧包ROCK色"
+  ],
+  "interpretation": "颜色过渡属于显示重建，不代表混合岩性或三维层序",
+  "source_data": {
+    "changed": false,
+    "existing_manifest": "docs/seed42-terrain-verification.json",
+    "terrain_6068_sha256": "1511ec7093ea399464e32c9ef0f363d9c051e9c9df5bd716c5ed5da014d4aab0"
+  },
+  "checks": {
+    "runner": "zhouzhu_core_tests.exe terrain_colors",
+    "checks": 20,
+    "failures_before": 2,
+    "failures_after": 0,
+    "adjacent_distance_m": 2,
+    "palette_rgb_distance_before": 0.743102,
+    "palette_rgb_distance_after": 0.014862,
+    "axes": [
+      "x",
+      "z"
+    ],
+    "exit_code": 0,
+    "seconds": 0.36,
+    "timeout_seconds": 180
+  },
+  "build": {
+    "configuration": "VS2022 MSVC x64 / Ninja / Debug / cmake-build-debug",
+    "targets": [
+      "zhouzhu_core_tests",
+      "zhouzhu"
+    ],
+    "exit_code": 0,
+    "seconds": 4.156,
+    "timeout_seconds": 180
+  },
+  "gpu": {
+    "mode": "实际新版Debug DLL GPU离屏采集",
+    "group": 6068,
+    "island": 1,
+    "position_xyz": [
+      26340,
+      1768,
+      -26960
+    ],
+    "day_of_year": 85,
+    "hour": 8.82,
+    "weather_override": "截图中的F6晴天",
+    "tiles": 242,
+    "yaw_degrees": [
+      270,
+      180,
+      0
+    ],
+    "sun_shadows": true,
+    "real_snow": true,
+    "material_diagnostic_override": false,
+    "exit_code": 0,
+    "seconds": 14.469,
+    "timeout_seconds": 180,
+    "visual_review": "root代理逐一查看三个修复后视角，原大片白色/深蓝硬切带消失",
+    "scope": "结论限于此源包、位置、日期、天气及三个视角"
+  },
+  "independent_observation": {
+    "description": "近河及跨LOD共享位置法线差",
+    "fixed_in_this_change": false,
+    "evidence": "build/terrain-artifacts/visible-seams/mesh_probe_source6068_distance.log"
+  },
+  "sources": [
+    {
+      "path": "src/terrain_tile.cpp",
+      "sha256": "ea4284ed38c218545e2c64d8087de37e5017b225a04e616c94c44df01c050fa8"
+    },
+    {
+      "path": "tests/terrain_color_checks.inc",
+      "sha256": "8bc829e3f28a1d7beefe32e5f43311aa7def1bba0c8f140cc2c34ba6bcd5ea20"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "build/terrain-artifacts/visible-seams/terrain_colors_red.log",
+      "sha256": "b35edb6d3e3dbbb9250cabf4257fc91ac009c01e72d59d41607c1d5658a99e90"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/material-checks.log",
+      "sha256": "2b807b120dfec576a4ce0e340f586d26d2238a28c0cc771ebe9baee8c5cc927c"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/material-checks-result.json",
+      "sha256": "c0dee5613b724d135d87dfa54bf6faff4c9d69484ef80fa0d9bf4cdcae4b62bf"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/render-clear-before/yaw_270_shadow_on.png",
+      "sha256": "eeedc65af47e7352062e6478255011bdbc1f70cb4c54e9fb16b8e67f52d6a285"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/render-palette-after/yaw_270_shadow_on.png",
+      "sha256": "75996afa4c885f07a9d156b0b7deec8025feee0e4575abe5356c9f6ee5255fcc"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/render-palette-after/yaw_180_shadow_on.png",
+      "sha256": "e05d18f14e47d9c564458d549df27463ab7df8a31ca6a76a8172eda3349d3b85"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/render-palette-after/yaw_0_shadow_on.png",
+      "sha256": "91b9e9d2c84d04df514b4bdcbb246e7ec0a952afd11da061a1fa37b66d6ff962"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/render-palette-after-result.json",
+      "sha256": "5a57201294d8b426b0e0e2b1d8cacf7ed250b8d4248f7ecf181c03609fb1b53a"
+    },
+    {
+      "path": "build/terrain-artifacts/visible-seams/source-lith-diagnostics.json",
+      "sha256": "31c23762d83fd1861abd4d5f24b4ee2270a01c9079716702c6d5ca260f6a19fa"
+    }
+  ]
+}

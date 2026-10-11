@@ -578,7 +578,7 @@
       "label": "分块地面",
       "detail": "TileLayout四叉树分块顶面、崖壁、岛底、裙边与叶块碰撞。源河亚格切分后的顶点从真实连续地面取差分单位法线，厘米级河槽使用相应小尺度，保留纵横坡；法线修复不改顶点位置或碰撞几何。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "595409c；20米/0.02米源河切分网格纵横坡、单位法线及位置/碰撞8项通过，最终联合36662项0失败。正式包LOD106↔141与跨群无头通过，像素验收尚未做。",
+      "evidence": "595409c；20米/0.02米源河单位法线与位置/碰撞检查通过，最终联合36662项0失败。ef91ef0着色20项与6068指定截图GPU三视角通过。诊断另见近河/跨LOD共享位置法线差，未纳入本次修复。",
       "sources": [
         "src/terrain_tile.h",
         "src/terrain_tile.cpp",
@@ -1594,11 +1594,13 @@
     {
       "id": "terrain-tile-ground",
       "label": "地皮着色",
-      "detail": "地表份额、陡坡露岩及河床着色。v8露岩使用源lith；河道切分颜色使用真实连续坡面法线的坡度，不以粗格平坡取代。缺少的三维岩层仍不补造。",
+      "detail": "地表份额、陡坡露岩及河床着色。v8出露岩性在未扭曲世界坐标的原格中心间双线性重建调色板RGB，裸岩与两种坡面入口共用；语义岩性仍为最近格类别，不平均编号或补造三维层序。坡度仍来自真实连续地面法线。",
       "tag": "纯算法（不含 Godot 头）",
-      "evidence": "595409c；河道真实纵横坡法线检查通过，地表着色与真实坡度共用；尚未做本轮可见像素验收。",
+      "evidence": "ef91ef0；真实网格东西/南北边界20项由2失败变为0失败，2米调色差0.743102→0.014862，几何/法线/碰撞/季节不变。同源6068 x26340,z−26960、85日8.82时、F6晴天GPU三视角原硬切带消失，范围仅此病例。",
       "sources": [
-        "src/terrain_tile.cpp"
+        "src/terrain_tile.cpp",
+        "tests/terrain_color_checks.inc",
+        "docs/seed42-material-verification.json"
       ],
       "since": "e41",
       "parent": "terrain-tile"
@@ -9962,7 +9964,7 @@
       "story": "玩家在6068村落附近真实河岸出生，观察随日期变化的河水，跨岛后回来仍看到对应日期的水情。",
       "date": "2026-10-06",
       "color": "#b8a12a",
-      "commits": "20a5efe..e09661a",
+      "commits": "20a5efe..ef91ef0",
       "steps": [
         {
           "text": "按明确启用的源规则生成河网，并在四细版及10相关LOD接入连续谷距修复",
@@ -9982,13 +9984,14 @@
           ]
         },
         {
-          "text": "玩家在6068村026附近真实河岸出生，重叠河谷坡面连续衔接，切分地面保留真实坡向",
+          "text": "玩家在6068村026附近真实河岸出生，河谷连续衔接，切分地面保留真实坡向，露岩颜色跨原格类别连续过渡",
           "nodes": [
             "world-session-start",
             "expedition",
             "player",
             "world-terrain",
-            "terrain-tile"
+            "terrain-tile",
+            "terrain-tile-ground"
           ]
         },
         {
@@ -10023,7 +10026,8 @@
         "terrain-tile",
         "world-clock",
         "world-river-water",
-        "world-node"
+        "world-node",
+        "terrain-tile-ground"
       ]
     }
   ],
