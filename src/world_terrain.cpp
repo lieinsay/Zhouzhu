@@ -176,28 +176,35 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     if (!g.lith.empty()) s.lith = g.lith[cell];
     if (!g.rockwall.empty()) s.rockwall = g.rockwall[cell];
     s.land = s.shore > 0.0;
-    RiverHit hits[WorldRivers::MAX_HITS];
-    const int n_hits = rivers ? rivers->near(p_x, p_z, hits, WorldRivers::MAX_HITS) : 0;
-    if (n_hits == 0) {
-        s.top = g.height_at(p_x, p_z) + detail(p_x, p_z);
+    if (rivers && rivers->from_source()) {
+        const RiverGround ground = rivers->ground(p_x, p_z, g.height_at(p_x, p_z), detail(p_x, p_z));
+        s.top = ground.top;
+        s.bed = ground.bed;
+        s.bank = ground.bank;
     } else {
-        // 河：细节噪声在滩外渐显；顶面在各条河的横断面与原地形之间取最低
-        const RiverRules &rr = rivers->get_rules();
-        double fade = 1.0;
-        for (int k = 0; k < n_hits; k++) {
-            fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core(hits[k].side)) / rr.blend_m));
+        RiverHit hits[WorldRivers::MAX_HITS];
+        const int n_hits = rivers ? rivers->near(p_x, p_z, hits, WorldRivers::MAX_HITS) : 0;
+        if (n_hits == 0) {
+            s.top = g.height_at(p_x, p_z) + detail(p_x, p_z);
+        } else {
+            // 旧包仍沿用原有横断面，不迁移历史河网。
+            const RiverRules &rr = rivers->get_rules();
+            double fade = 1.0;
+            for (int k = 0; k < n_hits; k++) {
+                fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core(hits[k].side)) / rr.blend_m));
+            }
+            const double natural = g.height_at(p_x, p_z) + fade * detail(p_x, p_z);
+            double top = 1e18;
+            for (int k = 0; k < n_hits; k++) {
+                const RiverHit &h = hits[k];
+                const double target = river_profile(h.at, h.distance, rr);
+                const double w = 1.0 - smooth01((h.distance - h.at.core(h.side)) / rr.blend_m);
+                top = std::min(top, natural + w * (target - natural));
+                s.bed = std::max(s.bed, float(1.0 - smooth01((h.distance - h.at.half()) / 1.5)));
+                s.bank = std::max(s.bank, float(w));
+            }
+            s.top = top;
         }
-        const double natural = g.height_at(p_x, p_z) + fade * detail(p_x, p_z);
-        double top = 1e18;
-        for (int k = 0; k < n_hits; k++) {
-            const RiverHit &h = hits[k];
-            const double target = river_profile(h.at, h.distance, rr);
-            const double w = 1.0 - smooth01((h.distance - h.at.core(h.side)) / rr.blend_m);
-            top = std::min(top, natural + w * (target - natural));
-            s.bed = std::max(s.bed, float(1.0 - smooth01((h.distance - h.at.half()) / 1.5)));
-            s.bank = std::max(s.bank, float(w));
-        }
-        s.top = top;
     }
     const WorldIsland &isl = island_info(s.island);
     const double inward = std::clamp(s.shore / std::max(1.0, isl.max_shore_m), 0.0, 1.0);

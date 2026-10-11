@@ -111,6 +111,12 @@ struct RiverStage {
     bool wet = false;
 };
 
+// 源河断面对地面的连续影响；bank/bed 仅供细节渐隐和地表着色。
+struct RiverGround {
+    double top = 0.0;
+    float bed = 0.0f, bank = 0.0f;
+};
+
 // 横断面：离中线 p_d 米处地面该多高（平底河床 → 岸坡 → 平岸 → 河漫滩），p_d 超过 core 按 core 算
 double river_profile(const RiverVertex &p_at, double p_d, const RiverRules &p_rules);
 // 径流指数为 p_runoff 时这一点的水
@@ -139,6 +145,8 @@ public:
     double max_reach() const { return reach_max; }
     // 该点落在哪些河的影响范围（core + blend）里：每条河取最近的一段，写进 r_hits（最多 p_cap 个），返回个数
     int near(double p_x, double p_z, RiverHit *r_hits, int p_cap) const;
+    // 同一条源河的重叠断面连续合成；不以零权重的最近候选替掉仍在起作用的宽谷。
+    RiverGround ground(double p_x, double p_z, double p_natural, double p_detail) const;
     // 最近的一条河（中线距离 ≤ p_max_distance，且 ≤ max_reach）
     bool nearest(double p_x, double p_z, double p_max_distance, RiverHit &r_hit) const;
     // 框里（外扩 p_margin）的段，逐个回调 (stem, segment)

@@ -26,6 +26,48 @@ void test_source_rivers() {
         if(std::abs(z)<1e-5 && x>0 && x<49 && tile.positions[i+1]<100) center=true;
     }
     check(center,"亚格河心插入实际地面三角形及碰撞");
+    // 同一条河较远的宽谷已覆盖此处，最近窄谷的零权重候选刚进范围时不能把它突然替掉。
+    WorldGrid overlap=g;
+    overlap.height.assign(9,200); overlap.source_landscape=true;
+    const std::string overlap_source="rivers 1\nexponents .26 .4\nbasin 0 1\nthreshold .3\n"
+        "stem 0 -1 -1 0 0 1\n"
+        "point 0 0 100 98 20 2 13 1 30 1 0 0 2\n"
+        "point 0 100 100 98 20 2 13 1 30 1 0 0 2\n"
+        "point 0 200 100 98 20 2 13 1 30 1 200 200 2\n"
+        "point 0 300 100 98 20 2 13 1 30 1 200 200 2\n";
+    check(parse_source_rivers(overlap_source,overlap,error),"重叠宽窄谷契约读取");
+    WorldTerrain valley(overlap,{},42);
+    const auto before=valley.sample_raw(39.999,50), after=valley.sample_raw(40.001,50);
+    std::printf("valley entry: %.6f -> %.6f (delta %.6f m / .002 m)\n",before.top,after.top,after.top-before.top);
+    check(std::abs(before.top-after.top)<.01,"零权重近河段进入范围时地面连续");
+    check(std::abs(valley.sample_raw(0,50).top-98)<1e-9,"重叠谷保留源河心河床");
+    WorldGrid endpoint=overlap;
+    check(parse_source_rivers("rivers 1\nexponents .26 .4\nbasin 0 1\nthreshold .3\n"
+        "stem 0 -1 -1 0 0 1\n"
+        "point 0 0 100 98 20 2 13 1 30 1 0 200 2\n"
+        "point 0 100 100 98 20 2 13 1 30 1 0 200 2\n",endpoint,error),"不对称谷宽端点读取");
+    WorldTerrain cap(endpoint,{},42);
+    check(std::abs(cap.sample_raw(-.001,-50).top-cap.sample_raw(.001,-50).top)<.01,"端点左右谷宽切换连续");
+    const auto edge=cap.sample_raw(500,50);
+    check(std::abs(edge.top-(endpoint.height_at(500,50)+cap.detail(500,50)))<1e-9 && edge.bank==0,"影响范围外仍取源地形和细节");
+    check(std::abs(cap.sample_raw(-10,50).top-100)<1e-9 && std::abs(cap.sample_raw(10,50).top-100)<1e-9,
+        "单段河槽真实半宽处保留源平岸高程，不因左右谷宽不同而放宽");
+    const double half_bed=98+2*std::pow(.5,.4/.26);
+    check(std::abs(cap.sample_raw(-5,50).top-half_bed)<1e-9 && std::abs(cap.sample_raw(5,50).top-half_bed)<1e-9,
+        "单段河槽两岸内侧仍按源宽深和横断面取值");
+    WorldGrid bend=overlap;
+    check(parse_source_rivers("rivers 1\nexponents .26 .4\nbasin 0 1\nthreshold .3\n"
+        "stem 0 -1 -1 0 0 1\n"
+        "point 0 0 100 98 20 2 13 1 30 1 20 20 2\n"
+        "point 0 100 95 93 20 2 13 1 30 1 20 20 2\n"
+        "point 100 100 90 88 20 2 13 1 30 1 20 20 2\n",bend,error),"不同高程折弯源河读取");
+    WorldTerrain turn(bend,{},42);
+    const double bend_before=turn.sample_raw(29.999,70).top, bend_after=turn.sample_raw(30.001,70).top;
+    std::printf("bend bisector: %.6f -> %.6f (delta %.6f m / .002 m)\n",bend_before,bend_after,bend_after-bend_before);
+    check(std::abs(bend_before-bend_after)<.01,"弯道相邻河段等距线两侧高度连续，不因最近段切换突跳");
+    check(std::abs(turn.sample_raw(0,100).top-93)<1e-9,"弯道共享源点保留真实河床原值");
+    check(std::abs(turn.sample_raw(63.999,80).top-turn.sample_raw(64.001,80).top)<.01,
+        "跨空间桶边界时零影响候选增减不造成地面突跳");
     if(const char *dir=std::getenv("ZHOUZHU_RIVER_PACKAGE")) {
         std::string bytes,text; gen_core::read_file(std::string(dir)+"/terrain.bin",bytes); gen_core::read_file(std::string(dir)+"/rivers.tsv",text);
         WorldGrid actual;
@@ -40,6 +82,26 @@ void test_source_rivers() {
         }
         check(joins>0 && width>20 && varies,"6068实包连接、宽度、不同日期");
         constexpr double spawn_x=24790,spawn_z=-32330;
+        // 分享截图旁旧逻辑在这一对实包坐标：源地形 +0.079 m，游戏地面 -14.119 m。
+        const auto wall_a=world.sample_raw(24612,-32356), wall_b=world.sample_raw(24614,-32356);
+        std::printf("6068 wall: source_delta=%.9f terrain_delta=%.9f\n",actual.height_at(24614,-32356)-actual.height_at(24612,-32356),wall_b.top-wall_a.top);
+        auto old_segment=[&](double x) {
+            RiverHit hits[WorldRivers::MAX_HITS];
+            const int count=r.near(x,-32356,hits,WorldRivers::MAX_HITS);
+            for(int k=0;k<count;++k) if(hits[k].stem==116) return hits[k].segment;
+            return -1;
+        };
+        double lo=24612,hi=24614;
+        const int segment=old_segment(lo);
+        check(segment>=0 && segment!=old_segment(hi),"实包回归仍覆盖旧河段切换位置");
+        for(int k=0;k<40;++k) {
+            const double mid=(lo+hi)*.5;
+            if(old_segment(mid)==segment) lo=mid; else hi=mid;
+        }
+        const double boundary=(lo+hi)*.5;
+        const double jump=world.sample_raw(boundary+1e-5,-32356).top-world.sample_raw(boundary-1e-5,-32356).top;
+        std::printf("6068 old switch x=%.9f new_jump=%.12f m / .00002 m\n",boundary,jump);
+        check(std::abs(jump)<.001,"6068实际候选切换点没有高度阶跃，保留连续谷坡");
         const auto spawn=world.sample(spawn_x,spawn_z);
         RiverHit hit; const bool river=r.nearest(spawn_x,spawn_z,1000,hit);
         check(spawn.land && river && hit.distance>hit.at.half()+5 && hit.distance<100,"出生在真实河岸地面");

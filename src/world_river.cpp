@@ -600,6 +600,61 @@ int WorldRivers::near(double p_x, double p_z, RiverHit *r_hits, int p_cap) const
     return count;
 }
 
+RiverGround WorldRivers::ground(double p_x, double p_z, double p_natural, double p_detail) const {
+    RiverGround out;
+    out.top = p_natural + p_detail;
+    const auto found = buckets.find(bucket_key(int(std::floor(p_z / BUCKET_M)), int(std::floor(p_x / BUCKET_M))));
+    if (found == buckets.end()) return out;
+    auto influence = [&](const RiverHit &hit) {
+        // 断面内仍用源左右谷宽。投影夹在端点时，按法向距离方向连续延伸端帽，
+        // 避免沿端点切换左右岸时把不对称谷宽突然翻转。
+        double core = hit.at.core(hit.side);
+        if (hit.at.source && (hit.t <= 0.0 || hit.t >= 1.0) && hit.distance > 0.0) {
+            const auto &v = stems[size_t(hit.stem)].v;
+            const auto &a = v[size_t(hit.segment)], &b = v[size_t(hit.segment) + 1];
+            const double dx = b.x - a.x, dz = b.z - a.z, length = std::hypot(dx, dz);
+            const double side = length > 0.0 ? std::clamp((dz * (p_x - hit.at.x) - dx * (p_z - hit.at.z)) / (length * hit.distance), -1.0, 1.0) : 0.0;
+            core = hit.at.half() + 0.5 * (hit.at.left + hit.at.right + side * (hit.at.left - hit.at.right));
+        }
+        return 1.0 - smoothstep((hit.distance - core) / rules.blend_m);
+    };
+    double bank = 0.0;
+    for (uint32_t id : found->second) {
+        const RiverHit hit = measure(id, p_x, p_z);
+        const double w = influence(hit);
+        bank = std::max(bank, w);
+        if (w > 0.0) out.bed = std::max(out.bed, float(1.0 - smoothstep((hit.distance - hit.at.half()) / 1.5)));
+    }
+    if (bank <= 0.0) return out;
+    out.bank = float(bank);
+    const double natural = p_natural + (1.0 - bank) * p_detail;
+    out.top = 1e18;
+    int stem = -1;
+    double weight = 0.0, target = 0.0, strength = 0.0;
+    auto finish = [&]() {
+        if (weight > 0.0) out.top = std::min(out.top, natural + strength * (target / weight - natural));
+        weight = target = strength = 0.0;
+    };
+    // index_segments 按 stem 顺序写每个桶；同河段在桶内连续，无需每次取样分配容器。
+    for (uint32_t id : found->second) {
+        const RiverHit hit = measure(id, p_x, p_z);
+        if (hit.stem != stem) {
+            finish();
+            stem = hit.stem;
+        }
+        const double w = influence(hit);
+        if (w <= 0.0) continue;
+        // 原有过渡权重 / 距离平方组成单位和插值：新候选在边界权重为零，
+        // 河心取源断面原值。分母下限只防除零，不改变河宽、谷宽或水文。
+        const double q = w / std::max(1e-24, hit.distance * hit.distance);
+        weight += q;
+        target += q * river_profile(hit.at, hit.distance, rules);
+        strength = std::max(strength, w);
+    }
+    finish();
+    return out;
+}
+
 bool WorldRivers::nearest(double p_x, double p_z, double p_max_distance, RiverHit &r_hit) const {
     RiverHit hits[MAX_HITS];
     const int n = near(p_x, p_z, hits, MAX_HITS);
