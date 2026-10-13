@@ -26,9 +26,12 @@ async function body(request) {
   }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new StoreError(400, 'JSON 请求格式不正确'); }
 }
-function sameOrigin(request, port) {
+function checkRequestAccess(request, port) {
   const hosts = [`127.0.0.1:${port}`, `localhost:${port}`];
   if (!hosts.includes(request.headers.host)) throw new StoreError(403, 'Host 必须是本机开发工具地址');
+  // 浏览器直接打开地址会标记 Sec-Fetch-Site:none，从其他页面点击链接则是
+  // cross-site。GET/HEAD 不写草稿，应允许读取；写入仍须通过下面的同源检查。
+  if (request.method === 'GET' || request.method === 'HEAD') return;
   const origin = request.headers.origin;
   if (origin && origin !== `http://${request.headers.host}`) throw new StoreError(403, '只允许同源页面写入草稿');
   if (!origin && request.headers['sec-fetch-site'] && request.headers['sec-fetch-site'] !== 'same-origin') throw new StoreError(403, '只允许同源页面写入草稿');
@@ -51,7 +54,7 @@ export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '
   const server = createServer(async (request, response) => {
     try {
       const port = server.address()?.port;
-      sameOrigin(request, port);
+      checkRequestAccess(request, port);
       let pathname;
       try { pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname); } catch { throw new StoreError(400, 'URL 格式不正确'); }
       if (pathname.includes('\\') || pathname.includes('\0') || pathname.split('/').includes('..')) throw new StoreError(403, '不允许访问目录外文件');

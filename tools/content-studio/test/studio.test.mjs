@@ -211,6 +211,65 @@ test('HTTP导入导出/差异/建议与只读静态边界、同源写入、冲�
   assert.deepEqual(await sourceHashes(f.repositoryRoot), original);
 });
 
+test('HTTP浏览器入口和读取允许导航，跨源写入及非法Host仍拒绝', async context => {
+  const f = await fixture(context);
+  const original = await sourceHashes(f.repositoryRoot);
+  const studio = await createStudioServer(f);
+  const url = await studio.listen(0);
+  context.after(() => new Promise(resolveClose => studio.server.close(resolveClose)));
+  const send = (path, { method = 'GET', headers = {}, data } = {}) => new Promise((resolveResponse, reject) => {
+    const payload = data === undefined ? undefined : JSON.stringify(data);
+    const req = request(`${url}${path}`, {
+      method,
+      headers: { ...(payload === undefined ? {} : { 'Content-Type': 'application/json' }), ...headers },
+    }, res => {
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
+      res.on('end', () => resolveResponse({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks).toString('utf8') }));
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.end(payload);
+  });
+  const navigation = site => ({ 'Sec-Fetch-Site': site, 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Dest': 'document', Accept: 'text/html' });
+  for (const site of ['none', 'cross-site']) {
+    const response = await send('/', { headers: navigation(site) });
+    assert.equal(response.status, 200, `GET / 顶级导航 Sec-Fetch-Site:${site}`);
+    assert.match(response.headers['content-type'], /^text\/html/);
+    assert.match(response.body, /<title>工坊测试<\/title>/);
+  }
+  const head = await send('/', { method: 'HEAD', headers: navigation('none') });
+  assert.equal(head.status, 200, 'HEAD / 仅检查入口');
+  assert.equal(head.body, '');
+  const crossOriginRead = { Origin: 'https://evil.example', 'Sec-Fetch-Site': 'cross-site' };
+  const module = await send('/lib/validation.mjs', { headers: { ...crossOriginRead, 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'script' } });
+  assert.equal(module.status, 200, 'GET 静态模块不会进入写入同源检查');
+  assert.match(module.headers['content-type'], /^text\/javascript/);
+  assert.equal(module.headers['access-control-allow-origin'], undefined, '静态模块没有开放跨源读取');
+  const read = await send('/api/workspace', { headers: { ...crossOriginRead, 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Dest': 'empty' } });
+  assert.equal(read.status, 200, 'GET API 读取不会进入写入同源检查');
+  assert.equal(read.headers['access-control-allow-origin'], undefined, 'API没有开放跨源读取');
+  const first = JSON.parse(read.body);
+  assert.equal(first.baseline.items.length, 49);
+  const writeData = { project: first.project, revision: first.revision };
+  for (const path of ['/api/workspace', '/api/import', '/api/reset']) {
+    const data = path === '/api/reset' ? { revision: first.revision } : writeData;
+    for (const headers of [crossOriginRead, { 'Sec-Fetch-Site': 'cross-site' }]) {
+      const response = await send(path, { method: 'POST', headers, data });
+      assert.equal(response.status, 403, `${path} 跨源写入${headers.Origin ? '含Origin' : '不含Origin'}`);
+      assert.equal(JSON.parse(response.body).error, '只允许同源页面写入草稿');
+    }
+  }
+  first.project.items[0].name = '浏览器同源草稿粟';
+  const saved = await send('/api/workspace', { method: 'POST', headers: { Origin: url, 'Sec-Fetch-Site': 'same-origin' }, data: writeData });
+  assert.equal(saved.status, 200, '同源页面可保存草稿');
+  assert.equal(JSON.parse(saved.body).project.items[0].name, '浏览器同源草稿粟');
+  const invalidHost = await send('/', { headers: { ...navigation('none'), Host: 'evil.example' } });
+  assert.equal(invalidHost.status, 403, '浏览器导航仍必须使用本机Host');
+  assert.equal(JSON.parse(invalidHost.body).error, 'Host 必须是本机开发工具地址');
+  assert.deepEqual(await sourceHashes(f.repositoryRoot), original);
+});
+
 test('C++建议禁止导出错误配方，并保持中文及字符串转义', () => {
   const project = clone();
   project.items[0].name = '粟"测试\\一';
