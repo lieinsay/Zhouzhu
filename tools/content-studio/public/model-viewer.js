@@ -137,7 +137,7 @@ export class ModelViewer {
     const half = Math.ceil(extent / step) * step;
     const grid = [];
     for (let p = -half; p <= half + step * .01; p += step) {
-      const color = Math.abs(p) < step * .01 ? [.35, .47, .46] : [.17, .23, .28];
+      const color = Math.abs(p) < step * .01 ? [.30, .53, .47] : [.65, .73, .78];
       for (const position of [[p, 0, -half], [p, 0, half], [-half, 0, p], [half, 0, p]]) grid.push(...position, 0, 1, 0, ...color, 1);
     }
     this.gridCount = grid.length / 10; this.upload(this.gridBuffer, new Float32Array(grid));
@@ -158,7 +158,7 @@ export class ModelViewer {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     const width = Math.max(1, Math.round(canvas.clientWidth * ratio)), height = Math.max(1, Math.round(canvas.clientHeight * ratio));
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
-    gl.viewport(0, 0, width, height); gl.clearColor(.055, .078, .105, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.viewport(0, 0, width, height); gl.clearColor(.88, .92, .94, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.program); gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     const eye = bounds.center.map((value, i) => value + [Math.sin(this.yaw) * Math.cos(this.pitch), Math.sin(this.pitch), Math.cos(this.yaw) * Math.cos(this.pitch)][i] * this.distance);
     const camera = multiply(perspective(width / height, Math.max(.001, bounds.radius * .005), Math.max(bounds.radius * 100, this.distance * 10)), lookAt(eye, bounds.center));

@@ -1,6 +1,6 @@
 {
   "name": "zhouzhu-content-studio",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Zhouzhu 独立开发者内容与配方管理工具",
