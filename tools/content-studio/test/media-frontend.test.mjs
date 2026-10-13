@@ -58,6 +58,18 @@ test('显式绑定保存局部变换、处理缺失资产，并能完全恢复�
   assert.equal(p.visuals, undefined);
 });
 
+test('清单误将采集源声明为items时也不会自动绑定库存道具', () => {
+  const p = project();
+  for (const usage of ['gather-source', 'building', 'ship-module']) {
+    const asset = { ...library.models[0], id: 'scatter:broadleaf', collection: 'items', recordIds: ['timber'], itemIds: ['timber'], usage };
+    const mismatched = { ...library, models: [asset] };
+    assert.equal(media.resolveVisual(p, p.items[0], 'items', mismatched).model, null, usage);
+    assert.equal(p.visuals, undefined);
+  }
+  const safe = { ...library.models[1], collection: 'items', recordIds: ['timber'] };
+  assert.equal(media.resolveVisual(p, p.items[0], 'items', { ...library, models: [safe] }).model.id, safe.id);
+});
+
 test('ID编辑发生暂时碰撞时保留双方视觉配置，继续输入恢复本条绑定', () => {
   const p = project(), row = p.items[0];
   p.visuals = { items: { timber: { model: 'own' }, stone: { model: 'other' } } };

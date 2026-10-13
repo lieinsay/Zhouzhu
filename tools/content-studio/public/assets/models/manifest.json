@@ -1,0 +1,1609 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-13T08:29:07.816Z",
+  "models": [
+    {
+      "id": "piece:foundation",
+      "url": "/assets/models/piece-foundation.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "foundation"
+      ],
+      "itemIds": [
+        "foundation"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 24,
+      "triangles": 12,
+      "parts": 1,
+      "name": "地基",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "8259c470e8a6cd804a9ecf000527b74776cedb35a94f54b7076c29136da7b241"
+    },
+    {
+      "id": "piece:floorboard",
+      "url": "/assets/models/piece-floorboard.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "floorboard"
+      ],
+      "itemIds": [
+        "floorboard"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 24,
+      "triangles": 12,
+      "parts": 1,
+      "name": "楼板",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "5ff87383737908454823128012402d404980b97d3e74fe07c7f3646916b39a92"
+    },
+    {
+      "id": "piece:earth_wall",
+      "url": "/assets/models/piece-earth_wall.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "earth_wall"
+      ],
+      "itemIds": [
+        "earth_wall"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 24,
+      "triangles": 12,
+      "parts": 1,
+      "name": "夯土墙",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "3b461f92d3996afce6b977fdaceccd2874152ef6145407829d1efac72ac7ad4d"
+    },
+    {
+      "id": "piece:brick_wall",
+      "url": "/assets/models/piece-brick_wall.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "brick_wall"
+      ],
+      "itemIds": [
+        "brick_wall"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 24,
+      "triangles": 12,
+      "parts": 1,
+      "name": "砖墙",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "a6e7f2125504a063414e93218ae2f5913013229151758010d0588a08b7dffde4"
+    },
+    {
+      "id": "piece:door_wall",
+      "url": "/assets/models/piece-door_wall.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "door_wall"
+      ],
+      "itemIds": [
+        "door_wall"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 168,
+      "triangles": 84,
+      "parts": 3,
+      "name": "门墙",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "d5701f95b88e1fe2d15ffbbcecf0aba14fe029a9bde585be1f7a38eae8a078dd"
+    },
+    {
+      "id": "piece:window_wall",
+      "url": "/assets/models/piece-window_wall.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "window_wall"
+      ],
+      "itemIds": [
+        "window_wall"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 192,
+      "triangles": 96,
+      "parts": 2,
+      "name": "窗墙",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "7ca6e43b0201f112db347578290353ecd45633aeb899bb4fa548f12da8111a71"
+    },
+    {
+      "id": "piece:gable",
+      "url": "/assets/models/piece-gable.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "gable"
+      ],
+      "itemIds": [
+        "gable"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 18,
+      "triangles": 8,
+      "parts": 1,
+      "name": "山墙",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。山墙形状取同格朝 +x 下坡的 tile_roof，导出不包含该坡顶。",
+      "assetSha256": "ae57f08af1ee3ce2b467eb7c99c46ab1dd93100730a629c5719fd216a6ed441d"
+    },
+    {
+      "id": "piece:thatch_roof",
+      "url": "/assets/models/piece-thatch_roof.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "thatch_roof"
+      ],
+      "itemIds": [
+        "thatch_roof"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 24,
+      "triangles": 12,
+      "parts": 1,
+      "name": "草顶",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "2b97752b256590aa3eaf622dd168e696de97ea91368ecac1642e75ecfa97c7e3"
+    },
+    {
+      "id": "piece:tile_roof",
+      "url": "/assets/models/piece-tile_roof.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "tile_roof"
+      ],
+      "itemIds": [
+        "tile_roof"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 24,
+      "triangles": 12,
+      "parts": 1,
+      "name": "瓦顶",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "28ba4f5e8a04ce48782b1bfca1c1986f07a550f679f7d8d08ac232a280c106a3"
+    },
+    {
+      "id": "piece:pillar",
+      "url": "/assets/models/piece-pillar.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "pillar"
+      ],
+      "itemIds": [
+        "pillar"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 24,
+      "triangles": 12,
+      "parts": 1,
+      "name": "木柱",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "cef64ab97eed25920153047c86563fc4e77fe20614a79bdbc74178503ef6181d"
+    },
+    {
+      "id": "piece:ladder",
+      "url": "/assets/models/piece-ladder.json",
+      "format": "mesh-json",
+      "usage": "construction",
+      "collection": "items",
+      "recordIds": [
+        "ladder"
+      ],
+      "itemIds": [
+        "ladder"
+      ],
+      "source": {
+        "path": "src/piece_mesh.cpp",
+        "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+      },
+      "vertices": 216,
+      "triangles": 108,
+      "parts": 2,
+      "name": "梯子",
+      "kind": "game",
+      "notes": "直接复用 build_piece_mesh；主材质与所有辅材质来自当前游戏定义，坐标单位为米。",
+      "assetSha256": "100247d564b93aec56e970fce66b6fd2487356ecf1aa7e0af8b95be9121d5c07"
+    },
+    {
+      "id": "building:house",
+      "url": "/assets/models/building-house.json",
+      "format": "mesh-json",
+      "usage": "building",
+      "collection": "buildings",
+      "recordIds": [
+        "house"
+      ],
+      "itemIds": [],
+      "source": {
+        "path": "src/building_mesh.cpp",
+        "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+      },
+      "templateId": "house/sanjian",
+      "vertices": 2202,
+      "triangles": 1100,
+      "parts": 11,
+      "name": "民居",
+      "kind": "game",
+      "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/house/sanjian.txt，不是库存物品独立实体。",
+      "assetSha256": "c2ee9861e08dd21288ba4d57633a33d0f278203a2d5b122b153578ef9d0e8225"
+    },
+    {
+      "id": "building:hall",
+      "url": "/assets/models/building-hall.json",
+      "format": "mesh-json",
+      "usage": "building",
+      "collection": "buildings",
+      "recordIds": [
+        "hall"
+      ],
+      "itemIds": [],
+      "source": {
+        "path": "src/building_mesh.cpp",
+        "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+      },
+      "templateId": "hall/citang",
+      "vertices": 3258,
+      "triangles": 1628,
+      "parts": 10,
+      "name": "堂屋",
+      "kind": "game",
+      "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/hall/citang.txt，不是库存物品独立实体。",
+      "assetSha256": "10480ddc91a83594ccfc2d2a0304079a3b16c5639c0bdf6505bb6ce3b8bb3805"
+    },
+    {
+      "id": "building:granary",
+      "url": "/assets/models/building-granary.json",
+      "format": "mesh-json",
+      "usage": "building",
+      "collection": "buildings",
+      "recordIds": [
+        "granary"
+      ],
+      "itemIds": [],
+      "source": {
+        "path": "src/building_mesh.cpp",
+        "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+      },
+      "templateId": "granary/cang",
+      "vertices": 1242,
+      "triangles": 620,
+      "parts": 9,
+      "name": "仓",
+      "kind": "game",
+      "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/granary/cang.txt，不是库存物品独立实体。",
+      "assetSha256": "3b26648d11be41d8b017b123fc1111e13ad6a188bc1ce60449922c1935c28e8d"
+    },
+    {
+      "id": "building:tower",
+      "url": "/assets/models/building-tower.json",
+      "format": "mesh-json",
+      "usage": "building",
+      "collection": "buildings",
+      "recordIds": [
+        "tower"
+      ],
+      "itemIds": [],
+      "source": {
+        "path": "src/building_mesh.cpp",
+        "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+      },
+      "templateId": "tower/wanglou",
+      "vertices": 3522,
+      "triangles": 1760,
+      "parts": 19,
+      "name": "望楼",
+      "kind": "game",
+      "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/tower/wanglou.txt，不是库存物品独立实体。",
+      "assetSha256": "5f7f1d780cceffb01d19c3b6abb22c057fb43e74e53981d95e4949e56f81e8ef"
+    },
+    {
+      "id": "building:berth",
+      "url": "/assets/models/building-berth.json",
+      "format": "mesh-json",
+      "usage": "building",
+      "collection": "buildings",
+      "recordIds": [
+        "berth"
+      ],
+      "itemIds": [],
+      "source": {
+        "path": "src/building_mesh.cpp",
+        "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+      },
+      "vertices": 384,
+      "triangles": 192,
+      "parts": 3,
+      "name": "船台",
+      "kind": "game",
+      "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。船台按当前 land_berth::add_parts 生成，无房屋模板。",
+      "assetSha256": "f79f87b36bd90eecbc96dae08db6c96a98ccb6be862ba32bb0604713e0f4bde3"
+    },
+    {
+      "collection": "items",
+      "format": "mesh-json",
+      "id": "prop:workbench",
+      "item": "workbench",
+      "itemIds": [
+        "workbench"
+      ],
+      "kind": "game",
+      "name": "工作台",
+      "notes": "直接调用当前游戏放置实物的 C++ 生成函数；以平地零垫高导出。",
+      "recordIds": [
+        "workbench"
+      ],
+      "source": {
+        "path": "src/placed_props.cpp",
+        "sha256": "4081bda93b92ddec912cbfd331cfa7c0cdaa6084f95b7b7cfc806c9554c51b49"
+      },
+      "url": "/assets/models/prop-workbench.json",
+      "usage": "placed",
+      "assetSha256": "f24c20b505a7ac1bff6bf8359661e9b2b9bae130b29830eb12831e31d7c19b29",
+      "vertices": 288,
+      "triangles": 96
+    },
+    {
+      "collection": "items",
+      "format": "mesh-json",
+      "id": "prop:kiln",
+      "item": "kiln",
+      "itemIds": [
+        "kiln"
+      ],
+      "kind": "game",
+      "name": "窑",
+      "notes": "直接调用当前游戏放置实物的 C++ 生成函数；以平地零垫高导出。",
+      "recordIds": [
+        "kiln"
+      ],
+      "source": {
+        "path": "src/placed_props.cpp",
+        "sha256": "4081bda93b92ddec912cbfd331cfa7c0cdaa6084f95b7b7cfc806c9554c51b49"
+      },
+      "url": "/assets/models/prop-kiln.json",
+      "usage": "placed",
+      "assetSha256": "8cf2c171e03815d233d8ded2c6821438243b44e9841396dd9d3d22e90435105d",
+      "vertices": 1404,
+      "triangles": 468
+    },
+    {
+      "collection": "items",
+      "format": "mesh-json",
+      "id": "prop:chest",
+      "item": "chest",
+      "itemIds": [
+        "chest"
+      ],
+      "kind": "game",
+      "name": "木箱",
+      "notes": "直接调用当前游戏放置实物的 C++ 生成函数；以平地零垫高导出。",
+      "recordIds": [
+        "chest"
+      ],
+      "source": {
+        "path": "src/placed_props.cpp",
+        "sha256": "4081bda93b92ddec912cbfd331cfa7c0cdaa6084f95b7b7cfc806c9554c51b49"
+      },
+      "url": "/assets/models/prop-chest.json",
+      "usage": "placed",
+      "assetSha256": "83b26f1d182830c9e54765d07e79c56e84ebdf691663b14b14b77d4d9056438f",
+      "vertices": 180,
+      "triangles": 60
+    },
+    {
+      "collection": "items",
+      "format": "mesh-json",
+      "id": "prop:torch",
+      "item": "torch",
+      "itemIds": [
+        "torch"
+      ],
+      "kind": "game",
+      "name": "火把",
+      "notes": "直接调用当前游戏放置实物的 C++ 生成函数；以平地零垫高导出。",
+      "recordIds": [
+        "torch"
+      ],
+      "source": {
+        "path": "src/placed_props.cpp",
+        "sha256": "4081bda93b92ddec912cbfd331cfa7c0cdaa6084f95b7b7cfc806c9554c51b49"
+      },
+      "url": "/assets/models/prop-torch.json",
+      "usage": "placed",
+      "assetSha256": "02f6ffcd6cb1c49aba3cb827d2dd9d96ce8ceefc72584a27ecc8e47162fccf53",
+      "vertices": 1728,
+      "triangles": 576
+    },
+    {
+      "collection": "items",
+      "format": "mesh-json",
+      "id": "prop:fence",
+      "item": "fence",
+      "itemIds": [
+        "fence"
+      ],
+      "kind": "game",
+      "name": "篱笆",
+      "notes": "直接调用当前游戏放置实物的 C++ 生成函数；以平地零垫高导出。",
+      "recordIds": [
+        "fence"
+      ],
+      "source": {
+        "path": "src/placed_props.cpp",
+        "sha256": "4081bda93b92ddec912cbfd331cfa7c0cdaa6084f95b7b7cfc806c9554c51b49"
+      },
+      "url": "/assets/models/prop-fence.json",
+      "usage": "placed",
+      "assetSha256": "82a05fe3f9f8b29f05743c9c26dacaa34745f345f5a17a0d25052800c1661f60",
+      "vertices": 144,
+      "triangles": 48
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:broadleaf",
+      "item": "timber",
+      "itemIds": [
+        "timber"
+      ],
+      "kind": "game",
+      "name": "阔叶树",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "broadleaf"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-broadleaf.json",
+      "usage": "gather-source",
+      "assetSha256": "d33f4d136011e73f29a41c0a04e6669e463482f69855b63be85e232bdc096385",
+      "vertices": 396,
+      "triangles": 132
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:conifer",
+      "item": "timber",
+      "itemIds": [
+        "timber"
+      ],
+      "kind": "game",
+      "name": "针叶树",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "conifer"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-conifer.json",
+      "usage": "gather-source",
+      "assetSha256": "ddbbc3793975e57a220113ec4b4b7fc28c9d119cfe5766f76a51791b3ff917d6",
+      "vertices": 108,
+      "triangles": 36
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:shrub",
+      "item": "firewood",
+      "itemIds": [
+        "firewood"
+      ],
+      "kind": "game",
+      "name": "灌丛",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "shrub"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-shrub.json",
+      "usage": "gather-source",
+      "assetSha256": "c3df5ac04953916c8f7eee85e97d413c16939d261b00ed4342e98f40d697e98a",
+      "vertices": 144,
+      "triangles": 48
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:reeds",
+      "item": "reed",
+      "itemIds": [
+        "reed"
+      ],
+      "kind": "game",
+      "name": "芦苇",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "reeds"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 1,
+      "url": "/assets/models/scatter-reeds.json",
+      "usage": "gather-source",
+      "assetSha256": "c5c83921b52ac0598dca81f1e41c727db94aaa0d506a81d8a3aa51eaa7074cd4",
+      "vertices": 108,
+      "triangles": 36
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:boulder",
+      "item": "stone",
+      "itemIds": [
+        "stone"
+      ],
+      "kind": "game",
+      "name": "石块",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "boulder"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-boulder.json",
+      "usage": "gather-source",
+      "assetSha256": "635fbfedf48e4ffbd1b68dc6fa99e091b6fcfbaf129c8884aad925a13fa0594f",
+      "vertices": 240,
+      "triangles": 80
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:floatstone",
+      "item": "floatstone",
+      "itemIds": [
+        "floatstone"
+      ],
+      "kind": "game",
+      "name": "浮石块",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "floatstone"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-floatstone.json",
+      "usage": "gather-source",
+      "assetSha256": "051b20a46bdd6f852e825c8960d0d86507bd05fc3f8057952d13b86ea7484053",
+      "vertices": 120,
+      "triangles": 40
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:clay_bank",
+      "item": "clay",
+      "itemIds": [
+        "clay"
+      ],
+      "kind": "game",
+      "name": "黏土坡",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "clay_bank"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-clay_bank.json",
+      "usage": "gather-source",
+      "assetSha256": "b60ee2a44fff1ed4059e685066102837b5a3ad325a329f2a8d254726104684e0",
+      "vertices": 240,
+      "triangles": 80
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:gravel_heap",
+      "item": "gravel",
+      "itemIds": [
+        "gravel"
+      ],
+      "kind": "game",
+      "name": "砂砾堆",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "gravel_heap"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-gravel_heap.json",
+      "usage": "gather-source",
+      "assetSha256": "f1ca4a68354adc20e0a487758036a7c667db87bf983de74f80cde29a73f36b03",
+      "vertices": 201,
+      "triangles": 67
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:placer",
+      "item": "gold_dust",
+      "itemIds": [
+        "gold_dust"
+      ],
+      "kind": "game",
+      "name": "淘金沙",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "placer"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-placer.json",
+      "usage": "gather-source",
+      "assetSha256": "e1891852b153dcd5effc9ad2a70524a789e003403c96de98ddc0ad8c9a58d721",
+      "vertices": 390,
+      "triangles": 130
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock",
+      "item": "copper_ore",
+      "itemIds": [
+        "copper_ore"
+      ],
+      "kind": "game",
+      "name": "铜矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-ore_rock.json",
+      "usage": "gather-source",
+      "assetSha256": "f917ce534452fccdab1460a9c87a6aab6f0a7660bd2f886c7396b273f3f53fa4",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:crust",
+      "item": "sulfur",
+      "itemIds": [
+        "sulfur"
+      ],
+      "kind": "game",
+      "name": "硫磺结壳",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "crust"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-crust.json",
+      "usage": "gather-source",
+      "assetSha256": "e309e7c9bd68f52fd8ad515f5c683acf354111c66b6595fa71a898137fd7b748",
+      "vertices": 117,
+      "triangles": 39
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:reeds_peat",
+      "item": "peat",
+      "itemIds": [
+        "peat"
+      ],
+      "kind": "game",
+      "name": "泥炭",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "reeds"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 0,
+      "url": "/assets/models/scatter-reeds_peat.json",
+      "usage": "gather-source",
+      "assetSha256": "fbf733f1fe2fdf5fbf125d2648a32dd3c4f323c8f86016469b89a31d3727c168",
+      "vertices": 108,
+      "triangles": 36
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:crust_guano",
+      "item": "guano",
+      "itemIds": [
+        "guano"
+      ],
+      "kind": "game",
+      "name": "鸟粪",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "crust"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 1,
+      "url": "/assets/models/scatter-crust_guano.json",
+      "usage": "gather-source",
+      "assetSha256": "dad063643689ee398b3e466a52fd4294b8c8930c9b50f31f59510c0ce5f7250d",
+      "vertices": 117,
+      "triangles": 39
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock_iron_ore",
+      "item": "iron_ore",
+      "itemIds": [
+        "iron_ore"
+      ],
+      "kind": "game",
+      "name": "铁矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 1,
+      "url": "/assets/models/scatter-ore_rock_iron_ore.json",
+      "usage": "gather-source",
+      "assetSha256": "c3db2c4f6b2735b7b018290379a0cff41272363983240c4e311115016a24f2c9",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock_lead_zinc_ore",
+      "item": "lead_zinc_ore",
+      "itemIds": [
+        "lead_zinc_ore"
+      ],
+      "kind": "game",
+      "name": "铅锌矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 2,
+      "url": "/assets/models/scatter-ore_rock_lead_zinc_ore.json",
+      "usage": "gather-source",
+      "assetSha256": "406622b507ec4a7586aaf2eae28e43424ce263c62a9b29e0871221644ae33545",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock_gold_ore",
+      "item": "gold_ore",
+      "itemIds": [
+        "gold_ore"
+      ],
+      "kind": "game",
+      "name": "金银矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 3,
+      "url": "/assets/models/scatter-ore_rock_gold_ore.json",
+      "usage": "gather-source",
+      "assetSha256": "69426976d46e173e1100995945a3662922cd539ba5eb526312328e9aa5a215e7",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock_manganese_ore",
+      "item": "manganese_ore",
+      "itemIds": [
+        "manganese_ore"
+      ],
+      "kind": "game",
+      "name": "锰矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 4,
+      "url": "/assets/models/scatter-ore_rock_manganese_ore.json",
+      "usage": "gather-source",
+      "assetSha256": "60f1946d23fb9e09e13bf2ae9846ddc8cf8f8387bbe9332b4e55a9414d3c663e",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock_tin_ore",
+      "item": "tin_ore",
+      "itemIds": [
+        "tin_ore"
+      ],
+      "kind": "game",
+      "name": "锡矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 5,
+      "url": "/assets/models/scatter-ore_rock_tin_ore.json",
+      "usage": "gather-source",
+      "assetSha256": "c9b3b5ba71ea303921162f1f6cc71179d1b4c4c6108e7f85a496209cd6c6dc82",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock_chromium_ore",
+      "item": "chromium_ore",
+      "itemIds": [
+        "chromium_ore"
+      ],
+      "kind": "game",
+      "name": "铬矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 6,
+      "url": "/assets/models/scatter-ore_rock_chromium_ore.json",
+      "usage": "gather-source",
+      "assetSha256": "f033ba2d5fc593817685335108c408c0467830f6aefca12b39f3231277e6f9e0",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "scatters",
+      "format": "mesh-json",
+      "id": "scatter:ore_rock_nickel_ore",
+      "item": "nickel_ore",
+      "itemIds": [
+        "nickel_ore"
+      ],
+      "kind": "game",
+      "name": "镍矿石",
+      "notes": "直接调用当前游戏 C++ 网格生成函数；散布保留原始模型及确定性实例色，不包含季节、风、积雪与世界曲率。",
+      "recordIds": [
+        "ore_rock"
+      ],
+      "source": {
+        "path": "src/scatter_meshes.cpp",
+        "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+      },
+      "subtype": 7,
+      "url": "/assets/models/scatter-ore_rock_nickel_ore.json",
+      "usage": "gather-source",
+      "assetSha256": "67ca796e344d057ee6f912d90231354fb21622f552be1b3ebaee804d30e3a802",
+      "vertices": 360,
+      "triangles": 120
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:bridge",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge"
+      ],
+      "name": "驾驶区",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "bridge"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-bridge.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "6888ed8c4e8dac42f589234223aa9e7170950f8dd763de0a9fa574a2b353f587",
+      "vertices": 12792,
+      "triangles": 4264
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:storage",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge",
+        "0,0,-1:storage"
+      ],
+      "name": "储存区",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "storage"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-storage.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "4ee52f82e71a00af699c7c3af0472bf0a045066fffefcd87977e19139c158632",
+      "vertices": 324,
+      "triangles": 108
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:sail",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge",
+        "0,0,-1:sail"
+      ],
+      "name": "帆",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "sail"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-sail.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "abddd5d7156ac7ee477fe36d057ca38ef4878218ee57c18e5110ed096fcf3e9b",
+      "vertices": 4932,
+      "triangles": 1644
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:floatstone",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge",
+        "0,0,-1:floatstone"
+      ],
+      "name": "浮石舱",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "floatstone"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-floatstone.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "4f08ae5d5cb588680d0bad1d8dccd48ce2ba9934a640faf03dcf2eae12087818",
+      "vertices": 432,
+      "triangles": 144
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:deck",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge",
+        "0,0,-1:deck"
+      ],
+      "name": "空节",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "deck"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-deck.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "2bfec9be49cde52f8e17ac60f53aa0f0c9c769e28e6033b64592d51c5cde716c",
+      "vertices": 324,
+      "triangles": 108
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:long_sail",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge",
+        "0,0,-2:long_sail"
+      ],
+      "name": "双桅帆",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "long_sail"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-long_sail.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "82ac466a86447332316c58c634c44c2574454369686d7f5e8caa64599df89115",
+      "vertices": 9684,
+      "triangles": 3228
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:tall_hold",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge",
+        "0,0,-1:tall_hold"
+      ],
+      "name": "双层货舱",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "tall_hold"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-tall_hold.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "9edbe081fe46eb979f3b9c3c31cd6f64baa99245daf86adc31e4255fa47890c2",
+      "vertices": 1800,
+      "triangles": 600
+    },
+    {
+      "collection": "modules",
+      "format": "mesh-json",
+      "id": "module:wide_deck",
+      "itemIds": [],
+      "kind": "game",
+      "layout": [
+        "0,0,0:bridge",
+        "1,0,0:deck",
+        "0,0,-1:wide_deck"
+      ],
+      "name": "宽空节",
+      "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+      "recordIds": [
+        "wide_deck"
+      ],
+      "source": {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      "url": "/assets/models/module-wide_deck.json",
+      "usage": "ship-module",
+      "implementationSource": {
+        "path": "src/ship.cpp",
+        "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+      },
+      "assetSha256": "5629d9842c4ed87a2938eb8652f7132deafb760f354062a7f8b5c0c128ef32aa",
+      "vertices": 576,
+      "triangles": 192
+    }
+  ],
+  "missingItems": [
+    {
+      "id": "millet",
+      "reason": "田中有植株模型，库存种子/粮食没有独立模型；本轮尚未导出植株。"
+    },
+    {
+      "id": "bean",
+      "reason": "田中有植株模型，库存种子/粮食没有独立模型；本轮尚未导出植株。"
+    },
+    {
+      "id": "cloth",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "pottery",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "lacquer",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "coin",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "salt",
+      "reason": "盐井有采场模型，但没有独立岩盐物品模型；本轮尚未导出盐井。"
+    },
+    {
+      "id": "plank",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "brick",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "stone_axe",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "stone_pick",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "wood_shovel",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "earth",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    },
+    {
+      "id": "roof_tile",
+      "reason": "当前游戏没有这件库存物品的独立模型，货运统一使用着色木箱。"
+    }
+  ],
+  "sources": [
+    {
+      "path": "tools/content-studio/model-export/core-export.cpp",
+      "sha256": "90041a772ffd029bdcd719e87fc58a601a769b828d069d6af7724667622bff6e"
+    },
+    {
+      "path": "src/piece_mesh.cpp",
+      "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+    },
+    {
+      "path": "src/build_pieces.cpp",
+      "sha256": "c687aeda09923091307ea1070753a6bd7fb533e181035b5f3fc4421b4d7e7157"
+    },
+    {
+      "path": "src/building_mesh.cpp",
+      "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+    },
+    {
+      "path": "src/building_parts.cpp",
+      "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+    },
+    {
+      "path": "src/buildings.cpp",
+      "sha256": "3cf8a79e827fea82767dc5e803c97ad773ef6ebecb21ba96aca375fdbd3dbb0c"
+    },
+    {
+      "path": "src/house_template.cpp",
+      "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+    },
+    {
+      "path": "src/interior_rules.cpp",
+      "sha256": "b876a1e225d965baa890396acb6f31e76fc57bdff9a7abee68ae308ee992f29f"
+    },
+    {
+      "path": "src/land_berth.cpp",
+      "sha256": "b6717b063b0cd88bec69d90d6e24fc3489f90528188587642cb3d80b3e15ba07"
+    },
+    {
+      "path": "src/settlement_model.cpp",
+      "sha256": "ae1b2e808a27b00b1d23a39b46c8af8743071b6b4140a159307265f6b10dee15"
+    },
+    {
+      "path": "src/map_ground.cpp",
+      "sha256": "ef88a210b7053427a7494d24f5a0526f308bdd57cc54818b1dab9c096166cef2"
+    },
+    {
+      "path": "src/ship_layout.cpp",
+      "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+    },
+    {
+      "path": "src/piece_mesh.h",
+      "sha256": "a5f47f13558e7cb2dea035873866e041ab7c597e66bc9993ec266796a65bcba4"
+    },
+    {
+      "path": "src/build_pieces.h",
+      "sha256": "0cf19f8a1ab55df2e0bd8f53f75d2f09d8b50d3e9526e8254fce2373b3e43b5b"
+    },
+    {
+      "path": "src/building_mesh.h",
+      "sha256": "1f169fe40d08afdf454450d487842b1955750854fcb32072e6c7c38d99e9d4fe"
+    },
+    {
+      "path": "src/building_parts.h",
+      "sha256": "bc4dcdab34b7c66d92eb430251c0f8024e9fe484ba0b1884ef054bfd60761a0e"
+    },
+    {
+      "path": "src/buildings.h",
+      "sha256": "f5734ee8044a41c3353b2ec1c274eeaf31aa55b7829e8f37bd118b2a73d3f5f1"
+    },
+    {
+      "path": "src/house_template.h",
+      "sha256": "310929ee6886891d6107e22d87749f391ac42fd3de28c71ce0bcbad376b74eea"
+    },
+    {
+      "path": "src/interior_rules.h",
+      "sha256": "0c0f4e37f581b2e04fb41c1a464b4b350e04ab91ac0a4fffaa9949a0d7bf7c10"
+    },
+    {
+      "path": "src/land_berth.h",
+      "sha256": "42ab1c73acda5ed91313cf631525c09148c4fbd27ee083aadf8d9ac9b4e52a01"
+    },
+    {
+      "path": "src/settlement_model.h",
+      "sha256": "b8c88500aaa1365601da73a6bdedc2406f8d31b195124eabb329fbca2a2808a0"
+    },
+    {
+      "path": "src/map_ground.h",
+      "sha256": "ad7d147c901e6d64c136b117426ab0adb1a5a52f8bd77386dfba14d60f680955"
+    },
+    {
+      "path": "src/ground_query.h",
+      "sha256": "d77cfb62a6cd6c1676493e86104b8da5c38e3d3a46699eec760e723884ee6417"
+    },
+    {
+      "path": "src/ship_layout.h",
+      "sha256": "6ffb34b0793a16ee42cb46e01621018dba71993b89c058a42feb72e5d5594645"
+    },
+    {
+      "path": "src/wild_landing.h",
+      "sha256": "cefea8254cb672a1c54b7bea351c2836f98b5fad06d995522a5c618e1f165f31"
+    },
+    {
+      "path": "src/mesh_kit.h",
+      "sha256": "045c875104d6161132310896753c3bda3f9a685ad2a355c2ca9bf690937add5c"
+    },
+    {
+      "path": "game/buildings/house/sanjian.txt",
+      "sha256": "d5ec441e6521e9cfd00b15121ffa135c528602cb56190c6f2f7ddfca099c204f"
+    },
+    {
+      "path": "game/buildings/hall/citang.txt",
+      "sha256": "09b1c2f860441726b6f2a941837a65507018a6c2579bf51cf41d264df78109ac"
+    },
+    {
+      "path": "game/buildings/granary/cang.txt",
+      "sha256": "a0c9456807e3053a9a4046d5f8346737d62807e9d23971973265ef6b93e835ca"
+    },
+    {
+      "path": "game/buildings/tower/wanglou.txt",
+      "sha256": "b34ab9979f13bffaf36b21c2e6ee92462d578d96cd960e6a0c6ad738ea5bbfda"
+    },
+    {
+      "path": "src/placed_props.cpp",
+      "sha256": "4081bda93b92ddec912cbfd331cfa7c0cdaa6084f95b7b7cfc806c9554c51b49"
+    },
+    {
+      "path": "src/scatter_meshes.cpp",
+      "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+    },
+    {
+      "path": "src/placeables.cpp",
+      "sha256": "d7c221d84d04010f50bd54b12fbf17f971797fc931fdc969c07f8586b3dd38b7"
+    },
+    {
+      "path": "src/item_slots.cpp",
+      "sha256": "d94d4ec35ecb8e365416ea5fc95e3ba95cb3319d34f6da4226d5496d2aa964fd"
+    },
+    {
+      "path": "src/crops.cpp",
+      "sha256": "b364a9537a01e45da8a6e5cad6f2c4cee70dcd9f7ddc082b355198d5997c2ca2"
+    },
+    {
+      "path": "src/deposit_kinds.cpp",
+      "sha256": "f62f41caee331f876daa2c60113ebb1f1f226d3725af49e9a8915827edf6adda"
+    },
+    {
+      "path": "src/placed_props.h",
+      "sha256": "5f39258495a2be19fbcc0c44ae309a43ba6046b2d6d07fe9b417e2622a963d90"
+    },
+    {
+      "path": "src/scatter_meshes.h",
+      "sha256": "48c5e0a303889a39f1c5048e0f5296ec9dffce07f710d0375b0da033c99b2669"
+    },
+    {
+      "path": "src/placeables.h",
+      "sha256": "32bea48f511f8cb298caae00116b6cf9aaa1efef02ee66564cadb849d7a0af67"
+    },
+    {
+      "path": "src/item_slots.h",
+      "sha256": "ebd2559cd492fb4b708daf2f7376e6ac1999df48f37700c65ed6ab8e917985cf"
+    },
+    {
+      "path": "src/crops.h",
+      "sha256": "c8d93960a520d8f090636c41e3f8943031457a10c2e68d2698aa3fb7e57ebe08"
+    },
+    {
+      "path": "src/deposit_kinds.h",
+      "sha256": "14e393c0554de32a02241218d3b5fb7944e064f69d0f331aa7d0e2dc3c540ed2"
+    },
+    {
+      "path": "tools/content-studio/model-export/godot-bridge.cpp",
+      "sha256": "2c2633b794c04f6349e7ded0f1073a011e72d4bdb242a13a3a05560a12d58afc"
+    },
+    {
+      "path": "tools/content-studio/model-export/export-godot.gd",
+      "sha256": "cb896abeefc7d89c086fe00552bf585389a1d5b5becd32d0a39d05ae23ba6022"
+    },
+    {
+      "path": "src/recipes.h",
+      "sha256": "8f7e6168d90e1214a38dd4c5b69d717b8b4b46086f65c9d29863ec19ba03cfd8"
+    },
+    {
+      "path": "src/ship.cpp",
+      "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+    },
+    {
+      "path": "src/ship.h",
+      "sha256": "78f435c50c8662fad33b03f3cdd65245d1f7ee067fab0fe0ba87d13d430a193e"
+    },
+    {
+      "path": "src/curved_material.cpp",
+      "sha256": "189b150bd831b1c389e7c575952b310c346a5571f3ee9838ee37d5efd2a53f70"
+    },
+    {
+      "path": "src/curved_material.h",
+      "sha256": "1c116d035f4bf278bfddb1f2dd3663ed4143bb541d64be488958954548076ec6"
+    },
+    {
+      "path": "game/ship.tscn",
+      "sha256": "7186c442283c2c413c647dcb6de81d713e9a1f62cfdcbc24599e1c5cea0fe136"
+    },
+    {
+      "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+      "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+    },
+    {
+      "path": "game/shaders/cloud_base.gdshader",
+      "sha256": "6ba0be1da04411f43915bfa57a6d0bf03effab30e6fe127b5e69dcc6bd5d6cfb"
+    },
+    {
+      "path": "game/shaders/cloud_deck.gdshader",
+      "sha256": "639df4a5e59be12aaddcba64cad58748f38952906a721c7fa7313360e38cc6e2"
+    },
+    {
+      "path": "game/shaders/cloud_deck_fade.gdshader",
+      "sha256": "c487a12d9f63678c1bdbc86c56dbb2808eb5d468fbe86b6434c16b65eaed1c77"
+    },
+    {
+      "path": "game/shaders/curved_standard.gdshader",
+      "sha256": "76256e901c60786825aa6580d254382d7a3145cf247c2b4ac1d320b2827cb744"
+    },
+    {
+      "path": "game/shaders/curved_standard.gdshaderinc",
+      "sha256": "8741546939b8e9ab5c6a25f8538939d81bba49c155e3f6e612f8124778176b35"
+    },
+    {
+      "path": "game/shaders/curved_standard_two_sided.gdshader",
+      "sha256": "faf22f202bfb99ec0372c8902f3a1c9c9c21e6aed3eb131b6f2a81d4866689e5"
+    },
+    {
+      "path": "game/shaders/far_group.gdshader",
+      "sha256": "b5e2428c0c920915505ab330ad33c66484b9edfc584ad3f8a4de7f9686ff5bc9"
+    },
+    {
+      "path": "game/shaders/ground.gdshader",
+      "sha256": "b6154b59df8ccd5438df6b7bcfd4e51eda5daa421c6e892678643365b0b784ba"
+    },
+    {
+      "path": "game/shaders/planet_curve.gdshaderinc",
+      "sha256": "a11b59b3fbf7bb245b21318f6041a8cf1ece48319bd1b8922c16004734e6c958"
+    },
+    {
+      "path": "game/shaders/planet_noise.gdshaderinc",
+      "sha256": "edea579657cd05bf1d03399d385783e7d9ea8f118ed5ce5a62bd68f39e733eb7"
+    },
+    {
+      "path": "game/shaders/planet_overlay.gdshader",
+      "sha256": "357137b0a97789f77aed9d78e05b7909afcd54dd5e8df22921fe34cf8c1239e6"
+    },
+    {
+      "path": "game/shaders/planet_sea.gdshaderinc",
+      "sha256": "8d01000d596051e3be7ca14fcbfd09cd8d9877f304f4ca74c05aff47eeb19169"
+    },
+    {
+      "path": "game/shaders/planet_sky.gdshaderinc",
+      "sha256": "a4a9823bd47917e4e9861030c4c7cf28ec7ea8c9d1c6f128910d8d1cb883b6b4"
+    },
+    {
+      "path": "game/shaders/river.gdshader",
+      "sha256": "c53274e530301fb14b452f9f09815971f2cfe69dfa9b7c19c9fcc41396078a65"
+    },
+    {
+      "path": "game/shaders/scatter.gdshader",
+      "sha256": "6f02b543fbe67e6eac15051689696a6bbc503d6216add30e9edaf64bab33b1be"
+    },
+    {
+      "path": "game/shaders/sea.gdshader",
+      "sha256": "31403365c1678a9146972fc30d3f93dc545156b436f159eb884eb36a576ea8ef"
+    },
+    {
+      "path": "game/shaders/sky.gdshader",
+      "sha256": "d64699bfe64162f0c6096a4eab5534d06b3f2361cc1c92e0969edccc658470be"
+    },
+    {
+      "path": "game/shaders/weather.gdshaderinc",
+      "sha256": "f5aa2d5cf26271e14fea1de09421ca895b5cf6188adc135b749aef886dad8704"
+    }
+  ],
+  "exporter": {
+    "core": "current-source",
+    "propsAndScatter": "tool-only-gdextension/current-source",
+    "ship": "existing-game-dll",
+    "compiler": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64/cl.exe",
+    "godot": "D:/Program Files/Godot/Godot_v4.4.1-stable_win64.exe",
+    "headless": true,
+    "gameFilesUnchanged": [
+      {
+        "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+        "sha256": "2605d243fb7e0336847d2937cca37c762f4c5a95f2c8ec643dd25c7966abf1af"
+      },
+      {
+        "path": "game/project.godot",
+        "sha256": "aeccba03f6e7775878a3c742a85b119c656201d6e7690c063f1955571be4c48b"
+      },
+      {
+        "path": "CMakeLists.txt",
+        "sha256": "dcb380b26c94ad746376537337e0f7a8a4096aa2d906b548dc14f99eb44b4131"
+      },
+      {
+        "path": "cmake-build-debug/CMakeCache.txt",
+        "sha256": "74a59c0be0d2b3cd9ab4ddd839815bdb8729b80e60a27790a49603824956d9a3"
+      },
+      {
+        "path": "cmake-build-debug/bin/libgodot-cpp.windows.template_debug.x86_64.lib",
+        "sha256": "5cab997452ede41c0de848494fd055465bb0acac7c726ad5f16bc0c858ae131e"
+      }
+    ]
+  },
+  "limitations": [
+    "采集源模型不是库存物品模型。",
+    "纯 C++ 建筑使用当前模板和默认平地；搭建件使用注明的邻接上下文。",
+    "保留静态原始几何与材质色；独立视窗不还原世界曲率、天气、季节、积雪或风摆。",
+    "船模块从既有 DLL 的合法参考船布局截取，邻节会决定栏杆/墙面；不包含全船共用船首和连接梯子。"
+  ],
+  "failures": []
+}

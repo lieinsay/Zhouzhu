@@ -1,0 +1,4 @@
+# 这些工具源码也进入生成依赖指纹，保持跨 checkout 的字节一致。
+*.cpp text eol=lf
+*.mjs text eol=lf
+*.gd text eol=lf

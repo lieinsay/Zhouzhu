@@ -30,9 +30,10 @@ export function defaultVisual(record, collection, library, project) {
   const itemId = recordItemId(record, collection);
   const itemBinding = collection !== 'items' ? project?.visuals?.items?.[itemId] : undefined;
   const thumbnail = itemBinding?.thumbnail !== undefined ? itemBinding.thumbnail : library.thumbnails.find(asset => asset.itemId === itemId)?.id || null;
-  const exact = library.models.find(asset => asset.collection === collection && asset.recordIds?.includes(record.id));
+  const inventoryUsage = asset => !['gather-source', 'building', 'ship-module'].includes(asset.usage);
+  const exact = library.models.find(asset => asset.collection === collection && asset.recordIds?.includes(record.id) && (collection !== 'items' || inventoryUsage(asset)));
   // A rock outcrop or tree is not the inventory entity of its harvested material.
-  const byItem = library.models.find(asset => asset.itemIds?.includes(itemId) && !['gather-source', 'building', 'ship-module'].includes(asset.usage));
+  const byItem = library.models.find(asset => asset.itemIds?.includes(itemId) && inventoryUsage(asset));
   return { thumbnail, model: exact?.id || byItem?.id || null, scale: [1, 1, 1], rotation: [0, 0, 0], offset: [0, 0, 0] };
 }
 
