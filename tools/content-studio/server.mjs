@@ -5,11 +5,26 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { WorkspaceStore, StoreError } from './lib/store.mjs';
 import { validateProject } from './lib/validation.mjs';
 import { MediaLibrary } from './lib/media.mjs';
+import { networkInterfaces } from 'node:os';
+import { isIP } from 'node:net';
 
 const TOOL_ROOT = dirname(fileURLToPath(import.meta.url));
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 const inside = (root, path) => { const rel = relative(root, path); return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel)); };
+const ipv4Number = address => address.split('.').reduce((value, part) => value * 256 + Number(part), 0);
+
+function parseAllowedNetwork(value) {
+  if (value === null) return null;
+  const match = typeof value === 'string' && /^([^/]+)\/(\d|[12]\d|3[0-2])$/.exec(value);
+  if (!match || isIP(match[1]) !== 4) throw new Error('允许网段必须是 IPv4 CIDR，例如 10.8.0.0/24');
+  const prefix = Number(match[2]);
+  const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
+  const address = ipv4Number(match[1]);
+  const network = (address & mask) >>> 0;
+  if (network !== address) throw new Error('允许网段需使用网络地址，例如 10.8.0.0/24');
+  return { network, mask };
+}
 
 function reply(response, status, value, headers = {}) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers });
@@ -27,8 +42,13 @@ async function body(request) {
   }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new StoreError(400, 'JSON 请求格式不正确'); }
 }
-function checkRequestAccess(request, port) {
+function checkRequestAccess(request, port, networkAddress, allowedNetwork) {
+  if (allowedNetwork && request.socket.localAddress === networkAddress) {
+    const remoteAddress = request.socket.remoteAddress;
+    if (isIP(remoteAddress) !== 4 || ((ipv4Number(remoteAddress) & allowedNetwork.mask) >>> 0) !== allowedNetwork.network) throw new StoreError(403, '客户端地址不在已允许的 VPN 网段');
+  }
   const hosts = [`127.0.0.1:${port}`, `localhost:${port}`];
+  if (networkAddress) hosts.push(`${networkAddress}:${port}`);
   if (!hosts.includes(request.headers.host)) throw new StoreError(403, 'Host 必须是本机开发工具地址');
   // 浏览器直接打开地址会标记 Sec-Fetch-Site:none，从其他页面点击链接则是
   // cross-site。GET/HEAD 不写草稿，应允许读取；写入仍须通过下面的同源检查。
@@ -50,13 +70,19 @@ export function makeCppProposal(project, baseline) {
     + `// src/recipes.cpp · namespace recipes\nconst RecipeDef RECIPES[] = {\n${recipes}\n};\n`;
 }
 
-export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '../..'), workspaceDirectory = resolve(TOOL_ROOT, 'workspace'), publicDirectory = resolve(TOOL_ROOT, 'public') } = {}) {
+export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '../..'), workspaceDirectory = resolve(TOOL_ROOT, 'workspace'), publicDirectory = resolve(TOOL_ROOT, 'public'), networkAddress = null, allowedNetwork = null } = {}) {
+  const networkRestriction = parseAllowedNetwork(allowedNetwork);
+  if (networkRestriction && !networkAddress) throw new Error('允许网段需要同时指定网络监听地址');
+  if (networkAddress !== null) {
+    const localAddresses = Object.values(networkInterfaces()).flat().filter(row => row.family === 'IPv4' && !row.internal).map(row => row.address);
+    if (isIP(networkAddress) !== 4 || !localAddresses.includes(networkAddress)) throw new Error('网络监听地址必须是本机已有的非回环 IPv4，不能使用通配地址或主机名');
+  }
   const media = new MediaLibrary({ publicDirectory, workspaceDirectory });
   const store = await new WorkspaceStore({ repositoryRoot, workspaceDirectory, mediaLibrary: media }).init();
-  const server = createServer(async (request, response) => {
+  const handler = async (request, response) => {
     try {
-      const port = server.address()?.port;
-      checkRequestAccess(request, port);
+      const port = request.socket.localPort;
+      checkRequestAccess(request, port, networkAddress, networkRestriction);
       let pathname;
       try { pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname); } catch { throw new StoreError(400, 'URL 格式不正确'); }
       if (pathname.includes('\\') || pathname.includes('\0') || pathname.split('/').includes('..')) throw new StoreError(403, '不允许访问目录外文件');
@@ -98,13 +124,28 @@ export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '
       if (response.headersSent) { response.destroy(); return; }
       reply(response, error.status ?? 500, { error: error.message });
     }
+  };
+  const servers = [createServer(handler), ...(networkAddress ? [createServer(handler)] : [])];
+  const server = servers[0];
+  for (const listener of servers) {
+    listener.requestTimeout = 15000;
+    listener.headersTimeout = 10000;
+  }
+  const close = () => Promise.all(servers.map(listener => new Promise((resolveClose, reject) => {
+    if (!listener.listening) return resolveClose();
+    listener.close(error => error ? reject(error) : resolveClose());
+  })));
+  const bind = (listener, port, address) => new Promise((resolveListen, reject) => {
+    listener.once('error', reject);
+    listener.listen(port, address, () => { listener.removeListener('error', reject); resolveListen(); });
   });
-  server.requestTimeout = 15000;
-  server.headersTimeout = 10000;
-  return { server, store, media, listen: (port = 4176) => new Promise((resolveListen, reject) => {
-    server.once('error', reject);
-    server.listen(port, '127.0.0.1', () => { server.removeListener('error', reject); resolveListen(`http://127.0.0.1:${server.address().port}`); });
-  }) };
+  return { server, servers, store, media, close, listen: async (port = 4176) => {
+    try {
+      await bind(server, port, '127.0.0.1');
+      if (networkAddress) await bind(servers[1], server.address().port, networkAddress);
+      return `http://127.0.0.1:${server.address().port}`;
+    } catch (error) { await close(); throw error; }
+  } };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
@@ -116,14 +157,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     if (argument === '--root' && args[i + 1]) options.repositoryRoot = resolve(args[++i]);
     else if (argument === '--workspace' && args[i + 1]) options.workspaceDirectory = resolve(args[++i]);
     else if (argument === '--port' && args[i + 1]) port = Number(args[++i]);
-    else throw new Error(`未知参数 ${argument}；支持 --root、--workspace、--port`);
+    else if (argument === '--network-address' && args[i + 1]) options.networkAddress = args[++i];
+    else if (argument === '--allow-network' && args[i + 1]) options.allowedNetwork = args[++i];
+    else throw new Error(`未知参数 ${argument}；支持 --root、--workspace、--port、--network-address、--allow-network`);
   }
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('端口必须为 1～65535 的整数');
   try {
     const studio = await createStudioServer(options);
     const url = await studio.listen(port);
-    console.log(`Zhouzhu 内容工坊：${url}\n草稿：${studio.store.file}\n源码只读，游戏不会加载此草稿。`);
-    process.once('SIGINT', () => studio.server.close());
-    process.once('SIGTERM', () => studio.server.close());
+    console.log(`Zhouzhu 内容工坊：${url}${options.networkAddress ? `\n网络入口：http://${options.networkAddress}:${port}` : ''}${options.allowedNetwork ? `\n允许客户端：${options.allowedNetwork}` : ''}\n草稿：${studio.store.file}\n源码只读，游戏不会加载此草稿。`);
+    process.once('SIGINT', () => studio.close());
+    process.once('SIGTERM', () => studio.close());
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
