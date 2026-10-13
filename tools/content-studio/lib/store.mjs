@@ -11,9 +11,11 @@ const hash = value => createHash('sha256').update(JSON.stringify(value)).digest(
 const clone = value => structuredClone(value);
 
 export class WorkspaceStore {
-  constructor({ repositoryRoot, workspaceDirectory }) {
+  constructor({ repositoryRoot, workspaceDirectory, mediaLibrary }) {
     this.repositoryRoot = resolve(repositoryRoot);
     this.file = resolve(workspaceDirectory, 'draft.json');
+    this.mediaLibrary = mediaLibrary;
+    this.assets = undefined;
     this.queue = Promise.resolve();
     this.draft = null;
   }
@@ -21,6 +23,7 @@ export class WorkspaceStore {
     this.baseline = await loadCatalog(this.repositoryRoot);
     assertProjectStructure(this.baseline);
     await this.readDraft();
+    if (this.mediaLibrary) this.assets = await this.mediaLibrary.getAssets(this.baseline);
     return this;
   }
   async readDraft() {
@@ -36,7 +39,7 @@ export class WorkspaceStore {
   revision() { return this.draft?.revision ?? `baseline:${hash(this.baseline.meta.sources)}`; }
   snapshot() {
     const project = clone(this.draft?.project ?? this.baseline);
-    return { baseline: clone(this.baseline), project, revision: this.revision(), issues: validateProject(project, this.baseline), changes: diffProjects(this.baseline, project) };
+    return { baseline: clone(this.baseline), project, revision: this.revision(), issues: validateProject(project, this.baseline, this.assets), changes: diffProjects(this.baseline, project) };
   }
   locked(operation) {
     const result = this.queue.then(operation);
@@ -47,6 +50,7 @@ export class WorkspaceStore {
     return this.locked(async () => {
       this.baseline = await loadCatalog(this.repositoryRoot);
       await this.readDraft();
+      if (this.mediaLibrary) this.assets = await this.mediaLibrary.getAssets(this.draft?.project ?? this.baseline);
       return this.snapshot();
     });
   }
@@ -58,6 +62,7 @@ export class WorkspaceStore {
       try { assertProjectStructure(project); } catch (error) { throw new StoreError(422, error.message); }
       if (project.meta.sources.length !== this.baseline.meta.sources.length || this.baseline.meta.sources.some(source => !project.meta.sources.some(saved => saved.path === source.path && saved.sha256 === source.sha256))) throw new StoreError(409, '草稿来源指纹与当前源码不同。请先导出草稿保全，再重置到当前基线并整理变更。');
       const clean = clone(project);
+      if (this.mediaLibrary) this.assets = await this.mediaLibrary.getAssets(clean);
       // The acquisition roots/enums come from the real source, never imported metadata.
       clean.meta.rawItems = clone(this.baseline.meta.rawItems);
       clean.meta.externalItems = clone(this.baseline.meta.externalItems);

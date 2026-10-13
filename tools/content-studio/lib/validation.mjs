@@ -1,5 +1,6 @@
 // Shared by Node and the browser. No filesystem or runtime dependencies.
 export const COLLECTIONS = ['items', 'recipes', 'props', 'pieces', 'buildings', 'modules', 'deposits', 'scatters', 'tools', 'crops', 'stations'];
+export const VISUAL_COLLECTIONS = ['items', 'props', 'pieces', 'buildings', 'modules', 'deposits', 'scatters', 'tools', 'crops'];
 export const ROW_SHAPES = {
   items: { id: 'string', name: 'string', stack: 'number', color: 'color' },
   recipes: { id: 'string', product: 'string', yield: 'number', station: 'string', ingredients: 'ingredients' },
@@ -30,7 +31,7 @@ const fallbackEnums = {
 
 export function assertProjectStructure(project) {
   if (!object(project) || project.schemaVersion !== 1) throw new Error('项目必须是 schemaVersion: 1 的 JSON 对象');
-  const topKeys = new Set(['schemaVersion', 'meta', ...COLLECTIONS]);
+  const topKeys = new Set(['schemaVersion', 'meta', 'visuals', ...COLLECTIONS]);
   for (const key of Object.keys(project)) if (!topKeys.has(key)) throw new Error(`不支持的项目字段 ${key}`);
   if (!object(project.meta)) throw new Error('项目缺少 meta 来源元数据');
   for (const collection of COLLECTIONS) {
@@ -59,14 +60,55 @@ export function assertProjectStructure(project) {
   if (!Array.isArray(project.meta.sources) || !project.meta.sources.every(s => object(s) && typeof s.path === 'string' && /^[a-f0-9]{64}$/.test(s.sha256))) throw new Error('meta.sources 必须包含源码路径和 SHA-256');
   for (const field of ['rawItems', 'externalItems']) if (!Array.isArray(project.meta[field]) || !project.meta[field].every(s => typeof s === 'string')) throw new Error(`meta.${field} 必须是物品 ID 数组`);
   if (project.meta.enums !== undefined && (!object(project.meta.enums) || !Object.values(project.meta.enums).every(v => Array.isArray(v) && v.every(s => typeof s === 'string')))) throw new Error('meta.enums 必须是枚举名称到字符串数组的映射');
+  assertVisualStructure(project.visuals);
 }
 
-export function validateProject(project, baseline = project) {
+function assertVisualStructure(visuals) {
+  if (visuals === undefined) return;
+  if (!object(visuals)) throw new Error('visuals 必须是按集合和记录 ID 分组的对象');
+  for (const [collection, entries] of Object.entries(visuals)) {
+    if (!VISUAL_COLLECTIONS.includes(collection) || !object(entries) || Object.keys(entries).length > 10000) throw new Error(`visuals.${collection} 集合不受支持或结构错误`);
+    for (const [id, visual] of Object.entries(entries)) {
+      const path = `visuals.${collection}.${id}`;
+      if (!/^[a-z][a-z0-9_]*$/.test(id) || !object(visual)) throw new Error(`${path} 记录结构错误`);
+      for (const [field, value] of Object.entries(visual)) {
+        if (field === 'thumbnail' || field === 'model') {
+          const validId = field === 'model' ? /^[a-zA-Z0-9][a-zA-Z0-9_:-]{0,127}$/ : /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/;
+          if (value !== null && (typeof value !== 'string' || !validId.test(value))) throw new Error(`${path}.${field} 必须是媒体库 ID 或 null，不能是 URL 或路径`);
+        } else if (['scale', 'rotation', 'offset'].includes(field)) {
+          if (!Array.isArray(value) || value.length !== 3 || !value.every(finite)) throw new Error(`${path}.${field} 必须是有限数值三元组`);
+          const valid = field === 'scale' ? value.every(n => n > 0 && n <= 100) : value.every(n => Math.abs(n) <= (field === 'rotation' ? 36000 : 100000));
+          if (!valid) throw new Error(`${path}.${field} 超过允许范围`);
+        } else throw new Error(`${path} 不支持字段 ${field}`);
+      }
+    }
+  }
+}
+
+export function validateVisuals(project, library) {
+  const issues = [];
+  try { assertVisualStructure(project.visuals); } catch (error) { return [{ severity: 'error', collection: 'project', id: '', field: 'visuals', message: error.message }]; }
+  const thumbnails = library && new Set((library.thumbnails ?? []).map(asset => asset.id));
+  const models = library && new Set((library.models ?? []).map(asset => asset.id));
+  for (const [collection, entries] of Object.entries(project.visuals ?? {})) {
+    const ids = new Set((project[collection] ?? []).map(row => row.id));
+    for (const [id, visual] of Object.entries(entries)) {
+      const issue = (field, message) => issues.push({ severity: 'error', collection, id, field: `visuals.${field}`, message });
+      if (!ids.has(id)) issue('id', `视觉配置目标“${id}”不存在，可能已被删除`);
+      if (visual.thumbnail && thumbnails && !thumbnails.has(visual.thumbnail)) issue('thumbnail', `缩略图“${visual.thumbnail}”不在工具媒体库中`);
+      if (visual.model && models && !models.has(visual.model)) issue('model', `模型“${visual.model}”不在工具媒体库中`);
+    }
+  }
+  return issues;
+}
+
+export function validateProject(project, baseline = project, library) {
   const issues = [];
   const issue = (collection, row, field, message, severity = 'error') => issues.push({ severity, collection, id: row?.id ?? '', field, message });
   try { assertProjectStructure(project); } catch (error) {
     issue('project', null, 'structure', error.message); return issues;
   }
+  issues.push(...validateVisuals(project, library));
   const itemIds = new Set(project.items.map(item => item.id));
   const enums = { ...fallbackEnums, ...(baseline?.meta?.enums ?? {}) };
   const ref = (collection, row, field, id, optional = false) => {
@@ -223,6 +265,14 @@ export function diffProjects(baseline, project) {
       else if (JSON.stringify(withoutSource(row)) !== JSON.stringify(withoutSource(after.get(id)))) changes.push({ collection, id, type: 'modified', before: row, after: after.get(id) });
     }
     for (const [id, row] of after) if (!before.has(id)) changes.push({ collection, id, type: 'added', before: null, after: row });
+  }
+  for (const collection of VISUAL_COLLECTIONS) {
+    const before = baseline.visuals?.[collection] ?? {};
+    const after = project.visuals?.[collection] ?? {};
+    for (const id of new Set([...Object.keys(before), ...Object.keys(after)])) {
+      if (JSON.stringify(withoutSource(before[id])) === JSON.stringify(withoutSource(after[id]))) continue;
+      changes.push({ collection: 'visuals', id: `${collection}.${id}`, targetCollection: collection, targetId: id, type: !Object.hasOwn(before, id) ? 'added' : !Object.hasOwn(after, id) ? 'deleted' : 'modified', before: before[id] ?? null, after: after[id] ?? null });
+    }
   }
   return changes;
 }

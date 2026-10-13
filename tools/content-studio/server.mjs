@@ -4,6 +4,7 @@ import { dirname, extname, resolve, relative, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { WorkspaceStore, StoreError } from './lib/store.mjs';
 import { validateProject } from './lib/validation.mjs';
+import { MediaLibrary } from './lib/media.mjs';
 
 const TOOL_ROOT = dirname(fileURLToPath(import.meta.url));
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
@@ -50,7 +51,8 @@ export function makeCppProposal(project, baseline) {
 }
 
 export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '../..'), workspaceDirectory = resolve(TOOL_ROOT, 'workspace'), publicDirectory = resolve(TOOL_ROOT, 'public') } = {}) {
-  const store = await new WorkspaceStore({ repositoryRoot, workspaceDirectory }).init();
+  const media = new MediaLibrary({ publicDirectory, workspaceDirectory });
+  const store = await new WorkspaceStore({ repositoryRoot, workspaceDirectory, mediaLibrary: media }).init();
   const server = createServer(async (request, response) => {
     try {
       const port = server.address()?.port;
@@ -60,12 +62,15 @@ export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '
       if (pathname.includes('\\') || pathname.includes('\0') || pathname.split('/').includes('..')) throw new StoreError(403, '不允许访问目录外文件');
       if (pathname.startsWith('/api/')) {
         if (request.method === 'GET') {
+          if (pathname.startsWith('/api/models/')) return reply(response, 200, await media.readModel(pathname.slice('/api/models/'.length)));
           const workspace = await store.getWorkspace();
+          if (pathname === '/api/assets') return reply(response, 200, await media.getAssets(workspace.project));
           if (pathname === '/api/workspace') return reply(response, 200, workspace);
           if (pathname === '/api/export') return reply(response, 200, JSON.stringify(workspace.project, null, 2) + '\n', { 'Content-Disposition': 'attachment; filename="zhouzhu-content-draft.json"' });
           if (pathname === '/api/report') return reply(response, 200, { revision: workspace.revision, sources: workspace.baseline.meta.sources, issues: workspace.issues, changes: workspace.changes });
           if (pathname === '/api/patch') return reply(response, 200, makeCppProposal(workspace.project, workspace.baseline), { 'Content-Type': 'text/plain; charset=utf-8', 'Content-Disposition': 'attachment; filename="zhouzhu-items-recipes-proposal.cpp.txt"' });
         }
+        if (request.method === 'POST' && pathname === '/api/models') return reply(response, 201, { model: await media.upload(await body(request)) });
         if (request.method === 'POST' && ['/api/workspace', '/api/import'].includes(pathname)) {
           const data = await body(request);
           if (!data || typeof data !== 'object' || Array.isArray(data) || Object.keys(data).some(key => key !== 'project' && key !== 'revision')) throw new StoreError(400, '写入格式为 {project, revision}');
@@ -86,7 +91,8 @@ export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '
       const allowed = pathname === validationPath ? real === await realpath(resolve(TOOL_ROOT, 'lib/validation.mjs')) : inside(await realpath(publicDirectory), real);
       if (!allowed) throw new StoreError(403, '不允许通过链接访问目录外文件');
       const bytes = await readFile(real);
-      response.writeHead(200, { 'Content-Type': MIME[extname(file)] ?? 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" });
+      const cacheControl = /^\/assets\/thumbnails\/[a-zA-Z0-9_-]+-v\d+\.png$/.test(pathname) ? 'private, max-age=3600' : 'no-store';
+      response.writeHead(200, { 'Content-Type': MIME[extname(file)] ?? 'application/octet-stream', 'Cache-Control': cacheControl, 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" });
       response.end(request.method === 'HEAD' ? undefined : bytes);
     } catch (error) {
       if (response.headersSent) { response.destroy(); return; }
@@ -95,7 +101,7 @@ export async function createStudioServer({ repositoryRoot = resolve(TOOL_ROOT, '
   });
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
-  return { server, store, listen: (port = 4176) => new Promise((resolveListen, reject) => {
+  return { server, store, media, listen: (port = 4176) => new Promise((resolveListen, reject) => {
     server.once('error', reject);
     server.listen(port, '127.0.0.1', () => { server.removeListener('error', reject); resolveListen(`http://127.0.0.1:${server.address().port}`); });
   }) };
