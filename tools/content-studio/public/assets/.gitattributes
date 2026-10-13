@@ -1,0 +1,4 @@
+# 网格清单记录原始字节 SHA，不能随 Windows checkout 转换行尾。
+models/*.json -text
+thumbnails/*.png -text
+thumbnails/manifest.json text eol=lf

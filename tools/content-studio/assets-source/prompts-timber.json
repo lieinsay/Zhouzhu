@@ -1,0 +1,10 @@
+[
+  {
+    "id": "timber",
+    "prompt": "Use case: stylized-concept. Asset type: single inventory thumbnail for Zhouzhu Chinese rural crafting game developer tool. Subject: 木料 / timber, three short rough-cut warm brown wood logs with visible pale growth rings and bark, bundled together, no plants or scenery. Style: consistent handcrafted low-poly 3D item render with subtle painterly material texture, restrained natural palette, clear silhouette, studio light from upper left. Composition: square image, centered three-quarter orthographic view, entire object visible, fills central 70 percent with generous clean padding. Background: genuinely transparent alpha, no floor, only tiny soft contact shadow if it preserves transparency. Constraints: one item type only, no text, no numbers, no frame, no UI, no watermark, no glossy toy plastic, no realistic photograph. This thumbnail is a design asset for the tool, not an exact rendering of a game model.",
+    "file": "public/assets/thumbnails/timber-v1.png",
+    "sha256": "aacb52bd960393416f83100b02dd71f4a2c63a3d2ae40016e4540402ce2fec1d",
+    "source": "image_gen",
+    "transparent": true
+  }
+]

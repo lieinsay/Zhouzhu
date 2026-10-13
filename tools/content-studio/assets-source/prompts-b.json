@@ -1,0 +1,194 @@
+[
+  {
+    "id": "guano",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A small pile of pale ivory and gray dry bird guano mineralized lumps with a thin crust; no bird, no exaggerated dirt or disgusting details.",
+    "file": "public/assets/thumbnails/guano-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "7ce92af8e0c7c9a2274c79a0ac0d34e319e366f65efc1710e0bd5bc45e7ad771"
+  },
+  {
+    "id": "plank",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: Two or three practical warm yellow-brown sawn wooden planks stacked slightly askew; clear wood grain.",
+    "file": "public/assets/thumbnails/plank-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "206e018289ba2324266c76ff7af2de3ff185c3523355a1c5d0156a3d0c35cefe"
+  },
+  {
+    "id": "brick",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: Three practical red terracotta rectangular bricks stacked slightly askew; modest worn corners.",
+    "file": "public/assets/thumbnails/brick-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "17c101b9ba9b519c38a726257f99661f9644c36a85b57a3117f78d0e1f50db6b"
+  },
+  {
+    "id": "stone_axe",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical primitive stone axe with a wooden handle, a gray stone axe head lashed securely with coarse cord.",
+    "file": "public/assets/thumbnails/stone_axe-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "4ce063fbc1e1adec6dff65ed225fd17a6ff3075f2f7a3fb6c1da99b1ceba6de7"
+  },
+  {
+    "id": "stone_pick",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical primitive stone pickaxe with a wooden handle and pointed gray stone pick head bound securely by coarse cord.",
+    "file": "public/assets/thumbnails/stone_pick-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "b51efad0dba192e2508e68ed4fdfe9331a2283a2589441e08018c247bad52627"
+  },
+  {
+    "id": "wood_shovel",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical shovel made entirely of wood, with a long wooden shaft and broad flat wooden shovel blade, no metal.",
+    "file": "public/assets/thumbnails/wood_shovel-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "b2857c3a0208f522c0a714c564cf17b587fb5748b3d4757b2fced76cf5e9c97e"
+  },
+  {
+    "id": "workbench",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical rural workbench, thick wooden tabletop on four sturdy legs, lower shelf, one small wooden plank and a chisel lying on the tabletop.",
+    "file": "public/assets/thumbnails/workbench-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "5b713e9428753ac095c2fe8471f5324e80e1663b10827b4d353e1e40800adc26"
+  },
+  {
+    "id": "kiln",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A simple adobe hemispherical bread-shaped kiln on a square base, an open front firing mouth and short chimney; no flames, no scene.",
+    "file": "public/assets/thumbnails/kiln-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "95efddb40e8348c18e2117e86bdd55577383c81fe1feaadf0993b13b64f8e4da"
+  },
+  {
+    "id": "chest",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical closed wooden storage chest with a flat plank lid, two dark iron bands and a simple front latch, no ornament.",
+    "file": "public/assets/thumbnails/chest-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "d6c819f5e9afe813c0f612d9612f3b70a8fc85c414f08cbd89339f15b05a1444"
+  },
+  {
+    "id": "torch",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical upright wooden torch, coarse cord holding resinous split pine kindling at its top, a small modest orange flame; no scenery.",
+    "file": "public/assets/thumbnails/torch-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "c20876eb902bc0dcb3922abc8b5533c8ca5c538fab2a2de30f10a13dfd5b7552"
+  },
+  {
+    "id": "fence",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One practical wooden fence section with exactly two upright timber posts and two horizontal wooden rails, handmade rural joinery.",
+    "file": "public/assets/thumbnails/fence-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "5ee5d0422978142591310c0937a7b3b93156665ea2e34d356515920b4f0fbc99"
+  },
+  {
+    "id": "earth",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A small compact pile of brown soil clods and crumbly earth, restrained warm brown, no plants, no container.",
+    "file": "public/assets/thumbnails/earth-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "2a9f2d67251ac0d3cd95920c04bb48535668a4a3540728ff187615c0ea77c9e1"
+  },
+  {
+    "id": "roof_tile",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: Several simple gray fired-clay curved roof tiles stacked loosely; each tile is an elongated shallow semicircular channel, practical undecorated rural ceramic.",
+    "file": "public/assets/thumbnails/roof_tile-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "7a29ce185603c403e10e9e6f291907ac432137e9f5995a73c4de51d02c6380dd"
+  },
+  {
+    "id": "foundation",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One low square building foundation platform built from rough natural gray stone blocks, clear square top footprint, only one small modular platform; no surrounding ground.",
+    "file": "public/assets/thumbnails/foundation-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "f4d9f7413e5316331e545344064eb3704b9e027bf04a827fe75147b601bdd701"
+  },
+  {
+    "id": "floorboard",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One square wooden floor panel building component made of joined sturdy planks, slight visible thickness and modest supporting timber underneath.",
+    "file": "public/assets/thumbnails/floorboard-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "b9aad4ebc61f8dc247f025ea21b10150be53ef4663e7f93604172d6cd46b3ef8"
+  },
+  {
+    "id": "earth_wall",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete rectangular light brown rammed-earth wall building panel with visible subtle compacted soil layers and substantial thickness; no door, window, roof, ground or extra wall.",
+    "file": "public/assets/thumbnails/earth_wall-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "3ec49140215caae78e5c5dadbaec906e8eae02fc8f2c149bbd02c4e8f9c800f1"
+  },
+  {
+    "id": "brick_wall",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete rectangular red terracotta brick masonry wall building panel, orderly staggered courses with subtle pale mortar and visible thickness; no door, window, roof, ground or extra wall.",
+    "file": "public/assets/thumbnails/brick_wall-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "7253ae79b26a0770b3d5c04f6d9f9523712a94fc78529c44dc3644da7f766913"
+  },
+  {
+    "id": "door_wall",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete light brown rammed-earth rectangular wall building panel containing a simple closed wooden plank door and practical wooden door frame centered in the wall; no surrounding building or ground.",
+    "file": "public/assets/thumbnails/door_wall-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "df7564232a760cd413ce0876691460df5d32ca6582e919bc8867e67174d1405d"
+  },
+  {
+    "id": "window_wall",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete light brown rammed-earth rectangular wall building panel containing a small centered simple wooden lattice window, no glass, modest practical wooden frame; no surrounding building or ground.",
+    "file": "public/assets/thumbnails/window_wall-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "ffc0dec199a25e23d071acc11f441e3c6fc514c71a8fc180d9860155f1f6f78a"
+  },
+  {
+    "id": "gable",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete pale brown rammed-earth triangular gable wall building component, a simple solid thick triangular wall panel with broad flat base and peaked top; no windows, roof, building or surrounding ground.",
+    "file": "public/assets/thumbnails/gable-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "d68a92c60e0b8ae284ad9d5574bbc653f7d24fcf00cf59ca08708044b06f7526"
+  },
+  {
+    "id": "thatch_roof",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One thick wheat-straw sloping roof building component, a single rectangular pitched roof plane covered in practical layered golden straw with small visible timber supports beneath; not a full house or complete two-sided roof.",
+    "file": "public/assets/thumbnails/thatch_roof-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "aab3012535ded09eb329c106b31c05ae16a106a17225a7a68a0f7d6e08fde120"
+  },
+  {
+    "id": "tile_roof",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One sloping roof building component, a single rectangular pitched roof plane covered in orderly overlapping gray clay tiles with modest timber supports beneath; not a full house or complete two-sided roof.",
+    "file": "public/assets/thumbnails/tile_roof-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "a3a4d340f6b46bddfc999f55ca4f2c4292d27671db0fea077dfa6a1374eddf30"
+  },
+  {
+    "id": "pillar",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One thick straight dark-brown squared wooden structural post, upright, practical rural timber with subtle grain and worn edges; no carved decoration, stone base or other building elements.",
+    "file": "public/assets/thumbnails/pillar-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "c46a8d264afe5009ca9806bae7b32656d0d1914df8bed6aca319ea899ee435fd"
+  },
+  {
+    "id": "ladder",
+    "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One practical straight wooden ladder with two continuous wooden side beams and many evenly spaced sturdy wooden rungs, a simple rural ladder, no scenery or other objects.",
+    "file": "public/assets/thumbnails/ladder-v1.png",
+    "source": "image_gen",
+    "transparent": true,
+    "sha256": "ffe6a976dd7e72cab7b1dfe6c10dc6c1079c26ffeab7473b205e9014dfb38241"
+  }
+]

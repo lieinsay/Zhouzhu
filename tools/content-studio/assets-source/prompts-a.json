@@ -1,0 +1,194 @@
+[
+  {
+    "id": "millet",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: Golden yellow foxtail millet panicles with a few tiny loose millet grains; practical harvested crop, identifiable millet seed heads.",
+    "file": "public/assets/thumbnails/millet-v1.png",
+    "sha256": "fe7e1e08f7df3a7094b68650d4fc867dd1c67acbf1affa6697f6de40aea7a901",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "bean",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A few brown-yellow dry soy beans beside a single natural bean pod.",
+    "file": "public/assets/thumbnails/bean-v1.png",
+    "sha256": "33f56e29d25547341cd895d88dc551cfb0bedd81359752accb52d0b6f34d45f8",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "cloth",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A folded piece of undyed coarse hemp linen cloth, warm natural flax beige, visible simple woven texture.",
+    "file": "public/assets/thumbnails/cloth-v1.png",
+    "sha256": "6fdcc700270fe3c26ffc9790edfd2be2c8ce6842be39af77c35dd048e7d5412b",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "pottery",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One simple unglazed terracotta storage pot, red ochre clay, short rounded vessel with a narrow open neck, no decorative writing.",
+    "file": "public/assets/thumbnails/pottery-v1.png",
+    "sha256": "eb66e74bff535108d0a3e21a3d6ffa35c20927ecfa977eda8f3ae2f3b94d0a81",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "lacquer",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One practical dark cinnabar red lacquered wooden bowl, smooth restrained lacquer surface.",
+    "file": "public/assets/thumbnails/lacquer-v1.png",
+    "sha256": "2bded4fc59aaa2a38799174c5812e1f162d3dfe43f5c031a99eb8b74d68ecd80",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "coin",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A few aged copper cash coins, round with square central holes, simple unmarked face, natural brown bronze patina.",
+    "file": "public/assets/thumbnails/coin-v1.png",
+    "sha256": "cafb442b20ec2ae48cc563fb03e12afa3a820aa1b6b630755a6ce725413c50c5",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "stone",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough angular grey building stone, chipped edges and grain, plain natural rock.",
+    "file": "public/assets/thumbnails/stone-v1.png",
+    "sha256": "49305eb3a001f5aaff655adf1a1ebea34093d487680f994656f5f7948c788d1c",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "clay",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One irregular lump of moist red-brown clay, practical earthen material.",
+    "file": "public/assets/thumbnails/clay-v1.png",
+    "sha256": "0a9a294c88b06b5c3d4401d98e33c8640cfffcc8e616534b90d820cca05284cd",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "floatstone",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One pale lavender and light-grey porous natural stone chunk, pumice-like small pores, no glow, no magic, no levitation effect.",
+    "file": "public/assets/thumbnails/floatstone-v1.png",
+    "sha256": "e9f98ed8e2bbfefe21c49d0f8a983cfdbfff7751e818dc8042e6b015e147c955",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "firewood",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small tied bundle of thin dry branches used as firewood, natural rough brown wood, simple fiber tie.",
+    "file": "public/assets/thumbnails/firewood-v1.png",
+    "sha256": "4cc1d4604fcb1a2f8130b8cb45dfa98c9359857e9dd4703edac0a2310bb90cf7",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "gravel",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small grouped pile of beige-grey loose crushed gravel stones, varied small angular pieces.",
+    "file": "public/assets/thumbnails/gravel-v1.png",
+    "sha256": "8d498d08449ceaad4bf8ef1f908b61a5a7e55200b8e93c302ede8e4d808eed80",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "gold_dust",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A compact small pile of coarse natural sand with a few sparse gold-colored placer grains mixed in, restrained amount of gold.",
+    "file": "public/assets/thumbnails/gold_dust-v1.png",
+    "sha256": "3b384b12da125addcdfa4ff46363e0084364ee2e4631b9fc97468052f371f6ed",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "copper_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough copper ore rock with natural malachite green mineral patches and grey-brown host stone.",
+    "file": "public/assets/thumbnails/copper_ore-v1.png",
+    "sha256": "a68bd64c2ae62b8090abad29137031be95262416b3467e3babfa86376de1c18b",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "iron_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough reddish-brown iron ore rock with rust-colored hematite surface and dark grey stone.",
+    "file": "public/assets/thumbnails/iron_ore-v1.png",
+    "sha256": "2d388e3f3ea2cc0933ca923834684fb05c19f2aa25aa3da143139b78027f6b63",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "lead_zinc_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough grey metallic lead-zinc ore rock, dull silvery mineral facets and weathered host stone.",
+    "file": "public/assets/thumbnails/lead_zinc_ore-v1.png",
+    "sha256": "afe22578810a38a0aad1310bb7e4d7e93c6d9fb426dc28bb69b73e9416efe431",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "gold_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One grey-brown ore rock with sparse thin natural gold and silver mineral veins, mostly ordinary host stone.",
+    "file": "public/assets/thumbnails/gold_ore-v1.png",
+    "sha256": "d1d29192beed354ec60d9817dda9351b995704bd88c2735af62c6a8a815dad4e",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "manganese_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough black-purple-grey manganese ore chunk, matte dark mineral rock.",
+    "file": "public/assets/thumbnails/manganese_ore-v1.png",
+    "sha256": "230568f40fdc8aa9d8e10c5ae8d15615649a26e541472c984af9634c95292d42",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "tin_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One dark grey rough tin ore rock with naturally mottled mineral specks.",
+    "file": "public/assets/thumbnails/tin_ore-v1.png",
+    "sha256": "ff39fa16931d7e7f0f5cc8c1cbbd88b32d864fa2558c8c7dd16d04aa743aecfc",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "chromium_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough dark green-grey chromium ore rock, natural chromite mineral texture.",
+    "file": "public/assets/thumbnails/chromium_ore-v1.png",
+    "sha256": "ef95481a52096f635a37adbbbaeeb86f189abe1bebc077074844d906263a3058",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "nickel_ore",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One pale olive green and grey nickel ore chunk, naturally mottled rough mineral rock.",
+    "file": "public/assets/thumbnails/nickel_ore-v1.png",
+    "sha256": "ba7ba6a8bb526d4a6cc402a57cefd9e261979493ed879f258f31de6fd2be5723",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "salt",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small grouped mound of milky white salt crystals, irregular coarse translucent grains.",
+    "file": "public/assets/thumbnails/salt-v1.png",
+    "sha256": "14bf9bd0fecd10e88411ab106a0a5fc7bf55dadef01245410f328de32de6714a",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "peat",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One dark brown fibrous peat block, compressed plant fibers and earthy torn edges.",
+    "file": "public/assets/thumbnails/peat-v1.png",
+    "sha256": "ab041b2f097fa12aeaf913b6bb78c1cfc115d2464435d9b69300108d7cff4d82",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "reed",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small tied bundle of yellow-green reeds with a few tan feathery reed heads, practical harvested wetland plant.",
+    "file": "public/assets/thumbnails/reed-v1.png",
+    "sha256": "e08a5d23944d2543da97ca38051a1e62eaeb80e03d241630693344f5f49a4480",
+    "source": "image_gen",
+    "transparent": true
+  },
+  {
+    "id": "sulfur",
+    "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One yellow natural rough sulfur crystal cluster, restrained ochre-yellow mineral color, no glow.",
+    "file": "public/assets/thumbnails/sulfur-v1.png",
+    "sha256": "feddaf75413c08b4fa157d4f711b962b63a2df4e1a6777ba5658c6c95c64770d",
+    "source": "image_gen",
+    "transparent": true
+  }
+]
