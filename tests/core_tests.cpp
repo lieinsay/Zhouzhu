@@ -7476,6 +7476,17 @@ void test_god_works() {
 
 void test_dev_manual() {
     std::printf("dev_manual\n");
+    // 独立内容工坊的说明只放在源码注释；不增加游戏内菜单或输入动作。
+    std::ifstream manual_source(std::string(ZHOUZHU_SOURCE_DIR) + "/src/dev_manual.cpp", std::ios::binary);
+    const std::string manual_text((std::istreambuf_iterator<char>(manual_source)), std::istreambuf_iterator<char>());
+    std::ifstream studio_help(std::string(ZHOUZHU_SOURCE_DIR) + "/docs/CONTENT-STUDIO.md", std::ios::binary);
+    const std::string studio_text((std::istreambuf_iterator<char>(studio_help)), std::istreambuf_iterator<char>());
+    const std::string studio_command = "node tools/content-studio/server.mjs";
+    check(bool(manual_source) && manual_text.find("docs/CONTENT-STUDIO.md") != std::string::npos &&
+                    manual_text.find(studio_command) != std::string::npos,
+            "内容工坊的源码注释包含文档入口与独立启动命令");
+    check(bool(studio_help) && studio_text.find(studio_command) != std::string::npos,
+            "内容工坊的使用文档存在且启动命令一致");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");
