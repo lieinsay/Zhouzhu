@@ -2,3 +2,5 @@ workspace/
 .cache/
 node_modules/
 *.log
+__pycache__/
+*.py[cod]

@@ -5,20 +5,20 @@
 在 Zhouzhu 项目根目录运行：
 
 ```powershell
-node tools/content-studio/server.mjs
+python tools/content-studio/server.py
 ```
 
-需要 Node.js 24，使用内置库，不需要安装 npm 依赖。浏览器打开 <http://127.0.0.1:4176>；服务只监听本机。结束时在启动终端按 `Ctrl+C`。
+需要 Python 3.10 或更新版本（本机已验证 3.12），仅使用标准库，无需 pip 安装依赖。浏览器打开 <http://127.0.0.1:4176>；服务只监听本机。结束时在启动终端按 `Ctrl+C`。
 
 本次已授权 Work VPN 网段 `10.8.0.0/24` 访问本机 `10.8.0.2`。同时保留本机入口时，启动命令为：
 
 ```powershell
-node tools/content-studio/server.mjs --network-address 10.8.0.2 --allow-network 10.8.0.0/24
+python tools/content-studio/server.py --network-address 10.8.0.2 --allow-network 10.8.0.0/24
 ```
 
-VPN 客户端打开 <http://10.8.0.2:4176>。工具仅额外绑定这个实际本机 IPv4，来源限制为上述网段，不监听其他网卡；两个入口共享同一份草稿和冲突检测，保存仍按各自页面的同源校验。省略这两个选项时仍仅供本机访问。当前 Windows 已有适用的 Node 防火墙规则，本轮未新增或修改系统规则。
+VPN 客户端打开 <http://10.8.0.2:4176>。工具仅额外绑定这个实际本机 IPv4，来源限制为上述网段，不监听其他网卡；两个入口共享同一份草稿和冲突检测，保存仍按各自页面的同源校验。省略这两个选项时仍仅供本机访问。Windows 防火墙须允许 Python 的 TCP 4176 入站，限定本机地址 `10.8.0.2` 和来源 `10.8.0.0/24`。
 
-更新工具源码后，需要在原启动终端按 `Ctrl+C`，再运行上述命令；正在运行的 Node 服务不会自动重新加载源码。如果打开页面仍显示旧的「只允许同源页面写入草稿」错误，重启服务后刷新页面。
+更新工具源码后，需要在原启动终端按 `Ctrl+C`，再运行上述命令；正在运行的 Python 服务不会自动重新加载源码。如果打开页面仍显示旧的「只允许同源页面写入草稿」错误，重启服务后刷新页面。
 
 先在「合成配方」选一条现有配方，调整材料、产出或工作站，再保存草稿；在「变更审阅」核对差异，在「内容校验」检查引用与约束。也可以新建条目，或通过 JSON 导入、导出整份草稿。批次物料估算按选定配方计算直接用料与产出，不模拟背包、设施距离或实际合成。`Ctrl+S` 保存，`Ctrl+K` 或 `/` 聚焦搜索。
 
@@ -26,14 +26,18 @@ VPN 客户端打开 <http://10.8.0.2:4176>。工具仅额外绑定这个实际�
 
 界面采用浅色工作台，定义清单与编辑标题的缩略图已放大，外观页大图为 240～260 像素。切换物品保留当前适用页签与清单滚动；保存保留输入焦点、选区和页面位置，刷新同一模型保留视角与线框。缩略图库可以按名称或 ID 搜索。
 
-生成缩略图、提示词与指纹位于 `public/assets/thumbnails/` 和 `assets-source/`。真实模型快照位于 `public/assets/models/`；重新导出可运行 `node tools/content-studio/model-export/export-models.mjs`，它需要本机已验证的 Rider MSVC/Godot 配置，仅构建工具导出器并使用独立无头项目，不重建游戏扩展。
+生成缩略图、提示词与指纹位于 `public/assets/thumbnails/` 和 `assets-source/`。服务启动和全部日常编辑功能无需 Node；模型重新导出和前端开发测试仍是可选 Node 开发脚本。真实模型快照位于 `public/assets/models/`；重新导出可运行 `node tools/content-studio/model-export/export-models.mjs`，它需要本机已验证的 Rider MSVC/Godot 配置，仅构建工具导出器并使用独立无头项目，不重建游戏扩展。
 
 本机草稿存放在 `tools/content-studio/workspace/draft.json`，该目录不进 Git。多浏览器保存冲突或源码基线变化时，工具会提示，保留现有文件；先导出待保留的编辑，再重新读取并处理差异。源码漂移后可在「变更审阅 → 重置全部草稿」建立当前基线草稿，旧文件会自动备份在同目录。
 
 工具测试命令（项目根目录）：
 
 ```powershell
-node --test tools/content-studio/test/*.test.mjs
+python -m unittest discover -s tools/content-studio/test_python -v
 ```
 
 完整使用说明、源码对应关系与边界见 [docs/CONTENT-STUDIO.md](../../docs/CONTENT-STUDIO.md)。
+
+本机已为 Python 添加上述范围的防火墙放行。其他机器可在管理员 PowerShell 中运行 `tools/content-studio/allow-work-vpn.ps1`；它不会覆盖已有同名规则。Python 路径变更后需相应核对规则。
+
+可选前端与模型开发检查：`node --test tools/content-studio/test/*.test.mjs`。这些开发脚本不属于服务器运行依赖。

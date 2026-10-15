@@ -1,9 +1,12 @@
 {
   "name": "zhouzhu-content-studio",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "Zhouzhu 独立开发者内容与配方管理工具",
-  "engines": { "node": ">=24" },
-  "scripts": { "start": "node server.mjs", "test": "node --test test/*.test.mjs" }
+  "scripts": {
+    "start": "python server.py",
+    "test": "python -m unittest discover -s test_python -v",
+    "test:frontend": "node --test test/*.test.mjs"
+  }
 }

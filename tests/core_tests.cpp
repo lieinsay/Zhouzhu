@@ -7481,7 +7481,7 @@ void test_dev_manual() {
     const std::string manual_text((std::istreambuf_iterator<char>(manual_source)), std::istreambuf_iterator<char>());
     std::ifstream studio_help(std::string(ZHOUZHU_SOURCE_DIR) + "/docs/CONTENT-STUDIO.md", std::ios::binary);
     const std::string studio_text((std::istreambuf_iterator<char>(studio_help)), std::istreambuf_iterator<char>());
-    const std::string studio_command = "node tools/content-studio/server.mjs";
+    const std::string studio_command = "python tools/content-studio/server.py";
     check(bool(manual_source) && manual_text.find("docs/CONTENT-STUDIO.md") != std::string::npos &&
                     manual_text.find(studio_command) != std::string::npos,
             "内容工坊的源码注释包含文档入口与独立启动命令");
