@@ -71,7 +71,14 @@
             "userConfirmed": false
           }
         }
-      ]
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/millet-v1.png",
+        "sha256": "fe7e1e08f7df3a7094b68650d4fc867dd1c67acbf1affa6697f6de40aea7a901",
+        "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: Golden yellow foxtail millet panicles with a few tiny loose millet grains; practical harvested crop, identifiable millet seed heads.",
+        "status": "superseded_preserved"
+      }
     },
     {
       "id": "item.copper_ore",
@@ -142,7 +149,14 @@
             "userConfirmed": false
           }
         }
-      ]
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/copper_ore-v1.png",
+        "sha256": "a68bd64c2ae62b8090abad29137031be95262416b3467e3babfa86376de1c18b",
+        "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough copper ore rock with natural malachite green mineral patches and grey-brown host stone.",
+        "status": "superseded_preserved"
+      }
     },
     {
       "id": "item.stone_axe",
@@ -219,7 +233,14 @@
             "userConfirmed": false
           }
         }
-      ]
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/stone_axe-v1.png",
+        "sha256": "4ce063fbc1e1adec6dff65ed225fd17a6ff3075f2f7a3fb6c1da99b1ceba6de7",
+        "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical primitive stone axe with a wooden handle, a gray stone axe head lashed securely with coarse cord.",
+        "status": "superseded_preserved"
+      }
     },
     {
       "id": "item.chest",
@@ -296,7 +317,14 @@
             "userConfirmed": false
           }
         }
-      ]
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/chest-v1.png",
+        "sha256": "d6c819f5e9afe813c0f612d9612f3b70a8fc85c414f08cbd89339f15b05a1444",
+        "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical closed wooden storage chest with a flat plank lid, two dark iron bands and a simple front latch, no ornament.",
+        "status": "superseded_preserved"
+      }
     },
     {
       "id": "item.pottery",
@@ -373,7 +401,14 @@
             "userConfirmed": false
           }
         }
-      ]
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/pottery-v1.png",
+        "sha256": "eb66e74bff535108d0a3e21a3d6ffa35c20927ecfa977eda8f3ae2f3b94d0a81",
+        "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One simple unglazed terracotta storage pot, red ochre clay, short rounded vessel with a narrow open neck, no decorative writing.",
+        "status": "superseded_preserved"
+      }
     },
     {
       "id": "item.cloth",
@@ -450,7 +485,14 @@
             "userConfirmed": false
           }
         }
-      ]
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/cloth-v1.png",
+        "sha256": "6fdcc700270fe3c26ffc9790edfd2be2c8ce6842be39af77c35dd048e7d5412b",
+        "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A folded piece of undyed coarse hemp linen cloth, warm natural flax beige, visible simple woven texture.",
+        "status": "superseded_preserved"
+      }
     },
     {
       "id": "item.floatstone",
@@ -527,7 +569,14 @@
             "userConfirmed": false
           }
         }
-      ]
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/floatstone-v1.png",
+        "sha256": "e9f98ed8e2bbfefe21c49d0f8a983cfdbfff7751e818dc8042e6b015e147c955",
+        "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One pale lavender and light-grey porous natural stone chunk, pumice-like small pores, no glow, no magic, no levitation effect.",
+        "status": "superseded_preserved"
+      }
     },
     {
       "id": "item.roof_tile",
@@ -601,6 +650,2924 @@
             "reviewedAt": "2026-10-26T09:58:37.084Z",
             "reviewer": "Codex",
             "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ],
+      "legacyReference": {
+        "version": "v1",
+        "path": "tools/content-studio/public/assets/thumbnails/roof_tile-v1.png",
+        "sha256": "7a29ce185603c403e10e9e6f291907ac432137e9f5995a73c4de51d02c6380dd",
+        "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: Several simple gray fired-clay curved roof tiles stacked loosely; each tile is an elongated shallow semicircular channel, practical undecorated rural ceramic.",
+        "status": "superseded_preserved"
+      }
+    },
+    {
+      "id": "item.bean",
+      "name": "菽",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:23.880Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/bean-v1.png",
+            "sha256": "33f56e29d25547341cd895d88dc551cfb0bedd81359752accb52d0b6f34d45f8",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              129,
+              161,
+              1178,
+              999
+            ],
+            "transparentPixels": 1200142,
+            "visiblePixels": 372374
+          },
+          "runtime": {
+            "path": "game/art/items/bean/v1.png",
+            "sha256": "c122d13d9cdbd5b543c63fd016f1c9911080deaba413acb106f1fe14cbc19fda",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              48,
+              51,
+              218,
+              187
+            ],
+            "transparentPixels": 55398,
+            "visiblePixels": 10138
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A few brown-yellow dry soy beans beside a single natural bean pod.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1246,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\bean-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:00.599Z",
+            "reviewer": "Codex",
+            "note": "干豆与短荚明确表达库存收获物，没有整株。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.lacquer",
+      "name": "漆器",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:24.296Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/lacquer-v1.png",
+            "sha256": "2bded4fc59aaa2a38799174c5812e1f162d3dfe43f5c031a99eb8b74d68ecd80",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              116,
+              289,
+              1139,
+              1005
+            ],
+            "transparentPixels": 1013023,
+            "visiblePixels": 559493
+          },
+          "runtime": {
+            "path": "game/art/items/lacquer/v1.png",
+            "sha256": "fd36488250bab44bf0a6acfb2cf44f1a815282f5f61c81709e603a81172025c9",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              46,
+              72,
+              213,
+              190
+            ],
+            "transparentPixels": 50346,
+            "visiblePixels": 15190
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One practical dark cinnabar red lacquered wooden bowl, smooth restrained lacquer surface.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              19,
+              1232,
+              1232
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\lacquer-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:00.875Z",
+            "reviewer": "Codex",
+            "note": "朱黑漆碗的平滑反光与陶土区分。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.coin",
+      "name": "铜钱",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:24.649Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/coin-v1.png",
+            "sha256": "cafb442b20ec2ae48cc563fb03e12afa3a820aa1b6b630755a6ce725413c50c5",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              135,
+              334,
+              1121,
+              996
+            ],
+            "transparentPixels": 1109961,
+            "visiblePixels": 462555
+          },
+          "runtime": {
+            "path": "game/art/items/coin/v1.png",
+            "sha256": "168e8874676aecbd4e34fdeae991a0b84e241691a3fca381d3e3921f913c8541",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              49,
+              78,
+              209,
+              186
+            ],
+            "transparentPixels": 53056,
+            "visiblePixels": 12480
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A few aged copper cash coins, round with square central holes, simple unmarked face, natural brown bronze patina.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1240,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\coin-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:01.063Z",
+            "reviewer": "Codex",
+            "note": "方孔铜钱，轮廓与自然铜色清楚。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.stone",
+      "name": "石料",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:24.952Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/stone-v1.png",
+            "sha256": "49305eb3a001f5aaff655adf1a1ebea34093d487680f994656f5f7948c788d1c",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              214,
+              245,
+              1052,
+              1033
+            ],
+            "transparentPixels": 1104121,
+            "visiblePixels": 468395
+          },
+          "runtime": {
+            "path": "game/art/items/stone/v1.png",
+            "sha256": "4df03c64acd89ba89e27c569dd38d07c1c7ddd264d16c4970f94ee4650eaeabb",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              62,
+              65,
+              199,
+              194
+            ],
+            "transparentPixels": 52793,
+            "visiblePixels": 12743
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough angular grey building stone, chipped edges and grain, plain natural rock.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1230,
+              1230
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\stone-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:01.246Z",
+            "reviewer": "Codex",
+            "note": "灰色普通断石，区别矿物夹杂和浮石层理。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.clay",
+      "name": "黏土",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:25.304Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/clay-v1.png",
+            "sha256": "0a9a294c88b06b5c3d4401d98e33c8640cfffcc8e616534b90d820cca05284cd",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              140,
+              217,
+              1129,
+              1049
+            ],
+            "transparentPixels": 1017674,
+            "visiblePixels": 554842
+          },
+          "runtime": {
+            "path": "game/art/items/clay/v1.png",
+            "sha256": "8bcdc7350979330866dbb741d962f642e849baaff37aa8e499fb25ef1b57ba32",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              50,
+              59,
+              212,
+              195
+            ],
+            "transparentPixels": 50283,
+            "visiblePixels": 15253
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One irregular lump of moist red-brown clay, practical earthen material.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              22,
+              1230,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\clay-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:01.404Z",
+            "reviewer": "Codex",
+            "note": "赤褐黏土团，形体区别干土堆。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.timber",
+      "name": "木料",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:25.665Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/timber-v1.png",
+            "sha256": "aacb52bd960393416f83100b02dd71f4a2c63a3d2ae40016e4540402ce2fec1d",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              41,
+              199,
+              1227,
+              1143
+            ],
+            "transparentPixels": 809736,
+            "visiblePixels": 762780
+          },
+          "runtime": {
+            "path": "game/art/items/timber/v1.png",
+            "sha256": "6ab0accb3ed6b9a6bbd25b950dacd84ca76d35c2ff2c14876e7fd68c0973d532",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              31,
+              56,
+              225,
+              210
+            ],
+            "transparentPixels": 44862,
+            "visiblePixels": 20674
+          },
+          "prompt": "Use case: stylized-concept. Asset type: single inventory thumbnail for Zhouzhu Chinese rural crafting game developer tool. Subject: 木料 / timber, three short rough-cut warm brown wood logs with visible pale growth rings and bark, bundled together, no plants or scenery. Style: consistent handcrafted low-poly 3D item render with subtle painterly material texture, restrained natural palette, clear silhouette, studio light from upper left. Composition: square image, centered three-quarter orthographic view, entire object visible, fills central 70 percent with generous clean padding. Background: genuinely transparent alpha, no floor, only tiny soft contact shadow if it preserves transparency. Constraints: one item type only, no text, no numbers, no frame, no UI, no watermark, no glossy toy plastic, no realistic photograph. This thumbnail is a design asset for the tool, not an exact rendering of a game model.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              33,
+              23,
+              1238,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\timber-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:01.548Z",
+            "reviewer": "Codex",
+            "note": "粗木段及断面，区别平整木板。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.firewood",
+      "name": "柴",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:26.013Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/firewood-v1.png",
+            "sha256": "4cc1d4604fcb1a2f8130b8cb45dfa98c9359857e9dd4703edac0a2310bb90cf7",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              95,
+              224,
+              1187,
+              1018
+            ],
+            "transparentPixels": 1191938,
+            "visiblePixels": 380578
+          },
+          "runtime": {
+            "path": "game/art/items/firewood/v1.png",
+            "sha256": "048708e91501ea55b315c27c0045c43199e6677dde760fdc3a50d696f09715ed",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              43,
+              63,
+              220,
+              192
+            ],
+            "transparentPixels": 55300,
+            "visiblePixels": 10236
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small tied bundle of thin dry branches used as firewood, natural rough brown wood, simple fiber tie.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1236,
+              1230
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\firewood-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:01.733Z",
+            "reviewer": "Codex",
+            "note": "细枝束，区别木料圆木。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.gravel",
+      "name": "砂石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:26.375Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/gravel-v1.png",
+            "sha256": "8d498d08449ceaad4bf8ef1f908b61a5a7e55200b8e93c302ede8e4d808eed80",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              136,
+              350,
+              1113,
+              976
+            ],
+            "transparentPixels": 1212886,
+            "visiblePixels": 359630
+          },
+          "runtime": {
+            "path": "game/art/items/gravel/v1.png",
+            "sha256": "c85b2296498bf706d5618f6528b844014e4f2346fd3e68e36d1754b79e38b0c9",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              45,
+              81,
+              204,
+              183
+            ],
+            "transparentPixels": 55656,
+            "visiblePixels": 9880
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small grouped pile of beige-grey loose crushed gravel stones, varied small angular pieces.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              49,
+              21,
+              1240,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\gravel-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:02.000Z",
+            "reviewer": "Codex",
+            "note": "浅色粗细砾混合小堆，区别完整矿块。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.gold_dust",
+      "name": "砂金",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:26.718Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/gold_dust-v1.png",
+            "sha256": "3b384b12da125addcdfa4ff46363e0084364ee2e4631b9fc97468052f371f6ed",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              108,
+              312,
+              1164,
+              972
+            ],
+            "transparentPixels": 1136017,
+            "visiblePixels": 436499
+          },
+          "runtime": {
+            "path": "game/art/items/gold_dust/v1.png",
+            "sha256": "32989a4fba8921066e21493265896b42b83d4930af5b4ef769be8c54ed70a302",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              46,
+              73,
+              220,
+              182
+            ],
+            "transparentPixels": 53633,
+            "visiblePixels": 11903
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A compact small pile of coarse natural sand with a few sparse gold-colored placer grains mixed in, restrained amount of gold.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              37,
+              1206,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\gold_dust-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:02.252Z",
+            "reviewer": "Codex",
+            "note": "砂粒小堆内含金色细粒，区别金银原矿。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.iron_ore",
+      "name": "铁矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:27.028Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/iron_ore-v1.png",
+            "sha256": "2d388e3f3ea2cc0933ca923834684fb05c19f2aa25aa3da143139b78027f6b63",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              210,
+              187,
+              1109,
+              1100
+            ],
+            "transparentPixels": 1035691,
+            "visiblePixels": 536825
+          },
+          "runtime": {
+            "path": "game/art/items/iron_ore/v1.png",
+            "sha256": "add8b190c0531a37ef1b002d52d5fa4aa7de3fedbc5716929af23f21aef5037c",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              63,
+              55,
+              209,
+              203
+            ],
+            "transparentPixels": 51071,
+            "visiblePixels": 14465
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough reddish-brown iron ore rock with rust-colored hematite surface and dark grey stone.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1222,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\iron_ore-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:02.450Z",
+            "reviewer": "Codex",
+            "note": "锈红铁矿夹杂与灰岩宿主可辨。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.lead_zinc_ore",
+      "name": "铅锌矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:27.335Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/lead_zinc_ore-v1.png",
+            "sha256": "afe22578810a38a0aad1310bb7e4d7e93c6d9fb426dc28bb69b73e9416efe431",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              176,
+              200,
+              1097,
+              1078
+            ],
+            "transparentPixels": 1022867,
+            "visiblePixels": 549649
+          },
+          "runtime": {
+            "path": "game/art/items/lead_zinc_ore/v1.png",
+            "sha256": "2e03e454966e2a3525b6500d381374c10df9d381cdee1fd0566cc812a76a25cf",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              57,
+              58,
+              205,
+              200
+            ],
+            "transparentPixels": 51021,
+            "visiblePixels": 14515
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough grey metallic lead-zinc ore rock, dull silvery mineral facets and weathered host stone.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              9,
+              1228,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\lead_zinc_ore-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:02.639Z",
+            "reviewer": "Codex",
+            "note": "灰银矿物断面，保留其自然矿石形态。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.gold_ore",
+      "name": "金银矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:27.644Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/gold_ore-v1.png",
+            "sha256": "d1d29192beed354ec60d9817dda9351b995704bd88c2735af62c6a8a815dad4e",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              196,
+              150,
+              1086,
+              1104
+            ],
+            "transparentPixels": 955621,
+            "visiblePixels": 616895
+          },
+          "runtime": {
+            "path": "game/art/items/gold_ore/v1.png",
+            "sha256": "285d0304ed046f80152d2ab0ee4bef6c954c8b8e2ed43be7b62c13eee22d66a2",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              60,
+              42,
+              205,
+              199
+            ],
+            "transparentPixels": 48690,
+            "visiblePixels": 16846
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One grey-brown ore rock with sparse thin natural gold and silver mineral veins, mostly ordinary host stone.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              83,
+              1226,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\gold_ore-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:02.843Z",
+            "reviewer": "Codex",
+            "note": "灰褐岩体内少量金色夹杂，不画成纯金。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.manganese_ore",
+      "name": "锰矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:27.943Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/manganese_ore-v1.png",
+            "sha256": "230568f40fdc8aa9d8e10c5ae8d15615649a26e541472c984af9634c95292d42",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              181,
+              185,
+              1119,
+              1098
+            ],
+            "transparentPixels": 1018092,
+            "visiblePixels": 554424
+          },
+          "runtime": {
+            "path": "game/art/items/manganese_ore/v1.png",
+            "sha256": "bd845271292f96f0166bc780382dbe3b237d562a3e8c6735ec8896fd5788a497",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              57,
+              57,
+              209,
+              205
+            ],
+            "transparentPixels": 50728,
+            "visiblePixels": 14808
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough black-purple-grey manganese ore chunk, matte dark mineral rock.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              19,
+              1240,
+              1222
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\manganese_ore-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:03.005Z",
+            "reviewer": "Codex",
+            "note": "暗紫黑矿石及宽断面，没有宝石造型。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.tin_ore",
+      "name": "锡矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:28.238Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/tin_ore-v1.png",
+            "sha256": "ff39fa16931d7e7f0f5cc8c1cbbd88b32d864fa2558c8c7dd16d04aa743aecfc",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              211,
+              184,
+              1091,
+              1085
+            ],
+            "transparentPixels": 1028929,
+            "visiblePixels": 543587
+          },
+          "runtime": {
+            "path": "game/art/items/tin_ore/v1.png",
+            "sha256": "695cfe5bfe1bfa1646e921dedbefd1bc760c7d4e028f042420c66aa0e8e7fdbb",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              62,
+              55,
+              205,
+              202
+            ],
+            "transparentPixels": 50893,
+            "visiblePixels": 14643
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One dark grey rough tin ore rock with naturally mottled mineral specks.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1234,
+              1238
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\tin_ore-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:03.168Z",
+            "reviewer": "Codex",
+            "note": "深灰锡矿斑块与细晶，保持不规则原矿。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.chromium_ore",
+      "name": "铬矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:28.562Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/chromium_ore-v1.png",
+            "sha256": "ef95481a52096f635a37adbbbaeeb86f189abe1bebc077074844d906263a3058",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              208,
+              195,
+              1075,
+              1048
+            ],
+            "transparentPixels": 1067905,
+            "visiblePixels": 504611
+          },
+          "runtime": {
+            "path": "game/art/items/chromium_ore/v1.png",
+            "sha256": "d713b7ddee0787730fedb1a04ff2335287539757d92a7872ec01f261dbaa9303",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              61,
+              57,
+              203,
+              196
+            ],
+            "transparentPixels": 51943,
+            "visiblePixels": 13593
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One rough dark green-grey chromium ore rock, natural chromite mineral texture.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              33,
+              1232,
+              1230
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\chromium_ore-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:03.345Z",
+            "reviewer": "Codex",
+            "note": "深绿黑原矿，宿主石与矿物色分开。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.nickel_ore",
+      "name": "镍矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:28.898Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/nickel_ore-v1.png",
+            "sha256": "ba7ba6a8bb526d4a6cc402a57cefd9e261979493ed879f258f31de6fd2be5723",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              198,
+              219,
+              1081,
+              1049
+            ],
+            "transparentPixels": 1061150,
+            "visiblePixels": 511366
+          },
+          "runtime": {
+            "path": "game/art/items/nickel_ore/v1.png",
+            "sha256": "3fa438d283a39e4aee827ed16d183c013506e3a69acdf847bcad50cd248c6d66",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              59,
+              60,
+              202,
+              194
+            ],
+            "transparentPixels": 52025,
+            "visiblePixels": 13511
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One pale olive green and grey nickel ore chunk, naturally mottled rough mineral rock.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              18,
+              1242,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\nickel_ore-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:03.520Z",
+            "reviewer": "Codex",
+            "note": "黄绿矿物夹杂岩块，不是金属锭。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.salt",
+      "name": "盐",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:29.249Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/salt-v1.png",
+            "sha256": "14bf9bd0fecd10e88411ab106a0a5fc7bf55dadef01245410f328de32de6714a",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              171,
+              317,
+              1118,
+              937
+            ],
+            "transparentPixels": 1231214,
+            "visiblePixels": 341302
+          },
+          "runtime": {
+            "path": "game/art/items/salt/v1.png",
+            "sha256": "e8158e8649c42a97c17bf16d5281ea3857c21dd5a2e3411a8c646f362ec1feeb",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              47,
+              76,
+              207,
+              181
+            ],
+            "transparentPixels": 55719,
+            "visiblePixels": 9817
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small grouped mound of milky white salt crystals, irregular coarse translucent grains.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              65,
+              28,
+              1230,
+              1222
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\salt-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:03.691Z",
+            "reviewer": "Codex",
+            "note": "白色细晶小堆，区别更大不规则鸟粪结块。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.peat",
+      "name": "泥炭",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:29.577Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/peat-v1.png",
+            "sha256": "ab041b2f097fa12aeaf913b6bb78c1cfc115d2464435d9b69300108d7cff4d82",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              174,
+              256,
+              1083,
+              1019
+            ],
+            "transparentPixels": 1074293,
+            "visiblePixels": 498223
+          },
+          "runtime": {
+            "path": "game/art/items/peat/v1.png",
+            "sha256": "abd62882d1e86bb7ffa6a2443c1a300adbfaec64e1a9edf4bfccf7d2a613dd84",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              56,
+              66,
+              204,
+              190
+            ],
+            "transparentPixels": 52138,
+            "visiblePixels": 13398
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One dark brown fibrous peat block, compressed plant fibers and earthy torn edges.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1226,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\peat-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:03.882Z",
+            "reviewer": "Codex",
+            "note": "深褐纤维泥炭块，区别灰石与黏土。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.reed",
+      "name": "芦苇",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:29.893Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/reed-v1.png",
+            "sha256": "e08a5d23944d2543da97ca38051a1e62eaeb80e03d241630693344f5f49a4480",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              179,
+              98,
+              1221,
+              1161
+            ],
+            "transparentPixels": 1119804,
+            "visiblePixels": 452712
+          },
+          "runtime": {
+            "path": "game/art/items/reed/v1.png",
+            "sha256": "6d507ff2554d76cd574238dc632204708ad4b1b323f6285a53f6d1bee23e2e43",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              53,
+              36,
+              226,
+              213
+            ],
+            "transparentPixels": 52611,
+            "visiblePixels": 12925
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: A small tied bundle of yellow-green reeds with a few tan feathery reed heads, practical harvested wetland plant.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              33,
+              47,
+              1230,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\reed-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:04.073Z",
+            "reviewer": "Codex",
+            "note": "割下的苇束，保留苇穗，没有根部和场景。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.sulfur",
+      "name": "硫磺",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:30.225Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/sulfur-v1.png",
+            "sha256": "feddaf75413c08b4fa157d4f711b962b63a2df4e1a6777ba5658c6c95c64770d",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              251,
+              205,
+              1051,
+              1089
+            ],
+            "transparentPixels": 1088979,
+            "visiblePixels": 483537
+          },
+          "runtime": {
+            "path": "game/art/items/sulfur/v1.png",
+            "sha256": "2e1a3b8a21a441ebf0ce52e8bf5313b689af90c17e090e9b990086d32ebd1a4c",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              68,
+              59,
+              198,
+              202
+            ],
+            "transparentPixels": 52660,
+            "visiblePixels": 12876
+          },
+          "prompt": "Use case: stylized-concept. Asset type: one game inventory thumbnail for an ancient rural Chinese crafting developer tool. Style: handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clean readable silhouette. Composition: square, centered three-quarter orthographic view, entire object within central 70 percent of canvas, generous transparent padding. Lighting: soft studio light from upper-left. Background: genuinely transparent alpha, no ground plane or scenery, no text, numbers, frame, UI, watermark or magic effects. Exactly one item type; a small grouped cluster is allowed for loose material. Subject: One yellow natural rough sulfur crystal cluster, restrained ochre-yellow mineral color, no glow.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              13,
+              1242,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\sulfur-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:04.222Z",
+            "reviewer": "Codex",
+            "note": "天然硫黄矿物晶块，无发光或超自然效果。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.guano",
+      "name": "鸟粪",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:30.539Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/guano-v1.png",
+            "sha256": "7ce92af8e0c7c9a2274c79a0ac0d34e319e366f65efc1710e0bd5bc45e7ad771",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              175,
+              287,
+              1083,
+              975
+            ],
+            "transparentPixels": 1183088,
+            "visiblePixels": 389428
+          },
+          "runtime": {
+            "path": "game/art/items/guano/v1.png",
+            "sha256": "a0da0020e2d2cf570f80f342679aebff1c86968f4adf371008b18be3aff5128f",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              56,
+              71,
+              204,
+              183
+            ],
+            "transparentPixels": 55059,
+            "visiblePixels": 10477
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A small pile of pale ivory and gray dry bird guano mineralized lumps with a thin crust; no bird, no exaggerated dirt or disgusting details.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              19,
+              1236,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\guano-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:04.377Z",
+            "reviewer": "Codex",
+            "note": "白垩色不规则结块，区别盐的细晶。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.plank",
+      "name": "木板",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:30.881Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/plank-v1.png",
+            "sha256": "206e018289ba2324266c76ff7af2de3ff185c3523355a1c5d0156a3d0c35cefe",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              126,
+              334,
+              1148,
+              1021
+            ],
+            "transparentPixels": 1154571,
+            "visiblePixels": 417945
+          },
+          "runtime": {
+            "path": "game/art/items/plank/v1.png",
+            "sha256": "cdd534daed4aa0353b12bb43d6be5af006f48d57e844755b112ad1b2a0070ed1",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              49,
+              81,
+              224,
+              199
+            ],
+            "transparentPixels": 53122,
+            "visiblePixels": 12414
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: Two or three practical warm yellow-brown sawn wooden planks stacked slightly askew; clear wood grain.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              25,
+              1176,
+              1190
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\plank-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:04.576Z",
+            "reviewer": "Codex",
+            "note": "少量完整木板，区别组装楼板。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.brick",
+      "name": "砖",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:31.223Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/brick-v1.png",
+            "sha256": "17c101b9ba9b519c38a726257f99661f9644c36a85b57a3117f78d0e1f50db6b",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              232,
+              270,
+              1036,
+              1070
+            ],
+            "transparentPixels": 1042463,
+            "visiblePixels": 530053
+          },
+          "runtime": {
+            "path": "game/art/items/brick/v1.png",
+            "sha256": "115031775c86bf6469aec20e8b66c49b4ef864cda64e4531993e82c3d880e222",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              65,
+              67,
+              197,
+              198
+            ],
+            "transparentPixels": 51231,
+            "visiblePixels": 14305
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: Three practical red terracotta rectangular bricks stacked slightly askew; modest worn corners.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              37,
+              1232,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\brick-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:04.806Z",
+            "reviewer": "Codex",
+            "note": "单类烧制砖，区别砌筑砖墙。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.stone_pick",
+      "name": "石镐",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:31.609Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/stone_pick-v1.png",
+            "sha256": "b51efad0dba192e2508e68ed4fdfe9331a2283a2589441e08018c247bad52627",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              272,
+              110,
+              1038,
+              1150
+            ],
+            "transparentPixels": 1353643,
+            "visiblePixels": 218873
+          },
+          "runtime": {
+            "path": "game/art/items/stone_pick/v1.png",
+            "sha256": "e4f37dec6ccdbcc23641395e5d3c3e5f5f38c13d18342975250575705220733d",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              71,
+              41,
+              196,
+              210
+            ],
+            "transparentPixels": 59322,
+            "visiblePixels": 6214
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical primitive stone pickaxe with a wooden handle and pointed gray stone pick head bound securely by coarse cord.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              31,
+              1240,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\stone_pick-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:05.027Z",
+            "reviewer": "Codex",
+            "note": "完整双尖石镐与绑扎木柄，区别石斧。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.wood_shovel",
+      "name": "木锹",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:31.949Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/wood_shovel-v1.png",
+            "sha256": "b2857c3a0208f522c0a714c564cf17b587fb5748b3d4757b2fced76cf5e9c97e",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              345,
+              37,
+              976,
+              1204
+            ],
+            "transparentPixels": 1378115,
+            "visiblePixels": 194401
+          },
+          "runtime": {
+            "path": "game/art/items/wood_shovel/v1.png",
+            "sha256": "22b6ade6721b105ac363da4b0caab8d8928ed8cdcacfd866dba6c80a84f65a57",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              83,
+              31,
+              188,
+              225
+            ],
+            "transparentPixels": 59669,
+            "visiblePixels": 5867
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical shovel made entirely of wood, with a long wooden shaft and broad flat wooden shovel blade, no metal.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              49,
+              17,
+              1176,
+              1224
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\wood_shovel-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:05.278Z",
+            "reviewer": "Codex",
+            "note": "完整木锹，长柄和铲面轮廓清楚。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.workbench",
+      "name": "工作台",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:32.308Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/workbench-v1.png",
+            "sha256": "5b713e9428753ac095c2fe8471f5324e80e1663b10827b4d353e1e40800adc26",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              66,
+              206,
+              1203,
+              1143
+            ],
+            "transparentPixels": 910837,
+            "visiblePixels": 661679
+          },
+          "runtime": {
+            "path": "game/art/items/workbench/v1.png",
+            "sha256": "f16714221eaf333772092377fe55c482a44337b0533648f4827a579491e726bd",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              38,
+              58,
+              223,
+              210
+            ],
+            "transparentPixels": 47570,
+            "visiblePixels": 17966
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical rural workbench, thick wooden tabletop on four sturdy legs, lower shelf, one small wooden plank and a chisel lying on the tabletop.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              21,
+              1236,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\workbench-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:05.865Z",
+            "reviewer": "Codex",
+            "note": "单个完整工作台，桌架与功能结构可辨。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.kiln",
+      "name": "窑",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:32.627Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/kiln-v1.png",
+            "sha256": "95efddb40e8348c18e2117e86bdd55577383c81fe1feaadf0993b13b64f8e4da",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              99,
+              138,
+              1195,
+              1128
+            ],
+            "transparentPixels": 944065,
+            "visiblePixels": 628451
+          },
+          "runtime": {
+            "path": "game/art/items/kiln/v1.png",
+            "sha256": "f7f43078b05baa02e08ad40257448ff20838d4ed6460b15cef52c23b5f461901",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              44,
+              47,
+              221,
+              207
+            ],
+            "transparentPixels": 48726,
+            "visiblePixels": 16810
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A simple adobe hemispherical bread-shaped kiln on a square base, an open front firing mouth and short chimney; no flames, no scene.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              20,
+              1240,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\kiln-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:06.113Z",
+            "reviewer": "Codex",
+            "note": "单座窑，炉口与排烟口可辨；不作为实际模型预览。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.torch",
+      "name": "火把",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:32.996Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/torch-v1.png",
+            "sha256": "c20876eb902bc0dcb3922abc8b5533c8ca5c538fab2a2de30f10a13dfd5b7552",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              420,
+              49,
+              887,
+              1185
+            ],
+            "transparentPixels": 1435182,
+            "visiblePixels": 137334
+          },
+          "runtime": {
+            "path": "game/art/items/torch/v1.png",
+            "sha256": "421fea8f023510222858459d33a2e9333d9692d8893b63d249bff15df22992be",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              96,
+              34,
+              172,
+              218
+            ],
+            "transparentPixels": 61495,
+            "visiblePixels": 4041
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A practical upright wooden torch, coarse cord holding resinous split pine kindling at its top, a small modest orange flame; no scenery.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              37,
+              1232,
+              1216
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\torch-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:06.548Z",
+            "reviewer": "Codex",
+            "note": "手持绑扎火把，火焰只属于该物品，未转成场景效果。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.fence",
+      "name": "篱笆",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:33.429Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/fence-v1.png",
+            "sha256": "5ee5d0422978142591310c0937a7b3b93156665ea2e34d356515920b4f0fbc99",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              198,
+              208,
+              1092,
+              1067
+            ],
+            "transparentPixels": 1222859,
+            "visiblePixels": 349657
+          },
+          "runtime": {
+            "path": "game/art/items/fence/v1.png",
+            "sha256": "0508f9c52a1abdae38c8466151fa96bd3bca76277aebc3c88eec8c4af09cd089",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              59,
+              59,
+              203,
+              197
+            ],
+            "transparentPixels": 56020,
+            "visiblePixels": 9516
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One practical wooden fence section with exactly two upright timber posts and two horizontal wooden rails, handmade rural joinery.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              35,
+              1253,
+              1230
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\fence-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:07.037Z",
+            "reviewer": "Codex",
+            "note": "单段双柱横杆篱笆，不画完整围墙。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.earth",
+      "name": "土",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:33.819Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/earth-v1.png",
+            "sha256": "2a9f2d67251ac0d3cd95920c04bb48535668a4a3540728ff187615c0ea77c9e1",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              145,
+              311,
+              1126,
+              942
+            ],
+            "transparentPixels": 1184498,
+            "visiblePixels": 388018
+          },
+          "runtime": {
+            "path": "game/art/items/earth/v1.png",
+            "sha256": "fc0c31689b5324b7c8af2494f4e29ef1a9bc8f798aaf5c1a93bd7f3fd212b41c",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              52,
+              69,
+              214,
+              174
+            ],
+            "transparentPixels": 54767,
+            "visiblePixels": 10769
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: A small compact pile of brown soil clods and crumbly earth, restrained warm brown, no plants, no container.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              85,
+              1216,
+              1244
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\earth-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:07.297Z",
+            "reviewer": "Codex",
+            "note": "棕土颗粒小堆，区别湿黏土团。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.foundation",
+      "name": "地基",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:34.168Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/foundation-v1.png",
+            "sha256": "f4d9f7413e5316331e545344064eb3704b9e027bf04a827fe75147b601bdd701",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              98,
+              355,
+              1170,
+              995
+            ],
+            "transparentPixels": 1136746,
+            "visiblePixels": 435770
+          },
+          "runtime": {
+            "path": "game/art/items/foundation/v1.png",
+            "sha256": "85f33816e1defaf7899e2b83a7cb0a316497bf3f6904e3ea44b9631227931185",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              44,
+              81,
+              218,
+              186
+            ],
+            "transparentPixels": 53720,
+            "visiblePixels": 11816
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One low square building foundation platform built from rough natural gray stone blocks, clear square top footprint, only one small modular platform; no surrounding ground.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              57,
+              1232,
+              1220
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\foundation-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:07.517Z",
+            "reviewer": "Codex",
+            "note": "单件石质台基构件，区别单块石料。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.floorboard",
+      "name": "楼板",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:34.461Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/floorboard-v1.png",
+            "sha256": "b9aad4ebc61f8dc247f025ea21b10150be53ef4663e7f93604172d6cd46b3ef8",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              57,
+              301,
+              1199,
+              1028
+            ],
+            "transparentPixels": 1118680,
+            "visiblePixels": 453836
+          },
+          "runtime": {
+            "path": "game/art/items/floorboard/v1.png",
+            "sha256": "8ee89399654d56baf4a196470bc2fa09615763031d9093064df891e9ca7d8588",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              37,
+              65,
+              227,
+              186
+            ],
+            "transparentPixels": 52646,
+            "visiblePixels": 12890
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One square wooden floor panel building component made of joined sturdy planks, slight visible thickness and modest supporting timber underneath.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              136,
+              1205,
+              1221
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\floorboard-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:07.975Z",
+            "reviewer": "Codex",
+            "note": "组装木楼板，区别松散木板。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.earth_wall",
+      "name": "夯土墙",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:34.740Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/earth_wall-v1.png",
+            "sha256": "3ec49140215caae78e5c5dadbaec906e8eae02fc8f2c149bbd02c4e8f9c800f1",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              161,
+              127,
+              1122,
+              1164
+            ],
+            "transparentPixels": 707056,
+            "visiblePixels": 865460
+          },
+          "runtime": {
+            "path": "game/art/items/earth_wall/v1.png",
+            "sha256": "2f711027219fad1dbe308dc375281d067abdbfe0e98a7b92bc2e7c3976879c15",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              55,
+              48,
+              209,
+              214
+            ],
+            "transparentPixels": 43232,
+            "visiblePixels": 22304
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete rectangular light brown rammed-earth wall building panel with visible subtle compacted soil layers and substantial thickness; no door, window, roof, ground or extra wall.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              0,
+              1222,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\earth_wall-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:08.325Z",
+            "reviewer": "Codex",
+            "note": "单块夯土墙面与水平夯筑纹理。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.brick_wall",
+      "name": "砖墙",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:35.025Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/brick_wall-v1.png",
+            "sha256": "7253ae79b26a0770b3d5c04f6d9f9523712a94fc78529c44dc3644da7f766913",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              152,
+              128,
+              1110,
+              1140
+            ],
+            "transparentPixels": 737617,
+            "visiblePixels": 834899
+          },
+          "runtime": {
+            "path": "game/art/items/brick_wall/v1.png",
+            "sha256": "3f744cd1120328b00e9d17a98276f1ffda50989165a2954561f0338ccec9cf30",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              55,
+              48,
+              208,
+              210
+            ],
+            "transparentPixels": 43871,
+            "visiblePixels": 21665
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete rectangular red terracotta brick masonry wall building panel, orderly staggered courses with subtle pale mortar and visible thickness; no door, window, roof, ground or extra wall.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              0,
+              1218,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\brick_wall-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:08.567Z",
+            "reviewer": "Codex",
+            "note": "单块砌砖墙构件，砖缝清楚。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.door_wall",
+      "name": "门墙",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:35.336Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/door_wall-v1.png",
+            "sha256": "df7564232a760cd413ce0876691460df5d32ca6582e919bc8867e67174d1405d",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              178,
+              222,
+              1077,
+              1075
+            ],
+            "transparentPixels": 909512,
+            "visiblePixels": 663004
+          },
+          "runtime": {
+            "path": "game/art/items/door_wall/v1.png",
+            "sha256": "7d05fff08802bcfc8fbf5b66d56153ee75b2d81c54c5a2a8931bae6b55797de6",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              58,
+              63,
+              202,
+              200
+            ],
+            "transparentPixels": 48276,
+            "visiblePixels": 17260
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete light brown rammed-earth rectangular wall building panel containing a simple closed wooden plank door and practical wooden door frame centered in the wall; no surrounding building or ground.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              3,
+              1222,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\door_wall-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:08.785Z",
+            "reviewer": "Codex",
+            "note": "单件门墙，门开口/框架可辨，不是完整房屋。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.window_wall",
+      "name": "窗墙",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:35.608Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/window_wall-v1.png",
+            "sha256": "ffc0dec199a25e23d071acc11f441e3c6fc514c71a8fc180d9860155f1f6f78a",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              183,
+              180,
+              1093,
+              1097
+            ],
+            "transparentPixels": 860441,
+            "visiblePixels": 712075
+          },
+          "runtime": {
+            "path": "game/art/items/window_wall/v1.png",
+            "sha256": "58c06351d4f300ac2c6e34d87e51285ac979e882fbaa383fe0860b0b5a74861c",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              58,
+              56,
+              203,
+              203
+            ],
+            "transparentPixels": 46933,
+            "visiblePixels": 18603
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete light brown rammed-earth rectangular wall building panel containing a small centered simple wooden lattice window, no glass, modest practical wooden frame; no surrounding building or ground.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              0,
+              1238,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\window_wall-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:09.107Z",
+            "reviewer": "Codex",
+            "note": "单件窗墙，窗框与开口清楚。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.gable",
+      "name": "山墙",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:35.848Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/gable-v1.png",
+            "sha256": "d68a92c60e0b8ae284ad9d5574bbc653f7d24fcf00cf59ca08708044b06f7526",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              107,
+              146,
+              1162,
+              1148
+            ],
+            "transparentPixels": 974537,
+            "visiblePixels": 597979
+          },
+          "runtime": {
+            "path": "game/art/items/gable/v1.png",
+            "sha256": "f4fde7c3e0cb52a57fd0a6c2d66cd0a2961b4f7b95610ec11021867f4b561ea5",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              45,
+              45,
+              219,
+              211
+            ],
+            "transparentPixels": 48977,
+            "visiblePixels": 16559
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One complete pale brown rammed-earth triangular gable wall building component, a simple solid thick triangular wall panel with broad flat base and peaked top; no windows, roof, building or surrounding ground.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              37,
+              1216,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\gable-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:09.456Z",
+            "reviewer": "Codex",
+            "note": "单件三角山墙，不是完整建筑。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.thatch_roof",
+      "name": "草顶",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:36.100Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/thatch_roof-v1.png",
+            "sha256": "aab3012535ded09eb329c106b31c05ae16a106a17225a7a68a0f7d6e08fde120",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              63,
+              239,
+              1219,
+              1048
+            ],
+            "transparentPixels": 1010741,
+            "visiblePixels": 561775
+          },
+          "runtime": {
+            "path": "game/art/items/thatch_roof/v1.png",
+            "sha256": "9f9bc3841b4977e002a54d8d57a1e30f25d95694606f536f18eb4a50b7f401c7",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              38,
+              62,
+              225,
+              193
+            ],
+            "transparentPixels": 50590,
+            "visiblePixels": 14946
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One thick wheat-straw sloping roof building component, a single rectangular pitched roof plane covered in practical layered golden straw with small visible timber supports beneath; not a full house or complete two-sided roof.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              33,
+              1238,
+              1254
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\thatch_roof-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:09.951Z",
+            "reviewer": "Codex",
+            "note": "单种草顶构件，草束节奏可辨；不冒充模型连接预览。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.tile_roof",
+      "name": "瓦顶",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:36.359Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/tile_roof-v1.png",
+            "sha256": "a3a4d340f6b46bddfc999f55ca4f2c4292d27671db0fea077dfa6a1374eddf30",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              90,
+              311,
+              1209,
+              985
+            ],
+            "transparentPixels": 1118610,
+            "visiblePixels": 453906
+          },
+          "runtime": {
+            "path": "game/art/items/tile_roof/v1.png",
+            "sha256": "f2b2cb15ae85938636d85c806a0f2d44a1b9108d53534e5ab0891a06abed3f38",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              42,
+              70,
+              223,
+              179
+            ],
+            "transparentPixels": 53271,
+            "visiblePixels": 12265
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One sloping roof building component, a single rectangular pitched roof plane covered in orderly overlapping gray clay tiles with modest timber supports beneath; not a full house or complete two-sided roof.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              119,
+              1240,
+              1214
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\tile_roof-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:10.194Z",
+            "reviewer": "Codex",
+            "note": "组装瓦顶构件，与单片roof_tile区分。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.pillar",
+      "name": "木柱",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:36.633Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/pillar-v1.png",
+            "sha256": "c46a8d264afe5009ca9806bae7b32656d0d1914df8bed6aca319ea899ee435fd",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              496,
+              89,
+              761,
+              1174
+            ],
+            "transparentPixels": 1306768,
+            "visiblePixels": 265748
+          },
+          "runtime": {
+            "path": "game/art/items/pillar/v1.png",
+            "sha256": "383f5b1b1c95c5ba1e0d132955dd7cdb7cb25e7ca16a67bb8158827a8661ff12",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              104,
+              39,
+              151,
+              228
+            ],
+            "transparentPixels": 57070,
+            "visiblePixels": 8466
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One thick straight dark-brown squared wooden structural post, upright, practical rural timber with subtle grain and worn edges; no carved decoration, stone base or other building elements.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              97,
+              25,
+              1160,
+              1177
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\pillar-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:10.390Z",
+            "reviewer": "Codex",
+            "note": "单根方木柱，端面与竖向木纹清楚。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.ladder",
+      "name": "梯子",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "legacy-imagegen-reused",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:08:36.994Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "tools/content-studio/public/assets/thumbnails/ladder-v1.png",
+            "sha256": "ffe6a976dd7e72cab7b1dfe6c10dc6c1079c26ffeab7473b205e9014dfb38241",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              382,
+              34,
+              937,
+              1191
+            ],
+            "transparentPixels": 1336537,
+            "visiblePixels": 235979
+          },
+          "runtime": {
+            "path": "game/art/items/ladder/v1.png",
+            "sha256": "ad1c4fffd4c43bc71ba41c3166662de3a6359d7d1ce4b3b3eb7d06400ae9686c",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              84,
+              28,
+              177,
+              222
+            ],
+            "transparentPixels": 58317,
+            "visiblePixels": 7219
+          },
+          "prompt": "Use case: stylized-concept. Asset type: developer content workshop inventory thumbnail concept, not an existing game model. Single inventory thumbnail of the described item. Handcrafted low-poly 3D item render with subtle painterly texture, restrained natural colors, clear silhouette. Square centered three-quarter orthographic view with entire item inside central 70% and ample transparent margins. Soft studio light from upper-left. Genuinely transparent alpha background. Old rural craft, practical and undecorated. No text, numbers, frame, UI, watermark, ground plane, scenery, labels, or extra objects. Subject: One practical straight wooden ladder with two continuous wooden side beams and many evenly spaced sturdy wooden rungs, a simple rural ladder, no scenery or other objects.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              57,
+              32,
+              1228,
+              1231
+            ]
+          },
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\tools\\content-studio\\public\\assets\\thumbnails\\ladder-v1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:12:10.991Z",
+            "reviewer": "Codex",
+            "note": "完整梯子，侧梁与重复踏棍清楚。 已实际查看旧图总览与明暗底32/48/64图表；物品图标层级的材料、光照、轮廓及透明边缘可沿用。模型与场景风格完成情况另记，用户未逐项确认。",
             "userConfirmed": false
           }
         }

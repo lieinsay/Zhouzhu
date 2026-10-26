@@ -1921,5 +1921,16 @@
       ],
       "note": "可登记来源，不进入 AI 生图队列。"
     }
-  ]
+  ],
+  "current_production": {
+    "updated": "2026-10-26",
+    "registry": "assets/art/registry.json",
+    "bindings": "game/art/bindings.json",
+    "item_count": 49,
+    "new_v2": 8,
+    "reused_v1": 41,
+    "game_applied": 49,
+    "acceptance": "docs/art-assets/ACCEPTANCE-20261026.md",
+    "note": "原existing_assets和各组current_state是2026-10-25盘点快照，当前接入以正式登记和独立验收为准。"
+  }
 }

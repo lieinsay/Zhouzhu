@@ -45,6 +45,18 @@ test('缩略图沿产物与道具引用映射，采集源不会冒充库存实�
   assert.equal(media.resolveVisual(p, { id: 'make_timber', product: 'timber' }, 'recipes', library).thumbnail, null, '配方跟随道具缩略图的显式绑定');
 });
 
+test('正式已应用版本默认共享，保留既有显式工具草稿', () => {
+  const p = project();
+  const formal = {id:'item-timber-v2',itemId:'timber',version:'v2',formalActive:true,url:'/api/art/image/item.timber/v2'};
+  const lib = media.normalizeLibrary({...library,thumbnails:[formal,...library.thumbnails]});
+  assert.equal(lib.thumbnails.length,2);
+  assert.equal(media.resolveVisual(p,p.items[0],'items',lib).thumbnail.id,formal.id);
+  assert.equal(media.resolveVisual(p,{id:'make',product:'timber'},'recipes',lib).thumbnail.id,formal.id);
+  p.visuals={items:{timber:{thumbnail:'timber-v1'}}};
+  assert.equal(media.resolveVisual(p,p.items[0],'items',lib).thumbnail.id,'timber-v1');
+  assert.equal(media.resolveVisual(p,{id:'make',product:'timber'},'recipes',lib).thumbnail.id,'timber-v1');
+});
+
 test('显式绑定保存局部变换、处理缺失资产，并能完全恢复默认', () => {
   const p = project(), row = p.items[0];
   media.writeVisual(p, row, 'items', library, 'scale', 2, 1);

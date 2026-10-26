@@ -3,16 +3,340 @@
   "styleId": "painted-jrpg-3d-v1",
   "styleApprovedBy": "用户于2026-10-26选定方向并授权分批制作接入；未逐张确认",
   "firstBatch": [
-    {"id":"item.millet","decision":"remake","requirement":"库存粟：金黄粟粒小堆，短小收获穗辅助识别，不画完整植株、田地或装饰袋。种子与收成共用。"},
-    {"id":"item.copper_ore","decision":"remake","requirement":"一块可信的灰褐色含铜原矿，孔雀石绿不规则矿物夹杂与断口；不画纯铜、金属锭或宝石，不暗示源品位。"},
-    {"id":"item.stone_axe","decision":"remake","requirement":"完整石斧：磨制灰石刃、木柄、可信的纤维绑扎连接；斧刃与柄方向清楚，无金属头。"},
-    {"id":"item.chest","decision":"remake","requirement":"一只可放置木箱，盖、板缝、木接合与朴素金属铰链清楚；不是室内家具chest柜，不画内容物。"},
-    {"id":"item.pottery","decision":"remake","requirement":"一只实用赭色陶罐，圆腹短颈开口，细腻陶土颗粒与克制轮制痕；不画花纹、华丽釉面或整组器皿。"},
-    {"id":"item.cloth","decision":"remake","requirement":"一块折叠本色麻布，米麻色、清楚折边与适量织纹；不是衣服、帆或麻袋。"},
-    {"id":"item.floatstone","decision":"remake","requirement":"一块普通矿物外观的淡灰紫浮石，可信断口与层理，易区别灰石和绿色铜矿；无符文、发光、漂浮碎屑、魔法或巨大晶簇。"},
-    {"id":"item.roof_tile","decision":"remake","requirement":"单片灰色烧制弧形瓦，厚度、弧面和断面清楚；不是瓦顶构件、屋面或整栋建筑。"}
+    {
+      "id": "item.millet",
+      "decision": "remake",
+      "requirement": "库存粟：金黄粟粒小堆，短小收获穗辅助识别，不画完整植株、田地或装饰袋。种子与收成共用。"
+    },
+    {
+      "id": "item.copper_ore",
+      "decision": "remake",
+      "requirement": "一块可信的灰褐色含铜原矿，孔雀石绿不规则矿物夹杂与断口；不画纯铜、金属锭或宝石，不暗示源品位。"
+    },
+    {
+      "id": "item.stone_axe",
+      "decision": "remake",
+      "requirement": "完整石斧：磨制灰石刃、木柄、可信的纤维绑扎连接；斧刃与柄方向清楚，无金属头。"
+    },
+    {
+      "id": "item.chest",
+      "decision": "remake",
+      "requirement": "一只可放置木箱，盖、板缝、木接合与朴素金属铰链清楚；不是室内家具chest柜，不画内容物。"
+    },
+    {
+      "id": "item.pottery",
+      "decision": "remake",
+      "requirement": "一只实用赭色陶罐，圆腹短颈开口，细腻陶土颗粒与克制轮制痕；不画花纹、华丽釉面或整组器皿。"
+    },
+    {
+      "id": "item.cloth",
+      "decision": "remake",
+      "requirement": "一块折叠本色麻布，米麻色、清楚折边与适量织纹；不是衣服、帆或麻袋。"
+    },
+    {
+      "id": "item.floatstone",
+      "decision": "remake",
+      "requirement": "一块普通矿物外观的淡灰紫浮石，可信断口与层理，易区别灰石和绿色铜矿；无符文、发光、漂浮碎屑、魔法或巨大晶簇。"
+    },
+    {
+      "id": "item.roof_tile",
+      "decision": "remake",
+      "requirement": "单片灰色烧制弧形瓦，厚度、弧面和断面清楚；不是瓦顶构件、屋面或整栋建筑。"
+    }
   ],
-  "decisions": [],
-  "nextStages": ["首批实际接入验收后逐项评估其余41项旧图", "核对8模块5建筑13家具模型与材质缺口，优先真实渲染", "少量共享场景材质验证后扩展"],
+  "decisions": [
+    {
+      "id": "item.bean",
+      "decision": "reuse_v1",
+      "reason": "干豆与短荚明确表达库存收获物，没有整株。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.lacquer",
+      "decision": "reuse_v1",
+      "reason": "朱黑漆碗的平滑反光与陶土区分。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.coin",
+      "decision": "reuse_v1",
+      "reason": "方孔铜钱，轮廓与自然铜色清楚。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.stone",
+      "decision": "reuse_v1",
+      "reason": "灰色普通断石，区别矿物夹杂和浮石层理。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.clay",
+      "decision": "reuse_v1",
+      "reason": "赤褐黏土团，形体区别干土堆。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.timber",
+      "decision": "reuse_v1",
+      "reason": "粗木段及断面，区别平整木板。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.firewood",
+      "decision": "reuse_v1",
+      "reason": "细枝束，区别木料圆木。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.gravel",
+      "decision": "reuse_v1",
+      "reason": "浅色粗细砾混合小堆，区别完整矿块。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.gold_dust",
+      "decision": "reuse_v1",
+      "reason": "砂粒小堆内含金色细粒，区别金银原矿。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.iron_ore",
+      "decision": "reuse_v1",
+      "reason": "锈红铁矿夹杂与灰岩宿主可辨。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.lead_zinc_ore",
+      "decision": "reuse_v1",
+      "reason": "灰银矿物断面，保留其自然矿石形态。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.gold_ore",
+      "decision": "reuse_v1",
+      "reason": "灰褐岩体内少量金色夹杂，不画成纯金。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.manganese_ore",
+      "decision": "reuse_v1",
+      "reason": "暗紫黑矿石及宽断面，没有宝石造型。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.tin_ore",
+      "decision": "reuse_v1",
+      "reason": "深灰锡矿斑块与细晶，保持不规则原矿。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.chromium_ore",
+      "decision": "reuse_v1",
+      "reason": "深绿黑原矿，宿主石与矿物色分开。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.nickel_ore",
+      "decision": "reuse_v1",
+      "reason": "黄绿矿物夹杂岩块，不是金属锭。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.salt",
+      "decision": "reuse_v1",
+      "reason": "白色细晶小堆，区别更大不规则鸟粪结块。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.peat",
+      "decision": "reuse_v1",
+      "reason": "深褐纤维泥炭块，区别灰石与黏土。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.reed",
+      "decision": "reuse_v1",
+      "reason": "割下的苇束，保留苇穗，没有根部和场景。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.sulfur",
+      "decision": "reuse_v1",
+      "reason": "天然硫黄矿物晶块，无发光或超自然效果。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.guano",
+      "decision": "reuse_v1",
+      "reason": "白垩色不规则结块，区别盐的细晶。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.plank",
+      "decision": "reuse_v1",
+      "reason": "少量完整木板，区别组装楼板。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.brick",
+      "decision": "reuse_v1",
+      "reason": "单类烧制砖，区别砌筑砖墙。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.stone_pick",
+      "decision": "reuse_v1",
+      "reason": "完整双尖石镐与绑扎木柄，区别石斧。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.wood_shovel",
+      "decision": "reuse_v1",
+      "reason": "完整木锹，长柄和铲面轮廓清楚。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.workbench",
+      "decision": "reuse_v1",
+      "reason": "单个完整工作台，桌架与功能结构可辨。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.kiln",
+      "decision": "reuse_v1",
+      "reason": "单座窑，炉口与排烟口可辨；不作为实际模型预览。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.torch",
+      "decision": "reuse_v1",
+      "reason": "手持绑扎火把，火焰只属于该物品，未转成场景效果。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.fence",
+      "decision": "reuse_v1",
+      "reason": "单段双柱横杆篱笆，不画完整围墙。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.earth",
+      "decision": "reuse_v1",
+      "reason": "棕土颗粒小堆，区别湿黏土团。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.foundation",
+      "decision": "reuse_v1",
+      "reason": "单件石质台基构件，区别单块石料。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.floorboard",
+      "decision": "reuse_v1",
+      "reason": "组装木楼板，区别松散木板。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.earth_wall",
+      "decision": "reuse_v1",
+      "reason": "单块夯土墙面与水平夯筑纹理。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.brick_wall",
+      "decision": "reuse_v1",
+      "reason": "单块砌砖墙构件，砖缝清楚。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.door_wall",
+      "decision": "reuse_v1",
+      "reason": "单件门墙，门开口/框架可辨，不是完整房屋。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.window_wall",
+      "decision": "reuse_v1",
+      "reason": "单件窗墙，窗框与开口清楚。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.gable",
+      "decision": "reuse_v1",
+      "reason": "单件三角山墙，不是完整建筑。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.thatch_roof",
+      "decision": "reuse_v1",
+      "reason": "单种草顶构件，草束节奏可辨；不冒充模型连接预览。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.tile_roof",
+      "decision": "reuse_v1",
+      "reason": "组装瓦顶构件，与单片roof_tile区分。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.pillar",
+      "decision": "reuse_v1",
+      "reason": "单根方木柱，端面与竖向木纹清楚。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    },
+    {
+      "id": "item.ladder",
+      "decision": "reuse_v1",
+      "reason": "完整梯子，侧梁与重复踏棍清楚。",
+      "modelRenderDecision": "库存图标不要求精确模型预览；该图合格，避免重复制作。",
+      "reviewEvidence": "output/art-production-20261026/reuse-review/"
+    }
+  ],
+  "nextStages": [
+    "首批实际接入验收后逐项评估其余41项旧图",
+    "核对8模块5建筑13家具模型与材质缺口，优先真实渲染",
+    "少量共享场景材质验证后扩展"
+  ],
   "excluded": "条件需求与候选不直接排队；程序数据不进入生图。"
 }

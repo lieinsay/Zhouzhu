@@ -139,7 +139,7 @@ class ArtLibrary:
             item_id = asset['id'][5:]
             for value in asset['versions']:
                 version = value['version']
-                result.append(dict(id='item-'+item_id+'-'+version, itemId=item_id, name=asset['name'],
+                result.append(dict(id=item_id if version == 'v1' else 'item-'+item_id+'-'+version, itemId=item_id, name=asset['name'],
                     url='/api/art/image/'+asset['id']+'/'+version, version=version, origin=value['origin'],
                     formalActive=state['active']['bindings'].get(asset['id'], {}).get('version') == version,
                     sha256=value['runtime']['sha256']))

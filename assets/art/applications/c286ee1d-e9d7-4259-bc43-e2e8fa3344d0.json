@@ -1,0 +1,458 @@
+{
+  "application": {
+    "id": "c286ee1d-e9d7-4259-bc43-e2e8fa3344d0",
+    "appliedAt": "2026-10-26T10:12:55.271Z",
+    "actor": "content-studio-art",
+    "registrySha256": "5ffab4def056b52ccc4ca595be6063bdeca6bd86e8f08db5f0c6caa4b1552fa8"
+  },
+  "previous": {
+    "schemaVersion": 1,
+    "styleId": "painted-jrpg-3d-v1",
+    "bindings": {
+      "item.millet": {
+        "version": "v2",
+        "path": "res://art/items/millet/v2.png",
+        "sha256": "ddec3e275eff3818078da56e55e5f2a0b9ac8459c3889fe08b1b23a2c301e845"
+      },
+      "item.copper_ore": {
+        "version": "v2",
+        "path": "res://art/items/copper_ore/v2.png",
+        "sha256": "cc5c342737e80658b1aa4d3667955c684313c47ab12df813c3f70b6120da290a"
+      },
+      "item.stone_axe": {
+        "version": "v2",
+        "path": "res://art/items/stone_axe/v2.png",
+        "sha256": "1c89e13888bb2f41a3326083dcde9015a0aa7419fcd90d4d18c685e9ab6c40ef"
+      },
+      "item.chest": {
+        "version": "v2",
+        "path": "res://art/items/chest/v2.png",
+        "sha256": "9ca249b3cc5e60eaf1f75c512c04a1fde6d102a5cad940b30d00aaaef1207f54"
+      },
+      "item.pottery": {
+        "version": "v2",
+        "path": "res://art/items/pottery/v2.png",
+        "sha256": "ee5064942609a5b7327bb3ff191058921ce751882bb37dda4ac912a7fa4dc8ee"
+      },
+      "item.cloth": {
+        "version": "v2",
+        "path": "res://art/items/cloth/v2.png",
+        "sha256": "82e87c9b208bc9aa848bfb99ddf59bd91a71a9a8683a0283f064feb0e2f0cbe7"
+      },
+      "item.floatstone": {
+        "version": "v2",
+        "path": "res://art/items/floatstone/v2.png",
+        "sha256": "6bc3b1e887adf25b16730266f0f38867d2af903850c3721f73e337b473fd4124"
+      },
+      "item.roof_tile": {
+        "version": "v2",
+        "path": "res://art/items/roof_tile/v2.png",
+        "sha256": "e11336d943df19a2a711fcf2d4026dc87078949efb6b259fe10e5a9ff7d25dc6"
+      },
+      "item.bean": {
+        "version": "v1",
+        "path": "res://art/items/bean/v1.png",
+        "sha256": "c122d13d9cdbd5b543c63fd016f1c9911080deaba413acb106f1fe14cbc19fda"
+      },
+      "item.lacquer": {
+        "version": "v1",
+        "path": "res://art/items/lacquer/v1.png",
+        "sha256": "fd36488250bab44bf0a6acfb2cf44f1a815282f5f61c81709e603a81172025c9"
+      },
+      "item.coin": {
+        "version": "v1",
+        "path": "res://art/items/coin/v1.png",
+        "sha256": "168e8874676aecbd4e34fdeae991a0b84e241691a3fca381d3e3921f913c8541"
+      },
+      "item.stone": {
+        "version": "v1",
+        "path": "res://art/items/stone/v1.png",
+        "sha256": "4df03c64acd89ba89e27c569dd38d07c1c7ddd264d16c4970f94ee4650eaeabb"
+      },
+      "item.clay": {
+        "version": "v1",
+        "path": "res://art/items/clay/v1.png",
+        "sha256": "8bcdc7350979330866dbb741d962f642e849baaff37aa8e499fb25ef1b57ba32"
+      },
+      "item.timber": {
+        "version": "v1",
+        "path": "res://art/items/timber/v1.png",
+        "sha256": "6ab0accb3ed6b9a6bbd25b950dacd84ca76d35c2ff2c14876e7fd68c0973d532"
+      },
+      "item.firewood": {
+        "version": "v1",
+        "path": "res://art/items/firewood/v1.png",
+        "sha256": "048708e91501ea55b315c27c0045c43199e6677dde760fdc3a50d696f09715ed"
+      },
+      "item.gravel": {
+        "version": "v1",
+        "path": "res://art/items/gravel/v1.png",
+        "sha256": "c85b2296498bf706d5618f6528b844014e4f2346fd3e68e36d1754b79e38b0c9"
+      },
+      "item.gold_dust": {
+        "version": "v1",
+        "path": "res://art/items/gold_dust/v1.png",
+        "sha256": "32989a4fba8921066e21493265896b42b83d4930af5b4ef769be8c54ed70a302"
+      },
+      "item.iron_ore": {
+        "version": "v1",
+        "path": "res://art/items/iron_ore/v1.png",
+        "sha256": "add8b190c0531a37ef1b002d52d5fa4aa7de3fedbc5716929af23f21aef5037c"
+      },
+      "item.lead_zinc_ore": {
+        "version": "v1",
+        "path": "res://art/items/lead_zinc_ore/v1.png",
+        "sha256": "2e03e454966e2a3525b6500d381374c10df9d381cdee1fd0566cc812a76a25cf"
+      },
+      "item.gold_ore": {
+        "version": "v1",
+        "path": "res://art/items/gold_ore/v1.png",
+        "sha256": "285d0304ed046f80152d2ab0ee4bef6c954c8b8e2ed43be7b62c13eee22d66a2"
+      },
+      "item.manganese_ore": {
+        "version": "v1",
+        "path": "res://art/items/manganese_ore/v1.png",
+        "sha256": "bd845271292f96f0166bc780382dbe3b237d562a3e8c6735ec8896fd5788a497"
+      },
+      "item.tin_ore": {
+        "version": "v1",
+        "path": "res://art/items/tin_ore/v1.png",
+        "sha256": "695cfe5bfe1bfa1646e921dedbefd1bc760c7d4e028f042420c66aa0e8e7fdbb"
+      },
+      "item.chromium_ore": {
+        "version": "v1",
+        "path": "res://art/items/chromium_ore/v1.png",
+        "sha256": "d713b7ddee0787730fedb1a04ff2335287539757d92a7872ec01f261dbaa9303"
+      },
+      "item.nickel_ore": {
+        "version": "v1",
+        "path": "res://art/items/nickel_ore/v1.png",
+        "sha256": "3fa438d283a39e4aee827ed16d183c013506e3a69acdf847bcad50cd248c6d66"
+      },
+      "item.salt": {
+        "version": "v1",
+        "path": "res://art/items/salt/v1.png",
+        "sha256": "e8158e8649c42a97c17bf16d5281ea3857c21dd5a2e3411a8c646f362ec1feeb"
+      },
+      "item.peat": {
+        "version": "v1",
+        "path": "res://art/items/peat/v1.png",
+        "sha256": "abd62882d1e86bb7ffa6a2443c1a300adbfaec64e1a9edf4bfccf7d2a613dd84"
+      },
+      "item.reed": {
+        "version": "v1",
+        "path": "res://art/items/reed/v1.png",
+        "sha256": "6d507ff2554d76cd574238dc632204708ad4b1b323f6285a53f6d1bee23e2e43"
+      },
+      "item.sulfur": {
+        "version": "v1",
+        "path": "res://art/items/sulfur/v1.png",
+        "sha256": "2e1a3b8a21a441ebf0ce52e8bf5313b689af90c17e090e9b990086d32ebd1a4c"
+      },
+      "item.guano": {
+        "version": "v1",
+        "path": "res://art/items/guano/v1.png",
+        "sha256": "a0da0020e2d2cf570f80f342679aebff1c86968f4adf371008b18be3aff5128f"
+      },
+      "item.plank": {
+        "version": "v1",
+        "path": "res://art/items/plank/v1.png",
+        "sha256": "cdd534daed4aa0353b12bb43d6be5af006f48d57e844755b112ad1b2a0070ed1"
+      },
+      "item.brick": {
+        "version": "v1",
+        "path": "res://art/items/brick/v1.png",
+        "sha256": "115031775c86bf6469aec20e8b66c49b4ef864cda64e4531993e82c3d880e222"
+      },
+      "item.stone_pick": {
+        "version": "v1",
+        "path": "res://art/items/stone_pick/v1.png",
+        "sha256": "e4f37dec6ccdbcc23641395e5d3c3e5f5f38c13d18342975250575705220733d"
+      },
+      "item.wood_shovel": {
+        "version": "v1",
+        "path": "res://art/items/wood_shovel/v1.png",
+        "sha256": "22b6ade6721b105ac363da4b0caab8d8928ed8cdcacfd866dba6c80a84f65a57"
+      },
+      "item.workbench": {
+        "version": "v1",
+        "path": "res://art/items/workbench/v1.png",
+        "sha256": "f16714221eaf333772092377fe55c482a44337b0533648f4827a579491e726bd"
+      },
+      "item.kiln": {
+        "version": "v1",
+        "path": "res://art/items/kiln/v1.png",
+        "sha256": "f7f43078b05baa02e08ad40257448ff20838d4ed6460b15cef52c23b5f461901"
+      },
+      "item.torch": {
+        "version": "v1",
+        "path": "res://art/items/torch/v1.png",
+        "sha256": "421fea8f023510222858459d33a2e9333d9692d8893b63d249bff15df22992be"
+      }
+    },
+    "application": {
+      "id": "e7e49b9b-c51e-4f44-9e8a-8addabe56136",
+      "appliedAt": "2026-10-26T10:12:54.319Z",
+      "actor": "content-studio-art",
+      "registrySha256": "5ffab4def056b52ccc4ca595be6063bdeca6bd86e8f08db5f0c6caa4b1552fa8"
+    }
+  },
+  "next": {
+    "schemaVersion": 1,
+    "styleId": "painted-jrpg-3d-v1",
+    "bindings": {
+      "item.millet": {
+        "version": "v2",
+        "path": "res://art/items/millet/v2.png",
+        "sha256": "ddec3e275eff3818078da56e55e5f2a0b9ac8459c3889fe08b1b23a2c301e845"
+      },
+      "item.copper_ore": {
+        "version": "v2",
+        "path": "res://art/items/copper_ore/v2.png",
+        "sha256": "cc5c342737e80658b1aa4d3667955c684313c47ab12df813c3f70b6120da290a"
+      },
+      "item.stone_axe": {
+        "version": "v2",
+        "path": "res://art/items/stone_axe/v2.png",
+        "sha256": "1c89e13888bb2f41a3326083dcde9015a0aa7419fcd90d4d18c685e9ab6c40ef"
+      },
+      "item.chest": {
+        "version": "v2",
+        "path": "res://art/items/chest/v2.png",
+        "sha256": "9ca249b3cc5e60eaf1f75c512c04a1fde6d102a5cad940b30d00aaaef1207f54"
+      },
+      "item.pottery": {
+        "version": "v2",
+        "path": "res://art/items/pottery/v2.png",
+        "sha256": "ee5064942609a5b7327bb3ff191058921ce751882bb37dda4ac912a7fa4dc8ee"
+      },
+      "item.cloth": {
+        "version": "v2",
+        "path": "res://art/items/cloth/v2.png",
+        "sha256": "82e87c9b208bc9aa848bfb99ddf59bd91a71a9a8683a0283f064feb0e2f0cbe7"
+      },
+      "item.floatstone": {
+        "version": "v2",
+        "path": "res://art/items/floatstone/v2.png",
+        "sha256": "6bc3b1e887adf25b16730266f0f38867d2af903850c3721f73e337b473fd4124"
+      },
+      "item.roof_tile": {
+        "version": "v2",
+        "path": "res://art/items/roof_tile/v2.png",
+        "sha256": "e11336d943df19a2a711fcf2d4026dc87078949efb6b259fe10e5a9ff7d25dc6"
+      },
+      "item.bean": {
+        "version": "v1",
+        "path": "res://art/items/bean/v1.png",
+        "sha256": "c122d13d9cdbd5b543c63fd016f1c9911080deaba413acb106f1fe14cbc19fda"
+      },
+      "item.lacquer": {
+        "version": "v1",
+        "path": "res://art/items/lacquer/v1.png",
+        "sha256": "fd36488250bab44bf0a6acfb2cf44f1a815282f5f61c81709e603a81172025c9"
+      },
+      "item.coin": {
+        "version": "v1",
+        "path": "res://art/items/coin/v1.png",
+        "sha256": "168e8874676aecbd4e34fdeae991a0b84e241691a3fca381d3e3921f913c8541"
+      },
+      "item.stone": {
+        "version": "v1",
+        "path": "res://art/items/stone/v1.png",
+        "sha256": "4df03c64acd89ba89e27c569dd38d07c1c7ddd264d16c4970f94ee4650eaeabb"
+      },
+      "item.clay": {
+        "version": "v1",
+        "path": "res://art/items/clay/v1.png",
+        "sha256": "8bcdc7350979330866dbb741d962f642e849baaff37aa8e499fb25ef1b57ba32"
+      },
+      "item.timber": {
+        "version": "v1",
+        "path": "res://art/items/timber/v1.png",
+        "sha256": "6ab0accb3ed6b9a6bbd25b950dacd84ca76d35c2ff2c14876e7fd68c0973d532"
+      },
+      "item.firewood": {
+        "version": "v1",
+        "path": "res://art/items/firewood/v1.png",
+        "sha256": "048708e91501ea55b315c27c0045c43199e6677dde760fdc3a50d696f09715ed"
+      },
+      "item.gravel": {
+        "version": "v1",
+        "path": "res://art/items/gravel/v1.png",
+        "sha256": "c85b2296498bf706d5618f6528b844014e4f2346fd3e68e36d1754b79e38b0c9"
+      },
+      "item.gold_dust": {
+        "version": "v1",
+        "path": "res://art/items/gold_dust/v1.png",
+        "sha256": "32989a4fba8921066e21493265896b42b83d4930af5b4ef769be8c54ed70a302"
+      },
+      "item.iron_ore": {
+        "version": "v1",
+        "path": "res://art/items/iron_ore/v1.png",
+        "sha256": "add8b190c0531a37ef1b002d52d5fa4aa7de3fedbc5716929af23f21aef5037c"
+      },
+      "item.lead_zinc_ore": {
+        "version": "v1",
+        "path": "res://art/items/lead_zinc_ore/v1.png",
+        "sha256": "2e03e454966e2a3525b6500d381374c10df9d381cdee1fd0566cc812a76a25cf"
+      },
+      "item.gold_ore": {
+        "version": "v1",
+        "path": "res://art/items/gold_ore/v1.png",
+        "sha256": "285d0304ed046f80152d2ab0ee4bef6c954c8b8e2ed43be7b62c13eee22d66a2"
+      },
+      "item.manganese_ore": {
+        "version": "v1",
+        "path": "res://art/items/manganese_ore/v1.png",
+        "sha256": "bd845271292f96f0166bc780382dbe3b237d562a3e8c6735ec8896fd5788a497"
+      },
+      "item.tin_ore": {
+        "version": "v1",
+        "path": "res://art/items/tin_ore/v1.png",
+        "sha256": "695cfe5bfe1bfa1646e921dedbefd1bc760c7d4e028f042420c66aa0e8e7fdbb"
+      },
+      "item.chromium_ore": {
+        "version": "v1",
+        "path": "res://art/items/chromium_ore/v1.png",
+        "sha256": "d713b7ddee0787730fedb1a04ff2335287539757d92a7872ec01f261dbaa9303"
+      },
+      "item.nickel_ore": {
+        "version": "v1",
+        "path": "res://art/items/nickel_ore/v1.png",
+        "sha256": "3fa438d283a39e4aee827ed16d183c013506e3a69acdf847bcad50cd248c6d66"
+      },
+      "item.salt": {
+        "version": "v1",
+        "path": "res://art/items/salt/v1.png",
+        "sha256": "e8158e8649c42a97c17bf16d5281ea3857c21dd5a2e3411a8c646f362ec1feeb"
+      },
+      "item.peat": {
+        "version": "v1",
+        "path": "res://art/items/peat/v1.png",
+        "sha256": "abd62882d1e86bb7ffa6a2443c1a300adbfaec64e1a9edf4bfccf7d2a613dd84"
+      },
+      "item.reed": {
+        "version": "v1",
+        "path": "res://art/items/reed/v1.png",
+        "sha256": "6d507ff2554d76cd574238dc632204708ad4b1b323f6285a53f6d1bee23e2e43"
+      },
+      "item.sulfur": {
+        "version": "v1",
+        "path": "res://art/items/sulfur/v1.png",
+        "sha256": "2e1a3b8a21a441ebf0ce52e8bf5313b689af90c17e090e9b990086d32ebd1a4c"
+      },
+      "item.guano": {
+        "version": "v1",
+        "path": "res://art/items/guano/v1.png",
+        "sha256": "a0da0020e2d2cf570f80f342679aebff1c86968f4adf371008b18be3aff5128f"
+      },
+      "item.plank": {
+        "version": "v1",
+        "path": "res://art/items/plank/v1.png",
+        "sha256": "cdd534daed4aa0353b12bb43d6be5af006f48d57e844755b112ad1b2a0070ed1"
+      },
+      "item.brick": {
+        "version": "v1",
+        "path": "res://art/items/brick/v1.png",
+        "sha256": "115031775c86bf6469aec20e8b66c49b4ef864cda64e4531993e82c3d880e222"
+      },
+      "item.stone_pick": {
+        "version": "v1",
+        "path": "res://art/items/stone_pick/v1.png",
+        "sha256": "e4f37dec6ccdbcc23641395e5d3c3e5f5f38c13d18342975250575705220733d"
+      },
+      "item.wood_shovel": {
+        "version": "v1",
+        "path": "res://art/items/wood_shovel/v1.png",
+        "sha256": "22b6ade6721b105ac363da4b0caab8d8928ed8cdcacfd866dba6c80a84f65a57"
+      },
+      "item.workbench": {
+        "version": "v1",
+        "path": "res://art/items/workbench/v1.png",
+        "sha256": "f16714221eaf333772092377fe55c482a44337b0533648f4827a579491e726bd"
+      },
+      "item.kiln": {
+        "version": "v1",
+        "path": "res://art/items/kiln/v1.png",
+        "sha256": "f7f43078b05baa02e08ad40257448ff20838d4ed6460b15cef52c23b5f461901"
+      },
+      "item.torch": {
+        "version": "v1",
+        "path": "res://art/items/torch/v1.png",
+        "sha256": "421fea8f023510222858459d33a2e9333d9692d8893b63d249bff15df22992be"
+      },
+      "item.fence": {
+        "version": "v1",
+        "path": "res://art/items/fence/v1.png",
+        "sha256": "0508f9c52a1abdae38c8466151fa96bd3bca76277aebc3c88eec8c4af09cd089"
+      },
+      "item.earth": {
+        "version": "v1",
+        "path": "res://art/items/earth/v1.png",
+        "sha256": "fc0c31689b5324b7c8af2494f4e29ef1a9bc8f798aaf5c1a93bd7f3fd212b41c"
+      },
+      "item.foundation": {
+        "version": "v1",
+        "path": "res://art/items/foundation/v1.png",
+        "sha256": "85f33816e1defaf7899e2b83a7cb0a316497bf3f6904e3ea44b9631227931185"
+      },
+      "item.floorboard": {
+        "version": "v1",
+        "path": "res://art/items/floorboard/v1.png",
+        "sha256": "8ee89399654d56baf4a196470bc2fa09615763031d9093064df891e9ca7d8588"
+      },
+      "item.earth_wall": {
+        "version": "v1",
+        "path": "res://art/items/earth_wall/v1.png",
+        "sha256": "2f711027219fad1dbe308dc375281d067abdbfe0e98a7b92bc2e7c3976879c15"
+      },
+      "item.brick_wall": {
+        "version": "v1",
+        "path": "res://art/items/brick_wall/v1.png",
+        "sha256": "3f744cd1120328b00e9d17a98276f1ffda50989165a2954561f0338ccec9cf30"
+      },
+      "item.door_wall": {
+        "version": "v1",
+        "path": "res://art/items/door_wall/v1.png",
+        "sha256": "7d05fff08802bcfc8fbf5b66d56153ee75b2d81c54c5a2a8931bae6b55797de6"
+      },
+      "item.window_wall": {
+        "version": "v1",
+        "path": "res://art/items/window_wall/v1.png",
+        "sha256": "58c06351d4f300ac2c6e34d87e51285ac979e882fbaa383fe0860b0b5a74861c"
+      },
+      "item.gable": {
+        "version": "v1",
+        "path": "res://art/items/gable/v1.png",
+        "sha256": "f4fde7c3e0cb52a57fd0a6c2d66cd0a2961b4f7b95610ec11021867f4b561ea5"
+      },
+      "item.thatch_roof": {
+        "version": "v1",
+        "path": "res://art/items/thatch_roof/v1.png",
+        "sha256": "9f9bc3841b4977e002a54d8d57a1e30f25d95694606f536f18eb4a50b7f401c7"
+      },
+      "item.tile_roof": {
+        "version": "v1",
+        "path": "res://art/items/tile_roof/v1.png",
+        "sha256": "f2b2cb15ae85938636d85c806a0f2d44a1b9108d53534e5ab0891a06abed3f38"
+      },
+      "item.pillar": {
+        "version": "v1",
+        "path": "res://art/items/pillar/v1.png",
+        "sha256": "383f5b1b1c95c5ba1e0d132955dd7cdb7cb25e7ca16a67bb8158827a8661ff12"
+      },
+      "item.ladder": {
+        "version": "v1",
+        "path": "res://art/items/ladder/v1.png",
+        "sha256": "ad1c4fffd4c43bc71ba41c3166662de3a6359d7d1ce4b3b3eb7d06400ae9686c"
+      }
+    },
+    "application": {
+      "id": "c286ee1d-e9d7-4259-bc43-e2e8fa3344d0",
+      "appliedAt": "2026-10-26T10:12:55.271Z",
+      "actor": "content-studio-art",
+      "registrySha256": "5ffab4def056b52ccc4ca595be6063bdeca6bd86e8f08db5f0c6caa4b1552fa8"
+    }
+  },
+  "note": "仅应用美术；未读取内容草稿，未修改配方、经济、存档或模型"
+}

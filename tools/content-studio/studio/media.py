@@ -194,7 +194,9 @@ class MediaLibrary:
                 fail(f'{kind} manifest 存在重复 ID', 500)
         covered = {row['itemId'] for row in thumbnails}
         if hasattr(self, 'art'):
-            thumbnails = self.art.thumbnails() + thumbnails
+            formal = self.art.thumbnails()
+            formal_ids = {row['id'] for row in formal}
+            thumbnails = formal + [row for row in thumbnails if row['id'] not in formal_ids]
             covered.update(row['itemId'] for row in thumbnails)
         return dict(thumbnails=thumbnails, models=models, missingItems=model_manifest.get('missingItems', []), missingThumbnails=[{'id': row['id'], 'name': row['name']} for row in project['items'] if row['id'] not in covered])
 
