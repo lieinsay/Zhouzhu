@@ -4,10 +4,12 @@
   "review_date": "2026-10-25",
   "source_commit": "e07a62f76f522a9f4caab6b1246f2e96e1d1c161",
   "scope": "当前主仓库源码和已提交工具资源；不包含用户本机草稿、归档实现或独立生成器参考工具",
-  "generation_enabled": false,
+  "generation_enabled": true,
   "style": {
-    "status": "pending_user_discussion",
-    "approved_style_id": null,
+    "status": "approved_by_user_2026_10_26",
+    "approved_style_id": "painted-jrpg-3d-v1",
+    "specification": "docs/ART-DIRECTION.md",
+    "production_plan": "docs/art-assets/production.json",
     "existing_thumbnail_style_is_project_approval": false
   },
   "status": "requirements_snapshot_not_runtime_registry_or_generation_queue",
@@ -36,7 +38,7 @@
         48,
         64
       ],
-      "note": "视角、主体尺度和母图尺寸待定；已有 v1 不覆盖。"
+      "note": "正式规格见 ART-DIRECTION.md；方形透明、三分之四视角、256运行时派生、32/48/64审图；已有 v1 不覆盖。"
     },
     "square_preview": {
       "ratio": "1:1",

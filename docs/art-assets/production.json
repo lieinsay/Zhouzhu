@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "styleId": "painted-jrpg-3d-v1",
+  "styleApprovedBy": "用户于2026-10-26选定方向并授权分批制作接入；未逐张确认",
+  "firstBatch": [
+    {"id":"item.millet","decision":"remake","requirement":"库存粟：金黄粟粒小堆，短小收获穗辅助识别，不画完整植株、田地或装饰袋。种子与收成共用。"},
+    {"id":"item.copper_ore","decision":"remake","requirement":"一块可信的灰褐色含铜原矿，孔雀石绿不规则矿物夹杂与断口；不画纯铜、金属锭或宝石，不暗示源品位。"},
+    {"id":"item.stone_axe","decision":"remake","requirement":"完整石斧：磨制灰石刃、木柄、可信的纤维绑扎连接；斧刃与柄方向清楚，无金属头。"},
+    {"id":"item.chest","decision":"remake","requirement":"一只可放置木箱，盖、板缝、木接合与朴素金属铰链清楚；不是室内家具chest柜，不画内容物。"},
+    {"id":"item.pottery","decision":"remake","requirement":"一只实用赭色陶罐，圆腹短颈开口，细腻陶土颗粒与克制轮制痕；不画花纹、华丽釉面或整组器皿。"},
+    {"id":"item.cloth","decision":"remake","requirement":"一块折叠本色麻布，米麻色、清楚折边与适量织纹；不是衣服、帆或麻袋。"},
+    {"id":"item.floatstone","decision":"remake","requirement":"一块普通矿物外观的淡灰紫浮石，可信断口与层理，易区别灰石和绿色铜矿；无符文、发光、漂浮碎屑、魔法或巨大晶簇。"},
+    {"id":"item.roof_tile","decision":"remake","requirement":"单片灰色烧制弧形瓦，厚度、弧面和断面清楚；不是瓦顶构件、屋面或整栋建筑。"}
+  ],
+  "decisions": [],
+  "nextStages": ["首批实际接入验收后逐项评估其余41项旧图", "核对8模块5建筑13家具模型与材质缺口，优先真实渲染", "少量共享场景材质验证后扩展"],
+  "excluded": "条件需求与候选不直接排队；程序数据不进入生图。"
+}
