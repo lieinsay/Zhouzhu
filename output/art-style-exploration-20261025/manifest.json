@@ -1,0 +1,45 @@
+{
+  "status": "美术风格探索，未确认全游戏规范，非正式资产",
+  "tool": "built-in image_gen",
+  "reference_weather": "柔和晴天，上午约10点，上方左侧日光",
+  "functional_reference": "同一青年、单桅木制小型货艇、夯土木构灰瓦民居、工作港口和道具组；生成图为视觉探索，不是已考证船型或工程蓝图",
+  "images": [
+    {
+      "id": "A1",
+      "file": "A1-scene.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-0f253592-2270-443e-8714-8a1f77e2ad58.png"
+    },
+    {
+      "id": "A2",
+      "file": "A2-assets.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-8f7fbcec-43dc-4429-a502-a49653ffc736.png"
+    },
+    {
+      "id": "B1",
+      "file": "B1-scene.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-c540369c-35e9-4789-ac94-b2d72acb91b3.png"
+    },
+    {
+      "id": "B2",
+      "file": "B2-assets.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-0d33f09a-47e2-418e-85b2-3855dbe6fbfc.png"
+    },
+    {
+      "id": "C1",
+      "file": "C1-scene.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-d1788098-4fba-4ae0-b007-3587f0e4f318.png"
+    },
+    {
+      "id": "C2",
+      "file": "C2-assets.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-e4bb8717-a917-45cb-803d-0c15fb41a1eb.png"
+    }
+  ],
+  "fairness_limits": [
+    "采用共同构图与资产板版式；生成图片不是同一三维场景的不同着色渲染，局部尺寸、形状与背景岛位置仍有差异。",
+    "首张场景按A方向提示生成，但实际偏写实，保留归入C；A、B基于其对象和构图重新生成。",
+    "A有意强调几何概括，但帆与衣物的三角折面过多；B资产板的大头比例仍更幼态，且部分面片感没有完全消除；C人物仍有理想化。",
+    "场景图顶部裁切桅杆顶，船与建筑完整程度以资产板补充。",
+    "室内、动态昼夜、真实引擎性能、骨骼动画与建造交互尚未验证；本轮不启动游戏或修改生成器。"
+  ]
+}
