@@ -2,6 +2,7 @@
 // 项目根目录启动：python tools/content-studio/server.py（浏览器访问 http://127.0.0.1:4176）。
 // 只读游戏内容表，编辑结果保存在工具草稿；/art.html 独立管理正式美术并应用到 game/art/bindings.json。
 // 美术制作登记：python tools/art-assets.py --help（原图、受控缩放、代理审图与小尺寸检查）。
+// 真实模型预览：python tools/art-preview/render.py --help；家具导出与操作见 docs/CONTENT-STUDIO.md。
 #include "dev_manual.h"
 
 #include "input_actions.h"

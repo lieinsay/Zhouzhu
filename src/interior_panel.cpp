@@ -28,7 +28,9 @@ Label *make_label(int p_font_size, const Color &p_color) {
 
 } // namespace
 
-void InteriorPanel::_bind_methods() {}
+void InteriorPanel::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("get_asset_art", "asset"), &InteriorPanel::get_asset_art);
+}
 
 void InteriorPanel::ensure_built() {
     if (column) {
@@ -54,6 +56,12 @@ void InteriorPanel::ensure_built() {
     status_label = make_label(16, ROW_PLAIN);
     column->add_child(status_label);
     tools_label = make_label(16, ROW_PLAIN);
+    preview = memnew(TextureRect);
+    preview->set_custom_minimum_size(Vector2(96, 96));
+    preview->set_expand_mode(TextureRect::EXPAND_IGNORE_SIZE);
+    preview->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
+    preview->set_tooltip_text(String(U"当前家具真实模型；尚缺精绘材质与细致造型"));
+    column->add_child(preview);
     column->add_child(tools_label);
     problems_label = make_label(15, ROW_WARN);
     column->add_child(problems_label);
@@ -66,6 +74,8 @@ void InteriorPanel::ensure_built() {
 
 void InteriorPanel::refresh(const View &p_view) {
     ensure_built();
+    preview->set_visible(!p_view.preview_asset.is_empty());
+    if (!p_view.preview_asset.is_empty()) preview->set_texture(art.texture_asset(std::string(p_view.preview_asset.utf8().get_data())));
     title->set_text(vformat(String(U"房屋模板（开发者）· %s · 第 %d / %d 层"), p_view.name, p_view.level + 1, p_view.levels));
     cursor_label->set_text(vformat(String(U"光标：x %+.2f  z %+.2f · %s"), p_view.x, p_view.z, String(FACING[p_view.quarter & 3])));
     status_label->set_text(p_view.status);

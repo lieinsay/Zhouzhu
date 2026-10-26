@@ -1,2 +1,3 @@
 *.pck
 game-*/test-save/
+preview-*/test-*

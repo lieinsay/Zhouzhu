@@ -3,6 +3,8 @@
 #include <cmath>
 
 #include <godot_cpp/classes/style_box_flat.hpp>
+#include <godot_cpp/classes/h_box_container.hpp>
+#include <godot_cpp/classes/texture_rect.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -29,7 +31,9 @@ Label *make_label(int p_font_size, const Color &p_color) {
 
 } // namespace
 
-void BuildPanel::_bind_methods() {}
+void BuildPanel::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("get_asset_art", "asset"), &BuildPanel::get_asset_art);
+}
 
 void BuildPanel::ensure_built() {
     if (column) {
@@ -61,8 +65,18 @@ void BuildPanel::ensure_built() {
     palette_title->set_text(String(U"要放的建筑（1 / 2 / 3 / 4 / 5 选）"));
     column->add_child(palette_title);
     for (int k = 0; k < buildings::COUNT && k < 8; k++) {
+        HBoxContainer *row = memnew(HBoxContainer);
+        column->add_child(row);
+        TextureRect *preview = memnew(TextureRect);
+        preview->set_custom_minimum_size(Vector2(48, 48));
+        preview->set_expand_mode(TextureRect::EXPAND_IGNORE_SIZE);
+        preview->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_CENTERED);
+        preview->set_texture(art.texture_asset("building." + std::string(buildings::at(k).id)));
+        preview->set_tooltip_text(String(U"当前真实模型预览；风格化模型与材质另行制作"));
+        row->add_child(preview);
         palette[k] = make_label(18, ROW_PLAIN);
-        column->add_child(palette[k]);
+        palette[k]->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+        row->add_child(palette[k]);
     }
 
     style_label = make_label(16, ROW_CURSOR);

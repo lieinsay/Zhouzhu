@@ -63,11 +63,15 @@ class ArtLibrary:
     def validate_bindings(self, registry, bindings):
         if not isinstance(bindings, dict):
             raise StudioError(422, 'bindings 必须是美术身份到版本的映射')
-        from .catalog import load_catalog
+        from .catalog import load_catalog, parse_initializer
         catalog = load_catalog(self.root)
         known = {namespace+'.'+row['id'] for namespace, collection in
                  [('item', 'items'), ('module', 'modules'), ('building', 'buildings')]
                  for row in catalog[collection]}
+        furniture_source = self.root / 'src/house_template.cpp'
+        if furniture_source.exists():
+            for node in parse_initializer(furniture_source.read_text(encoding='utf-8'), 'DEFS', str(furniture_source)):
+                known.add('furniture.' + node.value[0].value)
         for asset_id, version in bindings.items():
             if asset_id not in known:
                 raise StudioError(422, '美术绑定未对应当前游戏定义；新增命名空间需先接入其定义表')
@@ -134,12 +138,12 @@ class ArtLibrary:
         state = self.snapshot()
         result = []
         for asset in state['registry']['assets']:
-            if not asset['id'].startswith('item.'):
-                continue
-            item_id = asset['id'][5:]
+            namespace, record_id = asset['id'].split('.')
+            item_id = record_id if namespace == 'item' else None
             for value in asset['versions']:
                 version = value['version']
-                result.append(dict(id=item_id if version == 'v1' else 'item-'+item_id+'-'+version, itemId=item_id, name=asset['name'],
+                result.append(dict(id=item_id if namespace == 'item' and version == 'v1' else namespace+'-'+record_id+'-'+version,
+                    itemId=item_id, assetId=asset['id'], name=asset['name'],
                     url='/api/art/image/'+asset['id']+'/'+version, version=version, origin=value['origin'],
                     formalActive=state['active']['bindings'].get(asset['id'], {}).get('version') == version,
                     sha256=value['runtime']['sha256']))

@@ -356,6 +356,10 @@ void InteriorEdit::refresh() {
         view.tools.push_back(String::utf8(interior_tool_name(k).c_str()));
     }
     view.tool = tool;
+    const InteriorTool selected_tool = interior_tool(tool);
+    if (selected_tool.kind == InteriorToolKind::FURNITURE) {
+        view.preview_asset = "furniture." + String::utf8(furniture::DEFS[selected_tool.furniture].id);
+    }
     view.quarter = quarter;
     view.drawing_wall = wall_started;
     for (const std::string &p : report.problems) {

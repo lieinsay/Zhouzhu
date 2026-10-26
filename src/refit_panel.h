@@ -7,6 +7,7 @@
 #include <godot_cpp/variant/string.hpp>
 
 #include "ship_layout.h"
+#include "item_art.h"
 
 // 改装面板——船节点模块界面：只负责画，并回答屏幕上的一点落在哪张卡片 / 哪个钮上。自己不读输入、不改船。
 // 画的是（铺满屏幕的一层，点击由编排转给改装部件）：
@@ -18,6 +19,7 @@ class RefitPanel : public godot::Control {
     GDCLASS(RefitPanel, godot::Control)
 
 public:
+    godot::Dictionary get_asset_art(const godot::String &p_asset) { return art.inspect_asset(p_asset); }
     enum HitType {
         HIT_NONE = -1,
         HIT_CARD = 0, // index = ModuleKind
@@ -52,6 +54,7 @@ public:
     };
 
 private:
+    ItemArt art;
     View view;
     std::vector<godot::Rect2> card_rects; // 按 ModuleKind
     godot::Rect2 palette_rect, info_rect, remove_rect;

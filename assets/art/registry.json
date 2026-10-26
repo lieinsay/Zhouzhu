@@ -3572,6 +3572,3030 @@
           }
         }
       ]
+    },
+    {
+      "id": "module.bridge",
+      "name": "驾驶区",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:01.984Z",
+          "original": {
+            "path": "assets/art/previews/module/bridge/v1/render.png",
+            "sha256": "2a8fef1cfc811be83fb96a32289f9f599e7f1b731a74a682c05546405f079d0a",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/bridge/v1.png",
+            "sha256": "41d16c63a6081ac5af53828c50ac1e2bf9068b70dfca62d6f58139cead8ceaef",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -3.5
+                ],
+                "max": [
+                  3.5,
+                  3.1399998664856,
+                  3.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:bridge",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge"
+            ],
+            "name": "驾驶区",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "bridge"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-bridge.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "6888ed8c4e8dac42f589234223aa9e7170950f8dd763de0a9fa574a2b353f587",
+            "vertices": 12792,
+            "triangles": 4264,
+            "path": "assets/art/previews/module/bridge/v1/model.json",
+            "sha256": "6888ed8c4e8dac42f589234223aa9e7170950f8dd763de0a9fa574a2b353f587"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "module.storage",
+      "name": "储存区",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:02.275Z",
+          "original": {
+            "path": "assets/art/previews/module/storage/v1/render.png",
+            "sha256": "3c37c21119c3257b517c13bf05cd4cb1877d64ff14065af7f12a187305420260",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/storage/v1.png",
+            "sha256": "7eb0cad6c1b66499fa7933bc05570c54de0ce11eb12f8db240ec0906da0f4653",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ],
+                "max": [
+                  3.5,
+                  1.14999997615814,
+                  -3.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:storage",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:storage"
+            ],
+            "name": "储存区",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "storage"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-storage.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "4ee52f82e71a00af699c7c3af0472bf0a045066fffefcd87977e19139c158632",
+            "vertices": 324,
+            "triangles": 108,
+            "path": "assets/art/previews/module/storage/v1/model.json",
+            "sha256": "4ee52f82e71a00af699c7c3af0472bf0a045066fffefcd87977e19139c158632"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "module.sail",
+      "name": "帆",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:03.132Z",
+          "original": {
+            "path": "assets/art/previews/module/sail/v1/render.png",
+            "sha256": "6d8c8c062bd3440ad5e01d74d6d233962d5032e1dfc72e88b2e8e000dfb6bb27",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/sail/v1.png",
+            "sha256": "40a0a55fab255f2384dd73a4235590726fe65d5e567591f9d411acc71050689e",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ],
+                "max": [
+                  3.5,
+                  7.19999980926514,
+                  -3.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:sail",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:sail"
+            ],
+            "name": "帆",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "sail"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-sail.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "abddd5d7156ac7ee477fe36d057ca38ef4878218ee57c18e5110ed096fcf3e9b",
+            "vertices": 4932,
+            "triangles": 1644,
+            "path": "assets/art/previews/module/sail/v1/model.json",
+            "sha256": "abddd5d7156ac7ee477fe36d057ca38ef4878218ee57c18e5110ed096fcf3e9b"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "module.floatstone",
+      "name": "浮石舱",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:03.396Z",
+          "original": {
+            "path": "assets/art/previews/module/floatstone/v1/render.png",
+            "sha256": "fa2e070f8215933c49c6a7049aba970bafb832f86d82e936796905ee545929a0",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/floatstone/v1.png",
+            "sha256": "6fb1b37ff4855956f2019468bba62a86c2064edeb76363fb7492aec7ed033211",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.5,
+                  -5.10000038146973,
+                  -10.5
+                ],
+                "max": [
+                  3.5,
+                  1.14999997615814,
+                  -3.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:floatstone",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:floatstone"
+            ],
+            "name": "浮石舱",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "floatstone"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-floatstone.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "4f08ae5d5cb588680d0bad1d8dccd48ce2ba9934a640faf03dcf2eae12087818",
+            "vertices": 432,
+            "triangles": 144,
+            "path": "assets/art/previews/module/floatstone/v1/model.json",
+            "sha256": "4f08ae5d5cb588680d0bad1d8dccd48ce2ba9934a640faf03dcf2eae12087818"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。 当前模型浮石舱使用青色纯色盒，需普通矿物造型和结构接合；图标不替代该模型缺口。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "module.deck",
+      "name": "空节",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:04.118Z",
+          "original": {
+            "path": "assets/art/previews/module/deck/v1/render.png",
+            "sha256": "db8acadb6ffb0dbeff1c91106689932387b75e031e81c7cf7509719380419460",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/deck/v1.png",
+            "sha256": "6870dbf5eaf30edfd68280adceba6d0e138b83ae2ef05108280c7bc347618465",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ],
+                "max": [
+                  3.5,
+                  1.14999997615814,
+                  -3.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:deck",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:deck"
+            ],
+            "name": "空节",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "deck"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-deck.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "2bfec9be49cde52f8e17ac60f53aa0f0c9c769e28e6033b64592d51c5cde716c",
+            "vertices": 324,
+            "triangles": 108,
+            "path": "assets/art/previews/module/deck/v1/model.json",
+            "sha256": "2bfec9be49cde52f8e17ac60f53aa0f0c9c769e28e6033b64592d51c5cde716c"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "module.long_sail",
+      "name": "双桅帆",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:04.721Z",
+          "original": {
+            "path": "assets/art/previews/module/long_sail/v1/render.png",
+            "sha256": "121eb213dfb92bb7e157680ec6cadd926b3ddb6c8806c28f7c2b701ae1e0e609",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/long_sail/v1.png",
+            "sha256": "50a02160662fb68b6ddb1383d6bc5bae158e9278abeae53f7e11747e93909086",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -17.5
+                ],
+                "max": [
+                  3.5,
+                  8.39999961853027,
+                  -3.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:long_sail",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-2:long_sail"
+            ],
+            "name": "双桅帆",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "long_sail"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-long_sail.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "82ac466a86447332316c58c634c44c2574454369686d7f5e8caa64599df89115",
+            "vertices": 9684,
+            "triangles": 3228,
+            "path": "assets/art/previews/module/long_sail/v1/model.json",
+            "sha256": "82ac466a86447332316c58c634c44c2574454369686d7f5e8caa64599df89115"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "module.tall_hold",
+      "name": "双层货舱",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:05.575Z",
+          "original": {
+            "path": "assets/art/previews/module/tall_hold/v1/render.png",
+            "sha256": "082b35541dba5ec04bb21b643f57500925a44de6ff91cc24d450256ff7c9b01e",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/tall_hold/v1.png",
+            "sha256": "83783ba833a2fee6cdb3e45cc5a116bb7f39dfd5c3f13b3f31fa62af016be308",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.58000016212463,
+                  -3.5,
+                  -10.5799999237061
+                ],
+                "max": [
+                  3.58000016212463,
+                  4.94999980926514,
+                  -3.45999979972839
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:tall_hold",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:tall_hold"
+            ],
+            "name": "双层货舱",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "tall_hold"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-tall_hold.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "9edbe081fe46eb979f3b9c3c31cd6f64baa99245daf86adc31e4255fa47890c2",
+            "vertices": 1800,
+            "triangles": 600,
+            "path": "assets/art/previews/module/tall_hold/v1/model.json",
+            "sha256": "9edbe081fe46eb979f3b9c3c31cd6f64baa99245daf86adc31e4255fa47890c2"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "module.wide_deck",
+      "name": "宽空节",
+      "definition": "src/ship_layout.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "module palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:05.781Z",
+          "original": {
+            "path": "assets/art/previews/module/wide_deck/v1/render.png",
+            "sha256": "d524cd1fef2b32e79ef23ad030c50c4dc30ecdea0e094e02e75452a598d7e856",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/wide_deck/v1.png",
+            "sha256": "039b0c6a94f3db101e66d04e23f8b9338d6b029f40f8558cf0d6e20ade9c1708",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ],
+                "max": [
+                  10.5,
+                  1.14999997615814,
+                  -3.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:wide_deck",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "1,0,0:deck",
+              "0,0,-1:wide_deck"
+            ],
+            "name": "宽空节",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "wide_deck"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "d5b2b68dd5c1eae2a61789365cefb2ab0fe93d33b365d2e3936a21a629060dca"
+            },
+            "url": "/assets/models/module-wide_deck.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            },
+            "assetSha256": "5629d9842c4ed87a2938eb8652f7132deafb760f354062a7f8b5c0c128ef32aa",
+            "vertices": 576,
+            "triangles": 192,
+            "path": "assets/art/previews/module/wide_deck/v1/model.json",
+            "sha256": "5629d9842c4ed87a2938eb8652f7132deafb760f354062a7f8b5c0c128ef32aa"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "building.house",
+      "name": "民居",
+      "definition": "src/buildings.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "building palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:06.242Z",
+          "original": {
+            "path": "assets/art/previews/building/house/v1/render.png",
+            "sha256": "f17fb3b70ac9f9c209b4082599fd2ff4bd17833714a7feffc32c8ceff9985975",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/house/v1.png",
+            "sha256": "2bb19c9a94ac0dd8dacf2d6077cf6bb458568a4da1f60b94013080c60002ac58",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -6.5999999,
+                  -1.10000002,
+                  -4.1500001
+                ],
+                "max": [
+                  6.5999999,
+                  6.07499981,
+                  4.71602535
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "building:house",
+            "url": "/assets/models/building-house.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "house"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            "templateId": "house/sanjian",
+            "vertices": 2202,
+            "triangles": 1100,
+            "parts": 11,
+            "name": "民居",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/house/sanjian.txt，不是库存物品独立实体。",
+            "assetSha256": "c2ee9861e08dd21288ba4d57633a33d0f278203a2d5b122b153578ef9d0e8225",
+            "path": "assets/art/previews/building/house/v1/model.json",
+            "sha256": "c2ee9861e08dd21288ba4d57633a33d0f278203a2d5b122b153578ef9d0e8225"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "building.hall",
+      "name": "堂屋",
+      "definition": "src/buildings.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "building palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:07.103Z",
+          "original": {
+            "path": "assets/art/previews/building/hall/v1/render.png",
+            "sha256": "04c31140ce577b7fff7a420880c4a93984cabf4066b7f5796ec1058adeaf3ccb",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/hall/v1.png",
+            "sha256": "8270a39c5e0da1c5cb0b8fbf53f6346f89cb25f02a16c5da57f338563fcf5ce2",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -9.60000038,
+                  -1.60000002,
+                  -5.6500001
+                ],
+                "max": [
+                  9.60000038,
+                  8.57499981,
+                  7.0820508
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "building:hall",
+            "url": "/assets/models/building-hall.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "hall"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            "templateId": "hall/citang",
+            "vertices": 3258,
+            "triangles": 1628,
+            "parts": 10,
+            "name": "堂屋",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/hall/citang.txt，不是库存物品独立实体。",
+            "assetSha256": "10480ddc91a83594ccfc2d2a0304079a3b16c5639c0bdf6505bb6ce3b8bb3805",
+            "path": "assets/art/previews/building/hall/v1/model.json",
+            "sha256": "10480ddc91a83594ccfc2d2a0304079a3b16c5639c0bdf6505bb6ce3b8bb3805"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "building.granary",
+      "name": "仓",
+      "definition": "src/buildings.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "building palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:07.435Z",
+          "original": {
+            "path": "assets/art/previews/building/granary/v1/render.png",
+            "sha256": "a594ef366f33f2d0cc19730e8f7c5584096fd679860a74a54a9fb68a104d646c",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/granary/v1.png",
+            "sha256": "5614cb220bdd4a574f29269a642c36d3c28df1d897332be16427d047a3003f60",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -4.0999999,
+                  -2.4000001,
+                  -3.9000001
+                ],
+                "max": [
+                  4.0999999,
+                  6.17500019,
+                  6.71769142
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "building:granary",
+            "url": "/assets/models/building-granary.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "granary"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            "templateId": "granary/cang",
+            "vertices": 1242,
+            "triangles": 620,
+            "parts": 9,
+            "name": "仓",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/granary/cang.txt，不是库存物品独立实体。",
+            "assetSha256": "3b26648d11be41d8b017b123fc1111e13ad6a188bc1ce60449922c1935c28e8d",
+            "path": "assets/art/previews/building/granary/v1/model.json",
+            "sha256": "3b26648d11be41d8b017b123fc1111e13ad6a188bc1ce60449922c1935c28e8d"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "building.tower",
+      "name": "望楼",
+      "definition": "src/buildings.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "building palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:07.848Z",
+          "original": {
+            "path": "assets/art/previews/building/tower/v1/render.png",
+            "sha256": "2168816fd7362570160fdc031bd80fe072ced8b0ac4abd47db5b0a7ab65d43a9",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/tower/v1.png",
+            "sha256": "22df497576999bf5a50eba81f932595f9351c20f6f1bbecb1c609b2b204ebef4",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -4.0999999,
+                  -1.39999998,
+                  -3.9000001
+                ],
+                "max": [
+                  4.0999999,
+                  14.375,
+                  4.98564053
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "building:tower",
+            "url": "/assets/models/building-tower.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "tower"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            "templateId": "tower/wanglou",
+            "vertices": 3522,
+            "triangles": 1760,
+            "parts": 19,
+            "name": "望楼",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/tower/wanglou.txt，不是库存物品独立实体。",
+            "assetSha256": "5f7f1d780cceffb01d19c3b6abb22c057fb43e74e53981d95e4949e56f81e8ef",
+            "path": "assets/art/previews/building/tower/v1/model.json",
+            "sha256": "5f7f1d780cceffb01d19c3b6abb22c057fb43e74e53981d95e4949e56f81e8ef"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "building.berth",
+      "name": "船台",
+      "definition": "src/buildings.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "building palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:08.576Z",
+          "original": {
+            "path": "assets/art/previews/building/berth/v1/render.png",
+            "sha256": "03f7c6d835a7bc54618d1b616d99f469128ac17842080ec1cd54c3e9d8650fe8",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/berth/v1.png",
+            "sha256": "bd6e65e9afd561ce82dace8cc18373921630376c294242143a78b6782e3ed4aa",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -22.6000004,
+                  -0.899999976,
+                  -9.10000038
+                ],
+                "max": [
+                  22.6000004,
+                  6.10998678,
+                  9.69999981
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "building:berth",
+            "url": "/assets/models/building-berth.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "berth"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            "vertices": 384,
+            "triangles": 192,
+            "parts": 3,
+            "name": "船台",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。船台按当前 land_berth::add_parts 生成，无房屋模板。",
+            "assetSha256": "f79f87b36bd90eecbc96dae08db6c96a98ccb6be862ba32bb0604713e0f4bde3",
+            "path": "assets/art/previews/building/berth/v1/model.json",
+            "sha256": "f79f87b36bd90eecbc96dae08db6c96a98ccb6be862ba32bb0604713e0f4bde3"
+          },
+          "sourceSnapshotManifest": "assets/art/models/current-v2/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.bed",
+      "name": "床",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:08.728Z",
+          "original": {
+            "path": "assets/art/previews/furniture/bed/v1/render.png",
+            "sha256": "634bf61e52500b42ca029132803b970bab5e004201a5542ee7bb99f20fa67bf8",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/bed/v1.png",
+            "sha256": "6331c052c4407b2fd478e0f9f5adf04ae391af8306b03e5c416444e303d3c06a",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -1.0,
+                  0.0,
+                  -0.75
+                ],
+                "max": [
+                  1.0,
+                  0.899999976,
+                  0.75
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:bed",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/bed/v1/model.json",
+            "sha256": "170ff9808e111ada891f555fbdaa4df6335d312ccec08c26587a42b4af0e307f"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.stove",
+      "name": "灶",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:08.830Z",
+          "original": {
+            "path": "assets/art/previews/furniture/stove/v1/render.png",
+            "sha256": "e251f8b82b645be8caec338dc14ba27d70dd303f3bf96f5eb2bc9efdbb6600ef",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/stove/v1.png",
+            "sha256": "f71593377e1449929f206334a55c8a5455b1c0ee80c5a764f6c3fae0351a8545",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.899999976,
+                  0.0,
+                  -0.5
+                ],
+                "max": [
+                  0.899999976,
+                  2.75,
+                  0.5
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:stove",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/stove/v1/model.json",
+            "sha256": "f913c44893888e8be6b23aba1708ae69ba40d30ce69129ecc429c0b0b5aaa1c6"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.table",
+      "name": "桌",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:08.931Z",
+          "original": {
+            "path": "assets/art/previews/furniture/table/v1/render.png",
+            "sha256": "23c5fcc6a84dc4d18fc12d2f602fb6d152398ac35e669be868ea9dc664b78a5e",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/table/v1.png",
+            "sha256": "ba8c8259e55c797ada3a92bb380315c523d9a93d29ec429f532021414959ff65",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.699999988,
+                  0.0,
+                  -0.449999988
+                ],
+                "max": [
+                  0.699999988,
+                  0.800000012,
+                  0.449999988
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:table",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/table/v1/model.json",
+            "sha256": "e1606355adbd7d63f6db03963b8f268228ff3cff1985f06c7d29e0193bbd278a"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.bench",
+      "name": "长凳",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:09.029Z",
+          "original": {
+            "path": "assets/art/previews/furniture/bench/v1/render.png",
+            "sha256": "50a0ddb2800a439e1bb131791fabb36b07e7956a2fd09b8acf636477bd1c1309",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/bench/v1.png",
+            "sha256": "68d1c19c3e212066aeb8c872b17aa72014869fa7eef4d1739a09063ca441f161",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.600000024,
+                  0.0,
+                  -0.174999997
+                ],
+                "max": [
+                  0.600000024,
+                  0.449999988,
+                  0.174999997
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:bench",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/bench/v1/model.json",
+            "sha256": "430b95aaaf080fec13f853ffe1e16956c88f5421d90d409639af892ed28ea10a"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.chest",
+      "name": "柜",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:09.182Z",
+          "original": {
+            "path": "assets/art/previews/furniture/chest/v1/render.png",
+            "sha256": "0e99f0ca037596de9d5def78e87a09001539ae63b9e845af7b07c855738884a0",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/chest/v1.png",
+            "sha256": "a400c00689bdbd6b7d6ca33ab04a88b9f39053795981c9be78211a22a1fed620",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.600000024,
+                  0.0,
+                  -0.300000012
+                ],
+                "max": [
+                  0.600000024,
+                  1.20000005,
+                  0.324999988
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:chest",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/chest/v1/model.json",
+            "sha256": "bbe20546d1a22c318199d24b2b07ed9706d5b6c3f080a4c9c7ec26923ab80c88"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.vat",
+      "name": "水缸",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:09.444Z",
+          "original": {
+            "path": "assets/art/previews/furniture/vat/v1/render.png",
+            "sha256": "50424755c13c6e92633e696e35cdcc879b200d1ebc3a13c3beead0d8ccd1175e",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/vat/v1.png",
+            "sha256": "76a6749ac77c8aec020531cd8925aa9d93cef63c384ef8e0ebac719253175b08",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.474999994,
+                  0.0,
+                  -0.474999994
+                ],
+                "max": [
+                  0.474999994,
+                  0.800000012,
+                  0.474999994
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:vat",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/vat/v1/model.json",
+            "sha256": "6bd0cfaac71ff9fbd6cb704b42cd702cb653a76b2cc765f5428ae45af7afca30"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。 当前是方盒占位，缺少陶缸圆腹与口沿。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.bin",
+      "name": "粮囤",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:09.850Z",
+          "original": {
+            "path": "assets/art/previews/furniture/bin/v1/render.png",
+            "sha256": "0354b8aa042950266636d495de449c49203f8a013e79261795badf28a269f7fa",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/bin/v1.png",
+            "sha256": "85339110753ae6929843c3188df89300cd74987356f5e4c315194e9c551b5860",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.699999988,
+                  0.0,
+                  -0.699999988
+                ],
+                "max": [
+                  0.699999988,
+                  1.60000002,
+                  0.699999988
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:bin",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/bin/v1/model.json",
+            "sha256": "b3822cc433e21939f381cff9a1579e8bcf6f3e679dd7cb4f9be39ae40cac05cc"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.altar",
+      "name": "供桌",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:10.019Z",
+          "original": {
+            "path": "assets/art/previews/furniture/altar/v1/render.png",
+            "sha256": "c8202712864b9f1ba0efa90acc34b669fba5766e13671d98d75a38dd0017a440",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/altar/v1.png",
+            "sha256": "ebbef463fe68893d773ad8b25bae83b0f67e63efa60adc180af932f2b8b0bad0",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.899999976,
+                  0.0,
+                  -0.300000012
+                ],
+                "max": [
+                  0.899999976,
+                  1.45000005,
+                  0.300000012
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:altar",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/altar/v1/model.json",
+            "sha256": "c6328541ecb91b1f811159be781012d9bf2588b5b667b7ba135f831743657512"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.loom",
+      "name": "织机",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:10.153Z",
+          "original": {
+            "path": "assets/art/previews/furniture/loom/v1/render.png",
+            "sha256": "64dfbe8d77649fc56b19ab91c1fafc0134de65bbaf75f1f988000a488e785587",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/loom/v1.png",
+            "sha256": "84bf7dd68ab8c1b2c970256ad0a121e1e0db8ab2b01f4a0484860b057c35cd97",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.800000012,
+                  0.0,
+                  -0.639999986
+                ],
+                "max": [
+                  0.800000012,
+                  1.5,
+                  0.639999986
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:loom",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/loom/v1/model.json",
+            "sha256": "ebbc966f82bab5066c5b6902e8071ef4fff0b4f0afa375950c29a215633369cc"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。 仅有简化木架，织机工作构件与接合仍需设计。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.shelf",
+      "name": "架子",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:10.288Z",
+          "original": {
+            "path": "assets/art/previews/furniture/shelf/v1/render.png",
+            "sha256": "ff42dd62cd85254d181850794e9d9738632b002026e9ef61114f3dfda119bb90",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/shelf/v1.png",
+            "sha256": "ecfbe33d033599539939a7f8d6bc3345f9506eac5685e20fc9215cd2265e89d9",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.800000012,
+                  0.0,
+                  -0.25
+                ],
+                "max": [
+                  0.800000012,
+                  1.89999998,
+                  0.25
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:shelf",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/shelf/v1/model.json",
+            "sha256": "24f0b1edd09cddf76da5a16dcd4dfa5d948e6b0c47c63356fcfa185bf9fe58c7"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.sacks",
+      "name": "麻袋",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:10.658Z",
+          "original": {
+            "path": "assets/art/previews/furniture/sacks/v1/render.png",
+            "sha256": "533a73fcce0b089b3f08bcd0a558f8224d16a864e1ff0a0ce79c04cb31f61341",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/sacks/v1.png",
+            "sha256": "57358c4bee0401aa360ee215bbd4a0be619b620bbf002cf5bff44ee4849eab7c",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.574999988,
+                  0.0,
+                  -0.400000006
+                ],
+                "max": [
+                  0.574999988,
+                  0.870000005,
+                  0.400000006
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:sacks",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/sacks/v1/model.json",
+            "sha256": "4c718a3f2dc36a07db7de8a00f9d2609c3d7fe3d13ce35d1cd410a4967c90e8e"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。 当前是刚性方盒，缺少柔软麻袋体积与接缝。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.drum",
+      "name": "鼓",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:11.132Z",
+          "original": {
+            "path": "assets/art/previews/furniture/drum/v1/render.png",
+            "sha256": "026580585f9e8afe9361506f850f5bce072c58234d83349099cd5c2504edd957",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/drum/v1.png",
+            "sha256": "4bf371c619b62f1d549bf96ed7ba4b52609f0b525dc5f20fb8959f640ef5e55f",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -0.449999988,
+                  0.0,
+                  -0.25
+                ],
+                "max": [
+                  0.449999988,
+                  1.14999998,
+                  0.25
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:drum",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/drum/v1/model.json",
+            "sha256": "dfe6d75b13db258ae6de413725bda96307bec3309016ba71b77390e314b9c18a"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。 当前是方盒占位，缺少圆鼓筒、绷皮与固定结构。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.mat",
+      "name": "席",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "content-studio:formal-art",
+        "furniture palette"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T10:21:11.210Z",
+          "original": {
+            "path": "assets/art/previews/furniture/mat/v1/render.png",
+            "sha256": "9d404d9c2687b18085e3a59d4e944283fc274fa66219d70c05ad628c8f1415c7",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/mat/v1.png",
+            "sha256": "0b3159e4957999c445bb76fdabae494d3f068856a5c85d8f671323fe09ea6575",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "light": [
+                -0.5,
+                0.85,
+                0.65
+              ],
+              "ambient": 0.55,
+              "background": "transparent",
+              "sourceBounds": {
+                "min": [
+                  -1.0,
+                  0.00200000009,
+                  -0.699999988
+                ],
+                "max": [
+                  1.0,
+                  0.0219999999,
+                  0.699999988
+                ]
+              },
+              "rasterizer": "tools/art-preview/render.py; z-buffer, original vertex normals/colors, no geometry alteration"
+            }
+          },
+          "model": {
+            "id": "furniture:mat",
+            "source": {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            "note": "直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。",
+            "path": "assets/art/previews/furniture/mat/v1/model.json",
+            "sha256": "e90cfae51c97a2fd00d1f3c13855c08f45f337dc93227fb316240ad0dc40f01b"
+          },
+          "sourceSnapshotManifest": null,
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+            }
+          ],
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T10:26:10.618949+00:00",
+            "reviewer": "Codex",
+            "scope": "accuracy_of_current_model_preview_only",
+            "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
     }
   ]
 }

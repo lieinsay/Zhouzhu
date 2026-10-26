@@ -10,6 +10,8 @@
 
 制作入口：`python tools/art-assets.py --help`。`register` 非覆盖登记原图并生成统一 256 方图；`sheet` 输出明暗底32/48/64像素审图表；`review` 分别记录代理通过/拒绝。原图与旧 v1 均保留，内置生图提示词和参考指纹进入正式登记。制作脚本需要 Pillow；工坊服务不新增第三方依赖。规范见 [ART-DIRECTION.md](ART-DIRECTION.md)。
 
+真实模型预览：`python tools/art-preview/render.py --help`。先用已有模型导出器把本次真实模型快照写入新版本目录；家具导出命令为 `node tools/art-preview/export-furniture.mjs --output <新的版本目录>`，由 `tools/art-preview/furniture-export.cpp` 在独立MSVC构建中直接调用 `furniture_parts` / `mesh_kit`。渲染器需要numpy与Pillow，统一正交相机、柔光和透明背景，不改变米制尺寸、几何或原颜色。`--model-directory` 与 `--furniture-directory` 指定已核对来源；用 `--version vN` 增加版本，拒绝覆盖已登记版本。正式资源页可按物品、船模块、建筑、家具筛选；模块与建筑目录、游戏改装卡片、建筑面板、室内当前家具工具使用同一正式预览。当前模型的精绘造型/材质缺口见 `docs/art-assets/model-gaps.json`；代理仅确认快照预览准确，不将其当作风格化模型完成。
+
 ## 启动
 
 在 Zhouzhu 项目根目录运行：

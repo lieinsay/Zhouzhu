@@ -25,12 +25,13 @@ func _initialize() -> void:
 		assert(ProjectSettings.load_resource_pack(pack_path))
 		var active: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://art/bindings.json"))
 		var panel = ClassDB.instantiate("InventoryPanel")
+		var preview = ClassDB.instantiate("RefitPanel")
 		assert(panel != null)
 		for key in active.bindings:
-			if not key.begins_with("item."): continue
-			var info: Dictionary = panel.get_item_art(key.trim_prefix("item."))
+			var info: Dictionary = panel.get_item_art(key.trim_prefix("item.")) if key.begins_with("item.") else preview.get_asset_art(key)
 			assert(info.loaded and info.path == active.bindings[key].path)
 		assert(not panel.get_item_art("missing_pack_icon").loaded)
 		panel.free()
+		preview.free()
 		print("item_art_pack: isolated PCK C++ loading passed ",active.bindings.size())
 	quit(0)

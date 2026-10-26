@@ -16,6 +16,9 @@ class ItemArt {
     void load();
 
 public:
+    godot::Ref<godot::Texture2D> texture_asset(const std::string &p_asset);
+    bool draw_asset(godot::Control *p_control, const godot::Rect2 &p_rect, const std::string &p_asset, float p_alpha = 1.0f);
+    godot::Dictionary inspect_asset(const godot::String &p_asset);
     godot::Ref<godot::Texture2D> texture(const std::string &p_item);
     bool draw(godot::Control *p_control, const godot::Rect2 &p_rect, const std::string &p_item, float p_alpha = 1.0f);
     godot::Dictionary inspect(const godot::String &p_item);

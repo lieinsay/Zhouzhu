@@ -12,7 +12,7 @@ namespace {
 
 constexpr real_t MARGIN = 16;
 constexpr real_t PAD = 12;
-constexpr real_t PALETTE_W = 330;
+constexpr real_t PALETTE_W = 390;
 constexpr real_t PALETTE_HEAD = 58; // 标题与说明
 constexpr real_t CARD_GAP = 5;
 constexpr real_t CARD_H_MIN = 46, CARD_H_MAX = 64;
@@ -63,7 +63,9 @@ Color tone_color(int p_tone) {
 
 } // namespace
 
-void RefitPanel::_bind_methods() {}
+void RefitPanel::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("get_asset_art", "asset"), &RefitPanel::get_asset_art);
+}
 
 RefitPanel::RefitPanel() {
     set_mouse_filter(MOUSE_FILTER_IGNORE); // 点击由编排转给改装部件，这里只答落在哪
@@ -137,7 +139,9 @@ void RefitPanel::draw_card(ModuleKind p_kind, const Rect2 &p_rect, bool p_hover,
     const Color c = look_color(d.look);
     const int across = std::max(d.size_x, d.size_z), up = d.size_y;
     const real_t unit = std::min(real_t(16), (p_rect.size.y - 14) / up);
-    const Vector2 glyph0 = p_rect.position + Vector2(10, 0.5f * (p_rect.size.y - unit * up));
+    const real_t preview_side = std::min(real_t(48), p_rect.size.y);
+    art.draw_asset(this, Rect2(p_rect.position + Vector2(2, (p_rect.size.y - preview_side) * 0.5f), Vector2(preview_side, preview_side)), "module." + std::string(d.id), a);
+    const Vector2 glyph0 = p_rect.position + Vector2(58, 0.5f * (p_rect.size.y - unit * up));
     for (int i = 0; i < across; i++) {
         for (int j = 0; j < up; j++) {
             const Rect2 cell(glyph0 + Vector2(i * (unit + 2), (up - 1 - j) * (unit + 2) - (up - 1) * 1.0f), Vector2(unit, unit));
@@ -146,7 +150,7 @@ void RefitPanel::draw_card(ModuleKind p_kind, const Rect2 &p_rect, bool p_hover,
         }
     }
 
-    const real_t x = p_rect.position.x + 50, w = p_rect.size.x - 58;
+    const real_t x = p_rect.position.x + 100, w = p_rect.size.x - 108;
     const real_t line1 = p_rect.position.y + std::min(real_t(22), 0.42f * p_rect.size.y);
     const real_t line2 = p_rect.position.y + p_rect.size.y - 8;
     text(Vector2(x, line1), utf8(d.name), 18, Color(BRIGHT.r, BRIGHT.g, BRIGHT.b, a));
