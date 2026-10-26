@@ -1,0 +1,74 @@
+{
+  "bindingsChecked": 8,
+  "containerPottery": 6,
+  "passed": true,
+  "renderer": "headless",
+  "resources": {
+    "chest": {
+      "assetId": "item.chest",
+      "draws": 0,
+      "instanceId": -9223371961608958897,
+      "loaded": true,
+      "path": "res://art/items/chest/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "cloth": {
+      "assetId": "item.cloth",
+      "draws": 0,
+      "instanceId": -9223371961072087981,
+      "loaded": true,
+      "path": "res://art/items/cloth/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "copper_ore": {
+      "assetId": "item.copper_ore",
+      "draws": 0,
+      "instanceId": -9223371962145829813,
+      "loaded": true,
+      "path": "res://art/items/copper_ore/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "floatstone": {
+      "assetId": "item.floatstone",
+      "draws": 0,
+      "instanceId": -9223371960803652523,
+      "loaded": true,
+      "path": "res://art/items/floatstone/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "millet": {
+      "assetId": "item.millet",
+      "draws": 0,
+      "instanceId": -9223371962414265272,
+      "loaded": true,
+      "path": "res://art/items/millet/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "pottery": {
+      "assetId": "item.pottery",
+      "draws": 0,
+      "instanceId": -9223371961340523439,
+      "loaded": true,
+      "path": "res://art/items/pottery/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "roof_tile": {
+      "assetId": "item.roof_tile",
+      "draws": 0,
+      "instanceId": -9223371960535217065,
+      "loaded": true,
+      "path": "res://art/items/roof_tile/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "stone_axe": {
+      "assetId": "item.stone_axe",
+      "draws": 0,
+      "instanceId": -9223371961877394355,
+      "loaded": true,
+      "path": "res://art/items/stone_axe/v2.png",
+      "size": "(256.0, 256.0)"
+    }
+  },
+  "sharedTexture": true,
+  "userConfirmed": false
+}

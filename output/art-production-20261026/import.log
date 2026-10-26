@@ -1,0 +1,199 @@
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+
+first_scan_filesystem: begin: 项目初始化 steps: 5
+	first_scan_filesystem: step 0: 正在扫描文件结构……
+	first_scan_filesystem: step 1: 正在加载全局类名……
+	first_scan_filesystem: step 2: 正在校验 GDExtension……
+	first_scan_filesystem: step 3: 正在创建自动加载脚本……
+	first_scan_filesystem: step 4: 正在初始化插件……
+	first_scan_filesystem: step 5: 正在启动文件扫描……
+first_scan_filesystem: end
+update_scripts_classes: begin: 正在注册全局类…… steps: 46
+	update_scripts_classes: step 0: 
+	update_scripts_classes: step 1: 
+	update_scripts_classes: step 2: 
+	update_scripts_classes: step 3: 
+	update_scripts_classes: step 4: 
+	update_scripts_classes: step 5: 
+	update_scripts_classes: step 6: 
+	update_scripts_classes: step 7: 
+	update_scripts_classes: step 8: 
+	update_scripts_classes: step 9: 
+	update_scripts_classes: step 10: 
+	update_scripts_classes: step 11: 
+	update_scripts_classes: step 12: 
+	update_scripts_classes: step 13: 
+	update_scripts_classes: step 14: 
+	update_scripts_classes: step 15: 
+	update_scripts_classes: step 16: 
+	update_scripts_classes: step 17: 
+	update_scripts_classes: step 18: 
+	update_scripts_classes: step 19: 
+	update_scripts_classes: step 20: 
+	update_scripts_classes: step 21: 
+	update_scripts_classes: step 22: 
+	update_scripts_classes: step 23: 
+	update_scripts_classes: step 24: 
+	update_scripts_classes: step 25: 
+	update_scripts_classes: step 26: 
+	update_scripts_classes: step 27: 
+	update_scripts_classes: step 28: 
+	update_scripts_classes: step 29: 
+	update_scripts_classes: step 30: 
+	update_scripts_classes: step 31: 
+	update_scripts_classes: step 32: 
+	update_scripts_classes: step 33: 
+	update_scripts_classes: step 34: 
+	update_scripts_classes: step 35: 
+	update_scripts_classes: step 36: 
+	update_scripts_classes: step 37: 
+	update_scripts_classes: step 38: 
+	update_scripts_classes: step 39: 
+	update_scripts_classes: step 40: 
+	update_scripts_classes: step 41: 
+	update_scripts_classes: step 42: 
+	update_scripts_classes: step 43: 
+	update_scripts_classes: step 44: 
+	update_scripts_classes: step 45: 
+update_scripts_classes: end
+_update_scan_actions: begin: 正在扫描动作…… steps: 8
+	_update_scan_actions: step 0: v2.png
+	_update_scan_actions: step 1: v2.png
+	_update_scan_actions: step 2: v2.png
+	_update_scan_actions: step 3: v2.png
+	_update_scan_actions: step 4: v2.png
+	_update_scan_actions: step 5: v2.png
+	_update_scan_actions: step 6: v2.png
+	_update_scan_actions: step 7: v2.png
+_update_scan_actions: end
+reimport: begin: 正在导入或重新导入资产 steps: 8
+	reimport: step 0: 正在准备重新加载文件……
+	reimport: step 1: 正在准备重新加载文件……
+	reimport: step 2: 正在准备重新加载文件……
+	reimport: step 3: 正在准备重新加载文件……
+	reimport: step 4: 正在准备重新加载文件……
+	reimport: step 5: 正在准备重新加载文件……
+	reimport: step 6: 正在准备重新加载文件……
+	reimport: step 7: 正在准备重新加载文件……
+	reimport: step 0: 正在执行重新加载前的操作……
+	reimport: step 0: v2.png
+	reimport: step 1: v2.png
+	reimport: step 2: v2.png
+	reimport: step 3: v2.png
+	reimport: step 4: v2.png
+	reimport: step 5: v2.png
+	reimport: step 6: v2.png
+	reimport: step 7: v2.png
+	reimport: step 8: 正在结束资产导入……
+reimport: end
+update_script_paths_documentation: begin: 正在更新脚本文档 steps: 46
+	update_script_paths_documentation: step 0: build_e2e.gd
+	update_script_paths_documentation: step 1: cabin_e2e.gd
+	update_script_paths_documentation: step 2: craft_e2e.gd
+	update_script_paths_documentation: step 3: dev_group_jump_e2e.gd
+	update_script_paths_documentation: step 4: dev_tools_e2e.gd
+	update_script_paths_documentation: step 5: dock_approach_e2e.gd
+	update_script_paths_documentation: step 6: earthworks_e2e.gd
+	update_script_paths_documentation: step 7: farm_e2e.gd
+	update_script_paths_documentation: step 8: feature_tour.gd
+	update_script_paths_documentation: step 9: flat_map_e2e.gd
+	update_script_paths_documentation: step 10: freight_e2e.gd
+	update_script_paths_documentation: step 11: gather_e2e.gd
+	update_script_paths_documentation: step 12: god_orbit_e2e.gd
+	update_script_paths_documentation: step 13: god_sea_e2e.gd
+	update_script_paths_documentation: step 14: god_works_e2e.gd
+	update_script_paths_documentation: step 15: house_e2e.gd
+	update_script_paths_documentation: step 16: interior_e2e.gd
+	update_script_paths_documentation: step 17: pause_menu_e2e.gd
+	update_script_paths_documentation: step 18: planet_jump_e2e.gd
+	update_script_paths_documentation: step 19: planet_voyage_e2e.gd
+	update_script_paths_documentation: step 20: planet_weather_e2e.gd
+	update_script_paths_documentation: step 21: planet_world_e2e.gd
+	update_script_paths_documentation: step 22: respawn_e2e.gd
+	update_script_paths_documentation: step 23: river_e2e.gd
+	update_script_paths_documentation: step 24: sea_descent_e2e.gd
+	update_script_paths_documentation: step 25: seed42_rivers_e2e.gd
+	update_script_paths_documentation: step 26: shipyard_e2e.gd
+	update_script_paths_documentation: step 27: villager_e2e.gd
+	update_script_paths_documentation: step 28: voyage_2051_e2e.gd
+	update_script_paths_documentation: step 29: voyage_e2e.gd
+	update_script_paths_documentation: step 30: voyage_start_e2e.gd
+	update_script_paths_documentation: step 31: weather_e2e.gd
+	update_script_paths_documentation: step 32: world_e2e.gd
+	update_script_paths_documentation: step 33: world_features_e2e.gd
+	update_script_paths_documentation: step 34: world_sim_e2e.gd
+	update_script_paths_documentation: step 35: cover_shots.gd
+	update_script_paths_documentation: step 36: planet_shots.gd
+	update_script_paths_documentation: step 37: scatter_perf.gd
+	update_script_paths_documentation: step 38: scatter_shots.gd
+	update_script_paths_documentation: step 39: seed_villages.gd
+	update_script_paths_documentation: step 40: start_shots.gd
+	update_script_paths_documentation: step 41: stream_perf.gd
+	update_script_paths_documentation: step 42: terrain_shots.gd
+	update_script_paths_documentation: step 43: village_shots.gd
+	update_script_paths_documentation: step 44: weather_shots.gd
+	update_script_paths_documentation: step 45: boot.gd
+update_script_paths_documentation: end
+update_scene_groups: begin: 正在更新场景分组 steps: 50
+	update_scene_groups: step 0: build_e2e.tscn
+	update_scene_groups: step 1: cabin_e2e.tscn
+	update_scene_groups: step 2: craft_e2e.tscn
+	update_scene_groups: step 3: dev_tools_e2e.tscn
+	update_scene_groups: step 4: earthworks_e2e.tscn
+	update_scene_groups: step 5: farm_e2e.tscn
+	update_scene_groups: step 6: flat_map_e2e.tscn
+	update_scene_groups: step 7: freight_e2e.tscn
+	update_scene_groups: step 8: gather_e2e.tscn
+	update_scene_groups: step 9: god_orbit_e2e.tscn
+	update_scene_groups: step 10: god_sea_e2e.tscn
+	update_scene_groups: step 11: god_works_e2e.tscn
+	update_scene_groups: step 12: house_e2e.tscn
+	update_scene_groups: step 13: interior_e2e.tscn
+	update_scene_groups: step 14: pause_menu_e2e.tscn
+	update_scene_groups: step 15: planet_jump_e2e.tscn
+	update_scene_groups: step 16: planet_voyage_e2e.tscn
+	update_scene_groups: step 17: planet_weather_e2e.tscn
+	update_scene_groups: step 18: planet_world_e2e.tscn
+	update_scene_groups: step 19: respawn_e2e.tscn
+	update_scene_groups: step 20: river_e2e.tscn
+	update_scene_groups: step 21: sea_descent_e2e.tscn
+	update_scene_groups: step 22: shipyard_e2e.tscn
+	update_scene_groups: step 23: villager_e2e.tscn
+	update_scene_groups: step 24: voyage_2051_e2e.tscn
+	update_scene_groups: step 25: voyage_e2e.tscn
+	update_scene_groups: step 26: voyage_start_e2e.tscn
+	update_scene_groups: step 27: weather_e2e.tscn
+	update_scene_groups: step 28: world_e2e.tscn
+	update_scene_groups: step 29: world_features_e2e.tscn
+	update_scene_groups: step 30: world_sim_e2e.tscn
+	update_scene_groups: step 31: cover_shots.tscn
+	update_scene_groups: step 32: planet_shots.tscn
+	update_scene_groups: step 33: scatter_perf.tscn
+	update_scene_groups: step 34: scatter_shots.tscn
+	update_scene_groups: step 35: start_shots.tscn
+	update_scene_groups: step 36: stream_perf.tscn
+	update_scene_groups: step 37: terrain_shots.tscn
+	update_scene_groups: step 38: village_shots.tscn
+	update_scene_groups: step 39: weather_shots.tscn
+	update_scene_groups: step 40: boot.tscn
+	update_scene_groups: step 41: building_templates.tscn
+	update_scene_groups: step 42: dev_tools.tscn
+	update_scene_groups: step 43: flat_map.tscn
+	update_scene_groups: step 44: main.tscn
+	update_scene_groups: step 45: pause_menu.tscn
+	update_scene_groups: step 46: player.tscn
+	update_scene_groups: step 47: ship.tscn
+	update_scene_groups: step 48: world_clock.tscn
+	update_scene_groups: step 49: world_seed42.tscn
+update_scene_groups: end
+reimport: begin: 正在导入或重新导入资产 steps: 8
+	reimport: step 0: 正在执行重新加载后的操作……
+reimport: end
+loading_editor_layout: begin: 正在加载编辑器 steps: 5
+	loading_editor_layout: step 0: 正在加载编辑器布局……
+	loading_editor_layout: step 1: 正在加载停靠面板……
+	loading_editor_layout: step 2: 正在重新打开场景……
+	loading_editor_layout: step 3: 正在加载中央编辑器布局……
+	loading_editor_layout: step 4: 正在加载插件窗口布局……
+	loading_editor_layout: step 5: 编辑器布局就绪。
+loading_editor_layout: end

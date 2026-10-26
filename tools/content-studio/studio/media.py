@@ -193,6 +193,9 @@ class MediaLibrary:
             if len({row['id'] for row in values}) != len(values):
                 fail(f'{kind} manifest 存在重复 ID', 500)
         covered = {row['itemId'] for row in thumbnails}
+        if hasattr(self, 'art'):
+            thumbnails = self.art.thumbnails() + thumbnails
+            covered.update(row['itemId'] for row in thumbnails)
         return dict(thumbnails=thumbnails, models=models, missingItems=model_manifest.get('missingItems', []), missingThumbnails=[{'id': row['id'], 'name': row['name']} for row in project['items'] if row['id'] not in covered])
 
     def read_uploaded(self):

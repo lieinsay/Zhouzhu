@@ -17,7 +17,9 @@ const Color OUTLINE(0, 0, 0, 0.85f);
 
 } // namespace
 
-void HotbarBar::_bind_methods() {}
+void HotbarBar::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("get_item_art", "item"), &HotbarBar::get_item_art);
+}
 
 HotbarBar::HotbarBar() {
     set_mouse_filter(MOUSE_FILTER_IGNORE);
@@ -58,10 +60,12 @@ void HotbarBar::_draw() {
         if (!s.empty()) {
             float cr = 0, cg = 0, cb = 0;
             catalog::item_color(s.item, cr, cg, cb);
+            if (!art.draw(this, r.grow(-1), s.item)) {
             draw_rect(r.grow(-6), Color(cr, cg, cb, 0.85f));
             const String name = String::utf8(catalog::item_name(s.item).c_str());
             const int fs = name.length() <= 2 ? 15 : (name.length() == 3 ? 13 : 11);
             text(Vector2(r.position.x, r.position.y + SLOT * 0.5f + fs * 0.35f), name, fs, Color(1, 1, 1), SLOT, HORIZONTAL_ALIGNMENT_CENTER);
+            }
             if (s.count > 1) {
                 text(Vector2(r.position.x, r.get_end().y - 2), vformat("%d", s.count), 13, Color(1, 0.97f, 0.85f), SLOT - 3, HORIZONTAL_ALIGNMENT_RIGHT);
             }

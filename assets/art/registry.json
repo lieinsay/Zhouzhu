@@ -1,0 +1,610 @@
+{
+  "schemaVersion": 1,
+  "styleId": "painted-jrpg-3d-v1",
+  "assets": [
+    {
+      "id": "item.millet",
+      "name": "粟",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:18.833Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/millet/v2/original.png",
+            "sha256": "4b471b78293b5e4dbb84b322b92e12146ac4e2f9f646a3de28437cfb0e4a63a9",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              40,
+              259,
+              1213,
+              1026
+            ],
+            "transparentPixels": 963610,
+            "visiblePixels": 608906
+          },
+          "runtime": {
+            "path": "game/art/items/millet/v2.png",
+            "sha256": "ddec3e275eff3818078da56e55e5f2a0b9ac8459c3889fe08b1b23a2c301e845",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              33,
+              66,
+              224,
+              192
+            ],
+            "transparentPixels": 48951,
+            "visiblePixels": 16585
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: ONLY a small compact mound of dry hulled foxtail millet grains, round tiny pale golden-yellow cereal grains, fine matte grain texture, individual round grains softly distinguishable around the mound perimeter, credible dry food ingredient, broad readable mound shape. Moderate soft highlights, no waxy kernels. No seed heads, panicles, ears, stalks, wheat, corn, leaves, bowl, sack or other objects. This is inventory grain and seed, not a complete plant.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              25,
+              21,
+              1217,
+              1254
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-1faa1412-5d8e-4e2e-ad65-8b6232be7612.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:35.831Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.copper_ore",
+      "name": "铜矿石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:19.205Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/copper_ore/v2/original.png",
+            "sha256": "907030350a9c9a69d3804112623eb2147e28dfe7f08a4dc5e5f1729467f49989",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              72,
+              114,
+              1203,
+              1180
+            ],
+            "transparentPixels": 787568,
+            "visiblePixels": 784948
+          },
+          "runtime": {
+            "path": "game/art/items/copper_ore/v2.png",
+            "sha256": "cc5c342737e80658b1aa4d3667955c684313c47ab12df813c3f70b6120da290a",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              39,
+              42,
+              223,
+              215
+            ],
+            "transparentPixels": 44656,
+            "visiblePixels": 20880
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: exactly one irregular hand-sized copper ore rock, gray-brown stony host with visible irregular malachite green mineral patches and veins embedded into credible rough fracture surfaces. Restrained natural saturation, useful large shapes. Unprocessed mineral, not refined copper, a metal ingot, jewel or pure green crystal.",
+          "references": [],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              23,
+              1238,
+              1254
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-62ad9cd9-456b-483d-99d7-4ccc70dfe6a5.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:35.979Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.stone_axe",
+      "name": "石斧",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:19.518Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/stone_axe/v2/original.png",
+            "sha256": "79c9e796bb84ea834c2351361b1b891e3c78c8c8a8e64bb0ef3c441c3f6ddeee",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              49,
+              35,
+              1211,
+              1173
+            ],
+            "transparentPixels": 1206593,
+            "visiblePixels": 365923
+          },
+          "runtime": {
+            "path": "game/art/items/stone_axe/v2.png",
+            "sha256": "1c89e13888bb2f41a3326083dcde9015a0aa7419fcd90d4d18c685e9ab6c40ef",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              36,
+              30,
+              224,
+              214
+            ],
+            "transparentPixels": 55514,
+            "visiblePixels": 10022
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: exactly one complete practical stone axe, smooth shaped gray stone blade firmly lashed to a warm wooden handle with simple hemp fiber bindings. Clear axe cutting edge, credible socket/attachment and visibly designed grip. Handle diagonal from lower right toward upper left, blade across upper part. No metal head, ornament, runes or effects.",
+          "references": [
+            {
+              "path": "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+              "role": "style only",
+              "sha256": "cee1f0ccc8e7fc6a29bb2a927ddcdfcce7b3d402e49c1e721e50771e7df66c13"
+            }
+          ],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              28,
+              1236,
+              1254
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-4420cdc8-a64d-4dd9-b630-3f5cb46080c2.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:36.194Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.chest",
+      "name": "木箱",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:19.937Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/chest/v2/original.png",
+            "sha256": "081b35d3a822fc4b4624388f76506b18fd05e15bde6d607fa383a315af8b116d",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              32,
+              225,
+              1227,
+              1176
+            ],
+            "transparentPixels": 761325,
+            "visiblePixels": 811191
+          },
+          "runtime": {
+            "path": "game/art/items/chest/v2.png",
+            "sha256": "9ca249b3cc5e60eaf1f75c512c04a1fde6d102a5cad940b30d00aaaef1207f54",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              35,
+              63,
+              226,
+              216
+            ],
+            "transparentPixels": 44437,
+            "visiblePixels": 21099
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: exactly one closed portable wooden storage chest, warm timber planks with a simple hinged flat lid, structurally clear plank joins and modest dark iron hinges and latch. Small tasteful edge wear, readable volume. No treasure, contents, heraldry, padlock ornament or elaborate fittings. This is a game placeable wooden box, not a tall wardrobe.",
+          "references": [
+            {
+              "path": "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+              "role": "style only",
+              "sha256": "cee1f0ccc8e7fc6a29bb2a927ddcdfcce7b3d402e49c1e721e50771e7df66c13"
+            }
+          ],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              0,
+              1229,
+              1254
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-8fe60ae2-59f3-4c5e-9e55-e4d355f4b359.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:36.418Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.pottery",
+      "name": "陶罐",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:20.375Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/pottery/v2/original.png",
+            "sha256": "0ba6b72156d0ccf0da89fbca0f072a68887b6cfa4ba9060300ef0bcefbd769ab",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              104,
+              98,
+              1148,
+              1186
+            ],
+            "transparentPixels": 718619,
+            "visiblePixels": 853897
+          },
+          "runtime": {
+            "path": "game/art/items/pottery/v2.png",
+            "sha256": "ee5064942609a5b7327bb3ff191058921ce751882bb37dda4ac912a7fa4dc8ee",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              45,
+              41,
+              216,
+              219
+            ],
+            "transparentPixels": 42263,
+            "visiblePixels": 23273
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: exactly one practical unglazed red ochre terracotta storage pot, rounded belly, short narrow open neck, thick readable rim, stable small foot. Fine clay grain and a few restrained wheel-thrown lines, subtle warm/cool form shading. No pattern, inscription, handles, glaze, other vessels or contents.",
+          "references": [
+            {
+              "path": "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+              "role": "style only",
+              "sha256": "cee1f0ccc8e7fc6a29bb2a927ddcdfcce7b3d402e49c1e721e50771e7df66c13"
+            }
+          ],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              23,
+              1226,
+              1228
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-19ebb149-9168-4b20-83de-1b280cdc6d0f.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:36.612Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.cloth",
+      "name": "麻布",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:20.699Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/cloth/v2/original.png",
+            "sha256": "68dcf697b01af2716469466df823a621bfb98faa5a69d0a853279f23e77a2d0c",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              26,
+              237,
+              1234,
+              1097
+            ],
+            "transparentPixels": 920772,
+            "visiblePixels": 651744
+          },
+          "runtime": {
+            "path": "game/art/items/cloth/v2.png",
+            "sha256": "82e87c9b208bc9aa848bfb99ddf59bd91a71a9a8683a0283f064feb0e2f0cbe7",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              32,
+              63,
+              227,
+              202
+            ],
+            "transparentPixels": 48364,
+            "visiblePixels": 17172
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: exactly one neatly folded piece of undyed hemp linen, natural flax beige, two or three clear soft folds and folded edges, restrained fine plain-weave thread texture with credible thickness. Keep clean large planes and a few selected fibers at the edge. Not clothes, a sail, rope or sack.",
+          "references": [
+            {
+              "path": "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+              "role": "style only",
+              "sha256": "cee1f0ccc8e7fc6a29bb2a927ddcdfcce7b3d402e49c1e721e50771e7df66c13"
+            }
+          ],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              19,
+              1241,
+              1254
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-16659a76-0210-49e2-b3cb-d0976a2a1ae6.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:36.761Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.floatstone",
+      "name": "浮石",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:21.118Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/floatstone/v2/original.png",
+            "sha256": "097af18079de5f42d72fa7333cbfb8fe4c4eeb81338ca7a86c1dfd841c045eb6",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              70,
+              139,
+              1199,
+              1177
+            ],
+            "transparentPixels": 750273,
+            "visiblePixels": 822243
+          },
+          "runtime": {
+            "path": "game/art/items/floatstone/v2.png",
+            "sha256": "6bc3b1e887adf25b16730266f0f38867d2af903850c3721f73e337b473fd4124",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              41,
+              47,
+              225,
+              216
+            ],
+            "transparentPixels": 43377,
+            "visiblePixels": 22159
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: exactly one ordinary mineral-shaped floatstone rock, pale gray with a restrained muted lavender undertone, asymmetric broad fracture faces and a few clear natural mineral strata. Solid stone volume, subtly weathered edges, easily read as a mineral rather than crystal cluster. No holes like sponge, no runes, glow, luminous cracks, floating fragments, magic, giant crystals, jewels or supernatural decorations.",
+          "references": [
+            {
+              "path": "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+              "role": "style only",
+              "sha256": "cee1f0ccc8e7fc6a29bb2a927ddcdfcce7b3d402e49c1e721e50771e7df66c13"
+            }
+          ],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              0,
+              19,
+              1204,
+              1254
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-60c549f7-3559-46e4-b027-9c8b35e17ad1.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:36.933Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "item.roof_tile",
+      "name": "瓦",
+      "definition": "src/crops.cpp",
+      "useSites": [
+        "content-studio",
+        "InventoryPanel:pack/container/cursor/recipes",
+        "HotbarBar"
+      ],
+      "versions": [
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-26T09:57:21.467Z",
+          "generatorModel": "内置工具未暴露具体模型与参数",
+          "original": {
+            "path": "assets/art/items/roof_tile/v2/original.png",
+            "sha256": "91f46c92b5a8d6ee7066a2bb357ce6c0d981a11a9bf25d91dcdc17a9b892e359",
+            "width": 1254,
+            "height": 1254,
+            "alphaBounds": [
+              20,
+              212,
+              1237,
+              1043
+            ],
+            "transparentPixels": 1086676,
+            "visiblePixels": 485840
+          },
+          "runtime": {
+            "path": "game/art/items/roof_tile/v2.png",
+            "sha256": "e11336d943df19a2a711fcf2d4026dc87078949efb6b259fe10e5a9ff7d25dc6",
+            "width": 256,
+            "height": 256,
+            "alphaBounds": [
+              29,
+              59,
+              228,
+              195
+            ],
+            "transparentPixels": 52182,
+            "visiblePixels": 13354
+          },
+          "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: exactly ONE gray fired-clay curved roof tile as a loose construction material. Simple elongated shallow half-cylinder channel, clear curved cross-section, believable ceramic thickness and gently rounded firing edges, refined gray clay surface. Show its open channel and side thickness together. No stacked tiles, assembled roof, supports or building.",
+          "references": [
+            {
+              "path": "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+              "role": "style only",
+              "sha256": "cee1f0ccc8e7fc6a29bb2a927ddcdfcce7b3d402e49c1e721e50771e7df66c13"
+            }
+          ],
+          "derivation": {
+            "operation": "alpha_bbox_center_resize",
+            "size": 256,
+            "subjectLongEdge": 200,
+            "filter": "Lanczos premultiplied alpha",
+            "sourceBounds": [
+              13,
+              27,
+              1240,
+              1238
+            ]
+          },
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-70db6489-e252-4a7e-8d4d-ca1d26fd73ff.png",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-26T09:58:37.084Z",
+            "reviewer": "Codex",
+            "note": "已实际查看原图及明暗底32/48/64像素：主体语义、轮廓、真实透明边缘、统一留白与材料辨识通过；游戏像素验收另记，用户未逐张确认。",
+            "userConfirmed": false
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "items": [
+    {
+      "id": "millet",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-1faa1412-5d8e-4e2e-ad65-8b6232be7612.png",
+      "references": []
+    },
+    {
+      "id": "copper_ore",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-62ad9cd9-456b-483d-99d7-4ccc70dfe6a5.png",
+      "references": []
+    },
+    {
+      "id": "stone_axe",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-4420cdc8-a64d-4dd9-b630-3f5cb46080c2.png",
+      "references": [
+        "output/art-style-industry-20261026/I1-painted-jrpg-industry.png"
+      ]
+    },
+    {
+      "id": "chest",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-8fe60ae2-59f3-4c5e-9e55-e4d355f4b359.png",
+      "references": [
+        "output/art-style-industry-20261026/I1-painted-jrpg-industry.png"
+      ]
+    },
+    {
+      "id": "pottery",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-19ebb149-9168-4b20-83de-1b280cdc6d0f.png",
+      "references": [
+        "output/art-style-industry-20261026/I1-painted-jrpg-industry.png"
+      ]
+    },
+    {
+      "id": "cloth",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-16659a76-0210-49e2-b3cb-d0976a2a1ae6.png",
+      "references": [
+        "output/art-style-industry-20261026/I1-painted-jrpg-industry.png"
+      ]
+    },
+    {
+      "id": "floatstone",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-60c549f7-3559-46e4-b027-9c8b35e17ad1.png",
+      "references": [
+        "output/art-style-industry-20261026/I1-painted-jrpg-industry.png"
+      ]
+    },
+    {
+      "id": "roof_tile",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-70db6489-e252-4a7e-8d4d-ca1d26fd73ff.png",
+      "references": [
+        "output/art-style-industry-20261026/I1-painted-jrpg-industry.png"
+      ]
+    }
+  ],
+  "rejectedMillet": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-c5044584-7759-47c8-a3d4-5fa9e8b99ace.png"
+}

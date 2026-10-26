@@ -1,6 +1,7 @@
 // 独立开发者工具「舟渚·内容工坊」：见 docs/CONTENT-STUDIO.md。
 // 项目根目录启动：python tools/content-studio/server.py（浏览器访问 http://127.0.0.1:4176）。
-// 只读游戏内容表，编辑结果保存在工具草稿；不接入游戏运行逻辑。
+// 只读游戏内容表，编辑结果保存在工具草稿；/art.html 独立管理正式美术并应用到 game/art/bindings.json。
+// 美术制作登记：python tools/art-assets.py --help（原图、受控缩放、代理审图与小尺寸检查）。
 #include "dev_manual.h"
 
 #include "input_actions.h"

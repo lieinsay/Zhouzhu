@@ -270,6 +270,7 @@ void PackHand::refresh_panel() {
         row.yield = r.yield;
         for (int i = 0; i < recipes::ingredient_count(r); i++) {
             row.inputs += (i > 0 ? String(U" · ") : String()) + name_of(r.in[i].item) + vformat(" %d", r.in[i].count);
+            row.ingredients.push_back({r.in[i].item, r.in[i].count});
         }
         row.station_ok = recipes::station_ok(r, stations);
         row.station = utf8(recipes::station_name(r.station));

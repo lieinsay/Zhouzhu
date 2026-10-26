@@ -308,6 +308,8 @@ target_sources(
         src/interior_panel.cpp
         src/interior_panel.h
         src/inventory_panel.cpp
+        src/item_art.cpp
+        src/item_art.h
         src/inventory_panel.h
         src/island.cpp
         src/island.h

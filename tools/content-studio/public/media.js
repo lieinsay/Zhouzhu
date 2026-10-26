@@ -8,7 +8,7 @@ export function safeAssetUrl(value) {
   let decoded;
   try { decoded = decodeURIComponent(value); } catch { return null; }
   if (decoded.includes('..') || /[\\\s?#%]/.test(decoded)) return null;
-  return /^\/(?:assets|api\/assets|api\/models)\/[A-Za-z0-9_./%-]+$/.test(value) ? value : null;
+  return /^\/(?:assets|api\/assets|api\/models|api\/art\/image)\/[A-Za-z0-9_./%-]+$/.test(value) ? value : null;
 }
 
 export function normalizeLibrary(value) {
@@ -29,7 +29,7 @@ export function recordItemId(record, collection) {
 export function defaultVisual(record, collection, library, project) {
   const itemId = recordItemId(record, collection);
   const itemBinding = collection !== 'items' ? project?.visuals?.items?.[itemId] : undefined;
-  const thumbnail = itemBinding?.thumbnail !== undefined ? itemBinding.thumbnail : library.thumbnails.find(asset => asset.itemId === itemId)?.id || null;
+  const thumbnail = itemBinding?.thumbnail !== undefined ? itemBinding.thumbnail : (library.thumbnails.find(asset => asset.itemId === itemId && asset.formalActive) || library.thumbnails.find(asset => asset.itemId === itemId && !asset.version))?.id || null;
   const inventoryUsage = asset => !['gather-source', 'building', 'ship-module'].includes(asset.usage);
   const exact = library.models.find(asset => asset.collection === collection && asset.recordIds?.includes(record.id) && (collection !== 'items' || inventoryUsage(asset)));
   // A rock outcrop or tree is not the inventory entity of its harvested material.

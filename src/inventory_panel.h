@@ -8,6 +8,7 @@
 #include <godot_cpp/variant/string.hpp>
 
 #include "item_slots.h"
+#include "item_art.h"
 
 // 背包面板（Tab）：只负责画，并回答屏幕上的一点落在哪一格 / 哪条配方上。自己不读输入、不改背包。
 // 画的是（照 MC 的样子，居中）：
@@ -19,6 +20,7 @@ class InventoryPanel : public godot::Control {
     GDCLASS(InventoryPanel, godot::Control)
 
 public:
+    godot::Dictionary get_item_art(const godot::String &p_item) { return art.inspect(p_item); }
     enum Section {
         NONE = -1,
         PACK = 0,
@@ -30,6 +32,7 @@ public:
         std::string product; // 物品 id
         int yield = 1;
         godot::String inputs; // 「木料 1 · 木板 2」
+        std::vector<ItemStack> ingredients; // 完整名称仍在悬停提示中。
         bool station_ok = true;
         godot::String station; // 「工作台」
         bool can = false; // 眼下合得了
@@ -57,6 +60,7 @@ public:
     };
 
 private:
+    ItemArt art;
     View view;
     godot::Vector2 origin; // 面板左上角（本控件坐标）
     godot::Vector2 panel_size;

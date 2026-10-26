@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "styleId": "painted-jrpg-3d-v1",
+  "bindings": {
+    "item.millet": {
+      "version": "v2",
+      "path": "res://art/items/millet/v2.png",
+      "sha256": "ddec3e275eff3818078da56e55e5f2a0b9ac8459c3889fe08b1b23a2c301e845"
+    },
+    "item.copper_ore": {
+      "version": "v2",
+      "path": "res://art/items/copper_ore/v2.png",
+      "sha256": "cc5c342737e80658b1aa4d3667955c684313c47ab12df813c3f70b6120da290a"
+    },
+    "item.stone_axe": {
+      "version": "v2",
+      "path": "res://art/items/stone_axe/v2.png",
+      "sha256": "1c89e13888bb2f41a3326083dcde9015a0aa7419fcd90d4d18c685e9ab6c40ef"
+    },
+    "item.chest": {
+      "version": "v2",
+      "path": "res://art/items/chest/v2.png",
+      "sha256": "9ca249b3cc5e60eaf1f75c512c04a1fde6d102a5cad940b30d00aaaef1207f54"
+    },
+    "item.pottery": {
+      "version": "v2",
+      "path": "res://art/items/pottery/v2.png",
+      "sha256": "ee5064942609a5b7327bb3ff191058921ce751882bb37dda4ac912a7fa4dc8ee"
+    },
+    "item.cloth": {
+      "version": "v2",
+      "path": "res://art/items/cloth/v2.png",
+      "sha256": "82e87c9b208bc9aa848bfb99ddf59bd91a71a9a8683a0283f064feb0e2f0cbe7"
+    },
+    "item.floatstone": {
+      "version": "v2",
+      "path": "res://art/items/floatstone/v2.png",
+      "sha256": "6bc3b1e887adf25b16730266f0f38867d2af903850c3721f73e337b473fd4124"
+    },
+    "item.roof_tile": {
+      "version": "v2",
+      "path": "res://art/items/roof_tile/v2.png",
+      "sha256": "e11336d943df19a2a711fcf2d4026dc87078949efb6b259fe10e5a9ff7d25dc6"
+    }
+  },
+  "application": {
+    "id": "7fb2019d-6b95-499c-8834-18ccfaab5a53",
+    "appliedAt": "2026-10-26T10:02:04.315Z",
+    "actor": "content-studio-art",
+    "registrySha256": "1c0557e9bfa121fe8b02de35409b727162568351214d676436a81be1783f1dc7"
+  }
+}

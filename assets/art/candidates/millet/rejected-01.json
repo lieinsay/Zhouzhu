@@ -1,0 +1,11 @@
+{
+  "itemId": "millet",
+  "status": "rejected",
+  "prompt": "Use case: stylized-concept. Asset type: production inventory item icon for the game Zhouzhu, painted Japanese-style 3D. Create a single isolated object with credible functional volume and a refined flowing silhouette; carefully painted natural materials, selective fine strokes at joins and edges, clean luminous soft light from upper left, subtle warm/cool transitions. Avoid low-poly faceting, excessive scratches, mottling or gritty noise. Square composition, consistent gently elevated three-quarter orthographic view, complete centered object occupies about 78% of canvas long edge with comfortable transparent padding. TRUE transparent alpha background, no floor, cast shadow, scenery, frame, UI, text, numbers, watermark, people or decorative props. Readable at 32/48/64 pixels. References describe style only: extract the painted material quality and clear lighting, never copy the harbor scene or the board layout. Subject: harvested foxtail millet inventory material, a compact small mound of tiny golden yellow millet grains with only ONE short cut mature millet panicle laid alongside for identification. The grains are the focus. No full plant, leaves, roots, standing stalk, field, bowl or sack. Seed and harvested food share this same identity.",
+  "reason": "穗部像麦穗，颗粒高光偏亮；未绑定",
+  "references": [
+    "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+    "output/art-style-three-distances-20261025/E1-painted-jrpg-board.png"
+  ],
+  "sha256": "c57b0d43563c3d8a3417e3ac1e7d804fa65a5673d6dd6269a78f86f2be9494e0"
+}

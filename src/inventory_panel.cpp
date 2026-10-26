@@ -54,7 +54,9 @@ void recipe_columns(int p_count, int &r_cols, int &r_per_col, real_t &r_col_w) {
 
 } // namespace
 
-void InventoryPanel::_bind_methods() {}
+void InventoryPanel::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("get_item_art", "item"), &InventoryPanel::get_item_art);
+}
 
 InventoryPanel::InventoryPanel() {
     set_mouse_filter(MOUSE_FILTER_IGNORE); // 点击由编排转给背包部件，这里只答落在哪
@@ -183,7 +185,7 @@ void InventoryPanel::text(const Vector2 &p_at, const String &p_text, int p_size,
     draw_string(font, p_at, p_text, p_align, p_width, p_size, p_color);
 }
 
-// 一叠东西的样子：物品颜色的方块、名字、份数
+// 正式图标与动态数量分层；缺图保留原色块和名称。
 void InventoryPanel::draw_stack(const Rect2 &p_rect, const ItemStack &p_stack, float p_alpha) {
     if (p_stack.empty()) {
         return;
@@ -191,11 +193,13 @@ void InventoryPanel::draw_stack(const Rect2 &p_rect, const ItemStack &p_stack, f
     float r = 0, g = 0, b = 0;
     catalog::item_color(p_stack.item, r, g, b);
     const Rect2 swatch = p_rect.grow(-7);
+    if (!art.draw(this, p_rect.grow(-2), p_stack.item, p_alpha)) {
     draw_rect(swatch, Color(r, g, b, 0.85f * p_alpha));
     draw_rect(swatch, Color(r * 0.6f, g * 0.6f, b * 0.6f, p_alpha), false, 2);
     const String name = name_of(p_stack.item);
     const int size = name.length() <= 2 ? 17 : (name.length() == 3 ? 14 : 12);
     text(Vector2(p_rect.position.x, p_rect.position.y + p_rect.size.y * 0.5f + size * 0.35f), name, size, Color(1, 1, 1, p_alpha), p_rect.size.x, HORIZONTAL_ALIGNMENT_CENTER);
+    }
     if (p_stack.count > 1) {
         text(Vector2(p_rect.position.x, p_rect.get_end().y - 3), vformat("%d", p_stack.count), 14, Color(1, 0.97f, 0.85f, p_alpha), p_rect.size.x - 4, HORIZONTAL_ALIGNMENT_RIGHT);
     }
@@ -278,11 +282,24 @@ void InventoryPanel::_draw() {
         }
         float cr = 0, cg = 0, cb = 0;
         catalog::item_color(row.product, cr, cg, cb);
-        draw_rect(Rect2(r.position + Vector2(4, 5), Vector2(18, 18)), Color(cr, cg, cb, row.can ? 1.0f : 0.4f));
+        const float alpha = row.can ? 1.0f : 0.4f;
+        if (!art.draw(this, Rect2(r.position + Vector2(1, 1), Vector2(26, 26)), row.product, alpha))
+            draw_rect(Rect2(r.position + Vector2(4, 5), Vector2(18, 18)), Color(cr, cg, cb, alpha));
         const Color c = row.can ? BRIGHT : DIM;
         text(r.position + Vector2(30, 21), name_of(row.product) + (row.yield > 1 ? vformat(String(U" ×%d"), row.yield) : String()), 17, c);
         const real_t in_x = r.size.x >= RECIPE_W ? 128 : 104; // 两栏时窄些
-        text(r.position + Vector2(in_x, 21), row.station_ok ? row.inputs : String(U"要") + row.station, 15, row.station_ok ? c : NEED, r.size.x - in_x - 4);
+        if (!row.station_ok) {
+            text(r.position + Vector2(in_x, 21), String(U"要") + row.station, 15, NEED, r.size.x - in_x - 4);
+        } else {
+            for (size_t i = 0; i < row.ingredients.size(); ++i) {
+                const ItemStack &ingredient = row.ingredients[i];
+                const Vector2 at = r.position + Vector2(in_x + real_t(i) * 54, 3);
+                if (!art.draw(this, Rect2(at, Vector2(24, 24)), ingredient.item, alpha)) {
+                    text(at + Vector2(0, 18), name_of(ingredient.item), 10, c, 27);
+                }
+                text(at + Vector2(26, 18), vformat("%d", ingredient.count), 13, c, 26);
+            }
+        }
     }
 
     // 悬停的那一格 / 那条配方

@@ -7487,6 +7487,9 @@ void test_dev_manual() {
             "内容工坊的源码注释包含文档入口与独立启动命令");
     check(bool(studio_help) && studio_text.find(studio_command) != std::string::npos,
             "内容工坊的使用文档存在且启动命令一致");
+    check(manual_text.find("python tools/art-assets.py --help") != std::string::npos &&
+                    studio_text.find("/art.html") != std::string::npos,
+            "正式美术工具有操作手册入口与独立应用说明");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");
