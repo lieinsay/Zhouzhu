@@ -1,0 +1,1923 @@
+{
+  "schema_version": 1,
+  "title": "美术图片资源需求快照",
+  "review_date": "2026-10-25",
+  "source_commit": "e07a62f76f522a9f4caab6b1246f2e96e1d1c161",
+  "scope": "当前主仓库源码和已提交工具资源；不包含用户本机草稿、归档实现或独立生成器参考工具",
+  "generation_enabled": false,
+  "style": {
+    "status": "pending_user_discussion",
+    "approved_style_id": null,
+    "existing_thumbnail_style_is_project_approval": false
+  },
+  "status": "requirements_snapshot_not_runtime_registry_or_generation_queue",
+  "inheritance": "每个条目继承所属组的用途、来源、需求性质、制作方式、规格与现状；条目字段可作补充。",
+  "counting_rule": "entry_count 是语义条目/资源族数量，不是图片张数；通道、状态、视图和参考图不合并为总生图量。",
+  "requirement_classes": {
+    "existing_use_site": "已有游戏使用位置，现为色块或文字",
+    "visual_upgrade": "已有功能的视觉升级，尚未批准图片方案",
+    "conditional": "风格、模型或渲染方案确定后决定是否需要图片",
+    "future_candidate": "尚未明确页面或功能的候选",
+    "excluded": "数据或程序生成，排除 AI 生图"
+  },
+  "priority_proposals": {
+    "style_sample": "先定风格，再选择少量跨类别样张",
+    "first": "正式制作优先覆盖玩家高频界面",
+    "after_technical_sample": "先验证材质映射与渲染接入",
+    "later": "后续完善；与风格和页面计划一起排期"
+  },
+  "delivery_profiles": {
+    "square_icon": {
+      "ratio": "1:1",
+      "alpha": "transparent",
+      "target_pixels": null,
+      "review_sizes_proposal": [
+        32,
+        48,
+        64
+      ],
+      "note": "视角、主体尺度和母图尺寸待定；已有 v1 不覆盖。"
+    },
+    "square_preview": {
+      "ratio": "1:1",
+      "alpha": "pending",
+      "target_pixels": null,
+      "note": "统一模型相机、光照和地坪；背景与界面卡片尺寸待定。"
+    },
+    "small_symbol": {
+      "format": "prefer_vector_or_procedural",
+      "target_pixels": null,
+      "note": "状态、旋转与进度使用动态覆盖层。"
+    },
+    "ui_component": {
+      "format": "pending",
+      "note": "共享组件；图片边框需约定切片，动态文本独立。"
+    },
+    "material_pending_mapping": {
+      "mapping": null,
+      "channels": null,
+      "meters_per_repeat": null,
+      "target_pixels": null,
+      "note": "不烘死光影或天气；不是已批准的 PBR 全通道任务。"
+    },
+    "model_reference": {
+      "views": null,
+      "note": "整体与细节/多视图依模型需要决定；参考图不直接充当模型或 UV 贴图。"
+    },
+    "effect_pending_rendering": {
+      "alpha": null,
+      "frame_count": null,
+      "atlas_layout": null,
+      "note": "先定渲染方式，再决定是否有图像需求。"
+    },
+    "scene_reference": {
+      "ratio": null,
+      "note": "只作造型与色彩参考，不作为游戏地形或地图数据。"
+    },
+    "illustration_pending_layout": {
+      "ratio": null,
+      "text_safe_area": null,
+      "note": "先确认页面、正式名称、用途与布局。"
+    },
+    "runtime_data": {
+      "imagegen_eligible": false
+    }
+  },
+  "existing_assets": {
+    "thumbnail_manifest": "tools/content-studio/public/assets/thumbnails/manifest.json",
+    "thumbnail_count": 49,
+    "recorded_dimensions": [
+      "1254x1254"
+    ],
+    "model_manifest": "tools/content-studio/public/assets/models/manifest.json",
+    "model_count": 49,
+    "metadata_verification": "本轮核对清单与实际文件存在，不重新做像素审图；原图 SHA 保留在既有 manifest。",
+    "game_uses_tool_thumbnails": false
+  },
+  "source_fingerprints": [
+    {
+      "path": "README.md",
+      "sha256": "c498df9123f48180e01648b5981d17ee910ab3f9331f871c63fea1849c2c59e3"
+    },
+    {
+      "path": "docs/NONRIVER-DATA.md",
+      "sha256": "1ebb5b071da083e795460ecaaad5599f072f16580ad30e2bbb99c7b26a57e625"
+    },
+    {
+      "path": "docs/PROJECT-CONTEXT.md",
+      "sha256": "a037b7a9f6d44979a4be00a22ae59534bf128494d02832750ab8b9c62718ba91"
+    },
+    {
+      "path": "game/boot.gd",
+      "sha256": "68024ae6708c8d8992a6548f03eed3fa0cdfd00e4a96d9d3a0193c35cac601ae"
+    },
+    {
+      "path": "game/planet/seed42/groups/6068/world.json",
+      "sha256": "34d5340166ca2e4812a06598e560f84b7bf2e9eb2c577df6381a1949e50c4fff"
+    },
+    {
+      "path": "game/player.tscn",
+      "sha256": "ee045623dab44afae8cfc514ad0c6d60a6b43f29072bccfd289062af14d62774"
+    },
+    {
+      "path": "game/shaders/ground.gdshader",
+      "sha256": "b6154b59df8ccd5438df6b7bcfd4e51eda5daa421c6e892678643365b0b784ba"
+    },
+    {
+      "path": "game/shaders/river.gdshader",
+      "sha256": "c53274e530301fb14b452f9f09815971f2cfe69dfa9b7c19c9fcc41396078a65"
+    },
+    {
+      "path": "game/shaders/sea.gdshader",
+      "sha256": "31403365c1678a9146972fc30d3f93dc545156b436f159eb884eb36a576ea8ef"
+    },
+    {
+      "path": "game/shaders/sky.gdshader",
+      "sha256": "d64699bfe64162f0c6096a4eab5534d06b3f2361cc1c92e0969edccc658470be"
+    },
+    {
+      "path": "src/atmosphere.cpp",
+      "sha256": "4d48d44937c2166ee9794da36ad71f1e6d9e0089d6383e426b44b058475ba18f"
+    },
+    {
+      "path": "src/build_panel.cpp",
+      "sha256": "9e9e0e13d8b796b7b7d267df9ac617cb7d8b1f2a952df9a2e1f3a2a25e5eddaa"
+    },
+    {
+      "path": "src/building_mesh.cpp",
+      "sha256": "156db40252b437aabe0156219d69ab384e804cfc3c6057b84e67c158752a9b58"
+    },
+    {
+      "path": "src/building_parts.cpp",
+      "sha256": "43a4b991a8280e06fdd593a0b6747e5f3167a251b552e3bd8e18d1923fcaf895"
+    },
+    {
+      "path": "src/building_parts.h",
+      "sha256": "bc4dcdab34b7c66d92eb430251c0f8024e9fe484ba0b1884ef054bfd60761a0e"
+    },
+    {
+      "path": "src/buildings.cpp",
+      "sha256": "3cf8a79e827fea82767dc5e803c97ad773ef6ebecb21ba96aca375fdbd3dbb0c"
+    },
+    {
+      "path": "src/cloud_band.cpp",
+      "sha256": "9bab8a21f7ac38882bbfb9b60b5b23fd2ba5a2ccb21189c91d754a0e33ef986a"
+    },
+    {
+      "path": "src/cover_blend.h",
+      "sha256": "36a763fb41b11a2e8c0cb808cdb77c8508ccf65a2674ebf60a620bcb9b3a56ed"
+    },
+    {
+      "path": "src/crops.cpp",
+      "sha256": "b364a9537a01e45da8a6e5cad6f2c4cee70dcd9f7ddc082b355198d5997c2ca2"
+    },
+    {
+      "path": "src/curved_material.cpp",
+      "sha256": "189b150bd831b1c389e7c575952b310c346a5571f3ee9838ee37d5efd2a53f70"
+    },
+    {
+      "path": "src/deposit_kinds.cpp",
+      "sha256": "f62f41caee331f876daa2c60113ebb1f1f226d3725af49e9a8915827edf6adda"
+    },
+    {
+      "path": "src/dev_tools.cpp",
+      "sha256": "8a134ab10b1bfd0615af52da8b559d240ec224d733f3584c69a5882cfcd3d0cc"
+    },
+    {
+      "path": "src/dev_works_panel.cpp",
+      "sha256": "f4e06e815882159a97ad7dc1d706e75bd3e008360a9771daf5469ead7dabc76b"
+    },
+    {
+      "path": "src/dock_builder.cpp",
+      "sha256": "01a7c322b3ba0881ebb68ff11390e7294a02eeee847d5cdb40a68ff8401ef415"
+    },
+    {
+      "path": "src/expedition.cpp",
+      "sha256": "be78eb681ec7ce503a8a568e7742a4cb93902e1b2e592f3adc7d3df405494974"
+    },
+    {
+      "path": "src/farm.cpp",
+      "sha256": "06bb13160d9c3a4c8cc09cccdb8d704f8975ee6514e8f859681036bbcc2c889b"
+    },
+    {
+      "path": "src/farm_model.h",
+      "sha256": "a164f1f1f09c5b59b469f2669baaf0d2206e4514785e93b84ac8d043a0cf6a56"
+    },
+    {
+      "path": "src/hotbar_bar.cpp",
+      "sha256": "a8a9c7ddea18e81af0882d42f3e7fe70cb303f02480900dceb15a8ab85348515"
+    },
+    {
+      "path": "src/house_template.cpp",
+      "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+    },
+    {
+      "path": "src/interior_panel.cpp",
+      "sha256": "77669ab7a5445409ba8178e0d3d53e7b75a60e788d406fe81a8237841cb20c69"
+    },
+    {
+      "path": "src/inventory_panel.cpp",
+      "sha256": "2479fc945f77e7a2f27edc9869be679801bbf020f6cade398f4de67d365eda61"
+    },
+    {
+      "path": "src/map_browser.cpp",
+      "sha256": "de17da972db520be64d6b7f0b2bcbad4afa3db7cb76c98463e146d1685cb39dc"
+    },
+    {
+      "path": "src/pause_menu.cpp",
+      "sha256": "14d7ec57132ce043d8600da2f147783c3d9493fbe58de815f4b76b1179e6681e"
+    },
+    {
+      "path": "src/piece_mesh.cpp",
+      "sha256": "3725d0539b0bef3621fd96e28d70943796d59851c3e73ae1331199f39e871d6c"
+    },
+    {
+      "path": "src/placed_props.cpp",
+      "sha256": "4081bda93b92ddec912cbfd331cfa7c0cdaa6084f95b7b7cfc806c9554c51b49"
+    },
+    {
+      "path": "src/planet_map.cpp",
+      "sha256": "94e73b37203df003d01b9109285760bc1cd9ad2be32c398b389147e6a688bb63"
+    },
+    {
+      "path": "src/planet_sky.cpp",
+      "sha256": "551a7a7402af374ee1c8e8563da923ec6d529ff0804ebf2ba15164f460530523"
+    },
+    {
+      "path": "src/refit_panel.cpp",
+      "sha256": "919d34cd8a0df094a6ee490899e9b03b25778f96f0245d1a7ab917772447995d"
+    },
+    {
+      "path": "src/resource_scatter.cpp",
+      "sha256": "28f2375d554f70453e2bed4e3acc4a81171eea6bb00d5492e8d9972fbd297fb4"
+    },
+    {
+      "path": "src/resource_sites.cpp",
+      "sha256": "cbf75192a2419215239a61d2e8d1645781c69b2a8e406ab1dc6099f9b8b4ab10"
+    },
+    {
+      "path": "src/scatter_meshes.cpp",
+      "sha256": "e606d2240b042727b0782f1d9aa82d3e1111a82d6acb334a5cebeff60f3e13ba"
+    },
+    {
+      "path": "src/sea_surface.cpp",
+      "sha256": "11b0edd966e510369be6d0a838cc5216e70a66476aaa0a270a3efdc5c9cef94f"
+    },
+    {
+      "path": "src/shared_looks.cpp",
+      "sha256": "cdc0742427fa883176de8cf371ff7b7e351243877b59823e83f4735636a7c18d"
+    },
+    {
+      "path": "src/ship.cpp",
+      "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
+    },
+    {
+      "path": "src/ship_layout.cpp",
+      "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+    },
+    {
+      "path": "src/style_panel.cpp",
+      "sha256": "0f3d6d0b48eb366bfbdeb4509668db06c8cedbe31a69539428dee13ffd971062"
+    },
+    {
+      "path": "src/terrain_tile.cpp",
+      "sha256": "9fc9e902d9e5419ce474851c0b63f13e27eb20a62175e13481a42f78e69a14ce"
+    },
+    {
+      "path": "src/villager_model.cpp",
+      "sha256": "f2adb0f284fa01b80c344dd69ea2b64e5a66d43bc09445f111e22198f49487fb"
+    },
+    {
+      "path": "src/villagers.cpp",
+      "sha256": "eb722e64c76fa3bdeb6af6c5998795101a4bc8be83e8545de0418ee90dcd89ab"
+    },
+    {
+      "path": "src/weather.cpp",
+      "sha256": "e24b609d9fee60404a52db6690429cfed64af14723db9bb91852ea921ca8ccce"
+    },
+    {
+      "path": "src/world_map.cpp",
+      "sha256": "d0c31ef5788e0f3b9fda7cfc3afe610f2dc6ddacf9e9bae5b351a0f2556b86d4"
+    },
+    {
+      "path": "src/world_resource.cpp",
+      "sha256": "4c3fb96d20fa7d06773474630a523e0af01495af236111a762d32d97c8f5be0a"
+    },
+    {
+      "path": "tools/content-studio/assets-source/README.md",
+      "sha256": "62b9e8803abc68174563cf0158aa20ea8007e81e650f70ab72d566b88ed02a2d"
+    },
+    {
+      "path": "tools/content-studio/public/app.js",
+      "sha256": "5191d7474579e16ec7e0f4f4ca7e47e631336da6678dfab88ff8af8a9cb86331"
+    },
+    {
+      "path": "tools/content-studio/public/assets/models/manifest.json",
+      "sha256": "b5df771b8a056a3957f4b8f57a25dd3522245675c5b99deadfa445d020a76d77"
+    },
+    {
+      "path": "tools/content-studio/public/assets/thumbnails/manifest.json",
+      "sha256": "29b5b1f6c2b794b49ba6cf8816c5d2cb56cff6712299a10818f7eaeaebfd141b"
+    },
+    {
+      "path": "tools/content-studio/public/media.js",
+      "sha256": "caab9377d1d38556d961dbd6e8aec296810b180dc60e784ac8aa21ee66eb8622"
+    }
+  ],
+  "groups": [
+    {
+      "id": "item_icons",
+      "name": "物品图标",
+      "asset_type": "inventory_icon",
+      "requirement_class": "existing_use_site",
+      "priority_proposal": "first",
+      "production_route": "review_existing_then_choose_imagegen_or_model_render",
+      "delivery_profile": "square_icon",
+      "current_state": "tool_reference_exists_game_uses_color_swatches",
+      "source_refs": [
+        "src/crops.cpp",
+        "tools/content-studio/public/assets/thumbnails/manifest.json",
+        "tools/content-studio/assets-source/README.md"
+      ],
+      "use_sites": [
+        "src/inventory_panel.cpp",
+        "src/hotbar_bar.cpp",
+        "tools/content-studio/public/media.js"
+      ],
+      "entry_count": 49,
+      "entries": [
+        {
+          "id": "item.millet",
+          "source_id": "millet",
+          "name": "粟",
+          "subcategory": "food_seed",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#millet"
+        },
+        {
+          "id": "item.bean",
+          "source_id": "bean",
+          "name": "菽",
+          "subcategory": "food_seed",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#bean"
+        },
+        {
+          "id": "item.cloth",
+          "source_id": "cloth",
+          "name": "麻布",
+          "subcategory": "trade_money",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#cloth"
+        },
+        {
+          "id": "item.pottery",
+          "source_id": "pottery",
+          "name": "陶罐",
+          "subcategory": "trade_money",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#pottery"
+        },
+        {
+          "id": "item.lacquer",
+          "source_id": "lacquer",
+          "name": "漆器",
+          "subcategory": "trade_money",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#lacquer"
+        },
+        {
+          "id": "item.coin",
+          "source_id": "coin",
+          "name": "铜钱",
+          "subcategory": "trade_money",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#coin"
+        },
+        {
+          "id": "item.stone",
+          "source_id": "stone",
+          "name": "石料",
+          "subcategory": "stone_soil",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#stone"
+        },
+        {
+          "id": "item.clay",
+          "source_id": "clay",
+          "name": "黏土",
+          "subcategory": "stone_soil",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#clay"
+        },
+        {
+          "id": "item.floatstone",
+          "source_id": "floatstone",
+          "name": "浮石",
+          "subcategory": "stone_soil",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#floatstone"
+        },
+        {
+          "id": "item.timber",
+          "source_id": "timber",
+          "name": "木料",
+          "subcategory": "wood_plant",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#timber"
+        },
+        {
+          "id": "item.firewood",
+          "source_id": "firewood",
+          "name": "柴",
+          "subcategory": "wood_plant",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#firewood"
+        },
+        {
+          "id": "item.gravel",
+          "source_id": "gravel",
+          "name": "砂石",
+          "subcategory": "stone_soil",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#gravel"
+        },
+        {
+          "id": "item.gold_dust",
+          "source_id": "gold_dust",
+          "name": "砂金",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#gold_dust"
+        },
+        {
+          "id": "item.copper_ore",
+          "source_id": "copper_ore",
+          "name": "铜矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#copper_ore"
+        },
+        {
+          "id": "item.iron_ore",
+          "source_id": "iron_ore",
+          "name": "铁矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#iron_ore"
+        },
+        {
+          "id": "item.lead_zinc_ore",
+          "source_id": "lead_zinc_ore",
+          "name": "铅锌矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#lead_zinc_ore"
+        },
+        {
+          "id": "item.gold_ore",
+          "source_id": "gold_ore",
+          "name": "金银矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#gold_ore"
+        },
+        {
+          "id": "item.manganese_ore",
+          "source_id": "manganese_ore",
+          "name": "锰矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#manganese_ore"
+        },
+        {
+          "id": "item.tin_ore",
+          "source_id": "tin_ore",
+          "name": "锡矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#tin_ore"
+        },
+        {
+          "id": "item.chromium_ore",
+          "source_id": "chromium_ore",
+          "name": "铬矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#chromium_ore"
+        },
+        {
+          "id": "item.nickel_ore",
+          "source_id": "nickel_ore",
+          "name": "镍矿石",
+          "subcategory": "ores_placer",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#nickel_ore"
+        },
+        {
+          "id": "item.salt",
+          "source_id": "salt",
+          "name": "盐",
+          "subcategory": "other_minerals",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#salt"
+        },
+        {
+          "id": "item.peat",
+          "source_id": "peat",
+          "name": "泥炭",
+          "subcategory": "wood_plant",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#peat"
+        },
+        {
+          "id": "item.reed",
+          "source_id": "reed",
+          "name": "芦苇",
+          "subcategory": "wood_plant",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#reed"
+        },
+        {
+          "id": "item.sulfur",
+          "source_id": "sulfur",
+          "name": "硫磺",
+          "subcategory": "other_minerals",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#sulfur"
+        },
+        {
+          "id": "item.guano",
+          "source_id": "guano",
+          "name": "鸟粪",
+          "subcategory": "other_minerals",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#guano"
+        },
+        {
+          "id": "item.plank",
+          "source_id": "plank",
+          "name": "木板",
+          "subcategory": "processed",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#plank"
+        },
+        {
+          "id": "item.brick",
+          "source_id": "brick",
+          "name": "砖",
+          "subcategory": "processed",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#brick"
+        },
+        {
+          "id": "item.stone_axe",
+          "source_id": "stone_axe",
+          "name": "石斧",
+          "subcategory": "tools",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#stone_axe"
+        },
+        {
+          "id": "item.stone_pick",
+          "source_id": "stone_pick",
+          "name": "石镐",
+          "subcategory": "tools",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#stone_pick"
+        },
+        {
+          "id": "item.wood_shovel",
+          "source_id": "wood_shovel",
+          "name": "木锹",
+          "subcategory": "tools",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#wood_shovel"
+        },
+        {
+          "id": "item.workbench",
+          "source_id": "workbench",
+          "name": "工作台",
+          "subcategory": "placeables",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#workbench"
+        },
+        {
+          "id": "item.kiln",
+          "source_id": "kiln",
+          "name": "窑",
+          "subcategory": "placeables",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#kiln"
+        },
+        {
+          "id": "item.chest",
+          "source_id": "chest",
+          "name": "木箱",
+          "subcategory": "placeables",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#chest"
+        },
+        {
+          "id": "item.torch",
+          "source_id": "torch",
+          "name": "火把",
+          "subcategory": "placeables",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#torch"
+        },
+        {
+          "id": "item.fence",
+          "source_id": "fence",
+          "name": "篱笆",
+          "subcategory": "placeables",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#fence"
+        },
+        {
+          "id": "item.earth",
+          "source_id": "earth",
+          "name": "土",
+          "subcategory": "stone_soil",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#earth"
+        },
+        {
+          "id": "item.roof_tile",
+          "source_id": "roof_tile",
+          "name": "瓦",
+          "subcategory": "processed",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#roof_tile"
+        },
+        {
+          "id": "item.foundation",
+          "source_id": "foundation",
+          "name": "地基",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#foundation"
+        },
+        {
+          "id": "item.floorboard",
+          "source_id": "floorboard",
+          "name": "楼板",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#floorboard"
+        },
+        {
+          "id": "item.earth_wall",
+          "source_id": "earth_wall",
+          "name": "夯土墙",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#earth_wall"
+        },
+        {
+          "id": "item.brick_wall",
+          "source_id": "brick_wall",
+          "name": "砖墙",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#brick_wall"
+        },
+        {
+          "id": "item.door_wall",
+          "source_id": "door_wall",
+          "name": "门墙",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#door_wall"
+        },
+        {
+          "id": "item.window_wall",
+          "source_id": "window_wall",
+          "name": "窗墙",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#window_wall"
+        },
+        {
+          "id": "item.gable",
+          "source_id": "gable",
+          "name": "山墙",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#gable"
+        },
+        {
+          "id": "item.thatch_roof",
+          "source_id": "thatch_roof",
+          "name": "草顶",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#thatch_roof"
+        },
+        {
+          "id": "item.tile_roof",
+          "source_id": "tile_roof",
+          "name": "瓦顶",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#tile_roof"
+        },
+        {
+          "id": "item.pillar",
+          "source_id": "pillar",
+          "name": "木柱",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#pillar"
+        },
+        {
+          "id": "item.ladder",
+          "source_id": "ladder",
+          "name": "梯子",
+          "subcategory": "pieces",
+          "existing_thumbnail_ref": "tools/content-studio/public/assets/thumbnails/manifest.json#ladder"
+        }
+      ],
+      "note": "49 项已有工具参考图；不代表风格已确认。配方、种子、工具与摆件按物品 ID 复用。"
+    },
+    {
+      "id": "ship_module_previews",
+      "name": "船模块预览",
+      "asset_type": "selection_preview",
+      "requirement_class": "visual_upgrade",
+      "priority_proposal": "first",
+      "production_route": "prefer_model_render_after_style_review",
+      "delivery_profile": "square_preview",
+      "current_state": "procedural_geometry_text_or_grid_ui",
+      "source_refs": [
+        "src/ship_layout.cpp",
+        "tools/content-studio/public/assets/models/manifest.json"
+      ],
+      "use_sites": [
+        "src/refit_panel.cpp"
+      ],
+      "entry_count": 8,
+      "entries": [
+        {
+          "id": "module.bridge",
+          "source_id": "bridge",
+          "name": "驾驶区",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:bridge"
+        },
+        {
+          "id": "module.storage",
+          "source_id": "storage",
+          "name": "储存区",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:storage"
+        },
+        {
+          "id": "module.sail",
+          "source_id": "sail",
+          "name": "帆",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:sail"
+        },
+        {
+          "id": "module.floatstone",
+          "source_id": "floatstone",
+          "name": "浮石舱",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:floatstone"
+        },
+        {
+          "id": "module.deck",
+          "source_id": "deck",
+          "name": "空节",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:deck"
+        },
+        {
+          "id": "module.long_sail",
+          "source_id": "long_sail",
+          "name": "双桅帆",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:long_sail"
+        },
+        {
+          "id": "module.tall_hold",
+          "source_id": "tall_hold",
+          "name": "双层货舱",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:tall_hold"
+        },
+        {
+          "id": "module.wide_deck",
+          "source_id": "wide_deck",
+          "name": "宽空节",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#module:wide_deck"
+        }
+      ],
+      "note": "家具 chest 是柜，区别于物品 chest 木箱。家具已有几何但没有独立模型快照；模块和外壳已有工具快照。"
+    },
+    {
+      "id": "building_previews",
+      "name": "建筑外壳预览",
+      "asset_type": "selection_preview",
+      "requirement_class": "visual_upgrade",
+      "priority_proposal": "later",
+      "production_route": "prefer_model_render_after_style_review",
+      "delivery_profile": "square_preview",
+      "current_state": "procedural_geometry_text_or_grid_ui",
+      "source_refs": [
+        "src/buildings.cpp",
+        "tools/content-studio/public/assets/models/manifest.json"
+      ],
+      "use_sites": [
+        "src/build_panel.cpp"
+      ],
+      "entry_count": 5,
+      "entries": [
+        {
+          "id": "building.house",
+          "source_id": "house",
+          "name": "民居",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#building:house"
+        },
+        {
+          "id": "building.hall",
+          "source_id": "hall",
+          "name": "堂屋",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#building:hall"
+        },
+        {
+          "id": "building.granary",
+          "source_id": "granary",
+          "name": "仓",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#building:granary"
+        },
+        {
+          "id": "building.tower",
+          "source_id": "tower",
+          "name": "望楼",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#building:tower"
+        },
+        {
+          "id": "building.berth",
+          "source_id": "berth",
+          "name": "船台",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#building:berth"
+        }
+      ],
+      "note": "家具 chest 是柜，区别于物品 chest 木箱。家具已有几何但没有独立模型快照；模块和外壳已有工具快照。"
+    },
+    {
+      "id": "furniture_previews",
+      "name": "室内家具预览",
+      "asset_type": "selection_preview",
+      "requirement_class": "visual_upgrade",
+      "priority_proposal": "later",
+      "production_route": "prefer_model_render_after_style_review",
+      "delivery_profile": "square_preview",
+      "current_state": "procedural_geometry_text_or_grid_ui",
+      "source_refs": [
+        "src/house_template.cpp",
+        "tools/content-studio/public/assets/models/manifest.json"
+      ],
+      "use_sites": [
+        "src/interior_panel.cpp"
+      ],
+      "entry_count": 13,
+      "entries": [
+        {
+          "id": "furniture.bed",
+          "source_id": "bed",
+          "name": "床"
+        },
+        {
+          "id": "furniture.stove",
+          "source_id": "stove",
+          "name": "灶"
+        },
+        {
+          "id": "furniture.table",
+          "source_id": "table",
+          "name": "桌"
+        },
+        {
+          "id": "furniture.bench",
+          "source_id": "bench",
+          "name": "长凳"
+        },
+        {
+          "id": "furniture.chest",
+          "source_id": "chest",
+          "name": "柜"
+        },
+        {
+          "id": "furniture.vat",
+          "source_id": "vat",
+          "name": "水缸"
+        },
+        {
+          "id": "furniture.bin",
+          "source_id": "bin",
+          "name": "粮囤"
+        },
+        {
+          "id": "furniture.altar",
+          "source_id": "altar",
+          "name": "供桌"
+        },
+        {
+          "id": "furniture.loom",
+          "source_id": "loom",
+          "name": "织机"
+        },
+        {
+          "id": "furniture.shelf",
+          "source_id": "shelf",
+          "name": "架子"
+        },
+        {
+          "id": "furniture.sacks",
+          "source_id": "sacks",
+          "name": "麻袋"
+        },
+        {
+          "id": "furniture.drum",
+          "source_id": "drum",
+          "name": "鼓"
+        },
+        {
+          "id": "furniture.mat",
+          "source_id": "mat",
+          "name": "席"
+        }
+      ],
+      "note": "家具 chest 是柜，区别于物品 chest 木箱。家具已有几何但没有独立模型快照；模块和外壳已有工具快照。"
+    },
+    {
+      "id": "resource_map_symbols",
+      "name": "资源地图符号",
+      "asset_type": "map_symbol",
+      "requirement_class": "visual_upgrade",
+      "priority_proposal": "later",
+      "production_route": "prefer_vector_or_procedural",
+      "delivery_profile": "small_symbol",
+      "current_state": "colored_geometric_markers_and_legend",
+      "source_refs": [
+        "src/deposit_kinds.cpp"
+      ],
+      "use_sites": [
+        "src/world_map.cpp"
+      ],
+      "entry_count": 16,
+      "entries": [
+        {
+          "id": "map.resource.timber",
+          "source_id": "timber",
+          "name": "林木"
+        },
+        {
+          "id": "map.resource.spring",
+          "source_id": "spring",
+          "name": "泉眼"
+        },
+        {
+          "id": "map.resource.clay",
+          "source_id": "clay",
+          "name": "黏土"
+        },
+        {
+          "id": "map.resource.peat",
+          "source_id": "peat",
+          "name": "泥炭 / 芦苇"
+        },
+        {
+          "id": "map.resource.gravel",
+          "source_id": "gravel",
+          "name": "砂砾"
+        },
+        {
+          "id": "map.resource.placer",
+          "source_id": "placer",
+          "name": "砂金"
+        },
+        {
+          "id": "map.resource.stone",
+          "source_id": "stone",
+          "name": "石料"
+        },
+        {
+          "id": "map.resource.floatstone",
+          "source_id": "floatstone",
+          "name": "浮石"
+        },
+        {
+          "id": "map.resource.ore",
+          "source_id": "ore",
+          "name": "金属矿"
+        },
+        {
+          "id": "map.resource.hotspring",
+          "source_id": "hotspring",
+          "name": "温泉"
+        },
+        {
+          "id": "map.resource.sulfur",
+          "source_id": "sulfur",
+          "name": "硫磺"
+        },
+        {
+          "id": "map.resource.cave",
+          "source_id": "cave",
+          "name": "洞穴"
+        },
+        {
+          "id": "map.resource.guano",
+          "source_id": "guano",
+          "name": "鸟粪石"
+        },
+        {
+          "id": "map.resource.salt",
+          "source_id": "salt",
+          "name": "岩盐"
+        },
+        {
+          "id": "map.resource.saltspring",
+          "source_id": "saltspring",
+          "name": "盐泉"
+        },
+        {
+          "id": "map.resource.fossil",
+          "source_id": "fossil",
+          "name": "贝壳化石"
+        }
+      ],
+      "note": "16 个资源语义，点/片/散的显示不同；不等于 16 类库存物品，也不按状态重复生产。"
+    },
+    {
+      "id": "map_navigation",
+      "name": "地图导航符号",
+      "asset_type": "map_symbol_family",
+      "requirement_class": "visual_upgrade",
+      "priority_proposal": "later",
+      "production_route": "prefer_vector_or_procedural",
+      "delivery_profile": "small_symbol",
+      "current_state": "runtime_geometry",
+      "source_refs": [
+        "src/world_map.cpp",
+        "src/planet_map.cpp"
+      ],
+      "use_sites": [
+        "src/map_browser.cpp",
+        "src/world_map.cpp",
+        "src/planet_map.cpp"
+      ],
+      "entry_count": 8,
+      "entries": [
+        {
+          "id": "map.navigation.player",
+          "name": "玩家位置与朝向"
+        },
+        {
+          "id": "map.navigation.village",
+          "name": "村落"
+        },
+        {
+          "id": "map.navigation.seat",
+          "name": "邑治"
+        },
+        {
+          "id": "map.navigation.dock",
+          "name": "码头"
+        },
+        {
+          "id": "map.navigation.main_dock",
+          "name": "主码头"
+        },
+        {
+          "id": "map.navigation.destination",
+          "name": "目的码头"
+        },
+        {
+          "id": "map.navigation.planet",
+          "name": "行星目标与航线",
+          "variants": [
+            "当前岛群",
+            "选中目标",
+            "已准备",
+            "生成进度",
+            "航线",
+            "岛群类别"
+          ]
+        },
+        {
+          "id": "map.navigation.overlays",
+          "name": "共用状态覆盖层",
+          "variants": [
+            "已实例化",
+            "可泊",
+            "当前目标"
+          ]
+        }
+      ],
+      "note": "条目是符号或符号族。朝向、进度与状态由绘制参数控制，不是预渲染帧。"
+    },
+    {
+      "id": "gather_source_references",
+      "name": "场景采集源参考",
+      "asset_type": "model_reference",
+      "requirement_class": "conditional",
+      "priority_proposal": "later",
+      "production_route": "concept_then_model_or_procedural_geometry",
+      "delivery_profile": "model_reference",
+      "current_state": "procedural_models_snapshot_exists",
+      "source_refs": [
+        "src/deposit_kinds.cpp",
+        "src/scatter_meshes.cpp",
+        "tools/content-studio/public/assets/models/manifest.json"
+      ],
+      "use_sites": [
+        "src/resource_scatter.cpp"
+      ],
+      "entry_count": 20,
+      "entries": [
+        {
+          "id": "reference.scatter.broadleaf",
+          "name": "阔叶树",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:broadleaf"
+        },
+        {
+          "id": "reference.scatter.conifer",
+          "name": "针叶树",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:conifer"
+        },
+        {
+          "id": "reference.scatter.shrub",
+          "name": "灌丛",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:shrub"
+        },
+        {
+          "id": "reference.scatter.reeds",
+          "name": "芦苇",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:reeds"
+        },
+        {
+          "id": "reference.scatter.boulder",
+          "name": "石块",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:boulder"
+        },
+        {
+          "id": "reference.scatter.floatstone",
+          "name": "浮石块",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:floatstone"
+        },
+        {
+          "id": "reference.scatter.clay_bank",
+          "name": "黏土坡",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:clay_bank"
+        },
+        {
+          "id": "reference.scatter.gravel_heap",
+          "name": "砂砾堆",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:gravel_heap"
+        },
+        {
+          "id": "reference.scatter.placer",
+          "name": "淘金沙",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:placer"
+        },
+        {
+          "id": "reference.scatter.ore_rock",
+          "name": "铜矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock"
+        },
+        {
+          "id": "reference.scatter.crust",
+          "name": "硫磺结壳",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:crust"
+        },
+        {
+          "id": "reference.scatter.reeds_peat",
+          "name": "泥炭",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:reeds_peat"
+        },
+        {
+          "id": "reference.scatter.crust_guano",
+          "name": "鸟粪",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:crust_guano"
+        },
+        {
+          "id": "reference.scatter.ore_rock_iron_ore",
+          "name": "铁矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock_iron_ore"
+        },
+        {
+          "id": "reference.scatter.ore_rock_lead_zinc_ore",
+          "name": "铅锌矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock_lead_zinc_ore"
+        },
+        {
+          "id": "reference.scatter.ore_rock_gold_ore",
+          "name": "金银矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock_gold_ore"
+        },
+        {
+          "id": "reference.scatter.ore_rock_manganese_ore",
+          "name": "锰矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock_manganese_ore"
+        },
+        {
+          "id": "reference.scatter.ore_rock_tin_ore",
+          "name": "锡矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock_tin_ore"
+        },
+        {
+          "id": "reference.scatter.ore_rock_chromium_ore",
+          "name": "铬矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock_chromium_ore"
+        },
+        {
+          "id": "reference.scatter.ore_rock_nickel_ore",
+          "name": "镍矿石",
+          "existing_model_ref": "tools/content-studio/public/assets/models/manifest.json#scatter:ore_rock_nickel_ore"
+        }
+      ],
+      "note": "20 个已存快照，不含所有采尽/恢复、季节与 LOD 状态；库存原料图片不能代替采集源。"
+    },
+    {
+      "id": "resource_site_references",
+      "name": "固定采场与地标参考",
+      "asset_type": "model_reference",
+      "requirement_class": "conditional",
+      "priority_proposal": "later",
+      "production_route": "concept_then_model_or_procedural_geometry",
+      "delivery_profile": "model_reference",
+      "current_state": "procedural_site_visuals",
+      "source_refs": [
+        "src/deposit_kinds.cpp",
+        "src/world_resource.cpp"
+      ],
+      "use_sites": [
+        "src/world_resource.cpp",
+        "src/resource_sites.cpp"
+      ],
+      "entry_count": 12,
+      "entries": [
+        {
+          "id": "reference.site.spring",
+          "source_id": "spring",
+          "name": "泉眼"
+        },
+        {
+          "id": "reference.site.clay",
+          "source_id": "clay",
+          "name": "黏土"
+        },
+        {
+          "id": "reference.site.gravel",
+          "source_id": "gravel",
+          "name": "砂砾"
+        },
+        {
+          "id": "reference.site.placer",
+          "source_id": "placer",
+          "name": "砂金"
+        },
+        {
+          "id": "reference.site.stone",
+          "source_id": "stone",
+          "name": "石料"
+        },
+        {
+          "id": "reference.site.ore",
+          "source_id": "ore",
+          "name": "金属矿"
+        },
+        {
+          "id": "reference.site.hotspring",
+          "source_id": "hotspring",
+          "name": "温泉"
+        },
+        {
+          "id": "reference.site.sulfur",
+          "source_id": "sulfur",
+          "name": "硫磺"
+        },
+        {
+          "id": "reference.site.cave",
+          "source_id": "cave",
+          "name": "洞穴"
+        },
+        {
+          "id": "reference.site.salt",
+          "source_id": "salt",
+          "name": "岩盐"
+        },
+        {
+          "id": "reference.site.saltspring",
+          "source_id": "saltspring",
+          "name": "盐泉"
+        },
+        {
+          "id": "reference.site.fossil",
+          "source_id": "fossil",
+          "name": "贝壳化石"
+        }
+      ],
+      "note": "7 个散类采场与 5 个点类地标。绘制设施与地面关系，不改源位置、产物或供水规则。"
+    },
+    {
+      "id": "shared_materials",
+      "name": "建筑与器物共享材质",
+      "asset_type": "material_semantic",
+      "requirement_class": "conditional",
+      "priority_proposal": "after_technical_sample",
+      "production_route": "decide_palette_atlas_or_tileable_material",
+      "delivery_profile": "material_pending_mapping",
+      "current_state": "base_color_and_roughness",
+      "source_refs": [
+        "src/building_parts.h",
+        "src/building_mesh.cpp",
+        "src/shared_looks.cpp",
+        "src/curved_material.cpp"
+      ],
+      "use_sites": [
+        "src/building_mesh.cpp",
+        "src/piece_mesh.cpp",
+        "src/placed_props.cpp"
+      ],
+      "entry_count": 12,
+      "entries": [
+        {
+          "id": "material.STONE",
+          "source_id": "STONE",
+          "name": "台基石与台阶石"
+        },
+        {
+          "id": "material.WALL",
+          "source_id": "WALL",
+          "name": "夯土墙面"
+        },
+        {
+          "id": "material.FLOOR",
+          "source_id": "FLOOR",
+          "name": "木地板与楼板"
+        },
+        {
+          "id": "material.WOOD",
+          "source_id": "WOOD",
+          "name": "普通木材"
+        },
+        {
+          "id": "material.DARK_WOOD",
+          "source_id": "DARK_WOOD",
+          "name": "深色木材"
+        },
+        {
+          "id": "material.ROOF",
+          "source_id": "ROOF",
+          "name": "灰瓦屋面"
+        },
+        {
+          "id": "material.CLAY",
+          "source_id": "CLAY",
+          "name": "陶与泥"
+        },
+        {
+          "id": "material.CLOTH",
+          "source_id": "CLOTH",
+          "name": "麻布与织物"
+        },
+        {
+          "id": "material.STRAW",
+          "source_id": "STRAW",
+          "name": "草编与草顶"
+        },
+        {
+          "id": "material.GRAIN",
+          "source_id": "GRAIN",
+          "name": "粮食表面"
+        },
+        {
+          "id": "material.LACQUER",
+          "source_id": "LACQUER",
+          "name": "漆面"
+        },
+        {
+          "id": "material.BRICK",
+          "source_id": "BRICK",
+          "name": "砖墙"
+        }
+      ],
+      "note": "12 个材质语义，不等于 12 套 PBR；可共用或保留纯色。通道和映射方案尚未确定。"
+    },
+    {
+      "id": "terrain_surfaces",
+      "name": "地表语义",
+      "asset_type": "surface_semantic",
+      "requirement_class": "conditional",
+      "priority_proposal": "after_technical_sample",
+      "production_route": "decide_shared_detail_textures_without_changing_source_data",
+      "delivery_profile": "material_pending_mapping",
+      "current_state": "source_data_vertex_color_and_shaders",
+      "source_refs": [
+        "game/planet/seed42/groups/6068/world.json",
+        "src/cover_blend.h",
+        "src/terrain_tile.cpp"
+      ],
+      "use_sites": [
+        "game/shaders/ground.gdshader",
+        "game/shaders/river.gdshader"
+      ],
+      "entry_count": 11,
+      "entries": [
+        {
+          "id": "terrain.landcover.1",
+          "source_id": 1,
+          "name": "崖缘"
+        },
+        {
+          "id": "terrain.landcover.2",
+          "source_id": 2,
+          "name": "裸岩"
+        },
+        {
+          "id": "terrain.landcover.3",
+          "source_id": 3,
+          "name": "高山草甸"
+        },
+        {
+          "id": "terrain.landcover.4",
+          "source_id": 4,
+          "name": "林地"
+        },
+        {
+          "id": "terrain.landcover.5",
+          "source_id": 5,
+          "name": "灌丛"
+        },
+        {
+          "id": "terrain.landcover.6",
+          "source_id": 6,
+          "name": "草坡"
+        },
+        {
+          "id": "terrain.landcover.7",
+          "source_id": 7,
+          "name": "可耕地"
+        },
+        {
+          "id": "terrain.landcover.8",
+          "source_id": 8,
+          "name": "梯田"
+        },
+        {
+          "id": "terrain.landcover.9",
+          "source_id": 9,
+          "name": "湿地"
+        },
+        {
+          "id": "terrain.landcover.10",
+          "source_id": 10,
+          "name": "河道"
+        },
+        {
+          "id": "terrain.landcover.11",
+          "source_id": 11,
+          "name": "湖"
+        }
+      ],
+      "note": "11 个非虚空类别不直接对应 11 张贴图；河湖水面与岸床分开，季相及水线由运行时决定。"
+    },
+    {
+      "id": "additional_surface_candidates",
+      "name": "其他表面候选",
+      "asset_type": "material_candidate",
+      "requirement_class": "conditional",
+      "priority_proposal": "after_technical_sample",
+      "production_route": "share_existing_materials_first_then_review_need",
+      "delivery_profile": "material_pending_mapping",
+      "current_state": "no_approved_texture_spec",
+      "source_refs": [
+        "src/ship.cpp",
+        "src/scatter_meshes.cpp",
+        "src/villagers.cpp",
+        "src/terrain_tile.cpp"
+      ],
+      "use_sites": [
+        "src/ship.cpp",
+        "src/villagers.cpp",
+        "src/resource_scatter.cpp"
+      ],
+      "entry_count": 7,
+      "entries": [
+        {
+          "id": "surface.candidate.rope",
+          "name": "绳与绑扎"
+        },
+        {
+          "id": "surface.candidate.metal",
+          "name": "金属器具表面"
+        },
+        {
+          "id": "surface.candidate.skin",
+          "name": "皮肤"
+        },
+        {
+          "id": "surface.candidate.bark",
+          "name": "树皮"
+        },
+        {
+          "id": "surface.candidate.foliage",
+          "name": "叶片与枝叶图集"
+        },
+        {
+          "id": "surface.candidate.natural_rock",
+          "name": "源岩性岩面与岛壁岛底"
+        },
+        {
+          "id": "surface.candidate.floatstone",
+          "name": "浮石表面"
+        }
+      ],
+      "note": "不假定当前模型具备所有候选细节；须先确定造型、映射与渲染方式。"
+    },
+    {
+      "id": "crop_references",
+      "name": "作物造型参考",
+      "asset_type": "model_reference",
+      "requirement_class": "conditional",
+      "priority_proposal": "later",
+      "production_route": "concept_then_procedural_geometry_or_model",
+      "delivery_profile": "model_reference",
+      "current_state": "four_procedural_visual_stages_per_crop",
+      "source_refs": [
+        "src/crops.cpp",
+        "src/farm.cpp",
+        "src/farm_model.h"
+      ],
+      "use_sites": [
+        "src/farm.cpp"
+      ],
+      "entry_count": 2,
+      "entries": [
+        {
+          "id": "reference.crop.millet",
+          "source_id": "millet",
+          "name": "粟",
+          "visual_stage_count": 4
+        },
+        {
+          "id": "reference.crop.bean",
+          "source_id": "bean",
+          "name": "菽",
+          "visual_stage_count": 4
+        }
+      ],
+      "note": "每种四阶段，参考张数待定；粮种图标仍只复用相应物品图。"
+    },
+    {
+      "id": "character_references",
+      "name": "人物造型参考",
+      "asset_type": "model_reference",
+      "requirement_class": "conditional",
+      "priority_proposal": "later",
+      "production_route": "concept_then_model_and_animation",
+      "delivery_profile": "model_reference",
+      "current_state": "simplified_procedural_characters",
+      "source_refs": [
+        "game/player.tscn",
+        "src/villagers.cpp",
+        "src/villager_model.cpp"
+      ],
+      "use_sites": [
+        "game/player.tscn",
+        "src/villagers.cpp"
+      ],
+      "entry_count": 5,
+      "entries": [
+        {
+          "id": "reference.character.player",
+          "name": "主角"
+        },
+        {
+          "id": "reference.character.farmer",
+          "source_id": "farmer",
+          "name": "农"
+        },
+        {
+          "id": "reference.character.carrier",
+          "source_id": "carrier",
+          "name": "挑水"
+        },
+        {
+          "id": "reference.character.watchman",
+          "source_id": "watchman",
+          "name": "守望"
+        },
+        {
+          "id": "reference.character.idler",
+          "source_id": "idler",
+          "name": "闲"
+        }
+      ],
+      "note": "4 项村民工作身份可以共用人物基础；目前没有独立头像/立绘界面。"
+    },
+    {
+      "id": "ui_families",
+      "name": "共享界面资源族",
+      "asset_type": "ui_family",
+      "requirement_class": "visual_upgrade",
+      "priority_proposal": "later",
+      "production_route": "prefer_shared_vector_or_procedural_components_render_templates",
+      "delivery_profile": "ui_component",
+      "current_state": "code_drawn_geometry_and_text",
+      "source_refs": [
+        "src/inventory_panel.cpp",
+        "src/hotbar_bar.cpp",
+        "src/refit_panel.cpp",
+        "src/interior_panel.cpp",
+        "src/style_panel.cpp",
+        "src/dev_works_panel.cpp",
+        "src/pause_menu.cpp",
+        "src/weather.cpp",
+        "tools/content-studio/public/app.js"
+      ],
+      "use_sites": [
+        "src/expedition.cpp",
+        "src/dev_tools.cpp",
+        "tools/content-studio/public/app.js"
+      ],
+      "entry_count": 10,
+      "entries": [
+        {
+          "id": "ui.panels",
+          "name": "面板与窗口",
+          "semantics": [
+            "主面板",
+            "标题区",
+            "提示浮层",
+            "分隔装饰"
+          ]
+        },
+        {
+          "id": "ui.slots",
+          "name": "槽位与选择态",
+          "semantics": [
+            "普通",
+            "空槽",
+            "悬停",
+            "焦点",
+            "选中",
+            "不可操作"
+          ]
+        },
+        {
+          "id": "ui.buttons",
+          "name": "按钮与列表",
+          "semantics": [
+            "普通",
+            "悬停",
+            "按下",
+            "禁用",
+            "选中"
+          ]
+        },
+        {
+          "id": "ui.commands",
+          "name": "常用操作符号",
+          "semantics": [
+            "搜索",
+            "关闭",
+            "返回",
+            "展开收起",
+            "保存",
+            "导入导出",
+            "删除",
+            "刷新"
+          ]
+        },
+        {
+          "id": "ui.interaction",
+          "name": "准星与交互反馈",
+          "semantics": [
+            "准星",
+            "可交互",
+            "成功",
+            "警示",
+            "失败"
+          ]
+        },
+        {
+          "id": "ui.input",
+          "name": "键鼠提示",
+          "semantics": [
+            "键帽",
+            "鼠标按键",
+            "滚轮"
+          ]
+        },
+        {
+          "id": "ui.actions",
+          "name": "农事与营造动作",
+          "semantics": [
+            "开垦",
+            "播种",
+            "收获",
+            "挖掘",
+            "垒高",
+            "放置",
+            "旋转",
+            "拆除",
+            "墙",
+            "门",
+            "窗",
+            "梯子"
+          ]
+        },
+        {
+          "id": "ui.weather_time",
+          "name": "天气与时间候选",
+          "semantics": [
+            "晴",
+            "多云",
+            "小雨",
+            "大雨",
+            "云海漫顶",
+            "风暴",
+            "小雪",
+            "大雪",
+            "暴风雪",
+            "昼夜",
+            "四季"
+          ]
+        },
+        {
+          "id": "ui.ship_freight",
+          "name": "船况与物流符号",
+          "semantics": [
+            "船舱",
+            "货位",
+            "载货",
+            "速度",
+            "升降"
+          ]
+        },
+        {
+          "id": "ui.templates",
+          "name": "真实模板与样式预览",
+          "semantics": [
+            "整座样式",
+            "房屋模板"
+          ]
+        }
+      ],
+      "note": "条目是资源族，不是张数；天气图标栏等未有现成页面。动态文字、数字与键位不烘入图像。"
+    },
+    {
+      "id": "effects",
+      "name": "效果资源族",
+      "asset_type": "effect_family",
+      "requirement_class": "conditional",
+      "priority_proposal": "later",
+      "production_route": "preserve_procedural_default_optional_alpha_or_sequence_after_review",
+      "delivery_profile": "effect_pending_rendering",
+      "current_state": "procedural_geometry_particles_or_shaders",
+      "source_refs": [
+        "src/atmosphere.cpp",
+        "src/placed_props.cpp",
+        "src/world_resource.cpp",
+        "src/sea_surface.cpp",
+        "src/planet_sky.cpp",
+        "src/cloud_band.cpp"
+      ],
+      "use_sites": [
+        "game/shaders/river.gdshader",
+        "game/shaders/sea.gdshader",
+        "game/shaders/sky.gdshader"
+      ],
+      "entry_count": 5,
+      "entries": [
+        {
+          "id": "effect.rain_snow",
+          "name": "雨雪"
+        },
+        {
+          "id": "effect.fire",
+          "name": "火与照明"
+        },
+        {
+          "id": "effect.steam",
+          "name": "温泉水汽"
+        },
+        {
+          "id": "effect.water",
+          "name": "河面与海面"
+        },
+        {
+          "id": "effect.sky_clouds",
+          "name": "天空与云海"
+        }
+      ],
+      "note": "不预设帧数或逐帧生图；海浪法线已有程序烘焙。"
+    },
+    {
+      "id": "scene_references",
+      "name": "整体场景风格参考",
+      "asset_type": "scene_reference",
+      "requirement_class": "conditional",
+      "priority_proposal": "style_sample",
+      "production_route": "concept_reference_only",
+      "delivery_profile": "scene_reference",
+      "current_state": "existing_3d_world_no_approved_style",
+      "source_refs": [
+        "README.md",
+        "src/ship.cpp",
+        "src/dock_builder.cpp",
+        "src/building_parts.cpp",
+        "src/terrain_tile.cpp",
+        "src/planet_sky.cpp"
+      ],
+      "use_sites": [
+        "src/expedition.cpp"
+      ],
+      "entry_count": 6,
+      "entries": [
+        {
+          "id": "reference.scene.airship",
+          "name": "空艇整体与船舱"
+        },
+        {
+          "id": "reference.scene.harbor",
+          "name": "码头与船台"
+        },
+        {
+          "id": "reference.scene.village",
+          "name": "聚落与农田"
+        },
+        {
+          "id": "reference.scene.interior",
+          "name": "建筑室内"
+        },
+        {
+          "id": "reference.scene.island",
+          "name": "岛上近景与岛体"
+        },
+        {
+          "id": "reference.scene.far_world",
+          "name": "云海海面远群与行星"
+        }
+      ],
+      "note": "用于统一尺度、细节与色彩，不取代真实场景或生成器数据。"
+    },
+    {
+      "id": "illustration_candidates",
+      "name": "展示图片候选",
+      "asset_type": "illustration_candidate",
+      "requirement_class": "future_candidate",
+      "priority_proposal": "later",
+      "production_route": "define_screen_then_choose_imagegen_screenshot_or_design",
+      "delivery_profile": "illustration_pending_layout",
+      "current_state": "no_approved_image_slot",
+      "source_refs": [
+        "game/boot.gd",
+        "src/pause_menu.cpp",
+        "src/dev_tools.cpp",
+        "README.md"
+      ],
+      "use_sites": [],
+      "entry_count": 5,
+      "entries": [
+        {
+          "id": "illustration.candidate.title",
+          "name": "标题标志与背景"
+        },
+        {
+          "id": "illustration.candidate.loading",
+          "name": "加载与世界选择"
+        },
+        {
+          "id": "illustration.candidate.story",
+          "name": "剧情与立绘"
+        },
+        {
+          "id": "illustration.candidate.tutorial",
+          "name": "教程说明"
+        },
+        {
+          "id": "illustration.candidate.promotion",
+          "name": "宣传与发布图片"
+        }
+      ],
+      "note": "启动直接进世界；未有独立标题/对话立绘入口。教程优先实景截图，正式名称和页面布局待定。"
+    },
+    {
+      "id": "procedural_exclusions",
+      "name": "保留数据与程序产物",
+      "asset_type": "technical_data_family",
+      "requirement_class": "excluded",
+      "priority_proposal": "later",
+      "production_route": "data_or_program_generated_exclude_from_imagegen",
+      "delivery_profile": "runtime_data",
+      "current_state": "runtime_or_export_generated",
+      "source_refs": [
+        "docs/PROJECT-CONTEXT.md",
+        "docs/NONRIVER-DATA.md"
+      ],
+      "use_sites": [],
+      "entry_count": 6,
+      "entries": [
+        {
+          "id": "procedural.terrain_data",
+          "name": "地形高度岸距岩性资源栅格",
+          "source_refs": [
+            "src/world_grid.cpp"
+          ]
+        },
+        {
+          "id": "procedural.map_backdrops",
+          "name": "地图底图与岛群粗图",
+          "source_refs": [
+            "src/world_map.cpp",
+            "src/map_browser.cpp"
+          ]
+        },
+        {
+          "id": "procedural.planet_surface",
+          "name": "行星表面纹理",
+          "source_refs": [
+            "src/planet_surface.cpp"
+          ]
+        },
+        {
+          "id": "procedural.weather_fields",
+          "name": "天气与季相数据纹理",
+          "source_refs": [
+            "src/atmosphere.cpp",
+            "src/planet_weather.cpp"
+          ]
+        },
+        {
+          "id": "procedural.atmosphere_lut",
+          "name": "大气查找表",
+          "source_refs": [
+            "src/atmosphere.cpp",
+            "src/planet_sky.cpp"
+          ]
+        },
+        {
+          "id": "procedural.wave_normals",
+          "name": "海浪法线",
+          "source_refs": [
+            "src/sea_surface.cpp"
+          ]
+        }
+      ],
+      "note": "可登记来源，不进入 AI 生图队列。"
+    }
+  ]
+}
