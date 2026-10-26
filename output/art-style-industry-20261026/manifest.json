@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-26",
+  "status": "工业场景美术探索，待用户选择，非正式资产",
+  "tool": "built-in image_gen",
+  "scope": "比较上一轮E1精绘日式与E3成熟绘画两种方向在机械化工厂中的表现",
+  "images": [
+    {
+      "id": "I1",
+      "name": "精绘日式三维",
+      "file": "I1-painted-jrpg-industry.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-e985d6da-74e2-40fc-905c-66919891f9d4.png",
+      "style_reference": "D:\\Project\\My\\Zhouzhu\\output\\art-style-three-distances-20261025\\E1-painted-jrpg-board.png"
+    },
+    {
+      "id": "I3",
+      "name": "成熟绘画式三维",
+      "file": "I3-painterly-industry.png",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a1760e-1e8c-7ac0-afee-83bad6122b28\\exec-8f15d817-5e06-4aeb-a12b-be63d176a817.png",
+      "style_reference": "D:\\Project\\My\\Zhouzhu\\output\\art-style-three-distances-20261025\\E3-painterly-board.png"
+    }
+  ],
+  "panel_layout": {
+    "top": "工厂、生产装运与空艇货站全景",
+    "bottom_left": "机床工坊内的零件检验与人物中景",
+    "bottom_right": "轴承、钢轴、皮带轮及安装底座的材料近景"
+  },
+  "technical_sources": [
+    {
+      "title": "Smithsonian：Counter Shaft and Belt Shifter",
+      "url": "https://www.si.edu/object/counter-shaft-and-belt-shifter%3Anmah_845995",
+      "use": "传动轴、分轴与平皮带把主动力分配给多台机床的原理参考；不复用藏品图片。"
+    },
+    {
+      "title": "Tekniska museet：Mechanical Workshop",
+      "url": "https://www.tekniskamuseet.se/en/discover/exhibitions/previous-exhibitions/mechanical-workshop/",
+      "use": "车床、钻床及屋顶轴系/皮带传动、自然采光的机械工坊参考；不决定州渚的能源或历史年代。"
+    }
+  ],
+  "provisional_assumptions": [
+    "本轮采用船用构件加工厂、机床、传动轴与平皮带、短轨货车和装船门架作为视觉样本。",
+    "主动力源在画外；未确定水力、蒸汽、电力等具体能源或技术路线。",
+    "文化根基延续东亚普通生活材料，制造厂为工业演进样本；不据图片确定最终时代、地域或生产配方。"
+  ],
+  "limitations": [
+    "图像为美术设定板，不是实际引擎画面或已验证机械工程方案。",
+    "两套功能类型、近似规模和天气一致，独立生成导致布局、零件数量、船型、人物与细节有差异。",
+    "局部斑驳和碎面感仍偏重，不是目标规范；图中的小型背景建筑不视为已定世界设定。",
+    "本轮验证的是一个轴系机械化阶段的静态兼容性，未覆盖所有未来工业阶段、夜景、室内动态与性能。"
+  ]
+}
