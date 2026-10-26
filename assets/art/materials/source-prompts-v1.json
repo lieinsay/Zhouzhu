@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "tool": "built-in image_gen",
+  "transparent_background": false,
+  "styleId": "painted-jrpg-3d-v1",
+  "channels": "base color only; no inferred PBR channels",
+  "materials": [
+    {
+      "id": "wood",
+      "prompt": "Use case: stylized-concept. Asset type: seamless base-color surface texture for painted Japanese-style 3D game Zhouzhu. Subject: a continuous close-up surface of plain warm light brown timber grain, naturally elongated flowing fibers along the vertical image axis, a few restrained fine growth lines, no plank separations. Flat orthographic surface scan, no object perspective, no framing. Hand-painted material quality with clean broad areas and a little selectively drawn grain, not a photograph; reduced mottling, no scratches or debris. The square represents 0.5 by 0.5 meters of wood surface. True seamless tiling on both axes, edge features continue smoothly into opposite edge. Entire image is the material; no margins. Uniform diffuse color only, absolutely no directional light, cast shadows, highlights, AO, edge bevel, knots that look like holes, snow, water, seasonal color, writing or decoration. Natural restrained warm tan values, modest variation for multiplication into existing runtime albedo. Output square image.",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-5e6ad94b-a8f1-43ef-959a-486f1215b442.png"
+    },
+    {
+      "id": "rammed_earth",
+      "prompt": "Use case: stylized-concept. Asset type: seamless base-color texture for painted Japanese-style 3D game Zhouzhu. Subject: a close-up continuous surface of compacted warm ochre rammed earth wall, fine clay grains, subtle wide horizontal compaction bands, soft restrained hand-painted material variation. The square covers 1 by 1 meter. Flat orthographic surface scan, no perspective, no wall edges, no surrounding objects or framing. Seamless tiling on both axes, opposite edges continue smoothly. Uniform diffuse base color ONLY: no directional sunlight, no highlight, no cast shadow, no AO, no bevels, no damp stains, no erosion cracks, no snow, plants, weather, season or text. Detailed but calm, no excessive mottling or gritty noise, coherent clear broad values, selected subtle surface strokes. Entire canvas is material, no margins.",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-fda7bc5d-875d-4b95-9768-cdeb9295c544.png"
+    },
+    {
+      "id": "terracotta",
+      "prompt": "Use case: stylized-concept. Asset type: seamless diffuse base-color texture for painted Japanese-style 3D game Zhouzhu. Subject: a continuous close-up unglazed warm red ochre terracotta surface, fine clay grain with very restrained shallow firing speckles and subtle even hue variation, calm broad planes. Flat orthographic surface scan, square covers 0.5 by 0.5 meters. Delicate hand-painted material, not a photorealistic macro. Entire canvas is material, seamless on both axes with matching opposite edges. No object, vessel rim, turning grooves, cracks, writing, decoration, perspective, directional light, highlights, cast shadow, AO, bevels, snow, moisture or weather. Uniform diffuse base color, gentle restrained detail suitable for existing real-time lighting.",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-6ddf4703-6a01-4e0e-8b94-23197a789cdd.png"
+    },
+    {
+      "id": "iron",
+      "prompt": "Use case: stylized-concept. Asset type: seamless diffuse base-color texture for painted Japanese-style 3D game Zhouzhu. Subject: a continuous plain dark gray forged iron surface, restrained fine hammered material grain and very slight natural tone variation; orderly, maintained practical iron, no heavy rust, no scratches, no bolts or seams. Flat orthographic surface scan, square represents 0.5 by 0.5 meters. Delicate selective hand-painted texture. Seamless tiling across both axes, matching opposite edges, entire canvas filled. Base color ONLY, no reflected scenery, no baked specular highlights, no directional gradient, no light source, no cast shadows, no AO, no bevel, no text, border, snow, water, season or weather. Metal reflections and roughness will be controlled in the real-time shader, not painted into this image.",
+      "source": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-24bc0318-3095-47b1-9bee-d07b437a8674.png"
+    }
+  ]
+}

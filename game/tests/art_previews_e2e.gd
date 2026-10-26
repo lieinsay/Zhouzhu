@@ -4,6 +4,7 @@ var main: Expedition
 var output := ""
 var failed := false
 var checked := {}
+var mapped_surfaces := {}
 
 func frames(count: int) -> void:
 	for i in count: await get_tree().physics_frame
@@ -40,6 +41,15 @@ func _ready() -> void:
 	check(not is_nan(spot.y),"可放房屋的测试地")
 	check(settlement.place("house",spot,0,"sanjian")=="","安排真实房屋")
 	await frames(5)
+	for found in settlement.find_children("*","MeshInstance3D",true,false):
+		var node:=found as MeshInstance3D
+		if node.mesh==null:continue
+		for surface in node.mesh.get_surface_count():
+			var material: Material=node.get_surface_override_material(surface)
+			if material==null:material=node.mesh.surface_get_material(surface)
+			if material is ShaderMaterial and material.get_shader_parameter("surface_enabled")==true:
+				var texture: Texture2D=material.get_shader_parameter("surface_tex")
+				if texture!=null:mapped_surfaces[texture.resource_path]=true
 	check(main.teleport_to(spot),"移动到房屋")
 	await frames(5);await tap("build_mode")
 	check(main.is_build_open(),"真实B建筑入口")
@@ -72,7 +82,7 @@ func _ready() -> void:
 	check(refit.get_asset_art("module.floatstone").path!=refit.get_asset_art("item.floatstone").path,"浮石物品与舱模块命名空间独立")
 	check(interior.get_asset_art("furniture.chest").path!=interior.get_asset_art("item.chest").path,"柜与木箱命名空间独立")
 	await shot("03_modules")
-	var report:={"passed":not failed,"checked":checked.size(),"renderer":DisplayServer.get_name(),"resources":checked,"scope":"真实界面入口；模型精绘缺口另记"}
+	var report:={"passed":not failed,"checked":checked.size(),"renderer":DisplayServer.get_name(),"resources":checked,"mappedSurfaces":mapped_surfaces.keys(),"scope":"真实界面入口；模型精绘缺口另记"}
 	FileAccess.open(output.path_join("report.json"),FileAccess.WRITE).store_string(JSON.stringify(report,"  "))
 	print("art_previews: ",JSON.stringify(report))
 	main.queue_free();await frames(3);get_tree().quit(1 if failed else 0)

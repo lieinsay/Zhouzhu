@@ -111,6 +111,36 @@ def review(args):
     atomic_json(REGISTRY, registry)
 
 
+def register_material(args):
+    from PIL import Image
+    key = args.asset.removeprefix('material.')
+    if args.asset != 'material.'+key or key not in ('wood','rammed_earth','terracotta','iron') or not re.fullmatch(r'v[1-9][0-9]*',args.version) or not 0<args.tile_metres<=16:
+        raise ValueError('材质身份、版本或米制尺度不合法')
+    registry=read_json(REGISTRY)
+    asset=next((a for a in registry['assets'] if a['id']==args.asset),None)
+    if asset is None:raise ValueError('先登记材质用途与实际入口，再增加版本')
+    if any(v['version']==args.version for v in asset['versions']):raise ValueError('版本已存在，不覆盖历史')
+    plan=read_json(Path(args.prompts))
+    prompt=next(row['prompt'] for row in plan['materials'] if row['id']==key)
+    original=ROOT/'assets/art/materials'/key/args.version/'original.png'
+    candidate=key=='iron'
+    target=(ROOT/'assets/art/materials'/key/args.version/'basecolor.png') if candidate else (ROOT/'game/art/materials'/key/(args.version+'.png'))
+    if original.exists() or target.exists():raise ValueError('原图或派生文件已存在')
+    image=Image.open(args.source).convert('RGB')
+    if image.width!=image.height:raise ValueError('基础材质需要方形图片')
+    original.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(args.source,original)
+    image=image.resize((512,512),Image.Resampling.LANCZOS);target.parent.mkdir(parents=True,exist_ok=True);image.save(target)
+    linear=[(n/255)/12.92 if n/255<=.04045 else ((n/255+.055)/1.055)**2.4 for n in range(256)]
+    means=[sum(count*linear[n] for n,count in enumerate(image.getchannel(channel).histogram()))/(512*512) for channel in ('R','G','B')]
+    version=dict(version=args.version,styleId=registry['styleId'],origin='built-in-imagegen',prompt=prompt,references=[],generationSource=str(Path(args.source).resolve()),
+        original=dict(path=original.relative_to(ROOT).as_posix(),sha256=fingerprint(original)),runtime=dict(path=target.relative_to(ROOT).as_posix(),sha256=fingerprint(target)),
+        derivation=dict(operation='Lanczos resize RGB to512; no repainting'),surface=dict(tileMetres=args.tile_metres,meanLinear=means,channels=['baseColor'],mapping='object-local metric triplanar'),
+        productionStatus='controlled_sample_only' if candidate else 'produced',agentReview=dict(status='pending',note='待原图、重复和实际样件验收'),userConfirmation=None)
+    if candidate:version['bindingPolicy']='fixture_only'
+    asset['versions'].append(version);atomic_json(REGISTRY,registry)
+    print(f'登记 {args.asset}/{args.version}，尚未应用到游戏')
+
+
 def sheet(args):
     from PIL import Image, ImageDraw
     registry = read_json(REGISTRY)
@@ -142,6 +172,9 @@ def main():
     entry.add_argument('--reference',action='append',default=[])
     entry=commands.add_parser('review');entry.set_defaults(run=review)
     entry.add_argument('--asset',required=True);entry.add_argument('--version',required=True);entry.add_argument('--accept',action='store_true');entry.add_argument('--note',required=True)
+    entry=commands.add_parser('register-material');entry.set_defaults(run=register_material)
+    entry.add_argument('--asset',required=True);entry.add_argument('--version',required=True);entry.add_argument('--source',required=True)
+    entry.add_argument('--tile-metres',type=float,required=True);entry.add_argument('--prompts',default=str(ROOT/'assets/art/materials/source-prompts-v1.json'))
     entry=commands.add_parser('sheet');entry.set_defaults(run=sheet)
     entry.add_argument('--version');entry.add_argument('--output',default='output/art-production-20261026/review')
     args=parser.parse_args();args.run(args)

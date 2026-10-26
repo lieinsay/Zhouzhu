@@ -101,6 +101,7 @@ func _ready() -> void:
 	await shot("04_container")
 	if DisplayServer.get_name() != "headless":
 		check(panel.get_item_art("pottery").draws > 0 and hotbar.get_item_art("millet").draws > 0, "实际绘制路径已执行")
+	for id in records:records[id]=panel.get_item_art(id)
 	var report := {"passed":not failed,"renderer":DisplayServer.get_name(),"bindingsChecked":records.size(),"resources":records,"sharedTexture":pack_info.instanceId == bar_info.instanceId,"containerPottery":main.get_hold_count("pottery"),"userConfirmed":false}
 	var file := FileAccess.open(output.path_join("report.json"),FileAccess.WRITE)
 	file.store_string(JSON.stringify(report,"  "))

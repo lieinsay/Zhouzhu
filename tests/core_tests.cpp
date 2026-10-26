@@ -7493,6 +7493,9 @@ void test_dev_manual() {
     check(manual_text.find("python tools/art-preview/render.py --help") != std::string::npos &&
                     studio_text.find("tools/art-preview/render.py") != std::string::npos,
             "真实模型预览工具有手册入口");
+    check(manual_text.find("res://tests/art_material_e2e.tscn") != std::string::npos &&
+                    studio_text.find("art_material_e2e.tscn") != std::string::npos,
+            "材质小样工具有手册入口");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");

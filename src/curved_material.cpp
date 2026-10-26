@@ -4,6 +4,9 @@
 #include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/json.hpp>
+#include <godot_cpp/classes/texture2d.hpp>
 
 using namespace godot;
 
@@ -59,6 +62,35 @@ Ref<Material> make(const Color &p_albedo, float p_roughness, bool p_two_sided, b
 
 Ref<Material> solid(const Color &p_albedo, float p_roughness, bool p_two_sided) {
     return make(p_albedo, p_roughness, p_two_sided, false, Color(), 0.0f);
+}
+
+Ref<Material> surface(const Color &p_albedo, float p_roughness, const String &p_asset, float p_metallic) {
+    Ref<Material> result = make(p_albedo, p_roughness, false, false, Color(), 0.0f);
+    Ref<ShaderMaterial> material = result;
+    if (material.is_null()) return result;
+    const Ref<FileAccess> file = FileAccess::open("res://art/bindings.json", FileAccess::READ);
+    if (file.is_null()) return result;
+    const Variant data = JSON::parse_string(file->get_as_text());
+    if (data.get_type() != Variant::DICTIONARY) return result;
+    const Dictionary root = data;
+    const Dictionary bindings = root.get("bindings", Dictionary());
+    const Variant entry = bindings.get(p_asset, Variant());
+    if (entry.get_type() != Variant::DICTIONARY) return result;
+    const Dictionary binding = entry;
+    const String path = binding.get("path", String());
+    const Dictionary info = binding.get("surface", Dictionary());
+    const Array mean = info.get("meanLinear", Array());
+    const double metres = info.get("tileMetres", 0.0);
+    if (!path.begins_with("res://art/materials/") || !path.ends_with(".png") || path.contains("..") || path.contains("\\") || mean.size() != 3 || metres <= 0 ||
+            !ResourceLoader::get_singleton()->exists(path, "Texture2D")) return result;
+    const Ref<Texture2D> image = ResourceLoader::get_singleton()->load(path, "Texture2D");
+    if (image.is_null()) return result;
+    material->set_shader_parameter("surface_tex", image);
+    material->set_shader_parameter("surface_mean", Vector3(real_t(double(mean[0])), real_t(double(mean[1])), real_t(double(mean[2]))));
+    material->set_shader_parameter("surface_tile_metres", metres);
+    material->set_shader_parameter("surface_enabled", true);
+    material->set_shader_parameter("metallic", p_metallic);
+    return result;
 }
 
 Ref<Material> vertex_colored(float p_roughness) {

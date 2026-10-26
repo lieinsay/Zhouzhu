@@ -1,2 +1,8 @@
 game/planet/seed42/groups/*/terrain.bin filter=lfs diff=lfs merge=lfs -text
 game/planet/seed42/lods.bin filter=lfs diff=lfs merge=lfs -text
+
+# 正式美术按原始字节保存；避免换行转换破坏已登记的模型/来源指纹。
+assets/art/** -text
+game/art/** -text
+assets/art/registry.json text eol=lf
+game/art/**/*.import text eol=lf

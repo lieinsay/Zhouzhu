@@ -86,5 +86,14 @@ class ArtTests(unittest.TestCase):
         _,state=self.request('/api/art')
         self.assertEqual(self.request('/api/art/stage',dict(revision=state['revision'],bindings={self.asset['id']:self.asset['versions'][0]['version']}))[0],403)
 
+    def test_fixture_material_cannot_be_applied(self):
+        file=self.root/'assets/art/registry.json';registry=json.loads(file.read_text(encoding='utf-8'))
+        asset=registry['assets'][0];asset['id']='material.iron';asset['versions'][0]['bindingPolicy']='fixture_only'
+        atomic_json(file,registry)
+        _,state=self.request('/api/art')
+        status,result=self.request('/api/art/stage',dict(revision=state['revision'],bindings={'material.iron':asset['versions'][0]['version']}))
+        self.assertEqual(status,422);self.assertIn('受控样件',result['error'])
+        self.assertFalse((self.root/'game/art/bindings.json').exists())
+
 
 if __name__=='__main__':unittest.main()

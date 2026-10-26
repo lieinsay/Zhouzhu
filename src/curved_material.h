@@ -10,6 +10,8 @@ namespace curved_material {
 
 // 素色；p_two_sided 是双面（帆）
 godot::Ref<godot::Material> solid(const godot::Color &p_albedo, float p_roughness = 1.0f, bool p_two_sided = false);
+// 正式材质小样：按独立美术绑定读取基础色，局部米制三平面映射；缺图仍为素色。
+godot::Ref<godot::Material> surface(const godot::Color &p_albedo, float p_roughness, const godot::String &p_asset, float p_metallic = 0.0f);
 // 顶点色（按 sRGB 调的）当反照率
 godot::Ref<godot::Material> vertex_colored(float p_roughness = 1.0f);
 // 素色加自发光（浮石、舱窗的光）

@@ -13,7 +13,7 @@ function render(message = '') {
     const chosen = state.pending[asset.id] || '';
     const current = state.active.bindings[asset.id]?.version || '未应用（游戏使用回退）';
     const version = asset.versions.find(v => v.version === chosen) || asset.versions.at(-1);
-    return `<article class="art-card" data-id="${esc(asset.id)}"><img src="/api/art/image/${esc(asset.id)}/${esc(version.version)}" alt="${esc(asset.name)}"><h2>${esc(asset.name)} <small>${esc(asset.id)}</small></h2><label>待绑定版本<select aria-label="${esc(asset.id)}版本"><option value="">取消正式绑定</option>${asset.versions.map(v => `<option value="${esc(v.version)}" ${v.version===chosen?'selected':''} ${v.agentReview?.status!=='accepted'?'disabled':''}>${esc(v.version)} · ${esc(v.origin)} · ${esc(v.agentReview?.status)}</option>`).join('')}</select></label><p>${version.styleGap?esc(version.styleGap)+"<br>":""}游戏已应用：${esc(current)}<br>代理审图：${esc(version.agentReview?.status)}<br>用户逐项确认：${esc(version.userConfirmation || '未逐项确认')}<br>来源：${esc(version.original.path)}<br>派生：${esc(version.runtime.path)}<br>SHA256 ${esc(version.runtime.sha256)}</p><details><summary>提示词与审图记录</summary><pre>${esc(version.prompt)}</pre><p>${esc(version.agentReview?.note)}</p></details></article>`;
+    return `<article class="art-card" data-id="${esc(asset.id)}"><img src="/api/art/image/${esc(asset.id)}/${esc(version.version)}" alt="${esc(asset.name)}"><h2>${esc(asset.name)} <small>${esc(asset.id)}</small></h2><label>待绑定版本<select aria-label="${esc(asset.id)}版本"><option value="">取消正式绑定</option>${asset.versions.map(v => `<option value="${esc(v.version)}" ${v.version===chosen?'selected':''} ${v.agentReview?.status!=='accepted'||v.bindingPolicy==='fixture_only'?'disabled':''}>${esc(v.version)} · ${esc(v.origin)} · ${esc(v.agentReview?.status)}</option>`).join('')}</select></label><p>${version.bindingPolicy==='fixture_only'?'仅受控样件，未开放游戏绑定。<br>':''}${version.styleGap?esc(version.styleGap)+"<br>":""}游戏已应用：${esc(current)}<br>代理审图：${esc(version.agentReview?.status)}<br>用户逐项确认：${esc(version.userConfirmation || '未逐项确认')}<br>来源：${esc(version.original.path)}<br>派生：${esc(version.runtime.path)}<br>SHA256 ${esc(version.runtime.sha256)}</p><details><summary>提示词与审图记录</summary><pre>${esc(version.prompt)}</pre><p>${esc(version.agentReview?.note)}</p></details></article>`;
   }).join('');
   el('application').textContent = JSON.stringify(state.active.application || {}, null, 2);
   el('status').textContent = message || `${state.registry.assets.length} 项登记；${Object.keys(state.active.bindings).length} 项已应用`;
@@ -31,7 +31,7 @@ el('assets').onchange = event => {
   const select = event.target.closest('select'); if (!select) return;
   const card=select.closest('[data-id]'), id=card.dataset.id;
   if (select.value) state.pending[id]=select.value; else delete state.pending[id];
-  if (select.value) card.querySelector('img').src='/api/art/image/'+id+'/'+select.value;
+  render('有未暂存美术选择；先暂存再应用。');
   dirty=true; el('apply').disabled=true; el('status').textContent='有未暂存美术选择；先暂存再应用。';
 };
 await run(async () => {state=await api('/api/art');render();});

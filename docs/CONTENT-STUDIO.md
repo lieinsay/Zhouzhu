@@ -8,7 +8,7 @@
 
 游戏重新启动后从 `res://art/bindings.json` 读取正式图片，背包、快捷栏、木箱/船舱、拖拽物品、配方产物与材料共用 `item.<id>`。工具默认使用同一已应用版本；既有显式 `project.visuals` 工具草稿仍保留，可在正式资源页核对游戏实际应用。缺图继续颜色/名称回退，数量、快捷键、选择态和提示文字独立绘制。这里只应用美术，不顺带应用配方、经济、模型变换或其他草稿。
 
-制作入口：`python tools/art-assets.py --help`。`register` 非覆盖登记原图并生成统一 256 方图；`sheet` 输出明暗底32/48/64像素审图表；`review` 分别记录代理通过/拒绝。原图与旧 v1 均保留，内置生图提示词和参考指纹进入正式登记。制作脚本需要 Pillow；工坊服务不新增第三方依赖。规范见 [ART-DIRECTION.md](ART-DIRECTION.md)。
+制作入口：`python tools/art-assets.py --help`。`register` 非覆盖登记原图并生成统一 256 方图；`sheet` 输出明暗底32/48/64像素审图表；`review` 分别记录代理通过/拒绝。原图与旧 v1 均保留，内置生图提示词和参考指纹进入正式登记。制作脚本需要 Pillow；`register-material` 非覆盖登记受控基础色版本并计算线性色均值，铁自动限定为样件。工坊服务不新增第三方依赖。规范见 [ART-DIRECTION.md](ART-DIRECTION.md)。
 
 真实模型预览：`python tools/art-preview/render.py --help`。先用已有模型导出器把本次真实模型快照写入新版本目录；家具导出命令为 `node tools/art-preview/export-furniture.mjs --output <新的版本目录>`，由 `tools/art-preview/furniture-export.cpp` 在独立MSVC构建中直接调用 `furniture_parts` / `mesh_kit`。渲染器需要numpy与Pillow，统一正交相机、柔光和透明背景，不改变米制尺寸、几何或原颜色。`--model-directory` 与 `--furniture-directory` 指定已核对来源；用 `--version vN` 增加版本，拒绝覆盖已登记版本。正式资源页可按物品、船模块、建筑、家具筛选；模块与建筑目录、游戏改装卡片、建筑面板、室内当前家具工具使用同一正式预览。当前模型的精绘造型/材质缺口见 `docs/art-assets/model-gaps.json`；代理仅确认快照预览准确，不将其当作风格化模型完成。
 
@@ -77,6 +77,8 @@ python tools/content-studio/server.py --network-address 10.8.0.2 --allow-network
 
 ## 缩略图与模型
 
+场景材质小样验收：使用原Godot运行 `res://tests/art_material_e2e.tscn`，无头检查绑定与参数；经授权打开可见窗口时输出近景、反向光、湿润输入和远景截图。它使用正式 `ArtSurface` / `curved_material::surface` 和同一生产着色器，不加载世界、不改生成器或世界天气数据。木材0.5m、夯土1m、陶土0.5m、铁0.5m，仅基础色；原粗糙度与明确金属度仍为标量。局部三平面映射与纹理mipmap处理接缝及远景。首轮仅把木楼板、夯土墙、陶土表面映射到SharedLooks；铁仅在受控样件验证。木梁与家具逐构件纹理方向、完整材质通道及其他表面仍待后续，不扩成全套PBR任务。
+
 「道具目录 → 缩略图库」展示每个当前道具分别使用内置 ImageGen 生成的透明背景 PNG。提示词和最终原图指纹保存在工具 `assets-source/prompts-*.json`，原图位于 `public/assets/thumbnails/<id>-v1.png`；图像未编辑、裁切或缩放，只作为工具的设计缩略图，不代表对应的游戏网格。道具清单、配方材料和产物都优先使用这些缩略图，恢复颜色显示只用于没有绑定图像的内容。
 
 「外观与模型」提供三维预览、模型绑定、XYZ 缩放、旋转和偏移。拖动预览旋转，滚轮缩放，使用「重置视角」和「线框」检查形状。模型保留源几何、底色与顶点色，预览采用工具光照；它不模拟世界曲率、风、天气、积雪或玩家碰撞。视觉绑定放在可选 `project.visuals` 字段，旧版草稿仍能读取；仅用户编辑后才产生视觉配置变更，游戏没有读取这些字段的入口。
@@ -107,7 +109,7 @@ node tools/content-studio/model-export/export-models.mjs
 
 ## 隔离与后续接入
 
-游戏没有新增输入、菜单、autoload 或内容加载路径，CMake 和 Godot 项目没有工具依赖。`src/dev_manual.cpp` 只在文件顶部注释给出本工具文档与启动命令；`test_dev_manual` 对这个文档入口作一致性校验。
+内容草稿仍没有游戏加载入口。正式美术新增独立res://资源绑定与ArtSurface材质工厂，游戏运行不依赖工坊服务；`src/dev_manual.cpp` 的顶部注释记录制作与验收入口，`test_dev_manual` 核对文档一致性。
 
 工具的内容草稿仍是独立管理与设计工作区，没有内容草稿的「应用到游戏」操作。正式美术由上方独立入口接入游戏。未来接入内容草稿时，仍须明确格式、迁移和旧存档规则，再执行相应验证，不得为生成器补造资源或地貌数据。
 

@@ -310,6 +310,8 @@ target_sources(
         src/inventory_panel.cpp
         src/item_art.cpp
         src/item_art.h
+        src/art_surface.cpp
+        src/art_surface.h
         src/inventory_panel.h
         src/island.cpp
         src/island.h

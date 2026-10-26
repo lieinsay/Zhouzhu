@@ -6,7 +6,7 @@
     {
       "id": "item.millet",
       "decision": "remake",
-      "requirement": "库存粟：金黄粟粒小堆，短小收获穗辅助识别，不画完整植株、田地或装饰袋。种子与收成共用。"
+      "requirement": "库存粟：干燥金黄粟粒小堆，不画穗、完整植株、田地或装饰袋。首版穗形误成麦穗后改为只画颗粒，种子与收成共用。"
     },
     {
       "id": "item.copper_ore",

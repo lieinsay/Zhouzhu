@@ -12,7 +12,10 @@ Ref<Material> SharedLooks::part_material(PartMaterial p_material) {
     if (m.is_null()) {
         float r = 1, g = 1, b = 1, rough = 1;
         part_material_color(p_material, r, g, b, rough);
-        m = curved_material::solid(Color(r, g, b), rough);
+        const char *surface = p_material == PartMaterial::FLOOR ? "material.wood" :
+                p_material == PartMaterial::WALL ? "material.rammed_earth" :
+                p_material == PartMaterial::CLAY ? "material.terracotta" : nullptr;
+        m = surface ? curved_material::surface(Color(r, g, b), rough, surface) : curved_material::solid(Color(r, g, b), rough);
     }
     return m;
 }

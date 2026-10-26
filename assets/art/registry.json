@@ -3696,7 +3696,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -3824,7 +3825,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -3952,7 +3954,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4071,7 +4074,7 @@
               "sha256": "e34d83fbe070c934b8948fd740d222cde50b57c51d46a499a8158768be2bcd6a"
             }
           ],
-          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。 当前模型浮石舱使用青色纯色盒，需普通矿物造型和结构接合；图标不替代该模型缺口。",
+          "styleGap": "当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。 当前模型浮石舱使用青色纯色盒，需普通矿物造型和结构接合；图标不替代该模型缺口。 旧模型尚有青色自发光，与普通矿物方向不符，尚未重作。",
           "userConfirmation": null,
           "agentReview": {
             "status": "accepted",
@@ -4080,7 +4083,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4208,7 +4212,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4336,7 +4341,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4464,7 +4470,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4593,7 +4600,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4715,7 +4723,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4837,7 +4846,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -4959,7 +4969,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5081,7 +5092,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5202,7 +5214,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5309,7 +5322,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5416,7 +5430,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5523,7 +5538,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5630,7 +5646,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5737,7 +5754,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5844,7 +5862,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -5951,7 +5970,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -6058,7 +6078,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -6165,7 +6186,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -6272,7 +6294,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -6379,7 +6402,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -6486,7 +6510,8 @@
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
             "userConfirmed": false
-          }
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
         }
       ]
     },
@@ -6592,6 +6617,249 @@
             "reviewer": "Codex",
             "scope": "accuracy_of_current_model_preview_only",
             "note": "已实际查看26项统一渲染总览；保留真实几何、尺寸、颜色和连接上下文，透明与构图通过。风格与模型缺口仍未完成；用户未逐项确认。",
+            "userConfirmed": false
+          },
+          "materialSnapshotNote": "本v1预览为生成时真实几何及原基色；未包含第三阶段材质小样的全部表现。"
+        }
+      ]
+    },
+    {
+      "id": "material.wood",
+      "name": "木材",
+      "definition": "src/shared_looks.cpp; controlled surface bindings",
+      "useSites": [
+        "content-studio:formal-art",
+        "curved_material:surface pilot"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "prompt": "Use case: stylized-concept. Asset type: seamless base-color surface texture for painted Japanese-style 3D game Zhouzhu. Subject: a continuous close-up surface of plain warm light brown timber grain, naturally elongated flowing fibers along the vertical image axis, a few restrained fine growth lines, no plank separations. Flat orthographic surface scan, no object perspective, no framing. Hand-painted material quality with clean broad areas and a little selectively drawn grain, not a photograph; reduced mottling, no scratches or debris. The square represents 0.5 by 0.5 meters of wood surface. True seamless tiling on both axes, edge features continue smoothly into opposite edge. Entire image is the material; no margins. Uniform diffuse color only, absolutely no directional light, cast shadows, highlights, AO, edge bevel, knots that look like holes, snow, water, seasonal color, writing or decoration. Natural restrained warm tan values, modest variation for multiplication into existing runtime albedo. Output square image.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-5e6ad94b-a8f1-43ef-959a-486f1215b442.png",
+          "generatorModel": "内置工具未暴露具体模型和参数",
+          "original": {
+            "path": "assets/art/materials/wood/v1/original.png",
+            "sha256": "ce67eb3b283edd0a93c06f3378f647da5730efe50c08223f99353813975f464d"
+          },
+          "runtime": {
+            "path": "game/art/materials/wood/v1.png",
+            "sha256": "97d65b4f2da59f2141476962dfd694ef3c3e892d1033653a10e5acb15cd4c650"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.540653891797218,
+              0.2633019940872047,
+              0.09630644345102236
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar; runtime albedo modulation"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "scope": "source_image_and_repeat_board_for_pilot",
+            "reviewedAt": "2026-10-26T10:50:04.897678+00:00",
+            "note": "已查看四张基础色及2x2重复；无固定阳光、投影、积雪或季节。保留原图，仅缩放派生。尺度、局部三平面、光照与天气结合继续由游戏样件验收；不承诺木梁逐构件方向。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null,
+          "integrationReview": {
+            "status": "passed_controlled_pilot",
+            "report": "output/art-production-20261026/material-game/report.json",
+            "realBuildingReport": "output/art-production-20261026/preview-materials/report.json",
+            "scope": "SharedLooks limited mapping",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "material.rammed_earth",
+      "name": "夯土",
+      "definition": "src/shared_looks.cpp; controlled surface bindings",
+      "useSites": [
+        "content-studio:formal-art",
+        "curved_material:surface pilot"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "prompt": "Use case: stylized-concept. Asset type: seamless base-color texture for painted Japanese-style 3D game Zhouzhu. Subject: a close-up continuous surface of compacted warm ochre rammed earth wall, fine clay grains, subtle wide horizontal compaction bands, soft restrained hand-painted material variation. The square covers 1 by 1 meter. Flat orthographic surface scan, no perspective, no wall edges, no surrounding objects or framing. Seamless tiling on both axes, opposite edges continue smoothly. Uniform diffuse base color ONLY: no directional sunlight, no highlight, no cast shadow, no AO, no bevels, no damp stains, no erosion cracks, no snow, plants, weather, season or text. Detailed but calm, no excessive mottling or gritty noise, coherent clear broad values, selected subtle surface strokes. Entire canvas is material, no margins.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-fda7bc5d-875d-4b95-9768-cdeb9295c544.png",
+          "generatorModel": "内置工具未暴露具体模型和参数",
+          "original": {
+            "path": "assets/art/materials/rammed_earth/v1/original.png",
+            "sha256": "4d480e82272484b29d69be20507d1742133de6231096c367e08e1002aa81f774"
+          },
+          "runtime": {
+            "path": "game/art/materials/rammed_earth/v1.png",
+            "sha256": "ba94271c4ce044f7dd86c49c23e87f742861b48c44569436ffe63319a8648d27"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.5769846407790133,
+              0.22469727223582178,
+              0.05249017175852554
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar; runtime albedo modulation"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "scope": "source_image_and_repeat_board_for_pilot",
+            "reviewedAt": "2026-10-26T10:50:04.897678+00:00",
+            "note": "已查看四张基础色及2x2重复；无固定阳光、投影、积雪或季节。保留原图，仅缩放派生。尺度、局部三平面、光照与天气结合继续由游戏样件验收；不承诺木梁逐构件方向。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null,
+          "integrationReview": {
+            "status": "passed_controlled_pilot",
+            "report": "output/art-production-20261026/material-game/report.json",
+            "realBuildingReport": "output/art-production-20261026/preview-materials/report.json",
+            "scope": "SharedLooks limited mapping",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "material.terracotta",
+      "name": "陶土",
+      "definition": "src/shared_looks.cpp; controlled surface bindings",
+      "useSites": [
+        "content-studio:formal-art",
+        "curved_material:surface pilot"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "produced",
+          "prompt": "Use case: stylized-concept. Asset type: seamless diffuse base-color texture for painted Japanese-style 3D game Zhouzhu. Subject: a continuous close-up unglazed warm red ochre terracotta surface, fine clay grain with very restrained shallow firing speckles and subtle even hue variation, calm broad planes. Flat orthographic surface scan, square covers 0.5 by 0.5 meters. Delicate hand-painted material, not a photorealistic macro. Entire canvas is material, seamless on both axes with matching opposite edges. No object, vessel rim, turning grooves, cracks, writing, decoration, perspective, directional light, highlights, cast shadow, AO, bevels, snow, moisture or weather. Uniform diffuse base color, gentle restrained detail suitable for existing real-time lighting.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-6ddf4703-6a01-4e0e-8b94-23197a789cdd.png",
+          "generatorModel": "内置工具未暴露具体模型和参数",
+          "original": {
+            "path": "assets/art/materials/terracotta/v1/original.png",
+            "sha256": "856f58840c12b0cc7544ecc05af84a3dac9a27cf849851358fd25c3c8155a072"
+          },
+          "runtime": {
+            "path": "game/art/materials/terracotta/v1.png",
+            "sha256": "7c98ffc5e681c3f85165419d099c206e2e5e2531793ea0cdf813e7861ff59026"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.4724387846111299,
+              0.1016340048591897,
+              0.04059829213441827
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar; runtime albedo modulation"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "scope": "source_image_and_repeat_board_for_pilot",
+            "reviewedAt": "2026-10-26T10:50:04.897678+00:00",
+            "note": "已查看四张基础色及2x2重复；无固定阳光、投影、积雪或季节。保留原图，仅缩放派生。尺度、局部三平面、光照与天气结合继续由游戏样件验收；不承诺木梁逐构件方向。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null,
+          "integrationReview": {
+            "status": "passed_controlled_pilot",
+            "report": "output/art-production-20261026/material-game/report.json",
+            "realBuildingReport": "output/art-production-20261026/preview-materials/report.json",
+            "scope": "SharedLooks limited mapping",
+            "userConfirmed": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "material.iron",
+      "name": "金属铁",
+      "definition": "src/shared_looks.cpp; controlled surface bindings",
+      "useSites": [
+        "content-studio:formal-art",
+        "curved_material:surface pilot"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "productionStatus": "controlled_sample_only",
+          "prompt": "Use case: stylized-concept. Asset type: seamless diffuse base-color texture for painted Japanese-style 3D game Zhouzhu. Subject: a continuous plain dark gray forged iron surface, restrained fine hammered material grain and very slight natural tone variation; orderly, maintained practical iron, no heavy rust, no scratches, no bolts or seams. Flat orthographic surface scan, square represents 0.5 by 0.5 meters. Delicate selective hand-painted texture. Seamless tiling across both axes, matching opposite edges, entire canvas filled. Base color ONLY, no reflected scenery, no baked specular highlights, no directional gradient, no light source, no cast shadows, no AO, no bevel, no text, border, snow, water, season or weather. Metal reflections and roughness will be controlled in the real-time shader, not painted into this image.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-24bc0318-3095-47b1-9bee-d07b437a8674.png",
+          "generatorModel": "内置工具未暴露具体模型和参数",
+          "original": {
+            "path": "assets/art/materials/iron/v1/original.png",
+            "sha256": "67a9465cca4038d5d8be1a3dc6b6c166913eeb154e9066cea1f9a810e21c7168"
+          },
+          "runtime": {
+            "path": "assets/art/materials/iron/v1/basecolor.png",
+            "sha256": "38f5f2f11a1ed2c1debbc344898dc38791e0fcd14062d629d01d63c8912483a8"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.07057870714074992,
+              0.06776833268711088,
+              0.06809837226502671
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar; runtime albedo modulation"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "scope": "source_image_and_repeat_board_for_pilot",
+            "reviewedAt": "2026-10-26T10:50:04.897678+00:00",
+            "note": "已查看四张基础色及2x2重复；无固定阳光、投影、积雪或季节。保留原图，仅缩放派生。尺度、局部三平面、光照与天气结合继续由游戏样件验收；不承诺木梁逐构件方向。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null,
+          "bindingPolicy": "fixture_only",
+          "useScope": "仅受控样件，不写正式游戏绑定，不进入游戏导出目录。",
+          "integrationReview": {
+            "status": "passed_controlled_pilot",
+            "report": "output/art-production-20261026/material-game/report.json",
+            "realBuildingReport": null,
+            "scope": "fixture_only",
             "userConfirmed": false
           }
         }

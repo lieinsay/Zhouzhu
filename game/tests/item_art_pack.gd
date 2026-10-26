@@ -8,6 +8,8 @@ func _initialize() -> void:
 		var pack := PCKPacker.new()
 		assert(pack.pck_start(pack_path) == OK)
 		assert(pack.add_file("res://art/bindings.json","res://art/bindings.json") == OK)
+		for shader in ["curved_standard.gdshader","curved_standard_two_sided.gdshader","curved_standard.gdshaderinc","planet_curve.gdshaderinc"]:
+			assert(pack.add_file("res://shaders/"+shader,"res://shaders/"+shader)==OK)
 		var active: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://art/bindings.json"))
 		for binding in active.bindings.values():
 			var path: String = binding.path
@@ -28,9 +30,16 @@ func _initialize() -> void:
 		var preview = ClassDB.instantiate("RefitPanel")
 		assert(panel != null)
 		for key in active.bindings:
+			if key.begins_with("material."):
+				var surface: ShaderMaterial=ArtSurface.create(key,Color(.5,.5,.5),1.0)
+				assert(surface.get_shader_parameter("surface_enabled")==true)
+				var image: Texture2D=surface.get_shader_parameter("surface_tex")
+				assert(image!=null and image.resource_path==active.bindings[key].path)
+				continue
 			var info: Dictionary = panel.get_item_art(key.trim_prefix("item.")) if key.begins_with("item.") else preview.get_asset_art(key)
 			assert(info.loaded and info.path == active.bindings[key].path)
 		assert(not panel.get_item_art("missing_pack_icon").loaded)
+		assert(not active.bindings.has("material.iron"))
 		panel.free()
 		preview.free()
 		print("item_art_pack: isolated PCK C++ loading passed ",active.bindings.size())

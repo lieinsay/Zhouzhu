@@ -376,12 +376,63 @@
       "version": "v1",
       "path": "res://art/previews/furniture/mat/v1.png",
       "sha256": "0b3159e4957999c445bb76fdabae494d3f068856a5c85d8f671323fe09ea6575"
+    },
+    "material.wood": {
+      "version": "v1",
+      "path": "res://art/materials/wood/v1.png",
+      "sha256": "97d65b4f2da59f2141476962dfd694ef3c3e892d1033653a10e5acb15cd4c650",
+      "surface": {
+        "tileMetres": 0.5,
+        "meanLinear": [
+          0.540653891797218,
+          0.2633019940872047,
+          0.09630644345102236
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar; runtime albedo modulation"
+      }
+    },
+    "material.rammed_earth": {
+      "version": "v1",
+      "path": "res://art/materials/rammed_earth/v1.png",
+      "sha256": "ba94271c4ce044f7dd86c49c23e87f742861b48c44569436ffe63319a8648d27",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.5769846407790133,
+          0.22469727223582178,
+          0.05249017175852554
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar; runtime albedo modulation"
+      }
+    },
+    "material.terracotta": {
+      "version": "v1",
+      "path": "res://art/materials/terracotta/v1.png",
+      "sha256": "7c98ffc5e681c3f85165419d099c206e2e5e2531793ea0cdf813e7861ff59026",
+      "surface": {
+        "tileMetres": 0.5,
+        "meanLinear": [
+          0.4724387846111299,
+          0.1016340048591897,
+          0.04059829213441827
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar; runtime albedo modulation"
+      }
     }
   },
   "application": {
-    "id": "7bd1de72-7591-4b92-b64b-bd645bb6a621",
-    "appliedAt": "2026-10-26T10:29:06.981Z",
+    "id": "8426b55b-05ba-4454-9455-44fbaeb6f662",
+    "appliedAt": "2026-10-26T10:55:33.747Z",
     "actor": "content-studio-art",
-    "registrySha256": "b2bb1ff4852936afd1ce7490fcf8af3c7f5f3af9cc8b60e2347dd3ed75fb6c8f"
+    "registrySha256": "bfe69761a573d67ff2394c62aad385c875fbd9bebb5ac203d63d72030f3da297"
   }
 }

@@ -1,0 +1,52 @@
+{
+  "materials": {
+    "iron": {
+      "channels": [
+        "baseColor"
+      ],
+      "formalBinding": false,
+      "meanLinear": "(0.070579, 0.067768, 0.068098)",
+      "metallic": 0.85,
+      "path": "assets/art/materials/iron/v1/basecolor.png",
+      "roughness": 0.649999976158142,
+      "tileMetres": 0.5
+    },
+    "rammed_earth": {
+      "channels": [
+        "baseColor"
+      ],
+      "formalBinding": true,
+      "meanLinear": "(0.576985, 0.224697, 0.05249)",
+      "metallic": 0.0,
+      "path": "res://art/materials/rammed_earth/v1.png",
+      "roughness": 0.949999988079071,
+      "tileMetres": 1.0
+    },
+    "terracotta": {
+      "channels": [
+        "baseColor"
+      ],
+      "formalBinding": true,
+      "meanLinear": "(0.472439, 0.101634, 0.040598)",
+      "metallic": 0.0,
+      "path": "res://art/materials/terracotta/v1.png",
+      "roughness": 0.949999988079071,
+      "tileMetres": 0.5
+    },
+    "wood": {
+      "channels": [
+        "baseColor"
+      ],
+      "formalBinding": true,
+      "meanLinear": "(0.540654, 0.263302, 0.096306)",
+      "metallic": 0.0,
+      "path": "res://art/materials/wood/v1.png",
+      "roughness": 0.949999988079071,
+      "tileMetres": 0.5
+    }
+  },
+  "passed": true,
+  "renderer": "headless",
+  "scope": "受控材质样件；未改生成器或世界天气数据",
+  "wetChangedPixelsSampled": 0
+}

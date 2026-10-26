@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://tests/art_material_e2e.gd" id="1"]
+[node name="ArtMaterialE2E" type="Node3D"]
+script = ExtResource("1")

@@ -1931,6 +1931,14 @@
     "reused_v1": 41,
     "game_applied": 49,
     "acceptance": "docs/art-assets/ACCEPTANCE-20261026.md",
-    "note": "原existing_assets和各组current_state是2026-10-25盘点快照，当前接入以正式登记和独立验收为准。"
+    "note": "原existing_assets和各组current_state是2026-10-25盘点快照，当前接入以正式登记和独立验收为准。",
+    "model_previews": 26,
+    "material_basecolors": 4,
+    "materials_applied": 3,
+    "material_fixture_only": [
+      "iron"
+    ],
+    "formal_bindings": 78,
+    "registry_entries": 79
   }
 }

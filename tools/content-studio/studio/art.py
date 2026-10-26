@@ -1,13 +1,14 @@
 """正式美术版本与独立应用。绝不读取或写入内容草稿 project.visuals。"""
 import copy
 import hashlib
+import math
 import re
 import threading
 import uuid
 from pathlib import Path
 from .common import StudioError, atomic_json, digest, read_json, timestamp
 
-ASSET_ID = r'(item|module|building|furniture)\.[a-z][a-z0-9_]*'
+ASSET_ID = r'(item|module|building|furniture|material)\.[a-z][a-z0-9_]*'
 VERSION = r'v[1-9][0-9]*'
 EMPTY = {'schemaVersion': 1, 'bindings': {}}
 
@@ -68,6 +69,7 @@ class ArtLibrary:
         known = {namespace+'.'+row['id'] for namespace, collection in
                  [('item', 'items'), ('module', 'modules'), ('building', 'buildings')]
                  for row in catalog[collection]}
+        known.update('material.'+key for key in ('wood','rammed_earth','terracotta','iron'))
         furniture_source = self.root / 'src/house_template.cpp'
         if furniture_source.exists():
             for node in parse_initializer(furniture_source.read_text(encoding='utf-8'), 'DEFS', str(furniture_source)):
@@ -76,6 +78,13 @@ class ArtLibrary:
             if asset_id not in known:
                 raise StudioError(422, '美术绑定未对应当前游戏定义；新增命名空间需先接入其定义表')
             _, value = self.version(registry, asset_id, version)
+            if value.get('bindingPolicy') == 'fixture_only':
+                raise StudioError(422, '该材质仅供受控样件验收，尚未开放正式游戏绑定')
+            if asset_id.startswith('material.'):
+                surface = value.get('surface', {})
+                metres, mean = surface.get('tileMetres'), surface.get('meanLinear')
+                if type(metres) not in (int,float) or not math.isfinite(metres) or not 0 < metres <= 16 or not isinstance(mean,list) or len(mean)!=3 or any(type(n) not in (int,float) or not math.isfinite(n) or not 0<n<=1 for n in mean) or surface.get('channels') != ['baseColor']:
+                    raise StudioError(422, '材质需要受控米制尺度、线性色均值及已实现的baseColor通道')
             if value.get('agentReview', {}).get('status') != 'accepted':
                 raise StudioError(422, f'{asset_id}/{version} 尚未通过代理审图')
             for key in ('original', 'runtime'):
@@ -116,6 +125,8 @@ class ArtLibrary:
                 for key, version in state['pending'].items():
                     _, value = self.version(state['registry'], key, version)
                     bindings[key] = dict(version=version, path='res://' + value['runtime']['path'][5:], sha256=value['runtime']['sha256'])
+                    if key.startswith('material.'):
+                        bindings[key]['surface'] = copy.deepcopy(value['surface'])
                 application = dict(id=str(uuid.uuid4()), appliedAt=timestamp(), actor='content-studio-art',
                                    registrySha256=hashlib.sha256(self.registry_file.read_bytes()).hexdigest())
                 active = dict(schemaVersion=1, styleId=state['registry'].get('styleId'), bindings=bindings, application=application)
