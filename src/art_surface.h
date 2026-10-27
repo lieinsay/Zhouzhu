@@ -1,6 +1,7 @@
 #pragma once
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/classes/material.hpp>
+#include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/variant/color.hpp>
 #include <godot_cpp/variant/string.hpp>
 
@@ -11,4 +12,5 @@ protected:
     static void _bind_methods();
 public:
     static godot::Ref<godot::Material> create(const godot::String &p_asset, const godot::Color &p_color, double p_roughness, double p_metallic);
+    static bool configure(const godot::Ref<godot::ShaderMaterial> &p_material, const godot::String &p_prefix, const godot::String &p_asset);
 };

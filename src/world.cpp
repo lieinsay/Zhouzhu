@@ -1,4 +1,5 @@
 #include "world.h"
+#include "art_surface.h"
 
 #include <algorithm>
 #include <cmath>
@@ -346,6 +347,7 @@ void GroupWorld::install() {
         Ref<ShaderMaterial> m;
         m.instantiate();
         m->set_shader(ground_shader);
+        for (const char *key : {"stone","soil","grass","gravel","litter"}) ArtSurface::configure(m,String("ground_")+String(key),String("material.")+String(key));
         ground_material = m;
     } else {
         ERR_PRINT(String("World: 读不了地皮着色器 ") + GROUND_SHADER + String(U"，地皮不换季、不盖雪"));
@@ -837,6 +839,8 @@ JobPool::Work GroupWorld::tile_job(const TileKey &p_key) const {
         }
         out->season.resize(int64_t(m.season.size()));
         std::copy(m.season.begin(), m.season.end(), out->season.ptrw());
+        out->surface.resize(int64_t(m.surface.size()));
+        std::copy(m.surface.begin(),m.surface.end(),out->surface.ptrw());
         out->indices = int32s(m.indices);
         // 碰撞按生成的先后切段（一行行生成的，相邻的三角面挨着：每段是一条带子）
         const int64_t faces = int64_t(m.collision.size() / 9);
@@ -905,10 +909,11 @@ void GroupWorld::adopt(std::unique_ptr<TileArrays> p_tile) {
         arrays[Mesh::ARRAY_NORMAL] = m.normals;
         arrays[Mesh::ARRAY_COLOR] = m.colors;
         arrays[Mesh::ARRAY_CUSTOM0] = m.season;
+        arrays[Mesh::ARRAY_CUSTOM1] = m.surface;
         arrays[Mesh::ARRAY_INDEX] = m.indices;
         Ref<ArrayMesh> mesh;
         mesh.instantiate();
-        const uint64_t format = uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT;
+        const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) | (uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT);
         mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
         mesh->surface_set_material(0, ground_material);
 
@@ -1644,10 +1649,13 @@ void GroupWorld::mount_patch(Tile &r_tile, int64_t p_chunk) {
     season.resize(int64_t(m.season.size()));
     std::copy(m.season.begin(), m.season.end(), season.ptrw());
     arrays[Mesh::ARRAY_CUSTOM0] = season;
+    PackedByteArray surface;surface.resize(int64_t(m.surface.size()));
+    std::copy(m.surface.begin(),m.surface.end(),surface.ptrw());
+    arrays[Mesh::ARRAY_CUSTOM1] = surface;
     arrays[Mesh::ARRAY_INDEX] = int32s(m.indices);
     Ref<ArrayMesh> mesh;
     mesh.instantiate();
-    const uint64_t format = uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT;
+    const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) | (uint64_t(Mesh::ARRAY_CUSTOM_RGBA8_UNORM) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT);
     mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
     mesh->surface_set_material(0, ground_material);
     StaticBody3D *root = memnew(StaticBody3D);

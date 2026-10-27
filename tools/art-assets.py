@@ -114,16 +114,20 @@ def review(args):
 def register_material(args):
     from PIL import Image
     key = args.asset.removeprefix('material.')
-    if args.asset != 'material.'+key or key not in ('wood','rammed_earth','terracotta','iron') or not re.fullmatch(r'v[1-9][0-9]*',args.version) or not 0<args.tile_metres<=16:
+    slots=read_json(ROOT/'game/art/scene-slots.json',{}).get('materials',{})
+    if args.asset != 'material.'+key or key not in set(slots)|{'wood','rammed_earth','terracotta','iron'} or not re.fullmatch(r'v[1-9][0-9]*',args.version) or not 0<args.tile_metres<=16:
         raise ValueError('材质身份、版本或米制尺度不合法')
     registry=read_json(REGISTRY)
     asset=next((a for a in registry['assets'] if a['id']==args.asset),None)
-    if asset is None:raise ValueError('先登记材质用途与实际入口，再增加版本')
+    if asset is None:
+        if key not in slots:raise ValueError('先登记材质用途与实际入口，再增加版本')
+        asset=dict(id=args.asset,name=slots[key]['name'],definition='game/art/scene-slots.json',useSites=slots[key]['uses'],versions=[])
+        registry['assets'].append(asset)
     if any(v['version']==args.version for v in asset['versions']):raise ValueError('版本已存在，不覆盖历史')
     plan=read_json(Path(args.prompts))
     prompt=next(row['prompt'] for row in plan['materials'] if row['id']==key)
     original=ROOT/'assets/art/materials'/key/args.version/'original.png'
-    candidate=key=='iron'
+    candidate=key=='iron' and not slots.get(key,{}).get('runtime',False)
     target=(ROOT/'assets/art/materials'/key/args.version/'basecolor.png') if candidate else (ROOT/'game/art/materials'/key/(args.version+'.png'))
     if original.exists() or target.exists():raise ValueError('原图或派生文件已存在')
     image=Image.open(args.source).convert('RGB')

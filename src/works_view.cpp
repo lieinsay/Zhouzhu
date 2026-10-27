@@ -65,6 +65,11 @@ void build_structure_nodes(Node3D *p_root, const StructureMesh &p_mesh, SharedLo
         arrays.resize(Mesh::ARRAY_MAX);
         arrays[Mesh::ARRAY_VERTEX] = vec3s(part.positions);
         arrays[Mesh::ARRAY_NORMAL] = vec3s(part.normals);
+        if(part.uvs.size()==size_t(part.vertex_count())*2) {
+            PackedVector2Array uv,uv2;uv.resize(part.vertex_count());uv2.resize(part.vertex_count());
+            for(int i=0;i<part.vertex_count();++i){uv.set(i,Vector2(part.uvs[size_t(i)*2],part.uvs[size_t(i)*2+1]));uv2.set(i,Vector2(part.uv2s[size_t(i)*2],part.uv2s[size_t(i)*2+1]));}
+            arrays[Mesh::ARRAY_TEX_UV]=uv;arrays[Mesh::ARRAY_TEX_UV2]=uv2;
+        }
         PackedInt32Array indices;
         indices.resize(int64_t(part.indices.size()));
         std::copy(part.indices.begin(), part.indices.end(), indices.ptrw());

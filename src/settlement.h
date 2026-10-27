@@ -24,6 +24,7 @@ struct BuildingArrays {
         int group = 0;
         int material = 0; // PartMaterial
         godot::PackedVector3Array vertices, normals;
+        godot::PackedVector2Array uvs, uv2s;
         godot::PackedInt32Array indices;
     };
     std::vector<Surface> surfaces;

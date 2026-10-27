@@ -52,6 +52,9 @@ void part_material_color(PartMaterial p_material, float &r_r, float &r_g, float 
         { 0.88f, 0.74f, 0.34f, 1.0f }, // 粮
         { 0.58f, 0.14f, 0.10f, 0.6f }, // 朱漆
         { 0.60f, 0.33f, 0.25f, 1.0f }, // 砖（搭建件的砖墙）
+        { 0.30f, 0.31f, 0.32f, 0.55f }, // 铁构件
+        { 0.66f, 0.54f, 0.38f, 0.85f }, // 革/鼓皮
+        { 0.72f, 0.60f, 0.36f, 1.0f }, // 茅草
     };
     const Row &row = ROWS[std::clamp(int(p_material), 0, int(PartMaterial::COUNT) - 1)];
     r_r = row.r;

@@ -56,6 +56,10 @@ BuildingArrays to_building_arrays(BuildingMesh &&p_mesh) {
             s.group = g;
             s.material = m;
             s.vertices = vec3s(part.positions);
+            if(part.uvs.size()==size_t(part.vertex_count())*2) {
+                s.uvs.resize(part.vertex_count());s.uv2s.resize(part.vertex_count());
+                for(int i=0;i<part.vertex_count();++i){s.uvs.set(i,Vector2(part.uvs[size_t(i)*2],part.uvs[size_t(i)*2+1]));s.uv2s.set(i,Vector2(part.uv2s[size_t(i)*2],part.uv2s[size_t(i)*2+1]));}
+            }
             s.normals = vec3s(part.normals);
             s.indices.resize(int64_t(part.indices.size()));
             std::copy(part.indices.begin(), part.indices.end(), s.indices.ptrw());
@@ -287,6 +291,7 @@ void Settlement::mount(const BuildingArrays &p_arrays) {
         arrays.resize(Mesh::ARRAY_MAX);
         arrays[Mesh::ARRAY_VERTEX] = s.vertices;
         arrays[Mesh::ARRAY_NORMAL] = s.normals;
+        if(!s.uvs.is_empty()){arrays[Mesh::ARRAY_TEX_UV]=s.uvs;arrays[Mesh::ARRAY_TEX_UV2]=s.uv2s;}
         arrays[Mesh::ARRAY_INDEX] = s.indices;
         mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
         mesh->surface_set_material(mesh->get_surface_count() - 1, looks->part_material(PartMaterial(s.material)));

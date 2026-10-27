@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "authorization": "2026-10-27用户要求补齐当前场景所缺资源并实际应用；不新增玩法或生成器数据",
+  "materials": {
+    "wood": {
+      "name": "木材",
+      "tileMetres": 0.5,
+      "uses": [
+        "wood structure",
+        "ship",
+        "furniture"
+      ]
+    },
+    "rammed_earth": {
+      "name": "夯土",
+      "tileMetres": 1.0,
+      "uses": [
+        "walls"
+      ]
+    },
+    "terracotta": {
+      "name": "陶土",
+      "tileMetres": 0.5,
+      "uses": [
+        "pottery",
+        "stove",
+        "vat"
+      ]
+    },
+    "iron": {
+      "name": "铁构件",
+      "tileMetres": 0.5,
+      "runtime": true,
+      "uses": [
+        "chest hinges",
+        "ship fittings",
+        "drum fasteners"
+      ]
+    },
+    "stone": {
+      "name": "石面",
+      "tileMetres": 1.0,
+      "uses": [
+        "terrain rock detail",
+        "stone foundation",
+        "mineral surfaces"
+      ]
+    },
+    "soil": {
+      "name": "土壤",
+      "tileMetres": 1.0,
+      "uses": [
+        "ground soil",
+        "fields",
+        "wetland base"
+      ]
+    },
+    "grass": {
+      "name": "草地基底",
+      "tileMetres": 1.0,
+      "uses": [
+        "herb surface detail"
+      ]
+    },
+    "gravel": {
+      "name": "砂砾",
+      "tileMetres": 0.5,
+      "uses": [
+        "gravel source",
+        "source classified ground"
+      ]
+    },
+    "litter": {
+      "name": "林地薄落叶层",
+      "tileMetres": 1.0,
+      "uses": [
+        "forest ground"
+      ]
+    },
+    "hemp": {
+      "name": "麻布织纹",
+      "tileMetres": 0.25,
+      "uses": [
+        "sails",
+        "clothing",
+        "bedding",
+        "sacks",
+        "rope fiber"
+      ]
+    },
+    "straw": {
+      "name": "草编",
+      "tileMetres": 0.5,
+      "uses": [
+        "mat",
+        "grain bin",
+        "hats"
+      ]
+    },
+    "thatch": {
+      "name": "茅草",
+      "tileMetres": 1.0,
+      "uses": [
+        "thatch roof"
+      ]
+    },
+    "brick": {
+      "name": "砖面",
+      "tileMetres": 1.0,
+      "uses": [
+        "brick wall"
+      ]
+    },
+    "roof_tiles": {
+      "name": "瓦面",
+      "tileMetres": 1.0,
+      "uses": [
+        "roof tiles"
+      ]
+    },
+    "lacquer": {
+      "name": "漆面",
+      "tileMetres": 0.5,
+      "uses": [
+        "altar",
+        "drum"
+      ]
+    },
+    "bark": {
+      "name": "树皮",
+      "tileMetres": 0.5,
+      "uses": [
+        "tree bark"
+      ]
+    },
+    "foliage": {
+      "name": "叶面细节",
+      "tileMetres": 0.25,
+      "uses": [
+        "broadleaf",
+        "needle",
+        "shrub",
+        "crop foliage"
+      ]
+    },
+    "leather": {
+      "name": "皮革",
+      "tileMetres": 0.25,
+      "uses": [
+        "belt",
+        "shoe",
+        "drum skin"
+      ]
+    },
+    "hair": {
+      "name": "发丝",
+      "tileMetres": 0.25,
+      "uses": [
+        "adult character hair"
+      ]
+    },
+    "wood_endgrain": {
+      "name": "木材端纹",
+      "tileMetres": 0.25,
+      "uses": [
+        "wood component end faces"
+      ]
+    },
+    "grain": {
+      "name": "粮粒表面",
+      "tileMetres": 0.25,
+      "uses": [
+        "grain bin contents"
+      ]
+    },
+    "needle": {
+      "name": "针叶细节",
+      "tileMetres": 0.25,
+      "uses": [
+        "conifer canopy only"
+      ]
+    }
+  },
+  "characters": {
+    "face_young_male": {
+      "name": "青年成年男性面部",
+      "uses": [
+        "player",
+        "villager cosmetic variant"
+      ]
+    },
+    "face_mature_male": {
+      "name": "中年成年男性面部",
+      "uses": [
+        "villager cosmetic variant"
+      ]
+    },
+    "face_young_female": {
+      "name": "青年成年女性面部",
+      "uses": [
+        "villager cosmetic variant"
+      ]
+    },
+    "face_mature_female": {
+      "name": "中年成年女性面部",
+      "uses": [
+        "villager cosmetic variant"
+      ]
+    }
+  }
+}

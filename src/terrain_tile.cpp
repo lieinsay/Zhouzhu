@@ -60,6 +60,7 @@ GroundColor surface_rock_color(const WorldGrid &g, double p_x, double p_z) {
 // 一个顶点的季相份额（见 TileMesh::season）
 struct GroundSeason {
     uint8_t v[4] = { 0, 0, 0, 0 };
+    uint8_t surface[4] = { 255, 0, 0, 0 }; // 默认用于崖壁/岛底：岩面。
 };
 
 constexpr int COVER_CLIFF_EDGE = 1, COVER_ALPINE = 3, COVER_FOREST = 4, COVER_SHRUB = 5, COVER_GRASS = 6, COVER_ARABLE = 7, COVER_TERRACE = 8, COVER_WETLAND = 9;
@@ -116,6 +117,12 @@ GroundColor ground_color(const WorldTerrain &p_terrain, const TerrainSample &p_s
     for (int k = 0; k < 4; k++) {
         r_season.v[k] = uint8_t(std::lround(std::clamp(shares[k] * keep, 0.0, 1.0) * 255.0));
     }
+    const double bed = p_terrain.has_rivers() ? std::clamp(double(p_sample.bed),0.0,1.0) : 0.0;
+    const double rock_share = (1.0-bed) * (std::clamp(rock,0.0,1.0) + (1.0-std::clamp(rock,0.0,1.0)) * (mix.w[2]+0.5*mix.w[COVER_CLIFF_EDGE]));
+    double detail[4] = { rock_share, bed, herb*keep + 0.35*shrub*keep, forest*keep };
+    double sum=0;for(double value:detail)sum+=std::max(0.0,value);
+    const double normalizer=std::max(1.0,sum);
+    for(int k=0;k<4;++k)r_season.surface[k]=uint8_t(std::lround(std::clamp(detail[k]/normalizer,0.0,1.0)*255.0));
     const float shade = float(1.0 + 0.07 * hash_fbm(COLOR_SEED + 2, p_x, p_z, 30.0, 3));
     return { out.r * shade, out.g * shade, out.b * shade };
 }
@@ -130,6 +137,7 @@ struct Builder {
         mesh.normals.insert(mesh.normals.end(), { nx, ny, nz });
         mesh.colors.insert(mesh.colors.end(), { c.r, c.g, c.b, 1.0f });
         mesh.season.insert(mesh.season.end(), s.v, s.v + 4);
+        mesh.surface.insert(mesh.surface.end(), s.surface, s.surface + 4);
         return int(mesh.positions.size() / 3) - 1;
     }
     // a → b → c 须是从正面看的顺时针
@@ -709,6 +717,7 @@ TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_lay
         double n[3] = { 0.0, 1.0, 0.0 };
         double c[3] = { 0.0, 0.0, 0.0 };
         double season[4] = { 0.0, 0.0, 0.0, 0.0 };
+        double surface[4] = { 255.0, 0.0, 0.0, 0.0 };
     };
     std::vector<Node> nodes(size_t(per + 1) * (per + 1));
     auto node = [&](int di, int dj) -> Node & { return nodes[size_t(di) * (per + 1) + size_t(dj)]; };
@@ -732,6 +741,7 @@ TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_lay
             nd.c[0] = col.r, nd.c[1] = col.g, nd.c[2] = col.b;
             for (int k = 0; k < 4; k++) {
                 nd.season[k] = season.v[k];
+                nd.surface[k] = season.surface[k];
             }
         }
     }
@@ -740,7 +750,7 @@ TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_lay
     };
     // 粗格 (qi, qj) 里的点 (u, v)（u 沿 x、v 沿 z，0..1）：按叶块的两个三角形插值（对角线 (0,1)–(1,0)）
     struct Attr {
-        double y = 0.0, n[3] = { 0.0, 1.0, 0.0 }, c[3] = { 0.0, 0.0, 0.0 }, season[4] = { 0.0, 0.0, 0.0, 0.0 };
+        double y = 0.0, n[3] = { 0.0, 1.0, 0.0 }, c[3] = { 0.0, 0.0, 0.0 }, season[4] = { 0.0, 0.0, 0.0, 0.0 }, surface[4] = {255.0,0.0,0.0,0.0};
     };
     auto interp = [&](int qi, int qj, double u, double v) {
         const Node &a00 = node(qi, qj), &a01 = node(qi, qj + 1), &a10 = node(qi + 1, qj), &a11 = node(qi + 1, qj + 1);
@@ -758,6 +768,7 @@ TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_lay
         }
         for (int k = 0; k < 4; k++) {
             out.season[k] = w00 * a00.season[k] + w01 * a01.season[k] + w10 * a10.season[k] + w11 * a11.season[k];
+            out.surface[k] = w00*a00.surface[k]+w01*a01.surface[k]+w10*a10.surface[k]+w11*a11.surface[k];
         }
         const double len = std::sqrt(out.n[0] * out.n[0] + out.n[1] * out.n[1] + out.n[2] * out.n[2]);
         for (int k = 0; k < 3; k++) {
@@ -783,6 +794,7 @@ TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_lay
         GroundSeason se;
         for (int k = 0; k < 4; k++) {
             se.v[k] = uint8_t(std::lround(std::clamp(p_a.season[k], 0.0, 255.0)));
+            se.surface[k] = uint8_t(std::lround(std::clamp(p_a.surface[k],0.0,255.0)));
         }
         return se;
     };
@@ -812,8 +824,10 @@ TileMesh build_edit_patch(const WorldTerrain &p_terrain, const TileLayout &p_lay
                         se = season_of(a);
                     } else if (d > 0) {
                         c = RAISED;
+                        se.surface[0]=0;
                     } else {
                         c = -d * H >= soil_of(fi, fj) - 1e-9 ? DUG_STONE : DUG_SOIL;
+                        se.surface[0]=(-d*H>=soil_of(fi,fj)-1e-9)?255:0;
                     }
                     const double x = local_x(fj) + cj * EditGrid::CELL_M, z = local_z(fi) + ci * EditGrid::CELL_M;
                     id[ci][cj] = push(x, a.y + d * H, z, a.n, c, se);

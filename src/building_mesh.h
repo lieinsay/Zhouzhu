@@ -24,6 +24,8 @@ struct MeshPart {
     std::vector<float> normals; // xyz
     std::vector<float> colors; // rgba，sRGB（只有简模用）
     std::vector<int32_t> indices;
+    std::vector<float> uvs; // 米制逐构件UV，v沿构件长轴。
+    std::vector<float> uv2s; // y=16为米制UV；两项为负时存端面宽高，单次映射端纹。原生光照UV不会误判。
 
     bool empty() const { return indices.empty(); }
     int vertex_count() const { return int(positions.size() / 3); }

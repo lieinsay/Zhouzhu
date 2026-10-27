@@ -11,6 +11,7 @@ render_mode cull_back, specular_schlick_ggx, world_vertex_coords;
 
 #include "res://shaders/weather.gdshaderinc"
 #include "res://shaders/planet_curve.gdshaderinc"
+#include "res://shaders/ground_detail.gdshaderinc"
 
 uniform vec3 straw : source_color = vec3(0.62, 0.55, 0.34);
 uniform vec3 shrub_winter : source_color = vec3(0.42, 0.36, 0.26);
@@ -26,6 +27,7 @@ varying vec3 v_world;
 varying vec3 v_group; // 这一群的平面坐标（碎斑按它取：邻群摆了刚体变换，换锚前后花样不变）
 varying vec3 v_up; // 这一群的平面里的法线
 varying vec4 v_season;
+varying vec4 v_surface;
 
 void vertex() {
 	// world_vertex_coords：VERTEX、NORMAL 已是世界（平面）坐标
@@ -33,6 +35,7 @@ void vertex() {
 	v_group = wx_group_pos(VERTEX);
 	v_up = normalize(mat3(wx_group_inv) * NORMAL);
 	v_season = CUSTOM0;
+	v_surface = CUSTOM1;
 	COLOR.rgb = wx_srgb_to_linear(COLOR.rgb);
 	VERTEX = planet_visual(v_world);
 	NORMAL = planet_visual_normal(v_world, NORMAL);
@@ -44,6 +47,7 @@ void fragment() {
 	vec4 e1 = wx_elev_row(v_world.y, 1); // 秋色、春芽、作物、日均温
 	float herb = v_season.r, field = v_season.g, shrub = v_season.b, forest = v_season.a;
 	float blotch = wx_blotch(v_group.xz / 23.0);
+	base *= ground_surface_detail(v_group, v_up, v_surface, distance(v_world,CAMERA_POSITION_WORLD));
 	float dormant = clamp(1.0 - e0.b, 0.0, 1.0);
 
 	// 草：不绿时枯黄（碎斑：有的地方先黄）

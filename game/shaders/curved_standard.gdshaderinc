@@ -16,6 +16,11 @@ uniform bool surface_enabled = false;
 uniform sampler2D surface_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform vec3 surface_mean = vec3(1.0);
 uniform float surface_tile_metres = 1.0;
+uniform bool surface_uv_metres = false;
+uniform bool surface_end_enabled = false;
+uniform sampler2D surface_end_tex : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform vec3 surface_end_mean = vec3(1.0);
+uniform float surface_end_tile_metres = .25;
 global uniform float wx_wet;
 varying vec3 surface_pos;
 varying vec3 surface_n;
@@ -45,7 +50,12 @@ void fragment() {
 		weights /= max(dot(weights, vec3(1.0)), 0.0001);
 		vec3 p = surface_pos / max(surface_tile_metres, 0.001);
 		vec3 detail = texture(surface_tex, p.zy).rgb * weights.x + texture(surface_tex, p.xz).rgb * weights.y + texture(surface_tex, p.xy).rgb * weights.z;
-		base *= clamp(detail / max(surface_mean, vec3(0.001)), vec3(0.6), vec3(1.4));
+		vec3 ratio=detail/max(surface_mean,vec3(.001));
+		if(surface_uv_metres && (UV2.y>8.0 || UV2.y<0.0)) {
+			ratio=texture(surface_tex,UV/max(surface_tile_metres,.001)).rgb/max(surface_mean,vec3(.001));
+			if(surface_end_enabled && UV2.y<0.0)ratio=texture(surface_end_tex,clamp(UV/max(-UV2,vec2(.001)),vec2(.01),vec2(.99))).rgb/max(surface_end_mean,vec3(.001));
+		}
+		base *= clamp(ratio, vec3(0.6), vec3(1.4));
 		wet = clamp(wx_wet, 0.0, 1.0);
 		base *= mix(1.0, 0.88, wet);
 	}

@@ -49,6 +49,7 @@ extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned l
 #include "flight_model.h"
 #include "freight.h"
 #include "building_mesh.h"
+#include "mesh_kit.h"
 #include "building_parts.h"
 #include "house_template.h"
 #include "interior_rules.h"
@@ -1707,6 +1708,10 @@ void test_terrain_tiles() {
 
     const TileMesh inner = build_tile_mesh(t, layout, here);
     const size_t verts = inner.positions.size() / 3;
+    check(inner.surface.size()==verts*4 && inner.season.size()==verts*4,"地表语义与季相属性按顶点对齐");
+    bool shares_valid=true;
+    for(size_t k=0;k<verts;++k){int sum=0;for(int j=0;j<4;++j)sum+=inner.surface[k*4+j];shares_valid=shares_valid && sum<=257;}
+    check(shares_valid,"地形纹理份额有界，土壤使用剩余份额");
     bool indices_ok = inner.indices.size() % 3 == 0, local = true;
     for (int32_t k : inner.indices) {
         indices_ok = indices_ok && k >= 0 && size_t(k) < verts;
@@ -1734,6 +1739,9 @@ void test_terrain_tiles() {
     }
     check(coast.land_quads > 0 && coast.land_quads < 64 * 64, "岸边的块一半是地");
     check(walls > 0, "岸边的块有崖壁");
+    bool rock_faces=true;
+    for(size_t k=0;k<coast.normals.size()/3;++k)if(coast.normals[k*3+1]==0)rock_faces=rock_faces && coast.surface[k*4]==255 && coast.surface[k*4+1]==0;
+    check(rock_faces,"崖壁默认岩面纹理，不猜造植被或砂砾类别");
     const TileMesh coarse = build_tile_mesh(t, layout, { 1, 0, 0 });
     check(coarse.collision.empty(), "粗块不带碰撞");
 
@@ -4492,6 +4500,26 @@ bool winding_ok(const MeshPart &p_part) {
         }
     }
     return true;
+}
+
+void test_art_uv() {
+    std::printf("art_uv\n");
+    for(const mesh_kit::V3 size: {mesh_kit::V3{4,.2,.3},mesh_kit::V3{.2,4,.3},mesh_kit::V3{.2,.3,4}}) {
+        for(double yaw:{0.0,1.570796326794897}) {
+            MeshPart part;mesh_kit::append_box(part,mesh_kit::Xform(yaw,.3,{3,2,1}),size);
+            check(part.uvs.size()==size_t(part.vertex_count())*2 && part.uv2s.size()==part.uvs.size(),"逐构件UV属性完整");
+            bool metric=true;int end_vertices=0;
+            for(int f=0;f<6;++f)for(int k=0;k<4;++k){
+                const int a=f*4+k,b=f*4+(k+1)%4;
+                double distance=0;for(int axis=0;axis<3;++axis){const double d=part.positions[size_t(a)*3+axis]-part.positions[size_t(b)*3+axis];distance+=d*d;}
+                const double du=part.uvs[size_t(a)*2]-part.uvs[size_t(b)*2],dv=part.uvs[size_t(a)*2+1]-part.uvs[size_t(b)*2+1];
+                metric=metric && std::abs(distance-du*du-dv*dv)<1e-4 && (part.uv2s[size_t(a)*2+1]==16 || part.uv2s[size_t(a)*2+1]<0);
+                end_vertices+=part.uv2s[size_t(a)*2]<0;
+            }
+            check(metric,"旋转梁柱后的UV保持米制，不按整体房屋坐标拉伸");
+            check(end_vertices==8,"只有长轴两端使用端纹标记");
+        }
+    }
 }
 
 void test_building_mesh() {
@@ -7496,6 +7524,7 @@ void test_dev_manual() {
     check(manual_text.find("res://tests/art_material_e2e.tscn") != std::string::npos &&
                     studio_text.find("art_material_e2e.tscn") != std::string::npos,
             "材质小样工具有手册入口");
+    check(manual_text.find("res://tests/scene_materials_e2e.tscn")!=std::string::npos && studio_text.find("scene_materials_e2e.tscn")!=std::string::npos,"真实场景材质检查有文档入口");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");
@@ -7573,7 +7602,7 @@ int main(int argc, char **argv) {
             { "far_islands", test_far_islands },
             { "story_lods", test_story_lods },
             { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
-            { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
+            { "art_uv", test_art_uv }, { "building_mesh", test_building_mesh }, { "terrain_tiles", test_terrain_tiles }, { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
             { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works }, { "dev_manual", test_dev_manual },
             // 读开局那群的几段（换开局、重导时逐段重记金标）
             { "almanac", test_almanac }, { "climate", test_climate }, { "local_season", test_local_season }, { "village_seasons", test_village_seasons },

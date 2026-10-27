@@ -68,9 +68,15 @@ inline void polygon(MeshPart &r_part, std::vector<V3> p_points, const V3 &p_norm
     const int base = r_part.vertex_count();
     const double len = std::sqrt(dot(p_normal, p_normal));
     const V3 n = len > 0.0 ? p_normal * (1.0 / len) : V3{ 0, 1, 0 };
+    V3 tangent = std::abs(n.y)>0.5 ? V3{1,0,0} : (std::abs(n.x)>0.5 ? V3{0,0,1} : V3{1,0,0});
+    tangent=tangent-n*dot(tangent,n);tangent=tangent*(1.0/std::max(1e-9,std::sqrt(dot(tangent,tangent))));
+    const V3 bitangent=cross(n,tangent);
+    r_part.uvs.resize(size_t(base)*2,0.0f);r_part.uv2s.resize(size_t(base)*2,0.0f);
     for (const V3 &p : p_points) {
         push3(r_part.positions, p);
         push3(r_part.normals, n);
+        r_part.uvs.insert(r_part.uvs.end(),{float(dot(p,tangent)),float(dot(p,bitangent))});
+        r_part.uv2s.insert(r_part.uv2s.end(),{0.0f,16.0f});
         if (p_color) {
             r_part.colors.insert(r_part.colors.end(), { p_color->r, p_color->g, p_color->b, p_color->a });
         }
@@ -91,12 +97,28 @@ inline void polygon_faces(std::vector<float> &r_faces, const std::vector<V3> &p_
 
 inline void append_box(MeshPart &r_part, const Xform &p_xf, const V3 &p_size, const Rgba *p_color = nullptr) {
     const V3 half = p_size * 0.5;
+    const double dims[3]={p_size.x,p_size.y,p_size.z};
+    const int grain=int(std::max_element(dims,dims+3)-dims);
     for (int f = 0; f < 6; f++) {
+        const int base=r_part.vertex_count();
         std::vector<V3> pts;
         for (int k = 0; k < 4; k++) {
             pts.push_back(p_xf.xform(corner(half, f, SU[k], SW[k])));
         }
         polygon(r_part, pts, p_xf.rotate(FACE_N[f]), p_color);
+        const int normal_axis=f/2;
+        const int v_axis=grain==normal_axis ? ((normal_axis+1)%3) : grain;
+        const int u_axis=3-normal_axis-v_axis;
+        for(int k=base;k<r_part.vertex_count();++k) {
+            const V3 q{r_part.positions[size_t(k)*3]-p_xf.o.x,r_part.positions[size_t(k)*3+1]-p_xf.o.y,r_part.positions[size_t(k)*3+2]-p_xf.o.z};
+            const double local[3]={q.x*p_xf.m[0][0]+q.y*p_xf.m[1][0]+q.z*p_xf.m[2][0],q.x*p_xf.m[0][1]+q.y*p_xf.m[1][1]+q.z*p_xf.m[2][1],q.x*p_xf.m[0][2]+q.y*p_xf.m[1][2]+q.z*p_xf.m[2][2]};
+            r_part.uvs[size_t(k)*2]=float(local[u_axis]+dims[u_axis]*.5);
+            r_part.uvs[size_t(k)*2+1]=float(local[v_axis]+dims[v_axis]*.5);
+            // 板材薄边不贴整圈树心；方梁端面单次映射，避免一根梁出现多个重复树心。
+            const bool end=normal_axis==grain && std::max(dims[u_axis],dims[v_axis])/std::max(1e-6,std::min(dims[u_axis],dims[v_axis]))<3.5;
+            r_part.uv2s[size_t(k)*2]=end ? float(-dims[u_axis]):0.0f;
+            r_part.uv2s[size_t(k)*2+1]=end ? float(-dims[v_axis]):16.0f;
+        }
     }
 }
 

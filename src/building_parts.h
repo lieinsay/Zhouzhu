@@ -34,6 +34,9 @@ enum class PartMaterial {
     GRAIN,
     LACQUER, // 鼓、供桌上的朱漆
     BRICK, // 砖墙（搭建件）
+    METAL, // 现有器物的铰链、箍和固定件；只影响美术表现。
+    LEATHER, // 鼓皮、皮革附件。
+    THATCH, // 茅草屋面，与编织席面分开。
     COUNT,
 };
 

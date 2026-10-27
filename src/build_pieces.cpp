@@ -69,7 +69,7 @@ const PieceDef pieces::DEFS[] = {
     { "door_wall", PieceRole::DOOR, PieceSlot::EDGE, PartMaterial::WALL },
     { "window_wall", PieceRole::WINDOW, PieceSlot::EDGE, PartMaterial::WALL },
     { "gable", PieceRole::GABLE, PieceSlot::EDGE, PartMaterial::WALL },
-    { "thatch_roof", PieceRole::ROOF, PieceSlot::CELL, PartMaterial::STRAW },
+    { "thatch_roof", PieceRole::ROOF, PieceSlot::CELL, PartMaterial::THATCH },
     { "tile_roof", PieceRole::ROOF, PieceSlot::CELL, PartMaterial::ROOF },
     { "pillar", PieceRole::PILLAR, PieceSlot::CORNER, PartMaterial::DARK_WOOD },
     { "ladder", PieceRole::LADDER, PieceSlot::CELL, PartMaterial::WOOD },

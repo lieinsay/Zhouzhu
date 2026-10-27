@@ -4,6 +4,8 @@
 
 ## 正式美术资源与应用
 
+2026-10-27 场景补齐批次使用独立工作空间 `workspace/scene-art-20261027` 和回环端口4178，保留原有内容/美术草稿。表面定义在 `game/art/scene-slots.json`，新增材质仍通过同一正式登记和独立应用。真实开局读取检查为 `res://tests/scene_materials_e2e.tscn`；完整执行与验收见 `docs/art-assets/SCENE-COMPLETION-20261027.md`。木构件采用逐构件米制UV，梁端单次映射端纹；没有该属性的原生网格保留三平面回退。
+
 启动后进入 <http://127.0.0.1:4176/art.html>（主页右上角「正式美术资源」）。查看各命名空间身份、版本、来源、SHA、提示词、代理审图与用户逐项确认状态；选择版本 →「暂存美术绑定」→「应用美术到游戏」。暂存保存在独立 `workspace/art-draft.json`，不读取 `draft.json` 或 `project.visuals`。应用校验原图/派生指纹和代理审图结果，检查并发版本，原子更新 `game/art/bindings.json`，并保存 `assets/art/applications/` 前后快照。
 
 游戏重新启动后从 `res://art/bindings.json` 读取正式图片，背包、快捷栏、木箱/船舱、拖拽物品、配方产物与材料共用 `item.<id>`。工具默认使用同一已应用版本；既有显式 `project.visuals` 工具草稿仍保留，可在正式资源页核对游戏实际应用。缺图继续颜色/名称回退，数量、快捷键、选择态和提示文字独立绘制。这里只应用美术，不顺带应用配方、经济、模型变换或其他草稿。

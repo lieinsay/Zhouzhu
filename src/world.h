@@ -48,6 +48,7 @@ struct TileArrays : JobResult {
     godot::PackedVector3Array vertices, normals;
     godot::PackedColorArray colors;
     godot::PackedByteArray season; // 季相份额（CUSTOM0，RGBA8）
+    godot::PackedByteArray surface; // 实际渲染表面（CUSTOM1，RGBA8）
     godot::PackedInt32Array indices;
     // 碰撞三角面（只有叶块有），切成几段：一段一个凹多边形，主线程一段段挂（整块一次挂要十几毫秒）
     std::vector<godot::PackedVector3Array> face_parts;

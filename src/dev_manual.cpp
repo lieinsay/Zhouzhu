@@ -4,6 +4,7 @@
 // 美术制作登记：python tools/art-assets.py --help（原图、受控缩放、代理审图与小尺寸检查）。
 // 真实模型预览：python tools/art-preview/render.py --help；家具导出与操作见 docs/CONTENT-STUDIO.md。
 // 材质小样验收：res://tests/art_material_e2e.tscn；只验证尺度、映射、光照和天气，不修改世界源数据。
+// 场景材质读取：res://tests/scene_materials_e2e.tscn；完整场景补齐说明见 docs/art-assets/SCENE-COMPLETION-20261027.md。
 #include "dev_manual.h"
 
 #include "input_actions.h"

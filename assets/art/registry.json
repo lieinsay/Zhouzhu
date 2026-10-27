@@ -6862,6 +6862,983 @@
             "scope": "fixture_only",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v2",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: seamless diffuse base-color texture for painted Japanese-style 3D game Zhouzhu. Subject: a continuous plain dark gray forged iron surface, restrained fine hammered material grain and very slight natural tone variation; orderly, maintained practical iron, no heavy rust, no scratches, no bolts or seams. Flat orthographic surface scan, square represents 0.5 by 0.5 meters. Delicate selective hand-painted texture. Seamless tiling across both axes, matching opposite edges, entire canvas filled. Base color ONLY, no reflected scenery, no baked specular highlights, no directional gradient, no light source, no cast shadows, no AO, no bevel, no text, border, snow, water, season or weather. Metal reflections and roughness will be controlled in the real-time shader, not painted into this image.",
+          "references": [],
+          "generationSource": "D:\\Project\\My\\Zhouzhu\\assets\\art\\materials\\iron\\v1\\original.png",
+          "original": {
+            "path": "assets/art/materials/iron/v2/original.png",
+            "sha256": "67a9465cca4038d5d8be1a3dc6b6c166913eeb154e9066cea1f9a810e21c7168"
+          },
+          "runtime": {
+            "path": "game/art/materials/iron/v2.png",
+            "sha256": "38f5f2f11a1ed2c1debbc344898dc38791e0fcd14062d629d01d63c8912483a8"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.0705787071407778,
+              0.06776833268711704,
+              0.06809837226503707
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.stone",
+      "name": "石面",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "terrain rock detail",
+        "stone foundation",
+        "mineral surfaces"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: plain mineral-grained rock surface in neutral warm gray, fine natural grain and a few restrained hairline fractures; no painted large rock strata, no masonry, no gems or ore veins. It must work across source rock types by modulating their original colors. Scale 1m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-02bb5d2e-8b64-4f06-b8bc-140ca2601384.png",
+          "original": {
+            "path": "assets/art/materials/stone/v1/original.png",
+            "sha256": "dfab7b9c7aff821142e59534d7f875acbce4acc5072d584882eaccadd80b6d5a"
+          },
+          "runtime": {
+            "path": "game/art/materials/stone/v1.png",
+            "sha256": "1df02b9fefff4ce72a18cba57ba00a8415ab774f41d8a654bb1f596a2d812472"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.3223153205957403,
+              0.2736833081889394,
+              0.2192694035231993
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.soil",
+      "name": "土壤",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "ground soil",
+        "fields",
+        "wetland base"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: fine dry earthy soil with small compacted crumbs and restrained grain, neutral warm brown, no footprints, crop rows, roots, stones larger than 2cm, or vegetation. Scale 1m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-171ca910-02d8-4cca-b168-5428caba0f22.png",
+          "original": {
+            "path": "assets/art/materials/soil/v1/original.png",
+            "sha256": "76fd106d4a46f672945239bee35bc46685b8e0af92618d7f434306c81ddef03c"
+          },
+          "runtime": {
+            "path": "game/art/materials/soil/v1.png",
+            "sha256": "a9466f847895a3c1d21bb94d1bb4ce0d2e436eca7a4fb44c50ad021881088c9f"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.2843345239404167,
+              0.1367584685842474,
+              0.05221593762683312
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.grass",
+      "name": "草地基底",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "herb surface detail"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: a calm densely interwoven short meadow grass ground surface, tiny selected grass fibers, neutral muted olive beige-green, no tall blades, flowers, bare patches, scenery or shadows. Seasonal colors come from the runtime shader. Scale 1m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-8dd077c0-afed-49e6-942a-c4f3e3c4a0e0.png",
+          "original": {
+            "path": "assets/art/materials/grass/v1/original.png",
+            "sha256": "3da5f4c75899083e040e6ef2e5b62f86593442989f010fc06d95cab56278475e"
+          },
+          "runtime": {
+            "path": "game/art/materials/grass/v1.png",
+            "sha256": "7cb8ee626de38bc598d3ebe4bb60faf49a3a593bf6e753fc0144ccc547fe77ac"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.20090936605925117,
+              0.20983324423771182,
+              0.05081388270867077
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.gravel",
+      "name": "砂砾",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "gravel source",
+        "source classified ground"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: small natural mixed rounded and angular sand and gravel grains, mostly 2-20mm, neutral gray-beige, no gold, gems, large boulders or directional ripples. Scale 0.5m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-94acbf5f-b671-4035-b61e-ee1707ab0e63.png",
+          "original": {
+            "path": "assets/art/materials/gravel/v1/original.png",
+            "sha256": "16bb900b9206f16609c0d1b1925741d7697f825ff9080b3e581c05dd292cfcdf"
+          },
+          "runtime": {
+            "path": "game/art/materials/gravel/v1.png",
+            "sha256": "9d98823144366d1a312477890c4fd69e5f31377c678a1255036acf34093843df"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.37171946742826834,
+              0.30362431622642566,
+              0.2327305782879363
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.litter",
+      "name": "林地薄落叶层",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "forest ground"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: thin sparse dry small leaf fragments and fine twigs over compact forest soil, quiet natural brown, leaves no larger than 6cm, avoid piled heaps, plants, mushrooms, flowers and deep dark occlusion. Scale 1m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-fc237384-7054-4c43-ac9e-e539e35fbc1f.png",
+          "original": {
+            "path": "assets/art/materials/litter/v1/original.png",
+            "sha256": "ba3b85d4cad6689ba570982361d41a19af7f9561bcf63a4e4a9027c027dd0c49"
+          },
+          "runtime": {
+            "path": "game/art/materials/litter/v1.png",
+            "sha256": "d09eb2ead4f833e91e6e7888a776900f03c4496662d96e62ebb1ee7ecace30aa"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.1340993736509526,
+              0.06750885774077721,
+              0.0337911354532396
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.hemp",
+      "name": "麻布织纹",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "sails",
+        "clothing",
+        "bedding",
+        "sacks",
+        "rope fiber"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: plain undyed fine hemp linen weave, warm flax beige, warp vertical, threads evenly interlaced, maintained practical cloth, no folds, seams, stains, badges or decoration. Scale 0.25m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-2f93299c-294b-4611-8070-62586d77e432.png",
+          "original": {
+            "path": "assets/art/materials/hemp/v1/original.png",
+            "sha256": "b80a96d346e3f2a2141834aa5ef8e3282c545f8fd4c256bbbfdf4c50f969ac32"
+          },
+          "runtime": {
+            "path": "game/art/materials/hemp/v1.png",
+            "sha256": "7070aabfa2221746dd85208d6f9666f2d064657a5626bf5cbb3df6e8a695fc27"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.25,
+            "meanLinear": [
+              0.533838499888885,
+              0.43426282893668483,
+              0.310098008236797
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.straw",
+      "name": "草编",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "mat",
+        "grain bin",
+        "hats"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: simple tight straw mat weave in natural pale ochre, readable straight interlaced dry plant strips, slightly handmade, no fraying, objects, folds or borders. Scale 0.5m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-96abe84d-0117-41de-8c4d-e16313561ac4.png",
+          "original": {
+            "path": "assets/art/materials/straw/v1/original.png",
+            "sha256": "824596c7947e91d7645d991879d397ebcec59c7e2bc40aa1c54178ecc8e2448d"
+          },
+          "runtime": {
+            "path": "game/art/materials/straw/v1.png",
+            "sha256": "6dfbb02c67aa9ed858219f8062ff683ef212710e1d9ec3bd9ec7126d6f0d586d"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.5890795388431286,
+              0.389471640079479,
+              0.1814277263039629
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.thatch",
+      "name": "茅草",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "thatch roof"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: orderly compact layers of dry thatching straw stems directed vertically, subtle horizontal laying rhythm, natural straw beige, no roof outline, ridges, shadows or binding rope drawn across the texture. Scale 1m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-d7a38b96-25ef-41c6-85e0-190503d3d079.png",
+          "original": {
+            "path": "assets/art/materials/thatch/v1/original.png",
+            "sha256": "6346f1af3295a0f976ae895ff9b10edcc8d7867f916e1ea244c14e38156cfd07"
+          },
+          "runtime": {
+            "path": "game/art/materials/thatch/v1.png",
+            "sha256": "f5978097f2747379d28736d20f3d6b035e4177da3038392f7f74c226502fc48c"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.5317674907493917,
+              0.34639771637357153,
+              0.1771115822862533
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.brick",
+      "name": "砖面",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "brick wall"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: orderly plain warm red ochre fired brick wall, regular running bond with thin neutral earth mortar, understated handmade brick grain, no edge highlights or recessed mortar shadows. The 1m square contains five brick lengths across, ten courses vertically. No damage, writing or graffiti.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-2ef58f31-723e-48c9-9801-f3ad1e981b9d.png",
+          "original": {
+            "path": "assets/art/materials/brick/v1/original.png",
+            "sha256": "aebf359219bea057f97090f2c33e91b28f61a69c2e19f493b3ff1739f18646a0"
+          },
+          "runtime": {
+            "path": "game/art/materials/brick/v1.png",
+            "sha256": "0a0251d0631f3095ea9dfb6958cf8063cfa8e97040aa7d394bd8a2ba74f32504"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.41899932532279094,
+              0.11674134484113904,
+              0.0536306879217572
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.roof_tiles",
+      "name": "瓦面",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "roof tiles"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: plain gray unglazed fired-clay curved roofing tile surface, orderly vertical channels and horizontal overlaps expressed with restrained color distinctions, no baked highlight or shadow, no roof outline or ridge. Each 1m square has five tile channels across and three overlaps vertically.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-ccab43da-316b-46dc-8981-42b126f490a1.png",
+          "original": {
+            "path": "assets/art/materials/roof_tiles/v1/original.png",
+            "sha256": "3d2a2643adab4d35d76ecf2a207acf0d07b522df19274b94ec9159b65a5fdfd7"
+          },
+          "runtime": {
+            "path": "game/art/materials/roof_tiles/v1.png",
+            "sha256": "3adc518272c578d31d8d1ce81fb4665d9105f1ecb94a95bc9b20e2213b34533e"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 1.0,
+            "meanLinear": [
+              0.16168615523131263,
+              0.1512036272737457,
+              0.14459011110428888
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.lacquer",
+      "name": "漆面",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "altar",
+        "drum"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: well-kept smooth lacquer surface, restrained neutral warm charcoal with faint subtle brushed grain, no reflections, specular streaks, ornament, scratches or motifs. Actual red/black tint and highlights are supplied by runtime material. Scale 0.5m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-b4d8ad84-62a2-4899-8dc9-b973432a92bb.png",
+          "original": {
+            "path": "assets/art/materials/lacquer/v1/original.png",
+            "sha256": "400854d643df03b28e5dd6d9928dfec0589bfd41f93510185f90274da2f21b46"
+          },
+          "runtime": {
+            "path": "game/art/materials/lacquer/v1.png",
+            "sha256": "b8c06ec92ac27ae975c033bfea60bd669424f970d6347d68b312ce62d96abfd1"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.04449361145487992,
+              0.03416637297714378,
+              0.025907231196912555
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.bark",
+      "name": "树皮",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "tree bark"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: natural medium-fine tree bark with elongated vertical fibers and gently irregular small furrows, quiet gray-brown, no deep cracks, moss, lichen, knots, rings, faces or large species-specific plates. Scale 0.5m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-b4bb43d7-def4-408b-a165-c5d2b3493c96.png",
+          "original": {
+            "path": "assets/art/materials/bark/v1/original.png",
+            "sha256": "83887390c1099ccf200e03e180a35188b55188096b1536eab53aae51c70c08a7"
+          },
+          "runtime": {
+            "path": "game/art/materials/bark/v1.png",
+            "sha256": "d8c0b70197dac2f7269020b4cbc5c884cb5818f9f3a2d6f3bcd1348ca07f86a4"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.5,
+            "meanLinear": [
+              0.21192487299536641,
+              0.14734567242912608,
+              0.10181461488229372
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.foliage",
+      "name": "叶面细节",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "broadleaf",
+        "needle",
+        "shrub",
+        "crop foliage"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: delicate subtle plant leaf-surface grain, tiny selectively painted foliar strokes and very faint fine venation, quiet muted sage gray-green. Abstract surface detail only, no whole leaves or branches, no leaf cluster, no flowers. Suitable to modulate existing broadleaf and needle canopy colors without changing their species shapes. Scale 0.25m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-66766648-eaed-4566-9b96-23b2d61fc2cd.png",
+          "original": {
+            "path": "assets/art/materials/foliage/v1/original.png",
+            "sha256": "dd3b798ae77d67373da50c7d449e748bd6021bb41d44c95c9382d03ba237e967"
+          },
+          "runtime": {
+            "path": "game/art/materials/foliage/v1.png",
+            "sha256": "3739d2880aef883621ab77eccbfab301bbda4f39a3e5825a09b9c4bf32f2da49"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.25,
+            "meanLinear": [
+              0.17079464793103732,
+              0.20458272121647753,
+              0.10261049184466794
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.leather",
+      "name": "皮革",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "belt",
+        "shoe",
+        "drum skin"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: maintained plain natural leather grain, muted warm tan-gray, very fine selected pores, no folds, seams, stitching, cracks, logos, scratches or highlights. Scale 0.25m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-a9390f40-2a73-446e-9404-99e4e5bc5c83.png",
+          "original": {
+            "path": "assets/art/materials/leather/v1/original.png",
+            "sha256": "a9ae65c73c245dcc4523c1e3dcc21490fea3c1b43c649004a9b173f9c2e3734f"
+          },
+          "runtime": {
+            "path": "game/art/materials/leather/v1.png",
+            "sha256": "258b6d458444e14a02620f1ada80e94e22ddd34347fa4be32ca860daacaf1c13"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.25,
+            "meanLinear": [
+              0.3642102100488778,
+              0.24000051098255462,
+              0.15189917420733004
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.hair",
+      "name": "发丝",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "adult character hair"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: fine flowing dark brown hair strands arranged along vertical axis, soft selected hand-painted strand groups, subtle variation, no hairstyle silhouette, head, face, highlights, shadows or bald patches. Scale 0.25m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-1ef106ec-7c33-4b56-aed4-137a6b0fac4e.png",
+          "original": {
+            "path": "assets/art/materials/hair/v1/original.png",
+            "sha256": "a9e7261bd5dea5cc58231f1b3832e2e905ac896a42e9e53cf77cd0512ee3f728"
+          },
+          "runtime": {
+            "path": "game/art/materials/hair/v1.png",
+            "sha256": "0a2075b84c4766c998ab902b7f8979648cd3e95d2186c366c14ffe2ddd00f28d"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.25,
+            "meanLinear": [
+              0.047108992842272754,
+              0.024214375120427158,
+              0.015099359794657251
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.wood_endgrain",
+      "name": "木材端纹",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "wood component end faces"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: clean natural timber end grain with a few irregular gentle growth rings around an off-center core, warm light tan, subtle selected fine pores, no border, bevel, saw blade marks, cracks or highlights. Repeatable lumber cross-section detail. Scale 0.25m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-846e7e85-d588-4a84-ad19-7fce235b18b5.png",
+          "original": {
+            "path": "assets/art/materials/wood_endgrain/v1/original.png",
+            "sha256": "27c424b9b54d0414784adb237cc78eb8f4994064d37d0dfc6ee16e3dfee26673"
+          },
+          "runtime": {
+            "path": "game/art/materials/wood_endgrain/v1.png",
+            "sha256": "7df427820db42ff8def447b9a0a00a667f1fcad34b85804f07d26489299e9e11"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.25,
+            "meanLinear": [
+              0.6612071395702998,
+              0.3848266544906294,
+              0.17788970125504547
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "single normalized component end face, repeat disabled",
+            "repeat": false
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.grain",
+      "name": "粮粒表面",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "grain bin contents"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: a continuous tightly packed layer of tiny dry round millet grains in quiet golden beige, matte, no mound, ears, stems, bowl, sack, shadows or waxy shine. Scale 0.25m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-79a75435-f633-4767-b4b2-dcef134772ed.png",
+          "original": {
+            "path": "assets/art/materials/grain/v1/original.png",
+            "sha256": "c671dfef689b0a756676e4b522e8cbe96f84cfe38b67ae5f5aa7e8a921658436"
+          },
+          "runtime": {
+            "path": "game/art/materials/grain/v1.png",
+            "sha256": "704ff227724e9183d9fb9228aef251c70dba2aab1cbc30d91b55241558b63cc8"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.25,
+            "meanLinear": [
+              0.6918651197548276,
+              0.4050942189720246,
+              0.1002481265172476
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "material.needle",
+      "name": "针叶细节",
+      "definition": "game/art/scene-slots.json",
+      "useSites": [
+        "conifer canopy only"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "built-in-imagegen",
+          "prompt": "Use case: stylized-concept. Asset type: production seamless BASE COLOR texture for Zhouzhu, refined painted Japanese-style 3D. Delicate chosen hand-painted material strokes, believable material, calm broad values and uncluttered surfaces, not low-poly facets or photographic grit. Flat orthographic surface scan, entire square is material, no margins. Seamless across BOTH axes with opposite edges continuing. Uniform diffuse color ONLY: no directional sunlight, cast shadows, AO, highlights, reflections, bevels, snow, water, weather, season, writing, frames, people or objects. Keep local contrast restrained. Subject: a quiet fine surface of densely packed tiny conifer needle fibers, narrow short tapered sage-gray-green linear strokes arranged in small subtle organic bundles, no broad leaves, no broadleaf veins, no whole branch, no large needle clumps or cones. Abstract hand-painted needle surface grain for three-dimensional pine crown geometry. Scale 0.25m.",
+          "references": [],
+          "generationSource": "C:\\Users\\15357\\.codex\\generated_images\\01a17793-6f20-74c3-b7b9-01616fac43b4\\exec-5570e967-80da-4e83-9eaa-5954b7e33461.png",
+          "original": {
+            "path": "assets/art/materials/needle/v1/original.png",
+            "sha256": "ac456b99aaca02940b84a934476f9198ba6e9df720e0dc8af2c5595aafaab77a"
+          },
+          "runtime": {
+            "path": "game/art/materials/needle/v1.png",
+            "sha256": "e9ab4ddb5dbd36b34a14e91d7a9fa9bca071ad0cee14904101cda8f7f2a8648e"
+          },
+          "derivation": {
+            "operation": "Lanczos resize RGB to512; no repainting"
+          },
+          "surface": {
+            "tileMetres": 0.25,
+            "meanLinear": [
+              0.10934075054376712,
+              0.1392183142501698,
+              0.07814505848307884
+            ],
+            "channels": [
+              "baseColor"
+            ],
+            "mapping": "object-local metric triplanar"
+          },
+          "productionStatus": "produced",
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-27T12:06:38.769219+00:00",
+            "scope": "original and repeat sheet; runtime acceptance separate",
+            "note": "已查看独立原图及重复检查表，语义、风格、无环境阳光/投影及边缘通过；木端纹仅单次映射，阔叶与针叶分别使用。用户未逐张确认。",
+            "userConfirmed": false
+          },
+          "userConfirmation": null
         }
       ]
     }

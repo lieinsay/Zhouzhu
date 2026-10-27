@@ -427,12 +427,234 @@
         ],
         "mapping": "object-local metric triplanar; runtime albedo modulation"
       }
+    },
+    "material.stone": {
+      "version": "v1",
+      "path": "res://art/materials/stone/v1.png",
+      "sha256": "1df02b9fefff4ce72a18cba57ba00a8415ab774f41d8a654bb1f596a2d812472",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.3223153205957403,
+          0.2736833081889394,
+          0.2192694035231993
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.soil": {
+      "version": "v1",
+      "path": "res://art/materials/soil/v1.png",
+      "sha256": "a9466f847895a3c1d21bb94d1bb4ce0d2e436eca7a4fb44c50ad021881088c9f",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.2843345239404167,
+          0.1367584685842474,
+          0.05221593762683312
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.grass": {
+      "version": "v1",
+      "path": "res://art/materials/grass/v1.png",
+      "sha256": "7cb8ee626de38bc598d3ebe4bb60faf49a3a593bf6e753fc0144ccc547fe77ac",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.20090936605925117,
+          0.20983324423771182,
+          0.05081388270867077
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.gravel": {
+      "version": "v1",
+      "path": "res://art/materials/gravel/v1.png",
+      "sha256": "9d98823144366d1a312477890c4fd69e5f31377c678a1255036acf34093843df",
+      "surface": {
+        "tileMetres": 0.5,
+        "meanLinear": [
+          0.37171946742826834,
+          0.30362431622642566,
+          0.2327305782879363
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.litter": {
+      "version": "v1",
+      "path": "res://art/materials/litter/v1.png",
+      "sha256": "d09eb2ead4f833e91e6e7888a776900f03c4496662d96e62ebb1ee7ecace30aa",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.1340993736509526,
+          0.06750885774077721,
+          0.0337911354532396
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.hemp": {
+      "version": "v1",
+      "path": "res://art/materials/hemp/v1.png",
+      "sha256": "7070aabfa2221746dd85208d6f9666f2d064657a5626bf5cbb3df6e8a695fc27",
+      "surface": {
+        "tileMetres": 0.25,
+        "meanLinear": [
+          0.533838499888885,
+          0.43426282893668483,
+          0.310098008236797
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.straw": {
+      "version": "v1",
+      "path": "res://art/materials/straw/v1.png",
+      "sha256": "6dfbb02c67aa9ed858219f8062ff683ef212710e1d9ec3bd9ec7126d6f0d586d",
+      "surface": {
+        "tileMetres": 0.5,
+        "meanLinear": [
+          0.5890795388431286,
+          0.389471640079479,
+          0.1814277263039629
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.thatch": {
+      "version": "v1",
+      "path": "res://art/materials/thatch/v1.png",
+      "sha256": "f5978097f2747379d28736d20f3d6b035e4177da3038392f7f74c226502fc48c",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.5317674907493917,
+          0.34639771637357153,
+          0.1771115822862533
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.brick": {
+      "version": "v1",
+      "path": "res://art/materials/brick/v1.png",
+      "sha256": "0a0251d0631f3095ea9dfb6958cf8063cfa8e97040aa7d394bd8a2ba74f32504",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.41899932532279094,
+          0.11674134484113904,
+          0.0536306879217572
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.roof_tiles": {
+      "version": "v1",
+      "path": "res://art/materials/roof_tiles/v1.png",
+      "sha256": "3adc518272c578d31d8d1ce81fb4665d9105f1ecb94a95bc9b20e2213b34533e",
+      "surface": {
+        "tileMetres": 1.0,
+        "meanLinear": [
+          0.16168615523131263,
+          0.1512036272737457,
+          0.14459011110428888
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.lacquer": {
+      "version": "v1",
+      "path": "res://art/materials/lacquer/v1.png",
+      "sha256": "b8c06ec92ac27ae975c033bfea60bd669424f970d6347d68b312ce62d96abfd1",
+      "surface": {
+        "tileMetres": 0.5,
+        "meanLinear": [
+          0.04449361145487992,
+          0.03416637297714378,
+          0.025907231196912555
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
+    },
+    "material.wood_endgrain": {
+      "version": "v1",
+      "path": "res://art/materials/wood_endgrain/v1.png",
+      "sha256": "7df427820db42ff8def447b9a0a00a667f1fcad34b85804f07d26489299e9e11",
+      "surface": {
+        "tileMetres": 0.25,
+        "meanLinear": [
+          0.6612071395702998,
+          0.3848266544906294,
+          0.17788970125504547
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "single normalized component end face, repeat disabled",
+        "repeat": false
+      }
+    },
+    "material.grain": {
+      "version": "v1",
+      "path": "res://art/materials/grain/v1.png",
+      "sha256": "704ff227724e9183d9fb9228aef251c70dba2aab1cbc30d91b55241558b63cc8",
+      "surface": {
+        "tileMetres": 0.25,
+        "meanLinear": [
+          0.6918651197548276,
+          0.4050942189720246,
+          0.1002481265172476
+        ],
+        "channels": [
+          "baseColor"
+        ],
+        "mapping": "object-local metric triplanar"
+      }
     }
   },
   "application": {
-    "id": "8426b55b-05ba-4454-9455-44fbaeb6f662",
-    "appliedAt": "2026-10-26T10:55:33.747Z",
+    "id": "d38baa4f-6d23-498d-aa84-3922971b64a6",
+    "appliedAt": "2026-10-27T12:06:45.705Z",
     "actor": "content-studio-art",
-    "registrySha256": "bfe69761a573d67ff2394c62aad385c875fbd9bebb5ac203d63d72030f3da297"
+    "registrySha256": "13e32e13533857ebbae880119547035ae2bcec3e3f2948c9980c6d4e9a8335d1"
   }
 }

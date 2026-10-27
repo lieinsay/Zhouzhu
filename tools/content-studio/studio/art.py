@@ -8,7 +8,7 @@ import uuid
 from pathlib import Path
 from .common import StudioError, atomic_json, digest, read_json, timestamp
 
-ASSET_ID = r'(item|module|building|furniture|material)\.[a-z][a-z0-9_]*'
+ASSET_ID = r'(item|module|building|furniture|material|character)\.[a-z][a-z0-9_]*'
 VERSION = r'v[1-9][0-9]*'
 EMPTY = {'schemaVersion': 1, 'bindings': {}}
 
@@ -70,6 +70,9 @@ class ArtLibrary:
                  [('item', 'items'), ('module', 'modules'), ('building', 'buildings')]
                  for row in catalog[collection]}
         known.update('material.'+key for key in ('wood','rammed_earth','terracotta','iron'))
+        slots = read_json(self.root / 'game/art/scene-slots.json', {})
+        known.update('material.'+key for key in slots.get('materials', {}))
+        known.update('character.'+key for key in slots.get('characters', {}))
         furniture_source = self.root / 'src/house_template.cpp'
         if furniture_source.exists():
             for node in parse_initializer(furniture_source.read_text(encoding='utf-8'), 'DEFS', str(furniture_source)):
