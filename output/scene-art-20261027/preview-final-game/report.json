@@ -1,0 +1,229 @@
+{
+  "checked": 26,
+  "mappedSurfaces": [
+    "res://art/materials/stone/v1.png",
+    "res://art/materials/rammed_earth/v1.png",
+    "res://art/materials/wood/v1.png",
+    "res://art/materials/terracotta/v1.png",
+    "res://art/materials/hemp/v1.png",
+    "res://art/materials/iron/v2.png",
+    "res://art/materials/roof_tiles/v1.png",
+    "res://art/materials/straw/v1.png",
+    "res://art/materials/grain/v1.png",
+    "res://art/materials/lacquer/v1.png"
+  ],
+  "npcCount": 15,
+  "passed": true,
+  "renderer": "Windows",
+  "resources": {
+    "building.berth": {
+      "assetId": "building.berth",
+      "draws": 0,
+      "instanceId": -9223371939563697603,
+      "loaded": true,
+      "path": "res://art/previews/building/berth/v3.png",
+      "size": "(256.0, 256.0)"
+    },
+    "building.granary": {
+      "assetId": "building.granary",
+      "draws": 0,
+      "instanceId": -9223371940301895121,
+      "loaded": true,
+      "path": "res://art/previews/building/granary/v3.png",
+      "size": "(256.0, 256.0)"
+    },
+    "building.hall": {
+      "assetId": "building.hall",
+      "draws": 0,
+      "instanceId": -9223371940670993880,
+      "loaded": true,
+      "path": "res://art/previews/building/hall/v3.png",
+      "size": "(256.0, 256.0)"
+    },
+    "building.house": {
+      "assetId": "building.house",
+      "draws": 0,
+      "instanceId": -9223371941040092541,
+      "loaded": true,
+      "path": "res://art/previews/building/house/v3.png",
+      "size": "(256.0, 256.0)"
+    },
+    "building.tower": {
+      "assetId": "building.tower",
+      "draws": 0,
+      "instanceId": -9223371939932796362,
+      "loaded": true,
+      "path": "res://art/previews/building/tower/v3.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.altar": {
+      "assetId": "furniture.altar",
+      "draws": 0,
+      "instanceId": -9223371914515314257,
+      "loaded": true,
+      "path": "res://art/previews/furniture/altar/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.bed": {
+      "assetId": "furniture.bed",
+      "draws": 0,
+      "instanceId": -9223371919749805653,
+      "loaded": true,
+      "path": "res://art/previews/furniture/bed/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.bench": {
+      "assetId": "furniture.bench",
+      "draws": 0,
+      "instanceId": -9223371915589056086,
+      "loaded": true,
+      "path": "res://art/previews/furniture/bench/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.bin": {
+      "assetId": "furniture.bin",
+      "draws": 0,
+      "instanceId": -9223371914783749716,
+      "loaded": true,
+      "path": "res://art/previews/furniture/bin/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.chest": {
+      "assetId": "furniture.chest",
+      "draws": 0,
+      "instanceId": -9223371915320620626,
+      "loaded": true,
+      "path": "res://art/previews/furniture/chest/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.drum": {
+      "assetId": "furniture.drum",
+      "draws": 0,
+      "instanceId": -9223371913441572429,
+      "loaded": true,
+      "path": "res://art/previews/furniture/drum/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.loom": {
+      "assetId": "furniture.loom",
+      "draws": 0,
+      "instanceId": -9223371914246878800,
+      "loaded": true,
+      "path": "res://art/previews/furniture/loom/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.mat": {
+      "assetId": "furniture.mat",
+      "draws": 0,
+      "instanceId": -9223371913173136972,
+      "loaded": true,
+      "path": "res://art/previews/furniture/mat/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.sacks": {
+      "assetId": "furniture.sacks",
+      "draws": 0,
+      "instanceId": -9223371913710007886,
+      "loaded": true,
+      "path": "res://art/previews/furniture/sacks/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.shelf": {
+      "assetId": "furniture.shelf",
+      "draws": 0,
+      "instanceId": -9223371913978443343,
+      "loaded": true,
+      "path": "res://art/previews/furniture/shelf/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.stove": {
+      "assetId": "furniture.stove",
+      "draws": 0,
+      "instanceId": -9223371916125926883,
+      "loaded": true,
+      "path": "res://art/previews/furniture/stove/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.table": {
+      "assetId": "furniture.table",
+      "draws": 0,
+      "instanceId": -9223371915857491483,
+      "loaded": true,
+      "path": "res://art/previews/furniture/table/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "furniture.vat": {
+      "assetId": "furniture.vat",
+      "draws": 0,
+      "instanceId": -9223371915052185171,
+      "loaded": true,
+      "path": "res://art/previews/furniture/vat/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.bridge": {
+      "assetId": "module.bridge",
+      "draws": 5,
+      "instanceId": -9223371909616367272,
+      "loaded": true,
+      "path": "res://art/previews/module/bridge/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.deck": {
+      "assetId": "module.deck",
+      "draws": 5,
+      "instanceId": -9223371906428696290,
+      "loaded": true,
+      "path": "res://art/previews/module/deck/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.floatstone": {
+      "assetId": "module.floatstone",
+      "draws": 5,
+      "instanceId": -9223371907032676074,
+      "loaded": true,
+      "path": "res://art/previews/module/floatstone/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.long_sail": {
+      "assetId": "module.long_sail",
+      "draws": 5,
+      "instanceId": -9223371905724053217,
+      "loaded": true,
+      "path": "res://art/previews/module/long_sail/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.sail": {
+      "assetId": "module.sail",
+      "draws": 5,
+      "instanceId": -9223371907519215342,
+      "loaded": true,
+      "path": "res://art/previews/module/sail/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.storage": {
+      "assetId": "module.storage",
+      "draws": 5,
+      "instanceId": -9223371908341298934,
+      "loaded": true,
+      "path": "res://art/previews/module/storage/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.tall_hold": {
+      "assetId": "module.tall_hold",
+      "draws": 5,
+      "instanceId": -9223371905203959514,
+      "loaded": true,
+      "path": "res://art/previews/module/tall_hold/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "module.wide_deck": {
+      "assetId": "module.wide_deck",
+      "draws": 5,
+      "instanceId": -9223371904683865813,
+      "loaded": true,
+      "path": "res://art/previews/module/wide_deck/v2.png",
+      "size": "(256.0, 256.0)"
+    }
+  },
+  "scope": "真实界面入口；模型精绘缺口另记"
+}

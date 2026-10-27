@@ -8,6 +8,8 @@ var camera:Camera3D
 var results:={"models":{},"characters":{},"scatter":{}}
 var visible_render:=false
 var skip_interfaces:=false
+var previews_only:=false
+var model_namespace:=""
 
 func check(ok:bool,message:String)->void:
 	if not ok:failed=true;push_error("scene_visuals: "+message)
@@ -64,13 +66,15 @@ func bounds_of(node:Node3D)->AABB:
 			bounds=box if first else bounds.merge(box);first=false
 	return bounds
 func model_previews()->void:
-	var directory:=ProjectSettings.globalize_path("res://../assets/art/models/scene-20261027-v2")
+	var selected:Dictionary=JSON.parse_string(FileAccess.get_file_as_string(ProjectSettings.globalize_path("res://../assets/art/model-library.json")))
+	var directory:=ProjectSettings.globalize_path("res://../"+str(selected.snapshot))
 	var manifest:Dictionary=JSON.parse_string(FileAccess.get_file_as_string(directory.path_join("manifest.json")))
 	var records:Array=manifest.models.filter(func(row):return row.id.begins_with("module:") or row.id.begins_with("building:"))
 	var furniture_directory:=ProjectSettings.globalize_path("res://../assets/art/models/furniture-scene-20261027-v2")
 	for file in DirAccess.get_files_at(furniture_directory):
 		if file.ends_with(".json"):records.append({"id":"furniture:"+file.get_basename(),"file":furniture_directory.path_join(file)})
 	for row in records:
+		if not model_namespace.is_empty() and not row.id.begins_with(model_namespace+":"):continue
 		clear_stage()
 		var path:String=row.get("file",directory.path_join(str(row.get("url","")).get_file()))
 		var data:Dictionary=JSON.parse_string(FileAccess.get_file_as_string(path))
@@ -80,7 +84,7 @@ func model_previews()->void:
 		var key:String=row.id.replace(":",".")
 		await render_image(key)
 		results.models[key]={"file":path,"bounds":{"min":[bounds.position.x,bounds.position.y,bounds.position.z],"max":[bounds.end.x,bounds.end.y,bounds.end.z]},"orthographicSize":camera.size,"pixels":visible_render}
-	check(results.models.size()==26,"26项真实模型预览")
+	check(results.models.size()==(5 if model_namespace=="building" else 8 if model_namespace=="module" else 13 if model_namespace=="furniture" else 26),"当前选中类别的真实模型预览覆盖")
 func character_samples()->void:
 	for variant in 4:
 		clear_stage()
@@ -136,6 +140,8 @@ func _ready()->void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--output="):output=arg.trim_prefix("--output=")
 		if arg=="--skip-interfaces":skip_interfaces=true
+		if arg=="--previews-only":previews_only=true
+		if arg.begins_with("--namespace="):model_namespace=arg.trim_prefix("--namespace=")
 	DirAccess.make_dir_recursive_absolute(output)
 	visible_render=DisplayServer.get_name()!="headless"
 	get_tree().root.size=Vector2i(1024,800)
@@ -147,10 +153,14 @@ func _ready()->void:
 	var light:=DirectionalLight3D.new();light.rotation_degrees=Vector3(-45,-30,0);light.light_energy=1.1;world.add_child(light)
 	camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.near=.01;camera.far=10000;world.add_child(camera);camera.make_current()
 	var display:=TextureRect.new();display.texture=viewport.get_texture();display.position=Vector2(256,100);display.size=Vector2(512,512);add_child(display)
-	await model_previews();await character_samples();await scatter_samples()
-	display.queue_free();await actual_world()
+	await model_previews()
+	if not previews_only:await character_samples();await scatter_samples()
+	display.queue_free()
+	if previews_only:viewport.queue_free();await frames(2)
+	else:await actual_world()
 	for spec in [["art_previews_e2e","interfaces"],["item_art_e2e","inventory"]]:
 		if skip_interfaces:break
+		if previews_only and spec[0]=="item_art_e2e":break
 		var test=load("res://tests/"+spec[0]+".tscn").instantiate()
 		test.quit_when_done=false;test.output_override=output.path_join(spec[1]);add_child(test)
 		var passed:bool=await test.finished;check(passed,"真实界面 "+spec[0]);test.queue_free();await frames(3)

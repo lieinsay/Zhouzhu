@@ -5799,6 +5799,120 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-27T17:01:03.906Z",
+          "original": {
+            "path": "assets/art/previews/building/house/v3/render.png",
+            "sha256": "de56fe2d2a50becae26abffb23df90ad5de14879b1630e87c82a3bf2bb20f9bf",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/house/v3.png",
+            "sha256": "0e6db037c2fcd34f2f0a64af52514b6b826bbe2340299d0dec901c62f468c647",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  6.59999990463257,
+                  6.07499980926514,
+                  4.71602487564087
+                ],
+                "min": [
+                  -6.59999990463257,
+                  -1.10000002384186,
+                  -4.15000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "26a7d75b7952ed92ee6f40093f973faa79e7742dfce2832bb5aa77f3fe3bce67"
+            }
+          },
+          "model": {
+            "id": "building:house",
+            "url": "/assets/models/building-house.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "house"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            "templateId": "house/sanjian",
+            "vertices": 23770,
+            "triangles": 11516,
+            "parts": 13,
+            "name": "民居",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/house/sanjian.txt，不是库存物品独立实体。",
+            "assetSha256": "54b702bd9bd4832540cdf62d5b4e7f71f301e8a704cca6934a343eb85cedf548",
+            "path": "assets/art/previews/building/house/v3/model.json",
+            "sha256": "54b702bd9bd4832540cdf62d5b4e7f71f301e8a704cca6934a343eb85cedf548"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-masonry-v3/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "4a5849443b9173db1a70b42bbd79ab6555484bc9ca23fd7090930638383807ef"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+            }
+          ],
+          "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-27T17:01:33.824Z",
+            "reviewer": "Codex",
+            "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -6034,6 +6148,120 @@
             "reviewedAt": "2026-10-27T16:42:48.485Z",
             "reviewer": "Codex",
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
+            "userConfirmed": false
+          }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-27T17:01:03.993Z",
+          "original": {
+            "path": "assets/art/previews/building/hall/v3/render.png",
+            "sha256": "d4904093ef716e7b72e398243e936641a796bba4d1a69137b5c89ed96652b0d2",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/hall/v3.png",
+            "sha256": "aaf1f3a42115fe913fb5b5fc33deaef516ddcaf541e40c7649f5e163a1991bea",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  9.60000038146973,
+                  8.57499980926514,
+                  7.08205080032349
+                ],
+                "min": [
+                  -9.60000038146973,
+                  -1.60000002384186,
+                  -5.65000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "26a7d75b7952ed92ee6f40093f973faa79e7742dfce2832bb5aa77f3fe3bce67"
+            }
+          },
+          "model": {
+            "id": "building:hall",
+            "url": "/assets/models/building-hall.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "hall"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            "templateId": "hall/citang",
+            "vertices": 30946,
+            "triangles": 14960,
+            "parts": 12,
+            "name": "堂屋",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/hall/citang.txt，不是库存物品独立实体。",
+            "assetSha256": "7e9b396931ea770f3627127e1daf7148b5c2a55f43bc94a6573d870fe733a1ad",
+            "path": "assets/art/previews/building/hall/v3/model.json",
+            "sha256": "7e9b396931ea770f3627127e1daf7148b5c2a55f43bc94a6573d870fe733a1ad"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-masonry-v3/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "4a5849443b9173db1a70b42bbd79ab6555484bc9ca23fd7090930638383807ef"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+            }
+          ],
+          "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-27T17:01:33.908Z",
+            "reviewer": "Codex",
+            "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
             "userConfirmed": false
           }
         }
@@ -6273,6 +6501,120 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-27T17:01:04.052Z",
+          "original": {
+            "path": "assets/art/previews/building/granary/v3/render.png",
+            "sha256": "55e628d3f6c196185570b8829187bf7e9ad021e3658a1e6abb6f7198beba035b",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/granary/v3.png",
+            "sha256": "7b0ae00a0f7a132130ef8c2da01a3c33491f067c626c9004b8df273337970bac",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  4.09999990463257,
+                  6.17500066757202,
+                  6.71769189834595
+                ],
+                "min": [
+                  -4.09999990463257,
+                  -2.40000009536743,
+                  -3.90000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "26a7d75b7952ed92ee6f40093f973faa79e7742dfce2832bb5aa77f3fe3bce67"
+            }
+          },
+          "model": {
+            "id": "building:granary",
+            "url": "/assets/models/building-granary.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "granary"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            "templateId": "granary/cang",
+            "vertices": 21226,
+            "triangles": 10100,
+            "parts": 10,
+            "name": "仓",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/granary/cang.txt，不是库存物品独立实体。",
+            "assetSha256": "29bc25b465cc004575037f378e5ab67e462b6f6c43b4690c3f4d05654b20581b",
+            "path": "assets/art/previews/building/granary/v3/model.json",
+            "sha256": "29bc25b465cc004575037f378e5ab67e462b6f6c43b4690c3f4d05654b20581b"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-masonry-v3/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "4a5849443b9173db1a70b42bbd79ab6555484bc9ca23fd7090930638383807ef"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+            }
+          ],
+          "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-27T17:01:33.992Z",
+            "reviewer": "Codex",
+            "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -6510,6 +6852,120 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-27T17:01:04.102Z",
+          "original": {
+            "path": "assets/art/previews/building/tower/v3/render.png",
+            "sha256": "8654032d9748b294dbc10d212edf81da39d229388e3b7d4c99128ca76cddb80e",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/tower/v3.png",
+            "sha256": "7ee5f79d73de1bd9e62759ae480d07d1b98a2f6645c457b8263770e5b7fcae2c",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  4.09999990463257,
+                  14.375,
+                  4.98564004898071
+                ],
+                "min": [
+                  -4.09999990463257,
+                  -1.39999997615814,
+                  -3.90000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "26a7d75b7952ed92ee6f40093f973faa79e7742dfce2832bb5aa77f3fe3bce67"
+            }
+          },
+          "model": {
+            "id": "building:tower",
+            "url": "/assets/models/building-tower.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "tower"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            "templateId": "tower/wanglou",
+            "vertices": 17618,
+            "triangles": 8552,
+            "parts": 22,
+            "name": "望楼",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/tower/wanglou.txt，不是库存物品独立实体。",
+            "assetSha256": "6956a146fe83ea415bef0d6ac3c3e5d09a9815a5f130f38d9faf811cfce5e701",
+            "path": "assets/art/previews/building/tower/v3/model.json",
+            "sha256": "6956a146fe83ea415bef0d6ac3c3e5d09a9815a5f130f38d9faf811cfce5e701"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-masonry-v3/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "4a5849443b9173db1a70b42bbd79ab6555484bc9ca23fd7090930638383807ef"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+            }
+          ],
+          "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-27T17:01:34.074Z",
+            "reviewer": "Codex",
+            "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -6743,6 +7199,119 @@
             "reviewedAt": "2026-10-27T16:42:49.002Z",
             "reviewer": "Codex",
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
+            "userConfirmed": false
+          }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-27T17:01:04.125Z",
+          "original": {
+            "path": "assets/art/previews/building/berth/v3/render.png",
+            "sha256": "504d005a0b508763bbcc0f9d1b8b744c5c348ff4240030f6a928267a78762b60",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/berth/v3.png",
+            "sha256": "3202fcf983989f032eb74c00463ff6aaa13b23d81b6cdbd915cdc6725fe93f7e",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  22.6000003814697,
+                  6.10998678207397,
+                  9.69999885559082
+                ],
+                "min": [
+                  -22.6000003814697,
+                  -0.899999976158142,
+                  -9.10000038146973
+                ]
+              },
+              "surfaceBindingsSha256": "26a7d75b7952ed92ee6f40093f973faa79e7742dfce2832bb5aa77f3fe3bce67"
+            }
+          },
+          "model": {
+            "id": "building:berth",
+            "url": "/assets/models/building-berth.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "berth"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            "vertices": 384,
+            "triangles": 192,
+            "parts": 3,
+            "name": "船台",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。船台按当前 land_berth::add_parts 生成，无房屋模板。",
+            "assetSha256": "81154d4069e445c1483944bbf2a6ee916578f6bfeb3594195be4cc2bc89b37a0",
+            "path": "assets/art/previews/building/berth/v3/model.json",
+            "sha256": "81154d4069e445c1483944bbf2a6ee916578f6bfeb3594195be4cc2bc89b37a0"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-masonry-v3/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "4a5849443b9173db1a70b42bbd79ab6555484bc9ca23fd7090930638383807ef"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+            }
+          ],
+          "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewedAt": "2026-10-27T17:01:34.156Z",
+            "reviewer": "Codex",
+            "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
             "userConfirmed": false
           }
         }
@@ -10891,5 +11460,6 @@
         }
       ]
     }
-  ]
+  ],
+  "styleManifest": "assets/art/styles/painted-jrpg-3d-v1/manifest.json"
 }

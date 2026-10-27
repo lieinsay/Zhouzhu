@@ -19,6 +19,8 @@ func _ready() -> void:
 		var material: ShaderMaterial=ArtSurface.create(key,Color(.5,.5,.5),.9)
 		var texture: Texture2D=material.get_shader_parameter("surface_tex")
 		check(material.get_shader_parameter("surface_enabled")==true and texture!=null,"基础色可加载 "+key)
+		if key in ["material.rammed_earth","material.brick"]:check(material.get_shader_parameter("surface_uv_metres")==false,"夯土层纹/砖缝保持水平 "+key)
+		if key=="material.wood":check(material.get_shader_parameter("surface_uv_metres")==true,"木纹沿构件长轴")
 		var image: Image=texture.get_image() if texture!=null else null
 		check(image!=null and image.has_mipmaps(),"3D基础色具有mipmap "+key)
 		materials[key]=texture.resource_path if texture!=null else ""

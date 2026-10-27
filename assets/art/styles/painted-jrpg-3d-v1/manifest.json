@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "styleId": "painted-jrpg-3d-v1",
+  "specification": "docs/ART-DIRECTION.md",
+  "references": [
+    {
+      "role": "style-extraction-only",
+      "source": "output/art-style-industry-20261026/I1-painted-jrpg-industry.png",
+      "archived": "assets/art/styles/painted-jrpg-3d-v1/industry.png",
+      "sha256": "cee1f0ccc8e7fc6a29bb2a927ddcdfcce7b3d402e49c1e721e50771e7df66c13"
+    },
+    {
+      "role": "style-extraction-only",
+      "source": "output/art-style-three-distances-20261025/E1-painted-jrpg-board.png",
+      "archived": "assets/art/styles/painted-jrpg-3d-v1/life.png",
+      "sha256": "f37115ac659ef7dbcf30068104a15d57a07699bbf7cf89586925ff62ea9ac532"
+    }
+  ],
+  "note": "仅提取精绘日式三维的材料、造型与光影语言；不继承构图、人物、机器或新增玩法。生图版本references为空表示未直接提交参考像素，完整风格文字已写入提示词。"
+}

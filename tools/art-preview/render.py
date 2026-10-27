@@ -67,6 +67,7 @@ def main():
     parser.add_argument('--model-directory',default='tools/content-studio/public/assets/models')
     parser.add_argument('--version',default='v1')
     parser.add_argument('--rendered-directory',help='使用scene_visuals_e2e在真实Godot着色器下渲染的512透明PNG，保留其像素')
+    parser.add_argument('--namespace',choices=['building','module','furniture'],help='仅为受影响类别新增预览版本')
     args=parser.parse_args()
     catalog=load_catalog(ROOT)
     model_directory=ROOT/args.model_directory
@@ -77,6 +78,7 @@ def main():
         values=[field.value for field in node.value]
         definitions['furniture.'+values[0]]=dict(id=values[0],name=values[1],width=values[2],depth=values[3],height=values[4])
     registry=read_json(ROOT/'assets/art/registry.json')
+    if args.namespace:definitions={key:value for key,value in definitions.items() if key.startswith(args.namespace+'.')}
     if not __import__('re').fullmatch(r'v[1-9][0-9]*',args.version):raise ValueError('版本必须为vN')
     existing={a['id']:a for a in registry['assets']}
     evidence=[]
@@ -124,7 +126,9 @@ def main():
             useSites=['content-studio:formal-art',namespace+' palette'],versions=[record]))
         evidence.append(dict(id=key,name=definition['name'],definition=definition,sourceModel=model,styleGap=record['styleGap']))
     atomic_json(ROOT/'assets/art/registry.json',registry)
-    atomic_json(ROOT/'docs/art-assets/model-gaps.json',dict(schemaVersion=1,previews=evidence))
+    combined={row['id']:row for row in read_json(ROOT/'docs/art-assets/model-gaps.json',{}).get('previews',[])}
+    combined.update({row['id']:row for row in evidence})
+    atomic_json(ROOT/'docs/art-assets/model-gaps.json',dict(schemaVersion=1,previews=list(combined.values())))
     out=ROOT/('output/scene-art-20261027/model-previews-'+args.version if args.rendered_directory else 'output/art-production-20261026/model-previews');out.mkdir(parents=True,exist_ok=True)
     for page in range(0,len(evidence),8):
         sheet=Image.new('RGB',(960,500),'#cbd4db');draw=ImageDraw.Draw(sheet)
@@ -133,7 +137,7 @@ def main():
             image.thumbnail((220,215));x=(at%4)*240;y=(at//4)*250
             sheet.paste(image,(x+10,y+10),image);draw.text((x+10,y+230),row['id'],fill='#202b33')
         sheet.save(out/f'page-{page//8+1}.png')
-    print('26 actual model previews rendered; style gaps registered')
+    print(str(len(evidence))+' actual model previews rendered; style gaps registered')
 
 
 if __name__=='__main__':main()

@@ -16,14 +16,14 @@
   "inheritance": "每个条目继承所属组的用途、来源、需求性质、制作方式、规格与现状；条目字段可作补充。",
   "counting_rule": "entry_count 是语义条目/资源族数量，不是图片张数；通道、状态、视图和参考图不合并为总生图量。",
   "requirement_classes": {
-    "existing_use_site": "已有游戏使用位置，现为色块或文字",
-    "visual_upgrade": "已有功能的视觉升级，尚未批准图片方案",
+    "existing_use_site": "旧盘点中的已有使用位置；当时多为色块或文字，当前状态见正式登记",
+    "visual_upgrade": "已有功能的视觉升级；按已选方向及真实入口制作接入，不代表模型精修全部完成",
     "conditional": "风格、模型或渲染方案确定后决定是否需要图片",
     "future_candidate": "尚未明确页面或功能的候选",
     "excluded": "数据或程序生成，排除 AI 生图"
   },
   "priority_proposals": {
-    "style_sample": "先定风格，再选择少量跨类别样张",
+    "style_sample": "方向已于2026-10-26选定；保留历史样张，按已定规范和实际依赖制作",
     "first": "正式制作优先覆盖玩家高频界面",
     "after_technical_sample": "先验证材质映射与渲染接入",
     "later": "后续完善；与风格和页面计划一起排期"
@@ -1940,5 +1940,22 @@
     ],
     "formal_bindings": 78,
     "registry_entries": 79
+  },
+  "current_implementation": {
+    "updated": "2026-10-27",
+    "record": "docs/art-assets/SCENE-COMPLETION-20261027.md",
+    "acceptance": "assets/art/acceptance/20261027.json",
+    "runtime_registry": "assets/art/registry.json",
+    "runtime_bindings": "game/art/bindings.json",
+    "active_identities": 101,
+    "counts": {
+      "item": 49,
+      "module": 8,
+      "building": 5,
+      "furniture": 13,
+      "material": 22,
+      "character": 4
+    },
+    "boundary": "覆盖当前已定义图片槽；需求快照、未来候选和程序数据仍不作为生图队列，模型精修单独登记"
   }
 }

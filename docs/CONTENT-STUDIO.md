@@ -163,3 +163,4 @@ VPN 入口扩展的 10 项定向检查通过，覆盖实际双地址同端口、
 - 同源模型先导出到新的版本目录；`python tools/art-preview/render.py --model-directory <新模型目录> --furniture-directory <新家具目录> --version vN --rendered-directory <scene_visuals_e2e成功输出目录>`登记真实Godot透明渲染预览。不可覆盖旧模型、原图或把AI设定图登记成模型渲染。
 
 完整进展和限制见`docs/art-assets/SCENE-COMPLETION-20261027.md`。GPU日志有编译错误时，即使脚本加载断言通过，也不能记为像素通过。受控雨湿/积雪样件只改渲染输入，真实世界截图沿原开局时间与自动天气。
+定向更新预览时：渲染场景可加 --previews-only --namespace=building --skip-interfaces；登记命令加 --namespace building，仅为受影响类别增加新版本并保留其他缺口记录。当前模型源目录从 assets/art/model-library.json 读取，旧快照不覆盖。

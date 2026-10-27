@@ -1,0 +1,98 @@
+{
+  "characters": {
+
+  },
+  "models": {
+    "building.berth": {
+      "bounds": {
+        "max": [
+          22.6000003814697,
+          6.10998678207397,
+          9.69999885559082
+        ],
+        "min": [
+          -22.6000003814697,
+          -0.899999976158142,
+          -9.10000038146973
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-masonry-v3/building-berth.json",
+      "orthographicSize": 58.6450958251953,
+      "pixels": true
+    },
+    "building.granary": {
+      "bounds": {
+        "max": [
+          4.09999990463257,
+          6.17500066757202,
+          6.71769189834595
+        ],
+        "min": [
+          -4.09999990463257,
+          -2.40000009536743,
+          -3.90000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-masonry-v3/building-granary.json",
+      "orthographicSize": 16.985818862915,
+      "pixels": true
+    },
+    "building.hall": {
+      "bounds": {
+        "max": [
+          9.60000038146973,
+          8.57499980926514,
+          7.08205080032349
+        ],
+        "min": [
+          -9.60000038146973,
+          -1.60000002384186,
+          -5.65000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-masonry-v3/building-hall.json",
+      "orthographicSize": 28.6587524414063,
+      "pixels": true
+    },
+    "building.house": {
+      "bounds": {
+        "max": [
+          6.59999990463257,
+          6.07499980926514,
+          4.71602487564087
+        ],
+        "min": [
+          -6.59999990463257,
+          -1.10000002384186,
+          -4.15000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-masonry-v3/building-house.json",
+      "orthographicSize": 19.7919120788574,
+      "pixels": true
+    },
+    "building.tower": {
+      "bounds": {
+        "max": [
+          4.09999990463257,
+          14.375,
+          4.98564004898071
+        ],
+        "min": [
+          -4.09999990463257,
+          -1.39999997615814,
+          -3.90000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-masonry-v3/building-tower.json",
+      "orthographicSize": 24.3375205993652,
+      "pixels": true
+    }
+  },
+  "passed": true,
+  "pixelCapture": true,
+  "scatter": {
+
+  },
+  "userConfirmed": false
+}

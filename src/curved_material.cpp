@@ -71,7 +71,9 @@ Ref<Material> surface(const Color &p_albedo, float p_roughness, const String &p_
     if (material.is_null()) return result;
     material->set_meta("art_asset",p_asset);
     ArtSurface::configure(material,"surface",p_asset);
-    material->set_shader_parameter("surface_uv_metres",true);
+    // 木构件UV沿长轴；夯土层与砖缝必须保持水平，不能随墙段长轴旋转。
+    const bool horizontal_masonry=p_asset==String("material.rammed_earth")||p_asset==String("material.brick");
+    material->set_shader_parameter("surface_uv_metres",!horizontal_masonry);
     if(p_asset==String("material.wood")) ArtSurface::configure(material,"surface_end","material.wood_endgrain");
     material->set_shader_parameter("metallic", p_metallic);
     return result;

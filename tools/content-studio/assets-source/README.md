@@ -9,3 +9,6 @@ node tools/content-studio/assets-source/build-thumbnails.mjs
 ```
 
 该脚本只读图像像素和元数据，输出旧缩略图 `manifest.json`，不编辑、裁切或缩放生成原图。提示词与原图均按版本保留。2026-10-26 起正式美术登记在 `assets/art/registry.json`；游戏与工坊共享其规范化派生图，原 v1 文件不覆盖。新制作使用 `tools/art-assets.py`，工坊 `/art.html` 独立应用美术，不应用内容草稿。
+
+
+2026-10-27：旧49张v1与本目录来源继续保留。当前场景正式图片、完整提示词和风格参照归档见 assets/art/registry.json、assets/art/materials/source-prompts-scene-20261027.json、assets/art/characters/source-prompts-20261027-v2.json 与 assets/art/styles/painted-jrpg-3d-v1/manifest.json。101项实际绑定和分阶段验收见 assets/art/acceptance/20261027.json；当前同源模型快照由 assets/art/model-library.json 指向新版本，旧public模型不覆盖。
