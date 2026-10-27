@@ -1,4 +1,6 @@
 #include "placed_props.h"
+#include "curved_material.h"
+#include "art_mesh.h"
 
 #include <cmath>
 
@@ -50,10 +52,11 @@ class Builder {
     Node3D *root;
     Ref<Material> override_material;
 
-    void add(const Ref<PrimitiveMesh> &p_mesh, const Vector3 &p_at, const Ref<Material> &p_material) {
-        p_mesh->set_material(override_material.is_valid() ? override_material : p_material);
+    void add(const Ref<Mesh> &p_mesh, const Vector3 &p_at, const Ref<Material> &p_material) {
+
         MeshInstance3D *mi = memnew(MeshInstance3D);
         mi->set_mesh(p_mesh);
+        mi->set_material_override(override_material.is_valid()?override_material:p_material);
         mi->set_position(p_at);
         mi->set_cast_shadows_setting(override_material.is_valid() ? GeometryInstance3D::SHADOW_CASTING_SETTING_OFF : GeometryInstance3D::SHADOW_CASTING_SETTING_ON);
         root->add_child(mi);
@@ -64,20 +67,18 @@ public:
             root(p_root), override_material(p_override) {}
 
     void box(const Vector3 &p_size, const Vector3 &p_at, const Ref<Material> &p_material) {
-        Ref<BoxMesh> mesh;
-        mesh.instantiate();
-        mesh->set_size(p_size);
-        add(mesh, p_at, p_material);
+        BoxPart part;part.sx=p_size.x;part.sy=p_size.y;part.sz=p_size.z;part.shape=VisualShape::BEVEL_BOX;
+        add(art_mesh::shape(part,p_material),p_at,p_material);
     }
-    void box(const Vector3 &p_size, const Vector3 &p_at, const Color &p_color) { box(p_size, p_at, solid(p_color)); }
-    void cylinder(double p_radius, double p_height, const Vector3 &p_at, const Color &p_color, double p_top = -1.0) {
+    void box(const Vector3 &p_size,const Vector3 &p_at,const Color &p_color,const char *asset="material.wood") { box(p_size,p_at,curved_material::surface(p_color,.85f,asset,std::string(asset)=="material.iron"?.8f:0.0f)); }
+    void cylinder(double p_radius, double p_height, const Vector3 &p_at, const Color &p_color, double p_top = -1.0,const char *asset="material.wood") {
         Ref<CylinderMesh> mesh;
         mesh.instantiate();
         mesh->set_bottom_radius(real_t(p_radius));
         mesh->set_top_radius(real_t(p_top < 0.0 ? p_radius : p_top));
         mesh->set_height(real_t(p_height));
         mesh->set_radial_segments(12);
-        add(mesh, p_at, solid(p_color));
+        add(mesh,p_at,curved_material::surface(p_color,.9f,asset));
     }
     void sphere(double p_radius, double p_height, const Vector3 &p_at, const Ref<Material> &p_material) {
         Ref<SphereMesh> mesh;
@@ -88,7 +89,7 @@ public:
         mesh->set_rings(8);
         add(mesh, p_at, p_material);
     }
-    void sphere(double p_radius, double p_height, const Vector3 &p_at, const Color &p_color) { sphere(p_radius, p_height, p_at, solid(p_color)); }
+    void sphere(double p_radius, double p_height, const Vector3 &p_at, const Color &p_color) { sphere(p_radius,p_height,p_at,curved_material::surface(p_color,.95f,"material.terracotta")); }
     bool is_ghost() const { return override_material.is_valid(); }
 };
 
@@ -104,7 +105,7 @@ void build_prop_model(Node3D *p_root, const PropDef &p_def, double p_lift, const
     // 地不平：底下垫一块，垫到最低处
     if (p_lift > 0.03) {
         const real_t lift = real_t(p_lift) + 0.05f;
-        b.box(Vector3(w, lift, d), Vector3(0, -lift * 0.5f + 0.02f, 0), p_def.look == PropLook::KILN ? STONE : WOOD_DARK);
+        b.box(Vector3(w, lift, d), Vector3(0, -lift * 0.5f + 0.02f, 0), p_def.look == PropLook::KILN ? STONE : WOOD_DARK,p_def.look==PropLook::KILN?"material.stone":"material.wood");
     }
     switch (p_def.look) {
         case PropLook::WORKBENCH: {
@@ -116,13 +117,13 @@ void build_prop_model(Node3D *p_root, const PropDef &p_def, double p_lift, const
             }
             b.box(Vector3(w - 0.2f, 0.05f, d - 0.2f), Vector3(0, 0.25f, 0), WOOD);
             b.box(Vector3(0.36f, 0.05f, 0.22f), Vector3(-0.3f, h + 0.025f, 0.05f), WOOD); // 案上一块刨好的板
-            b.box(Vector3(0.05f, 0.18f, 0.05f), Vector3(0.4f, h + 0.09f, -0.1f), IRON); // 一把凿子立着
+            b.box(Vector3(0.05f, 0.18f, 0.05f), Vector3(0.4f, h + 0.09f, -0.1f), IRON,"material.iron"); // 一把凿子立着
         } break;
         case PropLook::KILN: {
-            b.box(Vector3(w, 0.4f, d), Vector3(0, 0.2f, 0), CLAY_DARK);
+            b.box(Vector3(w, 0.4f, d), Vector3(0, 0.2f, 0), CLAY_DARK,"material.terracotta");
             b.sphere(w * 0.46f, (h - 0.6f) * 2.0f, Vector3(0, 0.4f, 0), CLAY);
-            b.cylinder(0.14, 0.45, Vector3(0, h - 0.2f, -0.15f), CLAY_DARK, 0.1);
-            b.box(Vector3(0.5f, 0.45f, 0.12f), Vector3(0, 0.62f, d * 0.5f - 0.02f), IRON); // 火口
+            b.cylinder(0.14, 0.45, Vector3(0, h - 0.2f, -0.15f), CLAY_DARK,0.1,"material.terracotta");
+            b.box(Vector3(0.5f, 0.45f, 0.12f), Vector3(0, 0.62f, d * 0.5f - 0.02f), IRON,"material.iron"); // 火口
             if (!b.is_ghost()) {
                 b.box(Vector3(0.36f, 0.3f, 0.04f), Vector3(0, 0.58f, d * 0.5f + 0.05f), glowing(FLAME, 1.5f));
             }
@@ -131,9 +132,9 @@ void build_prop_model(Node3D *p_root, const PropDef &p_def, double p_lift, const
             b.box(Vector3(w, h * 0.72f, d), Vector3(0, h * 0.36f, 0), WOOD);
             b.box(Vector3(w + 0.03f, h * 0.24f, d + 0.03f), Vector3(0, h * 0.84f, 0), WOOD_LIGHT);
             for (int s : { -1, 1 }) {
-                b.box(Vector3(0.06f, h + 0.01f, d + 0.05f), Vector3(s * w * 0.33f, h * 0.5f, 0), IRON);
+                b.box(Vector3(0.06f, h + 0.01f, d + 0.05f), Vector3(s * w * 0.33f, h * 0.5f, 0), IRON,"material.iron");
             }
-            b.box(Vector3(0.12f, 0.14f, 0.04f), Vector3(0, h * 0.7f, d * 0.5f + 0.03f), IRON); // 锁扣
+            b.box(Vector3(0.12f, 0.14f, 0.04f), Vector3(0, h * 0.7f, d * 0.5f + 0.03f), IRON,"material.iron"); // 锁扣
         } break;
         case PropLook::TORCH: {
             b.cylinder(0.05, h - 0.2f, Vector3(0, (h - 0.2f) * 0.5f, 0), WOOD_DARK);

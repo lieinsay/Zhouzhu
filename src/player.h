@@ -24,6 +24,7 @@
 // 有行星数据的地图里往下飞穿得过云带，停在海面之上 GOD_SEA_CLEARANCE_M（海面只是画出来的，没有碰撞）；飞在岛下面不算坠落（Expedition 管）。
 //
 // 场景（player.tscn）里须有：Body（Node3D，身体模型）、CameraPivot/SpringArm3D/Camera3D、Sensor（Area3D）。
+class SceneCharacter;
 class Player : public godot::CharacterBody3D {
     GDCLASS(Player, godot::CharacterBody3D)
 
@@ -52,6 +53,7 @@ class Player : public godot::CharacterBody3D {
     uint32_t saved_mask = 0;
 
     godot::Node3D *body = nullptr;
+    SceneCharacter *avatar = nullptr;
     godot::Node3D *camera_pivot = nullptr;
     godot::Camera3D *camera = nullptr;
     godot::SpringArm3D *arm = nullptr;

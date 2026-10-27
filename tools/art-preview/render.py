@@ -66,6 +66,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--furniture-directory',required=True)
     parser.add_argument('--model-directory',default='tools/content-studio/public/assets/models')
     parser.add_argument('--version',default='v1')
+    parser.add_argument('--rendered-directory',help='使用scene_visuals_e2e在真实Godot着色器下渲染的512透明PNG，保留其像素')
     args=parser.parse_args()
     catalog=load_catalog(ROOT)
     model_directory=ROOT/args.model_directory
@@ -85,7 +86,7 @@ def main():
         if namespace=='furniture':
             mesh_path=Path(args.furniture_directory)/f'{id}.json'
             model=dict(id='furniture:'+id,source={'path':'src/building_parts.cpp','sha256':sha(ROOT/'src/building_parts.cpp')},
-                note='直接调用当前furniture_parts与mesh_kit，完整家具几何、原颜色和米制尺寸；未增添造型。')
+                note='直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。')
         else:
             model=next(m for m in manifest['models'] if m['id']==namespace+':'+id)
             mesh_path=model_directory/Path(model['url']).name
@@ -93,7 +94,18 @@ def main():
             if sha(ROOT/model['source']['path'])!=model['source']['sha256']:raise ValueError('模型主要生成源码已经变化，请重新导出 '+key)
         mesh=read_json(mesh_path)
         original=ROOT/'assets/art/previews'/namespace/id/args.version/'render.png'
-        parameters=render(mesh,original)
+        if args.rendered_directory:
+            import shutil
+            rendered=ROOT/args.rendered_directory
+            report=read_json(rendered/'report.json')
+            if not report.get('passed') or not report.get('pixelCapture') or not report.get('models',{}).get(key,{}).get('pixels'):raise ValueError('真实GPU渲染未完成 '+key)
+            if sha(Path(report['models'][key]['file']))!=sha(mesh_path):raise ValueError('截图来源与待登记的真实网格不一致 '+key)
+            image=Image.open(rendered/(key+'.png'))
+            if image.size!=(512,512) or image.mode!='RGBA' or image.getchannel('A').getextrema()!=(0,255):raise ValueError('预览需要512方形真实透明PNG '+key)
+            if original.exists():raise ValueError('不能覆盖原始预览 '+key)
+            original.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(rendered/(key+'.png'),original)
+            parameters=dict(camera=[1.1,.85,1.35],projection='orthographic',fit=.8,keyLight=dict(rotationDegrees=[-45,-30,0],energy=1.1),ambient=.7,background='transparent',renderer='Godot4.4.1 / real production shaders and bindings',sourceBounds=report['models'][key]['bounds'],surfaceBindingsSha256=sha(ROOT/'game/art/bindings.json'))
+        else:parameters=render(mesh,original)
         runtime=ROOT/'game/art/previews'/namespace/id/(args.version+'.png');runtime.parent.mkdir(parents=True,exist_ok=True)
         Image.open(original).convert('RGBa').resize((256,256),Image.Resampling.LANCZOS).convert('RGBA').save(runtime)
         model_copy=original.parent/'model.json';model_copy.write_bytes(mesh_path.read_bytes())
@@ -105,7 +117,7 @@ def main():
             model=dict(**model,path=model_copy.relative_to(ROOT).as_posix(),sha256=sha(model_copy)),
             sourceSnapshotManifest=(model_directory/'manifest.json').relative_to(ROOT).as_posix() if namespace!='furniture' else None,
             sourceFingerprints=[dict(path=str(p),sha256=sha(ROOT/p)) for p in ['src/house_template.cpp','src/building_parts.cpp','src/building_mesh.cpp','src/ship_layout.cpp','src/ship.cpp']],
-            styleGap='当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。',
+            styleGap='已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。' if args.rendered_directory else '当前程序模型主要为简化几何与纯色；尚缺精绘材质、细致接合和轮廓设计。此图仅准确预览现有模型，不标作风格化模型完成。',
             userConfirmation=None,agentReview=dict(status='pending',note='待核对完整主体、相机、尺寸及原模型来源'))
         if key in existing:existing[key]['versions'].append(record)
         else:registry['assets'].append(dict(id=key,name=definition['name'],definition='src/house_template.cpp' if namespace=='furniture' else 'src/ship_layout.cpp' if namespace=='module' else 'src/buildings.cpp',
@@ -113,7 +125,7 @@ def main():
         evidence.append(dict(id=key,name=definition['name'],definition=definition,sourceModel=model,styleGap=record['styleGap']))
     atomic_json(ROOT/'assets/art/registry.json',registry)
     atomic_json(ROOT/'docs/art-assets/model-gaps.json',dict(schemaVersion=1,previews=evidence))
-    out=ROOT/'output/art-production-20261026/model-previews';out.mkdir(exist_ok=True)
+    out=ROOT/('output/scene-art-20261027/model-previews-'+args.version if args.rendered_directory else 'output/art-production-20261026/model-previews');out.mkdir(parents=True,exist_ok=True)
     for page in range(0,len(evidence),8):
         sheet=Image.new('RGB',(960,500),'#cbd4db');draw=ImageDraw.Draw(sheet)
         for at,row in enumerate(evidence[page:page+8]):

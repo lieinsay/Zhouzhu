@@ -5,6 +5,7 @@
 #include <limits>
 
 #include "mesh_kit.h"
+#include "art_mesh_kit.h"
 
 namespace {
 
@@ -14,13 +15,13 @@ constexpr double PROXY_ROOF_DROP_M = 0.06; // 简模的顶往下压这么多
 using namespace mesh_kit;
 
 // 悬山顶：两坡从檐口（高 p_eave、前后 ±p_half_d）到屋脊（高 p_eave + p_rise、z = 0），沿 x 伸到 ±p_half_w；两山各一个三角，檐下一面。建筑局部坐标经 p_xf 摆好
-void append_gable(MeshPart &r_part, const Xform &p_xf, double p_half_w, double p_half_d, double p_eave, double p_rise, bool p_underside, const Rgba *p_color = nullptr) {
+void append_gable(MeshPart &r_part, const Xform &p_xf, double p_half_w, double p_half_d, double p_eave, double p_rise, bool p_underside, const Rgba *p_color = nullptr, MeshPart *p_end = nullptr) {
     const double X = p_half_w, e = p_half_d, y0 = p_eave, y1 = p_eave + p_rise;
     const auto P = [&](double x, double y, double z) { return p_xf.xform({ x, y, z }); };
     polygon(r_part, { P(-X, y0, e), P(X, y0, e), P(X, y1, 0), P(-X, y1, 0) }, p_xf.rotate({ 0, e, p_rise }), p_color);
     polygon(r_part, { P(-X, y0, -e), P(X, y0, -e), P(X, y1, 0), P(-X, y1, 0) }, p_xf.rotate({ 0, e, -p_rise }), p_color);
-    polygon(r_part, { P(X, y0, e), P(X, y0, -e), P(X, y1, 0) }, p_xf.rotate({ 1, 0, 0 }), p_color);
-    polygon(r_part, { P(-X, y0, e), P(-X, y0, -e), P(-X, y1, 0) }, p_xf.rotate({ -1, 0, 0 }), p_color);
+    polygon(p_end?*p_end:r_part, { P(X, y0, e), P(X, y0, -e), P(X, y1, 0) }, p_xf.rotate({ 1, 0, 0 }), p_color);
+    polygon(p_end?*p_end:r_part, { P(-X, y0, e), P(-X, y0, -e), P(-X, y1, 0) }, p_xf.rotate({ -1, 0, 0 }), p_color);
     if (p_underside) {
         polygon(r_part, { P(-X, y0, -e), P(X, y0, -e), P(X, y0, e), P(-X, y0, e) }, p_xf.rotate({ 0, -1, 0 }), p_color);
     }
@@ -117,7 +118,7 @@ BuildingMesh build_building_mesh(const MapGround &p_map, const BuildingFrame &p_
         const Xform xf(part.yaw, part.pitch, { part.x, part.y, part.z });
         const V3 size{ part.sx, part.sy, part.sz };
         if (part.visual) {
-            append_box(out.groups[size_t(part.group)][size_t(part.mat)], xf, size);
+            art_mesh_kit::part(out.groups[size_t(part.group)][size_t(part.mat)],part);
         }
         if (part.solid) {
             append_box_faces(out.collision, xf, size);
@@ -128,7 +129,7 @@ BuildingMesh build_building_mesh(const MapGround &p_map, const BuildingFrame &p_
         // 屋脊一道 + 悬山（出檐 ROOF_OVERHANG），与天花板同在顶那一组（船台没有顶）
         MeshPart &tiles = out.groups[size_t(out.roof_group())][size_t(PartMaterial::ROOF)];
         append_box(tiles, Xform(0.0, 0.0, { 0.0, wall + roof, 0.0 }), { w + 2 * house_dims::ROOF_OVERHANG + 0.4, 0.35, 0.5 });
-        append_gable(tiles, Xform(0.0, 0.0, {}), 0.5 * w + house_dims::ROOF_OVERHANG, 0.5 * d + house_dims::ROOF_OVERHANG, wall, roof, true);
+        append_gable(tiles, Xform(0.0, 0.0, {}), 0.5 * w + house_dims::ROOF_OVERHANG, 0.5 * d + house_dims::ROOF_OVERHANG, wall, roof, true, nullptr, &out.groups[size_t(out.roof_group())][size_t(PartMaterial::WALL)]);
         // 屋里：每层一盏不投影的暖光（远了就淡掉）
         const double level_h = level_height(*def);
         for (int l = 0; l < def->levels; l++) {

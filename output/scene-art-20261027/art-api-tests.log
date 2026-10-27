@@ -1,0 +1,11 @@
+test_apply_images_without_content_draft (test_art.ArtTests.test_apply_images_without_content_draft) ... ok
+test_character_uses_explicit_runtime_slots (test_art.ArtTests.test_character_uses_explicit_runtime_slots) ... ok
+test_fixture_material_cannot_be_applied (test_art.ArtTests.test_fixture_material_cannot_be_applied) ... ok
+test_model_versions_fingerprint_and_path_boundary (test_art.ArtTests.test_model_versions_fingerprint_and_path_boundary) ... ok
+test_namespace_and_path_boundary (test_art.ArtTests.test_namespace_and_path_boundary) ... ok
+test_stale_revision_hash_change_and_unreviewed_rejected (test_art.ArtTests.test_stale_revision_hash_change_and_unreviewed_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 2.446s
+
+OK

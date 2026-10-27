@@ -8,7 +8,8 @@ import { assertMesh, parseArguments } from '../model-export/export-models.mjs';
 import { loadCatalog } from '../lib/catalog.mjs';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const directory = path.join(root, 'tools/content-studio/public/assets/models');
+const selection=JSON.parse(await readFile(path.join(root,'assets/art/model-library.json'),'utf8'));
+const directory=path.join(root,selection.snapshot);
 const manifest = JSON.parse(await readFile(path.join(directory, 'manifest.json'), 'utf8'));
 const sha = data => createHash('sha256').update(data).digest('hex');
 

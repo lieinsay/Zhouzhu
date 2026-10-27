@@ -21,7 +21,7 @@ export const CORE_HEADERS = Object.freeze([
   'src/building_parts.h', 'src/buildings.h', 'src/house_template.h',
   'src/interior_rules.h', 'src/land_berth.h', 'src/settlement_model.h',
   'src/map_ground.h', 'src/ground_query.h', 'src/ship_layout.h',
-  'src/wild_landing.h', 'src/mesh_kit.h',
+  'src/wild_landing.h', 'src/mesh_kit.h', 'src/art_mesh_kit.h',
 ]);
 
 export const CORE_TEMPLATES = Object.freeze([

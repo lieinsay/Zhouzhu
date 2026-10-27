@@ -1,5 +1,6 @@
 #include "art_mesh.h"
 #include "mesh_kit.h"
+#include "art_mesh_kit.h"
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 using namespace godot;
@@ -18,3 +19,4 @@ Ref<ArrayMesh> art_mesh::from_part(const MeshPart &p_part,const Ref<Material> &p
     mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES,arrays);mesh->surface_set_material(0,p_material);return mesh;
 }
 Ref<ArrayMesh> art_mesh::box(const Vector3 &p_size,const Ref<Material> &p_material){MeshPart part;mesh_kit::append_box(part,mesh_kit::Xform(0,0,{}),{p_size.x,p_size.y,p_size.z});return from_part(part,p_material);}
+Ref<ArrayMesh> art_mesh::shape(const BoxPart &p_part,const Ref<Material> &p_material){MeshPart part;art_mesh_kit::part(part,p_part);return from_part(part,p_material);}

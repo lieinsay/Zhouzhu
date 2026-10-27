@@ -74,6 +74,8 @@ void write_part(std::ostream &r_out, const MeshPart &p_part, PartMaterial p_mate
     json_numbers(r_out, p_part.positions);
     r_out << ",\"normals\":";
     json_numbers(r_out, p_part.normals);
+    r_out << ",\"uvs\":";json_numbers(r_out,p_part.uvs);
+    r_out << ",\"uv2s\":";json_numbers(r_out,p_part.uv2s);
     r_out << ",\"indices\":[";
     // 游戏几何正面顺时针，WebGL 正面逆时针；只翻索引，顶点和法线保持原值。
     for (size_t i = 0; i < p_part.indices.size(); i += 3) {

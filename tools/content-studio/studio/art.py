@@ -148,6 +148,37 @@ class ArtLibrary:
         _, value = self.version(self.registry(), asset_id, version)
         return self.file(value['runtime']['path']).read_bytes()
 
+    def model(self, asset_id, version):
+        _, value=self.version(self.registry(),asset_id,version)
+        info=value.get('model',{})
+        if not info.get('path') or not info['path'].startswith('assets/art/previews/'):
+            raise StudioError(422,'该版本没有正式同源模型')
+        content=self.file(info['path']).read_bytes()
+        if hashlib.sha256(content).hexdigest()!=info.get('sha256'):
+            raise StudioError(422,'模型指纹已变化，请重新登记来源')
+        return content
+
+    def model_library(self):
+        config=read_json(self.root/'assets/art/model-library.json',None)
+        if config is None:return None
+        directory=config.get('snapshot','')
+        if config.get('schemaVersion')!=1 or not directory.startswith('assets/art/models/'):
+            raise StudioError(422,'当前模型快照配置错误')
+        manifest=read_json(self.file(directory)/'manifest.json',None)
+        if not isinstance(manifest,dict) or not isinstance(manifest.get('models'),list):
+            raise StudioError(422,'当前模型快照没有有效清单')
+        return directory,manifest
+
+    def snapshot_model(self, filename):
+        library=self.model_library()
+        if library is None:raise StudioError(404,'没有当前模型快照')
+        directory,manifest=library
+        row=next((row for row in manifest['models'] if Path(row['url']).name==filename),None)
+        if row is None or '/' in filename or '\\' in filename:raise StudioError(404,'未登记的模型快照')
+        content=self.file(directory+'/'+filename).read_bytes()
+        if hashlib.sha256(content).hexdigest()!=row.get('assetSha256'):raise StudioError(422,'模型快照指纹变化')
+        return content
+
     def thumbnails(self):
         state = self.snapshot()
         result = []

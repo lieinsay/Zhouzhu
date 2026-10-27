@@ -23,11 +23,13 @@ class SharedLooks {
     godot::Ref<godot::Material> proxy;
     std::map<uint64_t, godot::Ref<godot::Material>> plain;
     std::map<std::string, godot::Ref<godot::Mesh>> meshes;
+    std::map<std::string,godot::Ref<godot::Material>> surfaces;
 
 public:
     godot::Ref<godot::Material> part_material(PartMaterial p_material);
     godot::Ref<godot::Material> proxy_material(); // 顶点色当反照率（sRGB）
     godot::Ref<godot::Material> plain_material(const godot::Color &p_albedo, float p_roughness = 1.0f);
+    godot::Ref<godot::Material> surface_material(const godot::String &p_asset,const godot::Color &p_color,float p_roughness=1.0f,float p_metallic=0.0f);
     // 按名字取网格；没有就调 p_make 建一份存下
     godot::Ref<godot::Mesh> mesh(const std::string &p_key, const std::function<godot::Ref<godot::Mesh>()> &p_make);
 };

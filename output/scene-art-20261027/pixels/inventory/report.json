@@ -1,0 +1,402 @@
+{
+  "bindingsChecked": 49,
+  "containerPottery": 6,
+  "passed": true,
+  "renderer": "Windows",
+  "resources": {
+    "bean": {
+      "assetId": "item.bean",
+      "draws": 121,
+      "instanceId": -9223371613129406004,
+      "loaded": true,
+      "path": "res://art/items/bean/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "brick": {
+      "assetId": "item.brick",
+      "draws": 121,
+      "instanceId": -9223371608566002362,
+      "loaded": true,
+      "path": "res://art/items/brick/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "brick_wall": {
+      "assetId": "item.brick_wall",
+      "draws": 121,
+      "instanceId": -9223371617155937880,
+      "loaded": true,
+      "path": "res://art/items/brick_wall/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "chest": {
+      "assetId": "item.chest",
+      "draws": 242,
+      "instanceId": -9223371608297566903,
+      "loaded": true,
+      "path": "res://art/items/chest/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "chromium_ore": {
+      "assetId": "item.chromium_ore",
+      "draws": 0,
+      "instanceId": -9223371616887502426,
+      "loaded": true,
+      "path": "res://art/items/chromium_ore/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "clay": {
+      "assetId": "item.clay",
+      "draws": 121,
+      "instanceId": -9223371614471583317,
+      "loaded": true,
+      "path": "res://art/items/clay/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "cloth": {
+      "assetId": "item.cloth",
+      "draws": 121,
+      "instanceId": -9223371610981922341,
+      "loaded": true,
+      "path": "res://art/items/cloth/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "coin": {
+      "assetId": "item.coin",
+      "draws": 0,
+      "instanceId": -9223371611518793293,
+      "loaded": true,
+      "path": "res://art/items/coin/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "copper_ore": {
+      "assetId": "item.copper_ore",
+      "draws": 121,
+      "instanceId": -9223371616082196034,
+      "loaded": true,
+      "path": "res://art/items/copper_ore/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "door_wall": {
+      "assetId": "item.door_wall",
+      "draws": 121,
+      "instanceId": -9223371604807905962,
+      "loaded": true,
+      "path": "res://art/items/door_wall/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "earth": {
+      "assetId": "item.earth",
+      "draws": 242,
+      "instanceId": -9223371611787228751,
+      "loaded": true,
+      "path": "res://art/items/earth/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "earth_wall": {
+      "assetId": "item.earth_wall",
+      "draws": 121,
+      "instanceId": -9223371612860970545,
+      "loaded": true,
+      "path": "res://art/items/earth_wall/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "fence": {
+      "assetId": "item.fence",
+      "draws": 121,
+      "instanceId": -9223371610445051310,
+      "loaded": true,
+      "path": "res://art/items/fence/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "firewood": {
+      "assetId": "item.firewood",
+      "draws": 242,
+      "instanceId": -9223371607223825075,
+      "loaded": true,
+      "path": "res://art/items/firewood/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "floatstone": {
+      "assetId": "item.floatstone",
+      "draws": 121,
+      "instanceId": -9223371607492260534,
+      "loaded": true,
+      "path": "res://art/items/floatstone/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "floorboard": {
+      "assetId": "item.floorboard",
+      "draws": 121,
+      "instanceId": -9223371617692808797,
+      "loaded": true,
+      "path": "res://art/items/floorboard/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "foundation": {
+      "assetId": "item.foundation",
+      "draws": 121,
+      "instanceId": -9223371615545325120,
+      "loaded": true,
+      "path": "res://art/items/foundation/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "gable": {
+      "assetId": "item.gable",
+      "draws": 121,
+      "instanceId": -9223371606955389620,
+      "loaded": true,
+      "path": "res://art/items/gable/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "gold_dust": {
+      "assetId": "item.gold_dust",
+      "draws": 0,
+      "instanceId": -9223371613397841459,
+      "loaded": true,
+      "path": "res://art/items/gold_dust/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "gold_ore": {
+      "assetId": "item.gold_ore",
+      "draws": 0,
+      "instanceId": -9223371607760695989,
+      "loaded": true,
+      "path": "res://art/items/gold_ore/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "gravel": {
+      "assetId": "item.gravel",
+      "draws": 0,
+      "instanceId": -9223371605613212334,
+      "loaded": true,
+      "path": "res://art/items/gravel/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "guano": {
+      "assetId": "item.guano",
+      "draws": 0,
+      "instanceId": -9223371615813760575,
+      "loaded": true,
+      "path": "res://art/items/guano/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "iron_ore": {
+      "assetId": "item.iron_ore",
+      "draws": 0,
+      "instanceId": -9223371609371308731,
+      "loaded": true,
+      "path": "res://art/items/iron_ore/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "kiln": {
+      "assetId": "item.kiln",
+      "draws": 121,
+      "instanceId": -9223371605881647792,
+      "loaded": true,
+      "path": "res://art/items/kiln/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "lacquer": {
+      "assetId": "item.lacquer",
+      "draws": 0,
+      "instanceId": -9223371615008454204,
+      "loaded": true,
+      "path": "res://art/items/lacquer/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "ladder": {
+      "assetId": "item.ladder",
+      "draws": 121,
+      "instanceId": -9223371613666276917,
+      "loaded": true,
+      "path": "res://art/items/ladder/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "lead_zinc_ore": {
+      "assetId": "item.lead_zinc_ore",
+      "draws": 0,
+      "instanceId": -9223371608834437817,
+      "loaded": true,
+      "path": "res://art/items/lead_zinc_ore/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "manganese_ore": {
+      "assetId": "item.manganese_ore",
+      "draws": 0,
+      "instanceId": -9223371606150083247,
+      "loaded": true,
+      "path": "res://art/items/manganese_ore/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "millet": {
+      "assetId": "item.millet",
+      "draws": 121,
+      "instanceId": -9223371616619066967,
+      "loaded": true,
+      "path": "res://art/items/millet/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "nickel_ore": {
+      "assetId": "item.nickel_ore",
+      "draws": 0,
+      "instanceId": -9223371616350631489,
+      "loaded": true,
+      "path": "res://art/items/nickel_ore/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "peat": {
+      "assetId": "item.peat",
+      "draws": 0,
+      "instanceId": -9223371617424373337,
+      "loaded": true,
+      "path": "res://art/items/peat/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "pillar": {
+      "assetId": "item.pillar",
+      "draws": 121,
+      "instanceId": -9223371611250357798,
+      "loaded": true,
+      "path": "res://art/items/pillar/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "plank": {
+      "assetId": "item.plank",
+      "draws": 484,
+      "instanceId": -9223371606686954161,
+      "loaded": true,
+      "path": "res://art/items/plank/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "pottery": {
+      "assetId": "item.pottery",
+      "draws": 242,
+      "instanceId": -9223371605344776876,
+      "loaded": true,
+      "path": "res://art/items/pottery/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "reed": {
+      "assetId": "item.reed",
+      "draws": 0,
+      "instanceId": -9223371612324099632,
+      "loaded": true,
+      "path": "res://art/items/reed/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "roof_tile": {
+      "assetId": "item.roof_tile",
+      "draws": 242,
+      "instanceId": -9223371615276889662,
+      "loaded": true,
+      "path": "res://art/items/roof_tile/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "salt": {
+      "assetId": "item.salt",
+      "draws": 0,
+      "instanceId": -9223371610176615102,
+      "loaded": true,
+      "path": "res://art/items/salt/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "stone": {
+      "assetId": "item.stone",
+      "draws": 121,
+      "instanceId": -9223371608029131448,
+      "loaded": true,
+      "path": "res://art/items/stone/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "stone_axe": {
+      "assetId": "item.stone_axe",
+      "draws": 242,
+      "instanceId": -9223371609102873276,
+      "loaded": true,
+      "path": "res://art/items/stone_axe/v2.png",
+      "size": "(256.0, 256.0)"
+    },
+    "stone_pick": {
+      "assetId": "item.stone_pick",
+      "draws": 121,
+      "instanceId": -9223371614740018746,
+      "loaded": true,
+      "path": "res://art/items/stone_pick/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "sulfur": {
+      "assetId": "item.sulfur",
+      "draws": 0,
+      "instanceId": -9223371612592535090,
+      "loaded": true,
+      "path": "res://art/items/sulfur/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "thatch_roof": {
+      "assetId": "item.thatch_roof",
+      "draws": 121,
+      "instanceId": -9223371610713487581,
+      "loaded": true,
+      "path": "res://art/items/thatch_roof/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "tile_roof": {
+      "assetId": "item.tile_roof",
+      "draws": 121,
+      "instanceId": -9223371609639744189,
+      "loaded": true,
+      "path": "res://art/items/tile_roof/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "timber": {
+      "assetId": "item.timber",
+      "draws": 484,
+      "instanceId": -9223371613934712375,
+      "loaded": true,
+      "path": "res://art/items/timber/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "tin_ore": {
+      "assetId": "item.tin_ore",
+      "draws": 0,
+      "instanceId": -9223371605076341421,
+      "loaded": true,
+      "path": "res://art/items/tin_ore/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "torch": {
+      "assetId": "item.torch",
+      "draws": 242,
+      "instanceId": -9223371612055664209,
+      "loaded": true,
+      "path": "res://art/items/torch/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "window_wall": {
+      "assetId": "item.window_wall",
+      "draws": 121,
+      "instanceId": -9223371614203147862,
+      "loaded": true,
+      "path": "res://art/items/window_wall/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "wood_shovel": {
+      "assetId": "item.wood_shovel",
+      "draws": 121,
+      "instanceId": -9223371606418518706,
+      "loaded": true,
+      "path": "res://art/items/wood_shovel/v1.png",
+      "size": "(256.0, 256.0)"
+    },
+    "workbench": {
+      "assetId": "item.workbench",
+      "draws": 121,
+      "instanceId": -9223371609908179647,
+      "loaded": true,
+      "path": "res://art/items/workbench/v1.png",
+      "size": "(256.0, 256.0)"
+    }
+  },
+  "sharedTexture": true,
+  "userConfirmed": false
+}

@@ -13,6 +13,7 @@ render_mode cull_back, specular_schlick_ggx;
 
 #include "res://shaders/weather.gdshaderinc"
 #include "res://shaders/planet_curve.gdshaderinc"
+#include "res://shaders/scene_detail.gdshaderinc"
 
 uniform vec3 eye = vec3(0.0);
 uniform float roughness = 0.95;
@@ -31,6 +32,10 @@ varying float v_leaf; // 这一棵此刻的叶量（落叶树；别的 1）
 varying vec3 v_tint; // 季相染色后的颜色（线性）
 varying float v_snow; // 积雪水当量 mm（根部海拔）
 varying float v_seed;
+varying vec3 detail_position;
+varying vec3 detail_normal;
+varying float detail_semantic;
+varying float detail_distance;
 
 float bayer4(vec2 p) {
 	ivec2 q = ivec2(mod(p, 4.0));
@@ -42,6 +47,8 @@ float bayer4(vec2 p) {
 void vertex() {
 	vec3 origin = (MODEL_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	float d = distance(origin, eye);
+	detail_position=VERTEX*vec3(length(MODEL_MATRIX[0].xyz),length(MODEL_MATRIX[1].xyz),length(MODEL_MATRIX[2].xyz));
+	detail_normal=NORMAL;detail_semantic=COLOR.a;detail_distance=d;
 	v_in = smoothstep(fade.x, fade.y, d);
 	v_out = 1.0 - smoothstep(fade.z, fade.w, d);
 	if (v_in <= 0.0 || v_out <= 0.0) {
@@ -87,7 +94,8 @@ void fragment() {
 	if (v_foliage > 0.5 && v_leaf < 0.999 && fract(t + v_seed * 0.37) >= v_leaf) {
 		discard;
 	}
-	vec3 col = v_tint;
+	vec3 col = v_tint*scene_detail(detail_position,detail_normal,detail_semantic,detail_distance);
+	col*=mix(1.0,.88,clamp(wx_wet,0.0,1.0));
 	vec3 up = (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz;
 	float cover = smoothstep(0.8, 9.0, v_snow * (0.7 + 0.6 * v_seed)) * smoothstep(0.25, 0.75, up.y) * season.z;
 	col = mix(col, snow_color, cover);

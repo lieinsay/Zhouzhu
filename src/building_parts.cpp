@@ -121,21 +121,23 @@ void furniture_parts(const Furnishing &p_item, double p_base_y, int p_group, std
     const int q = ((p_item.quarter % 4) + 4) % 4;
     const double c = std::cos(q * 0.5 * PI), s = std::sin(q * 0.5 * PI);
     // 家具自己的坐标（原点在占地中心的地面，w 沿 x、正面 +z）→ 建筑坐标：+x → (cos, −sin)，+z → (sin, cos)
-    auto add = [&](double p_sx, double p_sy, double p_sz, double p_lx, double p_ly, double p_lz, PartMaterial p_mat) {
-        const bool turned = (q & 1) != 0;
-        r_boxes.push_back(box(turned ? p_sz : p_sx, p_sy, turned ? p_sx : p_sz, p_item.x + p_lx * c + p_lz * s, p_base_y + p_ly, p_item.z - p_lx * s + p_lz * c,
-                p_mat, true, false, p_group));
+    auto add = [&](double sx,double sy,double sz,double lx,double ly,double lz,PartMaterial mat,VisualShape shape=VisualShape::BEVEL_BOX) {
+        BoxPart part=box(sx,sy,sz,p_item.x+lx*c+lz*s,p_base_y+ly,p_item.z-lx*s+lz*c,mat,true,false,p_group);
+        part.yaw=q*.5*PI;part.shape=shape;r_boxes.push_back(part);
     };
     const std::string kind = def->id;
     if (kind == "bed") {
-        add(2.0, 0.4, 1.5, 0, 0.2, 0, PartMaterial::WOOD);
-        add(1.85, 0.12, 1.35, 0.05, 0.46, 0, PartMaterial::CLOTH);
-        add(0.35, 0.12, 0.6, -0.7, 0.57, 0, PartMaterial::CLOTH);
-        add(0.08, 0.9, 1.5, -0.96, 0.45, 0, PartMaterial::DARK_WOOD);
+        for(double x:{-.86,.86})for(double z:{-.61,.61})add(.10,.34,.10,x,.17,z,PartMaterial::WOOD);
+        for(double z:{-.69,.69})add(1.96,.18,.10,0,.34,z,PartMaterial::WOOD);
+        for(double x:{-.94,.94})add(.10,.18,1.4,x,.34,0,PartMaterial::WOOD);
+        for(int i=0;i<8;++i)add(.14,.04,1.3,-.84+i*.24,.43,0,PartMaterial::WOOD);
+        add(1.85,.12,1.35,0,.49,0,PartMaterial::CLOTH);
+        add(.35,.13,.62,-.67,.61,0,PartMaterial::CLOTH);
+        add(.09,.65,1.46,-.95,.57,0,PartMaterial::DARK_WOOD);
     } else if (kind == "stove") {
         add(1.8, 0.85, 1.0, 0, 0.425, 0, PartMaterial::CLAY);
-        add(0.6, 0.08, 0.6, -0.4, 0.87, 0.1, PartMaterial::DARK_WOOD);
-        add(0.45, 0.08, 0.45, 0.35, 0.87, 0.1, PartMaterial::DARK_WOOD);
+        add(.60,.08,.60,-.4,.87,.1,PartMaterial::CLAY,VisualShape::RING_Y);
+        add(.45,.08,.45,.35,.87,.1,PartMaterial::CLAY,VisualShape::RING_Y);
         add(0.35, 1.9, 0.35, 0.7, 1.8, -0.3, PartMaterial::CLAY);
     } else if (kind == "table") {
         add(1.4, 0.06, 0.9, 0, 0.77, 0, PartMaterial::WOOD);
@@ -149,22 +151,27 @@ void furniture_parts(const Furnishing &p_item, double p_base_y, int p_group, std
         add(0.08, 0.4, 0.3, -0.5, 0.2, 0, PartMaterial::WOOD);
         add(0.08, 0.4, 0.3, 0.5, 0.2, 0, PartMaterial::WOOD);
     } else if (kind == "chest") {
-        add(1.2, 1.2, 0.6, 0, 0.6, 0, PartMaterial::WOOD);
-        add(1.0, 0.95, 0.03, 0, 0.6, 0.31, PartMaterial::DARK_WOOD);
+        add(1.18,.08,.58,0,.08,0,PartMaterial::DARK_WOOD);
+        add(1.18,.08,.58,0,1.15,0,PartMaterial::WOOD);
+        for(double x:{-.55,.55})add(.10,1.05,.58,x,.62,0,PartMaterial::WOOD);
+        add(1.08,1.05,.06,0,.62,-.27,PartMaterial::WOOD);
+        for(double x:{-.27,.27}){
+            add(.52,.98,.045,x,.62,.29,PartMaterial::WOOD);
+            add(.03,.13,.035,x+(x<0?.18:-.18),.65,.33,PartMaterial::METAL);
+            for(double y:{.28,.95})add(.04,.09,.018,x+(x<0?-.22:.22),y,.322,PartMaterial::METAL);
+        }
     } else if (kind == "vat") {
-        add(0.9, 0.72, 0.9, 0, 0.36, 0, PartMaterial::CLAY);
-        add(0.95, 0.08, 0.95, 0, 0.76, 0, PartMaterial::CLAY);
-        add(0.75, 0.02, 0.75, 0, 0.72, 0, PartMaterial::DARK_WOOD);
+        add(.9,.8,.9,0,.4,0,PartMaterial::CLAY,VisualShape::VAT);
     } else if (kind == "bin") {
-        add(1.4, 1.3, 1.4, 0, 0.65, 0, PartMaterial::STRAW);
-        add(1.2, 0.3, 1.2, 0, 1.45, 0, PartMaterial::GRAIN);
+        add(1.4,1.3,1.4,0,.65,0,PartMaterial::STRAW,VisualShape::BIN);
+        add(1.18,.35,1.18,0,1.34,0,PartMaterial::GRAIN,VisualShape::ELLIPSOID);
     } else if (kind == "altar") {
         add(1.7, 0.92, 0.5, 0, 0.46, 0, PartMaterial::WOOD);
         add(1.8, 0.08, 0.6, 0, 0.96, 0, PartMaterial::LACQUER);
         for (int k = -1; k <= 1; k++) {
             add(0.14, 0.45, 0.05, k * 0.35, 1.225, -0.15, PartMaterial::DARK_WOOD);
         }
-        add(0.2, 0.15, 0.2, 0, 1.075, 0.12, PartMaterial::CLAY);
+        add(.2,.15,.2,0,1.075,.12,PartMaterial::CLAY,VisualShape::VAT);
     } else if (kind == "loom") {
         for (int a = -1; a <= 1; a += 2) {
             for (int b = -1; b <= 1; b += 2) {
@@ -172,7 +179,11 @@ void furniture_parts(const Furnishing &p_item, double p_base_y, int p_group, std
             }
             add(1.6, 0.08, 0.08, 0, 1.46, a * 0.6, PartMaterial::WOOD);
         }
-        add(1.3, 0.02, 0.9, 0, 0.85, -0.1, PartMaterial::CLOTH);
+        add(1.3,.02,.9,0,.85,-.1,PartMaterial::CLOTH);
+        for(double z:{-.55,.35})add(1.4,.13,.13,0,.88,z,PartMaterial::WOOD,VisualShape::ROLLER_X);
+        for(int i=0;i<18;++i)add(.012,.025,1.12,-.59+i*.069,.97,-.10,PartMaterial::CLOTH);
+        add(1.32,.06,.04,0,1.02,.10,PartMaterial::DARK_WOOD);
+        add(1.26,.04,.10,0,.30,.05,PartMaterial::WOOD);
         add(1.1, 0.06, 0.28, 0, 0.45, 0.48, PartMaterial::WOOD);
     } else if (kind == "shelf") {
         for (int a = -1; a <= 1; a += 2) {
@@ -183,18 +194,24 @@ void furniture_parts(const Furnishing &p_item, double p_base_y, int p_group, std
         for (double y : { 0.3, 0.95, 1.6 }) {
             add(1.6, 0.04, 0.5, 0, y, 0, PartMaterial::WOOD);
         }
-        add(0.25, 0.3, 0.25, -0.4, 1.12, 0, PartMaterial::CLAY);
-        add(0.25, 0.3, 0.25, 0.3, 1.12, 0, PartMaterial::CLAY);
-        add(0.3, 0.32, 0.3, 0.0, 0.48, 0, PartMaterial::CLAY);
-        add(0.5, 0.25, 0.35, 0.2, 1.745, 0, PartMaterial::CLOTH);
+        add(.25,.3,.25,-.4,1.12,0,PartMaterial::CLAY,VisualShape::VAT);
+        add(.25,.3,.25,.3,1.12,0,PartMaterial::CLAY,VisualShape::VAT);
+        add(.3,.32,.3,0,.48,0,PartMaterial::CLAY,VisualShape::VAT);
+        add(.5,.25,.35,.2,1.745,0,PartMaterial::CLOTH,VisualShape::SACK);
     } else if (kind == "sacks") {
-        add(0.55, 0.6, 0.8, -0.3, 0.3, 0, PartMaterial::CLOTH);
-        add(0.55, 0.56, 0.8, 0.3, 0.28, 0, PartMaterial::CLOTH);
-        add(0.5, 0.3, 0.6, 0, 0.72, 0, PartMaterial::CLOTH);
+        for(double x:{-.29,.29}){
+            add(.55,.58,.78,x,.29,0,PartMaterial::CLOTH,VisualShape::SACK);
+            add(.10,.035,.10,x,.55,0,PartMaterial::CLOTH,VisualShape::RING_Y);
+        }
+        add(.50,.30,.59,0,.70,0,PartMaterial::CLOTH,VisualShape::SACK);
+        add(.085,.028,.085,0,.835,0,PartMaterial::CLOTH,VisualShape::RING_Y);
     } else if (kind == "drum") {
-        add(0.9, 0.35, 0.5, 0, 0.175, 0, PartMaterial::WOOD);
-        add(0.8, 0.8, 0.45, 0, 0.75, 0, PartMaterial::LACQUER);
-        add(0.7, 0.7, 0.02, 0, 0.75, 0.235, PartMaterial::CLOTH);
+        for(double x:{-.35,.35})add(.10,.35,.48,x,.175,0,PartMaterial::WOOD);
+        add(.8,.8,.45,0,.75,0,PartMaterial::LACQUER,VisualShape::DRUM);
+        for(double z:{-.235,.235}){
+            add(.72,.72,.014,0,.75,z,PartMaterial::LEATHER,VisualShape::DISC_Z);
+            add(.80,.80,.03,0,.75,z,PartMaterial::METAL,VisualShape::RING_Z);
+        }
     } else if (kind == "mat") {
         add(2.0, 0.02, 1.4, 0, 0.012, 0, PartMaterial::STRAW);
     }
@@ -292,7 +309,21 @@ BuildingParts building_parts(const BuildingDef &p_def, const HouseTemplate &p_ho
 
     if (!p_def.house) {
         land_berth::add_parts(p_def, out);
-        return parts;
+        if(p_def.house){
+        const double roof_w=w+2*house_dims::ROOF_OVERHANG;
+        const double half_d=.5*d+house_dims::ROOF_OVERHANG;
+        const int columns=std::max(1,int(std::floor(roof_w/.20)));
+        const double pitch=std::atan2(p_def.roof_m,half_d);
+        for(int col=0;col<columns;++col)for(int side:{-1,1}){
+            BoxPart lip=box(.19,.055,.22,-.5*roof_w+(col+.5)*roof_w/columns,p_def.wall_m+.055,side*(half_d-.10),PartMaterial::ROOF,true,false,parts.roof_group());
+            lip.pitch=side*pitch;lip.shape=VisualShape::TILE_EDGE;out.push_back(lip);
+        }
+        // 露明梁与门边接合，只增加视觉构件，不加占地和碰撞。
+        for(int side:{-1,1}){
+            out.push_back(box(w,.14,.14,0,p_def.wall_m-.08,side*(.5*d+.02),PartMaterial::DARK_WOOD,true,false,parts.roof_group()));
+        }
+    }
+    return parts;
     }
 
     // 底层木地板（只画，碰撞是台基面）

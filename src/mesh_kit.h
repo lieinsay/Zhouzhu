@@ -62,7 +62,8 @@ inline void polygon(MeshPart &r_part, std::vector<V3> p_points, const V3 &p_norm
     if (p_points.size() < 3) {
         return;
     }
-    if (dot(cross(p_points[1] - p_points[0], p_points[2] - p_points[0]), p_normal) < 0.0) {
+    V3 area{};for(size_t k=1;k+1<p_points.size();++k)area=area+cross(p_points[k]-p_points[0],p_points[k+1]-p_points[0]);
+    if (dot(area, p_normal) < 0.0) {
         std::reverse(p_points.begin(), p_points.end());
     }
     const int base = r_part.vertex_count();
@@ -82,6 +83,8 @@ inline void polygon(MeshPart &r_part, std::vector<V3> p_points, const V3 &p_norm
         }
     }
     for (int k = 1; k + 1 < int(p_points.size()); k++) {
+        const V3 triangle_area=cross(p_points[size_t(k)]-p_points[0],p_points[size_t(k+1)]-p_points[0]);
+        if(dot(triangle_area,triangle_area)<1e-16)continue; // 回转轴/极点只输出有效三角形。
         r_part.indices.insert(r_part.indices.end(), { base, base + k + 1, base + k });
     }
 }

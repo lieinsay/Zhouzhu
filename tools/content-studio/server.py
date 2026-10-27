@@ -198,6 +198,12 @@ class Handler(BaseHTTPRequestHandler):
                 if len(parts) != 2:
                     raise StudioError(404, '美术图片路径错误')
                 return self.send_payload(200, studio.art.image(*parts), content_type='image/png')
+            if path.startswith('/api/art/model/') and self.command == 'GET':
+                parts=path[len('/api/art/model/'):].split('/')
+                if len(parts)!=2:raise StudioError(404,'美术模型路径错误')
+                return self.send_payload(200,studio.art.model(*parts),content_type='application/json; charset=utf-8')
+            if path.startswith('/api/art/snapshot/') and self.command=='GET':
+                return self.send_payload(200,studio.art.snapshot_model(path[len('/api/art/snapshot/'):]),content_type='application/json; charset=utf-8')
             if path == '/api/art/stage' and self.command == 'POST':
                 return self.send_payload(200, studio.art.stage(self.read_body()))
             if path == '/api/art/apply' and self.command == 'POST':

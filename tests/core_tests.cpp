@@ -50,6 +50,7 @@ extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned l
 #include "freight.h"
 #include "building_mesh.h"
 #include "mesh_kit.h"
+#include "art_mesh_kit.h"
 #include "building_parts.h"
 #include "house_template.h"
 #include "interior_rules.h"
@@ -4502,6 +4503,25 @@ bool winding_ok(const MeshPart &p_part) {
     return true;
 }
 
+void test_scene_shapes() {
+    std::printf("scene_shapes\n");
+    for(int i=0;i<furniture::COUNT;++i)for(int quarter=0;quarter<4;++quarter){
+        Furnishing item;item.kind=furniture::DEFS[i].id;item.quarter=quarter;
+        std::vector<BoxPart> parts;furniture_parts(item,0,0,parts);
+        MeshPart mesh;int colliders=0;
+        for(const auto &part:parts){if(part.visual)art_mesh_kit::part(mesh,part);if(part.solid)++colliders;}
+        bool valid=!mesh.empty() && mesh.uvs.size()==size_t(mesh.vertex_count())*2 && winding_ok(mesh);
+        double sx,sz;furniture_extent(furniture::DEFS[i],quarter,sx,sz);
+        for(int v=0;v<mesh.vertex_count();++v){
+            const double x=mesh.positions[size_t(v)*3],z=mesh.positions[size_t(v)*3+2];
+            const double n=std::hypot(mesh.normals[size_t(v)*3],mesh.normals[size_t(v)*3+1],mesh.normals[size_t(v)*3+2]);
+            valid=valid && std::isfinite(x) && std::isfinite(z) && std::isfinite(n) && std::abs(n-1)<1e-4 && std::abs(x)<=sx*.5+.055 && std::abs(z)<=sz*.5+.055;
+        }
+        check(valid,std::string("真实家具曲面、朝向、UV与原占地有效：")+item.kind+"/"+std::to_string(quarter));
+        check(colliders==int(furniture::DEFS[i].solid),"家具碰撞仍由原定义单一边界决定");
+    }
+}
+
 void test_art_uv() {
     std::printf("art_uv\n");
     for(const mesh_kit::V3 size: {mesh_kit::V3{4,.2,.3},mesh_kit::V3{.2,4,.3},mesh_kit::V3{.2,.3,4}}) {
@@ -4549,7 +4569,7 @@ void test_building_mesh() {
         solid += part.solid;
     }
     check(m.index == 3 && m.group_count == parts.group_count && int(m.groups.size()) == parts.group_count, "组数与 building_parts 同");
-    check(m.triangle_count() == 12 * visual + 12 + 8, "三角面：每个画的盒子 12 个 + 屋脊 12 + 悬山 8（" + std::to_string(m.triangle_count()) + "）");
+    check(m.triangle_count() >= 12 * visual + 20 && m.triangle_count()<20000, "细模包含有界的瓦口曲面细节，简模仍保持独立低面数（"+std::to_string(m.triangle_count())+"）");
     check(m.collision.size() == size_t(solid) * 12 * 9, "碰撞：每个挡人的盒子 12 个三角面");
     check(m.lamps.size() == size_t(house.levels) && m.lamps[0].group == 1, "每层一盏灯，在那层的组里");
     check(!m.groups[size_t(m.roof_group())][size_t(PartMaterial::ROOF)].empty(), "瓦面在顶那一组");
@@ -7525,6 +7545,8 @@ void test_dev_manual() {
                     studio_text.find("art_material_e2e.tscn") != std::string::npos,
             "材质小样工具有手册入口");
     check(manual_text.find("res://tests/scene_materials_e2e.tscn")!=std::string::npos && studio_text.find("scene_materials_e2e.tscn")!=std::string::npos,"真实场景材质检查有文档入口");
+    check(manual_text.find("res://tests/scene_visuals_e2e.tscn")!=std::string::npos && studio_text.find("scene_visuals_e2e.tscn")!=std::string::npos,"集中场景像素检查有文档入口");
+    check(manual_text.find("register-character")!=std::string::npos && studio_text.find("register-character")!=std::string::npos,"人物贴图登记有操作文档");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");
@@ -7602,7 +7624,7 @@ int main(int argc, char **argv) {
             { "far_islands", test_far_islands },
             { "story_lods", test_story_lods },
             { "gen_format", test_gen_format }, { "gen_seed42", test_gen_seed42 }, { "island_floor", test_island_floor },
-            { "art_uv", test_art_uv }, { "building_mesh", test_building_mesh }, { "terrain_tiles", test_terrain_tiles }, { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
+            { "scene_shapes", test_scene_shapes }, { "art_uv", test_art_uv }, { "building_mesh", test_building_mesh }, { "terrain_tiles", test_terrain_tiles }, { "terrain_edits", test_terrain_edits }, { "edit_patch", test_edit_patch }, { "earthworks", test_earthworks }, { "build_pieces", test_build_pieces },
             { "structure_styles", test_structure_styles_repo }, { "god_works", test_god_works }, { "dev_manual", test_dev_manual },
             // 读开局那群的几段（换开局、重导时逐段重记金标）
             { "almanac", test_almanac }, { "climate", test_climate }, { "local_season", test_local_season }, { "village_seasons", test_village_seasons },

@@ -40,6 +40,8 @@ enum class PartMaterial {
     COUNT,
 };
 
+enum class VisualShape { BOX, BEVEL_BOX, VAT, BIN, SACK, DRUM, DISC_Z, RING_Y, RING_Z, ELLIPSOID, ROLLER_X, TILE_EDGE, HULL };
+
 struct BoxPart {
     double sx = 1.0, sy = 1.0, sz = 1.0; // 尺寸（转之前）
     double x = 0.0, y = 0.0, z = 0.0; // 中心
@@ -49,6 +51,7 @@ struct BoxPart {
     bool visual = true;
     bool solid = true;
     int group = 0;
+    VisualShape shape = VisualShape::BOX; // 仅画面形体；碰撞与占地仍使用原定义。
 };
 
 struct LadderZone {

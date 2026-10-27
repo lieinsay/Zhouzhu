@@ -95,5 +95,40 @@ class ArtTests(unittest.TestCase):
         self.assertEqual(status,422);self.assertIn('受控样件',result['error'])
         self.assertFalse((self.root/'game/art/bindings.json').exists())
 
+    def test_character_uses_explicit_runtime_slots(self):
+        atomic_json(self.root/'game/art/scene-slots.json',{'characters':{'face_young_male':{}}})
+        file=self.root/'assets/art/registry.json';registry=json.loads(file.read_text(encoding='utf8'))
+        registry['assets'][0]['id']='character.face_young_male';atomic_json(file,registry)
+        _,state=self.request('/api/art')
+        version=self.asset['versions'][0]['version']
+        self.assertEqual(self.request('/api/art/stage',dict(revision=state['revision'],bindings={'character.face_young_male':version}))[0],200)
+        _,state=self.request('/api/art')
+        self.assertEqual(self.request('/api/art/stage',dict(revision=state['revision'],bindings={'character.undefined_face':version}))[0],422)
+
+    def test_model_versions_fingerprint_and_path_boundary(self):
+        model='assets/art/previews/building/house/v9/model.json'
+        atomic_json(self.root/model,{'schemaVersion':1,'parts':[]})
+        file=self.root/'assets/art/registry.json';registry=json.loads(file.read_text(encoding='utf8'))
+        value=registry['assets'][0]['versions'][0]
+        value['model']={'path':model,'sha256':hashlib.sha256((self.root/model).read_bytes()).hexdigest()}
+        atomic_json(file,registry)
+        url='/api/art/model/'+self.asset['id']+'/'+value['version']
+        self.assertEqual(self.request(url)[0],200)
+        (self.root/model).write_bytes(b'changed')
+        self.assertEqual(self.request(url)[0],422)
+        value['model']['path']='../outside.json';atomic_json(file,registry)
+        self.assertEqual(self.request(url)[0],422)
+
+    def test_current_snapshot_is_versioned_and_verified(self):
+        directory='assets/art/models/test-snapshot';filename='module-bridge.json'
+        atomic_json(self.root/directory/filename,{'schemaVersion':1,'parts':[]})
+        atomic_json(self.root/directory/'manifest.json',{'schemaVersion':1,'models':[{'url':'/assets/models/'+filename,'assetSha256':hashlib.sha256((self.root/directory/filename).read_bytes()).hexdigest()}]})
+        atomic_json(self.root/'assets/art/model-library.json',{'schemaVersion':1,'snapshot':directory})
+        url='/api/art/snapshot/'+filename
+        self.assertEqual(self.request(url)[0],200)
+        self.assertEqual(self.request('/api/art/snapshot/not-registered.json')[0],404)
+        (self.root/directory/filename).write_bytes(b'changed')
+        self.assertEqual(self.request(url)[0],422)
+
 
 if __name__=='__main__':unittest.main()

@@ -1,4 +1,5 @@
 #include "ship.h"
+#include "art_mesh.h"
 
 #include <algorithm>
 #include <cmath>
@@ -84,7 +85,7 @@ double angle_difference(double p_from, double p_to) {
 }
 
 Ref<Material> make_material(const Color &p_albedo, float p_roughness) {
-    return curved_material::solid(p_albedo, p_roughness);
+    return curved_material::surface(p_albedo,p_roughness,"material.wood");
 }
 
 void adopt(Node *p_parent, Node *p_node, const String &p_name) {
@@ -94,11 +95,9 @@ void adopt(Node *p_parent, Node *p_node, const String &p_name) {
 }
 
 // 一只盒子：样子挂在 Visual 下，碰撞（可选）挂在船根下
-void add_box(Node3D *p_visual, Node *p_body, const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide) {
-    Ref<BoxMesh> mesh;
-    mesh.instantiate();
-    mesh->set_size(p_size);
-    mesh->set_material(p_material);
+void add_box(Node3D *p_visual, Node *p_body, const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide, VisualShape p_shape=VisualShape::BEVEL_BOX) {
+    BoxPart part;part.sx=p_size.x;part.sy=p_size.y;part.sz=p_size.z;part.shape=p_shape;
+    const Ref<ArrayMesh> mesh=art_mesh::shape(part,p_material);
     MeshInstance3D *instance = memnew(MeshInstance3D);
     instance->set_mesh(mesh);
     instance->set_transform(p_xf);
@@ -268,11 +267,11 @@ void Ship::ensure_materials() {
     mat_wood = make_material(Color(0.52f, 0.37f, 0.23f), 0.95f);
     mat_hull = make_material(Color(0.33f, 0.22f, 0.15f), 0.9f);
     mat_rail = make_material(Color(0.4f, 0.28f, 0.18f), 0.9f);
-    mat_sail = curved_material::solid(Color(0.9f, 0.86f, 0.74f), 1.0f, true);
-    mat_stone = curved_material::glowing(Color(0.25f, 0.62f, 0.6f), 0.6f, Color(0.2f, 0.75f, 0.7f), 1.4f);
+    mat_sail = curved_material::surface(Color(.9f,.86f,.74f),1.0f,"material.hemp",0.0f,true);
+    mat_stone=curved_material::surface(Color(.65f,.62f,.72f),.96f,"material.stone");
     mat_crate = make_material(Color(0.58f, 0.44f, 0.26f), 0.95f);
     mat_roof = make_material(Color(0.27f, 0.19f, 0.13f), 0.9f);
-    mat_glow = curved_material::glowing(Color(0.55f, 0.9f, 0.85f), 0.4f, Color(0.3f, 0.9f, 0.8f), 2.0f);
+    mat_fittings=curved_material::surface(Color(.28f,.28f,.31f),.6f,"material.iron",.75f);
     mat_inlay = make_material(Color(0.78f, 0.66f, 0.46f), 0.9f);
     mat_lamp = curved_material::glowing(Color(0.95f, 0.66f, 0.36f), 0.5f, Color(1.0f, 0.62f, 0.3f), 1.2f);
 }
@@ -304,9 +303,10 @@ void Ship::build_cell(const Cell &p_cell, const Module &p_module) {
     const String prefix = vformat("M%d_%d_%d_", c.x, c.y, c.z);
 
     if (c.y == 0) {
-        add_box(visual, this, prefix + String("Hull"), Vector3(HULL_W, HULL_H, CELL_L), at(cx, -DECK_T - 0.5f * HULL_H, cz), mat_hull, true);
+        add_box(visual, this, prefix + String("Hull"), Vector3(HULL_W, HULL_H, CELL_L), at(cx, -DECK_T - 0.5f * HULL_H, cz), mat_hull, true,VisualShape::HULL);
         if (look == ModuleLook::FLOATSTONE) {
-            add_box(visual, this, prefix + String("Floatstone"), Vector3(2.4f, 1.6f, 5.6f), at(cx, -DECK_T - HULL_H - 0.8f, cz), mat_stone, false);
+            for(int i=0;i<3;++i){BoxPart stone;stone.sx=2.25;stone.sy=1.45;stone.sz=1.95;stone.shape=VisualShape::ELLIPSOID;
+                add_mesh(visual,prefix+vformat("Floatstone%d",i),art_mesh::shape(stone,mat_stone),at(cx+real_t((i%2)*.08-.04),-DECK_T-HULL_H-.75f,cz+(i-1)*1.7f));}
         }
     }
 
@@ -331,7 +331,7 @@ void Ship::build_cell(const Cell &p_cell, const Module &p_module) {
                 add_box(visual, this, face_name + String("Batten"), Vector3(CELL_W - 0.5f, 0.14f, 0.06f), Transform3D(wall, face + Vector3(0, 1.4f, 0)), mat_rail, false);
             } else if (look == ModuleLook::FLOATSTONE) {
                 for (int s = -1; s <= 1; s += 2) {
-                    add_box(visual, this, face_name + vformat("Slit%d", s), Vector3(1.8f, 0.32f, 0.08f), Transform3D(wall, face + along * (s * 1.7f) + Vector3(0, 0.5f, 0)), mat_glow, false);
+                    add_box(visual, this, face_name + vformat("Slit%d", s), Vector3(1.8f, 0.32f, 0.08f), Transform3D(wall, face + along * (s * 1.7f) + Vector3(0, 0.5f, 0)), mat_fittings, false);
                 }
             }
         }
@@ -528,7 +528,7 @@ void Ship::build_furnishing(const Module &p_module) {
             // 甲板上一块透光的格栅（贴着甲板面，不挡脚）：底下舱里的浮石从缝里透光
             for (const Cell &c : open) {
                 const real_t cx = real_t(cell_center_x(c.x)), cz = real_t(cell_center_z(c.z)), deck = real_t(cell_deck_y(c.y));
-                add_box(visual, this, prefix + vformat("Grate%d", c.y), Vector3(2.6f, 0.04f, 4.2f), at(cx, deck + 0.02f, cz), mat_glow, false);
+                add_box(visual, this, prefix + vformat("Grate%d", c.y), Vector3(2.6f, 0.04f, 4.2f), at(cx, deck + 0.02f, cz), mat_fittings, false);
                 for (int k = -2; k <= 2; k++) {
                     add_box(visual, this, prefix + vformat("GrateBar%d_%d", c.y, k + 2), Vector3(2.8f, 0.07f, 0.12f), at(cx, deck + 0.035f, cz + k * 0.95f), mat_rail, false);
                 }

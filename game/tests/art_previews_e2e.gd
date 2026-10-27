@@ -5,6 +5,9 @@ var output := ""
 var failed := false
 var checked := {}
 var mapped_surfaces := {}
+signal finished(passed:bool)
+var quit_when_done:=true
+var output_override:=""
 
 func frames(count: int) -> void:
 	for i in count: await get_tree().physics_frame
@@ -28,6 +31,7 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--output="):output=arg.trim_prefix("--output=")
 	DirAccess.make_dir_recursive_absolute(output)
+	if not output_override.is_empty():output=output_override;DirAccess.make_dir_recursive_absolute(output)
 	get_tree().root.size=Vector2i(1440,1000)
 	BuildingTemplates.write_dir=output.path_join("test-templates")
 	BuildingTemplates.reload()
@@ -85,4 +89,11 @@ func _ready() -> void:
 	var report:={"passed":not failed,"checked":checked.size(),"renderer":DisplayServer.get_name(),"resources":checked,"mappedSurfaces":mapped_surfaces.keys(),"scope":"真实界面入口；模型精绘缺口另记"}
 	FileAccess.open(output.path_join("report.json"),FileAccess.WRITE).store_string(JSON.stringify(report,"  "))
 	print("art_previews: ",JSON.stringify(report))
-	main.queue_free();await frames(3);get_tree().quit(1 if failed else 0)
+	var actors:=main.find_children("*","SceneCharacter",true,false)
+	check(actors.size()>1,"实际平板聚落已有成年人物")
+	for actor in actors:check(actor.get_visual_state().face_loaded,"聚落角色面部已加载")
+	report.npcCount=actors.size()-1
+	report.passed=not failed
+	FileAccess.open(output.path_join("report.json"),FileAccess.WRITE).store_string(JSON.stringify(report,"  "))
+	main.queue_free();await frames(3);finished.emit(not failed)
+	if quit_when_done:get_tree().quit(1 if failed else 0)

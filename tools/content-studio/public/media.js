@@ -8,7 +8,7 @@ export function safeAssetUrl(value) {
   let decoded;
   try { decoded = decodeURIComponent(value); } catch { return null; }
   if (decoded.includes('..') || /[\\\s?#%]/.test(decoded)) return null;
-  return /^\/(?:assets|api\/assets|api\/models|api\/art\/image)\/[A-Za-z0-9_./%-]+$/.test(value) ? value : null;
+  return /^\/(?:assets|api\/assets|api\/models|api\/art\/(?:image|model|snapshot))\/[A-Za-z0-9_./%-]+$/.test(value) ? value : null;
 }
 
 export function normalizeLibrary(value) {

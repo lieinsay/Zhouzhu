@@ -6,6 +6,7 @@
 #include <vector>
 #include "building_mesh.h"
 #include "mesh_kit.h"
+#include "art_mesh_kit.h"
 
 template <typename T> void numbers(std::ostream &out, const std::vector<T> &values) {
     out << '[';
@@ -24,8 +25,7 @@ int main(int argc,char **argv) {
         furniture_parts(furnishing,0,0,boxes);
         std::array<MeshPart,size_t(PartMaterial::COUNT)> parts;
         for(const auto &box:boxes) if(box.visual) {
-            mesh_kit::append_box(parts[size_t(box.mat)],
-                mesh_kit::Xform(box.yaw,box.pitch,{box.x,box.y,box.z}),{box.sx,box.sy,box.sz});
+            art_mesh_kit::part(parts[size_t(box.mat)],box);
         }
         std::ofstream out(directory/(std::string(def.id)+".json"),std::ios::binary);
         if(!out) return 3;
@@ -37,11 +37,13 @@ int main(int argc,char **argv) {
             float r,g,b,rough;part_material_color(PartMaterial(mat),r,g,b,rough);
             out << "{\"positions\":";numbers(out,p.positions);
             out << ",\"normals\":";numbers(out,p.normals);
+            out << ",\"uvs\":";numbers(out,p.uvs);
+            out << ",\"uv2s\":";numbers(out,p.uv2s);
             out << ",\"indices\":[";
             for(size_t k=0;k<p.indices.size();k+=3) {
                 if(k)out<<',';out<<p.indices[k]<<','<<p.indices[k+2]<<','<<p.indices[k+1];
             }
-            out << "],\"color\":["<<r<<','<<g<<','<<b<<"],\"roughness\":"<<rough<<'}';
+            out << "],\"color\":["<<r<<','<<g<<','<<b<<"],\"roughness\":"<<rough<<",\"materialIndex\":"<<mat<<'}';
         }
         out << "]}\n";
         if(first || !out) return 4;

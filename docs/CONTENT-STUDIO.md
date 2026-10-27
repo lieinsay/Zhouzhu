@@ -152,3 +152,14 @@ VPN 入口扩展的 10 项定向检查通过，覆盖实际双地址同端口、
 正式服务已切换为 Python，同一进程监听127.0.0.1:4176与10.8.0.2:4176；实际工作空间0校验问题，原工作空间无draft.json或上传模型需要迁移，未为验收写入用户草稿。Windows管理员脚本已添加规则 Zhouzhu-ContentStudio-Python4176-WorkVPN，限定当前Python可执行文件、TCP4176、本机10.8.0.2、来源10.8.0.0/24，未改已有规则。脚本 allow-work-vpn.ps1 可供其他机器管理员核对后运行；同名规则已存在时拒绝覆盖。
 
 通过浏览器的VPN入口检查原界面、缩略图、工作台96三角面实体模型、外观配置和刷新资产库，浏览器错误/警告为空。截图：workspace/ui-review/content-studio-python.jpg。尚未从另一台VPN客户端进行端到端访问。游戏源表、DLL、模型生成来源和资产完整性检查通过，主项目改动仅为开发手册启动命令注释与对应测试字符串。
+
+## 2026-10-27：场景正式美术
+
+`/art.html`增加共享材质与人物贴图类别；模型预览可以按版本旋转查看同源网格，形体检查与生产材质渲染图分开。原`project.visuals`草稿不自动应用到游戏。新材质和人物槽定义在`game/art/scene-slots.json`，不得据需求快照无限生图或新增玩法。
+
+- `python tools/art-assets.py register-character --asset character.<已定义槽> --version vN --source <独立透明原图>`登记，保留画布UV位置与预乘alpha缩放关系。
+- `python tools/art-assets.py sheet --namespace character --output <新审图目录>`检查透明边缘；通过代理review后才可在工坊独立暂存/应用，用户确认另记。
+- `res://tests/scene_materials_e2e.tscn`无头检查正式材质与源地表属性；`res://tests/scene_visuals_e2e.tscn`集中检查真实模型、人物、散布及游戏界面。先无头预验，再在用户明确允许的可见窗口中截图；`--skip-interfaces`只做受影响的场景复验。
+- 同源模型先导出到新的版本目录；`python tools/art-preview/render.py --model-directory <新模型目录> --furniture-directory <新家具目录> --version vN --rendered-directory <scene_visuals_e2e成功输出目录>`登记真实Godot透明渲染预览。不可覆盖旧模型、原图或把AI设定图登记成模型渲染。
+
+完整进展和限制见`docs/art-assets/SCENE-COMPLETION-20261027.md`。GPU日志有编译错误时，即使脚本加载断言通过，也不能记为像素通过。受控雨湿/积雪样件只改渲染输入，真实世界截图沿原开局时间与自动天气。

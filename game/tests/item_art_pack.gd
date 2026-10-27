@@ -1,6 +1,8 @@
 extends SceneTree
 ## 打包实际导入资源，然后在没有 art 源目录的隔离项目中验证 PCK 与 C++ 加载。
 func _initialize() -> void:
+	call_deferred("_run")
+func _run() -> void:
 	var args := OS.get_cmdline_user_args()
 	var mode := args[0]
 	var pack_path := args[1]
@@ -8,7 +10,7 @@ func _initialize() -> void:
 		var pack := PCKPacker.new()
 		assert(pack.pck_start(pack_path) == OK)
 		assert(pack.add_file("res://art/bindings.json","res://art/bindings.json") == OK)
-		for shader in ["curved_standard.gdshader","curved_standard_two_sided.gdshader","curved_standard.gdshaderinc","planet_curve.gdshaderinc"]:
+		for shader in ["curved_standard.gdshader","curved_standard_two_sided.gdshader","curved_standard.gdshaderinc","planet_curve.gdshaderinc","character_face.gdshader","scene_detail.gdshaderinc","scatter.gdshader","farm.gdshader","weather.gdshaderinc","ground.gdshader","ground_detail.gdshaderinc"]:
 			assert(pack.add_file("res://shaders/"+shader,"res://shaders/"+shader)==OK)
 		var active: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://art/bindings.json"))
 		for binding in active.bindings.values():
@@ -39,7 +41,13 @@ func _initialize() -> void:
 			var info: Dictionary = panel.get_item_art(key.trim_prefix("item.")) if key.begins_with("item.") else preview.get_asset_art(key)
 			assert(info.loaded and info.path == active.bindings[key].path)
 		assert(not panel.get_item_art("missing_pack_icon").loaded)
-		assert(not active.bindings.has("material.iron"))
+		assert(active.bindings["material.iron"].version=="v2")
+		for variant in 4:
+			var actor=ClassDB.instantiate("SceneCharacter")
+			actor.configure(variant,variant,false);root.add_child(actor)
+			assert(actor.get_visual_state().face_loaded)
+			actor.free()
+		for look in [0,1,2,3,4,5]:assert(ArtSurface.scatter_mesh(look,0)!=null)
 		panel.free()
 		preview.free()
 		print("item_art_pack: isolated PCK C++ loading passed ",active.bindings.size())

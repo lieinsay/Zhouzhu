@@ -33,7 +33,7 @@ Ref<Texture2D> ItemArt::texture_asset(const std::string &p_asset) {
     if (entry.get_type() == Variant::DICTIONARY) {
         const Dictionary binding = entry;
         const String path = binding.get("path", String());
-        if ((path.begins_with("res://art/items/") || path.begins_with("res://art/previews/")) && path.ends_with(".png") && !path.contains("..") && !path.contains("\\") &&
+        if ((path.begins_with("res://art/items/") || path.begins_with("res://art/previews/") || path.begins_with("res://art/characters/")) && path.ends_with(".png") && !path.contains("..") && !path.contains("\\") &&
                 ResourceLoader::get_singleton()->exists(path, "Texture2D")) {
             result = ResourceLoader::get_singleton()->load(path, "Texture2D");
         }

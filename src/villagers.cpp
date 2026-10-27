@@ -1,4 +1,5 @@
 #include "villagers.h"
+#include "scene_character.h"
 
 #include <algorithm>
 #include <cmath>
@@ -211,10 +212,11 @@ void Villagers::_ready() {
         looks = own_looks.get();
     }
     mat_skin = looks->plain_material(Color(0.86f, 0.68f, 0.52f));
-    mat_hat = looks->plain_material(Color(0.78f, 0.68f, 0.42f)); // 斗笠
-    mat_wood = looks->plain_material(Color(0.42f, 0.30f, 0.18f));
+    mat_hat = looks->surface_material("material.straw",Color(0.78f, 0.68f, 0.42f)); // 斗笠
+    mat_wood = looks->surface_material("material.wood",Color(0.42f, 0.30f, 0.18f));
     mat_water = looks->plain_material(Color(0.35f, 0.55f, 0.75f));
-    mat_sack = looks->plain_material(Color(0.82f, 0.74f, 0.55f));
+    mat_sack = looks->surface_material("material.hemp",Color(0.82f, 0.74f, 0.55f));
+    mat_tool = looks->surface_material("material.stone",Color(.52f,.51f,.49f));
     mat_job[int(Job::FARMER)] = looks->plain_material(Color(0.52f, 0.40f, 0.26f)); // 褐短褐
     mat_job[int(Job::CARRIER)] = looks->plain_material(Color(0.33f, 0.40f, 0.52f)); // 靛青
     mat_job[int(Job::WATCHMAN)] = looks->plain_material(Color(0.55f, 0.20f, 0.17f)); // 赭红
@@ -416,8 +418,11 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
     r_body.root = root;
 
     SharedLooks &l = *looks;
-    add_mesh(root, "Body", capsule(l, 0.28f, 1.3f, mat_job[int(job)]), Vector3(0, 0.72f, 0));
-    add_mesh(root, "Head", sphere(l, 0.17f, 0.34f, mat_skin), Vector3(0, 1.55f, 0.02f));
+    r_body.character=memnew(SceneCharacter);
+    r_body.character->set_name("Character");
+    r_body.character->set_shared_looks(looks);
+    r_body.character->configure(p_index%4,int(job),false);
+    root->add_child(r_body.character);
     if (job == Job::WATCHMAN) {
         add_mesh(root, "Cap", cylinder(l, 0.15f, 0.19f, 0.14f, mat_job[int(job)]), Vector3(0, 1.72f, 0));
     } else if (job != Job::IDLER) {
@@ -437,7 +442,7 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
     switch (job) {
         case Job::FARMER:
             add_mesh(tool, "Handle", box(l, Vector3(0.05f, 1.3f, 0.05f), mat_wood), Vector3(0, -0.35f, 0.2f));
-            add_mesh(tool, "Blade", box(l, Vector3(0.22f, 0.05f, 0.3f), mat_skin), Vector3(0, -1.0f, 0.33f));
+            add_mesh(tool, "Blade", box(l, Vector3(0.22f, 0.05f, 0.3f), mat_tool), Vector3(0, -1.0f, 0.33f));
             add_mesh(load, "Sack", box(l, Vector3(0.45f, 0.5f, 0.3f), mat_sack), Vector3(0, 1.05f, -0.38f));
             break;
         case Job::CARRIER:
@@ -452,7 +457,7 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
             break;
         case Job::WATCHMAN:
             add_mesh(tool, "Spear", box(l, Vector3(0.05f, 2.3f, 0.05f), mat_wood), Vector3(0, 0.0f, 0.12f));
-            add_mesh(tool, "Tip", box(l, Vector3(0.08f, 0.25f, 0.02f), mat_skin), Vector3(0, 1.25f, 0.12f));
+            add_mesh(tool, "Tip", box(l, Vector3(0.08f, 0.25f, 0.02f), mat_tool), Vector3(0, 1.25f, 0.12f));
             break;
         case Job::IDLER:
             break;
@@ -526,6 +531,7 @@ void Villagers::place_body(Body &r_body, const PersonState &p_person, double p_d
     if (r_body.load) {
         r_body.load->set_visible(!m.carrying.empty());
     }
+    if(r_body.character)r_body.character->animate(p_delta,p_person.phase==FolkPhase::WALKING?walk_speed:0,tool_rot.x,p_person.phase==FolkPhase::WORKING&&m.who.job==Job::FARMER);
     refresh_label(r_body, p_person);
 }
 

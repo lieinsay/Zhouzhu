@@ -32,6 +32,7 @@
 // progressive（流式加载招人时设）：展开那一帧走着的先接着估着走、只搭几个小人，之后每个物理帧给 REPATH_PER_TICK 个人找路、搭 BODIES_PER_TICK 个小人。
 // 几何是占位的小人：身子、头、斗笠、手里的家伙（锄 / 扁担水桶 / 长矛），头顶一行字「名字 · 在干什么」；材质与网格问宿主要共用的一份（host_looks）。
 // 村民没有碰撞，进门就藏起来。
+class SceneCharacter;
 class Villagers : public godot::Node3D {
     GDCLASS(Villagers, godot::Node3D)
 
@@ -45,6 +46,7 @@ public:
 private:
     struct Body {
         godot::Node3D *root = nullptr;
+        SceneCharacter *character = nullptr;
         godot::Node3D *tool = nullptr; // 手里家伙的支点（干活时摆动）
         godot::Node3D *load = nullptr; // 背着的东西（粮袋 / 桶里的水）
         godot::Label3D *label = nullptr;
@@ -77,7 +79,7 @@ private:
     std::vector<Body> bodies;
     SharedLooks *looks = nullptr; // 宿主给的，或者 own_looks
     std::unique_ptr<SharedLooks> own_looks;
-    godot::Ref<godot::Material> mat_skin, mat_hat, mat_wood, mat_water, mat_sack;
+    godot::Ref<godot::Material> mat_skin, mat_hat, mat_wood, mat_water, mat_sack, mat_tool;
     godot::Ref<godot::Material> mat_job[4];
     std::shared_ptr<VillageNav> prepared_nav; // 后台备好的导航格与挑水线
     uint64_t prepared_nav_sig = 0; // 照哪张清单备的（layout_signature）

@@ -15,6 +15,10 @@
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
 #include "curved_material.h"
+#include "art_surface.h"
+#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/shader.hpp>
+#include <godot_cpp/classes/shader_material.hpp>
 #include "local_season.h"
 #include "world_clock.h"
 
@@ -30,10 +34,10 @@ namespace {
 
 const char *GENERATED_META = "farm_generated";
 
-const Color SOIL(0.30f, 0.22f, 0.15f);
-const Color SOIL_RIDGE(0.36f, 0.27f, 0.18f);
-const Color SPROUT(0.47f, 0.66f, 0.26f);
-const Color LEAF(0.30f, 0.53f, 0.19f);
+const Color SOIL(0.30f, 0.22f, 0.15f,.80f);
+const Color SOIL_RIDGE(0.36f, 0.27f, 0.18f,.80f);
+const Color SPROUT(0.47f, 0.66f, 0.26f,.50f);
+const Color LEAF(0.30f, 0.53f, 0.19f,.50f);
 
 constexpr real_t SOIL_LIFT = 0.04f; // 垦过的土比草皮高一点，免得共面闪烁
 constexpr real_t BALK = 0.03f; // 格与格之间留的田埂（占格宽的比例，每侧）
@@ -130,13 +134,10 @@ struct MeshBuilder {
     // 立着的方柱：四个侧面 + 顶
     void column(const Vector3 &p_base, real_t p_half_width, real_t p_height, const Color &p_color) {
         const Vector3 up(0, p_height, 0);
-        const Vector3 corners[4] = { Vector3(-p_half_width, 0, -p_half_width), Vector3(p_half_width, 0, -p_half_width),
-            Vector3(p_half_width, 0, p_half_width), Vector3(-p_half_width, 0, p_half_width) };
-        for (int s = 0; s < 4; s++) {
-            const Vector3 a = p_base + corners[s], b = p_base + corners[(s + 1) % 4];
-            quad(a, b, b + up, a + up, corners[s] + corners[(s + 1) % 4], p_color);
-        }
-        quad(p_base + corners[0] + up, p_base + corners[1] + up, p_base + corners[2] + up, p_base + corners[3] + up, Vector3(0, 1, 0), p_color);
+        for(int s=0;s<8;++s){const double a=s*6.283185307/8,b=(s+1)*6.283185307/8;
+            const Vector3 c0(real_t(std::cos(a)*p_half_width),0,real_t(std::sin(a)*p_half_width)),c1(real_t(std::cos(b)*p_half_width),0,real_t(std::sin(b)*p_half_width));
+            quad(p_base+c0,p_base+c1,p_base+c1*.8f+up,p_base+c0*.8f+up,c0+c1,p_color);
+            triangle(p_base+up,p_base+c0*.8f+up,p_base+c1*.8f+up,Vector3(0,1,0),p_color);}
     }
 
     Ref<ArrayMesh> commit() const {
@@ -191,7 +192,8 @@ Ref<ArrayMesh> build_plot_mesh(const Patch &p_patch, const Vector2i &p_cell, con
         const int stage = FarmModel::stage_of(p_plot);
         const bool ripe = p_plot.state == PlotState::RIPE;
         const CropLook &look = look_of(p_plot);
-        const Color stalk = ripe ? look.stalk_ripe : SPROUT.lerp(LEAF, real_t(stage) / (FarmModel::STAGES - 2));
+        Color stalk = ripe ? look.stalk_ripe : SPROUT.lerp(LEAF, real_t(stage) / (FarmModel::STAGES - 2));
+        stalk.a=ripe?.60f:.50f;
         for (int q = 0; q < PLANTS_PER_RIDGE; q++) {
             const int salt = r * PLANTS_PER_RIDGE + q;
             const real_t u = (real_t(q) + 0.5f) / PLANTS_PER_RIDGE + 0.08f * jitter(p_cell, salt);
@@ -199,7 +201,8 @@ Ref<ArrayMesh> build_plot_mesh(const Patch &p_patch, const Vector2i &p_cell, con
             const Vector3 base = p_patch.at(std::clamp(u, lo, hi), v, SOIL_LIFT + RIDGE_HEIGHT - 0.02f);
             b.column(base, look.half_width[stage], height, stalk);
             if (ripe) {
-                b.column(base + Vector3(0, height, 0), look.head_half_width, look.head_height, look.head);
+                Color head=look.head;head.a=.65f;
+                b.column(base + Vector3(0, height, 0), look.head_half_width, look.head_height, head);
             }
         }
     }
@@ -285,6 +288,10 @@ void Farm::_ready() {
     ERR_FAIL_NULL_MSG(host, "Farm 要挂在地面宿主（Island / World / FlatMap）下面");
 
     plot_material = curved_material::vertex_colored(1.0f);
+    const Ref<Shader> shader=ResourceLoader::get_singleton()->load("res://shaders/farm.gdshader");
+    if(shader.is_valid()){Ref<ShaderMaterial> material;material.instantiate();material->set_shader(shader);
+        for(const char *slot:{"soil","foliage","hemp","grain"})ArtSurface::configure(material,String("detail_")+String(slot),String("material.")+String(slot));
+        plot_material=material;}
 
     highlight_material.instantiate();
     highlight_material->set_shading_mode(BaseMaterial3D::SHADING_MODE_UNSHADED);

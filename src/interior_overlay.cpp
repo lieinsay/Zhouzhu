@@ -1,4 +1,5 @@
 #include "interior_overlay.h"
+#include "art_mesh.h"
 
 #include <algorithm>
 #include <cmath>
@@ -35,7 +36,7 @@ bool same_boxes(const std::vector<BoxPart> &p_a, const std::vector<BoxPart> &p_b
     }
     for (size_t k = 0; k < p_a.size(); k++) {
         const BoxPart &a = p_a[k], &b = p_b[k];
-        if (a.sx != b.sx || a.sy != b.sy || a.sz != b.sz || a.x != b.x || a.y != b.y || a.z != b.z || a.yaw != b.yaw || a.pitch != b.pitch) {
+        if (a.sx != b.sx || a.sy != b.sy || a.sz != b.sz || a.x != b.x || a.y != b.y || a.z != b.z || a.yaw != b.yaw || a.pitch != b.pitch || a.shape!=b.shape) {
             return false;
         }
     }
@@ -113,20 +114,10 @@ void InteriorOverlay::refresh(const Transform3D &p_building, const Vector3 &p_fo
         child->queue_free();
     }
     const Ref<StandardMaterial3D> fill = p_state == GHOST_CAN_PLACE ? mat_ok : (p_state == GHOST_CANNOT_PLACE ? mat_bad : mat_selected);
-    auto add = [&](const Vector3 &p_size, const Transform3D &p_xf, const Ref<StandardMaterial3D> &p_material) {
-        Ref<BoxMesh> mesh;
-        mesh.instantiate();
-        mesh->set_size(p_size);
-        MeshInstance3D *instance = memnew(MeshInstance3D);
-        instance->set_mesh(mesh);
-        instance->set_material_override(p_material);
-        instance->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
-        instance->set_transform(p_xf);
-        ghost->add_child(instance);
-    };
-    for (const BoxPart &b : p_ghost) {
-        const Transform3D xf(Basis(Vector3(0, 1, 0), real_t(b.yaw)) * Basis(Vector3(1, 0, 0), real_t(b.pitch)), Vector3(real_t(b.x), real_t(b.y), real_t(b.z)));
-        add(Vector3(real_t(b.sx), real_t(b.sy), real_t(b.sz)) + Vector3(0.02f, 0.02f, 0.02f), xf, fill);
+    for(const BoxPart &part:p_ghost){
+        if(!part.visual)continue;
+        MeshInstance3D *instance=memnew(MeshInstance3D);
+        instance->set_mesh(art_mesh::shape(part,fill));instance->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);ghost->add_child(instance);
     }
     place_camera();
 }

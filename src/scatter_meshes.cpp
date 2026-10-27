@@ -12,6 +12,7 @@
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
 #include "crops.h"
+#include "art_surface.h"
 
 using namespace godot;
 
@@ -61,6 +62,12 @@ struct Builder {
     }
 
     // 一团：二十面体（p_subdiv 细分一次成 80 面）按 (rx, ry, rz) 拉伸，顶点按 p_seed 抖 p_jitter 倍；颜色上浅下深
+    void branch(const Vector3 &start,const Vector3 &end,double r0,double r1,const Color &col){
+        const auto axis=(end-start).normalized();const auto u=axis.cross(Vector3(0,0,1)).normalized();const auto w=axis.cross(u);
+        for(int k=0;k<10;++k){const double a=TAU*k/10,b=TAU*(k+1)/10;const auto n0=u*real_t(std::cos(a))+w*real_t(std::sin(a)),n1=u*real_t(std::cos(b))+w*real_t(std::sin(b));
+            const auto a0=start+n0*real_t(r0),b0=start+n1*real_t(r0),a1=end+n0*real_t(r1),b1=end+n1*real_t(r1);
+            tri(a0,a1,b0,col);tri(b0,a1,b1,col);}
+    }
     void blob(const Vector3 &center, const Vector3 &radius, int p_subdiv, double p_jitter, uint32_t p_seed, const Color &col, double p_shade = 0.18) {
         const double t = (1.0 + std::sqrt(5.0)) / 2.0;
         std::vector<Vector3> pts = {
@@ -109,11 +116,13 @@ struct Builder {
             const Vector3 &a = pts[size_t(f[0])], &b = pts[size_t(f[1])], &cc = pts[size_t(f[2])];
             const double up = ((a.y + b.y + cc.y) / 3.0 - center.y) / std::max(0.01f, radius.y); // −1 底 … 1 顶
             const Color shade = col.darkened(float(p_shade * (1.0 - up) * 0.5));
+            const int first=int(n.size());
             tri(a, cc, b, shade); // 二十面体的面是逆时针的：反过来
+            if(col.a<.75f)for(int i=first;i<int(n.size());++i){const auto d=v[i]-center;n.set(i,Vector3(d.x/(radius.x*radius.x),d.y/(radius.y*radius.y),d.z/(radius.z*radius.z)).normalized());}
         }
     }
 
-    Ref<ArrayMesh> build(const Ref<Material> &p_material) const {
+    Ref<ArrayMesh> build(const Ref<Material> &p_material,float p_semantic=1.0f) const {
         Ref<ArrayMesh> mesh;
         mesh.instantiate();
         if (v.is_empty()) {
@@ -123,7 +132,9 @@ struct Builder {
         arrays.resize(Mesh::ARRAY_MAX);
         arrays[Mesh::ARRAY_VERTEX] = v;
         arrays[Mesh::ARRAY_NORMAL] = n;
-        arrays[Mesh::ARRAY_COLOR] = c;
+        PackedColorArray semantic=c;
+        for(int i=0;i<semantic.size();++i)if(semantic[i].a>.99f){Color color=semantic[i];color.a=p_semantic;semantic.set(i,color);}
+        arrays[Mesh::ARRAY_COLOR] = semantic;
         mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
         mesh->surface_set_material(0, p_material);
         return mesh;
@@ -132,26 +143,29 @@ struct Builder {
 
 constexpr const char *SCATTER_SHADER = "res://shaders/scatter.gdshader";
 
-const Color BARK(0.36f, 0.27f, 0.18f);
+const Color BARK(0.36f, 0.27f, 0.18f,.90f);
 // 叶子的顶点色 alpha 标 0.5（别的是 1）：着色器按它给叶子换季、随风摆
 constexpr float FOLIAGE = 0.5f;
 const Color LEAF(0.27f, 0.45f, 0.2f, FOLIAGE);
-const Color NEEDLE(0.17f, 0.34f, 0.2f, FOLIAGE);
+const Color NEEDLE(0.17f, 0.34f, 0.2f, .55f);
 
 Ref<ArrayMesh> make(ScatterLook p_look, const Ref<Material> &p_material) {
     Builder b;
     switch (p_look) {
         case ScatterLook::BROADLEAF: {
-            b.frustum(Vector3(), -0.3, 0.32, 3.4, 0.2, 6, BARK);
+            b.frustum(Vector3(), -0.3, 0.32, 5.5, 0.08, 20, BARK);
+            for(int k=0;k<5;++k){const double a=TAU*k/5+.3;const double y=2.6+k*.38;
+                b.branch(Vector3(0,real_t(y),0),Vector3(real_t(1.5*std::cos(a)),real_t(y+1.8),real_t(1.5*std::sin(a))),.12,.035,BARK);}
             b.blob(Vector3(0, 4.9f, 0), Vector3(2.5f, 2.0f, 2.5f), 1, 0.12, 11, LEAF);
-            b.blob(Vector3(1.0f, 5.9f, 0.5f), Vector3(1.8f, 1.5f, 1.8f), 0, 0.1, 12, LEAF.lightened(0.06f));
-            b.blob(Vector3(-0.9f, 5.6f, -0.6f), Vector3(1.9f, 1.6f, 1.9f), 0, 0.1, 13, LEAF.darkened(0.05f));
+            b.blob(Vector3(1.0f, 5.9f, 0.5f), Vector3(1.8f, 1.5f, 1.8f), 1, 0.06, 12, LEAF.lightened(0.06f));
+            b.blob(Vector3(-0.9f, 5.6f, -0.6f), Vector3(1.9f, 1.6f, 1.9f), 1, 0.06, 13, LEAF.darkened(0.05f));
         } break;
         case ScatterLook::CONIFER: {
-            b.frustum(Vector3(), -0.3, 0.3, 2.4, 0.18, 6, BARK);
-            b.frustum(Vector3(), 1.6, 2.3, 5.4, 0.0, 8, NEEDLE);
-            b.frustum(Vector3(), 3.6, 1.8, 7.2, 0.0, 8, NEEDLE.lightened(0.05f));
-            b.frustum(Vector3(), 5.6, 1.2, 9.0, 0.0, 8, NEEDLE.lightened(0.1f));
+            b.frustum(Vector3(), -0.3, 0.3, 8.6, 0.025, 20, BARK);
+            for(int level=0;level<6;++level){const double y=2.2+level*1.08,r=2.05-level*.29;
+                for(int k=0;k<5;++k){const double a=TAU*(k/5.0+level*.073);const Vector3 center(real_t(r*.52*std::cos(a)),real_t(y),real_t(r*.52*std::sin(a)));
+                    b.blob(center,Vector3(real_t(r*.62),real_t(.49-level*.025),real_t(r*.62)),0,.055,101+level*5+k,NEEDLE.lightened(float(level)*.016f),.08);}}
+            b.frustum(Vector3(),7.8,.40,9.0,0,12,NEEDLE.lightened(.08f));
         } break;
         case ScatterLook::SHRUB: {
             const Color leaf(0.33f, 0.44f, 0.2f, FOLIAGE);
@@ -165,7 +179,7 @@ Ref<ArrayMesh> make(ScatterLook p_look, const Ref<Material> &p_material) {
                 const double a = TAU * k / 12.0 + 0.4 * std::sin(k * 1.7), r = 0.25 + 0.55 * std::fmod(k * 0.618, 1.0);
                 const double h = 1.5 + 0.9 * std::fmod(k * 0.382 + 0.2, 1.0);
                 Color stalk = Color(0.62f, 0.6f, 0.36f).lerp(Color(0.4f, 0.52f, 0.28f), float(std::fmod(k * 0.27, 1.0)));
-                stalk.a = FOLIAGE;
+                stalk.a = .60f;
                 b.frustum(Vector3(real_t(r * std::cos(a)), 0, real_t(r * std::sin(a))), -0.1, 0.05, h, 0.0, 3, stalk);
             }
         } break;
@@ -203,7 +217,7 @@ Ref<ArrayMesh> make(ScatterLook p_look, const Ref<Material> &p_material) {
             b.frustum(Vector3(0.7f, 0, 0.4f), -0.05, 0.5, 0.08, 0.4, 6, Color(0.9f, 0.9f, 0.9f), true, Color(1, 1, 1));
             break;
     }
-    return b.build(p_material);
+    return b.build(p_material,p_look==ScatterLook::CLAY_BANK?.80f:(p_look==ScatterLook::GRAVEL_HEAP||p_look==ScatterLook::PLACER?.85f:1.0f));
 }
 
 // 低模：阔叶一根六棱干 + 一团（盖住细模那三团），针叶一根干 + 一个锥（盖住细模那三层）
@@ -251,6 +265,8 @@ Ref<Material> ScatterMeshes::material() {
             Ref<ShaderMaterial> m;
             m.instantiate();
             m->set_shader(shader);
+            const char *slots[]={"bark","foliage","needle","hemp","soil","gravel","stone"};
+            for(const char *slot:slots)ArtSurface::configure(m,String("detail_")+String(slot),String("material.")+String(slot));
             shared = m;
             fading = true;
         } else {

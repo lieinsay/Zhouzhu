@@ -17,9 +17,11 @@ func _array3(v: Vector3) -> Array:
 
 func _material_info(material: Material) -> Dictionary:
 	var info := {"color": Color.WHITE, "roughness": 0.95, "vertex_color": false}
+	if material!=null and material.has_meta("art_asset"):info.artAsset=str(material.get_meta("art_asset"))
 	if material is StandardMaterial3D:
 		info.color = material.albedo_color
 		info.roughness = material.roughness
+		info.metallic=material.metallic
 		info.vertex_color = material.vertex_color_use_as_albedo
 		info.doubleSided = material.cull_mode == BaseMaterial3D.CULL_DISABLED
 		if material.emission_enabled:
@@ -32,6 +34,8 @@ func _material_info(material: Material) -> Dictionary:
 		elif shader_color is Vector3:
 			info.color = Color(shader_color.x, shader_color.y, shader_color.z)
 		var roughness = material.get_shader_parameter("roughness")
+		var metallic=material.get_shader_parameter("metallic")
+		if metallic is float or metallic is int:info.metallic=metallic
 		if roughness is float or roughness is int:
 			info.roughness = roughness
 		info.vertex_color = material.get_shader_parameter("vertex_color") == true or material.shader.resource_path.ends_with("scatter.gdshader")
@@ -61,6 +65,8 @@ func _surface_parts(node: MeshInstance3D, frame: Transform3D) -> Array:
 		var arrays := mesh.surface_get_arrays(surface)
 		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		var uvs: PackedVector2Array=arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV]!=null else PackedVector2Array()
+		var uv2s: PackedVector2Array=arrays[Mesh.ARRAY_TEX_UV2] if arrays[Mesh.ARRAY_TEX_UV2]!=null else PackedVector2Array()
 		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
 		var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR] if arrays[Mesh.ARRAY_COLOR] != null else PackedColorArray()
 		if indices.is_empty():
@@ -87,7 +93,8 @@ func _surface_parts(node: MeshInstance3D, frame: Transform3D) -> Array:
 			var key := "%0.8f,%0.8f,%0.8f,%0.8f" % [color.r, color.g, color.b, alpha]
 			if not buckets.has(key):
 				var part := {"positions": [], "normals": [], "indices": [], "color": [color.r, color.g, color.b], "alpha": alpha, "roughness": info.roughness, "node": str(node.name)}
-				for optional in ["doubleSided", "emission", "emissionEnergy"]:
+				part.uvs=[];part.uv2s=[]
+				for optional in ["doubleSided", "emission", "emissionEnergy", "metallic", "artAsset"]:
 					if info.has(optional):
 						part[optional] = info[optional]
 				buckets[key] = part
@@ -98,6 +105,8 @@ func _surface_parts(node: MeshInstance3D, frame: Transform3D) -> Array:
 			for index in order:
 				part.positions.append_array(_array3(transform * vertices[index]))
 				part.normals.append_array(_array3((normal_basis * normals[index]).normalized()))
+				if uvs.size()==vertices.size():part.uvs.append_array([uvs[index].x,uvs[index].y])
+				if uv2s.size()==vertices.size():part.uv2s.append_array([uv2s[index].x,uv2s[index].y])
 			part.indices.append_array([start, start + 1, start + 2])
 		parts.append_array(buckets.values())
 	return parts

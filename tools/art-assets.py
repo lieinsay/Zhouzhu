@@ -145,10 +145,32 @@ def register_material(args):
     print(f'登记 {args.asset}/{args.version}，尚未应用到游戏')
 
 
+def register_character(args):
+    from PIL import Image
+    key=args.asset.removeprefix('character.')
+    slots=read_json(ROOT/'game/art/scene-slots.json')['characters']
+    if args.asset!='character.'+key or key not in slots or not re.fullmatch(r'v[1-9][0-9]*',args.version):raise ValueError('未定义的人物贴图身份或版本')
+    registry=read_json(REGISTRY);asset=next((a for a in registry['assets'] if a['id']==args.asset),None)
+    if asset is None:
+        asset=dict(id=args.asset,name=slots[key]['name'],definition='game/art/scene-slots.json',useSites=slots[key]['uses'],versions=[]);registry['assets'].append(asset)
+    if any(v['version']==args.version for v in asset['versions']):raise ValueError('版本已存在，不覆盖历史')
+    original=ROOT/'assets/art/characters'/key/args.version/'original.png';runtime=ROOT/'game/art/characters'/key/(args.version+'.png')
+    if original.exists() or runtime.exists():raise ValueError('原图或派生已存在')
+    original.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(args.source,original);info=metrics(original)
+    image=Image.open(original).convert('RGBA').convert('RGBa').resize((512,512),Image.Resampling.LANCZOS).convert('RGBA')
+    runtime.parent.mkdir(parents=True,exist_ok=True);image.save(runtime)
+    prompt=next(row['prompt'] for row in read_json(Path(args.prompts))['characters'] if row['id']==key)
+    asset['versions'].append(dict(version=args.version,styleId=registry['styleId'],origin='built-in-imagegen',productionStatus='produced',prompt=prompt,references=[],generationSource=str(Path(args.source).resolve()),
+        original=dict(path=original.relative_to(ROOT).as_posix(),sha256=fingerprint(original),**info),runtime=dict(path=runtime.relative_to(ROOT).as_posix(),sha256=fingerprint(runtime),**metrics(runtime)),
+        derivation=dict(operation='premultiplied Lanczos to512; canvas and UV feature positions preserved; no alpha-bbox cropping'),
+        userConfirmation=None,agentReview=dict(status='pending',note='待透明边缘、成年动漫语义与曲面头部接入检查')))
+    atomic_json(REGISTRY,registry);print(f'登记 {args.asset}/{args.version}，尚未应用到游戏')
+
+
 def sheet(args):
     from PIL import Image, ImageDraw
     registry = read_json(REGISTRY)
-    rows = [(a, v) for a in registry['assets'] for v in a['versions'] if not args.version or v['version'] == args.version]
+    rows = [(a, v) for a in registry['assets'] for v in a['versions'] if (not args.version or v['version'] == args.version) and (not args.namespace or a['id'].startswith(args.namespace+'.'))]
     output = ROOT / args.output
     output.mkdir(parents=True, exist_ok=True)
     for background in ('light', 'dark'):
@@ -180,7 +202,11 @@ def main():
     entry.add_argument('--asset',required=True);entry.add_argument('--version',required=True);entry.add_argument('--source',required=True)
     entry.add_argument('--tile-metres',type=float,required=True);entry.add_argument('--prompts',default=str(ROOT/'assets/art/materials/source-prompts-v1.json'))
     entry=commands.add_parser('sheet');entry.set_defaults(run=sheet)
+    character=commands.add_parser('register-character');character.set_defaults(run=register_character)
+    character.add_argument('--asset',required=True);character.add_argument('--version',required=True);character.add_argument('--source',required=True)
+    character.add_argument('--prompts',default=str(ROOT/'assets/art/characters/source-prompts-20261027-v2.json'))
     entry.add_argument('--version');entry.add_argument('--output',default='output/art-production-20261026/review')
+    entry.add_argument('--namespace',choices=['item','module','building','furniture','material','character'])
     args=parser.parse_args();args.run(args)
 
 

@@ -1,4 +1,5 @@
 #include "player.h"
+#include "scene_character.h"
 
 #include <algorithm>
 #include <cmath>
@@ -107,6 +108,10 @@ void Player::_ready() {
         outdoor_arm = arm->get_length();
     }
     ERR_FAIL_COND_MSG(!body || !camera_pivot || !camera, "Player: 场景里缺 Body 或 CameraPivot/SpringArm3D/Camera3D");
+    avatar = memnew(SceneCharacter);
+    avatar->set_name("Avatar");
+    avatar->configure(0,4,true);
+    body->add_child(avatar);
     Area3D *sensor = get_node<Area3D>("Sensor");
     ERR_FAIL_NULL_MSG(sensor, "Player: 场景里缺 Sensor（Area3D）");
     sensor->connect("area_entered", Callable(this, "on_sensor_area_entered"));
@@ -158,6 +163,7 @@ void Player::update_arm(double p_delta) {
 }
 
 void Player::_physics_process(double p_delta) {
+    if(avatar){const auto velocity=get_velocity();avatar->animate(p_delta,controlled&&is_on_floor()?Vector2(velocity.x,velocity.z).length():0);}
     if (!controlled) {
         return;
     }

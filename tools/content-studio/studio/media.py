@@ -188,6 +188,11 @@ class MediaLibrary:
         for row in models:
             if not isinstance(row, dict) or not matches(MODEL_ID, row.get('id')) or row.get('format') != 'mesh-json' or not matches(r'/assets/models/[a-zA-Z0-9][a-zA-Z0-9_.-]*\.json', row.get('url')):
                 fail('模型 manifest 的 ID、格式或库内 URL 错误', 500)
+        current=self.art.model_library() if hasattr(self,'art') else None
+        if current is not None:
+            _,model_manifest=current
+            models=copy.deepcopy(model_manifest['models'])
+            for row in models:row['url']='/api/art/snapshot/'+Path(row['url']).name
         models.extend(self.read_uploaded()['models'])
         for kind, values in [('缩略图', thumbnails), ('模型', models)]:
             if len({row['id'] for row in values}) != len(values):

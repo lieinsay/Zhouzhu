@@ -5,6 +5,9 @@ var main: Expedition
 var output := ""
 var failed := false
 var records := {}
+signal finished(passed:bool)
+var quit_when_done:=true
+var output_override:=""
 
 func check(ok: bool, message: String) -> void:
 	if not ok:
@@ -52,6 +55,7 @@ func _ready() -> void:
 		if arg.begins_with("--output="):
 			output = arg.trim_prefix("--output=")
 	DirAccess.make_dir_recursive_absolute(output)
+	if not output_override.is_empty():output=output_override;DirAccess.make_dir_recursive_absolute(output)
 	get_tree().root.size = Vector2i(1440,1000)
 	main = load("res://world_seed42.tscn").instantiate()
 	main.get_node("GroupProvider").world_dir = output.path_join("test-save")
@@ -108,4 +112,5 @@ func _ready() -> void:
 	print("item_art: ", JSON.stringify(report))
 	main.queue_free()
 	await frames(3)
-	get_tree().quit(1 if failed else 0)
+	finished.emit(not failed)
+	if quit_when_done:get_tree().quit(1 if failed else 0)

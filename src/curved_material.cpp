@@ -65,8 +65,8 @@ Ref<Material> solid(const Color &p_albedo, float p_roughness, bool p_two_sided) 
     return make(p_albedo, p_roughness, p_two_sided, false, Color(), 0.0f);
 }
 
-Ref<Material> surface(const Color &p_albedo, float p_roughness, const String &p_asset, float p_metallic) {
-    Ref<Material> result = make(p_albedo, p_roughness, false, false, Color(), 0.0f);
+Ref<Material> surface(const Color &p_albedo, float p_roughness, const String &p_asset, float p_metallic, bool p_two_sided) {
+    Ref<Material> result = make(p_albedo, p_roughness, p_two_sided, false, Color(), 0.0f);
     Ref<ShaderMaterial> material = result;
     if (material.is_null()) return result;
     material->set_meta("art_asset",p_asset);

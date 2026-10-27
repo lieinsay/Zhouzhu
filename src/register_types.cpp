@@ -5,6 +5,7 @@
 
 #include "atmosphere.h"
 #include "art_surface.h"
+#include "scene_character.h"
 #include "build_overlay.h"
 #include "build_panel.h"
 #include "dev_tools.h"
@@ -59,6 +60,7 @@ void initialize_zhouzhu_module(ModuleInitializationLevel p_level) {
     }
     GDREGISTER_CLASS(WorldClock);
     GDREGISTER_CLASS(ArtSurface);
+    GDREGISTER_CLASS(SceneCharacter);
     GDREGISTER_ABSTRACT_CLASS(StoryStart);
     GDREGISTER_CLASS(TemplateLibrary);
     GDREGISTER_CLASS(Island);

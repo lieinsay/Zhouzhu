@@ -68,7 +68,7 @@ class Ship : public godot::CharacterBody3D {
     godot::Node3D *camera_rig = nullptr;
     godot::Camera3D *camera = nullptr;
 
-    godot::Ref<godot::Material> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_glow, mat_inlay, mat_lamp; // 弯曲标准材质（curved_material）
+    godot::Ref<godot::Material> mat_wood, mat_hull, mat_rail, mat_sail, mat_stone, mat_crate, mat_roof, mat_fittings, mat_inlay, mat_lamp; // 弯曲标准材质（curved_material）
 
     const Placements *furniture = nullptr; // 船上摆的东西的账（编排的）
     int furniture_revision = -1;

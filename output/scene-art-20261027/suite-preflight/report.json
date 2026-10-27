@@ -1,0 +1,630 @@
+{
+  "characters": {
+    "0": {
+      "adult": true,
+      "face_loaded": true,
+      "face_path": "res://art/characters/face_young_male/v1.png",
+      "height_without_hat": 1.78,
+      "job": 0,
+      "variant": 0
+    },
+    "1": {
+      "adult": true,
+      "face_loaded": true,
+      "face_path": "res://art/characters/face_mature_male/v1.png",
+      "height_without_hat": 1.78,
+      "job": 1,
+      "variant": 1
+    },
+    "2": {
+      "adult": true,
+      "face_loaded": true,
+      "face_path": "res://art/characters/face_young_female/v1.png",
+      "height_without_hat": 1.78,
+      "job": 2,
+      "variant": 2
+    },
+    "3": {
+      "adult": true,
+      "face_loaded": true,
+      "face_path": "res://art/characters/face_mature_female/v1.png",
+      "height_without_hat": 1.78,
+      "job": 3,
+      "variant": 3
+    }
+  },
+  "models": {
+    "building.berth": {
+      "bounds": {
+        "max": [
+          22.6000003814697,
+          6.10998678207397,
+          9.69999885559082
+        ],
+        "min": [
+          -22.6000003814697,
+          -0.899999976158142,
+          -9.10000038146973
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/building-berth.json",
+      "orthographicSize": 58.6450958251953,
+      "pixels": false
+    },
+    "building.granary": {
+      "bounds": {
+        "max": [
+          4.09999990463257,
+          6.17500066757202,
+          6.71769189834595
+        ],
+        "min": [
+          -4.09999990463257,
+          -2.40000009536743,
+          -3.90000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/building-granary.json",
+      "orthographicSize": 16.985818862915,
+      "pixels": false
+    },
+    "building.hall": {
+      "bounds": {
+        "max": [
+          9.60000038146973,
+          8.57499980926514,
+          7.08205080032349
+        ],
+        "min": [
+          -9.60000038146973,
+          -1.60000002384186,
+          -5.65000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/building-hall.json",
+      "orthographicSize": 28.6587524414063,
+      "pixels": false
+    },
+    "building.house": {
+      "bounds": {
+        "max": [
+          6.59999990463257,
+          6.07499980926514,
+          4.71602487564087
+        ],
+        "min": [
+          -6.59999990463257,
+          -1.10000002384186,
+          -4.15000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/building-house.json",
+      "orthographicSize": 19.7919120788574,
+      "pixels": false
+    },
+    "building.tower": {
+      "bounds": {
+        "max": [
+          4.09999990463257,
+          14.375,
+          4.98564004898071
+        ],
+        "min": [
+          -4.09999990463257,
+          -1.39999997615814,
+          -3.90000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/building-tower.json",
+      "orthographicSize": 24.3375205993652,
+      "pixels": false
+    },
+    "furniture.altar": {
+      "bounds": {
+        "max": [
+          0.899999976158142,
+          1.45000004768372,
+          0.300000011920929
+        ],
+        "min": [
+          -0.899999976158142,
+          0.0,
+          -0.300000011920929
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/altar.json",
+      "orthographicSize": 2.50729298591614,
+      "pixels": false
+    },
+    "furniture.bed": {
+      "bounds": {
+        "max": [
+          0.990000009536743,
+          0.894999980926514,
+          0.740000009536743
+        ],
+        "min": [
+          -0.995000004768372,
+          0.0,
+          -0.740000009536743
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/bed.json",
+      "orthographicSize": 3.09214687347412,
+      "pixels": false
+    },
+    "furniture.bench": {
+      "bounds": {
+        "max": [
+          0.600000023841858,
+          0.449999988079071,
+          0.174999997019768
+        ],
+        "min": [
+          -0.600000023841858,
+          0.0,
+          -0.174999997019768
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/bench.json",
+      "orthographicSize": 1.43920922279358,
+      "pixels": false
+    },
+    "furniture.bin": {
+      "bounds": {
+        "max": [
+          0.699999988079071,
+          1.51499998569489,
+          0.699999988079071
+        ],
+        "min": [
+          -0.699999988079071,
+          0.0,
+          -0.699999988079071
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/bin.json",
+      "orthographicSize": 2.78182220458984,
+      "pixels": false
+    },
+    "furniture.chest": {
+      "bounds": {
+        "max": [
+          0.600000023841858,
+          1.19000005722046,
+          0.347500026226044
+        ],
+        "min": [
+          -0.600000023841858,
+          0.0399999991059303,
+          -0.300000011920929
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/chest.json",
+      "orthographicSize": 1.98267567157745,
+      "pixels": false
+    },
+    "furniture.drum": {
+      "bounds": {
+        "max": [
+          0.400000005960464,
+          1.14999997615814,
+          0.25
+        ],
+        "min": [
+          -0.400000005960464,
+          0.0,
+          -0.25
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/drum.json",
+      "orthographicSize": 1.78143763542175,
+      "pixels": false
+    },
+    "furniture.loom": {
+      "bounds": {
+        "max": [
+          0.800000011920929,
+          1.5,
+          0.63999992609024
+        ],
+        "min": [
+          -0.800000011920929,
+          0.0,
+          -0.660000026226044
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/loom.json",
+      "orthographicSize": 2.79173564910889,
+      "pixels": false
+    },
+    "furniture.mat": {
+      "bounds": {
+        "max": [
+          1.0,
+          0.0219999998807907,
+          0.699999988079071
+        ],
+        "min": [
+          -1.0,
+          0.0020000000949949,
+          -0.699999988079071
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/mat.json",
+      "orthographicSize": 3.0435152053833,
+      "pixels": false
+    },
+    "furniture.sacks": {
+      "bounds": {
+        "max": [
+          0.567175626754761,
+          0.850000023841858,
+          0.372449964284897
+        ],
+        "min": [
+          -0.567175626754761,
+          0.0,
+          -0.407550007104874
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/sacks.json",
+      "orthographicSize": 1.71511709690094,
+      "pixels": false
+    },
+    "furniture.shelf": {
+      "bounds": {
+        "max": [
+          0.800000011920929,
+          1.89999997615814,
+          0.25
+        ],
+        "min": [
+          -0.800000011920929,
+          0.0,
+          -0.25
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/shelf.json",
+      "orthographicSize": 2.9010124206543,
+      "pixels": false
+    },
+    "furniture.stove": {
+      "bounds": {
+        "max": [
+          0.899999976158142,
+          2.75,
+          0.5
+        ],
+        "min": [
+          -0.899999976158142,
+          0.0,
+          -0.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/stove.json",
+      "orthographicSize": 4.13764190673828,
+      "pixels": false
+    },
+    "furniture.table": {
+      "bounds": {
+        "max": [
+          0.699999988079071,
+          0.800000011920929,
+          0.449999988079071
+        ],
+        "min": [
+          -0.699999988079071,
+          0.0,
+          -0.449999988079071
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/table.json",
+      "orthographicSize": 2.06729316711426,
+      "pixels": false
+    },
+    "furniture.vat": {
+      "bounds": {
+        "max": [
+          0.449999988079071,
+          0.800000011920929,
+          0.449999988079071
+        ],
+        "min": [
+          -0.449999988079071,
+          0.0,
+          -0.449999988079071
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/furniture-scene-20261027-v2/vat.json",
+      "orthographicSize": 1.59293591976166,
+      "pixels": false
+    },
+    "module.bridge": {
+      "bounds": {
+        "max": [
+          3.5,
+          3.1399998664856,
+          3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -3.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-bridge.json",
+      "orthographicSize": 12.8588018417358,
+      "pixels": false
+    },
+    "module.deck": {
+      "bounds": {
+        "max": [
+          3.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-deck.json",
+      "orthographicSize": 12.3104438781738,
+      "pixels": false
+    },
+    "module.floatstone": {
+      "bounds": {
+        "max": [
+          3.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -4.97499990463257,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-floatstone.json",
+      "orthographicSize": 12.3104457855225,
+      "pixels": false
+    },
+    "module.long_sail": {
+      "bounds": {
+        "max": [
+          3.5,
+          8.39999961853027,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -17.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-long_sail.json",
+      "orthographicSize": 21.7429580688477,
+      "pixels": false
+    },
+    "module.sail": {
+      "bounds": {
+        "max": [
+          3.5,
+          7.19999980926514,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-sail.json",
+      "orthographicSize": 17.4194984436035,
+      "pixels": false
+    },
+    "module.storage": {
+      "bounds": {
+        "max": [
+          3.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-storage.json",
+      "orthographicSize": 12.3104438781738,
+      "pixels": false
+    },
+    "module.tall_hold": {
+      "bounds": {
+        "max": [
+          3.57999968528748,
+          4.94999980926514,
+          -3.46000003814697
+        ],
+        "min": [
+          -3.58000016212463,
+          -3.5,
+          -10.5799999237061
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-tall_hold.json",
+      "orthographicSize": 14.9984445571899,
+      "pixels": false
+    },
+    "module.wide_deck": {
+      "bounds": {
+        "max": [
+          10.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-v2/module-wide_deck.json",
+      "orthographicSize": 19.09375,
+      "pixels": false
+    }
+  },
+  "passed": true,
+  "pixelCapture": false,
+  "scatter": {
+    "0": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 1140
+    },
+    "1": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 1956
+    },
+    "10": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 117
+    },
+    "2": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 144
+    },
+    "3": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 108
+    },
+    "4": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 240
+    },
+    "5": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 120
+    },
+    "6": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 240
+    },
+    "7": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 201
+    },
+    "8": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 390
+    },
+    "9": {
+      "materials": {
+        "bark": "res://art/materials/bark/v1.png",
+        "foliage": "res://art/materials/foliage/v1.png",
+        "gravel": "res://art/materials/gravel/v1.png",
+        "hemp": "res://art/materials/hemp/v1.png",
+        "needle": "res://art/materials/needle/v1.png",
+        "soil": "res://art/materials/soil/v1.png",
+        "stone": "res://art/materials/stone/v1.png"
+      },
+      "vertices": 360
+    }
+  },
+  "userConfirmed": false,
+  "world": {
+    "clock": 0,
+    "npcCount": 0,
+    "player": {
+      "adult": true,
+      "face_loaded": true,
+      "face_path": "res://art/characters/face_young_male/v1.png",
+      "height_without_hat": 1.78,
+      "job": 4,
+      "variant": 0
+    },
+    "weather": "原开局自动天气与真实时间序列"
+  }
+}

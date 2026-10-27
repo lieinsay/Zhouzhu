@@ -3,12 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { coreExportBuildSpec } from './build-core-export.mjs';
+import { coreExportBuildSpec, CORE_SOURCES } from './build-core-export.mjs';
 import { loadCatalog } from '../lib/catalog.mjs';
 
 const TOOL_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
-const BRIDGE_SOURCES = ['src/placed_props.cpp', 'src/scatter_meshes.cpp', 'src/placeables.cpp', 'src/item_slots.cpp', 'src/crops.cpp', 'src/deposit_kinds.cpp'];
-const BRIDGE_HEADERS = ['src/placed_props.h', 'src/scatter_meshes.h', 'src/placeables.h', 'src/item_slots.h', 'src/crops.h', 'src/deposit_kinds.h'];
+const BRIDGE_SOURCES = ['src/placed_props.cpp', 'src/scatter_meshes.cpp', 'src/placeables.cpp', 'src/item_slots.cpp', 'src/crops.cpp', 'src/deposit_kinds.cpp', 'src/art_mesh.cpp', 'src/curved_material.cpp', 'src/art_surface.cpp','src/shared_looks.cpp',...CORE_SOURCES];
+const BRIDGE_HEADERS = ['src/placed_props.h', 'src/scatter_meshes.h', 'src/placeables.h', 'src/item_slots.h', 'src/crops.h', 'src/deposit_kinds.h','src/art_mesh.h','src/art_surface.h','src/curved_material.h','src/art_mesh_kit.h'];
 const GAME_DLL = 'game/bin/zhouzhu.windows.template_debug.x86_64.dll';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 
