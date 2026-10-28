@@ -1,0 +1,32 @@
+{
+  "command": [
+    "D:/Program Files/Godot/Godot_v4.4.1-stable_win64.exe",
+    "--path",
+    "D:\\Project\\My\\Zhouzhu\\game",
+    "res://tests/npc_visual_observer.tscn",
+    "--quit-after",
+    "216000",
+    "--",
+    "--scene=seed42",
+    "--duration=150.0",
+    "--output=D:/Project/My/Zhouzhu/output/npc-visual-20261028/seed42-worker-final",
+    "--follow-person=3",
+    "--observer-x=26050.0",
+    "--observer-z=-28450.0"
+  ],
+  "engineExit": 0,
+  "checkedExit": 0,
+  "timedOut": false,
+  "wallSeconds": 163.02,
+  "scene": "seed42",
+  "observerVillage": 8,
+  "physicsNormalTime": true,
+  "scope": "普通引擎时间；未使用fixed-fps/快进/重启时钟/天气覆盖或NPC状态写入",
+  "coverage": {
+    "carry_water": 811,
+    "walk": 35064,
+    "work_chat": 401,
+    "work_fetch_water": 86,
+    "work_wait": 520
+  }
+}

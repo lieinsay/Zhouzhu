@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "snapshot": "assets/art/models/scene-20261027-authored-v4",
-  "note": "当前原生模块/外壳/采集源快照。作者家具与蒙皮人物另由model-registry管理；保留历史，不应用内容草稿。"
+  "snapshot": "assets/art/models/scene-20261028-npc-verified",
+  "note": "当前原生构件快照；NPC服装/握持/工具接触升级后的同源DLL。作者人物与家具仍由独立model-registry管理。"
 }

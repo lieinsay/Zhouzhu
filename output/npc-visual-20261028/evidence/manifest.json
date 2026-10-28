@@ -1,0 +1,431 @@
+{
+  "selectedScreenshots": [
+    {
+      "label": "自然行走：男式工具随行",
+      "path": "output/npc-visual-20261028/evidence/workwear-natural-final--0031_walk_v0_j0.png",
+      "sha256": "f24a04ff524d041e4c4a0cb80dc090df7c62eb675fcdd7a3ed31c0a50dd1d395",
+      "sourceRun": "workwear-natural-final",
+      "sourceImage": "0031_walk_v0_j0.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.0142820896580815,
+          "R": 0.00950495339930058
+        },
+        "carrying": "",
+        "clock": 759.049999999992,
+        "contact": {},
+        "elapsed": 12.165,
+        "image": "0031_walk_v0_j0.png",
+        "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+        "phase": 1,
+        "position": [
+          149.799179077148,
+          141.42431640625,
+          -45.2008247375488
+        ],
+        "state": {
+          "adult": true,
+          "animation": "walk",
+          "animationPlaying": true,
+          "animationPosition": 0.477220257123311,
+          "bones": 117,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/male/v1/model.glb",
+          "head_height": 1.54472351074219,
+          "height_without_hat": 1.78,
+          "imported_model": true,
+          "job": 0,
+          "left_grip_error": 0.0143687697127461,
+          "model_id": "actor.young_male",
+          "model_path": "res://art/models/actors/male/v1/model.glb",
+          "right_grip_error": 0.0109043456614017,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 0
+        },
+        "task": "till"
+      }
+    },
+    {
+      "label": "自然落锄：女式v2",
+      "path": "output/npc-visual-20261028/evidence/workwear-natural-final--0037_work_till_v2_j0_strike.png",
+      "sha256": "11435679db808cf48e358571e53b32aafaa77857f1f27fbd7f3a2525ea285238",
+      "sourceRun": "workwear-natural-final",
+      "sourceImage": "0037_work_till_v2_j0_strike.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.0111368577927351,
+          "R": 0.00938767474144697
+        },
+        "carrying": "",
+        "clock": 759.849999999991,
+        "contact": {
+          "angle": -0.00760501343756914,
+          "blade": [
+            162.756439208984,
+            141.494186401367,
+            -34.9462852478027
+          ],
+          "gap": 0.02642822265625,
+          "hit": true
+        },
+        "elapsed": 13.61,
+        "image": "0037_work_till_v2_j0_strike.png",
+        "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+        "phase": 2,
+        "position": [
+          162.5,
+          141.435516357422,
+          -35.0
+        ],
+        "state": {
+          "adult": true,
+          "animation": "work",
+          "animationPlaying": true,
+          "animationPosition": 1.61666666666667,
+          "bones": 158,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/female/v2/model.glb",
+          "head_height": 1.40992736816406,
+          "height_without_hat": 1.68,
+          "imported_model": true,
+          "job": 0,
+          "left_grip_error": 0.0124095855280757,
+          "model_id": "actor.young_female",
+          "model_path": "res://art/models/actors/female/v2/model.glb",
+          "right_grip_error": 0.00965577643364668,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 2
+        },
+        "task": "till"
+      }
+    },
+    {
+      "label": "自然落锄：男式",
+      "path": "output/npc-visual-20261028/evidence/workwear-natural-final--0071_work_till_v0_j0_strike.png",
+      "sha256": "f461aab4ca79d31b97f6c545b1fb91821bfaef2c7088f838beae9691eaa4b14c",
+      "sourceRun": "workwear-natural-final",
+      "sourceImage": "0071_work_till_v0_j0_strike.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.00800705142319202,
+          "R": 0.0237700827419758
+        },
+        "carrying": "",
+        "clock": 767.666666666651,
+        "contact": {
+          "angle": -0.000165331119205803,
+          "blade": [
+            137.743881225586,
+            142.067184448242,
+            -72.5747985839844
+          ],
+          "gap": 0.0312652587890625,
+          "hit": true
+        },
+        "elapsed": 27.697,
+        "image": "0071_work_till_v0_j0_strike.png",
+        "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:0",
+        "phase": 2,
+        "position": [
+          137.5,
+          142.000045776367,
+          -72.5
+        ],
+        "state": {
+          "adult": true,
+          "animation": "work",
+          "animationPlaying": true,
+          "animationPosition": 0.05,
+          "bones": 117,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/male/v1/model.glb",
+          "head_height": 1.52198791503906,
+          "height_without_hat": 1.78,
+          "imported_model": true,
+          "job": 0,
+          "left_grip_error": 0.0080370120704174,
+          "model_id": "actor.young_male",
+          "model_path": "res://art/models/actors/male/v1/model.glb",
+          "right_grip_error": 0.0318051092326641,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 0
+        },
+        "task": "till"
+      }
+    },
+    {
+      "label": "原始雨天：到水边取水",
+      "path": "output/npc-visual-20261028/evidence/seed42-worker-final--0016_work_fetch_water_v3_j1.png",
+      "sha256": "3df5f1f537ac3796d4cf2eac0ae986bc4445036d99350e6653a629c9e289f65a",
+      "sourceRun": "seed42-worker-final",
+      "sourceImage": "0016_work_fetch_water_v3_j1.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.00775218568742275,
+          "R": 0.0067138671875
+        },
+        "carrying": "",
+        "clock": 810.516666666612,
+        "contact": {},
+        "elapsed": 72.853,
+        "image": "0016_work_fetch_water_v3_j1.png",
+        "person": "/root/NpcVisualObserver/WorldSeed42/SiteStream/Village8/Villagers:3",
+        "phase": 2,
+        "poleAboveShoulderJoint": 0.0552978515625,
+        "position": [
+          26047.974609375,
+          1283.98291015625,
+          -28552.025390625
+        ],
+        "state": {
+          "adult": true,
+          "animation": "idle",
+          "animationPlaying": true,
+          "animationPosition": 0.116666666666667,
+          "bones": 158,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/female/v2/model.glb",
+          "head_height": 1.4063720703125,
+          "height_without_hat": 1.68,
+          "imported_model": true,
+          "job": 1,
+          "left_grip_error": 0.0079345703125,
+          "model_id": "actor.mature_female",
+          "model_path": "res://art/models/actors/female/v2/model.glb",
+          "right_grip_error": 0.0118508832529187,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 3
+        },
+        "task": "fetch_water",
+        "waterContact": {
+          "bottom": [
+            26048.60546875,
+            1284.45520019531,
+            -28552.509765625
+          ],
+          "dip": 0.00423631607150432,
+          "horizontalGap": 2.87117409706116,
+          "sourceSurface": [
+            26050.0,
+            1283.99194335938,
+            -28550.0
+          ],
+          "verticalGap": 0.4632568359375
+        }
+      }
+    },
+    {
+      "label": "原始雨天：放桶接触水面目标",
+      "path": "output/npc-visual-20261028/evidence/seed42-worker-final--0020_work_fetch_water_v3_j1_dip.png",
+      "sha256": "16558418c4dfe82412e9e9fe13b2164ec633e44c51815392f5d50d5349f8c633",
+      "sourceRun": "seed42-worker-final",
+      "sourceImage": "0020_work_fetch_water_v3_j1_dip.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.00738903600722551,
+          "R": 0.00840070843696594
+        },
+        "carrying": "",
+        "clock": 812.783333333276,
+        "contact": {},
+        "elapsed": 75.835,
+        "image": "0020_work_fetch_water_v3_j1_dip.png",
+        "person": "/root/NpcVisualObserver/WorldSeed42/SiteStream/Village8/Villagers:3",
+        "phase": 2,
+        "poleAboveShoulderJoint": 0.0546875,
+        "position": [
+          26047.974609375,
+          1283.98291015625,
+          -28552.025390625
+        ],
+        "state": {
+          "adult": true,
+          "animation": "idle",
+          "animationPlaying": true,
+          "animationPosition": 2.38333333333333,
+          "bones": 158,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/female/v2/model.glb",
+          "head_height": 1.408935546875,
+          "height_without_hat": 1.68,
+          "imported_model": true,
+          "job": 1,
+          "left_grip_error": 0.00737288501113653,
+          "model_id": "actor.mature_female",
+          "model_path": "res://art/models/actors/female/v2/model.glb",
+          "right_grip_error": 0.010563138872385,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 3
+        },
+        "task": "fetch_water",
+        "waterContact": {
+          "bottom": [
+            26049.98828125,
+            1283.96545410156,
+            -28550.015625
+          ],
+          "dip": 0.993376560512453,
+          "horizontalGap": 0.01953125,
+          "sourceSurface": [
+            26050.0,
+            1283.99194335938,
+            -28550.0
+          ],
+          "verticalGap": -0.0264892578125
+        }
+      }
+    },
+    {
+      "label": "原始雨天：取水后自然肩挑离开",
+      "path": "output/npc-visual-20261028/evidence/seed42-worker-final--0023_carry_water_v3_j1.png",
+      "sha256": "be487926cd54939a0fe03130708059c0470930f4013ac5211e9b47eabf32b893",
+      "sourceRun": "seed42-worker-final",
+      "sourceImage": "0023_carry_water_v3_j1.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.0074462890625,
+          "R": 0.00745328981429338
+        },
+        "carrying": "water",
+        "clock": 815.44999999994,
+        "contact": {},
+        "elapsed": 79.037,
+        "image": "0023_carry_water_v3_j1.png",
+        "person": "/root/NpcVisualObserver/WorldSeed42/SiteStream/Village8/Villagers:3",
+        "phase": 1,
+        "poleAboveShoulderJoint": 0.0560302734375,
+        "position": [
+          26047.93359375,
+          1283.99255371094,
+          -28552.05078125
+        ],
+        "state": {
+          "adult": true,
+          "animation": "walk",
+          "animationPlaying": true,
+          "animationPosition": 0.0490176975727081,
+          "bones": 158,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/female/v2/model.glb",
+          "head_height": 1.407470703125,
+          "height_without_hat": 1.68,
+          "imported_model": true,
+          "job": 1,
+          "left_grip_error": 0.00852746516466141,
+          "model_id": "actor.mature_female",
+          "model_path": "res://art/models/actors/female/v2/model.glb",
+          "right_grip_error": 0.00912266317754984,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 3
+        },
+        "task": "deliver"
+      }
+    },
+    {
+      "label": "工作服v2：腰部余量修复",
+      "path": "output/npc-visual-20261028/evidence/workwear-natural-final--0022_carry_water_v3_j1.png",
+      "sha256": "e8ed24c385f67289335c1a42f6ad87446fe60d5d800db39d9f0fb6af4f1c74c0",
+      "sourceRun": "workwear-natural-final",
+      "sourceImage": "0022_carry_water_v3_j1.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.00737003050744534,
+          "R": 0.00732982717454433
+        },
+        "carrying": "water",
+        "clock": 757.849999999993,
+        "contact": {},
+        "elapsed": 9.339,
+        "image": "0022_carry_water_v3_j1.png",
+        "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+        "phase": 1,
+        "poleAboveShoulderJoint": 0.05615234375,
+        "position": [
+          141.515380859375,
+          141.683258056641,
+          -56.4246520996094
+        ],
+        "state": {
+          "adult": true,
+          "animation": "walk",
+          "animationPlaying": true,
+          "animationPosition": 0.0551636278629303,
+          "bones": 158,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/female/v2/model.glb",
+          "head_height": 1.406982421875,
+          "height_without_hat": 1.68,
+          "imported_model": true,
+          "job": 1,
+          "left_grip_error": 0.00888462550938129,
+          "model_id": "actor.mature_female",
+          "model_path": "res://art/models/actors/female/v2/model.glb",
+          "right_grip_error": 0.00836638920009136,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 3
+        },
+        "task": "deliver"
+      }
+    },
+    {
+      "label": "修复前：原工作服腰部穿模",
+      "path": "output/npc-visual-20261028/evidence/main-natural-baseline--0031_carry_water_v3_j1.png",
+      "sha256": "64a86915a4312a7cd4a66e3999fe4f0f57f3128721c5039bd6c068b3aa81936d",
+      "sourceRun": "main-natural-baseline",
+      "sourceImage": "0031_carry_water_v3_j1.png",
+      "state": {
+        "actualGrip": {
+          "L": 0.0048380708321929,
+          "R": 0.00455144373700023
+        },
+        "carrying": "water",
+        "clock": 757.849999999993,
+        "contact": {},
+        "elapsed": 9.159,
+        "image": "0031_carry_water_v3_j1.png",
+        "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+        "phase": 1,
+        "position": [
+          141.515380859375,
+          141.683258056641,
+          -56.4246520996094
+        ],
+        "state": {
+          "adult": true,
+          "animation": "walk",
+          "bones": 158,
+          "face_loaded": true,
+          "face_path": "res://art/models/actors/female/v1/model.glb",
+          "head_height": 1.40737915039063,
+          "height_without_hat": 1.68,
+          "imported_model": true,
+          "job": 1,
+          "left_grip_error": 0.00901725422590971,
+          "model_id": "actor.mature_female",
+          "model_path": "res://art/models/actors/female/v1/model.glb",
+          "right_grip_error": 0.0084942989051342,
+          "skinned_clothing": 2,
+          "skinned_meshes": 5,
+          "textured_surfaces": 16,
+          "variant": 3
+        },
+        "task": "deliver"
+      }
+    }
+  ],
+  "note": "完整原始抓图保留本机，精选原图未裁切；源报告和完整压缩轨迹见archive。"
+}

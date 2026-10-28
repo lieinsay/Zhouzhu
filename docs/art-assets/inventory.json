@@ -1973,6 +1973,14 @@
         "furniture": "v3"
       },
       "user_individual_confirmation": null
+    },
+    "npc_natural_acceptance": {
+      "date": "2026-10-28",
+      "record": "docs/art-assets/NPC-ACCEPTANCE-20261028.md",
+      "acceptance": "assets/art/acceptance/npc-natural-20261028.json",
+      "female_model_version": "v2",
+      "existing_entity_identities": 18,
+      "user_individual_confirmation": null
     }
   }
 }

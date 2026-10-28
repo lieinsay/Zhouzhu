@@ -1,0 +1,5642 @@
+{
+  "clockEnd": 840.016666666585,
+  "clockStart": 751.983333333332,
+  "counts": {
+    "carry_water": 1431,
+    "walk": 4573,
+    "work_chat": 1236,
+    "work_deliver": 147,
+    "work_fetch_water": 265,
+    "work_sow": 337,
+    "work_tend": 621,
+    "work_till": 806,
+    "work_watch": 662
+  },
+  "daySeconds": 2400.0,
+  "done": true,
+  "elapsed": 100.003,
+  "maxActualGripDistance": 0.03171157091856,
+  "minStrikeGap": -0.0399627685546875,
+  "normalRate": 1.0,
+  "passedStructural": true,
+  "pixels": true,
+  "scene": "main",
+  "scope": "同一真实场景正常时间/天气与原NPC任务；只移动观察相机/玩家，不改NPC状态；结构通过不能替代像素审查",
+  "snapshots": [
+    {
+      "actualGrip": {
+        "L": 0.00771372113376856,
+        "R": 0.0218278896063566
+      },
+      "carrying": "",
+      "clock": 752.116666666665,
+      "contact": {
+
+      },
+      "elapsed": 0.119,
+      "image": "0000_walk_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 1,
+      "position": [
+        155.700973510742,
+        140.94775390625,
+        -33.125
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44631958007813,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.00773505121469498,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0270424615591764,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00530191883444786,
+        "R": 0.00399784836918116
+      },
+      "carrying": "",
+      "clock": 752.249999999998,
+      "contact": {
+
+      },
+      "elapsed": 0.419,
+      "image": "0001_walk_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 1,
+      "position": [
+        140.764984130859,
+        141.717880249023,
+        -56.8120498657227
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40188598632813,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00964707974344492,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00825698021799326,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00783858634531498,
+        "R": 0.0115517349913716
+      },
+      "carrying": "",
+      "clock": 752.249999999998,
+      "contact": {
+
+      },
+      "elapsed": 0.419,
+      "image": "0002_walk_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 1,
+      "position": [
+        155.860107421875,
+        140.909088134766,
+        -33.125
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41921997070313,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.00797601323574781,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0131606524810195,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00494499783962965
+      },
+      "carrying": "",
+      "clock": 752.383333333331,
+      "contact": {
+
+      },
+      "elapsed": 0.419,
+      "image": "0003_walk_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 1,
+      "position": [
+        1145.76928710938,
+        210.758834838867,
+        -404.086303710938
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.52552795410156,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00702880509197712,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00304416660219431,
+        "R": 0.00366750964894891
+      },
+      "carrying": "",
+      "clock": 752.649999999998,
+      "contact": {
+
+      },
+      "elapsed": 1.109,
+      "image": "0004_walk_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 1,
+      "position": [
+        141.288208007813,
+        141.684188842773,
+        -56.5767402648926
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.43496704101563,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00782786682248116,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00900633260607719,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00819611083716154,
+        "R": 0.0162260290235281
+      },
+      "carrying": "",
+      "clock": 752.649999999998,
+      "contact": {
+
+      },
+      "elapsed": 1.109,
+      "image": "0005_walk_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 1,
+      "position": [
+        156.337509155273,
+        140.81120300293,
+        -33.125
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44120788574219,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.00826140865683556,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0200080387294292,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00604869611561298
+      },
+      "carrying": "",
+      "clock": 752.783333333331,
+      "contact": {
+
+      },
+      "elapsed": 1.109,
+      "image": "0006_walk_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 1,
+      "position": [
+        1146.01196289063,
+        210.792266845703,
+        -403.601196289063
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50291442871094,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00721416436135769,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00466554798185825,
+        "R": 0.0050154784694314
+      },
+      "carrying": "",
+      "clock": 753.049999999997,
+      "contact": {
+
+      },
+      "elapsed": 1.762,
+      "image": "0007_work_fetch_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 2,
+      "position": [
+        141.487228393555,
+        141.684310913086,
+        -56.487232208252
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40725708007813,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0086123701184988,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0084428833797574,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0102911423891783,
+        "R": 0.0134035181254148
+      },
+      "carrying": "",
+      "clock": 753.049999999997,
+      "contact": {
+
+      },
+      "elapsed": 1.762,
+      "image": "0008_walk_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 1,
+      "position": [
+        156.814895629883,
+        140.793899536133,
+        -33.125
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.39697265625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0105091752484441,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0143146878108382,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 753.18333333333,
+      "contact": {
+
+      },
+      "elapsed": 1.762,
+      "image": "0009_walk_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 1,
+      "position": [
+        1145.6630859375,
+        210.744171142578,
+        -404.298950195313
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40003967285156,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00601204205304384
+      },
+      "carrying": "",
+      "clock": 753.316666666664,
+      "contact": {
+
+      },
+      "elapsed": 1.762,
+      "image": "0010_walk_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 1,
+      "position": [
+        1146.33532714844,
+        210.841400146484,
+        -402.954376220703
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.53639221191406,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00835468526929617,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00488159619271755,
+        "R": 0.00499482406303287
+      },
+      "carrying": "",
+      "clock": 753.58333333333,
+      "contact": {
+
+      },
+      "elapsed": 2.556,
+      "image": "0011_work_fetch_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 2,
+      "position": [
+        141.487228393555,
+        141.684310913086,
+        -56.487232208252
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40245056152344,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00840155314654112,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00872630719095469,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 753.58333333333,
+      "contact": {
+
+      },
+      "elapsed": 2.556,
+      "image": "0012_walk_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 1,
+      "position": [
+        1145.8662109375,
+        210.772186279297,
+        -403.892517089844
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44160461425781,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00489165959879756
+      },
+      "carrying": "",
+      "clock": 753.716666666663,
+      "contact": {
+
+      },
+      "elapsed": 2.556,
+      "image": "0013_walk_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 1,
+      "position": [
+        1146.57788085938,
+        210.880157470703,
+        -402.46923828125
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.52552795410156,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00698780920356512,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00460605695843697,
+        "R": 0.00487752258777618
+      },
+      "carrying": "",
+      "clock": 753.98333333333,
+      "contact": {
+
+      },
+      "elapsed": 3.39,
+      "image": "0014_work_fetch_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 2,
+      "position": [
+        141.487228393555,
+        141.684310913086,
+        -56.487232208252
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40986633300781,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00850594416260719,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00850455742329359,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 753.98333333333,
+      "contact": {
+
+      },
+      "elapsed": 3.39,
+      "image": "0015_walk_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 1,
+      "position": [
+        1146.06945800781,
+        210.800628662109,
+        -403.486114501953
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41854858398438,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00464839907363057,
+        "R": 0.00502329459413886
+      },
+      "carrying": "",
+      "clock": 754.249999999996,
+      "contact": {
+
+      },
+      "elapsed": 3.852,
+      "image": "0016_work_fetch_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 2,
+      "position": [
+        141.487228393555,
+        141.684310913086,
+        -56.487232208252
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.4085693359375,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00861556362360716,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00843571685254574,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 754.249999999996,
+      "contact": {
+
+      },
+      "elapsed": 3.852,
+      "image": "0017_walk_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 1,
+      "position": [
+        1146.20495605469,
+        210.821411132813,
+        -403.215179443359
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44160461425781,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00463739177212119,
+        "R": 0.00500174146145582
+      },
+      "carrying": "",
+      "clock": 755.183333333329,
+      "contact": {
+
+      },
+      "elapsed": 5.121,
+      "image": "0018_walk_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 1,
+      "position": [
+        154.378448486328,
+        141.244964599609,
+        -33.1223182678223
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.4085693359375,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00860485155135393,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0084331976249814,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00523414835333824,
+        "R": 0.00381381972692907
+      },
+      "carrying": "",
+      "clock": 755.316666666662,
+      "contact": {
+
+      },
+      "elapsed": 5.376,
+      "image": "0019_walk_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 1,
+      "position": [
+        154.519958496094,
+        141.215911865234,
+        -33.0123672485352
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40455627441406,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00970409903675318,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00791746284812689,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 755.583333333328,
+      "contact": {
+
+      },
+      "elapsed": 5.687,
+      "image": "0020_walk_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 1,
+      "position": [
+        1151.85827636719,
+        210.202667236328,
+        -374.455108642578
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49653625488281,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 755.716666666661,
+      "contact": {
+
+      },
+      "elapsed": 5.958,
+      "image": "0021_walk_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 1,
+      "position": [
+        1151.82531738281,
+        210.201324462891,
+        -374.613616943359
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.51683044433594,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 755.983333333328,
+      "contact": {
+
+      },
+      "elapsed": 6.252,
+      "image": "0022_walk_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 1,
+      "position": [
+        1151.75927734375,
+        210.198669433594,
+        -374.930603027344
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.54360961914063,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 756.116666666661,
+      "contact": {
+
+      },
+      "elapsed": 6.602,
+      "image": "0023_walk_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 1,
+      "position": [
+        1151.72619628906,
+        210.196075439453,
+        -375.089111328125
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.5107421875,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00626792712137103,
+        "R": 0.00603989837691188
+      },
+      "carrying": "",
+      "clock": 756.783333333327,
+      "contact": {
+
+      },
+      "elapsed": 7.336,
+      "image": "0024_walk_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 1,
+      "position": [
+        130.653350830078,
+        141.779891967773,
+        -66.8622436523438
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49861145019531,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.010455934330821,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0108105260878801,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00387570983730257,
+        "R": 0.00350155122578144
+      },
+      "carrying": "",
+      "clock": 757.049999999994,
+      "contact": {
+
+      },
+      "elapsed": 7.636,
+      "image": "0025_walk_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 1,
+      "position": [
+        131.004272460938,
+        141.757369995117,
+        -66.7042846679688
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.53817749023438,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0105452947318554,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00939492974430323,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00378224113956094,
+        "R": 0.00516324583441019
+      },
+      "carrying": "",
+      "clock": 757.31666666666,
+      "contact": {
+
+      },
+      "elapsed": 7.973,
+      "image": "0026_walk_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 1,
+      "position": [
+        131.355194091797,
+        141.742248535156,
+        -66.5463333129883
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.52371215820313,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00904467888176441,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0122342118993402,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00474887387827039,
+        "R": 0.00713916076347232
+      },
+      "carrying": "",
+      "clock": 757.449999999993,
+      "contact": {
+
+      },
+      "elapsed": 8.239,
+      "image": "0027_work_fetch_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 2,
+      "position": [
+        131.486999511719,
+        141.743072509766,
+        -66.4869995117188
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49668884277344,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00915915053337812,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0130081959068775,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00655975565314293,
+        "R": 0.00459833070635796
+      },
+      "carrying": "",
+      "clock": 757.449999999993,
+      "contact": {
+
+      },
+      "elapsed": 8.239,
+      "image": "0028_walk_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 1,
+      "position": [
+        149.432800292969,
+        141.496612548828,
+        -45.8041687011719
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50201416015625,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0126369409263134,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0093653928488493,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0058568362146616,
+        "R": 0.00623069331049919
+      },
+      "carrying": "",
+      "clock": 757.71666666666,
+      "contact": {
+
+      },
+      "elapsed": 8.826,
+      "image": "0029_work_fetch_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 2,
+      "position": [
+        131.486999511719,
+        141.743072509766,
+        -66.4869995117188
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.5042724609375,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0101766968145967,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0104796141386032,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00603480776771903,
+        "R": 0.00631538778543472
+      },
+      "carrying": "",
+      "clock": 757.849999999993,
+      "contact": {
+
+      },
+      "elapsed": 9.159,
+      "image": "0030_work_fetch_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 2,
+      "position": [
+        131.486999511719,
+        141.743072509766,
+        -66.4869995117188
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50094604492188,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0100843627005816,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0106580760329962,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0048380708321929,
+        "R": 0.00455144373700023
+      },
+      "carrying": "water",
+      "clock": 757.849999999993,
+      "contact": {
+
+      },
+      "elapsed": 9.159,
+      "image": "0031_carry_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 1,
+      "position": [
+        141.515380859375,
+        141.683258056641,
+        -56.4246520996094
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40737915039063,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00901725422590971,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0084942989051342,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0108966203406453,
+        "R": 0.0207770187407732
+      },
+      "carrying": "",
+      "clock": 757.983333333326,
+      "contact": {
+
+      },
+      "elapsed": 9.159,
+      "image": "0032_walk_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:8",
+      "phase": 1,
+      "position": [
+        154.377166748047,
+        139.744201660156,
+        -19.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49978637695313,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0113196792080998,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0228749141097069,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 758.116666666659,
+      "contact": {
+
+      },
+      "elapsed": 9.159,
+      "image": "0033_walk_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:10",
+      "phase": 1,
+      "position": [
+        134.508361816406,
+        142.700805664063,
+        -39.3368988037109
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.39973449707031,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00776578951627016
+      },
+      "carrying": "",
+      "clock": 758.249999999993,
+      "contact": {
+
+      },
+      "elapsed": 9.159,
+      "image": "0034_walk_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 1,
+      "position": [
+        134.375,
+        142.704452514648,
+        -39.378604888916
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40229797363281,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00884700659662485,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00580074870958924,
+        "R": 0.0060197226703167
+      },
+      "carrying": "",
+      "clock": 758.516666666659,
+      "contact": {
+
+      },
+      "elapsed": 10.519,
+      "image": "0035_work_fetch_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 2,
+      "position": [
+        131.486999511719,
+        141.743072509766,
+        -66.4869995117188
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50503540039063,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00989907700568438,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0106750279664993,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "fetch_water"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00392689509317279,
+        "R": 0.00574835250154138
+      },
+      "carrying": "water",
+      "clock": 758.516666666659,
+      "contact": {
+
+      },
+      "elapsed": 10.519,
+      "image": "0036_carry_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 1,
+      "position": [
+        141.931121826172,
+        141.70964050293,
+        -55.5688743591309
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.39697265625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00779510941356421,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0101111931726336,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00928727351129055,
+        "R": 0.0145881092175841
+      },
+      "carrying": "",
+      "clock": 758.649999999992,
+      "contact": {
+
+      },
+      "elapsed": 10.519,
+      "image": "0037_walk_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 1,
+      "position": [
+        149.423156738281,
+        141.506500244141,
+        -45.5768356323242
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50222778320313,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.00959130562841892,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0161061063408852,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0240359269082546,
+        "R": 0.0152644030749798
+      },
+      "carrying": "",
+      "clock": 758.766666666659,
+      "contact": {
+        "angle": -1.33868968486786,
+        "blade": [
+          163.585632324219,
+          142.394912719727,
+          -35.1386642456055
+        ],
+        "gap": 0.811279296875,
+        "hit": true
+      },
+      "elapsed": 10.519,
+      "image": "0038_work_till_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40213012695313,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.024099899455905,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0160507038235664,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 758.899999999992,
+      "contact": {
+
+      },
+      "elapsed": 10.519,
+      "image": "0039_walk_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:10",
+      "phase": 1,
+      "position": [
+        135.594802856445,
+        142.670791625977,
+        -39.026481628418
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41854858398438,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00662903627380729
+      },
+      "carrying": "",
+      "clock": 759.033333333325,
+      "contact": {
+
+      },
+      "elapsed": 10.519,
+      "image": "0040_walk_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 1,
+      "position": [
+        134.375,
+        142.696670532227,
+        -40.3211669921875
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.4013671875,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00777855701744556,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 759.166666666658,
+      "contact": {
+
+      },
+      "elapsed": 10.519,
+      "image": "0041_walk_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 1,
+      "position": [
+        1151.85314941406,
+        210.202453613281,
+        -374.480072021484
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49870300292969,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00344512774609029,
+        "R": 0.00292919320054352
+      },
+      "carrying": "water",
+      "clock": 759.433333333325,
+      "contact": {
+
+      },
+      "elapsed": 12.181,
+      "image": "0042_carry_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 1,
+      "position": [
+        142.860778808594,
+        141.688385009766,
+        -54.639217376709
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.43795776367188,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00855480786412954,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0077994205057621,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00999014172703028,
+        "R": 0.0170964896678925
+      },
+      "carrying": "",
+      "clock": 759.433333333325,
+      "contact": {
+
+      },
+      "elapsed": 12.181,
+      "image": "0043_walk_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 1,
+      "position": [
+        150.159515380859,
+        141.36784362793,
+        -44.8404808044434
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50836181640625,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0100928442552686,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0185787919908762,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0185083746910095,
+        "R": 0.00786270759999752
+      },
+      "carrying": "",
+      "clock": 759.566666666658,
+      "contact": {
+        "angle": -0.416185349225998,
+        "blade": [
+          163.137634277344,
+          141.590774536133,
+          -35.0342559814453
+        ],
+        "gap": 0.06976318359375,
+        "hit": true
+      },
+      "elapsed": 12.181,
+      "image": "0044_work_till_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41018676757813,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0203347429633141,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00874587614089251,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 759.699999999991,
+      "contact": {
+
+      },
+      "elapsed": 12.181,
+      "image": "0045_walk_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:10",
+      "phase": 1,
+      "position": [
+        136.704376220703,
+        142.639144897461,
+        -38.7094650268555
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44633483886719,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00587369594722986
+      },
+      "carrying": "",
+      "clock": 759.833333333324,
+      "contact": {
+
+      },
+      "elapsed": 12.181,
+      "image": "0046_walk_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 1,
+      "position": [
+        134.375,
+        142.68879699707,
+        -41.2837791442871
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.43051147460938,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00825430080294609,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 759.966666666658,
+      "contact": {
+
+      },
+      "elapsed": 12.181,
+      "image": "0047_walk_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 1,
+      "position": [
+        1151.61303710938,
+        210.18376159668,
+        -375.632629394531
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.51675415039063,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00279673514887691,
+        "R": 0.00279350718483329
+      },
+      "carrying": "water",
+      "clock": 760.233333333324,
+      "contact": {
+
+      },
+      "elapsed": 13.511,
+      "image": "0048_carry_water_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:3",
+      "phase": 1,
+      "position": [
+        143.672119140625,
+        141.705551147461,
+        -53.827880859375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44816589355469,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00818568281829357,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00797193963080645,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00804871786385775,
+        "R": 0.0169766191393137
+      },
+      "carrying": "",
+      "clock": 760.233333333324,
+      "contact": {
+
+      },
+      "elapsed": 13.511,
+      "image": "0049_walk_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 1,
+      "position": [
+        150.962173461914,
+        141.246841430664,
+        -44.599781036377
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.54185485839844,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.00809747260063887,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0207578875124455,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0272967461496592,
+        "R": 0.0125515507534146
+      },
+      "carrying": "",
+      "clock": 760.316666666657,
+      "contact": {
+        "angle": -1.27187740802765,
+        "blade": [
+          163.579574584961,
+          142.32568359375,
+          -35.1362380981445
+        ],
+        "gap": 0.742919921875,
+        "hit": true
+      },
+      "elapsed": 13.511,
+      "image": "0050_work_till_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41021728515625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0274874269962311,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0134757924824953,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 760.449999999991,
+      "contact": {
+
+      },
+      "elapsed": 13.511,
+      "image": "0051_walk_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:10",
+      "phase": 1,
+      "position": [
+        137.744598388672,
+        142.608123779297,
+        -38.4122581481934
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44816589355469,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00831856671720743
+      },
+      "carrying": "",
+      "clock": 760.583333333324,
+      "contact": {
+
+      },
+      "elapsed": 13.511,
+      "image": "0052_walk_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 1,
+      "position": [
+        134.276580810547,
+        142.684875488281,
+        -42.1702613830566
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.44633483886719,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0112994117662311,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 760.716666666657,
+      "contact": {
+
+      },
+      "elapsed": 13.511,
+      "image": "0053_walk_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 1,
+      "position": [
+        1151.38793945313,
+        210.164276123047,
+        -376.713165283203
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.53817749023438,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0302925128489733,
+        "R": 0.00771001726388931
+      },
+      "carrying": "",
+      "clock": 760.983333333323,
+      "contact": {
+        "angle": -0.944049835205078,
+        "blade": [
+          163.485260009766,
+          142.000137329102,
+          -35.1144714355469
+        ],
+        "gap": 0.430557250976563,
+        "hit": true
+      },
+      "elapsed": 14.774,
+      "image": "0054_work_till_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41021728515625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0329416133463383,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00850369967520237,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 760.983333333323,
+      "contact": {
+
+      },
+      "elapsed": 14.774,
+      "image": "0055_walk_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 1,
+      "position": [
+        1151.30786132813,
+        210.162673950195,
+        -377.097351074219
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.52371215820313,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00583987683057785,
+        "R": 0.00573860295116901
+      },
+      "carrying": "water",
+      "clock": 762.449999999989,
+      "contact": {
+
+      },
+      "elapsed": 16.352,
+      "image": "0056_carry_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 1,
+      "position": [
+        131.464706420898,
+        141.737152099609,
+        -66.5293655395508
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50657653808594,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.010532334446907,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0105396406725049,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00635601487010717,
+        "R": 0.00456329621374607
+      },
+      "carrying": "water",
+      "clock": 762.583333333322,
+      "contact": {
+
+      },
+      "elapsed": 16.667,
+      "image": "0057_carry_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 1,
+      "position": [
+        131.375106811523,
+        141.713348388672,
+        -66.6996383666992
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50447082519531,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.012527484446764,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00916562136262655,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0030135263223201,
+        "R": 0.00293163396418095
+      },
+      "carrying": "water",
+      "clock": 762.849999999988,
+      "contact": {
+
+      },
+      "elapsed": 17.019,
+      "image": "0058_carry_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 1,
+      "position": [
+        131.195877075195,
+        141.669555664063,
+        -67.0401992797852
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.55044555664063,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00922787468880415,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0102996937930584,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00377904647029936,
+        "R": 0.00516559602692723
+      },
+      "carrying": "water",
+      "clock": 762.983333333322,
+      "contact": {
+
+      },
+      "elapsed": 17.287,
+      "image": "0059_carry_water_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:1",
+      "phase": 1,
+      "position": [
+        131.10627746582,
+        141.652069091797,
+        -67.2104721069336
+      ],
+      "state": {
+        "adult": true,
+        "animation": "walk",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.52371215820313,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00903942529112101,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0122391302138567,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00995843578130007,
+        "R": 0.023639902472496
+      },
+      "carrying": "",
+      "clock": 764.316666666654,
+      "contact": {
+
+      },
+      "elapsed": 18.702,
+      "image": "0060_work_sow_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41021728515625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0102199958637357,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0273597147315741,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00995119288563728,
+        "R": 0.0236159786581993
+      },
+      "carrying": "",
+      "clock": 764.449999999987,
+      "contact": {
+
+      },
+      "elapsed": 19.009,
+      "image": "0061_work_sow_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41021728515625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.010219294577837,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0273402500897646,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00995119288563728,
+        "R": 0.0236255712807179
+      },
+      "carrying": "",
+      "clock": 764.716666666653,
+      "contact": {
+
+      },
+      "elapsed": 19.303,
+      "image": "0062_work_sow_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41021728515625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0102256005629897,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.027361661195755,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00995119288563728,
+        "R": 0.0236255712807179
+      },
+      "carrying": "",
+      "clock": 764.849999999986,
+      "contact": {
+
+      },
+      "elapsed": 19.593,
+      "image": "0063_work_sow_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.435516357422,
+        -35.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41021728515625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0102316634729505,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0273617543280125,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0148702915757895,
+        "R": 0.0229559764266014
+      },
+      "carrying": "",
+      "clock": 766.716666666651,
+      "contact": {
+        "angle": -1.60118556022644,
+        "blade": [
+          158.397766113281,
+          142.92236328125,
+          -50.4945983886719
+        ],
+        "gap": 1.18238830566406,
+        "hit": true
+      },
+      "elapsed": 21.486,
+      "image": "0064_work_till_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50263977050781,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0153682976961136,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0235473774373531,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0100070927292109,
+        "R": 0.0220301784574986
+      },
+      "carrying": "",
+      "clock": 766.849999999985,
+      "contact": {
+        "angle": -1.79065358638763,
+        "blade": [
+          158.389282226563,
+          143.101135253906,
+          -50.3837242126465
+        ],
+        "gap": 1.3656005859375,
+        "hit": true
+      },
+      "elapsed": 21.725,
+      "image": "0065_work_till_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50492858886719,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0110360737890005,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0232702158391476,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0175429824739695,
+        "R": 0.0162326116114855
+      },
+      "carrying": "",
+      "clock": 767.116666666651,
+      "contact": {
+        "angle": -1.44350039958954,
+        "blade": [
+          158.510864257813,
+          142.761245727539,
+          -50.4211959838867
+        ],
+        "gap": 1.00662231445313,
+        "hit": true
+      },
+      "elapsed": 22.003,
+      "image": "0066_work_till_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49818420410156,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0179498940706253,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0169596094638109,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0275291129946709,
+        "R": 0.00871939584612846
+      },
+      "carrying": "",
+      "clock": 767.249999999984,
+      "contact": {
+        "angle": -1.00330638885498,
+        "blade": [
+          158.442260742188,
+          142.313659667969,
+          -50.3828277587891
+        ],
+        "gap": 0.570297241210938,
+        "hit": true
+      },
+      "elapsed": 22.227,
+      "image": "0067_work_till_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49795532226563,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0278627965599298,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00933870300650597,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "till"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0107376761734486,
+        "R": 0.0262034256011248
+      },
+      "carrying": "",
+      "clock": 772.716666666646,
+      "contact": {
+
+      },
+      "elapsed": 27.703,
+      "image": "0068_work_sow_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50642395019531,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0110454764217138,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0301815811544657,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0107411602512002,
+        "R": 0.0262046419084072
+      },
+      "carrying": "",
+      "clock": 772.849999999979,
+      "contact": {
+
+      },
+      "elapsed": 27.937,
+      "image": "0069_work_sow_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50642395019531,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0110418302938342,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0301954057067633,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0107379592955112,
+        "R": 0.0262095015496016
+      },
+      "carrying": "",
+      "clock": 773.116666666646,
+      "contact": {
+
+      },
+      "elapsed": 28.186,
+      "image": "0070_work_sow_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50642395019531,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.011044098995626,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0302045103162527,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0107411602512002,
+        "R": 0.0262070707976818
+      },
+      "carrying": "",
+      "clock": 773.249999999979,
+      "contact": {
+
+      },
+      "elapsed": 28.436,
+      "image": "0071_work_sow_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:4",
+      "phase": 2,
+      "position": [
+        157.5,
+        141.592834472656,
+        -50.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50642395019531,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0110484510660172,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0302016492933035,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "sow"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00671897456049919
+      },
+      "carrying": "",
+      "clock": 777.783333333308,
+      "contact": {
+
+      },
+      "elapsed": 32.953,
+      "image": "0072_work_watch_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.51420593261719,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00804628804326057,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00721381232142448
+      },
+      "carrying": "",
+      "clock": 777.916666666641,
+      "contact": {
+
+      },
+      "elapsed": 33.258,
+      "image": "0073_work_watch_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50508117675781,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00817472487688065,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00696818018332124
+      },
+      "carrying": "",
+      "clock": 778.049999999974,
+      "contact": {
+
+      },
+      "elapsed": 33.58,
+      "image": "0074_work_watch_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50186157226563,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00796837545931339,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00696818018332124
+      },
+      "carrying": "",
+      "clock": 778.183333333308,
+      "contact": {
+
+      },
+      "elapsed": 33.889,
+      "image": "0075_work_watch_v0_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:4",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49880981445313,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00775410747155547,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 779.783333333306,
+      "contact": {
+
+      },
+      "elapsed": 35.67,
+      "image": "0076_work_chat_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:2",
+      "phase": 2,
+      "position": [
+        1151.875,
+        210.203338623047,
+        -374.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.42121887207031,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00409689266234636,
+        "R": 0.00501403911039233
+      },
+      "carrying": "water",
+      "clock": 780.049999999973,
+      "contact": {
+
+      },
+      "elapsed": 35.937,
+      "image": "0077_work_deliver_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40890502929688,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00813770294189453,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00914753321558237,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 780.049999999973,
+      "contact": {
+
+      },
+      "elapsed": 35.937,
+      "image": "0078_work_chat_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.51353454589844,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 780.183333333306,
+      "contact": {
+
+      },
+      "elapsed": 35.937,
+      "image": "0079_work_chat_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:2",
+      "phase": 2,
+      "position": [
+        1151.875,
+        210.203338623047,
+        -374.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.4029541015625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00489911716431379,
+        "R": 0.00507861003279686
+      },
+      "carrying": "water",
+      "clock": 780.449999999972,
+      "contact": {
+
+      },
+      "elapsed": 36.681,
+      "image": "0080_work_deliver_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40272521972656,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00855137780308723,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00860392767935991,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 780.449999999972,
+      "contact": {
+
+      },
+      "elapsed": 36.681,
+      "image": "0081_work_chat_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49880981445313,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 780.583333333306,
+      "contact": {
+
+      },
+      "elapsed": 36.681,
+      "image": "0082_work_chat_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:2",
+      "phase": 2,
+      "position": [
+        1151.875,
+        210.203338623047,
+        -374.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.4036865234375,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00483183469623327,
+        "R": 0.00496011599898338
+      },
+      "carrying": "water",
+      "clock": 780.849999999972,
+      "contact": {
+
+      },
+      "elapsed": 37.296,
+      "image": "0083_work_deliver_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40402221679688,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00839433167129755,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00870727840811014,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 780.849999999972,
+      "contact": {
+
+      },
+      "elapsed": 37.296,
+      "image": "0084_work_chat_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50062561035156,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 780.983333333305,
+      "contact": {
+
+      },
+      "elapsed": 37.296,
+      "image": "0085_work_chat_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50584411621094,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 781.116666666638,
+      "contact": {
+
+      },
+      "elapsed": 37.296,
+      "image": "0086_work_chat_v2_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:2",
+      "phase": 2,
+      "position": [
+        1151.875,
+        210.203338623047,
+        -374.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.4090576171875,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00462442031130195,
+        "R": 0.00498946057632566
+      },
+      "carrying": "water",
+      "clock": 781.383333333305,
+      "contact": {
+
+      },
+      "elapsed": 38.24,
+      "image": "0087_work_deliver_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40896606445313,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00860909558832645,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00841995235532522,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 781.383333333305,
+      "contact": {
+
+      },
+      "elapsed": 38.24,
+      "image": "0088_work_chat_v0_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:0",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50660705566406,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 781.516666666638,
+      "contact": {
+
+      },
+      "elapsed": 38.24,
+      "image": "0089_work_chat_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49752807617188,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00371842784807086,
+        "R": 0.00319675263017416
+      },
+      "carrying": "water",
+      "clock": 781.783333333304,
+      "contact": {
+
+      },
+      "elapsed": 38.915,
+      "image": "0090_work_deliver_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.54219055175781,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0105216512456536,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00962387025356293,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 781.783333333304,
+      "contact": {
+
+      },
+      "elapsed": 38.915,
+      "image": "0091_work_chat_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50328063964844,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00582568114623427,
+        "R": 0.00620167935267091
+      },
+      "carrying": "water",
+      "clock": 782.049999999971,
+      "contact": {
+
+      },
+      "elapsed": 39.447,
+      "image": "0092_work_deliver_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50428771972656,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0101637570187449,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0104710720479488,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 782.049999999971,
+      "contact": {
+
+      },
+      "elapsed": 39.447,
+      "image": "0093_work_chat_v1_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:1",
+      "phase": 2,
+      "position": [
+        1145.625,
+        210.73893737793,
+        -404.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50778198242188,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00612204615026712,
+        "R": 0.00633173575624824
+      },
+      "carrying": "water",
+      "clock": 782.316666666637,
+      "contact": {
+
+      },
+      "elapsed": 39.95,
+      "image": "0094_work_deliver_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49819946289063,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00992929842323065,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0108255064114928,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00612113298848271,
+        "R": 0.00631500082090497
+      },
+      "carrying": "water",
+      "clock": 782.44999999997,
+      "contact": {
+
+      },
+      "elapsed": 40.286,
+      "image": "0095_work_deliver_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49749755859375,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00982500240206718,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.010912299156189,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "deliver"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 783.649999999969,
+      "contact": {
+
+      },
+      "elapsed": 41.671,
+      "image": "0096_work_chat_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41740417480469,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 783.783333333303,
+      "contact": {
+
+      },
+      "elapsed": 41.938,
+      "image": "0097_work_chat_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40760803222656,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 784.049999999969,
+      "contact": {
+
+      },
+      "elapsed": 42.236,
+      "image": "0098_work_chat_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40251159667969,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+
+      },
+      "carrying": "",
+      "clock": 784.183333333302,
+      "contact": {
+
+      },
+      "elapsed": 42.494,
+      "image": "0099_work_chat_v3_j3.png",
+      "person": "/root/NpcVisualObserver/Main/IslandB/Villagers:3",
+      "phase": 2,
+      "position": [
+        1176.875,
+        224.621276855469,
+        -395.625
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40179443359375,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 3,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00779101485386491
+      },
+      "carrying": "",
+      "clock": 785.783333333301,
+      "contact": {
+
+      },
+      "elapsed": 44.104,
+      "image": "0100_work_watch_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 2,
+      "position": [
+        109.375,
+        143.395935058594,
+        -46.875
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41505432128906,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00924394559115171,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00865247379988432
+      },
+      "carrying": "",
+      "clock": 786.049999999967,
+      "contact": {
+
+      },
+      "elapsed": 44.371,
+      "image": "0101_work_watch_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 2,
+      "position": [
+        109.375,
+        143.395935058594,
+        -46.875
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40525817871094,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0098111666738987,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "R": 0.00814840849488974
+      },
+      "carrying": "",
+      "clock": 786.1833333333,
+      "contact": {
+
+      },
+      "elapsed": 44.595,
+      "image": "0102_work_watch_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 2,
+      "position": [
+        109.375,
+        143.395935058594,
+        -46.875
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40272521972656,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00922696385532618,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "R": 0.0077432650141418
+      },
+      "carrying": "",
+      "clock": 786.449999999967,
+      "contact": {
+
+      },
+      "elapsed": 44.887,
+      "image": "0103_work_watch_v3_j2.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:11",
+      "phase": 2,
+      "position": [
+        109.375,
+        143.395935058594,
+        -46.875
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40229797363281,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 2,
+        "left_grip_error": 0.0,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00882409978657961,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "watch"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0230980906635523,
+        "R": 0.00682250177487731
+      },
+      "carrying": "",
+      "clock": 809.783333333279,
+      "contact": {
+        "angle": -0.572624027729034,
+        "blade": [
+          162.259994506836,
+          141.798843383789,
+          -38.2259788513184
+        ],
+        "gap": 0.200775146484375,
+        "hit": true
+      },
+      "elapsed": 68.269,
+      "image": "0104_work_tend_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.542816162109,
+        -37.5
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.39982604980469,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0271043963730335,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00728558143600822,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0112753110006452,
+        "R": 0.0143648898229003
+      },
+      "carrying": "",
+      "clock": 810.183333333279,
+      "contact": {
+        "angle": -0.0715701133012772,
+        "blade": [
+          162.462966918945,
+          141.553314208984,
+          -37.8200569152832
+        ],
+        "gap": -0.0155792236328125,
+        "hit": true
+      },
+      "elapsed": 68.619,
+      "image": "0105_work_tend_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.542816162109,
+        -37.5
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40184020996094,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0119226248934865,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0157389100641012,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0251803826540709,
+        "R": 0.00714718829840422
+      },
+      "carrying": "",
+      "clock": 810.449999999945,
+      "contact": {
+        "angle": -0.807791173458099,
+        "blade": [
+          162.189102172852,
+          141.98454284668,
+          -38.3677978515625
+        ],
+        "gap": 0.37628173828125,
+        "hit": true
+      },
+      "elapsed": 68.887,
+      "image": "0106_work_tend_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.542816162109,
+        -37.5
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40452575683594,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0320752672851086,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00780652323737741,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0151997692883015,
+        "R": 0.0209967978298664
+      },
+      "carrying": "",
+      "clock": 810.716666666611,
+      "contact": {
+        "angle": -1.63934779167175,
+        "blade": [
+          162.146545410156,
+          142.809173583984,
+          -38.4529037475586
+        ],
+        "gap": 1.19479370117188,
+        "hit": true
+      },
+      "elapsed": 69.17,
+      "image": "0107_work_tend_v2_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:6",
+      "phase": 2,
+      "position": [
+        162.5,
+        141.542816162109,
+        -37.5
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.41000366210938,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0159696768969297,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0220789033919573,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0190188977867365,
+        "R": 0.00614686496555805
+      },
+      "carrying": "",
+      "clock": 817.649999999938,
+      "contact": {
+        "angle": -0.530525803565979,
+        "blade": [
+          164.889999389648,
+          140.355163574219,
+          -19.2761077880859
+        ],
+        "gap": 0.43115234375,
+        "hit": true
+      },
+      "elapsed": 76.102,
+      "image": "0108_work_tend_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:8",
+      "phase": 2,
+      "position": [
+        165.0,
+        140.028198242188,
+        -20.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.55076599121094,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.019368963316083,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0070850090123713,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0103736016899347,
+        "R": 0.0242474265396595
+      },
+      "carrying": "",
+      "clock": 817.916666666605,
+      "contact": {
+        "angle": -0.00295796734280884,
+        "blade": [
+          164.889999389648,
+          140.123733520508,
+          -19.7669696807861
+        ],
+        "gap": 0.1322021484375,
+        "hit": true
+      },
+      "elapsed": 76.352,
+      "image": "0109_work_tend_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:8",
+      "phase": 2,
+      "position": [
+        165.0,
+        140.028198242188,
+        -20.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50289916992188,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0107594206929207,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0272607989609241,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0184417050331831,
+        "R": 0.00761899817734957
+      },
+      "carrying": "",
+      "clock": 818.183333333271,
+      "contact": {
+        "angle": -0.402849853038788,
+        "blade": [
+          164.889999389648,
+          140.275817871094,
+          -19.3825664520264
+        ],
+        "gap": 0.337173461914063,
+        "hit": true
+      },
+      "elapsed": 76.619,
+      "image": "0110_work_tend_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:8",
+      "phase": 2,
+      "position": [
+        165.0,
+        140.028198242188,
+        -20.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49800109863281,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0213887915015221,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.00823779031634331,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.0213791951537132,
+        "R": 0.0130596617236733
+      },
+      "carrying": "",
+      "clock": 818.449999999938,
+      "contact": {
+        "angle": -1.3167496919632,
+        "blade": [
+          164.889999389648,
+          141.064804077148,
+          -18.9126605987549
+        ],
+        "gap": 1.1907958984375,
+        "hit": true
+      },
+      "elapsed": 76.903,
+      "image": "0111_work_tend_v0_j0.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:8",
+      "phase": 2,
+      "position": [
+        165.0,
+        140.028198242188,
+        -20.0
+      ],
+      "state": {
+        "adult": true,
+        "animation": "work",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.5032958984375,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0219327546656132,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0138594806194305,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "task": "tend"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00612153252586722,
+        "R": 0.00634387694299221
+      },
+      "carrying": "",
+      "clock": 829.383333333261,
+      "contact": {
+
+      },
+      "elapsed": 87.869,
+      "image": "0112_work_chat_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49755859375,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00987642165273428,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0108805662021041,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00612138025462627,
+        "R": 0.00629853550344706
+      },
+      "carrying": "",
+      "clock": 829.516666666594,
+      "contact": {
+
+      },
+      "elapsed": 88.232,
+      "image": "0113_work_chat_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.49752807617188,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00981775391846895,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0109265819191933,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00604265369474888,
+        "R": 0.00615769205614924
+      },
+      "carrying": "",
+      "clock": 829.649999999928,
+      "contact": {
+
+      },
+      "elapsed": 88.558,
+      "image": "0114_work_chat_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.4993896484375,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00978521537035704,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0109021347016096,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00589797087013721,
+        "R": 0.00606390507891774
+      },
+      "carrying": "",
+      "clock": 829.783333333261,
+      "contact": {
+
+      },
+      "elapsed": 88.878,
+      "image": "0115_work_chat_v1_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:5",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.50282287597656,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00984407216310501,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0107860704883933,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00492577720433474,
+        "R": 0.00507420720532537
+      },
+      "carrying": "",
+      "clock": 829.783333333261,
+      "contact": {
+
+      },
+      "elapsed": 88.878,
+      "image": "0116_work_chat_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40164184570313,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00847904197871685,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0086800018325448,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00486104423180223,
+        "R": 0.00496089039370418
+      },
+      "carrying": "",
+      "clock": 830.049999999927,
+      "contact": {
+
+      },
+      "elapsed": 89.534,
+      "image": "0117_work_chat_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40338134765625,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00839374959468842,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00872024148702621,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00474734744057059,
+        "R": 0.00490279868245125
+      },
+      "carrying": "",
+      "clock": 830.18333333326,
+      "contact": {
+
+      },
+      "elapsed": 89.858,
+      "image": "0118_work_chat_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40618896484375,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00841663777828217,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00864346139132977,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    },
+    {
+      "actualGrip": {
+        "L": 0.00461865169927478,
+        "R": 0.0048637492582202
+      },
+      "carrying": "",
+      "clock": 830.316666666594,
+      "contact": {
+
+      },
+      "elapsed": 90.182,
+      "image": "0119_work_chat_v3_j1.png",
+      "person": "/root/NpcVisualObserver/Main/IslandA/Villagers:7",
+      "phase": 2,
+      "position": [
+        134.375,
+        142.704483032227,
+        -39.375
+      ],
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.408935546875,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00845398940145969,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00854284502565861,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "task": "chat"
+    }
+  ],
+  "timeline": [
+    {
+      "clock": 752.116666666665,
+      "elapsed": 0.119,
+      "phases": {
+        "0:go_home": 16,
+        "1:till": 1
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 7.52099999999984,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0215583399885236,
+        "moon_phase": 0.0469062499999997,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 30.9042362125161,
+        "sun_azimuth": 77.5757092555451,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.0595338891569,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 759.299999999992,
+      "elapsed": 10.519,
+      "phases": {
+        "0:go_home": 2,
+        "1:chat": 5,
+        "1:deliver": 1,
+        "1:fetch_water": 1,
+        "1:till": 2,
+        "1:watch": 2,
+        "2:fetch_water": 3,
+        "2:till": 1
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 7.58383333333325,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0216437474560159,
+        "moon_phase": 0.046999751984127,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 31.7023226099206,
+        "sun_azimuth": 77.9404715499824,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.1210215258607,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 765.249999999986,
+      "elapsed": 20.021,
+      "phases": {
+        "1:chat": 5,
+        "1:deliver": 5,
+        "1:till": 3,
+        "1:watch": 2,
+        "2:sow": 1,
+        "2:till": 1
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 7.65233333333322,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0217370455611154,
+        "moon_phase": 0.0471016865079363,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 32.573616190842,
+        "sun_azimuth": 78.3379547636725,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.1883362991461,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 774.849999999977,
+      "elapsed": 30.02,
+      "phases": {
+        "1:chat": 5,
+        "1:deliver": 5,
+        "1:till": 1,
+        "1:watch": 2,
+        "2:sow": 3,
+        "2:till": 1
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 7.74833333333299,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0218681292388862,
+        "moon_phase": 0.0472445436507933,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 33.7967821128148,
+        "sun_azimuth": 78.8950411822058,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.2831296559533,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 782.44999999997,
+      "elapsed": 40.286,
+      "phases": {
+        "1:chat": 2,
+        "1:deliver": 3,
+        "1:till": 2,
+        "1:watch": 1,
+        "2:chat": 3,
+        "2:deliver": 2,
+        "2:till": 3,
+        "2:watch": 1
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 7.82316666666645,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0219705779733211,
+        "moon_phase": 0.0473559027777775,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 34.7518772802473,
+        "sun_azimuth": 79.3296204301562,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.357355732736,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 791.516666666629,
+      "elapsed": 50.003,
+      "phases": {
+        "1:chat": 1,
+        "1:deliver": 2,
+        "1:fetch_water": 3,
+        "1:till": 3,
+        "2:chat": 4,
+        "2:sow": 1,
+        "2:till": 1,
+        "2:watch": 2
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 7.91499999999962,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0220966199465412,
+        "moon_phase": 0.0474925595238092,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 35.9257973649152,
+        "sun_azimuth": 79.8637200532792,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.4487973977405,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 801.51666666662,
+      "elapsed": 60.003,
+      "phases": {
+        "1:chat": 5,
+        "1:fetch_water": 4,
+        "1:till": 1,
+        "2:deliver": 1,
+        "2:sow": 2,
+        "2:till": 2,
+        "2:watch": 2
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 8.01499999999953,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0222342714641543,
+        "moon_phase": 0.0476413690476183,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 37.2063302274801,
+        "sun_azimuth": 80.4468645065303,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.5487558103082,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 811.649999999944,
+      "elapsed": 70.103,
+      "phases": {
+        "1:chat": 5,
+        "1:deliver": 2,
+        "1:fetch_water": 3,
+        "1:till": 2,
+        "2:tend": 1,
+        "2:till": 2,
+        "2:watch": 2
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 8.11633333333293,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.022374184398131,
+        "moon_phase": 0.0477921626984119,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 38.5061702567336,
+        "sun_azimuth": 81.0401106332559,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.650388064174,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 821.516666666602,
+      "elapsed": 80.003,
+      "phases": {
+        "1:chat": 2,
+        "1:deliver": 3,
+        "1:fetch_water": 2,
+        "1:tend": 1,
+        "2:chat": 3,
+        "2:tend": 3,
+        "2:till": 1,
+        "2:watch": 2
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 8.21499999999935,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0225108273969586,
+        "moon_phase": 0.047938988095237,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 39.7738418933931,
+        "sun_azimuth": 81.6207139313675,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.7496078528871,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    },
+    {
+      "clock": 830.316666666594,
+      "elapsed": 90.182,
+      "phases": {
+        "1:chat": 2,
+        "1:deliver": 2,
+        "1:fetch_water": 1,
+        "1:patrol": 1,
+        "1:till": 1,
+        "2:chat": 5,
+        "2:tend": 4,
+        "2:watch": 1
+      },
+      "weather": {
+        "above_clouds": 0.0,
+        "altitude_band": 0,
+        "autumn": 0.0,
+        "cloud": 0.0,
+        "cloud_cover": 0.12,
+        "coverage": 0.0,
+        "crop": 0.5,
+        "date": "四月初二",
+        "day_kind": "clear",
+        "day_kind_name": "晴",
+        "day_length": 14.2007450786908,
+        "fog": 0.0,
+        "fog_top": -1000000000.0,
+        "front": 0.0,
+        "green": 1.0,
+        "has_data": false,
+        "ice": 0.0,
+        "ice_line": 1000000000.0,
+        "kind": "clear",
+        "kind_name": "晴",
+        "latitude": 30.0,
+        "leaf": 1.0,
+        "local_hour": 8.30183333333252,
+        "local_offset_h": 0.0,
+        "moon_lit": 0.0226314186626392,
+        "moon_phase": 0.048068204365078,
+        "night": false,
+        "override": {
+          "active": false,
+          "blend": 0.0,
+          "fresh_snow_mm": 0.0,
+          "kind": "",
+          "kind_name": "自动",
+          "temp_offset": 0.0
+        },
+        "planet": false,
+        "precip": 0.0,
+        "precip_mm_h": 0.0,
+        "sailable": true,
+        "sea_fog": 0.0,
+        "sea_height": null,
+        "season": 1,
+        "season_name": "二季",
+        "snow_frac": 0.0,
+        "snow_line": 1000000000.0,
+        "snow_mm": 0.0,
+        "spring": 0.0,
+        "storm": 0.0,
+        "sun_altitude": 40.891046920533,
+        "sun_azimuth": 82.1347083739562,
+        "sun_latitude": 30.0,
+        "sun_longitude": 0.0,
+        "sunrise": 4.8996274606546,
+        "sunset": 19.1003725393454,
+        "temp_c": 18.8370888213225,
+        "wet": 0.056,
+        "wind_ms": 2.0,
+        "wind_name": "东风",
+        "wind_x": -2.0,
+        "wind_z": 0.000000000000000367394039744206
+      }
+    }
+  ],
+  "wallSeconds": 100.003
+}

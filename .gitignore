@@ -29,3 +29,15 @@ CMakeUserPresets.json
 .mellos/
 game/art/model-bindings-review.json
 tools/art-models/__pycache__/
+# NPC验收原始批量抓图/临时场景留在本机；精选证据与完整轨迹另行归档。
+output/npc-visual-20261028/*
+!output/npc-visual-20261028/evidence/
+!output/npc-visual-20261028/archive/
+!output/npc-visual-20261028/npc-contact-sheet.png
+!output/npc-visual-20261028/manual-final-check.log
+!output/npc-visual-20261028/model-source-check.log
+!output/npc-visual-20261028/model-pack-probe.*
+!output/npc-visual-20261028/pack-build.*
+!output/npc-visual-20261028/final-import.*
+!output/npc-visual-20261028/workwear-import.*
+!output/npc-visual-20261028/workwear-v2-preview.*

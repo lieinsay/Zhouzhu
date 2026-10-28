@@ -1,0 +1,32 @@
+{
+  "command": [
+    "D:/Program Files/Godot/Godot_v4.4.1-stable_win64.exe",
+    "--path",
+    "D:\\Project\\My\\Zhouzhu\\game",
+    "res://tests/npc_visual_observer.tscn",
+    "--quit-after",
+    "216000",
+    "--",
+    "--scene=main",
+    "--duration=55.0",
+    "--output=D:/Project/My/Zhouzhu/output/npc-visual-20261028/workwear-natural-final"
+  ],
+  "engineExit": 0,
+  "checkedExit": 0,
+  "timedOut": false,
+  "wallSeconds": 62.2,
+  "scene": "main",
+  "observerVillage": null,
+  "physicsNormalTime": true,
+  "scope": "普通引擎时间；未使用fixed-fps/快进/重启时钟/天气覆盖或NPC状态写入",
+  "coverage": {
+    "carry_water": 899,
+    "walk": 1968,
+    "work_chat": 373,
+    "work_deliver": 66,
+    "work_fetch_water": 129,
+    "work_sow": 224,
+    "work_till": 451,
+    "work_watch": 163
+  }
+}
