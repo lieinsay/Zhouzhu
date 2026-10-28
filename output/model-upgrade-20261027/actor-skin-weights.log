@@ -1,0 +1,6 @@
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+
+SCRIPT ERROR: Parse Error: Cannot infer the type of "arrays" variable because the value doesn't have a set type.
+   at: GDScript::reload (res://tests/actor_models_e2e.gd:41)
+ERROR: Failed to load script "res://tests/actor_models_e2e.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3022)

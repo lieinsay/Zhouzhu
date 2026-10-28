@@ -315,6 +315,8 @@ target_sources(
         src/art_mesh.cpp
         src/art_mesh.h
         src/scene_character.cpp
+    src/model_art.cpp
+    src/model_art.h
         src/scene_character.h
         src/inventory_panel.h
         src/island.cpp

@@ -247,6 +247,7 @@ void Player::turn_body(const Vector3 &p_wish, double p_delta) {
 
 void Player::set_carrying(bool p_carrying, const Color &p_color) {
     carrying = p_carrying;
+    if(avatar)avatar->set_carrying(p_carrying);
     if (!body) {
         return;
     }

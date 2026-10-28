@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "gender": "male",
+      "author": "VRoid Project / pixiv",
+      "download": "https://opengameart.org/sites/default/files/sakurada_fumiriya.zip",
+      "sourcePage": "https://opengameart.org/content/vroid-studio-cc0-models",
+      "officialLicense": "https://vroid.pixiv.help/hc/en-us/articles/360014788554-Sakurada-Fumiriya",
+      "verifiedLicense": "CC0-1.0",
+      "checkedDate": "2026-10-27",
+      "archive": {
+        "path": "assets/art/external/vroid-cc0/20261027/male-original.zip",
+        "sha256": "f3c53eea11398c7ed650d686a1e19e0823122068280ed4adc8105c9913e9fc66"
+      },
+      "member": {
+        "name": "Sakurada Fumiriya.vrm",
+        "sha256": "a36e91b81518c59f6da0e3f34a176b79090a8c68cc6bd5fe03c1560744b283f3"
+      },
+      "embeddedOriginalMeta": {
+        "version": "",
+        "author": "VRoidプロジェクト",
+        "contactInformation": "",
+        "reference": "",
+        "title": "桜田 史利矢",
+        "texture": 28,
+        "allowedUserName": "Everyone",
+        "violentUssageName": "Allow",
+        "sexualUssageName": "Allow",
+        "commercialUssageName": "Allow",
+        "otherPermissionUrl": "https://hub.vroid.com/license?allowed_to_use_user=everyone&characterization_allowed_user=everyone&corporate_commercial_use=allow&credit=unnecessary&modification=allow&personal_commercial_use=profit&redistribution=allow&sexual_expression=allow&version=1&violent_expression=allow",
+        "licenseName": "Other",
+        "otherLicenseUrl": "https://hub.vroid.com/license?allowed_to_use_user=everyone&characterization_allowed_user=everyone&corporate_commercial_use=allow&credit=unnecessary&modification=allow&personal_commercial_use=profit&redistribution=allow&sexual_expression=allow&version=1&violent_expression=allow"
+      },
+      "adaptation": "Adult civilian derivative; original name/story/student persona not imported; authored topology/UV/weights retained"
+    },
+    {
+      "gender": "female",
+      "author": "VRoid Project / pixiv",
+      "download": "https://opengameart.org/sites/default/files/sendagaya_shino.zip",
+      "sourcePage": "https://opengameart.org/content/vroid-studio-cc0-models",
+      "officialLicense": "https://vroid.pixiv.help/hc/en-us/articles/360013482714-Sendagaya-Shino",
+      "verifiedLicense": "CC0-1.0",
+      "checkedDate": "2026-10-27",
+      "archive": {
+        "path": "assets/art/external/vroid-cc0/20261027/female-original.zip",
+        "sha256": "ff85ff42c1d041fd66dabdb36761a98557d7b55199f635769f3698a41c0a3696"
+      },
+      "member": {
+        "name": "Sendagaya Shino.vrm",
+        "sha256": "f11b2648e7e588ae171ad1c32e465f84e5b130b1d1789e3a3702946c0981d2a9"
+      },
+      "embeddedOriginalMeta": {
+        "version": "",
+        "author": "VRoidプロジェクト",
+        "contactInformation": "",
+        "reference": "",
+        "title": "千駄ヶ谷篠",
+        "texture": 28,
+        "allowedUserName": "Everyone",
+        "violentUssageName": "Allow",
+        "sexualUssageName": "Allow",
+        "commercialUssageName": "Allow",
+        "otherPermissionUrl": "https://hub.vroid.com/license?allowed_to_use_user=everyone&characterization_allowed_user=everyone&corporate_commercial_use=allow&credit=unnecessary&modification=allow&personal_commercial_use=profit&redistribution=allow&sexual_expression=allow&version=1&violent_expression=allow",
+        "licenseName": "Other",
+        "otherLicenseUrl": "https://hub.vroid.com/license?allowed_to_use_user=everyone&characterization_allowed_user=everyone&corporate_commercial_use=allow&credit=unnecessary&modification=allow&personal_commercial_use=profit&redistribution=allow&sexual_expression=allow&version=1&violent_expression=allow"
+      },
+      "adaptation": "Adult civilian derivative; original name/story/student persona not imported; authored topology/UV/weights retained"
+    }
+  ]
+}

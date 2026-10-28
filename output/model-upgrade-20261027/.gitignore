@@ -1,0 +1,4 @@
+*.pck
+**/test-save/
+**/test-templates/
+**/test-layout.txt

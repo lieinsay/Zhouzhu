@@ -3,6 +3,12 @@
 #include "art_mesh_kit.h"
 #include "curved_material.h"
 #include "item_art.h"
+#include "model_art.h"
+#include "art_surface.h"
+#include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/skin.hpp>
+#include <godot_cpp/classes/animation.hpp>
+#include <godot_cpp/classes/bone_attachment3d.hpp>
 #include <godot_cpp/classes/capsule_mesh.hpp>
 #include <godot_cpp/classes/cylinder_mesh.hpp>
 #include <godot_cpp/classes/sphere_mesh.hpp>
@@ -59,6 +65,8 @@ void SceneCharacter::configure(int p_variant,int p_job,bool p_hat){variant=((p_v
 void SceneCharacter::_ready(){if(!looks){own_looks=std::make_unique<SharedLooks>();looks=own_looks.get();}build();}
 void SceneCharacter::build(){
     const auto children=get_children();for(int i=0;i<children.size();++i){auto *child=Object::cast_to<Node>(children[i]);remove_child(child);child->queue_free();}
+    skeleton=nullptr;animation=nullptr;imported_model=nullptr;skinned_meshes=0;skinned_clothing=0;textured_surfaces=0;face_loaded=false;active_animation=String();
+    if(build_imported())return;
     const bool female=variant>=2,mature=(variant&1)!=0;
     const Color jobs[]={Color(.52,.40,.26),Color(.33,.40,.52),Color(.55,.20,.17),Color(.36,.50,.44),Color(.7,.24,.19)};
     const auto cloth=looks->surface_material("material.hemp",jobs[job],.96f);
@@ -90,7 +98,7 @@ void SceneCharacter::build(){
     for(int i=0;i<5;++i){auto *lock=mesh(this,String("Fringe")+String::num_int64(i),fringe(*looks,hair),Vector3(-.067f+i*.0335f,1.68f,.060f));lock->set_rotation(Vector3(-.4f,0,(i-2.f)*.18f));}
     if(female)for(double side:{-1.0,1.0}){auto *lock=mesh(this,side<0?"SideLockR":"SideLockL",fringe(*looks,hair),Vector3(real_t(side*.09),1.61f,-.01f));lock->set_scale(Vector3(.8,1.6,1.5));}
     for(double side:{-1.0,1.0}){auto *collar=mesh(this,side<0?"CollarR":"CollarL",box(*looks,Vector3(.035,.26,.024),lining),Vector3(real_t(side*.052),1.30f,.118f));collar->set_rotation(Vector3(0,0,real_t(side*.40)));}
-    if(hat){const auto straw=looks->surface_material("material.straw",Color(.78,.68,.42));mesh(this,"Hat",cylinder(*looks,.025,.34,.16,straw),Vector3(0,1.75,0));}
+    if(hat){const auto straw=looks->surface_material(job==2?"material.hemp":"material.straw",job==2?jobs[2]:Color(.78,.68,.42));mesh(this,"Hat",cylinder(*looks,job==2?.15:.025,job==2?.19:.34,job==2?.14:.16,straw),Vector3(0,1.75,0));}
     const char *faces[]={"face_young_male","face_mature_male","face_young_female","face_mature_female"};
     const String asset=String("character.")+String(faces[variant]);ItemArt reader;const Ref<Texture2D> texture=reader.texture_asset(std::string(asset.utf8().get_data()));face_loaded=texture.is_valid();face_path=face_loaded?texture->get_path():String();
     if(face_loaded){const std::string key="actor_face_"+std::string(faces[variant]);
@@ -105,10 +113,97 @@ void SceneCharacter::build(){
     animate(0,0);
 }
 void SceneCharacter::animate(double delta,double speed,double tool_angle,bool working){
+    if(imported_model&&skeleton&&animation){
+        const String clip=working?String("work"):(speed>2.5?String("run"):(speed>.08?String("walk"):String("idle")));
+        if(active_animation!=clip&&animation->has_animation(clip)){animation->play(clip,active_animation.is_empty()?0.0:.16);active_animation=clip;}
+        animation->set_speed_scale(speed>.08?real_t(std::clamp(speed/(clip==String("run")?3.6:1.3),.5,2.4)):1.0f);
+        animation->advance(std::max(.000001,delta));skeleton->force_update_all_bone_transforms();phase+=std::max(0.0,delta);
+        right_grip_error=left_grip_error=0;
+        const float height_shift=variant>=2?-.10f:0.0f;
+        if(job==0){const Basis rotation(Vector3(1,0,0),real_t(tool_angle));const Vector3 pivot(0,1.12f+height_shift,.05f);
+            arm_ik(false,pivot+rotation.xform(Vector3(0,-.04f,.20f)));arm_ik(true,pivot+rotation.xform(Vector3(0,.16f,.20f)));}
+        else if(job==1){arm_ik(false,Vector3(-.38f,1.32f+height_shift,0));arm_ik(true,Vector3(.38f,1.32f+height_shift,0));}
+        else if(job==2)arm_ik(false,Vector3(-.30f,1.12f+height_shift,.17f));
+        else if(carrying){arm_ik(false,Vector3(.40f,1.05f,-.40f));arm_ik(true,Vector3(-.40f,1.05f,-.40f));}
+        if(job<3||carrying){const Array keys=grip_pose.keys();for(int i=0;i<keys.size();++i){const String name=keys[i];const int bone=skeleton->find_bone(name);const Array values=grip_pose[name];if(bone<0||values.size()!=4)continue;
+            Quaternion q(values[0],values[1],values[2],values[3]);
+            if(name.begins_with("J_Bip_L_")){const String right=name.replace("_L_","_R_");const int counterpart=skeleton->find_bone(right);const Array r=grip_pose.get(right,Array());if(counterpart>=0&&r.size()==4){const Quaternion rest_r=skeleton->get_bone_global_rest(counterpart).basis.orthonormalized().get_quaternion(),rest_l=skeleton->get_bone_global_rest(bone).basis.orthonormalized().get_quaternion();const Quaternion world=rest_r*Quaternion(r[0],r[1],r[2],r[3]).normalized()*rest_r.inverse();q=rest_l.inverse()*Quaternion(world.x,-world.y,-world.z,world.w)*rest_l;}}
+            skeleton->set_bone_pose_rotation(bone,q.normalized());}}
+        skeleton->force_update_all_bone_transforms();
+        return;
+    }
     phase+=std::max(0.0,delta)*(4.0+std::min(4.0,speed));const double stride=std::clamp(speed/3.0,0.0,1.0);
     for(int i=0;i<2;++i){if(!legs[i]||!arms[i])continue;const double sign=i?1:-1;legs[i]->set_rotation(Vector3(real_t(sign*std::sin(phase)*.42*stride),0,0));
         if(job==1){arms[i]->set_rotation(Vector3(0,0,real_t(sign)));forearms[i]->set_rotation(Vector3(0,0,real_t(sign*1.2)));}
         else{const double base=(job==0||job==2)?-.27:-.05;arms[i]->set_rotation(Vector3(real_t(base-sign*std::sin(phase)*.32*stride+(working&&i==0?tool_angle:0)),0,real_t(sign*.05)));forearms[i]->set_rotation(Vector3(-.07f,0,0));}
     }
 }
-Dictionary SceneCharacter::get_visual_state()const{Dictionary out;out["variant"]=variant;out["job"]=job;out["adult"]=true;out["face_loaded"]=face_loaded;out["face_path"]=face_path;out["height_without_hat"]=1.78;return out;}
+Dictionary SceneCharacter::get_visual_state()const{Dictionary out;out["variant"]=variant;out["job"]=job;out["adult"]=true;out["face_loaded"]=face_loaded;out["face_path"]=face_path;out["height_without_hat"]=variant>=2?1.68:1.78;out["imported_model"]=imported_model!=nullptr;out["model_id"]=model_id;out["model_path"]=model_path;out["bones"]=skeleton?skeleton->get_bone_count():0;out["skinned_meshes"]=skinned_meshes;out["skinned_clothing"]=skinned_clothing;out["animation"]=active_animation;out["right_grip_error"]=right_grip_error;out["left_grip_error"]=left_grip_error;
+    out["textured_surfaces"]=textured_surfaces;if(skeleton){const int head=skeleton->find_bone("J_Bip_C_Head");if(head>=0)out["head_height"]=to_local(skeleton->to_global(skeleton->get_bone_global_pose(head).origin)).y;}
+    return out;}
+
+bool SceneCharacter::build_imported(){
+    const char *ids[]={"actor.young_male","actor.mature_male","actor.young_female","actor.mature_female"};model_id=ids[variant];
+    imported_model=model_art::instantiate(model_id);if(!imported_model)return false;
+    const Dictionary entry=model_art::binding(model_id);model_path=entry.get("path",String());
+    grip_pose=entry.get("gripPose",Dictionary());
+    const double scale=double(entry.get("scale",1.0));if(!std::isfinite(scale)||scale<=0||scale>4){memdelete(imported_model);imported_model=nullptr;return false;}
+    imported_model->set_name("AuthoredModel");imported_model->set_scale(Vector3(real_t(scale),real_t(scale),real_t(scale)));
+    // 原作者模型朝-Z；村民行为朝+Z，玩家Body的原转向和货箱约定朝-Z。
+    if(job!=4)imported_model->set_rotation(Vector3(0,real_t(3.141592653589793),0));add_child(imported_model);
+    prepare_imported(imported_model);
+    if(!skeleton||!animation||skinned_meshes==0){remove_child(imported_model);imported_model->queue_free();imported_model=nullptr;return false;}
+    animation->set_callback_mode_process(AnimationMixer::ANIMATION_CALLBACK_MODE_PROCESS_MANUAL);
+    const PackedStringArray clips=animation->get_animation_list();for(int i=0;i<clips.size();++i){const Ref<Animation> clip=animation->get_animation(clips[i]);if(clip.is_valid()&&(clips[i]==String("idle")||clips[i]==String("walk")||clips[i]==String("run")))clip->set_loop_mode(Animation::LOOP_LINEAR);}
+    face_loaded=true;face_path=model_path;animate(0,0);
+    if(hat){const int head=skeleton->find_bone("J_Bip_C_Head");if(head>=0){auto *attachment=memnew(BoneAttachment3D);attachment->set_name("HeadAccessory");attachment->set_bone_idx(head);skeleton->add_child(attachment);
+        const auto material=looks->surface_material(job==2?"material.hemp":"material.straw",job==2?Color(.55,.20,.17):Color(.78,.68,.42));auto *cap=mesh(attachment,"Hat",cylinder(*looks,job==2?.15:.025,job==2?.19:.34,job==2?.14:.16,material),Vector3());
+        const Transform3D head_world=skeleton->get_global_transform()*skeleton->get_bone_global_pose(head);const Transform3D desired=get_global_transform()*Transform3D(Basis(),Vector3(0,variant>=2?1.66f:1.76f,0));cap->set_transform(head_world.affine_inverse()*desired);}}
+    return true;
+}
+void SceneCharacter::prepare_imported(Node *node){
+    if(auto *rig=Object::cast_to<Skeleton3D>(node))skeleton=rig;
+    if(auto *player=Object::cast_to<AnimationPlayer>(node))animation=player;
+    if(auto *instance=Object::cast_to<MeshInstance3D>(node)){
+        if(instance->get_skin().is_valid())++skinned_meshes;
+        instance->set_visibility_range_end(80);
+        const Ref<Mesh> mesh=instance->get_mesh();if(mesh.is_valid())for(int surface=0;surface<mesh->get_surface_count();++surface){
+            const Ref<StandardMaterial3D> original=instance->get_active_material(surface);if(original.is_null())continue;
+            if(original->get_texture(BaseMaterial3D::TEXTURE_ALBEDO).is_valid())++textured_surfaces;
+            const String name=original->get_name();const int role=name.begins_with("ZZ_top_")?2:name.begins_with("ZZ_pants_")?3:name.begins_with("ZZ_shoes_")?4:name.begins_with("ZZ_hair_")?1:0;
+            if((role==2||role==3)&&instance->get_skin().is_valid())++skinned_clothing;
+            const std::string key="actor_"+std::to_string(uint64_t(original->get_instance_id()))+"_"+std::to_string(job)+"_"+std::to_string(variant);
+            const Ref<Material> material=looks->imported_material(key,[&](){
+                Ref<ShaderMaterial> created;created.instantiate();created->set_shader(ResourceLoader::get_singleton()->load("res://shaders/model_surface.gdshader"));
+                const Ref<Texture2D> texture=original->get_texture(BaseMaterial3D::TEXTURE_ALBEDO);created->set_shader_parameter("model_has_texture",texture.is_valid());if(texture.is_valid())created->set_shader_parameter("model_tex",texture);
+                const Color jobs[]={Color(.52,.40,.26),Color(.33,.40,.52),Color(.55,.20,.17),Color(.36,.50,.44),Color(.7,.24,.19)};
+                Color tint=original->get_albedo();if(role==2)tint=jobs[job];else if(role==3)tint=Color(.20,.22,.23);else if(role==4)tint=Color(.24,.16,.11);else if(role==1)tint=Color(.25,.19,.15);else if(name.begins_with("ZZ_skin_"))tint=(variant&1)?Color(.78,.67,.55):Color(.86,.75,.65);
+                created->set_shader_parameter("model_tint",tint);created->set_shader_parameter("model_role",role);created->set_shader_parameter("model_mature",(variant&1)!=0);
+                created->set_shader_parameter("model_iris",name.contains("EyeIris"));
+                if(role==2||role==3)ArtSurface::configure(created,"model_detail","material.hemp");if(role==4)ArtSurface::configure(created,"model_detail","material.leather");
+                created->set_meta("art_model_id",model_id);return Ref<Material>(created);});
+            instance->set_surface_override_material(surface,material);
+        }
+    }
+    const auto children=node->get_children();for(int i=0;i<children.size();++i)prepare_imported(Object::cast_to<Node>(children[i]));
+}
+void SceneCharacter::point_bone(int bone,const Vector3 &target,int tip){
+    if(bone<0||tip<0)return;const Transform3D current=skeleton->get_bone_global_pose(bone);const Vector3 from=skeleton->get_bone_global_pose(tip).origin-current.origin,to=target-current.origin;if(from.length_squared()<1e-8f||to.length_squared()<1e-8f)return;
+    const Quaternion delta(from.normalized(),to.normalized());const int parent=skeleton->get_bone_parent(bone);const Basis parent_basis=parent>=0?skeleton->get_bone_global_pose(parent).basis:Basis();
+    const Basis pose=skeleton->get_bone_rest(bone).basis.inverse()*parent_basis.inverse()*Basis(delta)*current.basis;
+    skeleton->set_bone_pose_rotation(bone,pose.orthonormalized().get_quaternion());skeleton->force_update_all_bone_transforms();
+}
+void SceneCharacter::arm_ik(bool left,const Vector3 &target){
+    const String prefix=left?String("J_Bip_L_"):String("J_Bip_R_");const int upper=skeleton->find_bone(prefix+String("UpperArm")),lower=skeleton->find_bone(prefix+String("LowerArm")),hand=skeleton->find_bone(prefix+String("Hand"));if(upper<0||lower<0||hand<0)return;
+    const Vector3 wanted=skeleton->to_local(to_global(target));const Vector3 a=skeleton->get_bone_global_pose(upper).origin,b=skeleton->get_bone_global_pose(lower).origin,c=skeleton->get_bone_global_pose(hand).origin;
+    const double l1=a.distance_to(b),l2=b.distance_to(c);const Vector3 direction=(wanted-a).normalized();const double distance=std::clamp(double(a.distance_to(wanted)),.02,l1+l2-.002);
+    const Vector3 outward=Vector3(real_t((left?1:-1)*(job==4?-1:1)),-.85f,-.15f);Vector3 hint=skeleton->get_global_transform().basis.inverse().xform(get_global_transform().basis.xform(outward));hint-=direction*direction.dot(hint);if(hint.length_squared()<1e-8f)hint=Vector3(0,0,1);hint.normalize();
+    const double along=(l1*l1+distance*distance-l2*l2)/(2*distance);const Vector3 elbow=a+direction*real_t(along)+hint*real_t(std::sqrt(std::max(0.0,l1*l1-along*along)));
+    point_bone(upper,elbow,lower);point_bone(lower,wanted,hand);
+    const int middle=skeleton->find_bone(prefix+String("Middle1"));
+    for(int i=0;i<3&&middle>=0;++i){const Vector3 wrist=skeleton->get_bone_global_pose(hand).origin,palm=wrist.lerp(skeleton->get_bone_global_pose(middle).origin,.65f);const Vector3 wrist_goal=wrist+wanted-palm;
+        // 以掌心而非手腕贴住工具；修正不会移动游戏工具或改变人物状态。
+        point_bone(upper,skeleton->get_bone_global_pose(lower).origin+(wanted-palm)*.45f,lower);point_bone(lower,wrist_goal,hand);}
+    const Vector3 wrist=skeleton->get_bone_global_pose(hand).origin,palm=middle>=0?wrist.lerp(skeleton->get_bone_global_pose(middle).origin,.65f):wrist;
+    const double error=skeleton->to_global(palm).distance_to(to_global(target));if(left)left_grip_error=error;else right_grip_error=error;
+}

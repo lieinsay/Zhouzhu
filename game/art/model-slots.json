@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "slots": {
+    "actor.young_male": {
+      "name": "青年男性",
+      "definition": "SceneCharacter cosmetic variant",
+      "heightMetres": 1.78
+    },
+    "actor.mature_male": {
+      "name": "成熟男性",
+      "definition": "SceneCharacter cosmetic variant",
+      "heightMetres": 1.78
+    },
+    "actor.young_female": {
+      "name": "青年女性",
+      "definition": "SceneCharacter cosmetic variant",
+      "heightMetres": 1.68
+    },
+    "actor.mature_female": {
+      "name": "成熟女性",
+      "definition": "SceneCharacter cosmetic variant",
+      "heightMetres": 1.68
+    }
+  }
+}

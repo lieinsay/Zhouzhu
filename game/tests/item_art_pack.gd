@@ -1,4 +1,18 @@
 extends SceneTree
+var added:={}
+func add_resource(pack:PCKPacker,path:String)->void:
+	if added.has(path):return
+	assert(path.begins_with("res://") and not path.contains(".."));added[path]=true
+	assert(pack.add_file(path,path)==OK)
+	if FileAccess.file_exists(path+".import"):
+		assert(pack.add_file(path+".import",path+".import")==OK)
+		var settings:=ConfigFile.new();assert(settings.load(path+".import")==OK)
+		var imported:String=settings.get_value("remap","path","")
+		if not imported.is_empty() and not added.has(imported):added[imported]=true;assert(pack.add_file(imported,imported)==OK)
+func add_directory(pack:PCKPacker,path:String)->void:
+	for file in DirAccess.get_files_at(path):
+		if not file.ends_with(".import"):add_resource(pack,path.path_join(file))
+	for directory in DirAccess.get_directories_at(path):add_directory(pack,path.path_join(directory))
 ## 打包实际导入资源，然后在没有 art 源目录的隔离项目中验证 PCK 与 C++ 加载。
 func _initialize() -> void:
 	call_deferred("_run")
@@ -10,6 +24,8 @@ func _run() -> void:
 		var pack := PCKPacker.new()
 		assert(pack.pck_start(pack_path) == OK)
 		assert(pack.add_file("res://art/bindings.json","res://art/bindings.json") == OK)
+		if FileAccess.file_exists("res://art/model-bindings.json"):
+			add_resource(pack,"res://art/model-bindings.json");add_resource(pack,"res://shaders/model_surface.gdshader");add_directory(pack,"res://art/models")
 		for shader in ["curved_standard.gdshader","curved_standard_two_sided.gdshader","curved_standard.gdshaderinc","planet_curve.gdshaderinc","character_face.gdshader","scene_detail.gdshaderinc","scatter.gdshader","farm.gdshader","weather.gdshaderinc","ground.gdshader","ground_detail.gdshaderinc"]:
 			assert(pack.add_file("res://shaders/"+shader,"res://shaders/"+shader)==OK)
 		var active: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://art/bindings.json"))
@@ -46,6 +62,7 @@ func _run() -> void:
 			var actor=ClassDB.instantiate("SceneCharacter")
 			actor.configure(variant,variant,false);root.add_child(actor)
 			assert(actor.get_visual_state().face_loaded)
+			assert(actor.get_visual_state().imported_model and actor.get_visual_state().skinned_clothing>=2 and actor.get_visual_state().textured_surfaces>=12)
 			actor.free()
 		for look in [0,1,2,3,4,5]:assert(ArtSurface.scatter_mesh(look,0)!=null)
 		panel.free()

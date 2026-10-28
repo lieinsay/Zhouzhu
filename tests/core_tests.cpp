@@ -7547,6 +7547,7 @@ void test_dev_manual() {
     check(manual_text.find("res://tests/scene_materials_e2e.tscn")!=std::string::npos && studio_text.find("scene_materials_e2e.tscn")!=std::string::npos,"真实场景材质检查有文档入口");
     check(manual_text.find("res://tests/scene_visuals_e2e.tscn")!=std::string::npos && studio_text.find("scene_visuals_e2e.tscn")!=std::string::npos,"集中场景像素检查有文档入口");
     check(manual_text.find("register-character")!=std::string::npos && studio_text.find("register-character")!=std::string::npos,"人物贴图登记有操作文档");
+    check(manual_text.find("tools/art-models/README.md")!=std::string::npos && studio_text.find("actor_models_e2e.tscn")!=std::string::npos,"作者三维模型与蒙皮工具有操作文档和验收入口");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");

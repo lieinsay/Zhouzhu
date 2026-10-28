@@ -8,6 +8,8 @@
 // 集中像素与同源模型预览：res://tests/scene_visuals_e2e.tscn；先无头预验，可见窗口须先获用户同意。
 // tools/art-assets.py register-character登记人物透明贴图；sheet --namespace character审图，仍需曲面头部验收。
 // tools/art-preview/render.py --rendered-directory登记真实Godot透明预览；/art.html可按版本旋转查看同源网格。
+// 作者模型与蒙皮：tools/art-models/README.md；prepare_actors.py在Blender中运行，externalize_textures.py仅机械拆出原贴图。
+// res://tests/actor_models_e2e.tscn检查真实蒙皮/动作/握点；res://tests/actor_world_e2e.tscn检查实际玩家与聚落模型。
 #include "dev_manual.h"
 
 #include "input_actions.h"

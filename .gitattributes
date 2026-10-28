@@ -8,3 +8,5 @@ assets/art/registry.json text eol=lf
 game/art/**/*.import text eol=lf
 # 引擎验收日志保留原始输出，包括进度行末空格。
 output/scene-art-20261027/*.log -text -whitespace
+output/model-upgrade-20261027/*.log -text -whitespace
+assets/art/external/quaternius/** -text -whitespace

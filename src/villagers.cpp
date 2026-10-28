@@ -421,13 +421,8 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
     r_body.character=memnew(SceneCharacter);
     r_body.character->set_name("Character");
     r_body.character->set_shared_looks(looks);
-    r_body.character->configure(p_index%4,int(job),false);
+    r_body.character->configure(p_index%4,int(job),job!=Job::IDLER);
     root->add_child(r_body.character);
-    if (job == Job::WATCHMAN) {
-        add_mesh(root, "Cap", cylinder(l, 0.15f, 0.19f, 0.14f, mat_job[int(job)]), Vector3(0, 1.72f, 0));
-    } else if (job != Job::IDLER) {
-        add_mesh(root, "Hat", cylinder(l, 0.03f, 0.36f, 0.16f, mat_hat), Vector3(0, 1.74f, 0));
-    }
 
     // 手里的家伙挂在右肩的支点上（+z 是脸朝的方向，右手在 −x）
     Node3D *tool = memnew(Node3D);
@@ -441,18 +436,19 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
     r_body.load = load;
     switch (job) {
         case Job::FARMER:
+            tool->set_position(Vector3(0,1.12f-(p_index%4>=2?.10f:0),.05f));
             add_mesh(tool, "Handle", box(l, Vector3(0.05f, 1.3f, 0.05f), mat_wood), Vector3(0, -0.35f, 0.2f));
             add_mesh(tool, "Blade", box(l, Vector3(0.22f, 0.05f, 0.3f), mat_tool), Vector3(0, -1.0f, 0.33f));
             add_mesh(load, "Sack", box(l, Vector3(0.45f, 0.5f, 0.3f), mat_sack), Vector3(0, 1.05f, -0.38f));
             break;
         case Job::CARRIER:
             // 扁担横在两肩上、两头挂桶；挑着水时桶里露出水面
-            tool->set_position(Vector3(0, 1.32f, 0));
+            tool->set_position(Vector3(0,1.32f-(p_index%4>=2?.10f:0),0));
             add_mesh(tool, "Pole", box(l, Vector3(1.7f, 0.05f, 0.06f), mat_wood), Vector3());
             for (real_t side : { -0.8f, 0.8f }) {
                 add_mesh(tool, side < 0 ? "RopeL" : "RopeR", box(l, Vector3(0.02f, 0.55f, 0.02f), mat_wood), Vector3(side, -0.28f, 0));
                 add_mesh(tool, side < 0 ? "BucketL" : "BucketR", cylinder(l, 0.17f, 0.14f, 0.34f, mat_wood), Vector3(side, -0.7f, 0));
-                add_mesh(load, side < 0 ? "WaterL" : "WaterR", cylinder(l, 0.155f, 0.155f, 0.03f, mat_water), Vector3(side, 1.32f - 0.54f, 0));
+                add_mesh(load, side < 0 ? "WaterL" : "WaterR", cylinder(l, 0.155f, 0.155f, 0.03f, mat_water), Vector3(side,1.32f-.54f-(p_index%4>=2?.10f:0),0));
             }
             break;
         case Job::WATCHMAN:
@@ -523,6 +519,7 @@ void Villagers::place_body(Body &r_body, const PersonState &p_person, double p_d
         }
     }
     const double y = ground_y(m.x, m.z);
+    if(r_body.character&&r_body.character->uses_imported_model()){if(p_person.phase==FolkPhase::WALKING)bob=0;if(p_person.phase==FolkPhase::WORKING&&m.who.job==Job::FARMER)lean=0;}
     r_body.root->set_position(Vector3(real_t(m.x), real_t(y + bob), real_t(m.z)));
     r_body.root->set_rotation(Vector3(real_t(lean), real_t(r_body.yaw + sway), 0));
     if (r_body.tool && m.who.job != Job::CARRIER) {

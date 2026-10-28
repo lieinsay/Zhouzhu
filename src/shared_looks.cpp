@@ -48,3 +48,4 @@ Ref<Material> SharedLooks::surface_material(const String &p_asset,const Color &p
     const std::string key=std::string(p_asset.utf8().get_data())+"_"+std::to_string(int(p_color.r*1000))+"_"+std::to_string(int(p_color.g*1000))+"_"+std::to_string(int(p_color.b*1000))+"_"+std::to_string(int(p_roughness*1000))+"_"+std::to_string(int(p_metallic*1000));
     Ref<Material> &material=surfaces[key];if(material.is_null())material=curved_material::surface(p_color,p_roughness,p_asset,p_metallic);return material;
 }
+Ref<Material> SharedLooks::imported_material(const std::string &key,const std::function<Ref<Material>()> &make){auto &material=imported_materials[key];if(material.is_null())material=make();return material;}
