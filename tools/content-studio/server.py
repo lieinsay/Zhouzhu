@@ -17,6 +17,7 @@ from urllib.parse import unquote, urlsplit
 from studio.common import StudioError, js_number, loads, quote
 from studio.media import MediaLibrary
 from studio.art import ArtLibrary
+from studio.models import ModelLibrary
 from studio.store import WorkspaceStore
 from studio.validation import validate_project
 
@@ -191,6 +192,14 @@ class Handler(BaseHTTPRequestHandler):
         if '\\' in path or '\0' in path or ':' in path or '..' in path.split('/'):
             raise StudioError(403, '不允许访问目录外文件')
         if path.startswith('/api/'):
+            if path=='/api/art/models' and self.command=='GET':return self.send_payload(200,studio.model_art.snapshot())
+            if path in ['/api/art/models/stage','/api/art/models/apply'] and self.command=='POST':return self.send_payload(200,getattr(studio.model_art,path.rsplit('/',1)[1])(self.read_body()))
+            for kind,method,content_type in [('image','image','image/png'),('model','model','application/json; charset=utf-8')]:
+                prefix='/api/art/models/'+kind+'/'
+                if path.startswith(prefix) and self.command=='GET':
+                    parts=path[len(prefix):].split('/')
+                    if len(parts)!=2:raise StudioError(404,'模型版本路径错误')
+                    return self.send_payload(200,getattr(studio.model_art,method)(*parts),content_type=content_type)
             if path == '/api/art' and self.command == 'GET':
                 return self.send_payload(200, studio.art.snapshot())
             if path.startswith('/api/art/image/') and self.command == 'GET':
@@ -274,6 +283,7 @@ class StudioServer:
         self.network_address = network_address
         self.public_directory = Path(public_directory).resolve()
         self.art = ArtLibrary(repository_root, workspace_directory)
+        self.model_art=ModelLibrary(repository_root,workspace_directory)
         self.media = MediaLibrary(self.public_directory, workspace_directory)
         self.media.art = self.art
         self.store = WorkspaceStore(repository_root, workspace_directory, self.media)
