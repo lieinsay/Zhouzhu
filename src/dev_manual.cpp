@@ -15,6 +15,7 @@
 // --model-bindings=res://art/model-bindings-review.json仅供显式试接入，默认仍读取正式绑定；不要覆盖历史版本。
 // NPC自然动作验收：python tools/observe-npc-visuals.py --help；npc_visual_observer.tscn只观察原任务、正常时钟与天气。
 // --visible沿用可见窗口授权；--scene seed42 --village 24仅移动观察者到源聚落，禁止拨钟或改NPC来补截图。
+// 衣裤余量精修：fit_workwear.py（Blender）与publish_workwear.py；保留作者原蒙皮/UV，按新版本独立登记和应用。
 #include "dev_manual.h"
 
 #include "input_actions.h"

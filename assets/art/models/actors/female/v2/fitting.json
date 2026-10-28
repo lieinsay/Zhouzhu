@@ -1,0 +1,13 @@
+{
+  "source": "assets/art/models/actors/female/v1/source.blend",
+  "modifiedVertices": 365,
+  "operation": "女式上衣后腰/衣摆余量适配；UV、原骨骼、逐顶点权重与动作不变",
+  "parameters": {
+    "fullEaseBelowMetres": 1.1,
+    "blendEndsAtMetres": 1.24,
+    "backEase": 0.42,
+    "sideEase": 0.08
+  },
+  "garment": "female_WorkTunic",
+  "underlayer": "female_WorkTrousers"
+}

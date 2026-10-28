@@ -21,3 +21,9 @@ Godot4.4.1无头GLTF导入在生成**编辑器场景缩略图**时会报`Paramet
 准备文件经`externalize_textures.py`拆出原作者贴图，在新的`game/art/models/<namespace>/<id>/vN/`形成GLB与侧车纹理。试接入可显式传`-- --model-bindings=res://art/model-bindings-review.json`，仅接受art目录内JSON。此文件不进正式版本；普通启动仍读`model-bindings.json`。`furniture_models_e2e.tscn`检查13家具与统一货箱的实际GLB、占地、生产材质，并在获准的GPU窗口导出512透明预览。定义宽深是占地上限，不为填满占地拉伸原有器物。
 
 审图后`python tools/art-models/publish_furniture.py --review <验收目录> --model-version vN --image-version vN`登记真实编辑源/GLB/依赖、作者许可和同源家具预览，不覆盖已有版本，也不会自动应用。项目改编与自有精修不会被标成外部作者原作或自动转授CC0。再到工坊正式美术页分别暂存、应用三维实体与图片。实际房屋、剖层/摆放预览、玩家货箱与船上货位读取相同实体身份；碰撞仍来自原有定义。
+
+## 工作服与自然NPC复验（2026-10-28）
+
+`fit_workwear.py`从已登记女式v1编辑源给上衣后腰/衣摆补足适配裤腰的余量，保留原网格拓扑、UV、骨骼和权重，另存v2。经真实GPU透明渲染及蒙皮检查后，`publish_workwear.py --review <目录>`归档新编辑源、PNG、GLB/贴图SHA和父版本，再通过独立ModelLibrary应用两个女式身份。它拒绝覆盖已有v2，原v1始终保留。肩袖/领口不因腰部余量变动；实际参数、修改顶点数与父源SHA见v2的fitting.json和登记。
+
+自然场景使用`tools/observe-npc-visuals.py`，详见CONTENT-STUDIO。剧情村落中心可能离房门超过近景LOD；`--follow-nearest`或`--follow-person 3`只让观察者每10秒靠近一个已有可见NPC，不生成NPC、不指定其任务、不改钟、天气或庄稼速度。单独组件渲染、诊断着色和真实自然任务分别记录，不拿空镜头或摆姿态样件补自然验收。

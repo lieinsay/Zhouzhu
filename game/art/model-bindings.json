@@ -192,9 +192,9 @@
           0.7819498181343079
         ]
       },
-      "version": "v1",
-      "path": "res://art/models/actors/female/v1/model.glb",
-      "sha256": "ef32d26f5f29034df5220911edb28f04b16eb03b9a234f4ac5078bffab4fc70b",
+      "version": "v2",
+      "path": "res://art/models/actors/female/v2/model.glb",
+      "sha256": "63d6e64dc3c377547a699d1a2604d5c603fcc9d74dceaf0069b71e49503dfca5",
       "author": "VRoid Project / pixiv",
       "license": "CC0-1.0"
     },
@@ -389,9 +389,9 @@
           0.7819498181343079
         ]
       },
-      "version": "v1",
-      "path": "res://art/models/actors/female/v1/model.glb",
-      "sha256": "ef32d26f5f29034df5220911edb28f04b16eb03b9a234f4ac5078bffab4fc70b",
+      "version": "v2",
+      "path": "res://art/models/actors/female/v2/model.glb",
+      "sha256": "63d6e64dc3c377547a699d1a2604d5c603fcc9d74dceaf0069b71e49503dfca5",
       "author": "VRoid Project / pixiv",
       "license": "CC0-1.0"
     },
@@ -1381,9 +1381,9 @@
     }
   },
   "application": {
-    "id": "94737d6d-4f6f-4aac-b1db-ca8b39aacb7d",
-    "appliedAt": "2026-10-28T06:22:38.681Z",
+    "id": "56c73b6e-60d1-44cc-a327-d4a3a9891ec4",
+    "appliedAt": "2026-10-28T07:49:23.043Z",
     "actor": "content-studio-model-art",
-    "registrySha256": "3bfbb1bfe3679884feb5fae854e9f2689d80f53e23b5c984d1af0ed8aa8d8dca"
+    "registrySha256": "eea20d4ecd8c39d988c46839ab61502f5779512ce0e3da5c7f446a7274b1944d"
   }
 }

@@ -179,3 +179,7 @@ VPN 入口扩展的 10 项定向检查通过，覆盖实际双地址同端口、
 ### NPC自然动作观察
 
 `python tools/observe-npc-visuals.py --scene seed42 --village 24 --duration 180 --output output/npc-visual-20261028/run-name`运行`npc_visual_observer.tscn`，默认无头；获准后加`--visible`保存实际NPC连续像素。村坐标从当前源表读取，只移动观察者，原任务、时钟1倍、作息、天气、庄稼速度均不改。输出目录须全新且在output内，原聚落布局只读复制，存档隔离。`--scene main/flat`检查既有双岛/平板场景，须与带真实气候数据的seed42分别汇报；这些场景没有源天气数据，不能冒充剧情天气验收。每10秒保存进度、每个动作按真实相位捕获；落锄间隙由实际刃底到碰撞地面的射线测量，握持测实际骨骼掌心到工具轴线。遮挡镜头不能作为衣物/手部验收。观察器不使用fixed-fps或快进，正常场景卡顿时仍记录实际墙钟与游戏钟增量，结构成功不自动等于像素通过。
+
+衣裤适配在Blender后台运行`tools/art-models/fit_workwear.py`，新GLB经`externalize_textures.py`保留原作者图片字节，并以显式试绑定进行GPU审图；`python tools/art-models/publish_workwear.py --review <目录>`保存女式v2的编辑源、透明预览、SHA及父版本，通过独立ModelLibrary应用。历史v1不覆盖；原骨骼/权重/UV保留，放松的是上衣后腰和衣摆。`--debug-surfaces`只供直接运行观察场景时的材质分类诊断，其图片带诊断标识，不得记为最终美术通过；该选项不改人物任务和时钟。
+
+剧情村心可能离可见房门超过65米近景范围。`--follow-nearest`按距离选择已有可见NPC；`--follow-person 3`可随行检查同一名已有村民。两者仅每10秒移动玩家观察者，保留正常流式加载、时钟和原任务，不会强制该人出门或工作。完整原始抓图留在本机输出目录，仓库提交精选原图、原始报告和压缩轨迹；见`docs/art-assets/NPC-ACCEPTANCE-20261028.md`。

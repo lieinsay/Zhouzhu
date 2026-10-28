@@ -58,14 +58,15 @@ func _run() -> void:
 			assert(info.loaded and info.path == active.bindings[key].path)
 		assert(not panel.get_item_art("missing_pack_icon").loaded)
 		assert(active.bindings["material.iron"].version=="v2")
+		var model_active:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://art/model-bindings.json"))
 		for variant in 4:
 			var actor=ClassDB.instantiate("SceneCharacter")
 			actor.configure(variant,variant,false);root.add_child(actor)
 			assert(actor.get_visual_state().face_loaded)
 			assert(actor.get_visual_state().imported_model and actor.get_visual_state().skinned_clothing>=2 and actor.get_visual_state().textured_surfaces>=12)
+			assert(actor.get_visual_state().model_path==model_active.bindings[actor.get_visual_state().model_id].path)
 			actor.free()
 		for look in [0,1,2,3,4,5]:assert(ArtSurface.scatter_mesh(look,0)!=null)
-		var model_active:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://art/model-bindings.json"))
 		var actual_static:=0
 		for id in model_active.bindings:
 			if id.begins_with("actor."):continue

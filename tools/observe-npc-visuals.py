@@ -2,7 +2,7 @@
 import argparse,pathlib,subprocess,json,time,re,sys
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--scene',choices=['seed42','main','flat'],default='seed42');p.add_argument('--duration',type=float,default=180);p.add_argument('--visible',action='store_true');p.add_argument('--output',required=True);p.add_argument('--village',type=int)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--scene',choices=['seed42','main','flat'],default='seed42');p.add_argument('--duration',type=float,default=180);p.add_argument('--visible',action='store_true');p.add_argument('--output',required=True);p.add_argument('--village',type=int);p.add_argument('--follow-nearest',action='store_true',help='每10秒仅按距离移动观察者靠近既有可见NPC，不改其任务');p.add_argument('--follow-person',type=int,help='随行观察已有NPC编号；不会生成或改动该NPC')
     a=p.parse_args()
     if not 10<=a.duration<=1800:p.error('观察时长10～1800秒，按正常时间运行')
     output=(ROOT/a.output).resolve()
@@ -13,6 +13,8 @@ def main():
     cmd=[engine,'--path',str(ROOT/'game')]
     if not a.visible:cmd.append('--headless')
     cmd+=['res://tests/npc_visual_observer.tscn','--quit-after','216000','--',f'--scene={a.scene}',f'--duration={a.duration}',f'--output={output.as_posix()}']
+    if a.follow_nearest:cmd.append('--follow-nearest')
+    if a.follow_person is not None:cmd.append(f'--follow-person={a.follow_person}')
     if a.village is not None:
         if a.scene!='seed42':p.error('村ID仅用于seed42实际源聚落')
         row=next((line.split('\t') for line in (ROOT/'game/planet/seed42/groups/6068/sites.tsv').read_text(encoding='utf8').splitlines() if line.startswith('village\t'+str(a.village)+'\t')),None)

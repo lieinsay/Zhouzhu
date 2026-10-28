@@ -7555,6 +7555,7 @@ void test_dev_manual() {
     check(manual_text.find("tools/art-models/README.md")!=std::string::npos && studio_text.find("actor_models_e2e.tscn")!=std::string::npos,"作者三维模型与蒙皮工具有操作文档和验收入口");
     check(manual_text.find("furniture_models_e2e.tscn")!=std::string::npos && studio_text.find("/api/art/models/apply")!=std::string::npos && manual_text.find("--model-bindings=")!=std::string::npos,"实体工坊应用、家具与独立试接入验收有文档");
     check(manual_text.find("tools/observe-npc-visuals.py")!=std::string::npos && studio_text.find("npc_visual_observer.tscn")!=std::string::npos,"真实NPC连续动作观察有手册与正常时间说明");
+    check(manual_text.find("fit_workwear.py")!=std::string::npos && studio_text.find("publish_workwear.py")!=std::string::npos,"作者工作服余量精修有版本登记操作说明");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");
