@@ -1,0 +1,40 @@
+{
+  "author": {
+    "Aron \u0141yczek": "All"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/ceramic_pot",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "ceramic_pot_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/ceramic_pot/ceramic_pot_1k.gltf",
+      "sha256": "7d8c28f171f701a422341c82322d439ea5041a6edd4443a85e3c8f88ce12ab0e",
+      "md5": "8777fd3f023e6f83371786b195ac665b"
+    },
+    {
+      "path": "textures/ceramic_pot_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_nor_gl_1k.jpg",
+      "sha256": "2102b4345882c9648de7ee3b3e547bf7a2a3c9fd35db0ded322df60df16a5c57",
+      "md5": "a40c80e5e4f9fa107d2c2dc8983d2867"
+    },
+    {
+      "path": "textures/ceramic_pot_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_diff_1k.jpg",
+      "sha256": "583e49e8be2ba460700f2dcd6466ab347f5285ccc651dd9054b59ef6a78d812b",
+      "md5": "85746a999ed333628143b3ad2c0b7f42"
+    },
+    {
+      "path": "textures/ceramic_pot_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_arm_1k.jpg",
+      "sha256": "b688549e4defe29de262ccba81278360cd2f42037a40b70f8f4693a96c14bc45",
+      "md5": "e45cd9ad939172ae7b94fd455bc44c08"
+    },
+    {
+      "path": "ceramic_pot.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ceramic_pot/ceramic_pot.bin",
+      "sha256": "f47636aa57f9a258c0ae6874763b9fe5dc87943ea932367e9d5526cdf914ff04",
+      "md5": "dab3afea04454ad1fbb1108afe764489"
+    }
+  ]
+}

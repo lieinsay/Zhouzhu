@@ -119,11 +119,12 @@ void furniture_parts(const Furnishing &p_item, double p_base_y, int p_group, std
         return;
     }
     const int q = ((p_item.quarter % 4) + 4) % 4;
+    BoxPart reference;reference.visual=false;reference.solid=false;reference.x=p_item.x;reference.y=p_base_y;reference.z=p_item.z;reference.yaw=q*.5*PI;reference.group=p_group;reference.model_id=std::string("furniture.")+def->id;r_boxes.push_back(reference);
     const double c = std::cos(q * 0.5 * PI), s = std::sin(q * 0.5 * PI);
     // 家具自己的坐标（原点在占地中心的地面，w 沿 x、正面 +z）→ 建筑坐标：+x → (cos, −sin)，+z → (sin, cos)
     auto add = [&](double sx,double sy,double sz,double lx,double ly,double lz,PartMaterial mat,VisualShape shape=VisualShape::BEVEL_BOX) {
         BoxPart part=box(sx,sy,sz,p_item.x+lx*c+lz*s,p_base_y+ly,p_item.z-lx*s+lz*c,mat,true,false,p_group);
-        part.yaw=q*.5*PI;part.shape=shape;r_boxes.push_back(part);
+        part.yaw=q*.5*PI;part.shape=shape;part.furniture_visual=true;r_boxes.push_back(part);
     };
     const std::string kind = def->id;
     if (kind == "bed") {
@@ -362,6 +363,12 @@ BuildingParts building_parts(const BuildingDef &p_def, const HouseTemplate &p_ho
                 wall_piece(out, along_x, a - FRAME_W, a, cx, cz, y0 + oy0, y0 + oy1, WALL_T + 0.04, PartMaterial::DARK_WOOD, false, group);
                 wall_piece(out, along_x, b, b + FRAME_W, cx, cz, y0 + oy0, y0 + oy1, WALL_T + 0.04, PartMaterial::DARK_WOOD, false, group);
                 wall_piece(out, along_x, a - FRAME_W, b + FRAME_W, cx, cz, y0 + oy1, y0 + oy1 + 0.14, WALL_T + 0.04, PartMaterial::DARK_WOOD, false, group);
+                // 过梁与立框的木销，沿既有接合位置；两面都能看到，且不侵入门窗净空。
+                for(double edge:{a-FRAME_W*.5,b+FRAME_W*.5})for(double sign:{-1.0,1.0}){
+                    const double face=(WALL_T+.04)*.5+.002;
+                    BoxPart peg=box(.026,.026,.008,along_x?edge:cx+sign*face,y0+oy1-.06,along_x?cz+sign*face:edge,PartMaterial::WOOD,true,false,group);
+                    if(!along_x)std::swap(peg.sx,peg.sz);peg.shape=VisualShape::BEVEL_BOX;out.push_back(peg);
+                }
                 if (o->window) {
                     wall_piece(out, along_x, a - FRAME_W, b + FRAME_W, cx, cz, y0 + oy0 - 0.1, y0 + oy0, WALL_T + 0.04, PartMaterial::DARK_WOOD, false, group);
                     const int bars = std::max(2, int(std::round(o->width / 0.3)));

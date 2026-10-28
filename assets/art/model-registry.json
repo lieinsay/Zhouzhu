@@ -2453,6 +2453,2457 @@
           "userConfirmation": null
         }
       ]
+    },
+    {
+      "id": "furniture.altar",
+      "name": "供桌",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.207Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_console_table/chinese_console_table_1k.gltf",
+            "sha256": "d028085b14277ce3772445d5991572c95e8c80630bcb401f90129d3c972c5425"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/altar/v1/source.blend",
+            "sha256": "d5be939b15607b98466ea1093abbba939a9b92548de34d627248fa11cd0b6700"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/altar/v1/model.glb",
+            "sha256": "d986f70b16a640f446865f9ce7a65447d8c1407dfd6c02a6d19664b2dcefec90",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/altar/v1/textures/image-0.jpg",
+                "sha256": "d07e9efc41896c4a77bc91f003341c4e0a64be05320862bf2457817220c3f86b"
+              },
+              {
+                "path": "game/art/models/furniture/altar/v1/textures/image-1.jpg",
+                "sha256": "82ecf04fa7793ffa6a5b11993944bf9a8f9a7179777ffaa63ef70295b044d4a4"
+              },
+              {
+                "path": "game/art/models/furniture/altar/v1/textures/image-2.jpg",
+                "sha256": "c819a43214165b1241392a599f5f3076263569e1aaad54ef92a57ba52e34e47e"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/altar/v1/preview.png",
+            "sha256": "b3ee6b6757e96105d6ac116128b12046b6afacdb5092e918c500a08adfbcd873"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/altar/v1/render.png",
+            "sha256": "b3ee6b6757e96105d6ac116128b12046b6afacdb5092e918c500a08adfbcd873"
+          },
+          "author": {
+            "name": "Poly Haven / Kirill Sannikov",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/chinese_console_table"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {
+                "ZZ_project_3": {
+                  "asset": "material.wood",
+                  "color": [
+                    0.5,
+                    0.36,
+                    0.22
+                  ],
+                  "roughness": 0.85,
+                  "metallic": 0
+                }
+              },
+              "uvMetresPerUnit": {
+                "chinese_console_table": 3.215190621090417,
+                "ZZ_project_3": 0.5393959059809811
+              },
+              "textureMeans": {
+                "chinese_console_table": [
+                  0.10943618909520017,
+                  0.047055041757840886,
+                  0.022587247062565156
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.8,
+              1,
+              0.6
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "altar",
+              "sourceAsset": "chinese_console_table",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {
+                  "ZZ_project_3": {
+                    "asset": "material.wood",
+                    "color": [
+                      0.5,
+                      0.36,
+                      0.22
+                    ],
+                    "roughness": 0.85,
+                    "metallic": 0
+                  }
+                },
+                "uvMetresPerUnit": {
+                  "chinese_console_table": 3.215190621090417,
+                  "ZZ_project_3": 0.5393959059809811
+                },
+                "textureMeans": {
+                  "chinese_console_table": [
+                    0.10943618909520017,
+                    0.047055041757840886,
+                    0.022587247062565156
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.8,
+                0.6,
+                1
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.8999999165534973,
+                  -0.30000001192092896,
+                  0.0
+                ],
+                "max": [
+                  0.8999999165534973,
+                  0.30000001192092896,
+                  1.4600000381469727
+                ]
+              },
+              "triangles": 14776,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "d07e9efc41896c4a77bc91f003341c4e0a64be05320862bf2457817220c3f86b"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "82ecf04fa7793ffa6a5b11993944bf9a8f9a7179777ffaa63ef70295b044d4a4"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "c819a43214165b1241392a599f5f3076263569e1aaad54ef92a57ba52e34e47e"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.205Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_console_table/source.json",
+            "sha256": "c82c5f41c9e566a684d42b0d1cee4135b33195926ca8f9d0d5ecc280deb1ee18"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.bed",
+      "name": "床",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.255Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_sofa/chinese_sofa_1k.gltf",
+            "sha256": "33f9f1bf014bea843f24944ed5ed2b0de0ba0ba1728ddac85fc79eb5aa2e6dce"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/bed/v1/source.blend",
+            "sha256": "942d5e2e98b96a2a0d48910195ce86cc5ac4d9f6d5277a5783254fe09b0d68ee"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/bed/v1/model.glb",
+            "sha256": "01a9fe675573d6ee83c27c2c5b1e04469a3d8786fa88922543209190acadbb47",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/bed/v1/textures/image-0.jpg",
+                "sha256": "6c7b73f4c1b38d8e26d35df1deb8f38af2f74fd08597a3a52645a41c6a417735"
+              },
+              {
+                "path": "game/art/models/furniture/bed/v1/textures/image-1.jpg",
+                "sha256": "fb512b25971ff1fa17d8049e9687fb232195b73fcf98ebf55e277df2d2d6bca3"
+              },
+              {
+                "path": "game/art/models/furniture/bed/v1/textures/image-2.jpg",
+                "sha256": "d0aabd7f28848c3f1189f768a50a29bc32ccdef2f557f91160080a47890be0f7"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/bed/v1/preview.png",
+            "sha256": "36f194cf5cec299581428e419f49e6eabc4d183f0d7da61aafec8c241681c226"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/bed/v1/render.png",
+            "sha256": "36f194cf5cec299581428e419f49e6eabc4d183f0d7da61aafec8c241681c226"
+          },
+          "author": {
+            "name": "Poly Haven / Kirill Sannikov",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/chinese_sofa"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {
+                "ZZ_project_7": {
+                  "asset": "material.hemp",
+                  "color": [
+                    0.660000026,
+                    0.600000024,
+                    0.5
+                  ],
+                  "roughness": 1,
+                  "metallic": 0
+                }
+              },
+              "uvMetresPerUnit": {
+                "chinese_sofa": 3.8520017812836342,
+                "ZZ_project_7": 1.0028767754341328
+              },
+              "textureMeans": {
+                "chinese_sofa": [
+                  0.10925223042592175,
+                  0.05500087003450439,
+                  0.03290706003653533
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              2,
+              0.6,
+              1.5
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "bed",
+              "sourceAsset": "chinese_sofa",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {
+                  "ZZ_project_7": {
+                    "asset": "material.hemp",
+                    "color": [
+                      0.660000026,
+                      0.600000024,
+                      0.5
+                    ],
+                    "roughness": 1,
+                    "metallic": 0
+                  }
+                },
+                "uvMetresPerUnit": {
+                  "chinese_sofa": 3.8520017812836342,
+                  "ZZ_project_7": 1.0028767754341328
+                },
+                "textureMeans": {
+                  "chinese_sofa": [
+                    0.10925223042592175,
+                    0.05500087003450439,
+                    0.03290706003653533
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                2,
+                1.5,
+                0.6
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -1.0,
+                  -0.75,
+                  0.0
+                ],
+                "max": [
+                  1.0,
+                  0.75,
+                  0.6000000238418579
+                ]
+              },
+              "triangles": 920,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "6c7b73f4c1b38d8e26d35df1deb8f38af2f74fd08597a3a52645a41c6a417735"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "fb512b25971ff1fa17d8049e9687fb232195b73fcf98ebf55e277df2d2d6bca3"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "d0aabd7f28848c3f1189f768a50a29bc32ccdef2f557f91160080a47890be0f7"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.253Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_sofa/source.json",
+            "sha256": "3811ca35866dc8d6fc384e7684f37553a11fc376a21c5f455adc017f4a7b1368"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.bench",
+      "name": "长凳",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.319Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/painted_wooden_bench/painted_wooden_bench_1k.gltf",
+            "sha256": "2289ab82f3fe3045bf18f7b9541743d2c65b9f071cb34bbe424d2bc998f3e507"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/bench/v1/source.blend",
+            "sha256": "33f4bb453737cc49aba5c5549ddc4d589650d972492369510bacca49c21802ed"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/bench/v1/model.glb",
+            "sha256": "8626d70ea4b3c7762f39805d9ebed6bcfed6ace45d339503984dc795eb7f9390",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/bench/v1/textures/image-0.jpg",
+                "sha256": "a0f53740d77fc61aac01de0b7e1ae6109445d1756839f739ae31fdf10c9911f2"
+              },
+              {
+                "path": "game/art/models/furniture/bench/v1/textures/image-1.jpg",
+                "sha256": "9bc533313091ee71eaca5fa6334b71d27935d9d75311f64df6a53c28a67c435c"
+              },
+              {
+                "path": "game/art/models/furniture/bench/v1/textures/image-2.jpg",
+                "sha256": "878785565eeff706b8f1e4db7e3d794a544e9cf0e56cee424d9a271ab4ead47e"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/bench/v1/preview.png",
+            "sha256": "2ddb5bbe0e657c3ae0cae1f6bb102721dfdd20e60c4d850be9c57a23137d5d8f"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/bench/v1/render.png",
+            "sha256": "2ddb5bbe0e657c3ae0cae1f6bb102721dfdd20e60c4d850be9c57a23137d5d8f"
+          },
+          "author": {
+            "name": "Poly Haven / Kirill Sannikov",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/painted_wooden_bench"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {},
+              "uvMetresPerUnit": {
+                "painted_wooden_bench": 1.9130733732208105
+              },
+              "textureMeans": {
+                "painted_wooden_bench": [
+                  0.10650117129853841,
+                  0.04105420714811109,
+                  0.02575115061126948
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.2,
+              0.45,
+              0.35
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "bench",
+              "sourceAsset": "painted_wooden_bench",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {},
+                "uvMetresPerUnit": {
+                  "painted_wooden_bench": 1.9130733732208105
+                },
+                "textureMeans": {
+                  "painted_wooden_bench": [
+                    0.10650117129853841,
+                    0.04105420714811109,
+                    0.02575115061126948
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.2,
+                0.35,
+                0.45
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.6000000238418579,
+                  -0.17499999701976776,
+                  0.0
+                ],
+                "max": [
+                  0.6000000238418579,
+                  0.17499999701976776,
+                  0.44999998807907104
+                ]
+              },
+              "triangles": 630,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "a0f53740d77fc61aac01de0b7e1ae6109445d1756839f739ae31fdf10c9911f2"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "9bc533313091ee71eaca5fa6334b71d27935d9d75311f64df6a53c28a67c435c"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "878785565eeff706b8f1e4db7e3d794a544e9cf0e56cee424d9a271ab4ead47e"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.317Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/painted_wooden_bench/source.json",
+            "sha256": "80bda16e057e93862066dd9e8c30a4c741b22a6f852fdbc14a2ff6afb7bcda50"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.bin",
+      "name": "粮囤",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.380Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/wicker_basket_02/wicker_basket_02_1k.gltf",
+            "sha256": "78c7a3bdd7025eb092b3ac744e9d83e9a75fbb242696b5dce87ec215af617768"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/bin/v1/source.blend",
+            "sha256": "1e732be3e6362c029263ce680fb85f96f856f37b8a99a97cdeae1a09dec86e7e"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/bin/v1/model.glb",
+            "sha256": "4008242136294a817ff7f60214dc97f75756ed6f4af6b2300710ce2263f6d2db",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/bin/v1/textures/image-0.jpg",
+                "sha256": "d3de9d9ec34955ed866a819763eb323a0dee571f55b02f5b4c44b0fc34cf2376"
+              },
+              {
+                "path": "game/art/models/furniture/bin/v1/textures/image-1.jpg",
+                "sha256": "c03525c27579160bcd71054aa17796570a074ff4cdd560bfed3fb9770c9ba975"
+              },
+              {
+                "path": "game/art/models/furniture/bin/v1/textures/image-2.jpg",
+                "sha256": "641013be798757f4bf2c82cf335b80db2b6d2b52f8fbf0b1f1e2e22196bc60ee"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/bin/v1/preview.png",
+            "sha256": "b1e5dcc1d80fedb75765720c8ad8dd39bf862b6774b946c44e687719fd480475"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/bin/v1/render.png",
+            "sha256": "b1e5dcc1d80fedb75765720c8ad8dd39bf862b6774b946c44e687719fd480475"
+          },
+          "author": {
+            "name": "Poly Haven / Kuutti Siitonen",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/wicker_basket_02"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.8,
+                0.68,
+                0.4
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {
+                "ZZ_project_9": {
+                  "asset": "material.grain",
+                  "color": [
+                    0.879999995,
+                    0.74000001,
+                    0.340000004
+                  ],
+                  "roughness": 1,
+                  "metallic": 0
+                }
+              },
+              "projectMaterial": "material.straw",
+              "uvMetresPerUnit": {
+                "wicker_basket_02": 4.35749293709359,
+                "ZZ_project_9": 0.9951964537664899
+              },
+              "textureMeans": {
+                "wicker_basket_02": [
+                  0.40173596398188344,
+                  0.20067045663105923,
+                  0.0809803674284256
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.4,
+              1.6,
+              1.4
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "bin",
+              "sourceAsset": "wicker_basket_02",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.8,
+                  0.68,
+                  0.4
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {
+                  "ZZ_project_9": {
+                    "asset": "material.grain",
+                    "color": [
+                      0.879999995,
+                      0.74000001,
+                      0.340000004
+                    ],
+                    "roughness": 1,
+                    "metallic": 0
+                  }
+                },
+                "projectMaterial": "material.straw",
+                "uvMetresPerUnit": {
+                  "wicker_basket_02": 4.35749293709359,
+                  "ZZ_project_9": 0.9951964537664899
+                },
+                "textureMeans": {
+                  "wicker_basket_02": [
+                    0.40173596398188344,
+                    0.20067045663105923,
+                    0.0809803674284256
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.4,
+                1.4,
+                1.6
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.7000000476837158,
+                  -0.699999988079071,
+                  0.0
+                ],
+                "max": [
+                  0.7000000476837158,
+                  0.699999988079071,
+                  1.600000023841858
+                ]
+              },
+              "triangles": 18378,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "d3de9d9ec34955ed866a819763eb323a0dee571f55b02f5b4c44b0fc34cf2376"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "c03525c27579160bcd71054aa17796570a074ff4cdd560bfed3fb9770c9ba975"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "641013be798757f4bf2c82cf335b80db2b6d2b52f8fbf0b1f1e2e22196bc60ee"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.377Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/wicker_basket_02/source.json",
+            "sha256": "7f20de66eb904022186ba9121124cde8343d3e02a61d5482e624df381d84a72b"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.chest",
+      "name": "柜",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.437Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_cabinet/chinese_cabinet_1k.gltf",
+            "sha256": "f7875e583eb73798eed01e1b466bb4c3bc76a46c6bbade39091a01e5ba561293"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/chest/v1/source.blend",
+            "sha256": "0278150c550eb66948ac8d416ad382cdc0cdf1fd146bc5bd6e8597ceb5ad8278"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/chest/v1/model.glb",
+            "sha256": "83834198198b7529351445503eadf62314e858a9e2e738eaed8f2a296c08f26c",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/chest/v1/textures/image-0.jpg",
+                "sha256": "6c583a8eaf4d78561bbbb0107a85231173eb9290cc6c233dcf9877e3175017c2"
+              },
+              {
+                "path": "game/art/models/furniture/chest/v1/textures/image-1.jpg",
+                "sha256": "7552eb37f049d86d0ae210c43da5639265614466d3636682eb9d9b103e5fe07b"
+              },
+              {
+                "path": "game/art/models/furniture/chest/v1/textures/image-2.jpg",
+                "sha256": "c017dcd80a4a25535ac96c2f8a115a87be3f6b89d5ad153bd72e3a705f96107d"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/chest/v1/preview.png",
+            "sha256": "989fbc60685d5cff526c561e87be8f9adae07f7499edcab3c7f9da8563093dde"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/chest/v1/render.png",
+            "sha256": "989fbc60685d5cff526c561e87be8f9adae07f7499edcab3c7f9da8563093dde"
+          },
+          "author": {
+            "name": "Poly Haven / Kirill Sannikov",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/chinese_cabinet"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {},
+              "uvMetresPerUnit": {
+                "chinese_cabinet": 4.042950790865523
+              },
+              "textureMeans": {
+                "chinese_cabinet": [
+                  0.08258857672862509,
+                  0.038637795578710415,
+                  0.02272623600693533
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.2,
+              1.2,
+              0.6
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "chest",
+              "sourceAsset": "chinese_cabinet",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {},
+                "uvMetresPerUnit": {
+                  "chinese_cabinet": 4.042950790865523
+                },
+                "textureMeans": {
+                  "chinese_cabinet": [
+                    0.08258857672862509,
+                    0.038637795578710415,
+                    0.02272623600693533
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.2,
+                0.6,
+                1.2
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.6000000238418579,
+                  -0.29999998211860657,
+                  0.0
+                ],
+                "max": [
+                  0.6000000238418579,
+                  0.29999998211860657,
+                  1.2000000476837158
+                ]
+              },
+              "triangles": 15668,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "6c583a8eaf4d78561bbbb0107a85231173eb9290cc6c233dcf9877e3175017c2"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "7552eb37f049d86d0ae210c43da5639265614466d3636682eb9d9b103e5fe07b"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "c017dcd80a4a25535ac96c2f8a115a87be3f6b89d5ad153bd72e3a705f96107d"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.435Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_cabinet/source.json",
+            "sha256": "3203a34959a61ec5a730f54430d5aef3a30c68a948cdacbfa9417fb27c5367cd"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.drum",
+      "name": "鼓",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "project-mesh-blender-refinement",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.483Z",
+          "original": {
+            "path": "assets/art/models/furniture-scene-20261027-v2/drum.json",
+            "sha256": "59bd9bc58020acf74cc82efed890c4699bf112b5dab7c644c8131d9dd0c6acb7"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/drum/v1/source.blend",
+            "sha256": "233b6d7d7add948f9354e9b2b3f52f5b5fcacf71fdf08533dc69ebcfb18d8a01"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/drum/v1/model.glb",
+            "sha256": "cd705996c5908881565bc77c8e316c0d2770242699cadbb808fa86f697b66b16",
+            "dependencies": []
+          },
+          "preview": {
+            "path": "game/art/models/furniture/drum/v1/preview.png",
+            "sha256": "a3e252db5fa91fb73e2be52f0fd71a7d03143867e2d3b194590cd8abbc0e1fd7"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/drum/v1/render.png",
+            "sha256": "a3e252db5fa91fb73e2be52f0fd71a7d03143867e2d3b194590cd8abbc0e1fd7"
+          },
+          "author": {
+            "name": "州渚项目原模型与Blender精修",
+            "license": "project-owned"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {
+                "ZZ_project_3": {
+                  "asset": "material.wood",
+                  "color": [
+                    0.5,
+                    0.360000014,
+                    0.219999999
+                  ],
+                  "roughness": 0.850000024,
+                  "metallic": 0
+                },
+                "ZZ_project_10": {
+                  "asset": "material.lacquer",
+                  "color": [
+                    0.579999983,
+                    0.140000001,
+                    0.100000001
+                  ],
+                  "roughness": 0.600000024,
+                  "metallic": 0
+                },
+                "ZZ_project_12": {
+                  "asset": "material.iron",
+                  "color": [
+                    0.300000012,
+                    0.310000002,
+                    0.319999993
+                  ],
+                  "roughness": 0.550000012,
+                  "metallic": 0.8
+                },
+                "ZZ_project_13": {
+                  "asset": "material.leather",
+                  "color": [
+                    0.660000026,
+                    0.540000021,
+                    0.379999995
+                  ],
+                  "roughness": 0.850000024,
+                  "metallic": 0
+                }
+              },
+              "uvMetresPerUnit": {
+                "ZZ_project_3": 1.0074159622452166,
+                "ZZ_project_10": 0.7799582190181674,
+                "ZZ_project_12": 0.6913902078036226,
+                "ZZ_project_13": 0.9745927213781562
+              },
+              "textureMeans": {}
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1,
+              1.3,
+              1
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "drum",
+              "sourceAsset": null,
+              "origin": "project-mesh-blender-refinement",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {
+                  "ZZ_project_3": {
+                    "asset": "material.wood",
+                    "color": [
+                      0.5,
+                      0.360000014,
+                      0.219999999
+                    ],
+                    "roughness": 0.850000024,
+                    "metallic": 0
+                  },
+                  "ZZ_project_10": {
+                    "asset": "material.lacquer",
+                    "color": [
+                      0.579999983,
+                      0.140000001,
+                      0.100000001
+                    ],
+                    "roughness": 0.600000024,
+                    "metallic": 0
+                  },
+                  "ZZ_project_12": {
+                    "asset": "material.iron",
+                    "color": [
+                      0.300000012,
+                      0.310000002,
+                      0.319999993
+                    ],
+                    "roughness": 0.550000012,
+                    "metallic": 0.8
+                  },
+                  "ZZ_project_13": {
+                    "asset": "material.leather",
+                    "color": [
+                      0.660000026,
+                      0.540000021,
+                      0.379999995
+                    ],
+                    "roughness": 0.850000024,
+                    "metallic": 0
+                  }
+                },
+                "uvMetresPerUnit": {
+                  "ZZ_project_3": 1.0074159622452166,
+                  "ZZ_project_10": 0.7799582190181674,
+                  "ZZ_project_12": 0.6913902078036226,
+                  "ZZ_project_13": 0.9745927213781562
+                },
+                "textureMeans": {}
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1,
+                1,
+                1.3
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.4000000059604645,
+                  -0.25,
+                  0.0
+                ],
+                "max": [
+                  0.4000000059604645,
+                  0.25,
+                  1.149999976158142
+                ]
+              },
+              "triangles": 4120,
+              "dependencies": []
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.483Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "furniture.loom",
+      "name": "织机",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "project-mesh-blender-refinement",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.526Z",
+          "original": {
+            "path": "assets/art/models/furniture-scene-20261027-v2/loom.json",
+            "sha256": "2d98ea6d78e4f57667740b500d3346232a3cc7fa83d829da2b51e9b3980c07d2"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/loom/v1/source.blend",
+            "sha256": "c3ea976693d71643567de9834dcec266d3f3768ff116c8e67229b46764ff09a4"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/loom/v1/model.glb",
+            "sha256": "c0fa0c8e16c8f750e01c58f17ec94c98e00d32271182e8d562ea548908ad337c",
+            "dependencies": []
+          },
+          "preview": {
+            "path": "game/art/models/furniture/loom/v1/preview.png",
+            "sha256": "397c97794854c11534c7d04e55cbf8606f03d6c051a8c3dee1b34c08da7fdb7b"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/loom/v1/render.png",
+            "sha256": "397c97794854c11534c7d04e55cbf8606f03d6c051a8c3dee1b34c08da7fdb7b"
+          },
+          "author": {
+            "name": "州渚项目原模型与Blender精修",
+            "license": "project-owned"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {
+                "ZZ_project_3": {
+                  "asset": "material.wood",
+                  "color": [
+                    0.5,
+                    0.36,
+                    0.22
+                  ],
+                  "roughness": 0.85,
+                  "metallic": 0
+                },
+                "ZZ_project_4": {
+                  "asset": "material.wood",
+                  "color": [
+                    0.300000012,
+                    0.200000003,
+                    0.119999997
+                  ],
+                  "roughness": 0.949999988,
+                  "metallic": 0
+                },
+                "ZZ_project_7": {
+                  "asset": "material.hemp",
+                  "color": [
+                    0.660000026,
+                    0.600000024,
+                    0.5
+                  ],
+                  "roughness": 1,
+                  "metallic": 0
+                }
+              },
+              "uvMetresPerUnit": {
+                "ZZ_project_3": 0.6265594025753082,
+                "ZZ_project_4": 1.0095230981384489,
+                "ZZ_project_7": 1.0032184739526029
+              },
+              "textureMeans": {}
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.6,
+              1.5,
+              1.3
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "loom",
+              "sourceAsset": null,
+              "origin": "project-mesh-blender-refinement",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {
+                  "ZZ_project_3": {
+                    "asset": "material.wood",
+                    "color": [
+                      0.5,
+                      0.36,
+                      0.22
+                    ],
+                    "roughness": 0.85,
+                    "metallic": 0
+                  },
+                  "ZZ_project_4": {
+                    "asset": "material.wood",
+                    "color": [
+                      0.300000012,
+                      0.200000003,
+                      0.119999997
+                    ],
+                    "roughness": 0.949999988,
+                    "metallic": 0
+                  },
+                  "ZZ_project_7": {
+                    "asset": "material.hemp",
+                    "color": [
+                      0.660000026,
+                      0.600000024,
+                      0.5
+                    ],
+                    "roughness": 1,
+                    "metallic": 0
+                  }
+                },
+                "uvMetresPerUnit": {
+                  "ZZ_project_3": 0.6265594025753082,
+                  "ZZ_project_4": 1.0095230981384489,
+                  "ZZ_project_7": 1.0032184739526029
+                },
+                "textureMeans": {}
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.6,
+                1.3,
+                1.5
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.800000011920929,
+                  -0.6399999856948853,
+                  0.0
+                ],
+                "max": [
+                  0.800000011920929,
+                  0.6600000262260437,
+                  1.5
+                ]
+              },
+              "triangles": 4656,
+              "dependencies": []
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.526Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "furniture.mat",
+      "name": "席",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "project-mesh-blender-refinement",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.572Z",
+          "original": {
+            "path": "assets/art/models/furniture-scene-20261027-v2/mat.json",
+            "sha256": "f25573581de2407a53eecf1b21e2fcd6a27e285db198291492b40e1a86e8b891"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/mat/v1/source.blend",
+            "sha256": "920ccdb40c3ac96dc2bb1e41b5f2656502df5fffd20768606766ef4bc4005984"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/mat/v1/model.glb",
+            "sha256": "3034789c302bb59e3b5f3dd971fc9c6c5206c3426e822b3124906765bc2983ec",
+            "dependencies": []
+          },
+          "preview": {
+            "path": "game/art/models/furniture/mat/v1/preview.png",
+            "sha256": "9967874d6c3899e3446f5df5d0dd921b8eb8809515de97085a9492b53ecb9703"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/mat/v1/render.png",
+            "sha256": "9967874d6c3899e3446f5df5d0dd921b8eb8809515de97085a9492b53ecb9703"
+          },
+          "author": {
+            "name": "州渚项目原模型与Blender精修",
+            "license": "project-owned"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {
+                "ZZ_project_8": {
+                  "asset": "material.straw",
+                  "color": [
+                    0.8,
+                    0.68,
+                    0.4
+                  ],
+                  "roughness": 1.0,
+                  "metallic": 0
+                }
+              },
+              "uvMetresPerUnit": {
+                "ZZ_project_8": 0.9505053494085312
+              },
+              "textureMeans": {}
+            },
+            "scale": 1.0,
+            "dimensions": [
+              2,
+              0.03,
+              1.4
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "mat",
+              "sourceAsset": null,
+              "origin": "project-mesh-blender-refinement",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {
+                  "ZZ_project_8": {
+                    "asset": "material.straw",
+                    "color": [
+                      0.8,
+                      0.68,
+                      0.4
+                    ],
+                    "roughness": 1.0,
+                    "metallic": 0
+                  }
+                },
+                "uvMetresPerUnit": {
+                  "ZZ_project_8": 0.9505053494085312
+                },
+                "textureMeans": {}
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                2,
+                1.4,
+                0.03
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -1.0,
+                  -0.699999988079071,
+                  0.0020000000949949026
+                ],
+                "max": [
+                  1.0,
+                  0.699999988079071,
+                  0.026999998837709427
+                ]
+              },
+              "triangles": 484,
+              "dependencies": []
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.572Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "furniture.sacks",
+      "name": "麻袋",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.621Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/compost_bag_02/compost_bag_02_1k.gltf",
+            "sha256": "56ede732d19c06d6f55827cf0f4fd6850fdc63ea0847d64a66ba6f341bba6aed"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/sacks/v1/source.blend",
+            "sha256": "a407084996256e618edd157120efdc158a598dbb03d2a62b53b167b841387364"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/sacks/v1/model.glb",
+            "sha256": "4147b29964476ba9d38173695a04d30adf80e0184b2e8f27fa29a6cefddc0538",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/sacks/v1/textures/image-0.jpg",
+                "sha256": "5a9828cbaa87b74f435e9ae612accf95fcac9bf398f1d4e891063ef9c28e1a99"
+              },
+              {
+                "path": "game/art/models/furniture/sacks/v1/textures/image-1.jpg",
+                "sha256": "5e6a4efb1f66e97d436574f40d1c1b7006269f8d014ac25caa1ca632a378ffd4"
+              },
+              {
+                "path": "game/art/models/furniture/sacks/v1/textures/image-2.jpg",
+                "sha256": "4936a8ff6f7b19bed93511071fea30fb4b04d4f5ef4e24914bee56692ab98f1b"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/sacks/v1/preview.png",
+            "sha256": "a20e2e4c98ed7f6da4c8864837224781f44f8564829e19fbddcb6b9608b8ca74"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/sacks/v1/render.png",
+            "sha256": "a20e2e4c98ed7f6da4c8864837224781f44f8564829e19fbddcb6b9608b8ca74"
+          },
+          "author": {
+            "name": "Poly Haven / Satyaki Mandal",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/compost_bag_02"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.66,
+                0.6,
+                0.5
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.25,
+              "projectMaterials": {},
+              "projectMaterial": "material.hemp",
+              "uvMetresPerUnit": {
+                "compost_bag_02": 2.187085040005344
+              },
+              "textureMeans": {
+                "compost_bag_02": [
+                  0.09499161380175931,
+                  0.09822635470123943,
+                  0.08055441254856574
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.2,
+              0.7,
+              0.9
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "sacks",
+              "sourceAsset": "compost_bag_02",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.66,
+                  0.6,
+                  0.5
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.25,
+                "projectMaterials": {},
+                "projectMaterial": "material.hemp",
+                "uvMetresPerUnit": {
+                  "compost_bag_02": 2.187085040005344
+                },
+                "textureMeans": {
+                  "compost_bag_02": [
+                    0.09499161380175931,
+                    0.09822635470123943,
+                    0.08055441254856574
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.2,
+                0.9,
+                0.7
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.5999999642372131,
+                  -0.44999998807907104,
+                  0.0
+                ],
+                "max": [
+                  0.5999999642372131,
+                  0.44999998807907104,
+                  0.699999988079071
+                ]
+              },
+              "triangles": 12096,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "5a9828cbaa87b74f435e9ae612accf95fcac9bf398f1d4e891063ef9c28e1a99"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "5e6a4efb1f66e97d436574f40d1c1b7006269f8d014ac25caa1ca632a378ffd4"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "4936a8ff6f7b19bed93511071fea30fb4b04d4f5ef4e24914bee56692ab98f1b"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.619Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/compost_bag_02/source.json",
+            "sha256": "1ce8b96084ce386220ff1fecad566818aaa017c4eedd3cab7d0abdeb41cb1289"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.shelf",
+      "name": "架子",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.671Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/painted_wooden_shelves/painted_wooden_shelves_1k.gltf",
+            "sha256": "f4d9ffc04ad1e9ce3155522ac962c336bf1fa74b4a27b8a5fd4c8bdb81c2e8f6"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/shelf/v1/source.blend",
+            "sha256": "e44a89486eb730ee3075ec74749a0d000779ed5867ddc5f0c34f2372077cf9b7"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/shelf/v1/model.glb",
+            "sha256": "821d522117db17fa64373f391af139322e6d0786a56dbc00a8a9d018481859a9",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/shelf/v1/textures/image-0.jpg",
+                "sha256": "9dcd7e3783da2a2cd44cd4f7a78ac976d2866e02d8dd0799d180d0ab746ae239"
+              },
+              {
+                "path": "game/art/models/furniture/shelf/v1/textures/image-1.jpg",
+                "sha256": "430aef90494d0aa16c354bb4d39fc1a768dd822a0da7e6b746f1891a0cb7cf3a"
+              },
+              {
+                "path": "game/art/models/furniture/shelf/v1/textures/image-2.jpg",
+                "sha256": "256c99e04dc99961ad08e085b01adc03641e861f66d4b325b1acb0f822d1e9a9"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/shelf/v1/preview.png",
+            "sha256": "438b69968a7e49a2d7a8110705cefe1a87d214369653511098ecd8b8e735f81a"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/shelf/v1/render.png",
+            "sha256": "438b69968a7e49a2d7a8110705cefe1a87d214369653511098ecd8b8e735f81a"
+          },
+          "author": {
+            "name": "Poly Haven / Kirill Sannikov",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/painted_wooden_shelves"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {},
+              "uvMetresPerUnit": {
+                "painted_wooden_shelves": 4.027417945206955
+              },
+              "textureMeans": {
+                "painted_wooden_shelves": [
+                  0.0751948872041983,
+                  0.03419389030892995,
+                  0.023836395117518394
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.6,
+              1.9,
+              0.5
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "shelf",
+              "sourceAsset": "painted_wooden_shelves",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {},
+                "uvMetresPerUnit": {
+                  "painted_wooden_shelves": 4.027417945206955
+                },
+                "textureMeans": {
+                  "painted_wooden_shelves": [
+                    0.0751948872041983,
+                    0.03419389030892995,
+                    0.023836395117518394
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.6,
+                0.5,
+                1.9
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.8000000715255737,
+                  -0.25,
+                  0.0
+                ],
+                "max": [
+                  0.8000000715255737,
+                  0.2500000298023224,
+                  1.899999976158142
+                ]
+              },
+              "triangles": 524,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "9dcd7e3783da2a2cd44cd4f7a78ac976d2866e02d8dd0799d180d0ab746ae239"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "430aef90494d0aa16c354bb4d39fc1a768dd822a0da7e6b746f1891a0cb7cf3a"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "256c99e04dc99961ad08e085b01adc03641e861f66d4b325b1acb0f822d1e9a9"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.669Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/painted_wooden_shelves/source.json",
+            "sha256": "b6339d18a7f216f902690cbedd9b0db3eace33500a380be829c4d73d0129ea4b"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.stove",
+      "name": "灶",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "project-mesh-blender-refinement",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.717Z",
+          "original": {
+            "path": "assets/art/models/furniture-scene-20261027-v2/stove.json",
+            "sha256": "6516f644f061560533f50c2e7aa752835670291e1203ea7b56d00147ef12c18e"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/stove/v1/source.blend",
+            "sha256": "12e24e68aaade059fb4618caff65c917cd738bfde95552123369fa7a7edd66ae"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/stove/v1/model.glb",
+            "sha256": "c2d0c8a2e18a0a1acaedb7808f180f61fcf34173bb5066d83e904ed5170c181c",
+            "dependencies": []
+          },
+          "preview": {
+            "path": "game/art/models/furniture/stove/v1/preview.png",
+            "sha256": "795e0a2a94fba82f91edf6adb164a0eeae866e5527e00a61c109d4991014c54d"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/stove/v1/render.png",
+            "sha256": "795e0a2a94fba82f91edf6adb164a0eeae866e5527e00a61c109d4991014c54d"
+          },
+          "author": {
+            "name": "州渚项目原模型与Blender精修",
+            "license": "project-owned"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {
+                "ZZ_project_6": {
+                  "asset": "material.terracotta",
+                  "color": [
+                    0.600000024,
+                    0.400000006,
+                    0.280000001
+                  ],
+                  "roughness": 1,
+                  "metallic": 0
+                }
+              },
+              "uvMetresPerUnit": {
+                "ZZ_project_6": 1.0161181655853257
+              },
+              "textureMeans": {}
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.8,
+              0.85,
+              1
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "stove",
+              "sourceAsset": null,
+              "origin": "project-mesh-blender-refinement",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {
+                  "ZZ_project_6": {
+                    "asset": "material.terracotta",
+                    "color": [
+                      0.600000024,
+                      0.400000006,
+                      0.280000001
+                    ],
+                    "roughness": 1,
+                    "metallic": 0
+                  }
+                },
+                "uvMetresPerUnit": {
+                  "ZZ_project_6": 1.0161181655853257
+                },
+                "textureMeans": {}
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.8,
+                1,
+                0.85
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.8999999761581421,
+                  -0.5,
+                  0.0
+                ],
+                "max": [
+                  0.8999999761581421,
+                  0.5,
+                  2.75
+                ]
+              },
+              "triangles": 4664,
+              "dependencies": []
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.717Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null
+        }
+      ]
+    },
+    {
+      "id": "furniture.table",
+      "name": "桌",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.761Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_tea_table/chinese_tea_table_1k.gltf",
+            "sha256": "4c1987aa1978c4fe1dfd0f5f10739df399346fc4c9373315d8d4b0cc798d8b01"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/table/v1/source.blend",
+            "sha256": "0277bf8efd617deb817f9f3315cf08dca6e39e092317d90976504434fbe0fa56"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/table/v1/model.glb",
+            "sha256": "4eca58adc5c1f56197369293fcd9822a9bcdc81e1340bca12a0330a8186c72e9",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/table/v1/textures/image-0.jpg",
+                "sha256": "4b6eea9bbf344912313a1046fd3e5183970a907b6dbd55d1ef465e27dd2d0859"
+              },
+              {
+                "path": "game/art/models/furniture/table/v1/textures/image-1.jpg",
+                "sha256": "beaff8984d8fd498b7cfecc2e5decd4db3ba6c87583acc41d18767326cb3ae3c"
+              },
+              {
+                "path": "game/art/models/furniture/table/v1/textures/image-2.jpg",
+                "sha256": "5d93474de9d0560d8a9a46a498fc6f64fb030f9cec6e6eb8f95c36dfc8e09e94"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/table/v1/preview.png",
+            "sha256": "95c4583bf3c3bc5b8f23891d92908abd494cc9b0196bb3602300eab77a3334e6"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/table/v1/render.png",
+            "sha256": "95c4583bf3c3bc5b8f23891d92908abd494cc9b0196bb3602300eab77a3334e6"
+          },
+          "author": {
+            "name": "Poly Haven / Kirill Sannikov",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/chinese_tea_table"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {},
+              "uvMetresPerUnit": {
+                "chinese_tea_table": 2.8020623099054762
+              },
+              "textureMeans": {
+                "chinese_tea_table": [
+                  0.08302533096472152,
+                  0.040311713031267356,
+                  0.02259707827593566
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              1.4,
+              0.8,
+              0.9
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "table",
+              "sourceAsset": "chinese_tea_table",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {},
+                "uvMetresPerUnit": {
+                  "chinese_tea_table": 2.8020623099054762
+                },
+                "textureMeans": {
+                  "chinese_tea_table": [
+                    0.08302533096472152,
+                    0.040311713031267356,
+                    0.02259707827593566
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                1.4,
+                0.9,
+                0.8
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.699999988079071,
+                  -0.45000001788139343,
+                  0.0
+                ],
+                "max": [
+                  0.699999988079071,
+                  0.45000001788139343,
+                  0.800000011920929
+                ]
+              },
+              "triangles": 2508,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "4b6eea9bbf344912313a1046fd3e5183970a907b6dbd55d1ef465e27dd2d0859"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "beaff8984d8fd498b7cfecc2e5decd4db3ba6c87583acc41d18767326cb3ae3c"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "5d93474de9d0560d8a9a46a498fc6f64fb030f9cec6e6eb8f95c36dfc8e09e94"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.760Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/chinese_tea_table/source.json",
+            "sha256": "5cf8c2d9ce373eec622558ddb85731fd21353b1f5044bcff7b4ebe35d8bc1d9a"
+          }
+        }
+      ]
+    },
+    {
+      "id": "furniture.vat",
+      "name": "水缸",
+      "definition": "src/house_template.cpp",
+      "useSites": [
+        "Settlement",
+        "InteriorOverlay",
+        "content-studio:models"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.852Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/ceramic_pot/ceramic_pot_1k.gltf",
+            "sha256": "7d8c28f171f701a422341c82322d439ea5041a6edd4443a85e3c8f88ce12ab0e"
+          },
+          "editableSource": {
+            "path": "assets/art/models/furniture/vat/v1/source.blend",
+            "sha256": "73656043533a8f2172727eb896e5668870a66d3d733ef77843e08f2a508e4c4f"
+          },
+          "runtime": {
+            "path": "game/art/models/furniture/vat/v1/model.glb",
+            "sha256": "caa89dc580c5dc95d90d11d0f4ca1d1e0cb6aa3b635d8522c961ac3e704b15b5",
+            "dependencies": [
+              {
+                "path": "game/art/models/furniture/vat/v1/textures/image-0.jpg",
+                "sha256": "2102b4345882c9648de7ee3b3e547bf7a2a3c9fd35db0ded322df60df16a5c57"
+              },
+              {
+                "path": "game/art/models/furniture/vat/v1/textures/image-1.jpg",
+                "sha256": "583e49e8be2ba460700f2dcd6466ab347f5285ccc651dd9054b59ef6a78d812b"
+              },
+              {
+                "path": "game/art/models/furniture/vat/v1/textures/image-2.jpg",
+                "sha256": "b688549e4defe29de262ccba81278360cd2f42037a40b70f8f4693a96c14bc45"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/furniture/vat/v1/preview.png",
+            "sha256": "cbbea666b58158313eed762880cee3390bdd55c9162435a0635d5eb911a5bd83"
+          },
+          "render": {
+            "path": "assets/art/models/furniture/vat/v1/render.png",
+            "sha256": "cbbea666b58158313eed762880cee3390bdd55c9162435a0635d5eb911a5bd83"
+          },
+          "author": {
+            "name": "Poly Haven / Aron Łyczek",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/ceramic_pot"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.6,
+                0.4,
+                0.28
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {},
+              "projectMaterial": "material.terracotta",
+              "uvMetresPerUnit": {
+                "ceramic_pot": 2.337797826470167
+              },
+              "textureMeans": {
+                "ceramic_pot": [
+                  0.18974083164006872,
+                  0.12855470995315885,
+                  0.06100598952211334
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              0.9,
+              0.8,
+              0.9
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "vat",
+              "sourceAsset": "ceramic_pot",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.6,
+                  0.4,
+                  0.28
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {},
+                "projectMaterial": "material.terracotta",
+                "uvMetresPerUnit": {
+                  "ceramic_pot": 2.337797826470167
+                },
+                "textureMeans": {
+                  "ceramic_pot": [
+                    0.18974083164006872,
+                    0.12855470995315885,
+                    0.06100598952211334
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                0.9,
+                0.9,
+                0.8
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.44999998807907104,
+                  -0.44999998807907104,
+                  0.0
+                ],
+                "max": [
+                  0.44999998807907104,
+                  0.44999998807907104,
+                  0.800000011920929
+                ]
+              },
+              "triangles": 4944,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "2102b4345882c9648de7ee3b3e547bf7a2a3c9fd35db0ded322df60df16a5c57"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "583e49e8be2ba460700f2dcd6466ab347f5285ccc651dd9054b59ef6a78d812b"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "b688549e4defe29de262ccba81278360cd2f42037a40b70f8f4693a96c14bc45"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.851Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/ceramic_pot/source.json",
+            "sha256": "7f0f4e2eb20478ffbd3c5827988674179708f2ac97a2e07bc2e78278ecd24ed2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "prop.cargo_crate",
+      "name": "统一货箱",
+      "definition": "src/player.cpp / src/ship.cpp",
+      "useSites": [
+        "Player:Crate",
+        "Ship:Cargo"
+      ],
+      "versions": [
+        {
+          "version": "v1",
+          "origin": "author-model-adaptation",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.901Z",
+          "original": {
+            "path": "assets/art/external/polyhaven/20261027/wooden_crate_02/wooden_crate_02_1k.gltf",
+            "sha256": "e90985d317664668988cb95ce707784c94ab0ccc6d13c980ca789fa69a5cf7b6"
+          },
+          "editableSource": {
+            "path": "assets/art/models/prop/cargo_crate/v1/source.blend",
+            "sha256": "d80f12a9dbc742f0f2897bb2ab4507cebcda4d068562db54537e6ed020b03ab1"
+          },
+          "runtime": {
+            "path": "game/art/models/prop/cargo_crate/v1/model.glb",
+            "sha256": "ffd86935a53be65fd09368430f201f3bd61dc0aa97499623a373a6403f3c2f4a",
+            "dependencies": [
+              {
+                "path": "game/art/models/prop/cargo_crate/v1/textures/image-0.jpg",
+                "sha256": "59342f730c9f336950f796ef5e4c3b8c794ce5adbd54d98a2ecb679a7e4ae5e8"
+              },
+              {
+                "path": "game/art/models/prop/cargo_crate/v1/textures/image-1.jpg",
+                "sha256": "a6e57123110d2899af9493c22b1918174f1c96c707e7126ac67738d98ee10c07"
+              },
+              {
+                "path": "game/art/models/prop/cargo_crate/v1/textures/image-2.jpg",
+                "sha256": "a76af97005a66fe8c7cdcabf20174f06813e6a6d5cd9502157c93a57f3c89d5a"
+              }
+            ]
+          },
+          "preview": {
+            "path": "game/art/models/prop/cargo_crate/v1/preview.png",
+            "sha256": "feb23b20d723e5921e322f5187a7ac5bebb7ad556a3b7b7d3b30afa31a6ebd74"
+          },
+          "render": {
+            "path": "assets/art/models/prop/cargo_crate/v1/render.png",
+            "sha256": "feb23b20d723e5921e322f5187a7ac5bebb7ad556a3b7b7d3b30afa31a6ebd74"
+          },
+          "author": {
+            "name": "Poly Haven / James Ray Cock, Jurita Burger",
+            "license": "CC0-1.0",
+            "licenseUrl": "https://polyhaven.com/license",
+            "sourceUrl": "https://polyhaven.com/a/wooden_crate_02"
+          },
+          "binding": {
+            "appearance": {
+              "color": [
+                0.5,
+                0.36,
+                0.22
+              ],
+              "roughness": 0.88,
+              "normalStrength": 0.18,
+              "tileMetres": 0.5,
+              "projectMaterials": {},
+              "uvMetresPerUnit": {
+                "wooden_crate_02": 2.673128086064765
+              },
+              "textureMeans": {
+                "wooden_crate_02": [
+                  0.14234492829661508,
+                  0.062279103529889704,
+                  0.026507522028794427
+                ]
+              }
+            },
+            "scale": 1.0,
+            "dimensions": [
+              0.8,
+              0.6,
+              0.7
+            ]
+          },
+          "derivation": {
+            "preparation": {
+              "kind": "cargo_crate",
+              "sourceAsset": "wooden_crate_02",
+              "origin": "author-model-adaptation",
+              "appearance": {
+                "color": [
+                  0.5,
+                  0.36,
+                  0.22
+                ],
+                "roughness": 0.88,
+                "normalStrength": 0.18,
+                "tileMetres": 0.5,
+                "projectMaterials": {},
+                "uvMetresPerUnit": {
+                  "wooden_crate_02": 2.673128086064765
+                },
+                "textureMeans": {
+                  "wooden_crate_02": [
+                    0.14234492829661508,
+                    0.062279103529889704,
+                    0.026507522028794427
+                  ]
+                }
+              },
+              "sourceDefinition": "src/house_template.cpp",
+              "expectedWidthDepthHeight": [
+                0.8,
+                0.7,
+                0.6
+              ],
+              "actualBoundsZUp": {
+                "min": [
+                  -0.4000000059604645,
+                  -0.3499999940395355,
+                  -0.30000001192092896
+                ],
+                "max": [
+                  0.4000000059604645,
+                  0.3499999940395355,
+                  0.30000001192092896
+                ]
+              },
+              "triangles": 5176,
+              "dependencies": [
+                {
+                  "path": "textures/image-0.jpg",
+                  "sha256": "59342f730c9f336950f796ef5e4c3b8c794ce5adbd54d98a2ecb679a7e4ae5e8"
+                },
+                {
+                  "path": "textures/image-1.jpg",
+                  "sha256": "a6e57123110d2899af9493c22b1918174f1c96c707e7126ac67738d98ee10c07"
+                },
+                {
+                  "path": "textures/image-2.jpg",
+                  "sha256": "a76af97005a66fe8c7cdcabf20174f06813e6a6d5cd9502157c93a57f3c89d5a"
+                }
+              ]
+            },
+            "tools": [
+              "tools/art-models/prepare_furniture.py",
+              "tools/art-models/externalize_textures.py"
+            ],
+            "sourceImages": "原作者UV贴图原字节保留；颜色/粗糙度/材质映射由生产着色器控制",
+            "modificationsLicense": "项目改编不自动转授CC0"
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.900Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验",
+            "productionEvidence": "output/model-upgrade-20261027/entity-production-pixels/report.json"
+          },
+          "userConfirmation": null,
+          "sourceArchiveManifest": {
+            "path": "assets/art/external/polyhaven/20261027/wooden_crate_02/source.json",
+            "sha256": "4697477088dbb0c3d12a56b7ad6dbc68ecdb18e79f6973d6ffdf2c7827382f7c"
+          }
+        }
+      ]
     }
   ]
 }

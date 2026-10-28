@@ -1,0 +1,53 @@
+{
+  "name": "Painted Wooden Bench",
+  "categories": [
+    "furniture",
+    "seating"
+  ],
+  "type": 2,
+  "tags": [
+    "vintage",
+    "old",
+    "wooden",
+    "worn",
+    "antique",
+    "farmhouse",
+    "aged",
+    "rustic",
+    "small",
+    "seat",
+    "stool"
+  ],
+  "authors": {
+    "Kirill Sannikov": "All"
+  },
+  "info": null,
+  "date_published": 1712707200,
+  "staging": null,
+  "polycount": 630,
+  "dimensions": [
+    1164.9435758590698,
+    496.5430945158005,
+    889.2914750613272
+  ],
+  "max_resolution": [
+    4096,
+    4096
+  ],
+  "texel_density": 1621.0608929808423,
+  "files_hash": "6784218e3b57df8750c5aa76ece84edfdd53b797",
+  "description": "Free 4K painted wooden bench model with worn, antique red finish, rustic farmhouse charm, compact seating and lower shelf - great aged prop for interiors.",
+  "category_id": "c7642d58-13d1-5289-844b-dd12b1455a27",
+  "category": "Furniture/Seating/Benches",
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood"
+    ]
+  },
+  "img_version": "68ce259c",
+  "download_count": 3775,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/painted_wooden_bench.png?width=256&height=256&format=webp&v=68ce259c"
+}

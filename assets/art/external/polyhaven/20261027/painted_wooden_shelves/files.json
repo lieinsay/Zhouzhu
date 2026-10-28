@@ -1,0 +1,631 @@
+{
+  "Diffuse": {
+    "4k": {
+      "jpg": {
+        "size": 8942931,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_diff_4k.jpg",
+        "md5": "c62d8d73f977b867f47c694a4e3ba70e"
+      },
+      "png": {
+        "size": 49320012,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/painted_wooden_shelves/painted_wooden_shelves_diff_4k.png",
+        "md5": "c7300d7251ec3b4b3c16181b0565c7ff"
+      },
+      "exr": {
+        "size": 23663094,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_diff_4k.exr",
+        "md5": "190011769608d550a336fca10de1878c"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2074155,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_diff_2k.jpg",
+        "md5": "fc887d416abd2582295c25d79ba599b2"
+      },
+      "png": {
+        "size": 15118038,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/painted_wooden_shelves/painted_wooden_shelves_diff_2k.png",
+        "md5": "3ee198c6f6622df370faca70d710e534"
+      },
+      "exr": {
+        "size": 5335505,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_diff_2k.exr",
+        "md5": "dab07f0fa52e4b5cf9402cb7d3124bd1"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 509573,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.jpg",
+        "md5": "42dc5354c0626a2e13619f8df6fc260f"
+      },
+      "png": {
+        "size": 4146089,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.png",
+        "md5": "6243b69b0661049268424622721c8395"
+      },
+      "exr": {
+        "size": 1220630,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.exr",
+        "md5": "9c39a197a5809430c8dc0770656295e3"
+      }
+    }
+  },
+  "nor_dx": {
+    "4k": {
+      "jpg": {
+        "size": 13106520,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_4k.jpg",
+        "md5": "7ab5c0a55ebdf249336743a53ba81d6b"
+      },
+      "png": {
+        "size": 59278801,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_4k.png",
+        "md5": "09e29beed3842b2d0dbb7f40c39b0e6e"
+      },
+      "exr": {
+        "size": 25414022,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_4k.exr",
+        "md5": "a7c5df0ed938d21a8053b3942769d18a"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 3625331,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_2k.jpg",
+        "md5": "f3f765827f926b7c070ec3f79004a2bd"
+      },
+      "png": {
+        "size": 17189009,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_2k.png",
+        "md5": "e88fc7837c165f563051197c688b4590"
+      },
+      "exr": {
+        "size": 7693878,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_2k.exr",
+        "md5": "660cc47439431e55e08e362f0ab0d4b5"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 841853,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_1k.jpg",
+        "md5": "a7277d6a6484f5d216624b2642b0f59b"
+      },
+      "png": {
+        "size": 4512540,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_1k.png",
+        "md5": "629374bcff95cc6cdc9b8a9e70cf5c95"
+      },
+      "exr": {
+        "size": 1907227,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_nor_dx_1k.exr",
+        "md5": "9cc5cc20b63936185238172de036766f"
+      }
+    }
+  },
+  "nor_gl": {
+    "4k": {
+      "jpg": {
+        "size": 13080240,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_4k.jpg",
+        "md5": "fbdd9727d6147d261fe20d969cddd68e"
+      },
+      "png": {
+        "size": 59278636,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_4k.png",
+        "md5": "9711f1f0e852c36b382b71cb5e095035"
+      },
+      "exr": {
+        "size": 25410072,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_4k.exr",
+        "md5": "33d1dd262ecc9e4d409dfec33e54e34a"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 3626263,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_2k.jpg",
+        "md5": "eb2a6b424c18281c33b42fe5c9064408"
+      },
+      "png": {
+        "size": 17188895,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_2k.png",
+        "md5": "f6fee8ee928b8bb2cc6aa69ee36fab20"
+      },
+      "exr": {
+        "size": 7694111,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_2k.exr",
+        "md5": "ecdf0f1fbcd4d21372848f571566a691"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 843073,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.jpg",
+        "md5": "2a1f2f0dd9fd556ca8809fd7a133bf3d"
+      },
+      "png": {
+        "size": 4512297,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.png",
+        "md5": "fea7bd2a096b17bc37ab365233d9f2dc"
+      },
+      "exr": {
+        "size": 1909330,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.exr",
+        "md5": "8aef2d18752238525e0f7c82e6eac063"
+      }
+    }
+  },
+  "blend": {
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/painted_wooden_shelves_diff_4k.jpg": {
+            "size": 8942931,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_diff_4k.jpg",
+            "md5": "c62d8d73f977b867f47c694a4e3ba70e"
+          },
+          "textures/painted_wooden_shelves_nor_gl_4k.exr": {
+            "size": 25410072,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_4k.exr",
+            "md5": "33d1dd262ecc9e4d409dfec33e54e34a"
+          },
+          "textures/painted_wooden_shelves_rough_4k.exr": {
+            "size": 7715777,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_rough_4k.exr",
+            "md5": "1af3d8aaf83be60d1ee7a2ea2b4078e0"
+          }
+        },
+        "size": 127521,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/painted_wooden_shelves/painted_wooden_shelves_4k.blend",
+        "md5": "068789b3f8bd1e9c1e1e08b8178c7c42"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/painted_wooden_shelves_rough_2k.exr": {
+            "size": 2195835,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_rough_2k.exr",
+            "md5": "1f31404860f221ec93605e916b2c6c00"
+          },
+          "textures/painted_wooden_shelves_nor_gl_2k.exr": {
+            "size": 7694111,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_2k.exr",
+            "md5": "ecdf0f1fbcd4d21372848f571566a691"
+          },
+          "textures/painted_wooden_shelves_diff_2k.jpg": {
+            "size": 2074155,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_diff_2k.jpg",
+            "md5": "fc887d416abd2582295c25d79ba599b2"
+          }
+        },
+        "size": 127323,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/painted_wooden_shelves/painted_wooden_shelves_2k.blend",
+        "md5": "a7c5a7ebff699c16af55f60240286940"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/painted_wooden_shelves_nor_gl_1k.exr": {
+            "size": 1909330,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.exr",
+            "md5": "8aef2d18752238525e0f7c82e6eac063"
+          },
+          "textures/painted_wooden_shelves_rough_1k.exr": {
+            "size": 626748,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_rough_1k.exr",
+            "md5": "21af6719d7d8ebbc1a54c77154a713a7"
+          },
+          "textures/painted_wooden_shelves_diff_1k.jpg": {
+            "size": 509573,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.jpg",
+            "md5": "42dc5354c0626a2e13619f8df6fc260f"
+          }
+        },
+        "size": 127496,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/painted_wooden_shelves/painted_wooden_shelves_1k.blend",
+        "md5": "373532ef5a598cf6e11887401012ab3f"
+      }
+    }
+  },
+  "gltf": {
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/painted_wooden_shelves_diff_4k.jpg": {
+            "size": 8942931,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_diff_4k.jpg",
+            "md5": "c62d8d73f977b867f47c694a4e3ba70e"
+          },
+          "textures/painted_wooden_shelves_nor_gl_4k.jpg": {
+            "size": 13080240,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_4k.jpg",
+            "md5": "fbdd9727d6147d261fe20d969cddd68e"
+          },
+          "painted_wooden_shelves.bin": {
+            "size": 20680,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/painted_wooden_shelves/painted_wooden_shelves.bin",
+            "md5": "964b327c4effc165624d160cdf2ee96c"
+          },
+          "textures/painted_wooden_shelves_arm_4k.jpg": {
+            "size": 9150520,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_arm_4k.jpg",
+            "md5": "b8cfeef753261bfdd1e06673f89df4c9"
+          }
+        },
+        "size": 2858,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/painted_wooden_shelves/painted_wooden_shelves_4k.gltf",
+        "md5": "d92901075fde1ba2f9cc0cd47d2b9f04"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "textures/painted_wooden_shelves_nor_gl_2k.jpg": {
+            "size": 3626263,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_2k.jpg",
+            "md5": "eb2a6b424c18281c33b42fe5c9064408"
+          },
+          "textures/painted_wooden_shelves_arm_2k.jpg": {
+            "size": 2626989,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_arm_2k.jpg",
+            "md5": "fc604455d9f4bb12c7ef45e2dfc80ec9"
+          },
+          "painted_wooden_shelves.bin": {
+            "size": 20680,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/painted_wooden_shelves/painted_wooden_shelves.bin",
+            "md5": "964b327c4effc165624d160cdf2ee96c"
+          },
+          "textures/painted_wooden_shelves_diff_2k.jpg": {
+            "size": 2074155,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_diff_2k.jpg",
+            "md5": "fc887d416abd2582295c25d79ba599b2"
+          }
+        },
+        "size": 2858,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/painted_wooden_shelves/painted_wooden_shelves_2k.gltf",
+        "md5": "215cda0c3af5deb515f65f10f19bc14b"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/painted_wooden_shelves_nor_gl_1k.jpg": {
+            "size": 843073,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.jpg",
+            "md5": "2a1f2f0dd9fd556ca8809fd7a133bf3d"
+          },
+          "painted_wooden_shelves.bin": {
+            "size": 20680,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/painted_wooden_shelves/painted_wooden_shelves.bin",
+            "md5": "964b327c4effc165624d160cdf2ee96c"
+          },
+          "textures/painted_wooden_shelves_arm_1k.jpg": {
+            "size": 734506,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_arm_1k.jpg",
+            "md5": "e97521e691aa2c5c15fa5634e7bdef8a"
+          },
+          "textures/painted_wooden_shelves_diff_1k.jpg": {
+            "size": 509573,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.jpg",
+            "md5": "42dc5354c0626a2e13619f8df6fc260f"
+          }
+        },
+        "size": 2858,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/painted_wooden_shelves/painted_wooden_shelves_1k.gltf",
+        "md5": "00af5933b9b5abbc4cad88eede28225c"
+      }
+    }
+  },
+  "usd": {
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/painted_wooden_shelves_diff_4k.jpg": {
+            "size": 8942931,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_diff_4k.jpg",
+            "md5": "c62d8d73f977b867f47c694a4e3ba70e"
+          },
+          "textures/painted_wooden_shelves_nor_gl_4k.exr": {
+            "size": 25410072,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_4k.exr",
+            "md5": "33d1dd262ecc9e4d409dfec33e54e34a"
+          },
+          "textures/painted_wooden_shelves_rough_4k.exr": {
+            "size": 7715777,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_rough_4k.exr",
+            "md5": "1af3d8aaf83be60d1ee7a2ea2b4078e0"
+          }
+        },
+        "size": 34999,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/painted_wooden_shelves/painted_wooden_shelves_4k.usdc",
+        "md5": "7ad2ac2a5fd378bc67ababce5476c5ef"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/painted_wooden_shelves_rough_2k.exr": {
+            "size": 2195835,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_rough_2k.exr",
+            "md5": "1f31404860f221ec93605e916b2c6c00"
+          },
+          "textures/painted_wooden_shelves_nor_gl_2k.exr": {
+            "size": 7694111,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_2k.exr",
+            "md5": "ecdf0f1fbcd4d21372848f571566a691"
+          },
+          "textures/painted_wooden_shelves_diff_2k.jpg": {
+            "size": 2074155,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_diff_2k.jpg",
+            "md5": "fc887d416abd2582295c25d79ba599b2"
+          }
+        },
+        "size": 34999,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/painted_wooden_shelves/painted_wooden_shelves_2k.usdc",
+        "md5": "2e609daa9f0c39b90fab145c6028cdaf"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/painted_wooden_shelves_nor_gl_1k.exr": {
+            "size": 1909330,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.exr",
+            "md5": "8aef2d18752238525e0f7c82e6eac063"
+          },
+          "textures/painted_wooden_shelves_rough_1k.exr": {
+            "size": 626748,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_rough_1k.exr",
+            "md5": "21af6719d7d8ebbc1a54c77154a713a7"
+          },
+          "textures/painted_wooden_shelves_diff_1k.jpg": {
+            "size": 509573,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.jpg",
+            "md5": "42dc5354c0626a2e13619f8df6fc260f"
+          }
+        },
+        "size": 34999,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/painted_wooden_shelves/painted_wooden_shelves_1k.usdc",
+        "md5": "fba6459ff2a84c039f9db41783e9ad7a"
+      }
+    }
+  },
+  "arm": {
+    "4k": {
+      "jpg": {
+        "size": 9150520,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_arm_4k.jpg",
+        "md5": "b8cfeef753261bfdd1e06673f89df4c9"
+      },
+      "png": {
+        "size": 25702353,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/painted_wooden_shelves/painted_wooden_shelves_arm_4k.png",
+        "md5": "7bde5e3fcce3148635b2d549c881d301"
+      },
+      "exr": {
+        "size": 17421842,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_arm_4k.exr",
+        "md5": "1f98216ba6cf0d848dee85a9eb81107e"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2626989,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_arm_2k.jpg",
+        "md5": "fc604455d9f4bb12c7ef45e2dfc80ec9"
+      },
+      "png": {
+        "size": 9088088,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/painted_wooden_shelves/painted_wooden_shelves_arm_2k.png",
+        "md5": "213c6f83edf102ae4a53baa45ad48331"
+      },
+      "exr": {
+        "size": 5156075,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_arm_2k.exr",
+        "md5": "a3f89f1a14f1c2cb58e105223ceba2d6"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 734506,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_arm_1k.jpg",
+        "md5": "e97521e691aa2c5c15fa5634e7bdef8a"
+      },
+      "png": {
+        "size": 2607767,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_shelves/painted_wooden_shelves_arm_1k.png",
+        "md5": "f2bbcf4f60d0e4b24311bd60dec3486d"
+      },
+      "exr": {
+        "size": 1531274,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_arm_1k.exr",
+        "md5": "04918a027736f603f2b90f8cf99a1dd4"
+      }
+    }
+  },
+  "fbx": {
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/painted_wooden_shelves_diff_4k.jpg": {
+            "size": 8942931,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_diff_4k.jpg",
+            "md5": "c62d8d73f977b867f47c694a4e3ba70e"
+          },
+          "textures/painted_wooden_shelves_nor_gl_4k.exr": {
+            "size": 25410072,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_4k.exr",
+            "md5": "33d1dd262ecc9e4d409dfec33e54e34a"
+          },
+          "textures/painted_wooden_shelves_rough_4k.exr": {
+            "size": 7715777,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_rough_4k.exr",
+            "md5": "1af3d8aaf83be60d1ee7a2ea2b4078e0"
+          }
+        },
+        "size": 41548,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/painted_wooden_shelves/painted_wooden_shelves_4k.fbx",
+        "md5": "17da6b1529fabfbb23f017c893f4728c"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/painted_wooden_shelves_rough_2k.exr": {
+            "size": 2195835,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_rough_2k.exr",
+            "md5": "1f31404860f221ec93605e916b2c6c00"
+          },
+          "textures/painted_wooden_shelves_nor_gl_2k.exr": {
+            "size": 7694111,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_2k.exr",
+            "md5": "ecdf0f1fbcd4d21372848f571566a691"
+          },
+          "textures/painted_wooden_shelves_diff_2k.jpg": {
+            "size": 2074155,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_diff_2k.jpg",
+            "md5": "fc887d416abd2582295c25d79ba599b2"
+          }
+        },
+        "size": 41548,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/painted_wooden_shelves/painted_wooden_shelves_2k.fbx",
+        "md5": "5e1b347d31fc8c448422cfcaa8bedc22"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/painted_wooden_shelves_nor_gl_1k.exr": {
+            "size": 1909330,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.exr",
+            "md5": "8aef2d18752238525e0f7c82e6eac063"
+          },
+          "textures/painted_wooden_shelves_rough_1k.exr": {
+            "size": 626748,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_rough_1k.exr",
+            "md5": "21af6719d7d8ebbc1a54c77154a713a7"
+          },
+          "textures/painted_wooden_shelves_diff_1k.jpg": {
+            "size": 509573,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.jpg",
+            "md5": "42dc5354c0626a2e13619f8df6fc260f"
+          }
+        },
+        "size": 41548,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/painted_wooden_shelves/painted_wooden_shelves_1k.fbx",
+        "md5": "f24ef7b2a507e95b259670823ba48b6d"
+      }
+    }
+  },
+  "AO": {
+    "4k": {
+      "jpg": {
+        "size": 1352506,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_ao_4k.jpg",
+        "md5": "1568261dae5fedee1b3432ece8bdb057"
+      },
+      "png": {
+        "size": 8874629,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/painted_wooden_shelves/painted_wooden_shelves_ao_4k.png",
+        "md5": "39ae3e73772c08ae6bae1417df8f1389"
+      },
+      "exr": {
+        "size": 1015193,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_ao_4k.exr",
+        "md5": "a76868c30854138248de4766ddf966f0"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 393941,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_ao_2k.jpg",
+        "md5": "de6fee0cab0e61beda280ff6875abd40"
+      },
+      "png": {
+        "size": 2349548,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/painted_wooden_shelves/painted_wooden_shelves_ao_2k.png",
+        "md5": "5b57514d6a5a2d28db95eabe953409ce"
+      },
+      "exr": {
+        "size": 390168,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_ao_2k.exr",
+        "md5": "58e895b89faf697319aa2b1fb34846f8"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 141337,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_ao_1k.jpg",
+        "md5": "01894eb0055570ee0578860885c921bb"
+      },
+      "png": {
+        "size": 589758,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_shelves/painted_wooden_shelves_ao_1k.png",
+        "md5": "35770a995b76f10b55bb858962568f18"
+      },
+      "exr": {
+        "size": 171301,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_ao_1k.exr",
+        "md5": "9a5d6c7eb798cce3f87e52db394b714e"
+      }
+    }
+  },
+  "Rough": {
+    "4k": {
+      "jpg": {
+        "size": 7633003,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/painted_wooden_shelves/painted_wooden_shelves_rough_4k.jpg",
+        "md5": "5c15230d855eeb260bda58b7cd0746d6"
+      },
+      "png": {
+        "size": 9842324,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/painted_wooden_shelves/painted_wooden_shelves_rough_4k.png",
+        "md5": "3ba1d140ec5a209f8537635211780e8f"
+      },
+      "exr": {
+        "size": 7715777,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/painted_wooden_shelves/painted_wooden_shelves_rough_4k.exr",
+        "md5": "1af3d8aaf83be60d1ee7a2ea2b4078e0"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2146854,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/painted_wooden_shelves/painted_wooden_shelves_rough_2k.jpg",
+        "md5": "9b4f9f3a9d3b064cabbd3063ee856903"
+      },
+      "png": {
+        "size": 4931087,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/painted_wooden_shelves/painted_wooden_shelves_rough_2k.png",
+        "md5": "d1d05b67dbf91d7f535d8f587c9b1620"
+      },
+      "exr": {
+        "size": 2195835,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/painted_wooden_shelves/painted_wooden_shelves_rough_2k.exr",
+        "md5": "1f31404860f221ec93605e916b2c6c00"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 593952,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_rough_1k.jpg",
+        "md5": "75bb13475d2ba4d7c89c2e6064c2b1b3"
+      },
+      "png": {
+        "size": 1502621,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/painted_wooden_shelves/painted_wooden_shelves_rough_1k.png",
+        "md5": "605ae640ce0b64f3f3c8ebbbc861370d"
+      },
+      "exr": {
+        "size": 626748,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/painted_wooden_shelves/painted_wooden_shelves_rough_1k.exr",
+        "md5": "21af6719d7d8ebbc1a54c77154a713a7"
+      }
+    }
+  }
+}

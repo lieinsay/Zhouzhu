@@ -1,0 +1,964 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 34452671,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_diff_8k.jpg",
+        "md5": "f9f9e15a170214f78da4ab5df82dfc71"
+      },
+      "png": {
+        "size": 187349717,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/wooden_bucket_02/wooden_bucket_02_diff_8k.png",
+        "md5": "9e0e7bedae14127bf7e1fdf40a0bbbfe"
+      },
+      "exr": {
+        "size": 69207748,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_diff_8k.exr",
+        "md5": "1b25bd73da050da31263abe5920a1f49"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8982324,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_diff_4k.jpg",
+        "md5": "1f825bfae6a85b8eed5dea79525a2572"
+      },
+      "png": {
+        "size": 62356102,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/wooden_bucket_02/wooden_bucket_02_diff_4k.png",
+        "md5": "9870a0be9d68df1e9cd291df536c29fc"
+      },
+      "exr": {
+        "size": 16025779,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_diff_4k.exr",
+        "md5": "28cb5a07405016280468aeeda8b17d9a"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2392805,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_diff_2k.jpg",
+        "md5": "34d2b1b4544345fc21283999f0fd463b"
+      },
+      "png": {
+        "size": 18572571,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/wooden_bucket_02/wooden_bucket_02_diff_2k.png",
+        "md5": "205d9b47b0104c7cbe2f4fb568733870"
+      },
+      "exr": {
+        "size": 4167611,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_diff_2k.exr",
+        "md5": "fc5bce78603046ef8bf9337e4e063126"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 648386,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_diff_1k.jpg",
+        "md5": "767e56a66acea53b9f6600f8895fcdb4"
+      },
+      "png": {
+        "size": 5138415,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_bucket_02/wooden_bucket_02_diff_1k.png",
+        "md5": "3e395a8e1b2a2a8b6d68bf34440ba9d6"
+      },
+      "exr": {
+        "size": 1148255,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_diff_1k.exr",
+        "md5": "7ce0f9792bba51c0f1e22b87dde6d3cc"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 39644250,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_nor_dx_8k.jpg",
+        "md5": "3ebc192abd7057731bee18d48ccc6841"
+      },
+      "png": {
+        "size": 270214731,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/wooden_bucket_02/wooden_bucket_02_nor_dx_8k.png",
+        "md5": "8b97f8972dea3f79ab71ff8afc239259"
+      },
+      "exr": {
+        "size": 77630489,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_nor_dx_8k.exr",
+        "md5": "5bda06095ce5ce595edba6cb43e1d03e"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 11197327,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_nor_dx_4k.jpg",
+        "md5": "6be7e2857f2ecb4db07638e04081b86e"
+      },
+      "png": {
+        "size": 76550027,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/wooden_bucket_02/wooden_bucket_02_nor_dx_4k.png",
+        "md5": "45c1ed7cf0b9741293635a08c1584e3b"
+      },
+      "exr": {
+        "size": 23397300,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_nor_dx_4k.exr",
+        "md5": "ef5ceb4f038dbf3249757e765e4024d1"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2952301,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_nor_dx_2k.jpg",
+        "md5": "244c939b840cc4cfaf92c1eb1c982a3d"
+      },
+      "png": {
+        "size": 20353662,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/wooden_bucket_02/wooden_bucket_02_nor_dx_2k.png",
+        "md5": "77fe21c6324e133a7fa5c383fb70c5ea"
+      },
+      "exr": {
+        "size": 6487248,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_nor_dx_2k.exr",
+        "md5": "2609b523571255a0488376ee0975f4ff"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 760253,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_nor_dx_1k.jpg",
+        "md5": "5f9c74d40857dfb0c867faaf1975a10a"
+      },
+      "png": {
+        "size": 5253537,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_bucket_02/wooden_bucket_02_nor_dx_1k.png",
+        "md5": "3417e995f8c935a06347b95e8fecf85d"
+      },
+      "exr": {
+        "size": 1684282,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_nor_dx_1k.exr",
+        "md5": "b1f0c1da1b2520e6b1cc86d507cdb2eb"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 37725980,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_nor_gl_8k.jpg",
+        "md5": "8e4ce35a16aadb1482f3270a09b848fe"
+      },
+      "png": {
+        "size": 270224687,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/wooden_bucket_02/wooden_bucket_02_nor_gl_8k.png",
+        "md5": "1f2dd55ac3149ec88d0ff1e4dbf754ee"
+      },
+      "exr": {
+        "size": 77298927,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_nor_gl_8k.exr",
+        "md5": "927292e1172fe7634426505f47e87518"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 10952383,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_nor_gl_4k.jpg",
+        "md5": "068db363da566dcb4f3bebad93afd103"
+      },
+      "png": {
+        "size": 76552823,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/wooden_bucket_02/wooden_bucket_02_nor_gl_4k.png",
+        "md5": "097a3ee6e6b4f303d6478e9cbc51fa3b"
+      },
+      "exr": {
+        "size": 23339159,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_nor_gl_4k.exr",
+        "md5": "02ff982128c9f940fec7dedb7eb2a01d"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2924878,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_nor_gl_2k.jpg",
+        "md5": "02fa74edb94077df4d2b120ca9469309"
+      },
+      "png": {
+        "size": 20354238,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/wooden_bucket_02/wooden_bucket_02_nor_gl_2k.png",
+        "md5": "5464acb5a273f2d2630840a9a564f9b3"
+      },
+      "exr": {
+        "size": 6473213,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_nor_gl_2k.exr",
+        "md5": "597cec71ef15c806ba5fc72bb4b72e79"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 756137,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_nor_gl_1k.jpg",
+        "md5": "2c85542496f2ca81528b2bf217774d39"
+      },
+      "png": {
+        "size": 5253662,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_bucket_02/wooden_bucket_02_nor_gl_1k.png",
+        "md5": "7dcc227ba8ada7a71e3ea654dcfa6c79"
+      },
+      "exr": {
+        "size": 1681643,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_nor_gl_1k.exr",
+        "md5": "7e9d90e4bd01dbd1e59c4f2becaa17e7"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/wooden_bucket_02_metal_8k.exr": {
+            "size": 4799027,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_metal_8k.exr",
+            "md5": "ea86aef883047aec072547610771ac23"
+          },
+          "textures/wooden_bucket_02_nor_gl_8k.exr": {
+            "size": 77298927,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_nor_gl_8k.exr",
+            "md5": "927292e1172fe7634426505f47e87518"
+          },
+          "textures/wooden_bucket_02_diff_8k.jpg": {
+            "size": 34452671,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_diff_8k.jpg",
+            "md5": "f9f9e15a170214f78da4ab5df82dfc71"
+          },
+          "textures/wooden_bucket_02_rough_8k.exr": {
+            "size": 53831979,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_rough_8k.exr",
+            "md5": "e57bd8a50eafddffd051ff2496b159ed"
+          }
+        },
+        "size": 349789,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/wooden_bucket_02/wooden_bucket_02_8k.blend",
+        "md5": "cdaaa6525777405fdda734066695daee"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/wooden_bucket_02_nor_gl_4k.exr": {
+            "size": 23339159,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_nor_gl_4k.exr",
+            "md5": "02ff982128c9f940fec7dedb7eb2a01d"
+          },
+          "textures/wooden_bucket_02_diff_4k.jpg": {
+            "size": 8982324,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_diff_4k.jpg",
+            "md5": "1f825bfae6a85b8eed5dea79525a2572"
+          },
+          "textures/wooden_bucket_02_metal_4k.exr": {
+            "size": 2023167,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_metal_4k.exr",
+            "md5": "5556847804c6b68e75d6ffbcd4a26c9c"
+          },
+          "textures/wooden_bucket_02_rough_4k.exr": {
+            "size": 15689838,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_rough_4k.exr",
+            "md5": "66d90255e981375322e2c9c04f98c5a2"
+          }
+        },
+        "size": 349993,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/wooden_bucket_02/wooden_bucket_02_4k.blend",
+        "md5": "c3deed300e8b55f363e79c000a3e6be4"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/wooden_bucket_02_diff_2k.jpg": {
+            "size": 2392805,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_diff_2k.jpg",
+            "md5": "34d2b1b4544345fc21283999f0fd463b"
+          },
+          "textures/wooden_bucket_02_rough_2k.exr": {
+            "size": 4536188,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_rough_2k.exr",
+            "md5": "b3dba8d878c388104753f317cc3c877c"
+          },
+          "textures/wooden_bucket_02_metal_2k.exr": {
+            "size": 756103,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_metal_2k.exr",
+            "md5": "f2dadc955d7798899a0057c3818d4d56"
+          },
+          "textures/wooden_bucket_02_nor_gl_2k.exr": {
+            "size": 6473213,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_nor_gl_2k.exr",
+            "md5": "597cec71ef15c806ba5fc72bb4b72e79"
+          }
+        },
+        "size": 350038,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/wooden_bucket_02/wooden_bucket_02_2k.blend",
+        "md5": "06a882b641db4fe3ad78b8ceb2306b9d"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/wooden_bucket_02_nor_gl_1k.exr": {
+            "size": 1681643,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_nor_gl_1k.exr",
+            "md5": "7e9d90e4bd01dbd1e59c4f2becaa17e7"
+          },
+          "textures/wooden_bucket_02_rough_1k.exr": {
+            "size": 1212762,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_rough_1k.exr",
+            "md5": "1a05678ed51674f589382da95610c9a6"
+          },
+          "textures/wooden_bucket_02_diff_1k.jpg": {
+            "size": 648386,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_diff_1k.jpg",
+            "md5": "767e56a66acea53b9f6600f8895fcdb4"
+          },
+          "textures/wooden_bucket_02_metal_1k.exr": {
+            "size": 266987,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_metal_1k.exr",
+            "md5": "78bbad6cb3635ea1fa92f5dada78fd0c"
+          }
+        },
+        "size": 349831,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/wooden_bucket_02/wooden_bucket_02_1k.blend",
+        "md5": "d7034d2be219c797823066cf0cddc7ee"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "textures/wooden_bucket_02_arm_8k.jpg": {
+            "size": 44352309,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_arm_8k.jpg",
+            "md5": "b8b7104b70e4eaf5fa967e38e0e65cff"
+          },
+          "textures/wooden_bucket_02_nor_gl_8k.jpg": {
+            "size": 37725980,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_nor_gl_8k.jpg",
+            "md5": "8e4ce35a16aadb1482f3270a09b848fe"
+          },
+          "wooden_bucket_02.bin": {
+            "size": 227128,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_bucket_02/wooden_bucket_02.bin",
+            "md5": "1795ede198f19fe6b81c92690a90fd79"
+          },
+          "textures/wooden_bucket_02_diff_8k.jpg": {
+            "size": 34452671,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_diff_8k.jpg",
+            "md5": "f9f9e15a170214f78da4ab5df82dfc71"
+          }
+        },
+        "size": 5625,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_bucket_02/wooden_bucket_02_8k.gltf",
+        "md5": "203bbadb40f3e1af7b8b811c084b0e92"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/wooden_bucket_02_diff_4k.jpg": {
+            "size": 8982324,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_diff_4k.jpg",
+            "md5": "1f825bfae6a85b8eed5dea79525a2572"
+          },
+          "textures/wooden_bucket_02_arm_4k.jpg": {
+            "size": 11383914,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_arm_4k.jpg",
+            "md5": "d0822b34e604a132301722120cab644e"
+          },
+          "textures/wooden_bucket_02_nor_gl_4k.jpg": {
+            "size": 10952383,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_nor_gl_4k.jpg",
+            "md5": "068db363da566dcb4f3bebad93afd103"
+          },
+          "wooden_bucket_02.bin": {
+            "size": 227128,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_bucket_02/wooden_bucket_02.bin",
+            "md5": "1795ede198f19fe6b81c92690a90fd79"
+          }
+        },
+        "size": 5625,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/wooden_bucket_02/wooden_bucket_02_4k.gltf",
+        "md5": "8c2389de7e68dea2698d3c9ba219f0c4"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "textures/wooden_bucket_02_arm_2k.jpg": {
+            "size": 3098279,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_arm_2k.jpg",
+            "md5": "190794f5b9943c4f3cae1896e9d55e52"
+          },
+          "textures/wooden_bucket_02_diff_2k.jpg": {
+            "size": 2392805,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_diff_2k.jpg",
+            "md5": "34d2b1b4544345fc21283999f0fd463b"
+          },
+          "wooden_bucket_02.bin": {
+            "size": 227128,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_bucket_02/wooden_bucket_02.bin",
+            "md5": "1795ede198f19fe6b81c92690a90fd79"
+          },
+          "textures/wooden_bucket_02_nor_gl_2k.jpg": {
+            "size": 2924878,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_nor_gl_2k.jpg",
+            "md5": "02fa74edb94077df4d2b120ca9469309"
+          }
+        },
+        "size": 5625,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/wooden_bucket_02/wooden_bucket_02_2k.gltf",
+        "md5": "24d58e3c6c2510e3de035f598e86ec5f"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/wooden_bucket_02_nor_gl_1k.jpg": {
+            "size": 756137,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_nor_gl_1k.jpg",
+            "md5": "2c85542496f2ca81528b2bf217774d39"
+          },
+          "textures/wooden_bucket_02_diff_1k.jpg": {
+            "size": 648386,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_diff_1k.jpg",
+            "md5": "767e56a66acea53b9f6600f8895fcdb4"
+          },
+          "wooden_bucket_02.bin": {
+            "size": 227128,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_bucket_02/wooden_bucket_02.bin",
+            "md5": "1795ede198f19fe6b81c92690a90fd79"
+          },
+          "textures/wooden_bucket_02_arm_1k.jpg": {
+            "size": 875674,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_arm_1k.jpg",
+            "md5": "5c84ac7cecbf56c17d173ec77689516f"
+          }
+        },
+        "size": 5625,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_bucket_02/wooden_bucket_02_1k.gltf",
+        "md5": "d4f4c816e7f21e7532862935a9b8389c"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/wooden_bucket_02_metal_8k.exr": {
+            "size": 4799027,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_metal_8k.exr",
+            "md5": "ea86aef883047aec072547610771ac23"
+          },
+          "textures/wooden_bucket_02_nor_gl_8k.exr": {
+            "size": 77298927,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_nor_gl_8k.exr",
+            "md5": "927292e1172fe7634426505f47e87518"
+          },
+          "textures/wooden_bucket_02_diff_8k.jpg": {
+            "size": 34452671,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_diff_8k.jpg",
+            "md5": "f9f9e15a170214f78da4ab5df82dfc71"
+          },
+          "textures/wooden_bucket_02_rough_8k.exr": {
+            "size": 53831979,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_rough_8k.exr",
+            "md5": "e57bd8a50eafddffd051ff2496b159ed"
+          }
+        },
+        "size": 381340,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/wooden_bucket_02/wooden_bucket_02_8k.usdc",
+        "md5": "3dcd4990bbdcd9f6ef63a8a1b96d6e1f"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/wooden_bucket_02_nor_gl_4k.exr": {
+            "size": 23339159,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_nor_gl_4k.exr",
+            "md5": "02ff982128c9f940fec7dedb7eb2a01d"
+          },
+          "textures/wooden_bucket_02_diff_4k.jpg": {
+            "size": 8982324,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_diff_4k.jpg",
+            "md5": "1f825bfae6a85b8eed5dea79525a2572"
+          },
+          "textures/wooden_bucket_02_metal_4k.exr": {
+            "size": 2023167,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_metal_4k.exr",
+            "md5": "5556847804c6b68e75d6ffbcd4a26c9c"
+          },
+          "textures/wooden_bucket_02_rough_4k.exr": {
+            "size": 15689838,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_rough_4k.exr",
+            "md5": "66d90255e981375322e2c9c04f98c5a2"
+          }
+        },
+        "size": 381301,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/wooden_bucket_02/wooden_bucket_02_4k.usdc",
+        "md5": "727b5ce83973cab81ab690ee4d6bca73"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/wooden_bucket_02_diff_2k.jpg": {
+            "size": 2392805,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_diff_2k.jpg",
+            "md5": "34d2b1b4544345fc21283999f0fd463b"
+          },
+          "textures/wooden_bucket_02_rough_2k.exr": {
+            "size": 4536188,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_rough_2k.exr",
+            "md5": "b3dba8d878c388104753f317cc3c877c"
+          },
+          "textures/wooden_bucket_02_metal_2k.exr": {
+            "size": 756103,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_metal_2k.exr",
+            "md5": "f2dadc955d7798899a0057c3818d4d56"
+          },
+          "textures/wooden_bucket_02_nor_gl_2k.exr": {
+            "size": 6473213,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_nor_gl_2k.exr",
+            "md5": "597cec71ef15c806ba5fc72bb4b72e79"
+          }
+        },
+        "size": 381340,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/wooden_bucket_02/wooden_bucket_02_2k.usdc",
+        "md5": "37fe6ce4f948812410db0d45ab877f68"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/wooden_bucket_02_nor_gl_1k.exr": {
+            "size": 1681643,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_nor_gl_1k.exr",
+            "md5": "7e9d90e4bd01dbd1e59c4f2becaa17e7"
+          },
+          "textures/wooden_bucket_02_rough_1k.exr": {
+            "size": 1212762,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_rough_1k.exr",
+            "md5": "1a05678ed51674f589382da95610c9a6"
+          },
+          "textures/wooden_bucket_02_diff_1k.jpg": {
+            "size": 648386,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_diff_1k.jpg",
+            "md5": "767e56a66acea53b9f6600f8895fcdb4"
+          },
+          "textures/wooden_bucket_02_metal_1k.exr": {
+            "size": 266987,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_metal_1k.exr",
+            "md5": "78bbad6cb3635ea1fa92f5dada78fd0c"
+          }
+        },
+        "size": 381301,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/wooden_bucket_02/wooden_bucket_02_1k.usdc",
+        "md5": "e0148c23d01c52ad96f85c507a10b8b3"
+      }
+    }
+  },
+  "Metal": {
+    "8k": {
+      "jpg": {
+        "size": 3885512,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_metal_8k.jpg",
+        "md5": "baaea5f1f6d760fb744386f179e773da"
+      },
+      "png": {
+        "size": 4659674,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/wooden_bucket_02/wooden_bucket_02_metal_8k.png",
+        "md5": "6c6075afa1c56be29749b99dfbced493"
+      },
+      "exr": {
+        "size": 4799027,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_metal_8k.exr",
+        "md5": "ea86aef883047aec072547610771ac23"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 1135897,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_metal_4k.jpg",
+        "md5": "979e69b4c581dea7be425750b883ac8c"
+      },
+      "png": {
+        "size": 2296701,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/wooden_bucket_02/wooden_bucket_02_metal_4k.png",
+        "md5": "4ac2990367d595f02c4d8387d3f39b11"
+      },
+      "exr": {
+        "size": 2023167,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_metal_4k.exr",
+        "md5": "5556847804c6b68e75d6ffbcd4a26c9c"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 348445,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_metal_2k.jpg",
+        "md5": "cd0b6772c4da218d09889f779585254b"
+      },
+      "png": {
+        "size": 871568,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/wooden_bucket_02/wooden_bucket_02_metal_2k.png",
+        "md5": "0d897d24327b5544194cd719cb891d4b"
+      },
+      "exr": {
+        "size": 756103,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_metal_2k.exr",
+        "md5": "f2dadc955d7798899a0057c3818d4d56"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 110211,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_metal_1k.jpg",
+        "md5": "6f3845e11d5850b2f5be742060d38618"
+      },
+      "png": {
+        "size": 288658,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_bucket_02/wooden_bucket_02_metal_1k.png",
+        "md5": "3b3c0e2bf83e18525000ff701d3e685c"
+      },
+      "exr": {
+        "size": 266987,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_metal_1k.exr",
+        "md5": "78bbad6cb3635ea1fa92f5dada78fd0c"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/wooden_bucket_02_metal_8k.exr": {
+            "size": 4799027,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_metal_8k.exr",
+            "md5": "ea86aef883047aec072547610771ac23"
+          },
+          "textures/wooden_bucket_02_nor_gl_8k.exr": {
+            "size": 77298927,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_nor_gl_8k.exr",
+            "md5": "927292e1172fe7634426505f47e87518"
+          },
+          "textures/wooden_bucket_02_diff_8k.jpg": {
+            "size": 34452671,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_diff_8k.jpg",
+            "md5": "f9f9e15a170214f78da4ab5df82dfc71"
+          },
+          "textures/wooden_bucket_02_rough_8k.exr": {
+            "size": 53831979,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_rough_8k.exr",
+            "md5": "e57bd8a50eafddffd051ff2496b159ed"
+          }
+        },
+        "size": 280764,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/wooden_bucket_02/wooden_bucket_02_8k.fbx",
+        "md5": "39e66e3475fb724d826b6b5ecb2d1b1c"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/wooden_bucket_02_nor_gl_4k.exr": {
+            "size": 23339159,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_nor_gl_4k.exr",
+            "md5": "02ff982128c9f940fec7dedb7eb2a01d"
+          },
+          "textures/wooden_bucket_02_diff_4k.jpg": {
+            "size": 8982324,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_diff_4k.jpg",
+            "md5": "1f825bfae6a85b8eed5dea79525a2572"
+          },
+          "textures/wooden_bucket_02_metal_4k.exr": {
+            "size": 2023167,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_metal_4k.exr",
+            "md5": "5556847804c6b68e75d6ffbcd4a26c9c"
+          },
+          "textures/wooden_bucket_02_rough_4k.exr": {
+            "size": 15689838,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_rough_4k.exr",
+            "md5": "66d90255e981375322e2c9c04f98c5a2"
+          }
+        },
+        "size": 280764,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/wooden_bucket_02/wooden_bucket_02_4k.fbx",
+        "md5": "cf25d1ec36abe0300f53cf635362df3b"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/wooden_bucket_02_diff_2k.jpg": {
+            "size": 2392805,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_diff_2k.jpg",
+            "md5": "34d2b1b4544345fc21283999f0fd463b"
+          },
+          "textures/wooden_bucket_02_rough_2k.exr": {
+            "size": 4536188,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_rough_2k.exr",
+            "md5": "b3dba8d878c388104753f317cc3c877c"
+          },
+          "textures/wooden_bucket_02_metal_2k.exr": {
+            "size": 756103,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_metal_2k.exr",
+            "md5": "f2dadc955d7798899a0057c3818d4d56"
+          },
+          "textures/wooden_bucket_02_nor_gl_2k.exr": {
+            "size": 6473213,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_nor_gl_2k.exr",
+            "md5": "597cec71ef15c806ba5fc72bb4b72e79"
+          }
+        },
+        "size": 280764,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/wooden_bucket_02/wooden_bucket_02_2k.fbx",
+        "md5": "ce546170f328fee845291f86fe2f1bf6"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/wooden_bucket_02_nor_gl_1k.exr": {
+            "size": 1681643,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_nor_gl_1k.exr",
+            "md5": "7e9d90e4bd01dbd1e59c4f2becaa17e7"
+          },
+          "textures/wooden_bucket_02_rough_1k.exr": {
+            "size": 1212762,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_rough_1k.exr",
+            "md5": "1a05678ed51674f589382da95610c9a6"
+          },
+          "textures/wooden_bucket_02_diff_1k.jpg": {
+            "size": 648386,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_diff_1k.jpg",
+            "md5": "767e56a66acea53b9f6600f8895fcdb4"
+          },
+          "textures/wooden_bucket_02_metal_1k.exr": {
+            "size": 266987,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_metal_1k.exr",
+            "md5": "78bbad6cb3635ea1fa92f5dada78fd0c"
+          }
+        },
+        "size": 280764,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/wooden_bucket_02/wooden_bucket_02_1k.fbx",
+        "md5": "8e76f0bdd9d24860aab74c23880c2d87"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 44352309,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_arm_8k.jpg",
+        "md5": "b8b7104b70e4eaf5fa967e38e0e65cff"
+      },
+      "png": {
+        "size": 174982853,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/wooden_bucket_02/wooden_bucket_02_arm_8k.png",
+        "md5": "ad3203ca7379e4f762ff253ceeeda63f"
+      },
+      "exr": {
+        "size": 94539247,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_arm_8k.exr",
+        "md5": "9cbefccd9a170cff733432353064bbb7"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 11383914,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_arm_4k.jpg",
+        "md5": "d0822b34e604a132301722120cab644e"
+      },
+      "png": {
+        "size": 53514404,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/wooden_bucket_02/wooden_bucket_02_arm_4k.png",
+        "md5": "b5eb8b77e606c7d2bba126c5a75c45a9"
+      },
+      "exr": {
+        "size": 24151862,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_arm_4k.exr",
+        "md5": "6a4b9c06d8553f665e37b962b6b2cb61"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 3098279,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_arm_2k.jpg",
+        "md5": "190794f5b9943c4f3cae1896e9d55e52"
+      },
+      "png": {
+        "size": 15033734,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/wooden_bucket_02/wooden_bucket_02_arm_2k.png",
+        "md5": "96a5d349e89c60782a6d4cdfe688ea9b"
+      },
+      "exr": {
+        "size": 6560726,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_arm_2k.exr",
+        "md5": "ea2505bd11c2f56e93b5db8b70d3c4a4"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 875674,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_arm_1k.jpg",
+        "md5": "5c84ac7cecbf56c17d173ec77689516f"
+      },
+      "png": {
+        "size": 4125212,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_bucket_02/wooden_bucket_02_arm_1k.png",
+        "md5": "4a07988728cc495c33ecad69b6972847"
+      },
+      "exr": {
+        "size": 1883965,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_arm_1k.exr",
+        "md5": "89533a75c6f359a9b69866dc1f0e92d4"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "size": 15910469,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_ao_8k.jpg",
+        "md5": "45632e479a513ef83bb93dbd7da54298"
+      },
+      "png": {
+        "size": 75807080,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/wooden_bucket_02/wooden_bucket_02_ao_8k.png",
+        "md5": "63cf314e810ad4f0ae9d2e46f70bd4e3"
+      },
+      "exr": {
+        "size": 46134090,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_ao_8k.exr",
+        "md5": "fa1e1ccdc535f6ea94c6c60d65a8a74c"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 4389768,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_ao_4k.jpg",
+        "md5": "25affafb16f1cc59281a92ae88ff0266"
+      },
+      "png": {
+        "size": 21435548,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/wooden_bucket_02/wooden_bucket_02_ao_4k.png",
+        "md5": "ea66b0346f81e05e49b225e9f586bb36"
+      },
+      "exr": {
+        "size": 13088096,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_ao_4k.exr",
+        "md5": "cf0920281f4957e8bd86ac2c4ed5d621"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1490406,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_ao_2k.jpg",
+        "md5": "3f768a0d74e75f33edc128758fefe0e4"
+      },
+      "png": {
+        "size": 5733938,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/wooden_bucket_02/wooden_bucket_02_ao_2k.png",
+        "md5": "7f13cb598ae998b9d9dbdf8211f923a8"
+      },
+      "exr": {
+        "size": 3703636,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_ao_2k.exr",
+        "md5": "24c1de0b5ef075ebd5d6671083ca946e"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 532594,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_ao_1k.jpg",
+        "md5": "fe921936b475af0431a673c46c654eca"
+      },
+      "png": {
+        "size": 1536075,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_bucket_02/wooden_bucket_02_ao_1k.png",
+        "md5": "749e63b89ad87d57d3f8e6fde6bdbf00"
+      },
+      "exr": {
+        "size": 1078766,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_ao_1k.exr",
+        "md5": "bf164a91cad0830f3c334c3a2531145f"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 36307864,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/wooden_bucket_02/wooden_bucket_02_rough_8k.jpg",
+        "md5": "841b6321d853bf3779a31acdd44dbd23"
+      },
+      "png": {
+        "size": 54028952,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/wooden_bucket_02/wooden_bucket_02_rough_8k.png",
+        "md5": "16c8865036567a4caf9587f33c54b8f2"
+      },
+      "exr": {
+        "size": 53831979,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/wooden_bucket_02/wooden_bucket_02_rough_8k.exr",
+        "md5": "e57bd8a50eafddffd051ff2496b159ed"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8976550,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/wooden_bucket_02/wooden_bucket_02_rough_4k.jpg",
+        "md5": "06bb5e9ccfbb05ea0f073f726582d347"
+      },
+      "png": {
+        "size": 21054499,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/wooden_bucket_02/wooden_bucket_02_rough_4k.png",
+        "md5": "793229769d9495c5d6d4c826f7e81bf0"
+      },
+      "exr": {
+        "size": 15689838,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/wooden_bucket_02/wooden_bucket_02_rough_4k.exr",
+        "md5": "66d90255e981375322e2c9c04f98c5a2"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2347294,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/wooden_bucket_02/wooden_bucket_02_rough_2k.jpg",
+        "md5": "4e3f8d9204b48d1c5ba76540eb657ef1"
+      },
+      "png": {
+        "size": 6438700,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/wooden_bucket_02/wooden_bucket_02_rough_2k.png",
+        "md5": "cea7c10d0fe1fd840174ac6c19b8eece"
+      },
+      "exr": {
+        "size": 4536188,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/wooden_bucket_02/wooden_bucket_02_rough_2k.exr",
+        "md5": "b3dba8d878c388104753f317cc3c877c"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 640862,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_bucket_02/wooden_bucket_02_rough_1k.jpg",
+        "md5": "cffff60d630cae84812c62795db1bc7e"
+      },
+      "png": {
+        "size": 1784345,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/wooden_bucket_02/wooden_bucket_02_rough_1k.png",
+        "md5": "f60e0223ab2c03e871385d1188e44202"
+      },
+      "exr": {
+        "size": 1212762,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/wooden_bucket_02/wooden_bucket_02_rough_1k.exr",
+        "md5": "1a05678ed51674f589382da95610c9a6"
+      }
+    }
+  }
+}

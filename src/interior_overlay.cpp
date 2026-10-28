@@ -1,5 +1,6 @@
 #include "interior_overlay.h"
 #include "art_mesh.h"
+#include "model_art.h"
 
 #include <algorithm>
 #include <cmath>
@@ -36,12 +37,13 @@ bool same_boxes(const std::vector<BoxPart> &p_a, const std::vector<BoxPart> &p_b
     }
     for (size_t k = 0; k < p_a.size(); k++) {
         const BoxPart &a = p_a[k], &b = p_b[k];
-        if (a.sx != b.sx || a.sy != b.sy || a.sz != b.sz || a.x != b.x || a.y != b.y || a.z != b.z || a.yaw != b.yaw || a.pitch != b.pitch || a.shape!=b.shape) {
+        if (a.sx != b.sx || a.sy != b.sy || a.sz != b.sz || a.x != b.x || a.y != b.y || a.z != b.z || a.yaw != b.yaw || a.pitch != b.pitch || a.shape!=b.shape || a.model_id!=b.model_id) {
             return false;
         }
     }
     return true;
 }
+void ghost_material(Node *node,const Ref<Material> &material){if(auto *mesh=Object::cast_to<MeshInstance3D>(node)){mesh->set_material_override(material);mesh->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);}const auto children=node->get_children();for(int i=0;i<children.size();++i)ghost_material(Object::cast_to<Node>(children[i]),material);}
 
 } // namespace
 
@@ -114,8 +116,12 @@ void InteriorOverlay::refresh(const Transform3D &p_building, const Vector3 &p_fo
         child->queue_free();
     }
     const Ref<StandardMaterial3D> fill = p_state == GHOST_CAN_PLACE ? mat_ok : (p_state == GHOST_CANNOT_PLACE ? mat_bad : mat_selected);
+    bool models=false;SharedLooks preview_looks;
+    for(const BoxPart &reference:p_ghost)if(!reference.model_id.empty()){
+        auto *model=model_art::furniture(reference.model_id.substr(10),preview_looks);if(!model)continue;models=true;ghost_material(model,fill);model->set_position(Vector3(real_t(reference.x),real_t(reference.y),real_t(reference.z)));model->set_rotation(Vector3(0,real_t(reference.yaw),0));ghost->add_child(model);
+    }
     for(const BoxPart &part:p_ghost){
-        if(!part.visual)continue;
+        if(!part.visual||(models&&part.furniture_visual))continue;
         MeshInstance3D *instance=memnew(MeshInstance3D);
         instance->set_mesh(art_mesh::shape(part,fill));instance->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);ghost->add_child(instance);
     }

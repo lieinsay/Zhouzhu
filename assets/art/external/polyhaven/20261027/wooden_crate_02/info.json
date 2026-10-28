@@ -1,0 +1,66 @@
+{
+  "date_published": 1646179200,
+  "name": "Wooden Crate 02",
+  "type": 2,
+  "staging": null,
+  "sponsors": [
+    "26820710"
+  ],
+  "categories": [
+    "containers",
+    "props",
+    "collection: smugglers_cove"
+  ],
+  "tags": [
+    "vintage",
+    "wood",
+    "old",
+    "wooden",
+    "worn",
+    "colonial",
+    "commercial",
+    "maritime",
+    "chest",
+    "box",
+    "container",
+    "prop",
+    "farmhouse",
+    "crate",
+    "farm"
+  ],
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 5176,
+  "texel_density": 3166.7987598321547,
+  "dimensions": [
+    1166.325867176056,
+    529.1010439395905,
+    463.95453810691833
+  ],
+  "files_hash": "2733eca1a1c1aaa3b4be262939692a4c02a9315a",
+  "description": "Free 8K model of a vintage wooden crate with worn planks, dovetail joins, brass corner plates and rope handles - ideal for maritime, colonial or farmhouse props.",
+  "authors": {
+    "James Ray Cock": "modeling",
+    "Jurita Burger": "graphic design"
+  },
+  "category_id": "7db08e6b-4676-50ac-8387-ecec2d7ffeb2",
+  "category": "Containers & Storage/Boxes & Crates/Wooden Crates",
+  "collections": [
+    "smugglers_cove"
+  ],
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood",
+      "brass",
+      "metal"
+    ]
+  },
+  "img_version": "067477fc",
+  "download_count": 13140,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/wooden_crate_02.png?width=256&height=256&format=webp&v=067477fc"
+}

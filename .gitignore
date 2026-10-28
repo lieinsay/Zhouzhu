@@ -27,3 +27,5 @@ CMakeUserPresets.json
 
 # mellos-mapping 的进度图与运行时状态
 .mellos/
+game/art/model-bindings-review.json
+tools/art-models/__pycache__/

@@ -1,0 +1,247 @@
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #0, invalid UID: 'uid://f6rnfy7osmf8' - using text path instead: 'res://art/models/actors/male/v1/textures/image-2.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #1, invalid UID: 'uid://b7arkx8a7jgn5' - using text path instead: 'res://art/models/actors/male/v1/textures/image-0.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #2, invalid UID: 'uid://cpbmuyjcyld58' - using text path instead: 'res://art/models/actors/male/v1/textures/image-1.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #3, invalid UID: 'uid://cdeqsusjvtn1l' - using text path instead: 'res://art/models/actors/male/v1/textures/image-3.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #4, invalid UID: 'uid://ch73apackbtjl' - using text path instead: 'res://art/models/actors/male/v1/textures/image-4.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #5, invalid UID: 'uid://bp5qka6l78x5d' - using text path instead: 'res://art/models/actors/male/v1/textures/image-5.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #6, invalid UID: 'uid://doyjuayeamspr' - using text path instead: 'res://art/models/actors/male/v1/textures/image-6.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #7, invalid UID: 'uid://moj05uasu5es' - using text path instead: 'res://art/models/actors/male/v1/textures/image-8.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #8, invalid UID: 'uid://btv2g5jojxd8q' - using text path instead: 'res://art/models/actors/male/v1/textures/image-7.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #9, invalid UID: 'uid://c6wt43wdn5knu' - using text path instead: 'res://art/models/actors/male/v1/textures/image-9.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #10, invalid UID: 'uid://djse8xxqf2yr' - using text path instead: 'res://art/models/actors/male/v1/textures/image-10.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #11, invalid UID: 'uid://jvm8ldxvha1u' - using text path instead: 'res://art/models/actors/male/v1/textures/image-11.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #12, invalid UID: 'uid://cvgloaeruwkrc' - using text path instead: 'res://art/models/actors/male/v1/textures/image-14.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #13, invalid UID: 'uid://b5g3vqsitrw03' - using text path instead: 'res://art/models/actors/male/v1/textures/image-12.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #14, invalid UID: 'uid://utdqurx4pajp' - using text path instead: 'res://art/models/actors/male/v1/textures/image-13.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #15, invalid UID: 'uid://b3m5a2aj3pncu' - using text path instead: 'res://art/models/actors/male/v1/textures/image-15.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #16, invalid UID: 'uid://bfeaiu7gdq75w' - using text path instead: 'res://art/models/actors/male/v1/textures/image-17.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #17, invalid UID: 'uid://dlc7s5xvd4nil' - using text path instead: 'res://art/models/actors/male/v1/textures/image-16.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #18, invalid UID: 'uid://bspie1b0wb3uy' - using text path instead: 'res://art/models/actors/male/v1/textures/image-18.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #19, invalid UID: 'uid://d3asjjx1vnwkq' - using text path instead: 'res://art/models/actors/male/v1/textures/image-20.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #20, invalid UID: 'uid://b62ji7t5c8yhl' - using text path instead: 'res://art/models/actors/male/v1/textures/image-19.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #21, invalid UID: 'uid://8qmwi0ux87fv' - using text path instead: 'res://art/models/actors/male/v1/textures/image-21.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #22, invalid UID: 'uid://m6ebhehv6pa1' - using text path instead: 'res://art/models/actors/male/v1/textures/image-22.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #0, invalid UID: 'uid://f6rnfy7osmf8' - using text path instead: 'res://art/models/actors/male/v1/textures/image-2.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #1, invalid UID: 'uid://b7arkx8a7jgn5' - using text path instead: 'res://art/models/actors/male/v1/textures/image-0.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #2, invalid UID: 'uid://cpbmuyjcyld58' - using text path instead: 'res://art/models/actors/male/v1/textures/image-1.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #3, invalid UID: 'uid://cdeqsusjvtn1l' - using text path instead: 'res://art/models/actors/male/v1/textures/image-3.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #4, invalid UID: 'uid://ch73apackbtjl' - using text path instead: 'res://art/models/actors/male/v1/textures/image-4.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #5, invalid UID: 'uid://bp5qka6l78x5d' - using text path instead: 'res://art/models/actors/male/v1/textures/image-5.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #6, invalid UID: 'uid://doyjuayeamspr' - using text path instead: 'res://art/models/actors/male/v1/textures/image-6.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #7, invalid UID: 'uid://moj05uasu5es' - using text path instead: 'res://art/models/actors/male/v1/textures/image-8.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #8, invalid UID: 'uid://btv2g5jojxd8q' - using text path instead: 'res://art/models/actors/male/v1/textures/image-7.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #9, invalid UID: 'uid://c6wt43wdn5knu' - using text path instead: 'res://art/models/actors/male/v1/textures/image-9.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #10, invalid UID: 'uid://djse8xxqf2yr' - using text path instead: 'res://art/models/actors/male/v1/textures/image-10.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #11, invalid UID: 'uid://jvm8ldxvha1u' - using text path instead: 'res://art/models/actors/male/v1/textures/image-11.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #12, invalid UID: 'uid://cvgloaeruwkrc' - using text path instead: 'res://art/models/actors/male/v1/textures/image-14.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #13, invalid UID: 'uid://b5g3vqsitrw03' - using text path instead: 'res://art/models/actors/male/v1/textures/image-12.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #14, invalid UID: 'uid://utdqurx4pajp' - using text path instead: 'res://art/models/actors/male/v1/textures/image-13.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #15, invalid UID: 'uid://b3m5a2aj3pncu' - using text path instead: 'res://art/models/actors/male/v1/textures/image-15.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #16, invalid UID: 'uid://bfeaiu7gdq75w' - using text path instead: 'res://art/models/actors/male/v1/textures/image-17.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #17, invalid UID: 'uid://dlc7s5xvd4nil' - using text path instead: 'res://art/models/actors/male/v1/textures/image-16.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #18, invalid UID: 'uid://bspie1b0wb3uy' - using text path instead: 'res://art/models/actors/male/v1/textures/image-18.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #19, invalid UID: 'uid://d3asjjx1vnwkq' - using text path instead: 'res://art/models/actors/male/v1/textures/image-20.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #20, invalid UID: 'uid://b62ji7t5c8yhl' - using text path instead: 'res://art/models/actors/male/v1/textures/image-19.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #21, invalid UID: 'uid://8qmwi0ux87fv' - using text path instead: 'res://art/models/actors/male/v1/textures/image-21.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/male/v1/model.glb': In external resource #22, invalid UID: 'uid://m6ebhehv6pa1' - using text path instead: 'res://art/models/actors/male/v1/textures/image-22.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #0, invalid UID: 'uid://ba0vkutlr5e3l' - using text path instead: 'res://art/models/actors/female/v1/textures/image-2.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #1, invalid UID: 'uid://hm8dggujm2lc' - using text path instead: 'res://art/models/actors/female/v1/textures/image-0.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #2, invalid UID: 'uid://c7xmrsfyyrvut' - using text path instead: 'res://art/models/actors/female/v1/textures/image-1.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #3, invalid UID: 'uid://dybk0ddx5fv3w' - using text path instead: 'res://art/models/actors/female/v1/textures/image-3.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #4, invalid UID: 'uid://cpj456fi2alo1' - using text path instead: 'res://art/models/actors/female/v1/textures/image-4.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #5, invalid UID: 'uid://cn0envgidhs1x' - using text path instead: 'res://art/models/actors/female/v1/textures/image-5.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #6, invalid UID: 'uid://dxdok0ocrs8so' - using text path instead: 'res://art/models/actors/female/v1/textures/image-6.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #7, invalid UID: 'uid://buaxtknvb4xsv' - using text path instead: 'res://art/models/actors/female/v1/textures/image-7.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #8, invalid UID: 'uid://k5xfrkmy7vw4' - using text path instead: 'res://art/models/actors/female/v1/textures/image-8.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #9, invalid UID: 'uid://of6fdoko2t7d' - using text path instead: 'res://art/models/actors/female/v1/textures/image-10.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #10, invalid UID: 'uid://dvhpjg0o5s3ob' - using text path instead: 'res://art/models/actors/female/v1/textures/image-9.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #11, invalid UID: 'uid://dqnqi65bno360' - using text path instead: 'res://art/models/actors/female/v1/textures/image-11.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #12, invalid UID: 'uid://bsr4qthhnub6n' - using text path instead: 'res://art/models/actors/female/v1/textures/image-14.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #13, invalid UID: 'uid://d23g3ambcj3hy' - using text path instead: 'res://art/models/actors/female/v1/textures/image-12.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #14, invalid UID: 'uid://d000u10nchync' - using text path instead: 'res://art/models/actors/female/v1/textures/image-13.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #15, invalid UID: 'uid://dy1pah58acqqh' - using text path instead: 'res://art/models/actors/female/v1/textures/image-15.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #16, invalid UID: 'uid://djl365blc60t5' - using text path instead: 'res://art/models/actors/female/v1/textures/image-17.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #17, invalid UID: 'uid://cn8jtppxs3ttd' - using text path instead: 'res://art/models/actors/female/v1/textures/image-16.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #18, invalid UID: 'uid://cle0du8ab4n7s' - using text path instead: 'res://art/models/actors/female/v1/textures/image-18.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #19, invalid UID: 'uid://c2qbey2b20uqa' - using text path instead: 'res://art/models/actors/female/v1/textures/image-20.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #20, invalid UID: 'uid://b0chdhhgnbiqj' - using text path instead: 'res://art/models/actors/female/v1/textures/image-19.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #21, invalid UID: 'uid://ddx7p6sv8p1kv' - using text path instead: 'res://art/models/actors/female/v1/textures/image-21.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #22, invalid UID: 'uid://c20xk7gtt373' - using text path instead: 'res://art/models/actors/female/v1/textures/image-22.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #0, invalid UID: 'uid://ba0vkutlr5e3l' - using text path instead: 'res://art/models/actors/female/v1/textures/image-2.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #1, invalid UID: 'uid://hm8dggujm2lc' - using text path instead: 'res://art/models/actors/female/v1/textures/image-0.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #2, invalid UID: 'uid://c7xmrsfyyrvut' - using text path instead: 'res://art/models/actors/female/v1/textures/image-1.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #3, invalid UID: 'uid://dybk0ddx5fv3w' - using text path instead: 'res://art/models/actors/female/v1/textures/image-3.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #4, invalid UID: 'uid://cpj456fi2alo1' - using text path instead: 'res://art/models/actors/female/v1/textures/image-4.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #5, invalid UID: 'uid://cn0envgidhs1x' - using text path instead: 'res://art/models/actors/female/v1/textures/image-5.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #6, invalid UID: 'uid://dxdok0ocrs8so' - using text path instead: 'res://art/models/actors/female/v1/textures/image-6.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #7, invalid UID: 'uid://buaxtknvb4xsv' - using text path instead: 'res://art/models/actors/female/v1/textures/image-7.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #8, invalid UID: 'uid://k5xfrkmy7vw4' - using text path instead: 'res://art/models/actors/female/v1/textures/image-8.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #9, invalid UID: 'uid://of6fdoko2t7d' - using text path instead: 'res://art/models/actors/female/v1/textures/image-10.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #10, invalid UID: 'uid://dvhpjg0o5s3ob' - using text path instead: 'res://art/models/actors/female/v1/textures/image-9.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #11, invalid UID: 'uid://dqnqi65bno360' - using text path instead: 'res://art/models/actors/female/v1/textures/image-11.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #12, invalid UID: 'uid://bsr4qthhnub6n' - using text path instead: 'res://art/models/actors/female/v1/textures/image-14.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #13, invalid UID: 'uid://d23g3ambcj3hy' - using text path instead: 'res://art/models/actors/female/v1/textures/image-12.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #14, invalid UID: 'uid://d000u10nchync' - using text path instead: 'res://art/models/actors/female/v1/textures/image-13.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #15, invalid UID: 'uid://dy1pah58acqqh' - using text path instead: 'res://art/models/actors/female/v1/textures/image-15.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #16, invalid UID: 'uid://djl365blc60t5' - using text path instead: 'res://art/models/actors/female/v1/textures/image-17.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #17, invalid UID: 'uid://cn8jtppxs3ttd' - using text path instead: 'res://art/models/actors/female/v1/textures/image-16.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #18, invalid UID: 'uid://cle0du8ab4n7s' - using text path instead: 'res://art/models/actors/female/v1/textures/image-18.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #19, invalid UID: 'uid://c2qbey2b20uqa' - using text path instead: 'res://art/models/actors/female/v1/textures/image-20.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #20, invalid UID: 'uid://b0chdhhgnbiqj' - using text path instead: 'res://art/models/actors/female/v1/textures/image-19.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #21, invalid UID: 'uid://ddx7p6sv8p1kv' - using text path instead: 'res://art/models/actors/female/v1/textures/image-21.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/actors/female/v1/model.glb': In external resource #22, invalid UID: 'uid://c20xk7gtt373' - using text path instead: 'res://art/models/actors/female/v1/textures/image-22.png'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/altar/v1/model.glb': In external resource #0, invalid UID: 'uid://dc7e1070ixay5' - using text path instead: 'res://art/models/furniture/altar/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/altar/v1/model.glb': In external resource #1, invalid UID: 'uid://osjp8bybfep5' - using text path instead: 'res://art/models/furniture/altar/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/altar/v1/model.glb': In external resource #2, invalid UID: 'uid://dmy5w0hm3hpml' - using text path instead: 'res://art/models/furniture/altar/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bed/v1/model.glb': In external resource #0, invalid UID: 'uid://dc3cf7xsn7dh1' - using text path instead: 'res://art/models/furniture/bed/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bed/v1/model.glb': In external resource #1, invalid UID: 'uid://clw7ylkha0ct' - using text path instead: 'res://art/models/furniture/bed/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bed/v1/model.glb': In external resource #2, invalid UID: 'uid://caq3vsau8onu7' - using text path instead: 'res://art/models/furniture/bed/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bench/v1/model.glb': In external resource #0, invalid UID: 'uid://djat7c1j7m4ch' - using text path instead: 'res://art/models/furniture/bench/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bench/v1/model.glb': In external resource #1, invalid UID: 'uid://c4mv8qeeqa6os' - using text path instead: 'res://art/models/furniture/bench/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bench/v1/model.glb': In external resource #2, invalid UID: 'uid://di6lfuk0jkyb3' - using text path instead: 'res://art/models/furniture/bench/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bin/v1/model.glb': In external resource #0, invalid UID: 'uid://rx0cljkhxpxx' - using text path instead: 'res://art/models/furniture/bin/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bin/v1/model.glb': In external resource #1, invalid UID: 'uid://brsueve8l40ha' - using text path instead: 'res://art/models/furniture/bin/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/bin/v1/model.glb': In external resource #2, invalid UID: 'uid://kn5vbegtxdpd' - using text path instead: 'res://art/models/furniture/bin/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/chest/v1/model.glb': In external resource #0, invalid UID: 'uid://vpwpfisn04v2' - using text path instead: 'res://art/models/furniture/chest/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/chest/v1/model.glb': In external resource #1, invalid UID: 'uid://brsr8qhbwnsox' - using text path instead: 'res://art/models/furniture/chest/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/chest/v1/model.glb': In external resource #2, invalid UID: 'uid://dhgugn4dn6fh5' - using text path instead: 'res://art/models/furniture/chest/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/sacks/v1/model.glb': In external resource #0, invalid UID: 'uid://dhg01y2307q4v' - using text path instead: 'res://art/models/furniture/sacks/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/sacks/v1/model.glb': In external resource #1, invalid UID: 'uid://b8vhk85l7twpm' - using text path instead: 'res://art/models/furniture/sacks/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/sacks/v1/model.glb': In external resource #2, invalid UID: 'uid://cq3lh3mq6e2vi' - using text path instead: 'res://art/models/furniture/sacks/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/shelf/v1/model.glb': In external resource #0, invalid UID: 'uid://c4d7ngtk1sx8c' - using text path instead: 'res://art/models/furniture/shelf/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/shelf/v1/model.glb': In external resource #1, invalid UID: 'uid://ql3kfm7pby53' - using text path instead: 'res://art/models/furniture/shelf/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/shelf/v1/model.glb': In external resource #2, invalid UID: 'uid://qvijtl6r2yl' - using text path instead: 'res://art/models/furniture/shelf/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/table/v1/model.glb': In external resource #0, invalid UID: 'uid://cmc3lhe2afp6l' - using text path instead: 'res://art/models/furniture/table/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/table/v1/model.glb': In external resource #1, invalid UID: 'uid://b4g4qr8wrhlcx' - using text path instead: 'res://art/models/furniture/table/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/table/v1/model.glb': In external resource #2, invalid UID: 'uid://cxtwqtwwvkqwf' - using text path instead: 'res://art/models/furniture/table/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/vat/v1/model.glb': In external resource #0, invalid UID: 'uid://csquhlnbhxisx' - using text path instead: 'res://art/models/furniture/vat/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/vat/v1/model.glb': In external resource #1, invalid UID: 'uid://b3iqqtiqanlex' - using text path instead: 'res://art/models/furniture/vat/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/furniture/vat/v1/model.glb': In external resource #2, invalid UID: 'uid://d131t2l07bexi' - using text path instead: 'res://art/models/furniture/vat/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/prop/cargo_crate/v1/model.glb': In external resource #0, invalid UID: 'uid://bduwyljxugd34' - using text path instead: 'res://art/models/prop/cargo_crate/v1/textures/image-1.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/prop/cargo_crate/v1/model.glb': In external resource #1, invalid UID: 'uid://3qjxo6xxskje' - using text path instead: 'res://art/models/prop/cargo_crate/v1/textures/image-2.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+WARNING: 'res://art/models/prop/cargo_crate/v1/model.glb': In external resource #2, invalid UID: 'uid://du5qvg7i2icye' - using text path instead: 'res://art/models/prop/cargo_crate/v1/textures/image-0.jpg'.
+   at: open (core/io/resource_format_binary.cpp:1094)
+item_art_pack: isolated PCK C++ loading passed 101

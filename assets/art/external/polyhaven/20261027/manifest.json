@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "licenseUrl": "https://polyhaven.com/license",
+  "selected": [
+    "ceramic_pot",
+    "chinese_cabinet",
+    "chinese_console_table",
+    "chinese_sofa",
+    "chinese_tea_table",
+    "compost_bag_02",
+    "painted_wooden_bench",
+    "painted_wooden_shelves",
+    "wicker_basket_02",
+    "wooden_crate_02"
+  ],
+  "archivedOnly": [
+    "chinese_stool",
+    "wooden_bucket_02"
+  ],
+  "note": "原始候选档案；仅selected十件用于本轮派生，候选不表示应用或制作队列。"
+}

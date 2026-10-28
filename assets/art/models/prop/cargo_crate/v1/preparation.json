@@ -1,0 +1,59 @@
+{
+  "kind": "cargo_crate",
+  "sourceAsset": "wooden_crate_02",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {},
+    "uvMetresPerUnit": {
+      "wooden_crate_02": 2.673128086064765
+    },
+    "textureMeans": {
+      "wooden_crate_02": [
+        0.14234492829661508,
+        0.062279103529889704,
+        0.026507522028794427
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    0.8,
+    0.7,
+    0.6
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.4000000059604645,
+      -0.3499999940395355,
+      -0.30000001192092896
+    ],
+    "max": [
+      0.4000000059604645,
+      0.3499999940395355,
+      0.30000001192092896
+    ]
+  },
+  "triangles": 5176,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "59342f730c9f336950f796ef5e4c3b8c794ce5adbd54d98a2ecb679a7e4ae5e8"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "a6e57123110d2899af9493c22b1918174f1c96c707e7126ac67738d98ee10c07"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "a76af97005a66fe8c7cdcabf20174f06813e6a6d5cd9502157c93a57f3c89d5a"
+    }
+  ]
+}

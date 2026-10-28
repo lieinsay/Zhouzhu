@@ -1,0 +1,149 @@
+{
+  "characters": {
+
+  },
+  "models": {
+    "module.bridge": {
+      "bounds": {
+        "max": [
+          3.5,
+          3.1399998664856,
+          3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -3.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-bridge.json",
+      "orthographicSize": 12.8588018417358,
+      "pixels": true
+    },
+    "module.deck": {
+      "bounds": {
+        "max": [
+          3.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-deck.json",
+      "orthographicSize": 12.3104438781738,
+      "pixels": true
+    },
+    "module.floatstone": {
+      "bounds": {
+        "max": [
+          3.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -4.97499990463257,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-floatstone.json",
+      "orthographicSize": 12.3104457855225,
+      "pixels": true
+    },
+    "module.long_sail": {
+      "bounds": {
+        "max": [
+          3.5,
+          8.39999961853027,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -17.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-long_sail.json",
+      "orthographicSize": 21.7429580688477,
+      "pixels": true
+    },
+    "module.sail": {
+      "bounds": {
+        "max": [
+          3.5,
+          7.19999980926514,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-sail.json",
+      "orthographicSize": 17.4194984436035,
+      "pixels": true
+    },
+    "module.storage": {
+      "bounds": {
+        "max": [
+          3.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-storage.json",
+      "orthographicSize": 12.3104438781738,
+      "pixels": true
+    },
+    "module.tall_hold": {
+      "bounds": {
+        "max": [
+          3.57999968528748,
+          4.94999980926514,
+          -3.46000003814697
+        ],
+        "min": [
+          -3.58000016212463,
+          -3.5,
+          -10.5799999237061
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-tall_hold.json",
+      "orthographicSize": 14.9984445571899,
+      "pixels": true
+    },
+    "module.wide_deck": {
+      "bounds": {
+        "max": [
+          10.5,
+          1.15000009536743,
+          -3.5
+        ],
+        "min": [
+          -3.5,
+          -3.5,
+          -10.5
+        ]
+      },
+      "file": "D:/Project/My/Zhouzhu/game/../assets/art/models/scene-20261027-authored-v4/module-wide_deck.json",
+      "orthographicSize": 19.09375,
+      "pixels": true
+    }
+  },
+  "passed": true,
+  "pixelCapture": true,
+  "scatter": {
+
+  },
+  "userConfirmed": false
+}

@@ -1,0 +1,40 @@
+{
+  "author": {
+    "Kuutti Siitonen": "All"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/wicker_basket_02",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "wicker_basket_02_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wicker_basket_02/wicker_basket_02_1k.gltf",
+      "sha256": "78c7a3bdd7025eb092b3ac744e9d83e9a75fbb242696b5dce87ec215af617768",
+      "md5": "aed62a99730dec42ef32e51c36187f37"
+    },
+    {
+      "path": "textures/wicker_basket_02_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wicker_basket_02/wicker_basket_02_nor_gl_1k.jpg",
+      "sha256": "d3de9d9ec34955ed866a819763eb323a0dee571f55b02f5b4c44b0fc34cf2376",
+      "md5": "502447f7dc5687b386f8c417c31feb07"
+    },
+    {
+      "path": "wicker_basket_02.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wicker_basket_02/wicker_basket_02.bin",
+      "sha256": "bd92d61a377879fa28c2bdb18fd0b0a42c42c7333c04e324f346b68689655fdb",
+      "md5": "32a855c75791b16826530611f9199e82"
+    },
+    {
+      "path": "textures/wicker_basket_02_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wicker_basket_02/wicker_basket_02_arm_1k.jpg",
+      "sha256": "641013be798757f4bf2c82cf335b80db2b6d2b52f8fbf0b1f1e2e22196bc60ee",
+      "md5": "2967de2f99b85ee52d6bab63978c003a"
+    },
+    {
+      "path": "textures/wicker_basket_02_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wicker_basket_02/wicker_basket_02_diff_1k.jpg",
+      "sha256": "c03525c27579160bcd71054aa17796570a074ff4cdd560bfed3fb9770c9ba975",
+      "md5": "61471823114f02ca04197e7e2af13e8f"
+    }
+  ]
+}

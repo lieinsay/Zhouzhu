@@ -1,0 +1,59 @@
+{
+  "kind": "chest",
+  "sourceAsset": "chinese_cabinet",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {},
+    "uvMetresPerUnit": {
+      "chinese_cabinet": 4.042950790865523
+    },
+    "textureMeans": {
+      "chinese_cabinet": [
+        0.08258857672862509,
+        0.038637795578710415,
+        0.02272623600693533
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.2,
+    0.6,
+    1.2
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.6000000238418579,
+      -0.29999998211860657,
+      0.0
+    ],
+    "max": [
+      0.6000000238418579,
+      0.29999998211860657,
+      1.2000000476837158
+    ]
+  },
+  "triangles": 15668,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "6c583a8eaf4d78561bbbb0107a85231173eb9290cc6c233dcf9877e3175017c2"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "7552eb37f049d86d0ae210c43da5639265614466d3636682eb9d9b103e5fe07b"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "c017dcd80a4a25535ac96c2f8a115a87be3f6b89d5ad153bd72e3a705f96107d"
+    }
+  ]
+}

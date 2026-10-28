@@ -1,0 +1,38 @@
+{
+  "characters": {
+
+  },
+  "models": {
+
+  },
+  "passed": true,
+  "pixelCapture": true,
+  "scatter": {
+
+  },
+  "userConfirmed": false,
+  "world": {
+    "clock": 0,
+    "npcCount": 2,
+    "player": {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.499755859375,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 4,
+      "left_grip_error": 0.0,
+      "model_id": "actor.young_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 0
+    },
+    "weather": "原开局自动天气与真实时间序列"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Painted Wooden Shelves",
+  "categories": [
+    "furniture",
+    "shelves"
+  ],
+  "type": 2,
+  "tags": [
+    "old",
+    "wooden",
+    "worn",
+    "vintage",
+    "farmhouse",
+    "aged"
+  ],
+  "authors": {
+    "Kirill Sannikov": "All"
+  },
+  "info": null,
+  "date_published": 1709510400,
+  "staging": null,
+  "max_resolution": [
+    4096,
+    4096
+  ],
+  "polycount": 524,
+  "texel_density": 2069.9165499188025,
+  "dimensions": [
+    511.115700006485,
+    367.09491535348883,
+    1125.072093855124
+  ],
+  "files_hash": "76a6c2e7243607651f07a050c5a4d730ac275905",
+  "description": "Free 4K model of painted wooden shelves with worn, vintage farmhouse character - aged paint, visible grain, rounded shelves, and nailed details.",
+  "category_id": "306ba141-9b10-54f2-8d06-09031cea8318",
+  "category": "Furniture/Storage Furniture/Shelving & Bookcases",
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood"
+    ]
+  },
+  "img_version": "5125935a",
+  "download_count": 2740,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/painted_wooden_shelves.png?width=256&height=256&format=webp&v=5125935a"
+}

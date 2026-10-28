@@ -1,0 +1,50 @@
+{
+  "name": "Wicker Basket 02",
+  "categories": [
+    "containers",
+    "decorative"
+  ],
+  "type": 2,
+  "tags": [
+    "handcrafted",
+    "home decor",
+    "rattan",
+    "basket",
+    "handwoven",
+    "woven",
+    "rustic decor",
+    "wicker",
+    "twine"
+  ],
+  "authors": {
+    "Kuutti Siitonen": "All"
+  },
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 17850,
+  "date_published": 1722384000,
+  "staging": null,
+  "texel_density": 11125.076178993691,
+  "dimensions": [
+    374.6650815010071,
+    270.6727311015129,
+    218.15226320177317
+  ],
+  "files_hash": "7c68c52ddfcdec879003c2120929487b0c589837",
+  "description": "Free 8K model of a handwoven wicker basket with lid - rustic rattan weave, twine-bound rim and short wooden legs.",
+  "category_id": "a7259375-6f0a-5f0d-99ff-ee1751ea792e",
+  "category": "Containers & Storage/Baskets & Buckets/Baskets",
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood"
+    ]
+  },
+  "img_version": "2c42d656",
+  "download_count": 8382,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/wicker_basket_02.png?width=256&height=256&format=webp&v=2c42d656"
+}

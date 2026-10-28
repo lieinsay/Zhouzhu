@@ -1,0 +1,40 @@
+{
+  "author": {
+    "Kirill Sannikov": "All"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/painted_wooden_shelves",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "painted_wooden_shelves_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/painted_wooden_shelves/painted_wooden_shelves_1k.gltf",
+      "sha256": "f4d9ffc04ad1e9ce3155522ac962c336bf1fa74b4a27b8a5fd4c8bdb81c2e8f6",
+      "md5": "00af5933b9b5abbc4cad88eede28225c"
+    },
+    {
+      "path": "textures/painted_wooden_shelves_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_nor_gl_1k.jpg",
+      "sha256": "9dcd7e3783da2a2cd44cd4f7a78ac976d2866e02d8dd0799d180d0ab746ae239",
+      "md5": "2a1f2f0dd9fd556ca8809fd7a133bf3d"
+    },
+    {
+      "path": "painted_wooden_shelves.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/painted_wooden_shelves/painted_wooden_shelves.bin",
+      "sha256": "894c032cda1c5668014c87b15ddcc42bccaede15e369e59f628d5219d38edf5f",
+      "md5": "964b327c4effc165624d160cdf2ee96c"
+    },
+    {
+      "path": "textures/painted_wooden_shelves_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_arm_1k.jpg",
+      "sha256": "256c99e04dc99961ad08e085b01adc03641e861f66d4b325b1acb0f822d1e9a9",
+      "md5": "e97521e691aa2c5c15fa5634e7bdef8a"
+    },
+    {
+      "path": "textures/painted_wooden_shelves_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/painted_wooden_shelves/painted_wooden_shelves_diff_1k.jpg",
+      "sha256": "430aef90494d0aa16c354bb4d39fc1a768dd822a0da7e6b746f1891a0cb7cf3a",
+      "md5": "42dc5354c0626a2e13619f8df6fc260f"
+    }
+  ]
+}

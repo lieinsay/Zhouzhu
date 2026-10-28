@@ -65,6 +65,12 @@ func _run() -> void:
 			assert(actor.get_visual_state().imported_model and actor.get_visual_state().skinned_clothing>=2 and actor.get_visual_state().textured_surfaces>=12)
 			actor.free()
 		for look in [0,1,2,3,4,5]:assert(ArtSurface.scatter_mesh(look,0)!=null)
+		var model_active:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://art/model-bindings.json"))
+		var actual_static:=0
+		for id in model_active.bindings:
+			if id.begins_with("actor."):continue
+			var model:Node3D=ArtSurface.model_instance(id);assert(model!=null and model.get_meta("art_model_path")==model_active.bindings[id].path);actual_static+=1;model.free()
+		assert(actual_static==14)
 		panel.free()
 		preview.free()
 		print("item_art_pack: isolated PCK C++ loading passed ",active.bindings.size())

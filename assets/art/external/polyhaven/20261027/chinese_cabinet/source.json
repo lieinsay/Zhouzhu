@@ -1,0 +1,40 @@
+{
+  "author": {
+    "Kirill Sannikov": "All"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/chinese_cabinet",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "chinese_cabinet_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_cabinet/chinese_cabinet_1k.gltf",
+      "sha256": "f7875e583eb73798eed01e1b466bb4c3bc76a46c6bbade39091a01e5ba561293",
+      "md5": "d805bdf4ffa5df0e8b5bd40d2b463d4c"
+    },
+    {
+      "path": "textures/chinese_cabinet_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_diff_1k.jpg",
+      "sha256": "7552eb37f049d86d0ae210c43da5639265614466d3636682eb9d9b103e5fe07b",
+      "md5": "940dbb968436533fc5b5f54727c90fd0"
+    },
+    {
+      "path": "textures/chinese_cabinet_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.jpg",
+      "sha256": "6c583a8eaf4d78561bbbb0107a85231173eb9290cc6c233dcf9877e3175017c2",
+      "md5": "307d1e6c77603c15d8d21de38b791464"
+    },
+    {
+      "path": "textures/chinese_cabinet_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_arm_1k.jpg",
+      "sha256": "c017dcd80a4a25535ac96c2f8a115a87be3f6b89d5ad153bd72e3a705f96107d",
+      "md5": "dd5157ff4dd4c36359c2d912760d39a3"
+    },
+    {
+      "path": "chinese_cabinet.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_cabinet/chinese_cabinet.bin",
+      "sha256": "e0fa721a1536b426e70d2427f5068cd6b7467aac77cea92617862d05d981918f",
+      "md5": "392eda89aa40550e7c193efd4075235a"
+    }
+  ]
+}

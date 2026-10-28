@@ -7,8 +7,8 @@ import { coreExportBuildSpec, CORE_SOURCES } from './build-core-export.mjs';
 import { loadCatalog } from '../lib/catalog.mjs';
 
 const TOOL_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
-const BRIDGE_SOURCES = ['src/placed_props.cpp', 'src/scatter_meshes.cpp', 'src/placeables.cpp', 'src/item_slots.cpp', 'src/crops.cpp', 'src/deposit_kinds.cpp', 'src/art_mesh.cpp', 'src/curved_material.cpp', 'src/art_surface.cpp','src/shared_looks.cpp',...CORE_SOURCES];
-const BRIDGE_HEADERS = ['src/placed_props.h', 'src/scatter_meshes.h', 'src/placeables.h', 'src/item_slots.h', 'src/crops.h', 'src/deposit_kinds.h','src/art_mesh.h','src/art_surface.h','src/curved_material.h','src/art_mesh_kit.h'];
+const BRIDGE_SOURCES = ['src/placed_props.cpp', 'src/scatter_meshes.cpp', 'src/placeables.cpp', 'src/item_slots.cpp', 'src/crops.cpp', 'src/deposit_kinds.cpp', 'src/art_mesh.cpp', 'src/curved_material.cpp', 'src/art_surface.cpp','src/shared_looks.cpp','src/model_art.cpp',...CORE_SOURCES];
+const BRIDGE_HEADERS = ['src/placed_props.h', 'src/scatter_meshes.h', 'src/placeables.h', 'src/item_slots.h', 'src/crops.h', 'src/deposit_kinds.h','src/art_mesh.h','src/art_surface.h','src/curved_material.h','src/art_mesh_kit.h','src/model_art.h','src/shared_looks.h'];
 const GAME_DLL = 'game/bin/zhouzhu.windows.template_debug.x86_64.dll';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -184,7 +184,7 @@ export async function exportModels({ root, output, godot }) {
   const manifest = {
     schemaVersion: 1, generatedAt: new Date().toISOString(), models, missingItems, sources,
     exporter: { core: 'current-source', propsAndScatter: 'tool-only-gdextension/current-source', ship: 'existing-game-dll', compiler: build.compiler, godot, headless: true, gameFilesUnchanged: before },
-    limitations: ['采集源模型不是库存物品模型。', '纯 C++ 建筑使用当前模板和默认平地；搭建件使用注明的邻接上下文。', '保留静态原始几何与材质色；独立视窗不还原世界曲率、天气、季节、积雪或风摆。', '船模块从既有 DLL 的合法参考船布局截取，邻节会决定栏杆/墙面；不包含全船共用船首和连接梯子。'],
+    limitations: ['采集源模型不是库存物品模型。', '纯 C++ 建筑使用当前模板和默认平地；搭建件使用注明的邻接上下文。作者家具与蒙皮人物使用独立model-registry，不能以此原生构件快照替代。', '保留静态原始几何与材质色；独立视窗不还原世界曲率、天气、季节、积雪或风摆。', '船模块从既有 DLL 的合法参考船布局截取，邻节会决定栏杆/墙面；不包含全船共用船首和连接梯子。独立导出工程不注入美术实体绑定或货物账本。'],
     failures: engine.failures || [],
   };
   await writeFile(path.join(output, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);

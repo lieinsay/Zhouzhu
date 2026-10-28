@@ -1,0 +1,71 @@
+{
+  "kind": "altar",
+  "sourceAsset": "chinese_console_table",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {
+      "ZZ_project_3": {
+        "asset": "material.wood",
+        "color": [
+          0.5,
+          0.36,
+          0.22
+        ],
+        "roughness": 0.85,
+        "metallic": 0
+      }
+    },
+    "uvMetresPerUnit": {
+      "chinese_console_table": 3.215190621090417,
+      "ZZ_project_3": 0.5393959059809811
+    },
+    "textureMeans": {
+      "chinese_console_table": [
+        0.10943618909520017,
+        0.047055041757840886,
+        0.022587247062565156
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.8,
+    0.6,
+    1
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.8999999165534973,
+      -0.30000001192092896,
+      0.0
+    ],
+    "max": [
+      0.8999999165534973,
+      0.30000001192092896,
+      1.4600000381469727
+    ]
+  },
+  "triangles": 14776,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "d07e9efc41896c4a77bc91f003341c4e0a64be05320862bf2457817220c3f86b"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "82ecf04fa7793ffa6a5b11993944bf9a8f9a7179777ffaa63ef70295b044d4a4"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "c819a43214165b1241392a599f5f3076263569e1aaad54ef92a57ba52e34e47e"
+    }
+  ]
+}

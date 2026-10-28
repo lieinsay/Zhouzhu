@@ -1,0 +1,60 @@
+{
+  "kind": "vat",
+  "sourceAsset": "ceramic_pot",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.6,
+      0.4,
+      0.28
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {},
+    "projectMaterial": "material.terracotta",
+    "uvMetresPerUnit": {
+      "ceramic_pot": 2.337797826470167
+    },
+    "textureMeans": {
+      "ceramic_pot": [
+        0.18974083164006872,
+        0.12855470995315885,
+        0.06100598952211334
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    0.9,
+    0.9,
+    0.8
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.44999998807907104,
+      -0.44999998807907104,
+      0.0
+    ],
+    "max": [
+      0.44999998807907104,
+      0.44999998807907104,
+      0.800000011920929
+    ]
+  },
+  "triangles": 4944,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "2102b4345882c9648de7ee3b3e547bf7a2a3c9fd35db0ded322df60df16a5c57"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "583e49e8be2ba460700f2dcd6466ab347f5285ccc651dd9054b59ef6a78d812b"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "b688549e4defe29de262ccba81278360cd2f42037a40b70f8f4693a96c14bc45"
+    }
+  ]
+}

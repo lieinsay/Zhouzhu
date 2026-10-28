@@ -1,0 +1,60 @@
+{
+  "kind": "sacks",
+  "sourceAsset": "compost_bag_02",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.66,
+      0.6,
+      0.5
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.25,
+    "projectMaterials": {},
+    "projectMaterial": "material.hemp",
+    "uvMetresPerUnit": {
+      "compost_bag_02": 2.187085040005344
+    },
+    "textureMeans": {
+      "compost_bag_02": [
+        0.09499161380175931,
+        0.09822635470123943,
+        0.08055441254856574
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.2,
+    0.9,
+    0.7
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.5999999642372131,
+      -0.44999998807907104,
+      0.0
+    ],
+    "max": [
+      0.5999999642372131,
+      0.44999998807907104,
+      0.699999988079071
+    ]
+  },
+  "triangles": 12096,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "5a9828cbaa87b74f435e9ae612accf95fcac9bf398f1d4e891063ef9c28e1a99"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "5e6a4efb1f66e97d436574f40d1c1b7006269f8d014ac25caa1ca632a378ffd4"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "4936a8ff6f7b19bed93511071fea30fb4b04d4f5ef4e24914bee56692ab98f1b"
+    }
+  ]
+}

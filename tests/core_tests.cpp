@@ -4561,6 +4561,11 @@ void test_building_mesh() {
     check(!building_frame(site, house, off, rules).grounded, "岛外的：没有地面");
 
     const HouseTemplate tmpl = bare_template(house);
+    HouseTemplate furnished=tmpl;Furnishing fc;fc.kind="table";fc.x=.7;fc.z=-.8;fc.quarter=1;furnished.items.push_back(fc);
+    const BuildingMesh legacy_furniture=build_building_mesh(plate,frame,b,furnished,3);
+    const BuildingMesh authored_furniture=build_building_mesh(plate,frame,b,furnished,3,true);
+    check(legacy_furniture.collision==authored_furniture.collision && legacy_furniture.group_count==authored_furniture.group_count && legacy_furniture.doors.size()==authored_furniture.doors.size() && legacy_furniture.ladders.size()==authored_furniture.ladders.size(),"作者家具只替换画面，原碰撞、分组、门梯保持一致");
+    check(authored_furniture.visual_models.size()==1 && authored_furniture.visual_models[0].model_id=="furniture.table" && authored_furniture.visual_models[0].x==fc.x && authored_furniture.visual_models[0].z==fc.z && std::abs(authored_furniture.visual_models[0].yaw-1.570796326794897)<1e-9,"家具实体引用保留原模板位置、转向和身份");
     const BuildingMesh m = build_building_mesh(plate, frame, b, tmpl, 3);
     const BuildingParts parts = building_parts(house, tmpl, frame.floor_y - frame.bottom, [&house](double, double) { return house.plinth_m; });
     int visual = 0, solid = 0;
@@ -7548,6 +7553,7 @@ void test_dev_manual() {
     check(manual_text.find("res://tests/scene_visuals_e2e.tscn")!=std::string::npos && studio_text.find("scene_visuals_e2e.tscn")!=std::string::npos,"集中场景像素检查有文档入口");
     check(manual_text.find("register-character")!=std::string::npos && studio_text.find("register-character")!=std::string::npos,"人物贴图登记有操作文档");
     check(manual_text.find("tools/art-models/README.md")!=std::string::npos && studio_text.find("actor_models_e2e.tscn")!=std::string::npos,"作者三维模型与蒙皮工具有操作文档和验收入口");
+    check(manual_text.find("furniture_models_e2e.tscn")!=std::string::npos && studio_text.find("/api/art/models/apply")!=std::string::npos && manual_text.find("--model-bindings=")!=std::string::npos,"实体工坊应用、家具与独立试接入验收有文档");
     // input_actions.h 里注释写着「开发者：」的动作，说明里都得有一条
     std::ifstream in(std::string(ZHOUZHU_SOURCE_DIR) + "/src/input_actions.h", std::ios::binary);
     check(bool(in), "读得到 src/input_actions.h");

@@ -1,0 +1,834 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 37131730,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_diff_8k.jpg",
+        "md5": "0cd4366f9185a48f83750abaad4a5343"
+      },
+      "png": {
+        "size": 206920252,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_sofa/chinese_sofa_diff_8k.png",
+        "md5": "c6d7c27bc7b4785cc74e00063d25b4a0"
+      },
+      "exr": {
+        "size": 90776418,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_diff_8k.exr",
+        "md5": "014365b30799a77fbadfd8eca2c8ccb9"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8362536,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_diff_4k.jpg",
+        "md5": "8853156b0683d47c65b756e7ea9bf19d"
+      },
+      "png": {
+        "size": 60075249,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_sofa/chinese_sofa_diff_4k.png",
+        "md5": "4d27be62114b6e14eb2f92345720786c"
+      },
+      "exr": {
+        "size": 19390745,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_diff_4k.exr",
+        "md5": "2a46209301365a7be321d20c27a7f73a"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1986052,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_diff_2k.jpg",
+        "md5": "0bb020bf5b6532f57b94e96f587b23ef"
+      },
+      "png": {
+        "size": 15759253,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_sofa/chinese_sofa_diff_2k.png",
+        "md5": "d079f11eb3173bd95fdaa3e7f20c3547"
+      },
+      "exr": {
+        "size": 4087340,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_diff_2k.exr",
+        "md5": "b114539709bd23645c44ffba795311f8"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 511164,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_diff_1k.jpg",
+        "md5": "6c7f09885790b40d7b21df59ec2e9952"
+      },
+      "png": {
+        "size": 4137092,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_sofa/chinese_sofa_diff_1k.png",
+        "md5": "08abae5036487f1b32caa63815ab910a"
+      },
+      "exr": {
+        "size": 1026442,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_diff_1k.exr",
+        "md5": "57f82909d38ff4a6f60ec4d69dd3f729"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 33591407,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_nor_dx_8k.jpg",
+        "md5": "c960e772055737d79ce565c540b240fe"
+      },
+      "png": {
+        "size": 156304027,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_sofa/chinese_sofa_nor_dx_8k.png",
+        "md5": "d28ec1e7c87e2de7b23226a0de053d45"
+      },
+      "exr": {
+        "size": 65583700,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_nor_dx_8k.exr",
+        "md5": "80a58e6940886bf560c76d0cf0667d44"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8656779,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_nor_dx_4k.jpg",
+        "md5": "375a53611cf4012828cc28688717b45c"
+      },
+      "png": {
+        "size": 54979675,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_sofa/chinese_sofa_nor_dx_4k.png",
+        "md5": "2f3846f271081b5eef0e22cfc2d06004"
+      },
+      "exr": {
+        "size": 17463892,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_nor_dx_4k.exr",
+        "md5": "9a3e4913f97334121cc3c3c75a1a465e"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2017402,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_nor_dx_2k.jpg",
+        "md5": "5d566700005f0ab3213c2ecc6fa6cbc8"
+      },
+      "png": {
+        "size": 15198438,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_sofa/chinese_sofa_nor_dx_2k.png",
+        "md5": "66f3381be6ca81c4fbc4a22c54091937"
+      },
+      "exr": {
+        "size": 4035654,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_nor_dx_2k.exr",
+        "md5": "63744c01ffbfd9fb222370386b144126"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 474465,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_nor_dx_1k.jpg",
+        "md5": "9e4d855e124368d08b62f526994d7416"
+      },
+      "png": {
+        "size": 3975657,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_sofa/chinese_sofa_nor_dx_1k.png",
+        "md5": "815e7ebf539d9de33f83e3a40919eb82"
+      },
+      "exr": {
+        "size": 988518,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_nor_dx_1k.exr",
+        "md5": "07906953e9320d49215eddace17b08cb"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 33615181,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_nor_gl_8k.jpg",
+        "md5": "251727a84ca811c4e19b67d7d63d3149"
+      },
+      "png": {
+        "size": 156298488,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_sofa/chinese_sofa_nor_gl_8k.png",
+        "md5": "02b3dbf9cd3894fc91fb8bd5fcbcfec4"
+      },
+      "exr": {
+        "size": 65859045,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_nor_gl_8k.exr",
+        "md5": "71756d1a6f29b7ba2d4dd37bb4f2ea33"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8665188,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_nor_gl_4k.jpg",
+        "md5": "3efe08b1726258aaf021afa6d45477f2"
+      },
+      "png": {
+        "size": 55035107,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_sofa/chinese_sofa_nor_gl_4k.png",
+        "md5": "f4fd8a96955b4f89f58e6337bd41da38"
+      },
+      "exr": {
+        "size": 17515248,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_nor_gl_4k.exr",
+        "md5": "ff10ee3432bcf36c356416877df8dbde"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2022444,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_nor_gl_2k.jpg",
+        "md5": "2c91f104ab56c20797a95f5dfec32afc"
+      },
+      "png": {
+        "size": 15197395,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_sofa/chinese_sofa_nor_gl_2k.png",
+        "md5": "e9643b812db8bb89895493a0e02bb67a"
+      },
+      "exr": {
+        "size": 4037658,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_nor_gl_2k.exr",
+        "md5": "51649f0ef6c41c999fd28567b54c1da5"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 472388,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_nor_gl_1k.jpg",
+        "md5": "83753c91cce4ee813ef24a8863053d24"
+      },
+      "png": {
+        "size": 3975304,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_sofa/chinese_sofa_nor_gl_1k.png",
+        "md5": "0ca06da70eeff8f1228dc17cdc33ac79"
+      },
+      "exr": {
+        "size": 990025,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_nor_gl_1k.exr",
+        "md5": "91039aa7d4e3da0fad1e9926904f8823"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/chinese_sofa_rough_8k.exr": {
+            "size": 37293318,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_rough_8k.exr",
+            "md5": "571a6fcc228d8a7cfbe10b5687cb85b1"
+          },
+          "textures/chinese_sofa_nor_gl_8k.exr": {
+            "size": 65859045,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_nor_gl_8k.exr",
+            "md5": "71756d1a6f29b7ba2d4dd37bb4f2ea33"
+          },
+          "textures/chinese_sofa_diff_8k.jpg": {
+            "size": 37131730,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_diff_8k.jpg",
+            "md5": "0cd4366f9185a48f83750abaad4a5343"
+          }
+        },
+        "size": 127517,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/chinese_sofa/chinese_sofa_8k.blend",
+        "md5": "b168339e76ce22376ede4825104d05d8"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/chinese_sofa_nor_gl_4k.exr": {
+            "size": 17515248,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_nor_gl_4k.exr",
+            "md5": "ff10ee3432bcf36c356416877df8dbde"
+          },
+          "textures/chinese_sofa_rough_4k.exr": {
+            "size": 8584311,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_rough_4k.exr",
+            "md5": "b3889537ce1899b0e2216da29e47a0c6"
+          },
+          "textures/chinese_sofa_diff_4k.jpg": {
+            "size": 8362536,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_diff_4k.jpg",
+            "md5": "8853156b0683d47c65b756e7ea9bf19d"
+          }
+        },
+        "size": 127673,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/chinese_sofa/chinese_sofa_4k.blend",
+        "md5": "3761e521b16b0667aed9d524587cfe2c"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/chinese_sofa_rough_2k.exr": {
+            "size": 2121728,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_rough_2k.exr",
+            "md5": "3f7c2f5d507d6f8d1bda6b71219ac4a0"
+          },
+          "textures/chinese_sofa_diff_2k.jpg": {
+            "size": 1986052,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_diff_2k.jpg",
+            "md5": "0bb020bf5b6532f57b94e96f587b23ef"
+          },
+          "textures/chinese_sofa_nor_gl_2k.exr": {
+            "size": 4037658,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_nor_gl_2k.exr",
+            "md5": "51649f0ef6c41c999fd28567b54c1da5"
+          }
+        },
+        "size": 127718,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/chinese_sofa/chinese_sofa_2k.blend",
+        "md5": "a99f7c6211437b71f1ccbece8f4fff48"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/chinese_sofa_diff_1k.jpg": {
+            "size": 511164,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_diff_1k.jpg",
+            "md5": "6c7f09885790b40d7b21df59ec2e9952"
+          },
+          "textures/chinese_sofa_rough_1k.exr": {
+            "size": 575329,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_rough_1k.exr",
+            "md5": "4412417635c3b5c7c1c910cd20ebdc07"
+          },
+          "textures/chinese_sofa_nor_gl_1k.exr": {
+            "size": 990025,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_nor_gl_1k.exr",
+            "md5": "91039aa7d4e3da0fad1e9926904f8823"
+          }
+        },
+        "size": 127678,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/chinese_sofa/chinese_sofa_1k.blend",
+        "md5": "7abe29fb0fb838d2d982a384b20676c0"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_sofa_arm_8k.jpg": {
+            "size": 38266016,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_arm_8k.jpg",
+            "md5": "1ac6b59b7e1d3fec2ac35cdae845b418"
+          },
+          "textures/chinese_sofa_nor_gl_8k.jpg": {
+            "size": 33615181,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_nor_gl_8k.jpg",
+            "md5": "251727a84ca811c4e19b67d7d63d3149"
+          },
+          "chinese_sofa.bin": {
+            "size": 29824,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_sofa/chinese_sofa.bin",
+            "md5": "6d5166585d031df7e90cb264780ec5b8"
+          },
+          "textures/chinese_sofa_diff_8k.jpg": {
+            "size": 37131730,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_diff_8k.jpg",
+            "md5": "0cd4366f9185a48f83750abaad4a5343"
+          }
+        },
+        "size": 2759,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_sofa/chinese_sofa_8k.gltf",
+        "md5": "c2dc2a317bb94fda2da5585b9482e1b3"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_sofa_nor_gl_4k.jpg": {
+            "size": 8665188,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_nor_gl_4k.jpg",
+            "md5": "3efe08b1726258aaf021afa6d45477f2"
+          },
+          "textures/chinese_sofa_arm_4k.jpg": {
+            "size": 8592678,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_arm_4k.jpg",
+            "md5": "065aa545765784962a0d02c6c36e914e"
+          },
+          "chinese_sofa.bin": {
+            "size": 29824,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_sofa/chinese_sofa.bin",
+            "md5": "6d5166585d031df7e90cb264780ec5b8"
+          },
+          "textures/chinese_sofa_diff_4k.jpg": {
+            "size": 8362536,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_diff_4k.jpg",
+            "md5": "8853156b0683d47c65b756e7ea9bf19d"
+          }
+        },
+        "size": 2759,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/chinese_sofa/chinese_sofa_4k.gltf",
+        "md5": "b8df5cd47c95f9a76240385952ed2b64"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_sofa_nor_gl_2k.jpg": {
+            "size": 2022444,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_nor_gl_2k.jpg",
+            "md5": "2c91f104ab56c20797a95f5dfec32afc"
+          },
+          "textures/chinese_sofa_arm_2k.jpg": {
+            "size": 2085806,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_arm_2k.jpg",
+            "md5": "3ce0388141f1db2d958a64344f0ef826"
+          },
+          "textures/chinese_sofa_diff_2k.jpg": {
+            "size": 1986052,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_diff_2k.jpg",
+            "md5": "0bb020bf5b6532f57b94e96f587b23ef"
+          },
+          "chinese_sofa.bin": {
+            "size": 29824,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_sofa/chinese_sofa.bin",
+            "md5": "6d5166585d031df7e90cb264780ec5b8"
+          }
+        },
+        "size": 2759,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/chinese_sofa/chinese_sofa_2k.gltf",
+        "md5": "3b73165eadd0b5f3c8b33943f87a01e8"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_sofa_diff_1k.jpg": {
+            "size": 511164,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_diff_1k.jpg",
+            "md5": "6c7f09885790b40d7b21df59ec2e9952"
+          },
+          "textures/chinese_sofa_arm_1k.jpg": {
+            "size": 555922,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_arm_1k.jpg",
+            "md5": "dcd64dc00367f4dbfabd0d94eb18b5b0"
+          },
+          "chinese_sofa.bin": {
+            "size": 29824,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_sofa/chinese_sofa.bin",
+            "md5": "6d5166585d031df7e90cb264780ec5b8"
+          },
+          "textures/chinese_sofa_nor_gl_1k.jpg": {
+            "size": 472388,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_nor_gl_1k.jpg",
+            "md5": "83753c91cce4ee813ef24a8863053d24"
+          }
+        },
+        "size": 2759,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_sofa/chinese_sofa_1k.gltf",
+        "md5": "6ccb6fbfbedbb2a5c3ded708448d0784"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/chinese_sofa_rough_8k.exr": {
+            "size": 37293318,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_rough_8k.exr",
+            "md5": "571a6fcc228d8a7cfbe10b5687cb85b1"
+          },
+          "textures/chinese_sofa_nor_gl_8k.exr": {
+            "size": 65859045,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_nor_gl_8k.exr",
+            "md5": "71756d1a6f29b7ba2d4dd37bb4f2ea33"
+          },
+          "textures/chinese_sofa_diff_8k.jpg": {
+            "size": 37131730,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_diff_8k.jpg",
+            "md5": "0cd4366f9185a48f83750abaad4a5343"
+          }
+        },
+        "size": 44768,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/chinese_sofa/chinese_sofa_8k.usdc",
+        "md5": "409fe8793df4cf70e3a85d454a848938"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/chinese_sofa_nor_gl_4k.exr": {
+            "size": 17515248,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_nor_gl_4k.exr",
+            "md5": "ff10ee3432bcf36c356416877df8dbde"
+          },
+          "textures/chinese_sofa_rough_4k.exr": {
+            "size": 8584311,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_rough_4k.exr",
+            "md5": "b3889537ce1899b0e2216da29e47a0c6"
+          },
+          "textures/chinese_sofa_diff_4k.jpg": {
+            "size": 8362536,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_diff_4k.jpg",
+            "md5": "8853156b0683d47c65b756e7ea9bf19d"
+          }
+        },
+        "size": 44793,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/chinese_sofa/chinese_sofa_4k.usdc",
+        "md5": "224fa71bf0b04cc4bd9b5b34e632d5b1"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/chinese_sofa_rough_2k.exr": {
+            "size": 2121728,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_rough_2k.exr",
+            "md5": "3f7c2f5d507d6f8d1bda6b71219ac4a0"
+          },
+          "textures/chinese_sofa_diff_2k.jpg": {
+            "size": 1986052,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_diff_2k.jpg",
+            "md5": "0bb020bf5b6532f57b94e96f587b23ef"
+          },
+          "textures/chinese_sofa_nor_gl_2k.exr": {
+            "size": 4037658,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_nor_gl_2k.exr",
+            "md5": "51649f0ef6c41c999fd28567b54c1da5"
+          }
+        },
+        "size": 44768,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/chinese_sofa/chinese_sofa_2k.usdc",
+        "md5": "82b50796c585558f745bc1477fd4d865"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/chinese_sofa_diff_1k.jpg": {
+            "size": 511164,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_diff_1k.jpg",
+            "md5": "6c7f09885790b40d7b21df59ec2e9952"
+          },
+          "textures/chinese_sofa_rough_1k.exr": {
+            "size": 575329,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_rough_1k.exr",
+            "md5": "4412417635c3b5c7c1c910cd20ebdc07"
+          },
+          "textures/chinese_sofa_nor_gl_1k.exr": {
+            "size": 990025,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_nor_gl_1k.exr",
+            "md5": "91039aa7d4e3da0fad1e9926904f8823"
+          }
+        },
+        "size": 44793,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/chinese_sofa/chinese_sofa_1k.usdc",
+        "md5": "45e789ef8c40b1643b75dd98fc689052"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 38266016,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_arm_8k.jpg",
+        "md5": "1ac6b59b7e1d3fec2ac35cdae845b418"
+      },
+      "png": {
+        "size": 82154767,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_sofa/chinese_sofa_arm_8k.png",
+        "md5": "2d6c91e7dc4604b3328da1678aec1285"
+      },
+      "exr": {
+        "size": 91196331,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_arm_8k.exr",
+        "md5": "66c6d41bda4545a238cf98148e43a37e"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8592678,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_arm_4k.jpg",
+        "md5": "065aa545765784962a0d02c6c36e914e"
+      },
+      "png": {
+        "size": 40226238,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_sofa/chinese_sofa_arm_4k.png",
+        "md5": "dca7136479895c15037a3debb84af2b6"
+      },
+      "exr": {
+        "size": 20541804,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_arm_4k.exr",
+        "md5": "8ebeabc17c01c5f2d6fde5b26f192478"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2085806,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_arm_2k.jpg",
+        "md5": "3ce0388141f1db2d958a64344f0ef826"
+      },
+      "png": {
+        "size": 11403138,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_sofa/chinese_sofa_arm_2k.png",
+        "md5": "5a103fb7126c0293499afbed22af6de2"
+      },
+      "exr": {
+        "size": 4798652,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_arm_2k.exr",
+        "md5": "518af168c602a7ce2a9e2cf2a2fad4a9"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 555922,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_arm_1k.jpg",
+        "md5": "dcd64dc00367f4dbfabd0d94eb18b5b0"
+      },
+      "png": {
+        "size": 3151323,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_sofa/chinese_sofa_arm_1k.png",
+        "md5": "9a74946691da74993b727633253dc46e"
+      },
+      "exr": {
+        "size": 1257065,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_arm_1k.exr",
+        "md5": "9d7db35a9eaec221f1f5ad0f1e5d3e31"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_sofa_rough_8k.exr": {
+            "size": 37293318,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_rough_8k.exr",
+            "md5": "571a6fcc228d8a7cfbe10b5687cb85b1"
+          },
+          "textures/chinese_sofa_nor_gl_8k.exr": {
+            "size": 65859045,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_nor_gl_8k.exr",
+            "md5": "71756d1a6f29b7ba2d4dd37bb4f2ea33"
+          },
+          "textures/chinese_sofa_diff_8k.jpg": {
+            "size": 37131730,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_diff_8k.jpg",
+            "md5": "0cd4366f9185a48f83750abaad4a5343"
+          }
+        },
+        "size": 45612,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/chinese_sofa/chinese_sofa_8k.fbx",
+        "md5": "6c95d5ee3aa4715b7226df8307032ee1"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_sofa_nor_gl_4k.exr": {
+            "size": 17515248,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_nor_gl_4k.exr",
+            "md5": "ff10ee3432bcf36c356416877df8dbde"
+          },
+          "textures/chinese_sofa_rough_4k.exr": {
+            "size": 8584311,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_rough_4k.exr",
+            "md5": "b3889537ce1899b0e2216da29e47a0c6"
+          },
+          "textures/chinese_sofa_diff_4k.jpg": {
+            "size": 8362536,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_diff_4k.jpg",
+            "md5": "8853156b0683d47c65b756e7ea9bf19d"
+          }
+        },
+        "size": 45612,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/chinese_sofa/chinese_sofa_4k.fbx",
+        "md5": "2e22b9a5620b6fa0955ba36e99913e24"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_sofa_rough_2k.exr": {
+            "size": 2121728,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_rough_2k.exr",
+            "md5": "3f7c2f5d507d6f8d1bda6b71219ac4a0"
+          },
+          "textures/chinese_sofa_diff_2k.jpg": {
+            "size": 1986052,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_diff_2k.jpg",
+            "md5": "0bb020bf5b6532f57b94e96f587b23ef"
+          },
+          "textures/chinese_sofa_nor_gl_2k.exr": {
+            "size": 4037658,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_nor_gl_2k.exr",
+            "md5": "51649f0ef6c41c999fd28567b54c1da5"
+          }
+        },
+        "size": 45612,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/chinese_sofa/chinese_sofa_2k.fbx",
+        "md5": "3a55ee976accf1ed92578db75efe3eed"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_sofa_diff_1k.jpg": {
+            "size": 511164,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_diff_1k.jpg",
+            "md5": "6c7f09885790b40d7b21df59ec2e9952"
+          },
+          "textures/chinese_sofa_rough_1k.exr": {
+            "size": 575329,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_rough_1k.exr",
+            "md5": "4412417635c3b5c7c1c910cd20ebdc07"
+          },
+          "textures/chinese_sofa_nor_gl_1k.exr": {
+            "size": 990025,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_nor_gl_1k.exr",
+            "md5": "91039aa7d4e3da0fad1e9926904f8823"
+          }
+        },
+        "size": 45612,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/chinese_sofa/chinese_sofa_1k.fbx",
+        "md5": "a56ac02eaee4aa8184f59047399238a7"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "size": 20387097,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_ao_8k.jpg",
+        "md5": "9fb8f914d3f88fb363b6ee90fb7b8f44"
+      },
+      "png": {
+        "size": 24055927,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_sofa/chinese_sofa_ao_8k.png",
+        "md5": "cda759ad2a70a8de1d6107a35ddc0cb5"
+      },
+      "exr": {
+        "size": 20236798,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_ao_8k.exr",
+        "md5": "5cf91094797c4a45fae40f3f9784cb13"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 5565494,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_ao_4k.jpg",
+        "md5": "964f9d9b1862af57882e974e35aeb42e"
+      },
+      "png": {
+        "size": 15075009,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_sofa/chinese_sofa_ao_4k.png",
+        "md5": "29c5db4040f6694172f1be52086ed110"
+      },
+      "exr": {
+        "size": 5852755,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_ao_4k.exr",
+        "md5": "c13294a71778b2ba7a080d6991a30991"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1271233,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_ao_2k.jpg",
+        "md5": "9807159cd24b78fa2564956b7cca2968"
+      },
+      "png": {
+        "size": 4496610,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_sofa/chinese_sofa_ao_2k.png",
+        "md5": "5cc115f1dd76cea0506202f06b28f07e"
+      },
+      "exr": {
+        "size": 1283629,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_ao_2k.exr",
+        "md5": "21dbaafdca7274b2054190ed94e3afd4"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 310290,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_ao_1k.jpg",
+        "md5": "64cec1466ab0cf84887f4de7d0441622"
+      },
+      "png": {
+        "size": 1284880,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_sofa/chinese_sofa_ao_1k.png",
+        "md5": "63cfb7126d8751d2fd352e0c87fed7ae"
+      },
+      "exr": {
+        "size": 333124,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_ao_1k.exr",
+        "md5": "dc92749fd8b4ca459700539f78df5925"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 33872994,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_sofa/chinese_sofa_rough_8k.jpg",
+        "md5": "d912fab3c3f3d9eb868f148eccfc2392"
+      },
+      "png": {
+        "size": 50969544,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_sofa/chinese_sofa_rough_8k.png",
+        "md5": "21da5c9017da403bfe2011fd88f6490d"
+      },
+      "exr": {
+        "size": 37293318,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_sofa/chinese_sofa_rough_8k.exr",
+        "md5": "571a6fcc228d8a7cfbe10b5687cb85b1"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7545772,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_sofa/chinese_sofa_rough_4k.jpg",
+        "md5": "e9fbe34d74172b6d12dbb7586c69705c"
+      },
+      "png": {
+        "size": 18867090,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_sofa/chinese_sofa_rough_4k.png",
+        "md5": "2014406ec023b3d5fefad5e1f858e6af"
+      },
+      "exr": {
+        "size": 8584311,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_sofa/chinese_sofa_rough_4k.exr",
+        "md5": "b3889537ce1899b0e2216da29e47a0c6"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1817031,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_sofa/chinese_sofa_rough_2k.jpg",
+        "md5": "e9b8747ce441b661055c3989f17f714d"
+      },
+      "png": {
+        "size": 5370852,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_sofa/chinese_sofa_rough_2k.png",
+        "md5": "4097ecbd2c0c8a8ba20d15c835667b6f"
+      },
+      "exr": {
+        "size": 2121728,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_sofa/chinese_sofa_rough_2k.exr",
+        "md5": "3f7c2f5d507d6f8d1bda6b71219ac4a0"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 475933,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_rough_1k.jpg",
+        "md5": "fc13157b8be136147d4af89d81ac0ab6"
+      },
+      "png": {
+        "size": 1463179,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_sofa/chinese_sofa_rough_1k.png",
+        "md5": "28d7d99a5a9d778b38d5ba8cbe7904b8"
+      },
+      "exr": {
+        "size": 575329,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_sofa/chinese_sofa_rough_1k.exr",
+        "md5": "4412417635c3b5c7c1c910cd20ebdc07"
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 #include "player.h"
 #include "scene_character.h"
+#include "model_art.h"
 
 #include <algorithm>
 #include <cmath>
@@ -256,6 +257,9 @@ void Player::set_carrying(bool p_carrying, const Color &p_color) {
         crate->set_name("Crate");
         body->add_child(crate);
         crate->set_position(Vector3(0, 1.05f, -0.55f)); // 身前、齐胸
+        SharedLooks cargo_looks;
+        Node3D *authored=model_art::instantiate_styled("prop.cargo_crate",cargo_looks);
+        if(authored){authored->set_name("AuthoredCargo");crate->add_child(authored);}
         Ref<StandardMaterial3D> wood;
         wood.instantiate();
         wood->set_albedo(Color(0.58f, 0.44f, 0.26f));
@@ -267,14 +271,14 @@ void Player::set_carrying(bool p_carrying, const Color &p_color) {
         MeshInstance3D *mesh = memnew(MeshInstance3D);
         mesh->set_name("Box");
         mesh->set_mesh(box);
-        crate->add_child(mesh);
+        if(!authored)crate->add_child(mesh);else memdelete(mesh);
         Ref<BoxMesh> lid;
         lid.instantiate();
-        lid->set_size(Vector3(0.7f, 0.04f, 0.6f));
+        lid->set_size(authored?Vector3(.22f,.008f,.17f):Vector3(.7f,.04f,.6f));
         MeshInstance3D *lid_mesh = memnew(MeshInstance3D);
         lid_mesh->set_name("Lid");
         lid_mesh->set_mesh(lid);
-        lid_mesh->set_position(Vector3(0, 0.32f, 0));
+        lid_mesh->set_position(authored?Vector3(.16f,.306f,-.12f):Vector3(0,.32f,0));
         crate->add_child(lid_mesh);
     }
     MeshInstance3D *lid_mesh = Object::cast_to<MeshInstance3D>(crate->get_node_or_null("Lid"));

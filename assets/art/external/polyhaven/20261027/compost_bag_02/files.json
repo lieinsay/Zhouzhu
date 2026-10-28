@@ -1,0 +1,904 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 35611715,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_diff_8k.jpg",
+        "md5": "a9949b2c4d226c4cb7db4410df90a7e2"
+      },
+      "png": {
+        "size": 210357148,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/compost_bag_02/compost_bag_02_diff_8k.png",
+        "md5": "3547d2d105d011894bad57735e1d45b6"
+      },
+      "exr": {
+        "size": 77805997,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_diff_8k.exr",
+        "md5": "ec8a4022c737b3384f4ed046fed1411a"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 9048336,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_diff_4k.jpg",
+        "md5": "eb10eecfa4e8811f1454b6569cdc7350"
+      },
+      "png": {
+        "size": 67371314,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/compost_bag_02/compost_bag_02_diff_4k.png",
+        "md5": "ee7873c435f1f488257b126f0d677e38"
+      },
+      "exr": {
+        "size": 17438134,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_diff_4k.exr",
+        "md5": "1960ac2540829209265a709a3ea32996"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2411219,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_diff_2k.jpg",
+        "md5": "f4a28a938a816d6c4765281767b55702"
+      },
+      "png": {
+        "size": 18382061,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/compost_bag_02/compost_bag_02_diff_2k.png",
+        "md5": "74760c6b12e9dc235a0e3675451fdbb6"
+      },
+      "exr": {
+        "size": 4502267,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_diff_2k.exr",
+        "md5": "0f27bca77431041f4721c346435367b0"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 627148,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_diff_1k.jpg",
+        "md5": "27024bf4c2d35607b30d85e340ff3ecb"
+      },
+      "png": {
+        "size": 4829453,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/compost_bag_02/compost_bag_02_diff_1k.png",
+        "md5": "15d6816edfd90180cf3f09799e97bfdb"
+      },
+      "exr": {
+        "size": 1173185,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_diff_1k.exr",
+        "md5": "40b33739b04b5b3f4a10fcbb97c82d97"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 38148105,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_nor_dx_8k.jpg",
+        "md5": "bf52ea3d405f6ebbdb9e3a818db171ee"
+      },
+      "png": {
+        "size": 246436819,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/compost_bag_02/compost_bag_02_nor_dx_8k.png",
+        "md5": "b34b52413a70be5bbf5d8118db768105"
+      },
+      "exr": {
+        "size": 73568406,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_nor_dx_8k.exr",
+        "md5": "b205d5e9791beea6038932a74c1dff14"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 10593706,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_nor_dx_4k.jpg",
+        "md5": "3ab02eb5aab43421d106e9ffdb2fc10c"
+      },
+      "png": {
+        "size": 66322752,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/compost_bag_02/compost_bag_02_nor_dx_4k.png",
+        "md5": "40067d2250b2936a755c46757a40c902"
+      },
+      "exr": {
+        "size": 20708321,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_nor_dx_4k.exr",
+        "md5": "d48756888b5d0bef6cce62914f107df4"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2880030,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_nor_dx_2k.jpg",
+        "md5": "ff31c9c07bb52d1e7947e8442494ee31"
+      },
+      "png": {
+        "size": 17821977,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/compost_bag_02/compost_bag_02_nor_dx_2k.png",
+        "md5": "180770144d0d2698afabc2d613b87b63"
+      },
+      "exr": {
+        "size": 6118292,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_nor_dx_2k.exr",
+        "md5": "57ab2cbdb7f053c90a756fa4c5ae9b22"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 735253,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_nor_dx_1k.jpg",
+        "md5": "9fa3024a681a0406b4edd09e61a11a84"
+      },
+      "png": {
+        "size": 4757173,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/compost_bag_02/compost_bag_02_nor_dx_1k.png",
+        "md5": "bdc0efa7cecd164a355ee7dafef68b64"
+      },
+      "exr": {
+        "size": 1576953,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_nor_dx_1k.exr",
+        "md5": "9370bea5943a3b86625b7c91e8f9f11f"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 36691741,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_nor_gl_8k.jpg",
+        "md5": "0b7f5c9bfb8b0088317e1d5616a9900c"
+      },
+      "png": {
+        "size": 246444450,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/compost_bag_02/compost_bag_02_nor_gl_8k.png",
+        "md5": "fc33d06bae8e54234dc7dedce85011ea"
+      },
+      "exr": {
+        "size": 73573948,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_nor_gl_8k.exr",
+        "md5": "8dfc9d9073b2d44df9da491f1658ee0a"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 10434775,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_nor_gl_4k.jpg",
+        "md5": "7ad1bce3d71b98b102e349e62797c6d6"
+      },
+      "png": {
+        "size": 66325914,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/compost_bag_02/compost_bag_02_nor_gl_4k.png",
+        "md5": "7d497e61a5300c2c8629eff7138fea0b"
+      },
+      "exr": {
+        "size": 20584075,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_nor_gl_4k.exr",
+        "md5": "102805558250c52428497557ab922d42"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2854306,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_nor_gl_2k.jpg",
+        "md5": "e0ddb080aed3b8a6b5aa3ed9a635f8f5"
+      },
+      "png": {
+        "size": 17823650,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/compost_bag_02/compost_bag_02_nor_gl_2k.png",
+        "md5": "df4d6ac20cfbc1ff216225e662b3264e"
+      },
+      "exr": {
+        "size": 6063344,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_nor_gl_2k.exr",
+        "md5": "204b9d23692f978faa75369c21fad688"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 728875,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_nor_gl_1k.jpg",
+        "md5": "feff8552a89967bedd88073c7c838dca"
+      },
+      "png": {
+        "size": 4758315,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/compost_bag_02/compost_bag_02_nor_gl_1k.png",
+        "md5": "1a6c5448e5796dee86d0c129ada16d9b"
+      },
+      "exr": {
+        "size": 1561602,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_nor_gl_1k.exr",
+        "md5": "46a30d40b9ab607a5ffa3646bd9c5245"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/compost_bag_02_rough_8k.exr": {
+            "size": 37175938,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_rough_8k.exr",
+            "md5": "11e3798b227d512d7dede5c68100ccfd"
+          },
+          "textures/compost_bag_02_nor_gl_8k.exr": {
+            "size": 73573948,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_nor_gl_8k.exr",
+            "md5": "8dfc9d9073b2d44df9da491f1658ee0a"
+          },
+          "textures/compost_bag_02_diff_8k.jpg": {
+            "size": 35611715,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_diff_8k.jpg",
+            "md5": "a9949b2c4d226c4cb7db4410df90a7e2"
+          }
+        },
+        "size": 419957,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/compost_bag_02/compost_bag_02_8k.blend",
+        "md5": "ccc8d9b3d0e884a1822aea7e526ac241"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/compost_bag_02_diff_4k.jpg": {
+            "size": 9048336,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_diff_4k.jpg",
+            "md5": "eb10eecfa4e8811f1454b6569cdc7350"
+          },
+          "textures/compost_bag_02_rough_4k.exr": {
+            "size": 12102092,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_rough_4k.exr",
+            "md5": "771dc6f888796ae46fea36be3a56bf26"
+          },
+          "textures/compost_bag_02_nor_gl_4k.exr": {
+            "size": 20584075,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_nor_gl_4k.exr",
+            "md5": "102805558250c52428497557ab922d42"
+          }
+        },
+        "size": 420205,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/compost_bag_02/compost_bag_02_4k.blend",
+        "md5": "9ae8b0d2a544856e4a19b49bb2d3d498"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/compost_bag_02_rough_2k.exr": {
+            "size": 3472893,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_rough_2k.exr",
+            "md5": "44d1987b39e029843b8af68d53a436e6"
+          },
+          "textures/compost_bag_02_diff_2k.jpg": {
+            "size": 2411219,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_diff_2k.jpg",
+            "md5": "f4a28a938a816d6c4765281767b55702"
+          },
+          "textures/compost_bag_02_nor_gl_2k.exr": {
+            "size": 6063344,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_nor_gl_2k.exr",
+            "md5": "204b9d23692f978faa75369c21fad688"
+          }
+        },
+        "size": 420291,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/compost_bag_02/compost_bag_02_2k.blend",
+        "md5": "00477f49d2e930454eaa4c523ab40162"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/compost_bag_02_nor_gl_1k.exr": {
+            "size": 1561602,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_nor_gl_1k.exr",
+            "md5": "46a30d40b9ab607a5ffa3646bd9c5245"
+          },
+          "textures/compost_bag_02_diff_1k.jpg": {
+            "size": 627148,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_diff_1k.jpg",
+            "md5": "27024bf4c2d35607b30d85e340ff3ecb"
+          },
+          "textures/compost_bag_02_rough_1k.exr": {
+            "size": 946756,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_rough_1k.exr",
+            "md5": "f1c91b03a3b8724d16d1324d4d1b1fa8"
+          }
+        },
+        "size": 420289,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/compost_bag_02/compost_bag_02_1k.blend",
+        "md5": "e5bd4044ff9a51ccee0375424763f6af"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "compost_bag_02.bin": {
+            "size": 301024,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/compost_bag_02/compost_bag_02.bin",
+            "md5": "dd8351299be2a9a6e112e74bf026de34"
+          },
+          "textures/compost_bag_02_nor_gl_8k.jpg": {
+            "size": 36691741,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_nor_gl_8k.jpg",
+            "md5": "0b7f5c9bfb8b0088317e1d5616a9900c"
+          },
+          "textures/compost_bag_02_arm_8k.jpg": {
+            "size": 34052773,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_arm_8k.jpg",
+            "md5": "2c64b607b933cb4c54f9af4f512bd722"
+          },
+          "textures/compost_bag_02_diff_8k.jpg": {
+            "size": 35611715,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_diff_8k.jpg",
+            "md5": "a9949b2c4d226c4cb7db4410df90a7e2"
+          }
+        },
+        "size": 2792,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/compost_bag_02/compost_bag_02_8k.gltf",
+        "md5": "54295296809580b75e59a7303109c59c"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/compost_bag_02_nor_gl_4k.jpg": {
+            "size": 10434775,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_nor_gl_4k.jpg",
+            "md5": "7ad1bce3d71b98b102e349e62797c6d6"
+          },
+          "textures/compost_bag_02_diff_4k.jpg": {
+            "size": 9048336,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_diff_4k.jpg",
+            "md5": "eb10eecfa4e8811f1454b6569cdc7350"
+          },
+          "compost_bag_02.bin": {
+            "size": 301024,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/compost_bag_02/compost_bag_02.bin",
+            "md5": "dd8351299be2a9a6e112e74bf026de34"
+          },
+          "textures/compost_bag_02_arm_4k.jpg": {
+            "size": 9682528,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_arm_4k.jpg",
+            "md5": "b363b1ef0ee9412b227a11357a5e71af"
+          }
+        },
+        "size": 2792,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/compost_bag_02/compost_bag_02_4k.gltf",
+        "md5": "8ecda51de4b0afffe1de9fe66390dd01"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "compost_bag_02.bin": {
+            "size": 301024,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/compost_bag_02/compost_bag_02.bin",
+            "md5": "dd8351299be2a9a6e112e74bf026de34"
+          },
+          "textures/compost_bag_02_diff_2k.jpg": {
+            "size": 2411219,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_diff_2k.jpg",
+            "md5": "f4a28a938a816d6c4765281767b55702"
+          },
+          "textures/compost_bag_02_arm_2k.jpg": {
+            "size": 2654471,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_arm_2k.jpg",
+            "md5": "9d9478b8c9b388d27adb4be322f0ef3c"
+          },
+          "textures/compost_bag_02_nor_gl_2k.jpg": {
+            "size": 2854306,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_nor_gl_2k.jpg",
+            "md5": "e0ddb080aed3b8a6b5aa3ed9a635f8f5"
+          }
+        },
+        "size": 2792,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/compost_bag_02/compost_bag_02_2k.gltf",
+        "md5": "c6d2003cc731d2d502825e7dfb3d638e"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/compost_bag_02_arm_1k.jpg": {
+            "size": 693929,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_arm_1k.jpg",
+            "md5": "c858d507585b80c57024a53389ebb2c2"
+          },
+          "compost_bag_02.bin": {
+            "size": 301024,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/compost_bag_02/compost_bag_02.bin",
+            "md5": "dd8351299be2a9a6e112e74bf026de34"
+          },
+          "textures/compost_bag_02_diff_1k.jpg": {
+            "size": 627148,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_diff_1k.jpg",
+            "md5": "27024bf4c2d35607b30d85e340ff3ecb"
+          },
+          "textures/compost_bag_02_nor_gl_1k.jpg": {
+            "size": 728875,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_nor_gl_1k.jpg",
+            "md5": "feff8552a89967bedd88073c7c838dca"
+          }
+        },
+        "size": 2792,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/compost_bag_02/compost_bag_02_1k.gltf",
+        "md5": "dd6066a66cca0c857d130cb48ac974ff"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/compost_bag_02_rough_8k.exr": {
+            "size": 37175938,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_rough_8k.exr",
+            "md5": "11e3798b227d512d7dede5c68100ccfd"
+          },
+          "textures/compost_bag_02_nor_gl_8k.exr": {
+            "size": 73573948,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_nor_gl_8k.exr",
+            "md5": "8dfc9d9073b2d44df9da491f1658ee0a"
+          },
+          "textures/compost_bag_02_diff_8k.jpg": {
+            "size": 35611715,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_diff_8k.jpg",
+            "md5": "a9949b2c4d226c4cb7db4410df90a7e2"
+          }
+        },
+        "size": 583118,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/compost_bag_02/compost_bag_02_8k.usdc",
+        "md5": "be331e94860c461eefc0fabf46698711"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/compost_bag_02_diff_4k.jpg": {
+            "size": 9048336,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_diff_4k.jpg",
+            "md5": "eb10eecfa4e8811f1454b6569cdc7350"
+          },
+          "textures/compost_bag_02_rough_4k.exr": {
+            "size": 12102092,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_rough_4k.exr",
+            "md5": "771dc6f888796ae46fea36be3a56bf26"
+          },
+          "textures/compost_bag_02_nor_gl_4k.exr": {
+            "size": 20584075,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_nor_gl_4k.exr",
+            "md5": "102805558250c52428497557ab922d42"
+          }
+        },
+        "size": 583126,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/compost_bag_02/compost_bag_02_4k.usdc",
+        "md5": "81883b6dc5b33340940cce6aedba3a11"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/compost_bag_02_rough_2k.exr": {
+            "size": 3472893,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_rough_2k.exr",
+            "md5": "44d1987b39e029843b8af68d53a436e6"
+          },
+          "textures/compost_bag_02_diff_2k.jpg": {
+            "size": 2411219,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_diff_2k.jpg",
+            "md5": "f4a28a938a816d6c4765281767b55702"
+          },
+          "textures/compost_bag_02_nor_gl_2k.exr": {
+            "size": 6063344,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_nor_gl_2k.exr",
+            "md5": "204b9d23692f978faa75369c21fad688"
+          }
+        },
+        "size": 583118,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/compost_bag_02/compost_bag_02_2k.usdc",
+        "md5": "14bd025c54a181141880e19a47fee399"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/compost_bag_02_nor_gl_1k.exr": {
+            "size": 1561602,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_nor_gl_1k.exr",
+            "md5": "46a30d40b9ab607a5ffa3646bd9c5245"
+          },
+          "textures/compost_bag_02_diff_1k.jpg": {
+            "size": 627148,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_diff_1k.jpg",
+            "md5": "27024bf4c2d35607b30d85e340ff3ecb"
+          },
+          "textures/compost_bag_02_rough_1k.exr": {
+            "size": 946756,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_rough_1k.exr",
+            "md5": "f1c91b03a3b8724d16d1324d4d1b1fa8"
+          }
+        },
+        "size": 583132,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/compost_bag_02/compost_bag_02_1k.usdc",
+        "md5": "a092c661bd1f4c0b1441740b62114a59"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/compost_bag_02_rough_8k.exr": {
+            "size": 37175938,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_rough_8k.exr",
+            "md5": "11e3798b227d512d7dede5c68100ccfd"
+          },
+          "textures/compost_bag_02_nor_gl_8k.exr": {
+            "size": 73573948,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_nor_gl_8k.exr",
+            "md5": "8dfc9d9073b2d44df9da491f1658ee0a"
+          },
+          "textures/compost_bag_02_diff_8k.jpg": {
+            "size": 35611715,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_diff_8k.jpg",
+            "md5": "a9949b2c4d226c4cb7db4410df90a7e2"
+          }
+        },
+        "size": 410796,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/compost_bag_02/compost_bag_02_8k.fbx",
+        "md5": "d072192e9ce6ce4d7df0f5dadc08cd08"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/compost_bag_02_diff_4k.jpg": {
+            "size": 9048336,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_diff_4k.jpg",
+            "md5": "eb10eecfa4e8811f1454b6569cdc7350"
+          },
+          "textures/compost_bag_02_rough_4k.exr": {
+            "size": 12102092,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_rough_4k.exr",
+            "md5": "771dc6f888796ae46fea36be3a56bf26"
+          },
+          "textures/compost_bag_02_nor_gl_4k.exr": {
+            "size": 20584075,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_nor_gl_4k.exr",
+            "md5": "102805558250c52428497557ab922d42"
+          }
+        },
+        "size": 410796,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/compost_bag_02/compost_bag_02_4k.fbx",
+        "md5": "9ec7a00f8e594a818fc4c6f6e7ef0d81"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/compost_bag_02_diff_2k.jpg": {
+            "size": 2411219,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_diff_2k.jpg",
+            "md5": "f4a28a938a816d6c4765281767b55702"
+          },
+          "textures/compost_bag_02_rough_2k.exr": {
+            "size": 3472893,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_rough_2k.exr",
+            "md5": "44d1987b39e029843b8af68d53a436e6"
+          },
+          "textures/compost_bag_02_nor_gl_2k.exr": {
+            "size": 6063344,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_nor_gl_2k.exr",
+            "md5": "204b9d23692f978faa75369c21fad688"
+          }
+        },
+        "size": 410796,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/compost_bag_02/compost_bag_02_2k.fbx",
+        "md5": "8a4c64cca8847a9066db33b384df86e0"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/compost_bag_02_nor_gl_1k.exr": {
+            "size": 1561602,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_nor_gl_1k.exr",
+            "md5": "46a30d40b9ab607a5ffa3646bd9c5245"
+          },
+          "textures/compost_bag_02_diff_1k.jpg": {
+            "size": 627148,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_diff_1k.jpg",
+            "md5": "27024bf4c2d35607b30d85e340ff3ecb"
+          },
+          "textures/compost_bag_02_rough_1k.exr": {
+            "size": 946756,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_rough_1k.exr",
+            "md5": "f1c91b03a3b8724d16d1324d4d1b1fa8"
+          }
+        },
+        "size": 410796,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/compost_bag_02/compost_bag_02_1k.fbx",
+        "md5": "1bace2ec91a21b8c70b0e88bcd3f67d8"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 34052773,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_arm_8k.jpg",
+        "md5": "2c64b607b933cb4c54f9af4f512bd722"
+      },
+      "png": {
+        "size": 54875126,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/compost_bag_02/compost_bag_02_arm_8k.png",
+        "md5": "8f1784136a61ff014cd182b9875362c3"
+      },
+      "exr": {
+        "size": 68042419,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_arm_8k.exr",
+        "md5": "22cdb8a0313e77a648829dcc601c9fbc"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 9682528,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_arm_4k.jpg",
+        "md5": "b363b1ef0ee9412b227a11357a5e71af"
+      },
+      "png": {
+        "size": 15300168,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/compost_bag_02/compost_bag_02_arm_4k.png",
+        "md5": "b5e12f503a74e71121a793be0aca3607"
+      },
+      "exr": {
+        "size": 19464534,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_arm_4k.exr",
+        "md5": "86c67a450854f07ae26b7335493fe10b"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2654471,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_arm_2k.jpg",
+        "md5": "9d9478b8c9b388d27adb4be322f0ef3c"
+      },
+      "png": {
+        "size": 4267715,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/compost_bag_02/compost_bag_02_arm_2k.png",
+        "md5": "8836755514f1040d7607b4da4470c7e5"
+      },
+      "exr": {
+        "size": 5608884,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_arm_2k.exr",
+        "md5": "fd55169cd28696ecd77401652531bc92"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 693929,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_arm_1k.jpg",
+        "md5": "c858d507585b80c57024a53389ebb2c2"
+      },
+      "png": {
+        "size": 1179313,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/compost_bag_02/compost_bag_02_arm_1k.png",
+        "md5": "682d97f72977794a64df0ae1850a1773"
+      },
+      "exr": {
+        "size": 1511139,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_arm_1k.exr",
+        "md5": "d2f6b985830df2a3b0a4ba5c18bf8c0e"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 24622602,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_rough_8k.jpg",
+        "md5": "d7bf5c497a2bf11629d6816d3aed9665"
+      },
+      "png": {
+        "size": 37606982,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/compost_bag_02/compost_bag_02_rough_8k.png",
+        "md5": "3ee53b89bd994c8ebb2bd489bd93fcc6"
+      },
+      "exr": {
+        "size": 37175938,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_rough_8k.exr",
+        "md5": "11e3798b227d512d7dede5c68100ccfd"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 6846360,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_rough_4k.jpg",
+        "md5": "24c1ef3c7cac2f625115905f5305c097"
+      },
+      "png": {
+        "size": 16751230,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/compost_bag_02/compost_bag_02_rough_4k.png",
+        "md5": "209bb20cbfa320db427e376d730491b1"
+      },
+      "exr": {
+        "size": 12102092,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_rough_4k.exr",
+        "md5": "771dc6f888796ae46fea36be3a56bf26"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1887613,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_rough_2k.jpg",
+        "md5": "a830d8f32e8c6d81125c06bb4d168f26"
+      },
+      "png": {
+        "size": 5052575,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/compost_bag_02/compost_bag_02_rough_2k.png",
+        "md5": "b4bc0ee5ff8df1a7a490c72a404e1bc2"
+      },
+      "exr": {
+        "size": 3472893,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_rough_2k.exr",
+        "md5": "44d1987b39e029843b8af68d53a436e6"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 489131,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_rough_1k.jpg",
+        "md5": "0b9142d8f7623f6b570a9550b2c5ae69"
+      },
+      "png": {
+        "size": 1423672,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/compost_bag_02/compost_bag_02_rough_1k.png",
+        "md5": "9e71b7f8d390fa106c11753adbce1b82"
+      },
+      "exr": {
+        "size": 946756,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_rough_1k.exr",
+        "md5": "f1c91b03a3b8724d16d1324d4d1b1fa8"
+      }
+    }
+  },
+  "Displacement": {
+    "8k": {
+      "jpg": {
+        "size": 2691629,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_disp_8k.jpg",
+        "md5": "9e554478676d62fd44860470b4fcfdaa"
+      },
+      "png": {
+        "size": 34873242,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/compost_bag_02/compost_bag_02_disp_8k.png",
+        "md5": "95785cb23c1b5939f8b204c76ded84d9"
+      },
+      "exr": {
+        "size": 2434512,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_disp_8k.exr",
+        "md5": "316e053a055d0cf7386e0c77dfb3c296"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 1016837,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_disp_4k.jpg",
+        "md5": "fcbbd89347f3b94c7d76379e4d251160"
+      },
+      "png": {
+        "size": 12954043,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/compost_bag_02/compost_bag_02_disp_4k.png",
+        "md5": "255919a4b092d97ba426214f4fbad37e"
+      },
+      "exr": {
+        "size": 986281,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_disp_4k.exr",
+        "md5": "d02110dfd44bdcae367905195fbe6dc6"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 366077,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_disp_2k.jpg",
+        "md5": "3c5c19681f69ee43cbd975d10aaf9db0"
+      },
+      "png": {
+        "size": 4075229,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/compost_bag_02/compost_bag_02_disp_2k.png",
+        "md5": "34832775bf24971cf7a8622d0439a2f7"
+      },
+      "exr": {
+        "size": 375833,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_disp_2k.exr",
+        "md5": "1e3959785fec55f107b2aa8db2f8dea4"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 126011,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_disp_1k.jpg",
+        "md5": "d060a7a08916617528217e1030a7679d"
+      },
+      "png": {
+        "size": 1242463,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/compost_bag_02/compost_bag_02_disp_1k.png",
+        "md5": "afdee6cd60e56b8a527cb5d7e73d266b"
+      },
+      "exr": {
+        "size": 138119,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_disp_1k.exr",
+        "md5": "d12927bb1f58c42dde342adad9270bde"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "size": 18237382,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/compost_bag_02/compost_bag_02_ao_8k.jpg",
+        "md5": "c731e06825b398f8df588a90b1e5a627"
+      },
+      "png": {
+        "size": 26823116,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/compost_bag_02/compost_bag_02_ao_8k.png",
+        "md5": "97c83856cb5794f2a7f70452fadaabae"
+      },
+      "exr": {
+        "size": 27224316,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/compost_bag_02/compost_bag_02_ao_8k.exr",
+        "md5": "3cbdfb4021746591a47033d5fa917de0"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 5348901,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/compost_bag_02/compost_bag_02_ao_4k.jpg",
+        "md5": "31819a0fb1599aee4bd98518a132ebb5"
+      },
+      "png": {
+        "size": 14375296,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/compost_bag_02/compost_bag_02_ao_4k.png",
+        "md5": "c412b3ce0eba120db82d61be5c7353e0"
+      },
+      "exr": {
+        "size": 10549958,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/compost_bag_02/compost_bag_02_ao_4k.exr",
+        "md5": "9772a8bbb7cfc8b3a87ee1171a14fccf"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1707494,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/compost_bag_02/compost_bag_02_ao_2k.jpg",
+        "md5": "f699276d2383326a63cdf425aabbdb1e"
+      },
+      "png": {
+        "size": 4860959,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/compost_bag_02/compost_bag_02_ao_2k.png",
+        "md5": "7e2c2fc563c31e3bee06df8a5938ebae"
+      },
+      "exr": {
+        "size": 3220891,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/compost_bag_02/compost_bag_02_ao_2k.exr",
+        "md5": "ece08449f707e8db053b05ada24b6c97"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 462294,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_ao_1k.jpg",
+        "md5": "4b8945536a8d1db28ead4ef9ae5f416f"
+      },
+      "png": {
+        "size": 1371957,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/compost_bag_02/compost_bag_02_ao_1k.png",
+        "md5": "0294f87027aedc32fa6f1e7016fe2d81"
+      },
+      "exr": {
+        "size": 881201,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/compost_bag_02/compost_bag_02_ao_1k.exr",
+        "md5": "32cff931735e22b47e1d59ceac11f03d"
+      }
+    }
+  }
+}

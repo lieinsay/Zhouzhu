@@ -56,13 +56,14 @@ struct BuildingMesh {
     std::vector<LadderZone> ladders;
     std::vector<DoorEntry> doors;
     std::vector<BuildingLamp> lamps;
+    std::vector<BoxPart> visual_models; // 主线程挂载作者模型；纯数据线程不读取Godot资源或玩法草稿。
 
     int roof_group() const { return group_count - 1; }
     int triangle_count() const; // 画的三角面（各组各材质加起来）
 };
 
 // p_map 是宿主的地面（量门前坡道落到哪）；地坪已经量好（building_frame）。p_template 是这座该用的房屋模板（不是房屋的不看）
-BuildingMesh build_building_mesh(const MapGround &p_map, const BuildingFrame &p_frame, const Building &p_building, const HouseTemplate &p_template, int p_index);
+BuildingMesh build_building_mesh(const MapGround &p_map, const BuildingFrame &p_frame, const Building &p_building, const HouseTemplate &p_template, int p_index,bool p_separate_furniture=false);
 
 // 细模各材质的颜色（sRGB）与粗糙度：Settlement 的材质、简模的顶点色都用这一份
 void part_material_color(PartMaterial p_material, float &r_r, float &r_g, float &r_b, float &r_roughness);

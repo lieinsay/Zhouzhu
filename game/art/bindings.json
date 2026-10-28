@@ -18,9 +18,9 @@
       "sha256": "6bc3b1e887adf25b16730266f0f38867d2af903850c3721f73e337b473fd4124"
     },
     "module.tall_hold": {
-      "version": "v2",
-      "path": "res://art/previews/module/tall_hold/v2.png",
-      "sha256": "9f6079a7b48c6137c19cb615e6b20428683756f6f84089bc632b89a38ffa6027"
+      "version": "v3",
+      "path": "res://art/previews/module/tall_hold/v3.png",
+      "sha256": "b6397520855e5d2cd3c6d82ef450d1e32d7e8bf57b1793df87727f38f3198845"
     },
     "material.terracotta": {
       "version": "v1",
@@ -82,9 +82,9 @@
       "sha256": "f4fde7c3e0cb52a57fd0a6c2d66cd0a2961b4f7b95610ec11021867f4b561ea5"
     },
     "furniture.chest": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/chest/v2.png",
-      "sha256": "f38781407daa778e07c11d85eff66c8ad11d3be92d3718080c1b2932fe6b4dfa"
+      "version": "v3",
+      "path": "res://art/previews/furniture/chest/v3.png",
+      "sha256": "a1657a5e5ada2ad196d9c8ae950f3b3498c07e53d185700ab74ba485ef459960"
     },
     "material.soil": {
       "version": "v1",
@@ -114,9 +114,9 @@
       "sha256": "048708e91501ea55b315c27c0045c43199e6677dde760fdc3a50d696f09715ed"
     },
     "module.storage": {
-      "version": "v2",
-      "path": "res://art/previews/module/storage/v2.png",
-      "sha256": "2f373861b1c1b76f742db0a22068b0c7c32ccf820413fb79ff8ee9c3a914e903"
+      "version": "v3",
+      "path": "res://art/previews/module/storage/v3.png",
+      "sha256": "876669d33f3aa6fb25a84b2b6774596ca4dfa6a9afd5e44d43c377d259077f3c"
     },
     "material.gravel": {
       "version": "v1",
@@ -163,9 +163,9 @@
       "sha256": "22b6ade6721b105ac363da4b0caab8d8928ed8cdcacfd866dba6c80a84f65a57"
     },
     "furniture.sacks": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/sacks/v2.png",
-      "sha256": "dd457867afa397d7356642d958091be946486f2e1b50c9ab6a67f7b874bd1ea9"
+      "version": "v3",
+      "path": "res://art/previews/furniture/sacks/v3.png",
+      "sha256": "a3a88d6d427a9ac120827d2be767b1919cfd6e072a2152df44803738dff3f743"
     },
     "material.thatch": {
       "version": "v1",
@@ -185,9 +185,9 @@
       }
     },
     "furniture.bed": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/bed/v2.png",
-      "sha256": "3b82570f8f264d169ac96932a38b5b0faf08420dd4a5ccde873ef12a7cc3f693"
+      "version": "v3",
+      "path": "res://art/previews/furniture/bed/v3.png",
+      "sha256": "652b5c3d181cf228787e69aab7f78e50116f777a06fa819327d5bb3f27fd0aad"
     },
     "item.salt": {
       "version": "v1",
@@ -200,9 +200,9 @@
       "sha256": "8ee89399654d56baf4a196470bc2fa09615763031d9093064df891e9ca7d8588"
     },
     "furniture.stove": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/stove/v2.png",
-      "sha256": "1dadbe9ef27bcedd686ba5bb0c69c48e7b5fffb3953418f87e2e7f6094debecf"
+      "version": "v3",
+      "path": "res://art/previews/furniture/stove/v3.png",
+      "sha256": "0846fdf3c798ddfa30518bf7eb7212f0a25efed0ac909c25183e511388926927"
     },
     "character.face_young_female": {
       "version": "v1",
@@ -210,9 +210,9 @@
       "sha256": "83308d70bdee86ba83973626961ba604f46cb18fa1d136e426bbb539365ff8c5"
     },
     "building.tower": {
-      "version": "v3",
-      "path": "res://art/previews/building/tower/v3.png",
-      "sha256": "7ee5f79d73de1bd9e62759ae480d07d1b98a2f6645c457b8263770e5b7fcae2c"
+      "version": "v4",
+      "path": "res://art/previews/building/tower/v4.png",
+      "sha256": "301e2e813c9a2a1b95b1b36e7d3d293c627536b0168e2099024ed70174502223"
     },
     "item.gold_dust": {
       "version": "v1",
@@ -230,9 +230,9 @@
       "sha256": "6ab0accb3ed6b9a6bbd25b950dacd84ca76d35c2ff2c14876e7fd68c0973d532"
     },
     "building.hall": {
-      "version": "v3",
-      "path": "res://art/previews/building/hall/v3.png",
-      "sha256": "aaf1f3a42115fe913fb5b5fc33deaef516ddcaf541e40c7649f5e163a1991bea"
+      "version": "v4",
+      "path": "res://art/previews/building/hall/v4.png",
+      "sha256": "ef7fa3a50a7793736c2fb97db7c8b8acbb9d1d38143f7219fa6663f7d142125f"
     },
     "item.brick": {
       "version": "v1",
@@ -344,8 +344,8 @@
       }
     },
     "building.berth": {
-      "version": "v3",
-      "path": "res://art/previews/building/berth/v3.png",
+      "version": "v4",
+      "path": "res://art/previews/building/berth/v4.png",
       "sha256": "3202fcf983989f032eb74c00463ff6aaa13b23d81b6cdbd915cdc6725fe93f7e"
     },
     "item.brick_wall": {
@@ -354,9 +354,9 @@
       "sha256": "3f744cd1120328b00e9d17a98276f1ffda50989165a2954561f0338ccec9cf30"
     },
     "module.floatstone": {
-      "version": "v2",
-      "path": "res://art/previews/module/floatstone/v2.png",
-      "sha256": "4877361e1fa385132d27ebe63e65c657ab1eac624233dbe214b56d15de9a8cba"
+      "version": "v3",
+      "path": "res://art/previews/module/floatstone/v3.png",
+      "sha256": "03d4b7e75bcc1f3e118684b9b07a0c69b7dfe8aeacf46a3d6e4f080b358cada7"
     },
     "item.thatch_roof": {
       "version": "v1",
@@ -369,14 +369,14 @@
       "sha256": "8bcdc7350979330866dbb741d962f642e849baaff37aa8e499fb25ef1b57ba32"
     },
     "furniture.drum": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/drum/v2.png",
-      "sha256": "2b6003588fc2a5283870847d96fd402d29fc5378f65e03adc3bf5c7a7259e2c2"
+      "version": "v3",
+      "path": "res://art/previews/furniture/drum/v3.png",
+      "sha256": "ea3a83983712e1c9a085b90fafb8003d0de0f0fe38d1f4d81ac65154a17a4b16"
     },
     "module.wide_deck": {
-      "version": "v2",
-      "path": "res://art/previews/module/wide_deck/v2.png",
-      "sha256": "6cda5c919131a478d1bd3c3d8e5bd042eecbf0a93501c69640b80be46c37d457"
+      "version": "v3",
+      "path": "res://art/previews/module/wide_deck/v3.png",
+      "sha256": "d61ef4448f6cfdfef7314e52cc764e7d5a3be9a6a32833fcd77d943746ad458a"
     },
     "material.litter": {
       "version": "v1",
@@ -406,9 +406,9 @@
       "sha256": "285d0304ed046f80152d2ab0ee4bef6c954c8b8e2ed43be7b62c13eee22d66a2"
     },
     "furniture.shelf": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/shelf/v2.png",
-      "sha256": "2373dbfd8a8cf74fa446643f6330abb04e7662e21660b6f1467aa023d1046c3c"
+      "version": "v3",
+      "path": "res://art/previews/furniture/shelf/v3.png",
+      "sha256": "b96b0dbad186bf7f7db10e7ec3790703c3b18678f90ac7b9a0d2b391a06914dd"
     },
     "material.wood": {
       "version": "v1",
@@ -450,9 +450,9 @@
       }
     },
     "furniture.vat": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/vat/v2.png",
-      "sha256": "330304fa8a9b2fc5f384e68af264a4c596a351c9499fcbddbf77ffab8d6dc674"
+      "version": "v3",
+      "path": "res://art/previews/furniture/vat/v3.png",
+      "sha256": "19630be37b7825582263bc3458e65b819b3f1bb57e219ef228a8cdb066a95794"
     },
     "material.leather": {
       "version": "v1",
@@ -516,14 +516,14 @@
       "sha256": "399bf538b7570800c80100400defed1cbee07b1f68943759ce2e31433498478b"
     },
     "furniture.mat": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/mat/v2.png",
-      "sha256": "27e73aa5e6a93a7425f6ca706bad88dc09e2621b4bbf3ba870af5344f30d8886"
+      "version": "v3",
+      "path": "res://art/previews/furniture/mat/v3.png",
+      "sha256": "6fce57885bf62113b5d9eeff7956b76424ce2e0cd783314f02fe351b0aac3fe8"
     },
     "furniture.bench": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/bench/v2.png",
-      "sha256": "c9b0cd37a09685741a45d0eaa6cb1fad7d0e60b906339c1986ce26205ffb6488"
+      "version": "v3",
+      "path": "res://art/previews/furniture/bench/v3.png",
+      "sha256": "3d323f0dbe870520900cb09f8705f1859a89736208bf3e4046879d893d315d33"
     },
     "item.copper_ore": {
       "version": "v2",
@@ -597,24 +597,24 @@
       }
     },
     "module.deck": {
-      "version": "v2",
-      "path": "res://art/previews/module/deck/v2.png",
-      "sha256": "174219f88561c86b99ad7d78bfb403cfec76350ec45b12b9428dd508a18ae5f4"
+      "version": "v3",
+      "path": "res://art/previews/module/deck/v3.png",
+      "sha256": "484d3bb960539070a8bdf9dff405080dd077b82bb47ccac2128ad77b3760272e"
     },
     "furniture.bin": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/bin/v2.png",
-      "sha256": "23ca8f855a31f59b98e816366f531817cdd51309e5f7d051f45da7ef747161bc"
+      "version": "v3",
+      "path": "res://art/previews/furniture/bin/v3.png",
+      "sha256": "1d7e948e716c765d01a5edeff54b77a6f3758f75eb2af2351313c74ffac888ba"
     },
     "module.long_sail": {
-      "version": "v2",
-      "path": "res://art/previews/module/long_sail/v2.png",
-      "sha256": "2ed0d5a0089c183ae2b3cea999cec911ddb28b86c48fc805ddde352d3445bf0d"
+      "version": "v3",
+      "path": "res://art/previews/module/long_sail/v3.png",
+      "sha256": "c63f70e751fab29b6a70d80f1ad1257a4c694bd1245147ed0c9d3b3914982939"
     },
     "building.house": {
-      "version": "v3",
-      "path": "res://art/previews/building/house/v3.png",
-      "sha256": "0e6db037c2fcd34f2f0a64af52514b6b826bbe2340299d0dec901c62f468c647"
+      "version": "v4",
+      "path": "res://art/previews/building/house/v4.png",
+      "sha256": "127976dda4727c3e99def3ba4f1b8c911ce1d2a4e17035ad53fc4d1fa31618c0"
     },
     "item.gravel": {
       "version": "v1",
@@ -637,14 +637,14 @@
       "sha256": "abd62882d1e86bb7ffa6a2443c1a300adbfaec64e1a9edf4bfccf7d2a613dd84"
     },
     "building.granary": {
-      "version": "v3",
-      "path": "res://art/previews/building/granary/v3.png",
-      "sha256": "7b0ae00a0f7a132130ef8c2da01a3c33491f067c626c9004b8df273337970bac"
+      "version": "v4",
+      "path": "res://art/previews/building/granary/v4.png",
+      "sha256": "181b7806e98be621c9f65beb22a4f18410b5a5b11b383cdceef4f51ebc541137"
     },
     "furniture.loom": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/loom/v2.png",
-      "sha256": "448e7eaf91f00be6b6918c133ece1e9f900a277989a02cd0bfc0867282e0cb80"
+      "version": "v3",
+      "path": "res://art/previews/furniture/loom/v3.png",
+      "sha256": "5c765353ab1b2809d728d3ba0a42af726c4e07f6ec825c9b6a168216e6785c65"
     },
     "material.brick": {
       "version": "v1",
@@ -684,9 +684,9 @@
       "sha256": "3fa438d283a39e4aee827ed16d183c013506e3a69acdf847bcad50cd248c6d66"
     },
     "furniture.altar": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/altar/v2.png",
-      "sha256": "571f2a40e26a9364041383c4adceee9af1135f346f7d9cdc3872c2f69e0aab4c"
+      "version": "v3",
+      "path": "res://art/previews/furniture/altar/v3.png",
+      "sha256": "43037e10681b0673e613884016aadbec35fddfa457a4d67654ff68e5036c0a61"
     },
     "item.chromium_ore": {
       "version": "v1",
@@ -733,9 +733,9 @@
       "sha256": "ee5064942609a5b7327bb3ff191058921ce751882bb37dda4ac912a7fa4dc8ee"
     },
     "module.sail": {
-      "version": "v2",
-      "path": "res://art/previews/module/sail/v2.png",
-      "sha256": "de45dec1c593e59f643f969b4ef45584019a4dd288badc7ea752166de3238e5e"
+      "version": "v3",
+      "path": "res://art/previews/module/sail/v3.png",
+      "sha256": "6e5de865ded09920204a2edcc9fe54cafe080286a42853ce07fe96497a5c599e"
     },
     "item.iron_ore": {
       "version": "v1",
@@ -743,9 +743,9 @@
       "sha256": "add8b190c0531a37ef1b002d52d5fa4aa7de3fedbc5716929af23f21aef5037c"
     },
     "furniture.table": {
-      "version": "v2",
-      "path": "res://art/previews/furniture/table/v2.png",
-      "sha256": "43cb3e3e24c5301b6506ee0afa726fa2bdfe4e6116b779af5f7886fd4acbdeb8"
+      "version": "v3",
+      "path": "res://art/previews/furniture/table/v3.png",
+      "sha256": "fd1becfdf3c9e0de368f8be6612cc42f52c0f148c254e52cd93379075d06ec93"
     },
     "item.cloth": {
       "version": "v2",
@@ -768,15 +768,15 @@
       "sha256": "4df03c64acd89ba89e27c569dd38d07c1c7ddd264d16c4970f94ee4650eaeabb"
     },
     "module.bridge": {
-      "version": "v2",
-      "path": "res://art/previews/module/bridge/v2.png",
-      "sha256": "2dbb22b469a007557be6cf329e947cd0edccf46107b87266a2c5e7b5c1550dc9"
+      "version": "v3",
+      "path": "res://art/previews/module/bridge/v3.png",
+      "sha256": "5e3e53eed17212a4ac3c9ad58c75ce77c60e4438c8012cd8efdd3bd15fdb7ae2"
     }
   },
   "application": {
-    "id": "5ee62624-59ce-4e68-adc1-77724607052f",
-    "appliedAt": "2026-10-27T17:01:34.867Z",
+    "id": "89982d7a-b702-4ea5-acd1-550b31f3fdfd",
+    "appliedAt": "2026-10-28T06:17:17.889Z",
     "actor": "content-studio-art",
-    "registrySha256": "27cea592cd7ba731abcf4d33f27a6e437c9eeda39d2b9b6fba2f68f6a066c451"
+    "registrySha256": "564d6b0b6c5ca1424fcd693952234075e5d50351de2fb6f403e3758fd7767c5e"
   }
 }

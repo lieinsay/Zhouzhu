@@ -52,6 +52,8 @@ struct BoxPart {
     bool solid = true;
     int group = 0;
     VisualShape shape = VisualShape::BOX; // 仅画面形体；碰撞与占地仍使用原定义。
+    bool furniture_visual=false;
+    std::string model_id; // 仅非可见/非碰撞的引用标记使用，x/y/z/yaw是现有模板的实体锚点。
 };
 
 struct LadderZone {

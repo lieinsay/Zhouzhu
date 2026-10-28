@@ -1,0 +1,729 @@
+{
+  "blend": {
+    "1k": {
+      "blend": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/ceramic_pot/ceramic_pot_1k.blend",
+        "md5": "794c20f0efd9f90699ae973ef1350bf1",
+        "size": 201378,
+        "include": {
+          "textures/ceramic_pot_diff_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_diff_1k.jpg",
+            "md5": "85746a999ed333628143b3ad2c0b7f42",
+            "size": 664480
+          },
+          "textures/ceramic_pot_metal_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_metal_1k.exr",
+            "md5": "05b984527940372673b4993a4bc00c87",
+            "size": 174153
+          },
+          "textures/ceramic_pot_nor_gl_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_nor_gl_1k.exr",
+            "md5": "2d2ce3d8f107c33f7784011b949c7fff",
+            "size": 527076
+          },
+          "textures/ceramic_pot_rough_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_rough_1k.exr",
+            "md5": "dd83f77819068184b2affd5352838781",
+            "size": 580613
+          }
+        }
+      }
+    },
+    "2k": {
+      "blend": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/ceramic_pot/ceramic_pot_2k.blend",
+        "md5": "7dcd83f7054ea6d2d36c0bc0592b5d02",
+        "size": 201378,
+        "include": {
+          "textures/ceramic_pot_diff_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_diff_2k.jpg",
+            "md5": "511a286f6b85d97a1e243323c4f862a4",
+            "size": 2424934
+          },
+          "textures/ceramic_pot_metal_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_metal_2k.exr",
+            "md5": "332a5b7878de151d2e0bf8c949b2a245",
+            "size": 573082
+          },
+          "textures/ceramic_pot_nor_gl_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_nor_gl_2k.exr",
+            "md5": "b02b9ad2331228bfb0038e61d4b7c2c8",
+            "size": 1774070
+          },
+          "textures/ceramic_pot_rough_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_rough_2k.exr",
+            "md5": "11612ba369f5b894772245e2bc809201",
+            "size": 2043872
+          }
+        }
+      }
+    },
+    "4k": {
+      "blend": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/ceramic_pot/ceramic_pot_4k.blend",
+        "md5": "936a1539f9171dc86744e3a4ef19d711",
+        "size": 201378,
+        "include": {
+          "textures/ceramic_pot_diff_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_diff_4k.jpg",
+            "md5": "5c8d621a4880295e6d14181bacada72b",
+            "size": 8953348
+          },
+          "textures/ceramic_pot_metal_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_metal_4k.exr",
+            "md5": "5d5bd80c0d9fb81e90f0adcc3db39215",
+            "size": 2003644
+          },
+          "textures/ceramic_pot_nor_gl_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_nor_gl_4k.exr",
+            "md5": "1f47fd215432da9388579e40d1c1a013",
+            "size": 6190411
+          },
+          "textures/ceramic_pot_rough_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_rough_4k.exr",
+            "md5": "d9658e14ee893ec33a03ccc4ffbae90d",
+            "size": 7240928
+          }
+        }
+      }
+    }
+  },
+  "AO": {
+    "1k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_ao_1k.exr",
+        "md5": "9991da92330cd9e82efca670b60e5dd9",
+        "size": 169503
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_ao_1k.jpg",
+        "md5": "904dad36f996980f6e3d71435cae982a",
+        "size": 152011
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/ceramic_pot/ceramic_pot_ao_1k.png",
+        "md5": "2f6230e633fdb96b5d8cefca6efd7dcf",
+        "size": 851184
+      }
+    },
+    "2k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_ao_2k.exr",
+        "md5": "e8f31f8384f7fa1affd06760e3eda6c0",
+        "size": 524540
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_ao_2k.jpg",
+        "md5": "f5505814ea49fa59a20b4576f4b51f83",
+        "size": 601560
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/ceramic_pot/ceramic_pot_ao_2k.png",
+        "md5": "bf6002c2cc122ed0fcf931608704fe1f",
+        "size": 3335152
+      }
+    },
+    "4k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_ao_4k.exr",
+        "md5": "c672333d9a094942cb0c708512c844e3",
+        "size": 2474798
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_ao_4k.jpg",
+        "md5": "ef755d2c4f32c21c31010c8bf032f02d",
+        "size": 2897879
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/ceramic_pot/ceramic_pot_ao_4k.png",
+        "md5": "4d994bcf07255b099987c8a35d7bb262",
+        "size": 11580385
+      }
+    }
+  },
+  "arm": {
+    "1k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_arm_1k.exr",
+        "md5": "543f7ed610e948629bd21abd8db3d9bb",
+        "size": 1427520
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_arm_1k.jpg",
+        "md5": "e45cd9ad939172ae7b94fd455bc44c08",
+        "size": 633246
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/ceramic_pot/ceramic_pot_arm_1k.png",
+        "md5": "a71ec6e44ed5200f329cba752ac65b2e",
+        "size": 2812674
+      }
+    },
+    "2k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_arm_2k.exr",
+        "md5": "c3aaa8b4972ddeb1ff62cfaf6f9fcf70",
+        "size": 4937560
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_arm_2k.jpg",
+        "md5": "21f00039769f6fd3cccdbb1842efc0e2",
+        "size": 2256658
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/ceramic_pot/ceramic_pot_arm_2k.png",
+        "md5": "dbf0d70e2bfb2e01802c1183062af5dd",
+        "size": 9654686
+      }
+    },
+    "4k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_arm_4k.exr",
+        "md5": "1dfe5356a77c556f7b8389aae68b98eb",
+        "size": 17197294
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_arm_4k.jpg",
+        "md5": "9cff62dd409bb261d8366935a1909583",
+        "size": 7990270
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/ceramic_pot/ceramic_pot_arm_4k.png",
+        "md5": "18ff6ce4b853cbfd9e19dff453e5327b",
+        "size": 29519267
+      }
+    }
+  },
+  "Diffuse": {
+    "1k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_diff_1k.exr",
+        "md5": "fee378ddf670e541162242ad8beabd11",
+        "size": 1349237
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_diff_1k.jpg",
+        "md5": "85746a999ed333628143b3ad2c0b7f42",
+        "size": 664480
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/ceramic_pot/ceramic_pot_diff_1k.png",
+        "md5": "30250e2fdec42221384e9e68e94029d1",
+        "size": 3741716
+      }
+    },
+    "2k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_diff_2k.exr",
+        "md5": "d29cab4fb5167585165c63daab2328b3",
+        "size": 4866371
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_diff_2k.jpg",
+        "md5": "511a286f6b85d97a1e243323c4f862a4",
+        "size": 2424934
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/ceramic_pot/ceramic_pot_diff_2k.png",
+        "md5": "569db51f71a5cdee1887984f63094c12",
+        "size": 13331155
+      }
+    },
+    "4k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_diff_4k.exr",
+        "md5": "48ffa5ac940e2766a41df3e183b25cf1",
+        "size": 18573900
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_diff_4k.jpg",
+        "md5": "5c8d621a4880295e6d14181bacada72b",
+        "size": 8953348
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/ceramic_pot/ceramic_pot_diff_4k.png",
+        "md5": "f88d69d96791d48570d62d15087ad5d9",
+        "size": 39857518
+      }
+    }
+  },
+  "Metal": {
+    "1k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_metal_1k.exr",
+        "md5": "05b984527940372673b4993a4bc00c87",
+        "size": 174153
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_metal_1k.jpg",
+        "md5": "7d31573c2c03cefbd8b8b48f2b8ec4a6",
+        "size": 130819
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/ceramic_pot/ceramic_pot_metal_1k.png",
+        "md5": "f6beb9b9d8570d7b34517c9ff7719fb9",
+        "size": 259756
+      }
+    },
+    "2k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_metal_2k.exr",
+        "md5": "332a5b7878de151d2e0bf8c949b2a245",
+        "size": 573082
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_metal_2k.jpg",
+        "md5": "d6e58e6b4b5d9d23bc85aabf89bc415c",
+        "size": 482831
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/ceramic_pot/ceramic_pot_metal_2k.png",
+        "md5": "ead9d35d349cc7e4d97fc79e2b690297",
+        "size": 945317
+      }
+    },
+    "4k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_metal_4k.exr",
+        "md5": "5d5bd80c0d9fb81e90f0adcc3db39215",
+        "size": 2003644
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_metal_4k.jpg",
+        "md5": "eb95d17a03547a81f2b065d0f88cc3ee",
+        "size": 1819697
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/ceramic_pot/ceramic_pot_metal_4k.png",
+        "md5": "dd5922672f66704b33fe0985db95dd09",
+        "size": 2645542
+      }
+    }
+  },
+  "nor_dx": {
+    "1k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_nor_dx_1k.exr",
+        "md5": "50f85af23ca9588d8cb356be237646cd",
+        "size": 528280
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_nor_dx_1k.jpg",
+        "md5": "6358b6a6a316de29d5095c9317d1bc17",
+        "size": 252253
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/ceramic_pot/ceramic_pot_nor_dx_1k.png",
+        "md5": "18d48b5e24fc99e10a2c41ad95fd03ac",
+        "size": 1811555
+      }
+    },
+    "2k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_nor_dx_2k.exr",
+        "md5": "6e54541f6edcda8c155b902702212c6e",
+        "size": 1780595
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_nor_dx_2k.jpg",
+        "md5": "c3a2b61363a3ef561d89ec7d8d5b344d",
+        "size": 857973
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/ceramic_pot/ceramic_pot_nor_dx_2k.png",
+        "md5": "3785fa0a38c64eacbaada2f3637cca04",
+        "size": 4898861
+      }
+    },
+    "4k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_nor_dx_4k.exr",
+        "md5": "40e15f0a7c4ecd8cdfa988dd3fff918e",
+        "size": 6206635
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_nor_dx_4k.jpg",
+        "md5": "544969345f8388e01fd4db25afc9c381",
+        "size": 3075005
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/ceramic_pot/ceramic_pot_nor_dx_4k.png",
+        "md5": "cfe80ffd935871446b9c506925dc105e",
+        "size": 10869501
+      }
+    }
+  },
+  "nor_gl": {
+    "1k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_nor_gl_1k.exr",
+        "md5": "2d2ce3d8f107c33f7784011b949c7fff",
+        "size": 527076
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_nor_gl_1k.jpg",
+        "md5": "a40c80e5e4f9fa107d2c2dc8983d2867",
+        "size": 252874
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/ceramic_pot/ceramic_pot_nor_gl_1k.png",
+        "md5": "61552492b1e42ed4db255405fe4728af",
+        "size": 1812027
+      }
+    },
+    "2k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_nor_gl_2k.exr",
+        "md5": "b02b9ad2331228bfb0038e61d4b7c2c8",
+        "size": 1774070
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_nor_gl_2k.jpg",
+        "md5": "c035f66ef6e4b03b8a7ff578712df959",
+        "size": 855903
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/ceramic_pot/ceramic_pot_nor_gl_2k.png",
+        "md5": "a308431d2cc6115ef7cf0192a2f6a08e",
+        "size": 4894336
+      }
+    },
+    "4k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_nor_gl_4k.exr",
+        "md5": "1f47fd215432da9388579e40d1c1a013",
+        "size": 6190411
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_nor_gl_4k.jpg",
+        "md5": "ad38158ccf2642b68ab47aeff16abe21",
+        "size": 2979051
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/ceramic_pot/ceramic_pot_nor_gl_4k.png",
+        "md5": "f016ec99fe415096a8536e5684398ff0",
+        "size": 10870330
+      }
+    }
+  },
+  "Rough": {
+    "1k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_rough_1k.exr",
+        "md5": "dd83f77819068184b2affd5352838781",
+        "size": 580613
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_rough_1k.jpg",
+        "md5": "c306cde515ebcfa6cedc3f10ad068faf",
+        "size": 502799
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/ceramic_pot/ceramic_pot_rough_1k.png",
+        "md5": "17985436db56464aaa6da66878faf162",
+        "size": 1251478
+      }
+    },
+    "2k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_rough_2k.exr",
+        "md5": "11612ba369f5b894772245e2bc809201",
+        "size": 2043872
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_rough_2k.jpg",
+        "md5": "65f33c701567a072c6b198d69b0decc1",
+        "size": 1825756
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/ceramic_pot/ceramic_pot_rough_2k.png",
+        "md5": "f86a036dc464f69c3e08fe5172a50e7e",
+        "size": 3977133
+      }
+    },
+    "4k": {
+      "exr": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_rough_4k.exr",
+        "md5": "d9658e14ee893ec33a03ccc4ffbae90d",
+        "size": 7240928
+      },
+      "jpg": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_rough_4k.jpg",
+        "md5": "8b7fa15c40a25f6c08751a2a5e5cf1cd",
+        "size": 6534007
+      },
+      "png": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/ceramic_pot/ceramic_pot_rough_4k.png",
+        "md5": "fdd13338a22993ade1eccee21115504a",
+        "size": 7880141
+      }
+    }
+  },
+  "fbx": {
+    "1k": {
+      "fbx": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/ceramic_pot/ceramic_pot_1k.fbx",
+        "md5": "9eb6709de1ca2c2277257f35e23245d2",
+        "size": 121228,
+        "include": {
+          "textures/ceramic_pot_diff_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_diff_1k.jpg",
+            "md5": "85746a999ed333628143b3ad2c0b7f42",
+            "size": 664480
+          },
+          "textures/ceramic_pot_metal_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_metal_1k.exr",
+            "md5": "05b984527940372673b4993a4bc00c87",
+            "size": 174153
+          },
+          "textures/ceramic_pot_nor_gl_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_nor_gl_1k.exr",
+            "md5": "2d2ce3d8f107c33f7784011b949c7fff",
+            "size": 527076
+          },
+          "textures/ceramic_pot_rough_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_rough_1k.exr",
+            "md5": "dd83f77819068184b2affd5352838781",
+            "size": 580613
+          }
+        }
+      }
+    },
+    "2k": {
+      "fbx": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/ceramic_pot/ceramic_pot_2k.fbx",
+        "md5": "9e069ca07b732df75006de0d20147a1e",
+        "size": 121228,
+        "include": {
+          "textures/ceramic_pot_diff_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_diff_2k.jpg",
+            "md5": "511a286f6b85d97a1e243323c4f862a4",
+            "size": 2424934
+          },
+          "textures/ceramic_pot_metal_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_metal_2k.exr",
+            "md5": "332a5b7878de151d2e0bf8c949b2a245",
+            "size": 573082
+          },
+          "textures/ceramic_pot_nor_gl_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_nor_gl_2k.exr",
+            "md5": "b02b9ad2331228bfb0038e61d4b7c2c8",
+            "size": 1774070
+          },
+          "textures/ceramic_pot_rough_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_rough_2k.exr",
+            "md5": "11612ba369f5b894772245e2bc809201",
+            "size": 2043872
+          }
+        }
+      }
+    },
+    "4k": {
+      "fbx": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/ceramic_pot/ceramic_pot_4k.fbx",
+        "md5": "0235c03d038dedcb3ea695088ca30bf9",
+        "size": 121228,
+        "include": {
+          "textures/ceramic_pot_diff_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_diff_4k.jpg",
+            "md5": "5c8d621a4880295e6d14181bacada72b",
+            "size": 8953348
+          },
+          "textures/ceramic_pot_metal_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_metal_4k.exr",
+            "md5": "5d5bd80c0d9fb81e90f0adcc3db39215",
+            "size": 2003644
+          },
+          "textures/ceramic_pot_nor_gl_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_nor_gl_4k.exr",
+            "md5": "1f47fd215432da9388579e40d1c1a013",
+            "size": 6190411
+          },
+          "textures/ceramic_pot_rough_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_rough_4k.exr",
+            "md5": "d9658e14ee893ec33a03ccc4ffbae90d",
+            "size": 7240928
+          }
+        }
+      }
+    }
+  },
+  "gltf": {
+    "1k": {
+      "gltf": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/ceramic_pot/ceramic_pot_1k.gltf",
+        "md5": "8777fd3f023e6f83371786b195ac665b",
+        "size": 2990,
+        "include": {
+          "textures/ceramic_pot_nor_gl_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_nor_gl_1k.jpg",
+            "md5": "a40c80e5e4f9fa107d2c2dc8983d2867",
+            "size": 252874
+          },
+          "textures/ceramic_pot_diff_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_diff_1k.jpg",
+            "md5": "85746a999ed333628143b3ad2c0b7f42",
+            "size": 664480
+          },
+          "textures/ceramic_pot_arm_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_arm_1k.jpg",
+            "md5": "e45cd9ad939172ae7b94fd455bc44c08",
+            "size": 633246
+          },
+          "ceramic_pot.bin": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ceramic_pot/ceramic_pot.bin",
+            "md5": "dab3afea04454ad1fbb1108afe764489",
+            "size": 87952
+          }
+        }
+      }
+    },
+    "2k": {
+      "gltf": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/ceramic_pot/ceramic_pot_2k.gltf",
+        "md5": "fd28bcd8ef41cdc047f44fa9d3e2a6fc",
+        "size": 2990,
+        "include": {
+          "textures/ceramic_pot_nor_gl_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_nor_gl_2k.jpg",
+            "md5": "c035f66ef6e4b03b8a7ff578712df959",
+            "size": 855903
+          },
+          "textures/ceramic_pot_diff_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_diff_2k.jpg",
+            "md5": "511a286f6b85d97a1e243323c4f862a4",
+            "size": 2424934
+          },
+          "textures/ceramic_pot_arm_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_arm_2k.jpg",
+            "md5": "21f00039769f6fd3cccdbb1842efc0e2",
+            "size": 2256658
+          },
+          "ceramic_pot.bin": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ceramic_pot/ceramic_pot.bin",
+            "md5": "dab3afea04454ad1fbb1108afe764489",
+            "size": 87952
+          }
+        }
+      }
+    },
+    "4k": {
+      "gltf": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ceramic_pot/ceramic_pot_4k.gltf",
+        "md5": "7b1a164df89ab12ba485ff90975f8aef",
+        "size": 2990,
+        "include": {
+          "textures/ceramic_pot_nor_gl_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_nor_gl_4k.jpg",
+            "md5": "ad38158ccf2642b68ab47aeff16abe21",
+            "size": 2979051
+          },
+          "textures/ceramic_pot_diff_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_diff_4k.jpg",
+            "md5": "5c8d621a4880295e6d14181bacada72b",
+            "size": 8953348
+          },
+          "textures/ceramic_pot_arm_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_arm_4k.jpg",
+            "md5": "9cff62dd409bb261d8366935a1909583",
+            "size": 7990270
+          },
+          "ceramic_pot.bin": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ceramic_pot/ceramic_pot.bin",
+            "md5": "dab3afea04454ad1fbb1108afe764489",
+            "size": 87952
+          }
+        }
+      }
+    }
+  },
+  "usd": {
+    "1k": {
+      "usd": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/ceramic_pot/ceramic_pot_1k.usdc",
+        "md5": "f9eebf14413ebfebc783dd74c49020e3",
+        "size": 154096,
+        "include": {
+          "textures/ceramic_pot_diff_1k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_pot/ceramic_pot_diff_1k.jpg",
+            "md5": "85746a999ed333628143b3ad2c0b7f42",
+            "size": 664480
+          },
+          "textures/ceramic_pot_metal_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_metal_1k.exr",
+            "md5": "05b984527940372673b4993a4bc00c87",
+            "size": 174153
+          },
+          "textures/ceramic_pot_nor_gl_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_nor_gl_1k.exr",
+            "md5": "2d2ce3d8f107c33f7784011b949c7fff",
+            "size": 527076
+          },
+          "textures/ceramic_pot_rough_1k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/ceramic_pot/ceramic_pot_rough_1k.exr",
+            "md5": "dd83f77819068184b2affd5352838781",
+            "size": 580613
+          }
+        }
+      }
+    },
+    "2k": {
+      "usd": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/ceramic_pot/ceramic_pot_2k.usdc",
+        "md5": "6ef9c7e03508fb3b7866b9d417942738",
+        "size": 154096,
+        "include": {
+          "textures/ceramic_pot_diff_2k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/ceramic_pot/ceramic_pot_diff_2k.jpg",
+            "md5": "511a286f6b85d97a1e243323c4f862a4",
+            "size": 2424934
+          },
+          "textures/ceramic_pot_metal_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_metal_2k.exr",
+            "md5": "332a5b7878de151d2e0bf8c949b2a245",
+            "size": 573082
+          },
+          "textures/ceramic_pot_nor_gl_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_nor_gl_2k.exr",
+            "md5": "b02b9ad2331228bfb0038e61d4b7c2c8",
+            "size": 1774070
+          },
+          "textures/ceramic_pot_rough_2k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/ceramic_pot/ceramic_pot_rough_2k.exr",
+            "md5": "11612ba369f5b894772245e2bc809201",
+            "size": 2043872
+          }
+        }
+      }
+    },
+    "4k": {
+      "usd": {
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/ceramic_pot/ceramic_pot_4k.usdc",
+        "md5": "50d400a8a11eae064c2eb3d82fa4baeb",
+        "size": 154123,
+        "include": {
+          "textures/ceramic_pot_diff_4k.jpg": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/ceramic_pot/ceramic_pot_diff_4k.jpg",
+            "md5": "5c8d621a4880295e6d14181bacada72b",
+            "size": 8953348
+          },
+          "textures/ceramic_pot_metal_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_metal_4k.exr",
+            "md5": "5d5bd80c0d9fb81e90f0adcc3db39215",
+            "size": 2003644
+          },
+          "textures/ceramic_pot_nor_gl_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_nor_gl_4k.exr",
+            "md5": "1f47fd215432da9388579e40d1c1a013",
+            "size": 6190411
+          },
+          "textures/ceramic_pot_rough_4k.exr": {
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/ceramic_pot/ceramic_pot_rough_4k.exr",
+            "md5": "d9658e14ee893ec33a03ccc4ffbae90d",
+            "size": 7240928
+          }
+        }
+      }
+    }
+  }
+}

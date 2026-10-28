@@ -1,5 +1,5 @@
 {
   "schemaVersion": 1,
-  "snapshot": "assets/art/models/scene-20261027-masonry-v3",
-  "note": "当前同源模型库；旧public模型原文件与历史预览版本保留。仅更新工具读取源，不应用任何内容草稿。"
+  "snapshot": "assets/art/models/scene-20261027-authored-v4",
+  "note": "当前原生模块/外壳/采集源快照。作者家具与蒙皮人物另由model-registry管理；保留历史，不应用内容草稿。"
 }

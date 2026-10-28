@@ -10,6 +10,7 @@ var visible_render:=false
 var skip_interfaces:=false
 var previews_only:=false
 var model_namespace:=""
+var world_only:=false
 
 func check(ok:bool,message:String)->void:
 	if not ok:failed=true;push_error("scene_visuals: "+message)
@@ -142,6 +143,7 @@ func _ready()->void:
 		if arg=="--skip-interfaces":skip_interfaces=true
 		if arg=="--previews-only":previews_only=true
 		if arg.begins_with("--namespace="):model_namespace=arg.trim_prefix("--namespace=")
+		if arg=="--world-only":world_only=true
 	DirAccess.make_dir_recursive_absolute(output)
 	visible_render=DisplayServer.get_name()!="headless"
 	get_tree().root.size=Vector2i(1024,800)
@@ -153,8 +155,8 @@ func _ready()->void:
 	var light:=DirectionalLight3D.new();light.rotation_degrees=Vector3(-45,-30,0);light.light_energy=1.1;world.add_child(light)
 	camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.near=.01;camera.far=10000;world.add_child(camera);camera.make_current()
 	var display:=TextureRect.new();display.texture=viewport.get_texture();display.position=Vector2(256,100);display.size=Vector2(512,512);add_child(display)
-	await model_previews()
-	if not previews_only:await character_samples();await scatter_samples()
+	if not world_only:await model_previews()
+	if not previews_only and not world_only:await character_samples();await scatter_samples()
 	display.queue_free()
 	if previews_only:viewport.queue_free();await frames(2)
 	else:await actual_world()

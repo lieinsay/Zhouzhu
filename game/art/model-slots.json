@@ -20,6 +20,132 @@
       "name": "成熟女性",
       "definition": "SceneCharacter cosmetic variant",
       "heightMetres": 1.68
+    },
+    "furniture.altar": {
+      "name": "altar",
+      "definition": "src/house_template.cpp:furniture.altar",
+      "dimensionsMetres": [
+        1.8,
+        1,
+        0.6
+      ]
+    },
+    "furniture.bed": {
+      "name": "bed",
+      "definition": "src/house_template.cpp:furniture.bed",
+      "dimensionsMetres": [
+        2,
+        0.6,
+        1.5
+      ]
+    },
+    "furniture.bench": {
+      "name": "bench",
+      "definition": "src/house_template.cpp:furniture.bench",
+      "dimensionsMetres": [
+        1.2,
+        0.45,
+        0.35
+      ]
+    },
+    "furniture.bin": {
+      "name": "bin",
+      "definition": "src/house_template.cpp:furniture.bin",
+      "dimensionsMetres": [
+        1.4,
+        1.6,
+        1.4
+      ]
+    },
+    "prop.cargo_crate": {
+      "name": "cargo_crate",
+      "definition": "src/player.cpp:Crate",
+      "dimensionsMetres": [
+        0.8,
+        0.6,
+        0.7
+      ]
+    },
+    "furniture.chest": {
+      "name": "chest",
+      "definition": "src/house_template.cpp:furniture.chest",
+      "dimensionsMetres": [
+        1.2,
+        1.2,
+        0.6
+      ]
+    },
+    "furniture.drum": {
+      "name": "drum",
+      "definition": "src/house_template.cpp:furniture.drum",
+      "dimensionsMetres": [
+        1,
+        1.3,
+        1
+      ]
+    },
+    "furniture.loom": {
+      "name": "loom",
+      "definition": "src/house_template.cpp:furniture.loom",
+      "dimensionsMetres": [
+        1.6,
+        1.5,
+        1.3
+      ]
+    },
+    "furniture.mat": {
+      "name": "mat",
+      "definition": "src/house_template.cpp:furniture.mat",
+      "dimensionsMetres": [
+        2,
+        0.03,
+        1.4
+      ]
+    },
+    "furniture.sacks": {
+      "name": "sacks",
+      "definition": "src/house_template.cpp:furniture.sacks",
+      "dimensionsMetres": [
+        1.2,
+        0.7,
+        0.9
+      ]
+    },
+    "furniture.shelf": {
+      "name": "shelf",
+      "definition": "src/house_template.cpp:furniture.shelf",
+      "dimensionsMetres": [
+        1.6,
+        1.9,
+        0.5
+      ]
+    },
+    "furniture.stove": {
+      "name": "stove",
+      "definition": "src/house_template.cpp:furniture.stove",
+      "dimensionsMetres": [
+        1.8,
+        0.85,
+        1
+      ]
+    },
+    "furniture.table": {
+      "name": "table",
+      "definition": "src/house_template.cpp:furniture.table",
+      "dimensionsMetres": [
+        1.4,
+        0.8,
+        0.9
+      ]
+    },
+    "furniture.vat": {
+      "name": "vat",
+      "definition": "src/house_template.cpp:furniture.vat",
+      "dimensionsMetres": [
+        0.9,
+        0.8,
+        0.9
+      ]
     }
   }
 }

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-28T06:22:38.177854+00:00",
+  "scope": "当前已用三维人物/服装蒙皮、家具、统一货箱及原生建筑/船模块接合升级",
+  "status": "applied-and-agent-checked",
+  "userIndividualConfirmation": null,
+  "entityRegistry": "assets/art/model-registry.json",
+  "entityBindings": "game/art/model-bindings.json",
+  "entityApplication": {
+    "id": "94737d6d-4f6f-4aac-b1db-ca8b39aacb7d",
+    "appliedAt": "2026-10-28T06:22:38.681Z",
+    "actor": "content-studio-model-art",
+    "registrySha256": "3bfbb1bfe3679884feb5fae854e9f2689d80f53e23b5c984d1af0ed8aa8d8dca"
+  },
+  "imageBindings": "game/art/bindings.json",
+  "counts": {
+    "imageIdentities": 101,
+    "actorIdentities": 4,
+    "actorMeshes": 2,
+    "furniture": 13,
+    "props": 1,
+    "entityIdentities": 18,
+    "uniqueGlbs": 16,
+    "externalStaticModels": 10,
+    "projectBlenderStaticModels": 4,
+    "updatedPreviews": 26,
+    "nativeBuildingTypes": 5,
+    "nativeModuleTypes": 8
+  },
+  "validation": {
+    "core": {
+      "checks": 160,
+      "failed": 0,
+      "evidence": "output/model-upgrade-20261027/model-core-checks.log"
+    },
+    "modelApi": {
+      "checks": 5,
+      "failed": 0
+    },
+    "imageApi": {
+      "checks": 7,
+      "failed": 0
+    },
+    "frontend": {
+      "checks": 30,
+      "failed": 0,
+      "evidence": "output/model-upgrade-20261027/frontend-final-tests.log"
+    },
+    "staticGpu": "output/model-upgrade-20261027/entity-production-pixels/report.json",
+    "actualGame": "output/model-upgrade-20261027/entity-world-pixels/report.json",
+    "interfaces": "output/model-upgrade-20261027/interfaces-final-pixels/report.json",
+    "seed42": "output/model-upgrade-20261027/seed42-model-pixels/report.json",
+    "isolatedPck": "output/model-upgrade-20261027/model-pack-probe.result.json",
+    "sourceFingerprintCheck": "所有图片历史原图/派生、18实体源/编辑源/运行文件/依赖，以及12个PolyHaven原始包逐SHA与MD5通过"
+  },
+  "limits": [
+    "原开发地图NPC当前在室内隐藏；自然职业工作像素未全面覆盖，4幅真实工具装配为独立受控样件。",
+    "GLTF首次无头导入的编辑器缩略图命中Godot4.4.1已知错误，日志保留；实际运行与GPU无ERROR。",
+    "隔离PCK缺UID缓存产生文字路径回退警告，18实体与101图片实际加载通过；不等于完整发行版导出。",
+    "时代、地域、动态布料/表情系统未定，不据视觉模型新增职业、工业动力、生成数据或玩法。"
+  ],
+  "remainingCurrentBindingGaps": 0,
+  "protected": [
+    "用户内容草稿/存档",
+    "生成器与源地形/天气数据",
+    "已停止的河流实现",
+    "未推送"
+  ]
+}

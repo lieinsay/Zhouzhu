@@ -13,6 +13,14 @@ uniform sampler2D model_detail_tex:source_color,filter_linear_mipmap_anisotropic
 uniform vec3 model_detail_mean=vec3(1.0);
 uniform float model_detail_tile_metres=.25;
 uniform float model_roughness=.9;
+uniform float model_uv_repeat=3.0;
+uniform vec3 model_source_mean=vec3(.2);
+uniform sampler2D model_normal:hint_normal,filter_linear_mipmap_anisotropic,repeat_enable;
+uniform bool model_has_normal=false;
+uniform float model_normal_depth=0.0;
+uniform sampler2D model_orm:filter_linear_mipmap_anisotropic,repeat_enable;
+uniform bool model_has_orm=false;
+uniform float model_metallic=0.0;
 void vertex(){vec3 original=VERTEX;VERTEX=planet_visual(original);NORMAL=planet_visual_normal(original,NORMAL);}
 void fragment(){
 	vec4 original=vec4(1.0);if(model_has_texture)original=texture(model_tex,UV);
@@ -21,9 +29,14 @@ void fragment(){
 	if(model_iris){float pigment=dot(original.rgb,vec3(.2126,.7152,.0722));col=vec3(.72,.39,.16)*pigment;}
 	if(model_role==2||model_role==3||model_role==4){
 		col=model_tint.rgb;
-		if(model_detail_enabled)col*=clamp(texture(model_detail_tex,UV*3.0).rgb/max(model_detail_mean,vec3(.001)),vec3(.75),vec3(1.25));
+		if(model_detail_enabled)col*=clamp(texture(model_detail_tex,UV*model_uv_repeat).rgb/max(model_detail_mean,vec3(.001)),vec3(.75),vec3(1.25));
 	}
+	float metal=model_metallic;
+	if(model_role==5){vec3 ratio=clamp(original.rgb/max(model_source_mean,vec3(.001)),vec3(.72),vec3(1.28));col=model_tint.rgb*ratio;}
+	if(model_has_orm){vec3 packed=texture(model_orm,UV).rgb;metal*=packed.b;AO=packed.r;AO_LIGHT_AFFECT=.35;}
+	if(model_role==5)col=mix(col,original.rgb,metal);
 	if(model_role==1&&model_mature){float gray=dot(col,vec3(.2126,.7152,.0722));col=mix(col,vec3(gray)*1.65,.7);}
 	float wet=clamp(wx_wet,0.0,1.0);if(model_role>1)col*=mix(1.0,.9,wet);
-	ALBEDO=col;ROUGHNESS=model_roughness*mix(1.0,.8,wet);SPECULAR=model_role==0?.18:.3;
+	ALBEDO=col;ROUGHNESS=model_roughness*mix(1.0,.8,wet);SPECULAR=model_role==0?.18:.3;METALLIC=metal;
+	NORMAL_MAP_DEPTH=model_normal_depth;if(model_has_normal)NORMAL_MAP=texture(model_normal,UV).rgb;
 }

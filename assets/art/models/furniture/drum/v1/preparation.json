@@ -1,0 +1,84 @@
+{
+  "kind": "drum",
+  "sourceAsset": null,
+  "origin": "project-mesh-blender-refinement",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {
+      "ZZ_project_3": {
+        "asset": "material.wood",
+        "color": [
+          0.5,
+          0.360000014,
+          0.219999999
+        ],
+        "roughness": 0.850000024,
+        "metallic": 0
+      },
+      "ZZ_project_10": {
+        "asset": "material.lacquer",
+        "color": [
+          0.579999983,
+          0.140000001,
+          0.100000001
+        ],
+        "roughness": 0.600000024,
+        "metallic": 0
+      },
+      "ZZ_project_12": {
+        "asset": "material.iron",
+        "color": [
+          0.300000012,
+          0.310000002,
+          0.319999993
+        ],
+        "roughness": 0.550000012,
+        "metallic": 0.8
+      },
+      "ZZ_project_13": {
+        "asset": "material.leather",
+        "color": [
+          0.660000026,
+          0.540000021,
+          0.379999995
+        ],
+        "roughness": 0.850000024,
+        "metallic": 0
+      }
+    },
+    "uvMetresPerUnit": {
+      "ZZ_project_3": 1.0074159622452166,
+      "ZZ_project_10": 0.7799582190181674,
+      "ZZ_project_12": 0.6913902078036226,
+      "ZZ_project_13": 0.9745927213781562
+    },
+    "textureMeans": {}
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1,
+    1,
+    1.3
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.4000000059604645,
+      -0.25,
+      0.0
+    ],
+    "max": [
+      0.4000000059604645,
+      0.25,
+      1.149999976158142
+    ]
+  },
+  "triangles": 4120,
+  "dependencies": []
+}

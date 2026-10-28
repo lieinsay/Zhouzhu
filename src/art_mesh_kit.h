@@ -105,11 +105,13 @@ inline void part(MeshPart &mesh,const BoxPart &p){
         case VisualShape::TILE_EDGE:tile_edge(mesh,xf,size);break;
         case VisualShape::HULL:{
             const double hx=size.x*.5,hy=size.y*.5,hz=size.z*.5;
-            const V3 p0{-hx,hy,-hz},p1{hx,hy,-hz},p2{hx,hy,hz},p3{-hx,hy,hz},b0{-.70*hx,-hy,-hz},b1{.70*hx,-hy,-hz},b2{.70*hx,-hy,hz},b3{-.70*hx,-hy,hz};
-            const std::vector<std::vector<V3>> faces={{p0,p1,p2,p3},{b0,b3,b2,b1},{p0,p3,b3,b0},{p1,b1,b2,p2},{p0,b0,b1,p1},{p3,p2,b2,b3}};
-            const V3 ns[]={{0,1,0},{0,-1,0},{-1,-.3,0},{1,-.3,0},{0,0,-1},{0,0,1}};
-            for(int f=0;f<6;++f){std::vector<V3> points;for(auto v:faces[size_t(f)])points.push_back(xf.xform(v));const int first=mesh.vertex_count();polygon(mesh,points,xf.rotate(ns[f]),nullptr);
-                for(int i=first;i<mesh.vertex_count();++i){const V3 v=local_of(xf,{mesh.positions[size_t(i)*3],mesh.positions[size_t(i)*3+1],mesh.positions[size_t(i)*3+2]});mesh.uvs[size_t(i)*2]=float((f==0||f==1)?v.x+hx:v.y+hy);mesh.uvs[size_t(i)*2+1]=float(v.z+hz);}}
+            // 模块顶面/端面尺寸保持不动，舷侧至舭部以连续折弧收束，木纹沿船长。
+            const std::vector<V3> profile={{-hx,hy,0},{hx,hy,0},{hx,.2*hy,0},{.97*hx,-.30*hy,0},{.86*hx,-.8*hy,0},{.70*hx,-hy,0},{-.70*hx,-hy,0},{-.86*hx,-.8*hy,0},{-.97*hx,-.30*hy,0},{-hx,.2*hy,0}};
+            double distance=0;
+            for(size_t edge=0;edge<profile.size();++edge){const V3 a=profile[edge],b=profile[(edge+1)%profile.size()],delta=b-a;const double span=std::hypot(delta.x,delta.y);const V3 normal=xf.rotate({-delta.y/span,delta.x/span,0});const int first=mesh.vertex_count();
+                polygon(mesh,{xf.xform(a+V3{0,0,-hz}),xf.xform(b+V3{0,0,-hz}),xf.xform(b+V3{0,0,hz}),xf.xform(a+V3{0,0,hz})},normal,nullptr);
+                for(int i=first;i<mesh.vertex_count();++i){const V3 v=local_of(xf,{mesh.positions[size_t(i)*3],mesh.positions[size_t(i)*3+1],mesh.positions[size_t(i)*3+2]});mesh.uvs[size_t(i)*2]=float(distance+dot(v-a,delta)/span);mesh.uvs[size_t(i)*2+1]=float(v.z+hz);}distance+=span;}
+            for(double z:{-hz,hz}){std::vector<V3> points;for(auto p:profile)points.push_back(xf.xform(p+V3{0,0,z}));polygon(mesh,points,xf.rotate({0,0,z<0?-1.0:1.0}),nullptr);}
             break;}
         case VisualShape::DRUM:lathe(mesh,Xform(p.yaw,p.pitch+1.570796326794897,{p.x,p.y,p.z}),{p.sx,p.sz,p.sy},{{0,0},{.44,0},{.49,.18},{.5,.5},{.49,.82},{.44,1},{0,1}});break;
         case VisualShape::ROLLER_X:lathe(mesh,Xform(p.yaw+1.570796326794897,p.pitch+1.570796326794897,{p.x,p.y,p.z}),{p.sz,p.sx,p.sy},{{0,0},{.5,0},{.5,1},{0,1}},24);break;

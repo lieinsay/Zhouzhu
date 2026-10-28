@@ -1,0 +1,40 @@
+{
+  "author": {
+    "Satyaki Mandal": "All"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/compost_bag_02",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "compost_bag_02_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/compost_bag_02/compost_bag_02_1k.gltf",
+      "sha256": "56ede732d19c06d6f55827cf0f4fd6850fdc63ea0847d64a66ba6f341bba6aed",
+      "md5": "dd6066a66cca0c857d130cb48ac974ff"
+    },
+    {
+      "path": "textures/compost_bag_02_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_arm_1k.jpg",
+      "sha256": "4936a8ff6f7b19bed93511071fea30fb4b04d4f5ef4e24914bee56692ab98f1b",
+      "md5": "c858d507585b80c57024a53389ebb2c2"
+    },
+    {
+      "path": "compost_bag_02.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/compost_bag_02/compost_bag_02.bin",
+      "sha256": "8e529d8a17c4e827a128b8b1b4898825db8507d3da665f78e4621ff9af31cd1d",
+      "md5": "dd8351299be2a9a6e112e74bf026de34"
+    },
+    {
+      "path": "textures/compost_bag_02_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_diff_1k.jpg",
+      "sha256": "5e6a4efb1f66e97d436574f40d1c1b7006269f8d014ac25caa1ca632a378ffd4",
+      "md5": "27024bf4c2d35607b30d85e340ff3ecb"
+    },
+    {
+      "path": "textures/compost_bag_02_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/compost_bag_02/compost_bag_02_nor_gl_1k.jpg",
+      "sha256": "5a9828cbaa87b74f435e9ae612accf95fcac9bf398f1d4e891063ef9c28e1a99",
+      "md5": "feff8552a89967bedd88073c7c838dca"
+    }
+  ]
+}

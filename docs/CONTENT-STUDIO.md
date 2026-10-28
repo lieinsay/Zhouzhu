@@ -173,3 +173,5 @@ VPN 入口扩展的 10 项定向检查通过，覆盖实际双地址同端口、
 在正式美术页选择“三维实体模型”，查看作者、许可、实际渲染和骨骼记录，独立暂存并“应用实体到游戏”。接口为`/api/art/models`、`/api/art/models/stage`、`/api/art/models/apply`，源登记`assets/art/model-registry.json`，游戏实体绑定`game/art/model-bindings.json`，应用历史`assets/art/model-applications/`。模型暂存文件与图片、玩法草稿各自独立。应用会重新核对GLB头、来源/依赖指纹、代理审查及既有视觉槽，不会应用`project.visuals`。用户逐项确认保持空值，代理自查另记。
 
 模型API定向检查：`python -m unittest discover -s tools/content-studio/test_python -p test_model_art.py`。页面切换图片/实体时保留各自未暂存选择，应用只影响当前类。
+
+作者器物：`prepare_furniture.py`在Blender精修，`publish_furniture.py`按已审GPU SHA登记实体与同源图片。`furniture_models_e2e.tscn`验13家具/统一货箱；`scene_visuals_e2e.tscn -- --world-only --skip-interfaces`仅检查原始开局，不重新跑已通过的预览。完整流程与CLI见`tools/art-models/README.md`，本轮验收见`docs/art-assets/MODEL-UPGRADE-20261027.md`。

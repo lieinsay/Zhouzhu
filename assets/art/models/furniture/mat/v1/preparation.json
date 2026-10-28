@@ -1,0 +1,51 @@
+{
+  "kind": "mat",
+  "sourceAsset": null,
+  "origin": "project-mesh-blender-refinement",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {
+      "ZZ_project_8": {
+        "asset": "material.straw",
+        "color": [
+          0.8,
+          0.68,
+          0.4
+        ],
+        "roughness": 1.0,
+        "metallic": 0
+      }
+    },
+    "uvMetresPerUnit": {
+      "ZZ_project_8": 0.9505053494085312
+    },
+    "textureMeans": {}
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    2,
+    1.4,
+    0.03
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -1.0,
+      -0.699999988079071,
+      0.0020000000949949026
+    ],
+    "max": [
+      1.0,
+      0.699999988079071,
+      0.026999998837709427
+    ]
+  },
+  "triangles": 484,
+  "dependencies": []
+}

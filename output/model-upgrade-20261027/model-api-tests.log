@@ -1,0 +1,23 @@
+test_apply_images_without_content_draft (test_art.ArtTests.test_apply_images_without_content_draft) ... ok
+test_character_uses_explicit_runtime_slots (test_art.ArtTests.test_character_uses_explicit_runtime_slots) ... ok
+test_current_snapshot_is_versioned_and_verified (test_art.ArtTests.test_current_snapshot_is_versioned_and_verified) ... ok
+test_fixture_material_cannot_be_applied (test_art.ArtTests.test_fixture_material_cannot_be_applied) ... ok
+test_model_versions_fingerprint_and_path_boundary (test_art.ArtTests.test_model_versions_fingerprint_and_path_boundary) ... ok
+test_namespace_and_path_boundary (test_art.ArtTests.test_namespace_and_path_boundary) ... ok
+test_stale_revision_hash_change_and_unreviewed_rejected (test_art.ArtTests.test_stale_revision_hash_change_and_unreviewed_rejected) ... ok
+test_apply_images_without_content_draft (test_model_art.ModelArtTests.test_apply_images_without_content_draft) ... ok
+test_character_uses_explicit_runtime_slots (test_model_art.ModelArtTests.test_character_uses_explicit_runtime_slots) ... ok
+test_current_snapshot_is_versioned_and_verified (test_model_art.ModelArtTests.test_current_snapshot_is_versioned_and_verified) ... ok
+test_entity_apply_preserves_image_and_content_drafts (test_model_art.ModelArtTests.test_entity_apply_preserves_image_and_content_drafts) ... ok
+test_fixture_material_cannot_be_applied (test_model_art.ModelArtTests.test_fixture_material_cannot_be_applied) ... ok
+test_model_license_and_review_gate (test_model_art.ModelArtTests.test_model_license_and_review_gate) ... ok
+test_model_revision_and_namespace_guard (test_model_art.ModelArtTests.test_model_revision_and_namespace_guard) ... ok
+test_model_versions_fingerprint_and_path_boundary (test_model_art.ModelArtTests.test_model_versions_fingerprint_and_path_boundary) ... ok
+test_namespace_and_path_boundary (test_model_art.ModelArtTests.test_namespace_and_path_boundary) ... ok
+test_reject_flat_asset_and_dependency_hash_changes (test_model_art.ModelArtTests.test_reject_flat_asset_and_dependency_hash_changes) ... ok
+test_stale_revision_hash_change_and_unreviewed_rejected (test_model_art.ModelArtTests.test_stale_revision_hash_change_and_unreviewed_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 4.111s
+
+OK

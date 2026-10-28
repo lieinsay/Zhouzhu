@@ -1,0 +1,246 @@
+{
+  "models": {
+    "furniture.altar": {
+      "bounds": {
+        "max": [
+          0.899999916553497,
+          1.46000003814697,
+          0.300000011920929
+        ],
+        "min": [
+          -0.899999916553497,
+          0.0,
+          -0.300000011920929
+        ]
+      },
+      "path": "res://art/models/furniture/altar/v1/model.glb",
+      "pixels": true,
+      "sha256": "d986f70b16a640f446865f9ce7a65447d8c1407dfd6c02a6d19664b2dcefec90"
+    },
+    "furniture.bed": {
+      "bounds": {
+        "max": [
+          1.0,
+          0.600000023841858,
+          0.75
+        ],
+        "min": [
+          -1.0,
+          0.0,
+          -0.75
+        ]
+      },
+      "path": "res://art/models/furniture/bed/v1/model.glb",
+      "pixels": true,
+      "sha256": "01a9fe675573d6ee83c27c2c5b1e04469a3d8786fa88922543209190acadbb47"
+    },
+    "furniture.bench": {
+      "bounds": {
+        "max": [
+          0.600000023841858,
+          0.449999988079071,
+          0.174999997019768
+        ],
+        "min": [
+          -0.600000023841858,
+          0.0,
+          -0.174999997019768
+        ]
+      },
+      "path": "res://art/models/furniture/bench/v1/model.glb",
+      "pixels": true,
+      "sha256": "8626d70ea4b3c7762f39805d9ebed6bcfed6ace45d339503984dc795eb7f9390"
+    },
+    "furniture.bin": {
+      "bounds": {
+        "max": [
+          0.700000047683716,
+          1.60000002384186,
+          0.699999988079071
+        ],
+        "min": [
+          -0.700000047683716,
+          0.0,
+          -0.699999988079071
+        ]
+      },
+      "path": "res://art/models/furniture/bin/v1/model.glb",
+      "pixels": true,
+      "sha256": "4008242136294a817ff7f60214dc97f75756ed6f4af6b2300710ce2263f6d2db"
+    },
+    "furniture.chest": {
+      "bounds": {
+        "max": [
+          0.600000023841858,
+          1.20000004768372,
+          0.299999982118607
+        ],
+        "min": [
+          -0.600000023841858,
+          0.0,
+          -0.299999982118607
+        ]
+      },
+      "path": "res://art/models/furniture/chest/v1/model.glb",
+      "pixels": true,
+      "sha256": "83834198198b7529351445503eadf62314e858a9e2e738eaed8f2a296c08f26c"
+    },
+    "furniture.drum": {
+      "bounds": {
+        "max": [
+          0.400000005960464,
+          1.14999997615814,
+          0.25
+        ],
+        "min": [
+          -0.400000005960464,
+          0.0,
+          -0.25
+        ]
+      },
+      "path": "res://art/models/furniture/drum/v1/model.glb",
+      "pixels": true,
+      "sha256": "cd705996c5908881565bc77c8e316c0d2770242699cadbb808fa86f697b66b16"
+    },
+    "furniture.loom": {
+      "bounds": {
+        "max": [
+          0.800000011920929,
+          1.5,
+          0.63999992609024
+        ],
+        "min": [
+          -0.800000011920929,
+          0.0,
+          -0.660000026226044
+        ]
+      },
+      "path": "res://art/models/furniture/loom/v1/model.glb",
+      "pixels": true,
+      "sha256": "c0fa0c8e16c8f750e01c58f17ec94c98e00d32271182e8d562ea548908ad337c"
+    },
+    "furniture.mat": {
+      "bounds": {
+        "max": [
+          1.0,
+          0.0269999988377094,
+          0.699999988079071
+        ],
+        "min": [
+          -1.0,
+          0.0020000000949949,
+          -0.699999988079071
+        ]
+      },
+      "path": "res://art/models/furniture/mat/v1/model.glb",
+      "pixels": true,
+      "sha256": "3034789c302bb59e3b5f3dd971fc9c6c5206c3426e822b3124906765bc2983ec"
+    },
+    "furniture.sacks": {
+      "bounds": {
+        "max": [
+          0.599999964237213,
+          0.699999988079071,
+          0.449999988079071
+        ],
+        "min": [
+          -0.599999964237213,
+          0.0,
+          -0.449999988079071
+        ]
+      },
+      "path": "res://art/models/furniture/sacks/v1/model.glb",
+      "pixels": true,
+      "sha256": "4147b29964476ba9d38173695a04d30adf80e0184b2e8f27fa29a6cefddc0538"
+    },
+    "furniture.shelf": {
+      "bounds": {
+        "max": [
+          0.800000071525574,
+          1.89999997615814,
+          0.249999970197678
+        ],
+        "min": [
+          -0.800000071525574,
+          0.0,
+          -0.250000029802322
+        ]
+      },
+      "path": "res://art/models/furniture/shelf/v1/model.glb",
+      "pixels": true,
+      "sha256": "821d522117db17fa64373f391af139322e6d0786a56dbc00a8a9d018481859a9"
+    },
+    "furniture.stove": {
+      "bounds": {
+        "max": [
+          0.899999976158142,
+          2.75,
+          0.5
+        ],
+        "min": [
+          -0.899999976158142,
+          0.0,
+          -0.5
+        ]
+      },
+      "path": "res://art/models/furniture/stove/v1/model.glb",
+      "pixels": true,
+      "sha256": "c2d0c8a2e18a0a1acaedb7808f180f61fcf34173bb5066d83e904ed5170c181c"
+    },
+    "furniture.table": {
+      "bounds": {
+        "max": [
+          0.699999988079071,
+          0.800000011920929,
+          0.450000017881393
+        ],
+        "min": [
+          -0.699999988079071,
+          0.0,
+          -0.450000017881393
+        ]
+      },
+      "path": "res://art/models/furniture/table/v1/model.glb",
+      "pixels": true,
+      "sha256": "4eca58adc5c1f56197369293fcd9822a9bcdc81e1340bca12a0330a8186c72e9"
+    },
+    "furniture.vat": {
+      "bounds": {
+        "max": [
+          0.449999988079071,
+          0.800000011920929,
+          0.449999988079071
+        ],
+        "min": [
+          -0.449999988079071,
+          0.0,
+          -0.449999988079071
+        ]
+      },
+      "path": "res://art/models/furniture/vat/v1/model.glb",
+      "pixels": true,
+      "sha256": "caa89dc580c5dc95d90d11d0f4ca1d1e0cb6aa3b635d8522c961ac3e704b15b5"
+    },
+    "prop.cargo_crate": {
+      "bounds": {
+        "max": [
+          0.400000005960464,
+          0.300000011920929,
+          0.349999994039536
+        ],
+        "min": [
+          -0.400000005960464,
+          -0.300000011920929,
+          -0.349999994039536
+        ]
+      },
+      "path": "res://art/models/prop/cargo_crate/v1/model.glb",
+      "pixels": true,
+      "sha256": "ffd86935a53be65fd09368430f201f3bd61dc0aa97499623a373a6403f3c2f4a"
+    }
+  },
+  "passed": true,
+  "renderer": "Windows",
+  "scope": "真实作者/精修实体、生产材质、定义宽深和透明预览；碰撞与真实界面另验",
+  "sourceBindings": "res://art/model-bindings.json"
+}

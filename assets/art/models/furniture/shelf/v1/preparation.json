@@ -1,0 +1,59 @@
+{
+  "kind": "shelf",
+  "sourceAsset": "painted_wooden_shelves",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {},
+    "uvMetresPerUnit": {
+      "painted_wooden_shelves": 4.027417945206955
+    },
+    "textureMeans": {
+      "painted_wooden_shelves": [
+        0.0751948872041983,
+        0.03419389030892995,
+        0.023836395117518394
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.6,
+    0.5,
+    1.9
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.8000000715255737,
+      -0.25,
+      0.0
+    ],
+    "max": [
+      0.8000000715255737,
+      0.2500000298023224,
+      1.899999976158142
+    ]
+  },
+  "triangles": 524,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "9dcd7e3783da2a2cd44cd4f7a78ac976d2866e02d8dd0799d180d0ab746ae239"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "430aef90494d0aa16c354bb4d39fc1a768dd822a0da7e6b746f1891a0cb7cf3a"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "256c99e04dc99961ad08e085b01adc03641e861f66d4b325b1acb0f822d1e9a9"
+    }
+  ]
+}

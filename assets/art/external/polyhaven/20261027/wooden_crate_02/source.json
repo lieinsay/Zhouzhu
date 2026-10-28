@@ -1,0 +1,41 @@
+{
+  "author": {
+    "James Ray Cock": "modeling",
+    "Jurita Burger": "graphic design"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/wooden_crate_02",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "wooden_crate_02_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/wooden_crate_02/wooden_crate_02_1k.gltf",
+      "sha256": "e90985d317664668988cb95ce707784c94ab0ccc6d13c980ca789fa69a5cf7b6",
+      "md5": "a69eb62fd20e6badb6bb56f052930e06"
+    },
+    {
+      "path": "textures/wooden_crate_02_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_02/wooden_crate_02_diff_1k.jpg",
+      "sha256": "a6e57123110d2899af9493c22b1918174f1c96c707e7126ac67738d98ee10c07",
+      "md5": "45bca8f49da9d541e06bc926ab001c81"
+    },
+    {
+      "path": "textures/wooden_crate_02_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_02/wooden_crate_02_arm_1k.jpg",
+      "sha256": "a76af97005a66fe8c7cdcabf20174f06813e6a6d5cd9502157c93a57f3c89d5a",
+      "md5": "a7537612dbfb7fd25e756074eec5624e"
+    },
+    {
+      "path": "wooden_crate_02.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/wooden_crate_02/wooden_crate_02.bin",
+      "sha256": "e68e272641f704e5241e4108894f0b97363d511944db8b991a48787d0160ea5e",
+      "md5": "08d98507231cdeda1070d1a2d0646254"
+    },
+    {
+      "path": "textures/wooden_crate_02_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/wooden_crate_02/wooden_crate_02_nor_gl_1k.jpg",
+      "sha256": "59342f730c9f336950f796ef5e4c3b8c794ce5adbd54d98a2ecb679a7e4ae5e8",
+      "md5": "314226b31765168cd8070898f8a7e18e"
+    }
+  ]
+}

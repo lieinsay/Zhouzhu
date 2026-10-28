@@ -1,0 +1,71 @@
+{
+  "kind": "bed",
+  "sourceAsset": "chinese_sofa",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {
+      "ZZ_project_7": {
+        "asset": "material.hemp",
+        "color": [
+          0.660000026,
+          0.600000024,
+          0.5
+        ],
+        "roughness": 1,
+        "metallic": 0
+      }
+    },
+    "uvMetresPerUnit": {
+      "chinese_sofa": 3.8520017812836342,
+      "ZZ_project_7": 1.0028767754341328
+    },
+    "textureMeans": {
+      "chinese_sofa": [
+        0.10925223042592175,
+        0.05500087003450439,
+        0.03290706003653533
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    2,
+    1.5,
+    0.6
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -1.0,
+      -0.75,
+      0.0
+    ],
+    "max": [
+      1.0,
+      0.75,
+      0.6000000238418579
+    ]
+  },
+  "triangles": 920,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "6c7b73f4c1b38d8e26d35df1deb8f38af2f74fd08597a3a52645a41c6a417735"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "fb512b25971ff1fa17d8049e9687fb232195b73fcf98ebf55e277df2d2d6bca3"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "d0aabd7f28848c3f1189f768a50a29bc32ccdef2f557f91160080a47890be0f7"
+    }
+  ]
+}

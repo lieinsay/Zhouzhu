@@ -1,0 +1,834 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 36318023,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_diff_8k.jpg",
+        "md5": "35545a2c3d0a9cdd261d6bdfa30bba74"
+      },
+      "png": {
+        "size": 170135044,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_console_table/chinese_console_table_diff_8k.png",
+        "md5": "c7d3823ff0f593dc63a27dac4a5f8aa3"
+      },
+      "exr": {
+        "size": 86617047,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_diff_8k.exr",
+        "md5": "9749b64fb8ec010b7facb77b7be7fc3f"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 9198258,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_diff_4k.jpg",
+        "md5": "428ce363827d96c8bd33c42beafbad40"
+      },
+      "png": {
+        "size": 54006643,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_console_table/chinese_console_table_diff_4k.png",
+        "md5": "656ffc4f55c3d43ed1a269b55142910a"
+      },
+      "exr": {
+        "size": 20459073,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_diff_4k.exr",
+        "md5": "3e295c2f8de175da13dbcf0b9c32441d"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2529264,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_diff_2k.jpg",
+        "md5": "53fb50ee40b12fa5b12be41738c2cb7e"
+      },
+      "png": {
+        "size": 15968484,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_console_table/chinese_console_table_diff_2k.png",
+        "md5": "6281a30f0fb94823ba664ad8f499c48e"
+      },
+      "exr": {
+        "size": 5094848,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_diff_2k.exr",
+        "md5": "698be0f47207e57d0d17dd8099e33210"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 731482,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_diff_1k.jpg",
+        "md5": "1b6e339d5610bff8fd018ad8cbd7022c"
+      },
+      "png": {
+        "size": 4556608,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_console_table/chinese_console_table_diff_1k.png",
+        "md5": "73fb1e1f6233e7b9a39f90b4e39d19f2"
+      },
+      "exr": {
+        "size": 1449014,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_diff_1k.exr",
+        "md5": "6b14006f9d0ad7aef3a00b75e6fc86d8"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 30030509,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_nor_dx_8k.jpg",
+        "md5": "35a6ee06a8caf7ded5387d966da5fb15"
+      },
+      "png": {
+        "size": 136741371,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_console_table/chinese_console_table_nor_dx_8k.png",
+        "md5": "b8ec53f8f5151edf539cdedcbd358675"
+      },
+      "exr": {
+        "size": 60400481,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_nor_dx_8k.exr",
+        "md5": "3f0fa85238254e1dde30bcf96d3172ec"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8712604,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_nor_dx_4k.jpg",
+        "md5": "8ef6bc357c5f8291b8166c1ec03b6297"
+      },
+      "png": {
+        "size": 51298289,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_console_table/chinese_console_table_nor_dx_4k.png",
+        "md5": "6022d2bed470883250c820ccf337fe13"
+      },
+      "exr": {
+        "size": 18906757,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_nor_dx_4k.exr",
+        "md5": "41789113d4de4717bbcf5eb9399a500d"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2420598,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_nor_dx_2k.jpg",
+        "md5": "253d55cce50a0979dfe233660a82ba4a"
+      },
+      "png": {
+        "size": 15441076,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_console_table/chinese_console_table_nor_dx_2k.png",
+        "md5": "1f648b624a1aaa08834f31113de964bd"
+      },
+      "exr": {
+        "size": 5021250,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_nor_dx_2k.exr",
+        "md5": "378a470529e2e3be6fdfd66a9fa8a641"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 698384,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_nor_dx_1k.jpg",
+        "md5": "123240b7d69aa6ba7ee0f2fe0726e500"
+      },
+      "png": {
+        "size": 4401872,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_console_table/chinese_console_table_nor_dx_1k.png",
+        "md5": "45b6a01b388c4963e2bed46ae7c39be9"
+      },
+      "exr": {
+        "size": 1425770,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_nor_dx_1k.exr",
+        "md5": "4db377b8271df4cc273bc56f607a2227"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 30101068,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_nor_gl_8k.jpg",
+        "md5": "3cf6a373ad91e8c4e60a6dc72321cd79"
+      },
+      "png": {
+        "size": 136726195,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_console_table/chinese_console_table_nor_gl_8k.png",
+        "md5": "7728063afbe976967ae1f07333eab54b"
+      },
+      "exr": {
+        "size": 60477159,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_nor_gl_8k.exr",
+        "md5": "c1164756e3378fb5212343b4b4b17f34"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8736390,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_nor_gl_4k.jpg",
+        "md5": "fe6bcfc7bf3a7f6059f444f7a385152c"
+      },
+      "png": {
+        "size": 51323458,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_console_table/chinese_console_table_nor_gl_4k.png",
+        "md5": "160a07e4a85a067861edc25db378d8f9"
+      },
+      "exr": {
+        "size": 18942272,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_nor_gl_4k.exr",
+        "md5": "4f3a4bbf97432c1535c069ccbed3bf9e"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2428040,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_nor_gl_2k.jpg",
+        "md5": "0a251ed10e9ba826f15917ba66a5f5d2"
+      },
+      "png": {
+        "size": 15439527,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_console_table/chinese_console_table_nor_gl_2k.png",
+        "md5": "fd76952e46ca9fa26dbee27cbeae40e3"
+      },
+      "exr": {
+        "size": 5017999,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_nor_gl_2k.exr",
+        "md5": "709cf06c192e3f85a1d195821f6a6325"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 700938,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_nor_gl_1k.jpg",
+        "md5": "ae12146cca5c94fd82b9de395e46b994"
+      },
+      "png": {
+        "size": 4402328,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_console_table/chinese_console_table_nor_gl_1k.png",
+        "md5": "e1c2648d78e817d7ec27bdab677f73d1"
+      },
+      "exr": {
+        "size": 1424024,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_nor_gl_1k.exr",
+        "md5": "2fc7fcd3d02b0a29644d89ec0aaf523e"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_8k.exr": {
+            "size": 60477159,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_nor_gl_8k.exr",
+            "md5": "c1164756e3378fb5212343b4b4b17f34"
+          },
+          "textures/chinese_console_table_diff_8k.jpg": {
+            "size": 36318023,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_diff_8k.jpg",
+            "md5": "35545a2c3d0a9cdd261d6bdfa30bba74"
+          },
+          "textures/chinese_console_table_rough_8k.exr": {
+            "size": 38977541,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_rough_8k.exr",
+            "md5": "f8c62fb430be6ba68d85f485daf4e616"
+          }
+        },
+        "size": 547597,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/chinese_console_table/chinese_console_table_8k.blend",
+        "md5": "8f335cb91cd00a261ddfab9ece2d085d"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_4k.exr": {
+            "size": 18942272,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_nor_gl_4k.exr",
+            "md5": "4f3a4bbf97432c1535c069ccbed3bf9e"
+          },
+          "textures/chinese_console_table_diff_4k.jpg": {
+            "size": 9198258,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_diff_4k.jpg",
+            "md5": "428ce363827d96c8bd33c42beafbad40"
+          },
+          "textures/chinese_console_table_rough_4k.exr": {
+            "size": 9775859,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_rough_4k.exr",
+            "md5": "ae8444a0530bbd0346411f51cfee523a"
+          }
+        },
+        "size": 547496,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/chinese_console_table/chinese_console_table_4k.blend",
+        "md5": "1e1ac4df5361250571d628a72c14f738"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_2k.exr": {
+            "size": 5017999,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_nor_gl_2k.exr",
+            "md5": "709cf06c192e3f85a1d195821f6a6325"
+          },
+          "textures/chinese_console_table_diff_2k.jpg": {
+            "size": 2529264,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_diff_2k.jpg",
+            "md5": "53fb50ee40b12fa5b12be41738c2cb7e"
+          },
+          "textures/chinese_console_table_rough_2k.exr": {
+            "size": 2660123,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_rough_2k.exr",
+            "md5": "07b5d7a17140392aa8a6bb8df9e8c62f"
+          }
+        },
+        "size": 547452,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/chinese_console_table/chinese_console_table_2k.blend",
+        "md5": "4b4d670e48a98610c46141c9723190e8"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/chinese_console_table_rough_1k.exr": {
+            "size": 769005,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_rough_1k.exr",
+            "md5": "59b1dbfd0eccf39f0b4901e670f3c24b"
+          },
+          "textures/chinese_console_table_diff_1k.jpg": {
+            "size": 731482,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_diff_1k.jpg",
+            "md5": "1b6e339d5610bff8fd018ad8cbd7022c"
+          },
+          "textures/chinese_console_table_nor_gl_1k.exr": {
+            "size": 1424024,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_nor_gl_1k.exr",
+            "md5": "2fc7fcd3d02b0a29644d89ec0aaf523e"
+          }
+        },
+        "size": 547589,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/chinese_console_table/chinese_console_table_1k.blend",
+        "md5": "4663be88e6d06fa426320d15b99f9305"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_8k.jpg": {
+            "size": 30101068,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_nor_gl_8k.jpg",
+            "md5": "3cf6a373ad91e8c4e60a6dc72321cd79"
+          },
+          "textures/chinese_console_table_diff_8k.jpg": {
+            "size": 36318023,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_diff_8k.jpg",
+            "md5": "35545a2c3d0a9cdd261d6bdfa30bba74"
+          },
+          "textures/chinese_console_table_arm_8k.jpg": {
+            "size": 42940246,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_arm_8k.jpg",
+            "md5": "3f2e645b11183d105f6b7950a0110b83"
+          },
+          "chinese_console_table.bin": {
+            "size": 505184,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_console_table/chinese_console_table.bin",
+            "md5": "08e53d44d181263d5d4e731f7cd713c3"
+          }
+        },
+        "size": 2861,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_console_table/chinese_console_table_8k.gltf",
+        "md5": "ae496138f3566a27da58640404554f61"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_4k.jpg": {
+            "size": 8736390,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_nor_gl_4k.jpg",
+            "md5": "fe6bcfc7bf3a7f6059f444f7a385152c"
+          },
+          "textures/chinese_console_table_arm_4k.jpg": {
+            "size": 10794783,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_arm_4k.jpg",
+            "md5": "ccacea6a65001142ff7c664a3897adca"
+          },
+          "chinese_console_table.bin": {
+            "size": 505184,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_console_table/chinese_console_table.bin",
+            "md5": "08e53d44d181263d5d4e731f7cd713c3"
+          },
+          "textures/chinese_console_table_diff_4k.jpg": {
+            "size": 9198258,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_diff_4k.jpg",
+            "md5": "428ce363827d96c8bd33c42beafbad40"
+          }
+        },
+        "size": 2861,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/chinese_console_table/chinese_console_table_4k.gltf",
+        "md5": "c1d9c447d59a88ecc96006f8bf6270b7"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_2k.jpg": {
+            "size": 2428040,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_nor_gl_2k.jpg",
+            "md5": "0a251ed10e9ba826f15917ba66a5f5d2"
+          },
+          "textures/chinese_console_table_diff_2k.jpg": {
+            "size": 2529264,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_diff_2k.jpg",
+            "md5": "53fb50ee40b12fa5b12be41738c2cb7e"
+          },
+          "textures/chinese_console_table_arm_2k.jpg": {
+            "size": 2955759,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_arm_2k.jpg",
+            "md5": "a13e2b561513d53a14600da6accc84cb"
+          },
+          "chinese_console_table.bin": {
+            "size": 505184,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_console_table/chinese_console_table.bin",
+            "md5": "08e53d44d181263d5d4e731f7cd713c3"
+          }
+        },
+        "size": 2861,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/chinese_console_table/chinese_console_table_2k.gltf",
+        "md5": "1baff6822872f5c1ee566ea1968639a0"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_console_table_arm_1k.jpg": {
+            "size": 851730,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_arm_1k.jpg",
+            "md5": "3aa4e460645083b231b20846b4d01df0"
+          },
+          "textures/chinese_console_table_diff_1k.jpg": {
+            "size": 731482,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_diff_1k.jpg",
+            "md5": "1b6e339d5610bff8fd018ad8cbd7022c"
+          },
+          "textures/chinese_console_table_nor_gl_1k.jpg": {
+            "size": 700938,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_nor_gl_1k.jpg",
+            "md5": "ae12146cca5c94fd82b9de395e46b994"
+          },
+          "chinese_console_table.bin": {
+            "size": 505184,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_console_table/chinese_console_table.bin",
+            "md5": "08e53d44d181263d5d4e731f7cd713c3"
+          }
+        },
+        "size": 2861,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_console_table/chinese_console_table_1k.gltf",
+        "md5": "7afbbc2473741124afb17b8b7a92f1dd"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_8k.exr": {
+            "size": 60477159,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_nor_gl_8k.exr",
+            "md5": "c1164756e3378fb5212343b4b4b17f34"
+          },
+          "textures/chinese_console_table_diff_8k.jpg": {
+            "size": 36318023,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_diff_8k.jpg",
+            "md5": "35545a2c3d0a9cdd261d6bdfa30bba74"
+          },
+          "textures/chinese_console_table_rough_8k.exr": {
+            "size": 38977541,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_rough_8k.exr",
+            "md5": "f8c62fb430be6ba68d85f485daf4e616"
+          }
+        },
+        "size": 733644,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/chinese_console_table/chinese_console_table_8k.usdc",
+        "md5": "facabc7d2f4c02200879806c5cd8fbdb"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_4k.exr": {
+            "size": 18942272,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_nor_gl_4k.exr",
+            "md5": "4f3a4bbf97432c1535c069ccbed3bf9e"
+          },
+          "textures/chinese_console_table_diff_4k.jpg": {
+            "size": 9198258,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_diff_4k.jpg",
+            "md5": "428ce363827d96c8bd33c42beafbad40"
+          },
+          "textures/chinese_console_table_rough_4k.exr": {
+            "size": 9775859,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_rough_4k.exr",
+            "md5": "ae8444a0530bbd0346411f51cfee523a"
+          }
+        },
+        "size": 733645,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/chinese_console_table/chinese_console_table_4k.usdc",
+        "md5": "aa3161c75caa60d86f64364bcde197ee"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_2k.exr": {
+            "size": 5017999,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_nor_gl_2k.exr",
+            "md5": "709cf06c192e3f85a1d195821f6a6325"
+          },
+          "textures/chinese_console_table_diff_2k.jpg": {
+            "size": 2529264,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_diff_2k.jpg",
+            "md5": "53fb50ee40b12fa5b12be41738c2cb7e"
+          },
+          "textures/chinese_console_table_rough_2k.exr": {
+            "size": 2660123,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_rough_2k.exr",
+            "md5": "07b5d7a17140392aa8a6bb8df9e8c62f"
+          }
+        },
+        "size": 733644,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/chinese_console_table/chinese_console_table_2k.usdc",
+        "md5": "fea948cb4197d1e751bbcbd4d2bbebec"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/chinese_console_table_rough_1k.exr": {
+            "size": 769005,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_rough_1k.exr",
+            "md5": "59b1dbfd0eccf39f0b4901e670f3c24b"
+          },
+          "textures/chinese_console_table_diff_1k.jpg": {
+            "size": 731482,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_diff_1k.jpg",
+            "md5": "1b6e339d5610bff8fd018ad8cbd7022c"
+          },
+          "textures/chinese_console_table_nor_gl_1k.exr": {
+            "size": 1424024,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_nor_gl_1k.exr",
+            "md5": "2fc7fcd3d02b0a29644d89ec0aaf523e"
+          }
+        },
+        "size": 733644,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/chinese_console_table/chinese_console_table_1k.usdc",
+        "md5": "e3f987a06de26ac77718df20bc511945"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 42940246,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_arm_8k.jpg",
+        "md5": "3f2e645b11183d105f6b7950a0110b83"
+      },
+      "png": {
+        "size": 80046014,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_console_table/chinese_console_table_arm_8k.png",
+        "md5": "d4cd414117535fb15f8d85471f06314c"
+      },
+      "exr": {
+        "size": 96362332,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_arm_8k.exr",
+        "md5": "109064a6ea3e2f4c1a8625286f15815c"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 10794783,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_arm_4k.jpg",
+        "md5": "ccacea6a65001142ff7c664a3897adca"
+      },
+      "png": {
+        "size": 39513070,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_console_table/chinese_console_table_arm_4k.png",
+        "md5": "d9f9fc0b94967658ce7f63bb087b7b33"
+      },
+      "exr": {
+        "size": 23927345,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_arm_4k.exr",
+        "md5": "80c2f1d6362241c7d7e9d8a41acaf496"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2955759,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_arm_2k.jpg",
+        "md5": "a13e2b561513d53a14600da6accc84cb"
+      },
+      "png": {
+        "size": 12371653,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_console_table/chinese_console_table_arm_2k.png",
+        "md5": "82ad5398265c2eeced8284541d183d8f"
+      },
+      "exr": {
+        "size": 6400769,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_arm_2k.exr",
+        "md5": "bea8f9078066ec7ad266d5acab1198d9"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 851730,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_arm_1k.jpg",
+        "md5": "3aa4e460645083b231b20846b4d01df0"
+      },
+      "png": {
+        "size": 3640129,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_console_table/chinese_console_table_arm_1k.png",
+        "md5": "ea11cddb3db215218c4ed9c719f7fc3c"
+      },
+      "exr": {
+        "size": 1828434,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_arm_1k.exr",
+        "md5": "415ff54f4cabed48552c840caf9a030a"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_8k.exr": {
+            "size": 60477159,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_nor_gl_8k.exr",
+            "md5": "c1164756e3378fb5212343b4b4b17f34"
+          },
+          "textures/chinese_console_table_diff_8k.jpg": {
+            "size": 36318023,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_diff_8k.jpg",
+            "md5": "35545a2c3d0a9cdd261d6bdfa30bba74"
+          },
+          "textures/chinese_console_table_rough_8k.exr": {
+            "size": 38977541,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_rough_8k.exr",
+            "md5": "f8c62fb430be6ba68d85f485daf4e616"
+          }
+        },
+        "size": 543020,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/chinese_console_table/chinese_console_table_8k.fbx",
+        "md5": "313dfad0218553d6bcaee1aad68fa8a3"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_4k.exr": {
+            "size": 18942272,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_nor_gl_4k.exr",
+            "md5": "4f3a4bbf97432c1535c069ccbed3bf9e"
+          },
+          "textures/chinese_console_table_diff_4k.jpg": {
+            "size": 9198258,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_diff_4k.jpg",
+            "md5": "428ce363827d96c8bd33c42beafbad40"
+          },
+          "textures/chinese_console_table_rough_4k.exr": {
+            "size": 9775859,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_rough_4k.exr",
+            "md5": "ae8444a0530bbd0346411f51cfee523a"
+          }
+        },
+        "size": 543020,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/chinese_console_table/chinese_console_table_4k.fbx",
+        "md5": "69078ea2304cc520314975aa5f2f4fed"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_console_table_nor_gl_2k.exr": {
+            "size": 5017999,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_nor_gl_2k.exr",
+            "md5": "709cf06c192e3f85a1d195821f6a6325"
+          },
+          "textures/chinese_console_table_diff_2k.jpg": {
+            "size": 2529264,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_diff_2k.jpg",
+            "md5": "53fb50ee40b12fa5b12be41738c2cb7e"
+          },
+          "textures/chinese_console_table_rough_2k.exr": {
+            "size": 2660123,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_rough_2k.exr",
+            "md5": "07b5d7a17140392aa8a6bb8df9e8c62f"
+          }
+        },
+        "size": 543020,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/chinese_console_table/chinese_console_table_2k.fbx",
+        "md5": "a63f91b43d7bf3e0b5b3622652dfef6a"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_console_table_rough_1k.exr": {
+            "size": 769005,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_rough_1k.exr",
+            "md5": "59b1dbfd0eccf39f0b4901e670f3c24b"
+          },
+          "textures/chinese_console_table_diff_1k.jpg": {
+            "size": 731482,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_diff_1k.jpg",
+            "md5": "1b6e339d5610bff8fd018ad8cbd7022c"
+          },
+          "textures/chinese_console_table_nor_gl_1k.exr": {
+            "size": 1424024,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_nor_gl_1k.exr",
+            "md5": "2fc7fcd3d02b0a29644d89ec0aaf523e"
+          }
+        },
+        "size": 543020,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/chinese_console_table/chinese_console_table_1k.fbx",
+        "md5": "21e9bf45d4196cbdf6b67ffbfda54674"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "size": 24992232,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_ao_8k.jpg",
+        "md5": "ce61d1249a964bdec0a59fb2e7554b49"
+      },
+      "png": {
+        "size": 26263980,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_console_table/chinese_console_table_ao_8k.png",
+        "md5": "6f41a407bb49db8d1b1da5d48ce99aba"
+      },
+      "exr": {
+        "size": 26406589,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_ao_8k.exr",
+        "md5": "2c34bd099f8dca96bc9a07739a5fe930"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7116764,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_ao_4k.jpg",
+        "md5": "b0165551bbfd71bdaac8da2677bc119a"
+      },
+      "png": {
+        "size": 15697662,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_console_table/chinese_console_table_ao_4k.png",
+        "md5": "be91acaa665131f13805cf6f9d5c653d"
+      },
+      "exr": {
+        "size": 7711954,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_ao_4k.exr",
+        "md5": "abc496eae072c0ac580dc3948c27d133"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1901772,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_ao_2k.jpg",
+        "md5": "57741a2c944eb1860b4043fb72a1db80"
+      },
+      "png": {
+        "size": 5187123,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_console_table/chinese_console_table_ao_2k.png",
+        "md5": "0a040c985c652249799743d2947c9413"
+      },
+      "exr": {
+        "size": 2069914,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_ao_2k.exr",
+        "md5": "d9db402613c041c78275470e99db28d1"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 543438,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_ao_1k.jpg",
+        "md5": "40a8cdb364aa732ba5a7eb964e2b1fe3"
+      },
+      "png": {
+        "size": 1535839,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_console_table/chinese_console_table_ao_1k.png",
+        "md5": "e7e1355a3f69e47e1751984367cb3b82"
+      },
+      "exr": {
+        "size": 601270,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_ao_1k.exr",
+        "md5": "ecb5ffa19c363a16ac988fa0d685eef3"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 36104749,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_console_table/chinese_console_table_rough_8k.jpg",
+        "md5": "ca8cac39004de9c89a4edd045c56b015"
+      },
+      "png": {
+        "size": 49272525,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_console_table/chinese_console_table_rough_8k.png",
+        "md5": "7d45ba02c245403751a01d1553428f40"
+      },
+      "exr": {
+        "size": 38977541,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_console_table/chinese_console_table_rough_8k.exr",
+        "md5": "f8c62fb430be6ba68d85f485daf4e616"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8801403,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_console_table/chinese_console_table_rough_4k.jpg",
+        "md5": "b451e780eb0f7ee88d664fceb754917e"
+      },
+      "png": {
+        "size": 18343388,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_console_table/chinese_console_table_rough_4k.png",
+        "md5": "57f0c279f9aeb460833960693436a1b7"
+      },
+      "exr": {
+        "size": 9775859,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_console_table/chinese_console_table_rough_4k.exr",
+        "md5": "ae8444a0530bbd0346411f51cfee523a"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2354220,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_console_table/chinese_console_table_rough_2k.jpg",
+        "md5": "72de2c99388405d5eb20e55129f391d1"
+      },
+      "png": {
+        "size": 5672453,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_console_table/chinese_console_table_rough_2k.png",
+        "md5": "0787b5b2bd4887cb664d9d4556a6bc0b"
+      },
+      "exr": {
+        "size": 2660123,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_console_table/chinese_console_table_rough_2k.exr",
+        "md5": "07b5d7a17140392aa8a6bb8df9e8c62f"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 670357,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_console_table/chinese_console_table_rough_1k.jpg",
+        "md5": "60a5e814ad43635837f08e42239fbb0e"
+      },
+      "png": {
+        "size": 1629554,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_console_table/chinese_console_table_rough_1k.png",
+        "md5": "a088a97e15f2d8fc91ce64451d8495dc"
+      },
+      "exr": {
+        "size": 769005,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_console_table/chinese_console_table_rough_1k.exr",
+        "md5": "59b1dbfd0eccf39f0b4901e670f3c24b"
+      }
+    }
+  }
+}

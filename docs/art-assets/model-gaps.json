@@ -44,19 +44,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-bridge.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "5f9af5a2efdc1d6dbe2f671c83522cf40cd1ccb799add858ae0cab58754426a5",
-        "vertices": 16536,
-        "triangles": 5512
+        "assetSha256": "b8a3145acae782270c7bd41a130c943f09ad3d6039374d135d27ee08f37f13c2",
+        "vertices": 16608,
+        "triangles": 5536
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "module.storage",
@@ -102,19 +103,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-storage.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "4d937b071073d3ca2c5cec9f67f58222c01ee45d9f6f140a9a018452a657dd88",
-        "vertices": 2628,
-        "triangles": 876
+        "assetSha256": "3f87083c34caddf3d276db828fbe8dec04298b4191c994fe91669a52a67aeec6",
+        "vertices": 2700,
+        "triangles": 900
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "module.sail",
@@ -160,19 +162,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-sail.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "35e4dee794cc4c0035bea3fe80415e0d4e706bd33d01e2582de532b6399b7f48",
-        "vertices": 7236,
-        "triangles": 2412
+        "assetSha256": "1a46d21eebf46de97f36d8c0002b66889dee8c6821ebec5c61e4cb580009cd4a",
+        "vertices": 7308,
+        "triangles": 2436
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "module.floatstone",
@@ -218,19 +221,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-floatstone.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "21940507df5a0c9e85eb5b11adf48d9393aed200d695c3c58880759db078e4b5",
-        "vertices": 8028,
-        "triangles": 2676
+        "assetSha256": "c44abd1ff9e37d4425dabbe66ef144214b9353b608757c14d4d9b816706445e1",
+        "vertices": 8100,
+        "triangles": 2700
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "module.deck",
@@ -276,19 +280,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-deck.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "7a45697a1e3f9b58c8b40c8de7573d637326d3d68d4e37b0a4b05d2c6751074f",
-        "vertices": 2628,
-        "triangles": 876
+        "assetSha256": "38db88bc5bb3001fe6c66230a0bd2d6edcb27428dc1f413f62807849cefc9caa",
+        "vertices": 2700,
+        "triangles": 900
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "module.long_sail",
@@ -334,19 +339,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-long_sail.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "ef09fb6541ade4cee1c1e591d2554639de1b3103ec78598120fbfd802240e2e7",
-        "vertices": 12852,
-        "triangles": 4284
+        "assetSha256": "130eb002d9958fc5f2dbc9506517b743e0b9b5366ea2316a4f8136ca77d95ddd",
+        "vertices": 12996,
+        "triangles": 4332
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "module.tall_hold",
@@ -392,19 +398,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-tall_hold.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "59720694383cfb7f11a023bd683bb29cffbfb143a55749506f2a7baabf5f302f",
-        "vertices": 15912,
-        "triangles": 5304
+        "assetSha256": "879f146f7bc7351e6b480315d1a47dbcea87791062563d158d205b7a991ee6c4",
+        "vertices": 15984,
+        "triangles": 5328
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "module.wide_deck",
@@ -451,19 +458,20 @@
         ],
         "source": {
           "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
-          "sha256": "76c34dceedf80f523effe04de18a45cd11c3e996eab1916afbd466f7bb6d110f"
+          "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
         },
         "url": "/assets/models/module-wide_deck.json",
         "usage": "ship-module",
         "implementationSource": {
           "path": "src/ship.cpp",
-          "sha256": "efbac3a95883a6ccccd5bf5a64983895b6d068cb1184d9a725aa3aa6a2583d36"
+          "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
         },
-        "assetSha256": "ef2bab249eebb9ff45ed0fbab33f74b96b9cef78fbc7af5e25c593c93d813165",
-        "vertices": 4608,
-        "triangles": 1536
+        "assetSha256": "73600e564db25ee6dbba4554b273455bc8631eede0bb363e2f1fcce36776da21",
+        "vertices": 4752,
+        "triangles": 1584
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v3"
     },
     {
       "id": "building.house",
@@ -495,18 +503,19 @@
         "itemIds": [],
         "source": {
           "path": "src/building_mesh.cpp",
-          "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+          "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
         },
         "templateId": "house/sanjian",
-        "vertices": 23770,
-        "triangles": 11516,
+        "vertices": 24154,
+        "triangles": 11708,
         "parts": 13,
         "name": "民居",
         "kind": "game",
         "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/house/sanjian.txt，不是库存物品独立实体。",
-        "assetSha256": "54b702bd9bd4832540cdf62d5b4e7f71f301e8a704cca6934a343eb85cedf548"
+        "assetSha256": "4e8b25bfdedad8c898fd0a60589a35c0717b88cac9c233a14f8ad9f4ab4673ba"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v4"
     },
     {
       "id": "building.hall",
@@ -538,18 +547,19 @@
         "itemIds": [],
         "source": {
           "path": "src/building_mesh.cpp",
-          "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+          "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
         },
         "templateId": "hall/citang",
-        "vertices": 30946,
-        "triangles": 14960,
+        "vertices": 31618,
+        "triangles": 15296,
         "parts": 12,
         "name": "堂屋",
         "kind": "game",
         "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/hall/citang.txt，不是库存物品独立实体。",
-        "assetSha256": "7e9b396931ea770f3627127e1daf7148b5c2a55f43bc94a6573d870fe733a1ad"
+        "assetSha256": "2b6e8389656d95de25703ef796b922146bf06581150794c813280ea7c3bdc843"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v4"
     },
     {
       "id": "building.granary",
@@ -581,18 +591,19 @@
         "itemIds": [],
         "source": {
           "path": "src/building_mesh.cpp",
-          "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+          "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
         },
         "templateId": "granary/cang",
-        "vertices": 21226,
-        "triangles": 10100,
-        "parts": 10,
+        "vertices": 21514,
+        "triangles": 10244,
+        "parts": 11,
         "name": "仓",
         "kind": "game",
         "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/granary/cang.txt，不是库存物品独立实体。",
-        "assetSha256": "29bc25b465cc004575037f378e5ab67e462b6f6c43b4690c3f4d05654b20581b"
+        "assetSha256": "ca577a96780f165658a5c156509ab12c280ca4b98bd18355e06a35014a77ec71"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v4"
     },
     {
       "id": "building.tower",
@@ -624,18 +635,19 @@
         "itemIds": [],
         "source": {
           "path": "src/building_mesh.cpp",
-          "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+          "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
         },
         "templateId": "tower/wanglou",
-        "vertices": 17618,
-        "triangles": 8552,
+        "vertices": 18290,
+        "triangles": 8888,
         "parts": 22,
         "name": "望楼",
         "kind": "game",
         "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/tower/wanglou.txt，不是库存物品独立实体。",
-        "assetSha256": "6956a146fe83ea415bef0d6ac3c3e5d09a9815a5f130f38d9faf811cfce5e701"
+        "assetSha256": "077e5f3f4b3010636513b022cf18ef77660bd7a941c934c5e2227ad8031712cd"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v4"
     },
     {
       "id": "building.berth",
@@ -667,7 +679,7 @@
         "itemIds": [],
         "source": {
           "path": "src/building_mesh.cpp",
-          "sha256": "f8bd91b5363885d77112d7115683d9b3b29218cc344f7ae43fecb947a3c5a2d5"
+          "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
         },
         "vertices": 384,
         "triangles": 192,
@@ -677,7 +689,8 @@
         "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。船台按当前 land_berth::add_parts 生成，无房屋模板。",
         "assetSha256": "81154d4069e445c1483944bbf2a6ee916578f6bfeb3594195be4cc2bc89b37a0"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+      "currentImageVersion": "v4"
     },
     {
       "id": "furniture.bed",
@@ -697,7 +710,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.stove",
@@ -717,7 +733,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.table",
@@ -737,7 +756,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.bench",
@@ -757,7 +779,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.chest",
@@ -777,7 +802,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.vat",
@@ -797,7 +825,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.bin",
@@ -817,7 +848,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.altar",
@@ -837,7 +871,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.loom",
@@ -857,7 +894,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.shelf",
@@ -877,7 +917,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.sacks",
@@ -897,7 +940,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.drum",
@@ -917,7 +963,10 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     },
     {
       "id": "furniture.mat",
@@ -937,7 +986,12 @@
         },
         "note": "直接调用当前furniture_parts与art_mesh_kit，完整家具曲面、原颜色和米制尺寸。"
       },
-      "styleGap": "已接入正式共享材质、构件UV和曲面；保留原尺寸与结构。仍为程序构件模型，后续可精修榫卯、曲线与手绘局部细节。"
+      "styleGap": "真实作者/Blender器物实体已接入；版本与编辑源见model-registry，历史程序预览保留。",
+      "currentImageVersion": "v3",
+      "currentEntityVersion": "v1",
+      "entityRegistry": "assets/art/model-registry.json"
     }
-  ]
+  ],
+  "updated": "2026-10-28T06:22:38.177854+00:00",
+  "boundary": "当前使用位模型/蒙皮与接合升级已接入；未来无使用位的库存模型、动态布料、最终时代地域不自动制作。"
 }

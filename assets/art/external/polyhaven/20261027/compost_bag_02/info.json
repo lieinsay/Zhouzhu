@@ -1,0 +1,59 @@
+{
+  "donated": true,
+  "name": "Compost Bag 02",
+  "type": 2,
+  "info": null,
+  "authors": {
+    "Satyaki Mandal": "All"
+  },
+  "date_published": 1678838400,
+  "staging": null,
+  "categories": [
+    "containers",
+    "industrial",
+    "collection: the_shed"
+  ],
+  "tags": [
+    "outdoor",
+    "botany",
+    "greenhouse",
+    "landscaping",
+    "shed",
+    "gardening",
+    "fertilizer",
+    "soil"
+  ],
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 12096,
+  "texel_density": 7219.773780945251,
+  "dimensions": [
+    539.3457114696503,
+    470.53681313991547,
+    433.6617160588503
+  ],
+  "files_hash": "aa96f29975d682235b75de6414439ac812135c24",
+  "description": "Free 8K model of a weathered teal woven compost bag, topped with soil and a black liner, showing dirt stains, creases and worn print.",
+  "sponsors": [
+    "26820710"
+  ],
+  "category_id": "6588dd6a-0a8d-5ac7-ab52-4975a02a4c95",
+  "category": "Containers & Storage/Bags/Garden & Compost Bags",
+  "collections": [
+    "the_shed"
+  ],
+  "attributes": {
+    "condition": [
+      "weathered"
+    ],
+    "material": [
+      "fabric",
+      "plastic"
+    ]
+  },
+  "img_version": "68eb8c20",
+  "download_count": 6770,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/compost_bag_02.png?width=256&height=256&format=webp&v=68eb8c20"
+}

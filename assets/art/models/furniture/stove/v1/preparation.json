@@ -1,0 +1,51 @@
+{
+  "kind": "stove",
+  "sourceAsset": null,
+  "origin": "project-mesh-blender-refinement",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {
+      "ZZ_project_6": {
+        "asset": "material.terracotta",
+        "color": [
+          0.600000024,
+          0.400000006,
+          0.280000001
+        ],
+        "roughness": 1,
+        "metallic": 0
+      }
+    },
+    "uvMetresPerUnit": {
+      "ZZ_project_6": 1.0161181655853257
+    },
+    "textureMeans": {}
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.8,
+    1,
+    0.85
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.8999999761581421,
+      -0.5,
+      0.0
+    ],
+    "max": [
+      0.8999999761581421,
+      0.5,
+      2.75
+    ]
+  },
+  "triangles": 4664,
+  "dependencies": []
+}

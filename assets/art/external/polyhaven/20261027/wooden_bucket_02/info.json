@@ -1,0 +1,61 @@
+{
+  "type": 2,
+  "name": "Wooden Bucket 02",
+  "authors": {
+    "James Ray Cock": "All"
+  },
+  "date_published": 1649808000,
+  "staging": null,
+  "sponsors": [
+    "7934315"
+  ],
+  "categories": [
+    "props",
+    "containers",
+    "collection: smugglers_cove"
+  ],
+  "tags": [
+    "old",
+    "wooden",
+    "bucket",
+    "vintage",
+    "wood",
+    "prop",
+    "worn",
+    "antique",
+    "farmhouse",
+    "colonial",
+    "maritime",
+    "container"
+  ],
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 7252,
+  "texel_density": 4358.73177821933,
+  "dimensions": [
+    615.3266429901123,
+    616.3034439086914,
+    350.42548179626465
+  ],
+  "files_hash": "a40353bab070ec4e81471ce7c16feabad6b2a163",
+  "description": "Free 8K model of a worn antique wooden bucket with metal bands and handles - vintage farmhouse/colonial maritime prop from the Smugglers Cove collection.",
+  "category_id": "1d2ebe30-8c69-5f58-bc61-fcf2e6a03cba",
+  "category": "Containers & Storage/Baskets & Buckets/Buckets",
+  "collections": [
+    "smugglers_cove"
+  ],
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood",
+      "metal"
+    ]
+  },
+  "img_version": "e14ccffa",
+  "download_count": 17287,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/wooden_bucket_02.png?width=256&height=256&format=webp&v=e14ccffa"
+}

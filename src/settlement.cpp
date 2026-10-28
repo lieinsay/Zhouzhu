@@ -1,4 +1,5 @@
 #include "settlement.h"
+#include "model_art.h"
 
 #include <cmath>
 #include <limits>
@@ -244,7 +245,7 @@ BuildingMesh Settlement::make_mesh(int p_index) const {
     const TemplateLibrary *library = TemplateLibrary::get_singleton();
     const HouseTemplate tmpl = !def->house ? HouseTemplate() : (library ? library->resolve(b) : bare_template(*def));
     const BuildingFrame frame = size_t(p_index) < frames.size() ? frames[size_t(p_index)] : building_frame(*ground, *def, b, rules);
-    return build_building_mesh(*map, frame, b, tmpl, p_index);
+    return build_building_mesh(*map, frame, b, tmpl, p_index,true);
 }
 
 void Settlement::build_one(int p_index) {
@@ -336,6 +337,7 @@ void Settlement::mount(const BuildingArrays &p_arrays) {
         zone->set_transform(Transform3D(Basis(Vector3(0, 1, 0), real_t(l.yaw)), Vector3(real_t(l.x), real_t(l.y), real_t(l.z))));
         group_nodes[size_t(l.group)]->add_child(zone);
     }
+    for(const BoxPart &reference:m.visual_models){auto *model=model_art::furniture(reference.model_id.substr(10),*looks);if(!model)continue;model->set_position(Vector3(real_t(reference.x),real_t(reference.y),real_t(reference.z)));model->set_rotation(Vector3(0,real_t(reference.yaw),0));group_nodes[size_t(reference.group)]->add_child(model);}
     add_child(root);
 
     // 碰撞：整座一个凹多边形（两面都挡：墙薄，人与相机从哪边碰都算）；碰撞形状得是 StaticBody3D 的直接子节点

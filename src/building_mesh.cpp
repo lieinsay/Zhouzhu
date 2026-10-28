@@ -89,7 +89,7 @@ BuildingFrame building_frame(const SiteGround &p_ground, const BuildingDef &p_de
     return frame;
 }
 
-BuildingMesh build_building_mesh(const MapGround &p_map, const BuildingFrame &p_frame, const Building &p_building, const HouseTemplate &p_template, int p_index) {
+BuildingMesh build_building_mesh(const MapGround &p_map, const BuildingFrame &p_frame, const Building &p_building, const HouseTemplate &p_template, int p_index,bool p_separate_furniture) {
     BuildingMesh out;
     out.index = p_index;
     out.frame = p_frame;
@@ -117,7 +117,8 @@ BuildingMesh build_building_mesh(const MapGround &p_map, const BuildingFrame &p_
     for (const BoxPart &part : parts.boxes) {
         const Xform xf(part.yaw, part.pitch, { part.x, part.y, part.z });
         const V3 size{ part.sx, part.sy, part.sz };
-        if (part.visual) {
+        if(p_separate_furniture&&!part.model_id.empty())out.visual_models.push_back(part);
+        if (part.visual && !(p_separate_furniture&&part.furniture_visual)) {
             art_mesh_kit::part(out.groups[size_t(part.group)][size_t(part.mat)],part);
         }
         if (part.solid) {

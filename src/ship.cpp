@@ -1,5 +1,7 @@
 #include "ship.h"
 #include "art_mesh.h"
+#include "model_art.h"
+#include "shared_looks.h"
 
 #include <algorithm>
 #include <cmath>
@@ -95,13 +97,13 @@ void adopt(Node *p_parent, Node *p_node, const String &p_name) {
 }
 
 // 一只盒子：样子挂在 Visual 下，碰撞（可选）挂在船根下
-void add_box(Node3D *p_visual, Node *p_body, const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide, VisualShape p_shape=VisualShape::BEVEL_BOX) {
+void add_box(Node3D *p_visual, Node *p_body, const String &p_name, const Vector3 &p_size, const Transform3D &p_xf, const Ref<Material> &p_material, bool p_collide, VisualShape p_shape=VisualShape::BEVEL_BOX,const String &p_model=String()) {
     BoxPart part;part.sx=p_size.x;part.sy=p_size.y;part.sz=p_size.z;part.shape=p_shape;
     const Ref<ArrayMesh> mesh=art_mesh::shape(part,p_material);
-    MeshInstance3D *instance = memnew(MeshInstance3D);
-    instance->set_mesh(mesh);
-    instance->set_transform(p_xf);
-    adopt(p_visual, instance, p_name);
+    SharedLooks looks;Node3D *instance=p_model.is_empty()?nullptr:model_art::instantiate_styled(p_model,looks);
+    if(instance){const Array dims=model_art::binding(p_model).get("dimensions",Array());if(dims.size()==3)instance->set_scale(Vector3(p_size.x/real_t(double(dims[0])),p_size.y/real_t(double(dims[1])),p_size.z/real_t(double(dims[2]))));}
+    else {auto *fallback=memnew(MeshInstance3D);fallback->set_mesh(mesh);instance=fallback;}
+    const Vector3 scale=instance->get_scale();instance->set_transform(p_xf);instance->set_scale(scale);adopt(p_visual,instance,p_name);
     if (!p_collide) {
         return;
     }
@@ -669,9 +671,9 @@ void Ship::build_cargo() {
         const HoldSlot &s = slots[k];
         const real_t x = real_t(s.x), y = real_t(s.y), z = real_t(s.z);
         const String name = vformat("Cargo%d", int(k));
-        add_box(visual, this, name, Vector3(CRATE_SIZE, CRATE_H, CRATE_SIZE), at(x, y + 0.06f + 0.5f * CRATE_H, z), mat_crate, true);
+        add_box(visual, this, name, Vector3(CRATE_SIZE, CRATE_H, CRATE_SIZE), at(x, y + 0.06f + 0.5f * CRATE_H, z), mat_crate, true,VisualShape::BEVEL_BOX,"prop.cargo_crate");
         Ref<Material> lid = make_material(cargo_color(cargo[k]), 0.9f);
-        add_box(visual, this, name + String("Lid"), Vector3(CRATE_SIZE - 0.2f, 0.05f, CRATE_SIZE - 0.2f), at(x, y + 0.06f + CRATE_H + 0.025f, z), lid, false);
+        add_box(visual, this, name + String("Lid"), Vector3(.34f, 0.01f, .26f), at(x+.22f, y + 0.06f + CRATE_H + .005f, z-.18f), lid, false);
         for (const String &part : { name, name + String("Shape"), name + String("Lid") }) {
             Node *node = visual->get_node_or_null(NodePath(part));
             node = node ? node : get_node_or_null(NodePath(part));

@@ -1,0 +1,47 @@
+{
+  "name": "Chinese Stool",
+  "categories": [
+    "seating",
+    "furniture"
+  ],
+  "type": 2,
+  "tags": [
+    "vintage",
+    "antique",
+    "wooden",
+    "ornate",
+    "traditional",
+    "asian"
+  ],
+  "authors": {
+    "Kirill Sannikov": "All"
+  },
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 1090,
+  "texel_density": 5997.049080483978,
+  "dimensions": [
+    598.9732146263123,
+    506.40586018562317,
+    630.5584987724009
+  ],
+  "staging": null,
+  "date_published": 1718323200,
+  "files_hash": "996baf2756a969c5bd141d2867c92acaf2039b43",
+  "description": "Free 8K model of a vintage Chinese wooden stool - antique, ornate joinery with rounded legs and traditional Asian design, ideal for period interiors.",
+  "category_id": "302a40f3-e544-5721-b63b-ca3574e9975a",
+  "category": "Furniture/Seating/Stools & Bar Seating",
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood"
+    ]
+  },
+  "img_version": "f365db6f",
+  "download_count": 4764,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/chinese_stool.png?width=256&height=256&format=webp&v=f365db6f"
+}

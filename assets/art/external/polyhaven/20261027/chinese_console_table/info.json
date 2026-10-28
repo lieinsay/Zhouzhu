@@ -1,0 +1,47 @@
+{
+  "name": "Chinese Console Table",
+  "categories": [
+    "table",
+    "furniture"
+  ],
+  "type": 2,
+  "tags": [
+    "vintage",
+    "antique",
+    "wooden",
+    "ornate",
+    "traditional",
+    "asian"
+  ],
+  "authors": {
+    "Kirill Sannikov": "All"
+  },
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 13648,
+  "texel_density": 3614.814219898978,
+  "dimensions": [
+    1719.6246981620789,
+    338.7930691242218,
+    660.7421338558197
+  ],
+  "staging": null,
+  "date_published": 1718755200,
+  "files_hash": "d2f88e4753957bff4fcf282db5d86af5073eff45",
+  "description": "Free 8K model of a vintage Chinese wooden console table with ornate carvings and traditional Asian styling; antique patina, ideal for period interiors.",
+  "category_id": "0eb01da8-4b18-53fb-8638-2fd1e3868432",
+  "category": "Furniture/Tables/Console Tables",
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood"
+    ]
+  },
+  "img_version": "7c4702a0",
+  "download_count": 5213,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/chinese_console_table.png?width=256&height=256&format=webp&v=7c4702a0"
+}

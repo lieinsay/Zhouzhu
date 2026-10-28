@@ -1,0 +1,1034 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 37697716,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_diff_8k.jpg",
+        "md5": "5095bced79faa7775924e77b070c4b31"
+      },
+      "png": {
+        "size": 205993632,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_diff_8k.png",
+        "md5": "e9bbb60d0df25990d65560bccfce6fae"
+      },
+      "exr": {
+        "size": 96887912,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_diff_8k.exr",
+        "md5": "78b6b7e4d3ff07d3aff5ad114adaf035"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8899312,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_diff_4k.jpg",
+        "md5": "64b241a3aa438d76fb63e82a7769d608"
+      },
+      "png": {
+        "size": 62342349,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_diff_4k.png",
+        "md5": "36102eb5200e7e568cad6597d428555f"
+      },
+      "exr": {
+        "size": 21561185,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_diff_4k.exr",
+        "md5": "4d2d047b4e0e082f640d57a0fa45a317"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2255095,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_diff_2k.jpg",
+        "md5": "29ed9c90a22e08d21fa2ed4b497362d6"
+      },
+      "png": {
+        "size": 17091771,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_diff_2k.png",
+        "md5": "4369e8813c5166a1d234170658caee7f"
+      },
+      "exr": {
+        "size": 4814959,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_diff_2k.exr",
+        "md5": "5cf91d8a71c24344db4fdcfc7cc485db"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 613915,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_diff_1k.jpg",
+        "md5": "940dbb968436533fc5b5f54727c90fd0"
+      },
+      "png": {
+        "size": 4671349,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_diff_1k.png",
+        "md5": "8f5490b31d324a2c1f16982f713fcda4"
+      },
+      "exr": {
+        "size": 1272979,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_diff_1k.exr",
+        "md5": "74c6669643a5277072a5ac1fb68df5e1"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 26141167,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_nor_dx_8k.jpg",
+        "md5": "7f04a3b12510761fcb2b198e25ff97f5"
+      },
+      "png": {
+        "size": 132074433,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_nor_dx_8k.png",
+        "md5": "5d0e6a22e7d1602547965681d98eabc2"
+      },
+      "exr": {
+        "size": 50934761,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_nor_dx_8k.exr",
+        "md5": "42f63b7194bc8c69a6a5abb3b40f901b"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7294061,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_nor_dx_4k.jpg",
+        "md5": "8e081c5635725788c1ee4af16ec29ee5"
+      },
+      "png": {
+        "size": 53461185,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_nor_dx_4k.png",
+        "md5": "b14cc0362bafce72068c35c05278c38e"
+      },
+      "exr": {
+        "size": 15138197,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_nor_dx_4k.exr",
+        "md5": "2abd6841e032346d723929753d28d087"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1885952,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_nor_dx_2k.jpg",
+        "md5": "87bda7a6bc692c296aa0bbbc1dcb639c"
+      },
+      "png": {
+        "size": 15632550,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_nor_dx_2k.png",
+        "md5": "11bbdeb7d3f0b1825dd30ed67a16e3c2"
+      },
+      "exr": {
+        "size": 3828470,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_nor_dx_2k.exr",
+        "md5": "dd6b9a683d57373b43ac3c75e741527f"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 511361,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_nor_dx_1k.jpg",
+        "md5": "37e930c1ecdca6ed7c3b903960f59d4a"
+      },
+      "png": {
+        "size": 4277614,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_nor_dx_1k.png",
+        "md5": "8d3432545b158563962309e149686cc4"
+      },
+      "exr": {
+        "size": 1042075,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_nor_dx_1k.exr",
+        "md5": "a5562895b5d8f124bedfe0e9811e76aa"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 26176252,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_nor_gl_8k.jpg",
+        "md5": "3b8db628585b3930efc3619a7c2647f1"
+      },
+      "png": {
+        "size": 132058659,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_nor_gl_8k.png",
+        "md5": "55962bcf8b8eb455d8d4dd94c8423642"
+      },
+      "exr": {
+        "size": 51190982,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_nor_gl_8k.exr",
+        "md5": "51f926c6382640dcde349fcb74662cbf"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7311328,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_nor_gl_4k.jpg",
+        "md5": "6d6c9c7f4868278f9f530922d58401f0"
+      },
+      "png": {
+        "size": 53524263,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_nor_gl_4k.png",
+        "md5": "2489b22da8b86861d89c298c5b3a22d9"
+      },
+      "exr": {
+        "size": 15193149,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_nor_gl_4k.exr",
+        "md5": "5ced4f729c3d473f07d927d6068d5b60"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1891330,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_nor_gl_2k.jpg",
+        "md5": "2f5f8e0c35b879a019433d630fd1dca4"
+      },
+      "png": {
+        "size": 15632544,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_nor_gl_2k.png",
+        "md5": "95229d61491f01cc79080b29d3e07bff"
+      },
+      "exr": {
+        "size": 3828303,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_nor_gl_2k.exr",
+        "md5": "b19d8fc5e96c763c5545575ef9ce5e96"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 511060,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.jpg",
+        "md5": "307d1e6c77603c15d8d21de38b791464"
+      },
+      "png": {
+        "size": 4277657,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.png",
+        "md5": "4161eabbed5b10c96b4d16a67eb26acc"
+      },
+      "exr": {
+        "size": 1043799,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.exr",
+        "md5": "29600a204563c4225cce467cec5341e6"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/chinese_cabinet_nor_gl_8k.exr": {
+            "size": 51190982,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_nor_gl_8k.exr",
+            "md5": "51f926c6382640dcde349fcb74662cbf"
+          },
+          "textures/chinese_cabinet_diff_8k.jpg": {
+            "size": 37697716,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_diff_8k.jpg",
+            "md5": "5095bced79faa7775924e77b070c4b31"
+          },
+          "textures/chinese_cabinet_metal_8k.exr": {
+            "size": 4821813,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_metal_8k.exr",
+            "md5": "b1312eb1d80de5392bb96aa1544eaf04"
+          },
+          "textures/chinese_cabinet_rough_8k.exr": {
+            "size": 39296336,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_rough_8k.exr",
+            "md5": "15a17d9b984ca17051b1d7ab932ec849"
+          }
+        },
+        "size": 478141,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/chinese_cabinet/chinese_cabinet_8k.blend",
+        "md5": "e32edcd4e39274dc3c79cb0d6845df98"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/chinese_cabinet_rough_4k.exr": {
+            "size": 9488985,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_rough_4k.exr",
+            "md5": "122926b2e394f3fb4d1331185f37d470"
+          },
+          "textures/chinese_cabinet_diff_4k.jpg": {
+            "size": 8899312,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_diff_4k.jpg",
+            "md5": "64b241a3aa438d76fb63e82a7769d608"
+          },
+          "textures/chinese_cabinet_metal_4k.exr": {
+            "size": 1529821,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_metal_4k.exr",
+            "md5": "5d9dc98ab283259e619d7e2d53a3b85b"
+          },
+          "textures/chinese_cabinet_nor_gl_4k.exr": {
+            "size": 15193149,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_nor_gl_4k.exr",
+            "md5": "5ced4f729c3d473f07d927d6068d5b60"
+          }
+        },
+        "size": 477878,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/chinese_cabinet/chinese_cabinet_4k.blend",
+        "md5": "dd2857fa193a7d69d36a55bca86fd89f"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/chinese_cabinet_nor_gl_2k.exr": {
+            "size": 3828303,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_nor_gl_2k.exr",
+            "md5": "b19d8fc5e96c763c5545575ef9ce5e96"
+          },
+          "textures/chinese_cabinet_rough_2k.exr": {
+            "size": 2427268,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_rough_2k.exr",
+            "md5": "0f94413de7611724ebf7899051a98c0e"
+          },
+          "textures/chinese_cabinet_diff_2k.jpg": {
+            "size": 2255095,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_diff_2k.jpg",
+            "md5": "29ed9c90a22e08d21fa2ed4b497362d6"
+          },
+          "textures/chinese_cabinet_metal_2k.exr": {
+            "size": 537268,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_metal_2k.exr",
+            "md5": "28343782eab955c3d667221966046a7a"
+          }
+        },
+        "size": 477881,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/chinese_cabinet/chinese_cabinet_2k.blend",
+        "md5": "7a80edf7f92daaa3c83560af9ab4b90e"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/chinese_cabinet_diff_1k.jpg": {
+            "size": 613915,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_diff_1k.jpg",
+            "md5": "940dbb968436533fc5b5f54727c90fd0"
+          },
+          "textures/chinese_cabinet_nor_gl_1k.exr": {
+            "size": 1043799,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.exr",
+            "md5": "29600a204563c4225cce467cec5341e6"
+          },
+          "textures/chinese_cabinet_metal_1k.exr": {
+            "size": 200654,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_metal_1k.exr",
+            "md5": "f661cc621970a23b5ffd659cb0855942"
+          },
+          "textures/chinese_cabinet_rough_1k.exr": {
+            "size": 665836,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_rough_1k.exr",
+            "md5": "7fc4bc3624fc715c32e1d448d74e5a6d"
+          }
+        },
+        "size": 478035,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/chinese_cabinet/chinese_cabinet_1k.blend",
+        "md5": "86ada8becce8e2ff52ce4f062fb6d57d"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_cabinet_nor_gl_8k.jpg": {
+            "size": 26176252,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_nor_gl_8k.jpg",
+            "md5": "3b8db628585b3930efc3619a7c2647f1"
+          },
+          "textures/chinese_cabinet_arm_8k.jpg": {
+            "size": 42025282,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_arm_8k.jpg",
+            "md5": "041a077d2fe35e158359b0e1b2da873e"
+          },
+          "textures/chinese_cabinet_diff_8k.jpg": {
+            "size": 37697716,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_diff_8k.jpg",
+            "md5": "5095bced79faa7775924e77b070c4b31"
+          },
+          "chinese_cabinet.bin": {
+            "size": 492960,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_cabinet/chinese_cabinet.bin",
+            "md5": "392eda89aa40550e7c193efd4075235a"
+          }
+        },
+        "size": 8975,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_cabinet/chinese_cabinet_8k.gltf",
+        "md5": "c4a4e4b78cf266f3b44c5e6c10c62c6f"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_cabinet_arm_4k.jpg": {
+            "size": 10005601,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_arm_4k.jpg",
+            "md5": "7991cf0efb2d3715f667f00414b235fd"
+          },
+          "textures/chinese_cabinet_diff_4k.jpg": {
+            "size": 8899312,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_diff_4k.jpg",
+            "md5": "64b241a3aa438d76fb63e82a7769d608"
+          },
+          "textures/chinese_cabinet_nor_gl_4k.jpg": {
+            "size": 7311328,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_nor_gl_4k.jpg",
+            "md5": "6d6c9c7f4868278f9f530922d58401f0"
+          },
+          "chinese_cabinet.bin": {
+            "size": 492960,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_cabinet/chinese_cabinet.bin",
+            "md5": "392eda89aa40550e7c193efd4075235a"
+          }
+        },
+        "size": 8975,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/chinese_cabinet/chinese_cabinet_4k.gltf",
+        "md5": "db2fb5f4c0882906ab70246a11590f32"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_cabinet_arm_2k.jpg": {
+            "size": 2572169,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_arm_2k.jpg",
+            "md5": "37b3204627a243a9d6853290198c3901"
+          },
+          "chinese_cabinet.bin": {
+            "size": 492960,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_cabinet/chinese_cabinet.bin",
+            "md5": "392eda89aa40550e7c193efd4075235a"
+          },
+          "textures/chinese_cabinet_nor_gl_2k.jpg": {
+            "size": 1891330,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_nor_gl_2k.jpg",
+            "md5": "2f5f8e0c35b879a019433d630fd1dca4"
+          },
+          "textures/chinese_cabinet_diff_2k.jpg": {
+            "size": 2255095,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_diff_2k.jpg",
+            "md5": "29ed9c90a22e08d21fa2ed4b497362d6"
+          }
+        },
+        "size": 8975,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/chinese_cabinet/chinese_cabinet_2k.gltf",
+        "md5": "533dded7ef013de64e4824df2c4df8ac"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_cabinet_diff_1k.jpg": {
+            "size": 613915,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_diff_1k.jpg",
+            "md5": "940dbb968436533fc5b5f54727c90fd0"
+          },
+          "textures/chinese_cabinet_nor_gl_1k.jpg": {
+            "size": 511060,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.jpg",
+            "md5": "307d1e6c77603c15d8d21de38b791464"
+          },
+          "textures/chinese_cabinet_arm_1k.jpg": {
+            "size": 714153,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_arm_1k.jpg",
+            "md5": "dd5157ff4dd4c36359c2d912760d39a3"
+          },
+          "chinese_cabinet.bin": {
+            "size": 492960,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_cabinet/chinese_cabinet.bin",
+            "md5": "392eda89aa40550e7c193efd4075235a"
+          }
+        },
+        "size": 8975,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_cabinet/chinese_cabinet_1k.gltf",
+        "md5": "d805bdf4ffa5df0e8b5bd40d2b463d4c"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/chinese_cabinet_nor_gl_8k.exr": {
+            "size": 51190982,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_nor_gl_8k.exr",
+            "md5": "51f926c6382640dcde349fcb74662cbf"
+          },
+          "textures/chinese_cabinet_diff_8k.jpg": {
+            "size": 37697716,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_diff_8k.jpg",
+            "md5": "5095bced79faa7775924e77b070c4b31"
+          },
+          "textures/chinese_cabinet_metal_8k.exr": {
+            "size": 4821813,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_metal_8k.exr",
+            "md5": "b1312eb1d80de5392bb96aa1544eaf04"
+          },
+          "textures/chinese_cabinet_rough_8k.exr": {
+            "size": 39296336,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_rough_8k.exr",
+            "md5": "15a17d9b984ca17051b1d7ab932ec849"
+          }
+        },
+        "size": 815410,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/chinese_cabinet/chinese_cabinet_8k.usdc",
+        "md5": "9b4df042fe6c00e58709d415a6fce336"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/chinese_cabinet_rough_4k.exr": {
+            "size": 9488985,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_rough_4k.exr",
+            "md5": "122926b2e394f3fb4d1331185f37d470"
+          },
+          "textures/chinese_cabinet_diff_4k.jpg": {
+            "size": 8899312,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_diff_4k.jpg",
+            "md5": "64b241a3aa438d76fb63e82a7769d608"
+          },
+          "textures/chinese_cabinet_metal_4k.exr": {
+            "size": 1529821,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_metal_4k.exr",
+            "md5": "5d9dc98ab283259e619d7e2d53a3b85b"
+          },
+          "textures/chinese_cabinet_nor_gl_4k.exr": {
+            "size": 15193149,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_nor_gl_4k.exr",
+            "md5": "5ced4f729c3d473f07d927d6068d5b60"
+          }
+        },
+        "size": 815409,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/chinese_cabinet/chinese_cabinet_4k.usdc",
+        "md5": "8facb9ee2e3e5d055d1f7c8e83a3171a"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/chinese_cabinet_nor_gl_2k.exr": {
+            "size": 3828303,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_nor_gl_2k.exr",
+            "md5": "b19d8fc5e96c763c5545575ef9ce5e96"
+          },
+          "textures/chinese_cabinet_rough_2k.exr": {
+            "size": 2427268,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_rough_2k.exr",
+            "md5": "0f94413de7611724ebf7899051a98c0e"
+          },
+          "textures/chinese_cabinet_diff_2k.jpg": {
+            "size": 2255095,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_diff_2k.jpg",
+            "md5": "29ed9c90a22e08d21fa2ed4b497362d6"
+          },
+          "textures/chinese_cabinet_metal_2k.exr": {
+            "size": 537268,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_metal_2k.exr",
+            "md5": "28343782eab955c3d667221966046a7a"
+          }
+        },
+        "size": 815410,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/chinese_cabinet/chinese_cabinet_2k.usdc",
+        "md5": "3f21b41b220cd413f682f5d506c3d968"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/chinese_cabinet_diff_1k.jpg": {
+            "size": 613915,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_diff_1k.jpg",
+            "md5": "940dbb968436533fc5b5f54727c90fd0"
+          },
+          "textures/chinese_cabinet_nor_gl_1k.exr": {
+            "size": 1043799,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.exr",
+            "md5": "29600a204563c4225cce467cec5341e6"
+          },
+          "textures/chinese_cabinet_metal_1k.exr": {
+            "size": 200654,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_metal_1k.exr",
+            "md5": "f661cc621970a23b5ffd659cb0855942"
+          },
+          "textures/chinese_cabinet_rough_1k.exr": {
+            "size": 665836,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_rough_1k.exr",
+            "md5": "7fc4bc3624fc715c32e1d448d74e5a6d"
+          }
+        },
+        "size": 815416,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/chinese_cabinet/chinese_cabinet_1k.usdc",
+        "md5": "1623239d6b4f55acc9a454d80402ed6e"
+      }
+    }
+  },
+  "Metal": {
+    "8k": {
+      "jpg": {
+        "size": 4782249,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_metal_8k.jpg",
+        "md5": "37f9a697c3870f0579eb217a27065f7d"
+      },
+      "png": {
+        "size": 5460328,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_metal_8k.png",
+        "md5": "904c3f88dbd3148034a3ffb028ab8ab2"
+      },
+      "exr": {
+        "size": 4821813,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_metal_8k.exr",
+        "md5": "b1312eb1d80de5392bb96aa1544eaf04"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 1381605,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_metal_4k.jpg",
+        "md5": "3211a2ee1e92b2ed3f51b8bd2549d43f"
+      },
+      "png": {
+        "size": 2049612,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_metal_4k.png",
+        "md5": "5c2cb83b13ac82c31bddf678d64186bb"
+      },
+      "exr": {
+        "size": 1529821,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_metal_4k.exr",
+        "md5": "5d9dc98ab283259e619d7e2d53a3b85b"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 438848,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_metal_2k.jpg",
+        "md5": "a7d3eb53e42528fcfb4449e5efe1f389"
+      },
+      "png": {
+        "size": 677824,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_metal_2k.png",
+        "md5": "604281d9e88104671ffcb3c517bac28b"
+      },
+      "exr": {
+        "size": 537268,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_metal_2k.exr",
+        "md5": "28343782eab955c3d667221966046a7a"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 149368,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_metal_1k.jpg",
+        "md5": "0faf50f4fbc3e2ce640025215aa7aabc"
+      },
+      "png": {
+        "size": 216861,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_metal_1k.png",
+        "md5": "0bc6c12970592a963158a8003b593071"
+      },
+      "exr": {
+        "size": 200654,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_metal_1k.exr",
+        "md5": "f661cc621970a23b5ffd659cb0855942"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 42025282,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_arm_8k.jpg",
+        "md5": "041a077d2fe35e158359b0e1b2da873e"
+      },
+      "png": {
+        "size": 91204348,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_arm_8k.png",
+        "md5": "391f20b755fb49961ff10911ded46920"
+      },
+      "exr": {
+        "size": 97940798,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_arm_8k.exr",
+        "md5": "9d1c50ef6463f182c57a12c545ed26b7"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 10005601,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_arm_4k.jpg",
+        "md5": "7991cf0efb2d3715f667f00414b235fd"
+      },
+      "png": {
+        "size": 43876561,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_arm_4k.png",
+        "md5": "9a20cec85a292889ff05adaf8d3de588"
+      },
+      "exr": {
+        "size": 23495814,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_arm_4k.exr",
+        "md5": "265e77e97706e4457894ebec32ac3ca8"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2572169,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_arm_2k.jpg",
+        "md5": "37b3204627a243a9d6853290198c3901"
+      },
+      "png": {
+        "size": 13086440,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_arm_2k.png",
+        "md5": "25c3f6b5d5041f607163d2651231e951"
+      },
+      "exr": {
+        "size": 5917767,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_arm_2k.exr",
+        "md5": "aca09fd827790de75dcc624033846b51"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 714153,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_arm_1k.jpg",
+        "md5": "dd5157ff4dd4c36359c2d912760d39a3"
+      },
+      "png": {
+        "size": 3748582,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_arm_1k.png",
+        "md5": "9b231a57b92576c8038ae9a76871ae61"
+      },
+      "exr": {
+        "size": 1625968,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_arm_1k.exr",
+        "md5": "e22e5e4c2f9241d37c05b312ecebc2a2"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_cabinet_nor_gl_8k.exr": {
+            "size": 51190982,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_nor_gl_8k.exr",
+            "md5": "51f926c6382640dcde349fcb74662cbf"
+          },
+          "textures/chinese_cabinet_diff_8k.jpg": {
+            "size": 37697716,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_diff_8k.jpg",
+            "md5": "5095bced79faa7775924e77b070c4b31"
+          },
+          "textures/chinese_cabinet_metal_8k.exr": {
+            "size": 4821813,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_metal_8k.exr",
+            "md5": "b1312eb1d80de5392bb96aa1544eaf04"
+          },
+          "textures/chinese_cabinet_rough_8k.exr": {
+            "size": 39296336,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_rough_8k.exr",
+            "md5": "15a17d9b984ca17051b1d7ab932ec849"
+          }
+        },
+        "size": 501068,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/chinese_cabinet/chinese_cabinet_8k.fbx",
+        "md5": "400e05fa44d2af7f132a3635d58f467a"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_cabinet_rough_4k.exr": {
+            "size": 9488985,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_rough_4k.exr",
+            "md5": "122926b2e394f3fb4d1331185f37d470"
+          },
+          "textures/chinese_cabinet_diff_4k.jpg": {
+            "size": 8899312,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_diff_4k.jpg",
+            "md5": "64b241a3aa438d76fb63e82a7769d608"
+          },
+          "textures/chinese_cabinet_metal_4k.exr": {
+            "size": 1529821,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_metal_4k.exr",
+            "md5": "5d9dc98ab283259e619d7e2d53a3b85b"
+          },
+          "textures/chinese_cabinet_nor_gl_4k.exr": {
+            "size": 15193149,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_nor_gl_4k.exr",
+            "md5": "5ced4f729c3d473f07d927d6068d5b60"
+          }
+        },
+        "size": 501068,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/chinese_cabinet/chinese_cabinet_4k.fbx",
+        "md5": "3757f21920500ca03e37b2ef7fbbc0ef"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_cabinet_nor_gl_2k.exr": {
+            "size": 3828303,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_nor_gl_2k.exr",
+            "md5": "b19d8fc5e96c763c5545575ef9ce5e96"
+          },
+          "textures/chinese_cabinet_rough_2k.exr": {
+            "size": 2427268,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_rough_2k.exr",
+            "md5": "0f94413de7611724ebf7899051a98c0e"
+          },
+          "textures/chinese_cabinet_diff_2k.jpg": {
+            "size": 2255095,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_diff_2k.jpg",
+            "md5": "29ed9c90a22e08d21fa2ed4b497362d6"
+          },
+          "textures/chinese_cabinet_metal_2k.exr": {
+            "size": 537268,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_metal_2k.exr",
+            "md5": "28343782eab955c3d667221966046a7a"
+          }
+        },
+        "size": 501068,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/chinese_cabinet/chinese_cabinet_2k.fbx",
+        "md5": "482010359c01f5de6167ac263919f2f5"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_cabinet_diff_1k.jpg": {
+            "size": 613915,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_diff_1k.jpg",
+            "md5": "940dbb968436533fc5b5f54727c90fd0"
+          },
+          "textures/chinese_cabinet_nor_gl_1k.exr": {
+            "size": 1043799,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_nor_gl_1k.exr",
+            "md5": "29600a204563c4225cce467cec5341e6"
+          },
+          "textures/chinese_cabinet_metal_1k.exr": {
+            "size": 200654,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_metal_1k.exr",
+            "md5": "f661cc621970a23b5ffd659cb0855942"
+          },
+          "textures/chinese_cabinet_rough_1k.exr": {
+            "size": 665836,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_rough_1k.exr",
+            "md5": "7fc4bc3624fc715c32e1d448d74e5a6d"
+          }
+        },
+        "size": 501068,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/chinese_cabinet/chinese_cabinet_1k.fbx",
+        "md5": "c3125fcb6a4937caef241326781410d9"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "size": 20890724,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_ao_8k.jpg",
+        "md5": "f9728336d44c7d0af90b83d14ca2fd08"
+      },
+      "png": {
+        "size": 23404019,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_ao_8k.png",
+        "md5": "f3936e3b1ccd9ff856bb71d5d0ba8db5"
+      },
+      "exr": {
+        "size": 22593171,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_ao_8k.exr",
+        "md5": "6251ddb2b3f8633a05ed4804cf55ed82"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 5904007,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_ao_4k.jpg",
+        "md5": "4123aabeedccff80600387bfad0357a0"
+      },
+      "png": {
+        "size": 14978228,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_ao_4k.png",
+        "md5": "133cf9d57bf9f166be063fa5cc2b9f89"
+      },
+      "exr": {
+        "size": 6537936,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_ao_4k.exr",
+        "md5": "9a6906fea2675744b6b16a9ba4d5e612"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1473866,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_ao_2k.jpg",
+        "md5": "b47365cb6e38f7738488733ecd590f52"
+      },
+      "png": {
+        "size": 4776204,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_ao_2k.png",
+        "md5": "203f60f598f27c4394dbf24c05e36754"
+      },
+      "exr": {
+        "size": 1639350,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_ao_2k.exr",
+        "md5": "e8e1e003f756039c6524d96fd3d11e54"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 411848,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_ao_1k.jpg",
+        "md5": "9ce0bef986f04eb2dbe7c99449e2684f"
+      },
+      "png": {
+        "size": 1415581,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_ao_1k.png",
+        "md5": "efb528ace7f95c13f6add90469c65b87"
+      },
+      "exr": {
+        "size": 477457,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_ao_1k.exr",
+        "md5": "bf932f98abfdf938c1a48bfcb20c00a6"
+      }
+    }
+  },
+  "Displacement": {
+    "8k": {
+      "jpg": {
+        "size": 786893,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_disp_8k.jpg",
+        "md5": "387e512e518181c99178b027b3f18fc9"
+      },
+      "png": {
+        "size": 151373,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_disp_8k.png",
+        "md5": "4473fd97ee853a91a86adb8752a88a38"
+      },
+      "exr": {
+        "size": 49298,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_disp_8k.exr",
+        "md5": "a6b779ca7e939d8260c51b0da8a5fb43"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 197029,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_disp_4k.jpg",
+        "md5": "49304bf240c8dbee72332978331739ae"
+      },
+      "png": {
+        "size": 42362,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_disp_4k.png",
+        "md5": "f678ef866716e43900ed3eb7026fd72b"
+      },
+      "exr": {
+        "size": 22877,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_disp_4k.exr",
+        "md5": "a9b98f2ed0f59308745ea4156ac1d3a8"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 49573,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_disp_2k.jpg",
+        "md5": "3635a529fbb2d82e9fef46b49c298814"
+      },
+      "png": {
+        "size": 12845,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_disp_2k.png",
+        "md5": "88e74a3efffd8fcbd9e7ee96af42542a"
+      },
+      "exr": {
+        "size": 10845,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_disp_2k.exr",
+        "md5": "2073e6acc807ad2321a755b5546aee10"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 12709,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_disp_1k.jpg",
+        "md5": "4c8f58b79c1cf236592560d6bf0aae4a"
+      },
+      "png": {
+        "size": 4356,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_disp_1k.png",
+        "md5": "0bf40ff46d325331a6381e92b233f89f"
+      },
+      "exr": {
+        "size": 5341,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_disp_1k.exr",
+        "md5": "da75beb93a48b4a36c8f99b852fdd46f"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 36331846,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_cabinet/chinese_cabinet_rough_8k.jpg",
+        "md5": "05d85ad8092344bde412613a459bc5e3"
+      },
+      "png": {
+        "size": 54375807,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_cabinet/chinese_cabinet_rough_8k.png",
+        "md5": "6ddd85c22a44bff3b51b1c513fd5b27e"
+      },
+      "exr": {
+        "size": 39296336,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_cabinet/chinese_cabinet_rough_8k.exr",
+        "md5": "15a17d9b984ca17051b1d7ab932ec849"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8499353,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_cabinet/chinese_cabinet_rough_4k.jpg",
+        "md5": "95feb44e3744ddb4dc0d7eb32eeea35a"
+      },
+      "png": {
+        "size": 20467868,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_cabinet/chinese_cabinet_rough_4k.png",
+        "md5": "326a40f4d6fce1d80b3308559aac3181"
+      },
+      "exr": {
+        "size": 9488985,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_cabinet/chinese_cabinet_rough_4k.exr",
+        "md5": "122926b2e394f3fb4d1331185f37d470"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2119934,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_cabinet/chinese_cabinet_rough_2k.jpg",
+        "md5": "12800ccde46e7b3d8c4b09a187f52270"
+      },
+      "png": {
+        "size": 6002756,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_cabinet/chinese_cabinet_rough_2k.png",
+        "md5": "b2bce9ea7e5993ffeae723777f13d507"
+      },
+      "exr": {
+        "size": 2427268,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_cabinet/chinese_cabinet_rough_2k.exr",
+        "md5": "0f94413de7611724ebf7899051a98c0e"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 564688,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_cabinet/chinese_cabinet_rough_1k.jpg",
+        "md5": "d028ff151aef799688729a15080e8529"
+      },
+      "png": {
+        "size": 1654385,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_cabinet/chinese_cabinet_rough_1k.png",
+        "md5": "4b68115715ff3bf5121e45fec530d642"
+      },
+      "exr": {
+        "size": 665836,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_cabinet/chinese_cabinet_rough_1k.exr",
+        "md5": "7fc4bc3624fc715c32e1d448d74e5a6d"
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "kind": "bin",
+  "sourceAsset": "wicker_basket_02",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.8,
+      0.68,
+      0.4
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {
+      "ZZ_project_9": {
+        "asset": "material.grain",
+        "color": [
+          0.879999995,
+          0.74000001,
+          0.340000004
+        ],
+        "roughness": 1,
+        "metallic": 0
+      }
+    },
+    "projectMaterial": "material.straw",
+    "uvMetresPerUnit": {
+      "wicker_basket_02": 4.35749293709359,
+      "ZZ_project_9": 0.9951964537664899
+    },
+    "textureMeans": {
+      "wicker_basket_02": [
+        0.40173596398188344,
+        0.20067045663105923,
+        0.0809803674284256
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.4,
+    1.4,
+    1.6
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.7000000476837158,
+      -0.699999988079071,
+      0.0
+    ],
+    "max": [
+      0.7000000476837158,
+      0.699999988079071,
+      1.600000023841858
+    ]
+  },
+  "triangles": 18378,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "d3de9d9ec34955ed866a819763eb323a0dee571f55b02f5b4c44b0fc34cf2376"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "c03525c27579160bcd71054aa17796570a074ff4cdd560bfed3fb9770c9ba975"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "641013be798757f4bf2c82cf335b80db2b6d2b52f8fbf0b1f1e2e22196bc60ee"
+    }
+  ]
+}

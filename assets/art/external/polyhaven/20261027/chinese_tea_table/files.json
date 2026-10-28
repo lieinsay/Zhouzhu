@@ -1,0 +1,764 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 29271189,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_diff_8k.jpg",
+        "md5": "6cdb64b3c712ea5cb1c5ad1129264063"
+      },
+      "png": {
+        "size": 189730484,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_tea_table/chinese_tea_table_diff_8k.png",
+        "md5": "e2675606a41add29237693001eda0299"
+      },
+      "exr": {
+        "size": 81722711,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_diff_8k.exr",
+        "md5": "a78ea6440e95808894a9fc5c0b620485"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 6751904,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_diff_4k.jpg",
+        "md5": "e4285f01a6fc8d83787fe0b505d6077a"
+      },
+      "png": {
+        "size": 56449874,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_tea_table/chinese_tea_table_diff_4k.png",
+        "md5": "3d7a0d905fa60be8640127b5c0461fe1"
+      },
+      "exr": {
+        "size": 16983418,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_diff_4k.exr",
+        "md5": "8ffda726671f91a0858124b2d625952f"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1696113,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_diff_2k.jpg",
+        "md5": "adb3c90c197dd4a44140b0ea89991d6a"
+      },
+      "png": {
+        "size": 15273182,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_tea_table/chinese_tea_table_diff_2k.png",
+        "md5": "14bc53140c1986db3cfc5944f72c7478"
+      },
+      "exr": {
+        "size": 3633544,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_diff_2k.exr",
+        "md5": "b7d3761bc829efe0b050c8327dce590d"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 447131,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_diff_1k.jpg",
+        "md5": "eec9f6e3d2c3f7335abd4760e3a30ba2"
+      },
+      "png": {
+        "size": 4002903,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_tea_table/chinese_tea_table_diff_1k.png",
+        "md5": "c996fd5f4dbea5a908fad81d951c6d33"
+      },
+      "exr": {
+        "size": 917256,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_diff_1k.exr",
+        "md5": "32aabb6ca243810776aa323f090cc0d5"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 31798173,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_nor_dx_8k.jpg",
+        "md5": "5d8a1740d26f85b1212f2a1c6a2e06ac"
+      },
+      "png": {
+        "size": 180081008,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_tea_table/chinese_tea_table_nor_dx_8k.png",
+        "md5": "96e4ae18de2616342df738e0224653fc"
+      },
+      "exr": {
+        "size": 57936474,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_nor_dx_8k.exr",
+        "md5": "e8ba2588ef1e6e0e8e7e44f0814f61c1"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 9500090,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_nor_dx_4k.jpg",
+        "md5": "c5c9ca97188348321b277b3bca4f89d8"
+      },
+      "png": {
+        "size": 58035586,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_tea_table/chinese_tea_table_nor_dx_4k.png",
+        "md5": "4529d91f515b2b6d78476ff644d689a9"
+      },
+      "exr": {
+        "size": 20418191,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_nor_dx_4k.exr",
+        "md5": "f36d2181154f858f446d41f8af0c9121"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2332458,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_nor_dx_2k.jpg",
+        "md5": "8630a37add9ac13b8ba3541b5fee0f26"
+      },
+      "png": {
+        "size": 15836271,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_tea_table/chinese_tea_table_nor_dx_2k.png",
+        "md5": "5252a39af48f8bdfd2f01727f9a668ae"
+      },
+      "exr": {
+        "size": 5484836,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_nor_dx_2k.exr",
+        "md5": "143f281701823780229c71b538cf60f2"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 551092,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_nor_dx_1k.jpg",
+        "md5": "ee04f79af477cf6894a22d03c72e924a"
+      },
+      "png": {
+        "size": 4067998,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_tea_table/chinese_tea_table_nor_dx_1k.png",
+        "md5": "7f7b9db96f70045ade1f21d2f2d67be2"
+      },
+      "exr": {
+        "size": 1260255,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_nor_dx_1k.exr",
+        "md5": "b49ae2102eb53e80981670e0b0490ec7"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 31807017,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_nor_gl_8k.jpg",
+        "md5": "be9f14aa0e77e459beaa85378fe27c71"
+      },
+      "png": {
+        "size": 180073797,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_tea_table/chinese_tea_table_nor_gl_8k.png",
+        "md5": "cd01b1e2849caa92ec88495cef94818d"
+      },
+      "exr": {
+        "size": 58007591,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_nor_gl_8k.exr",
+        "md5": "38beaf43e3c01a0217fccf8dadc3572b"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 9507397,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_nor_gl_4k.jpg",
+        "md5": "b0491e99aec65209b4c03cc20a5ef902"
+      },
+      "png": {
+        "size": 58037515,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_tea_table/chinese_tea_table_nor_gl_4k.png",
+        "md5": "e49295d879117dd0126b98af31273f3c"
+      },
+      "exr": {
+        "size": 20415111,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_nor_gl_4k.exr",
+        "md5": "becee8cf5f7d3d9c4ba6d73665873ffe"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2329694,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_nor_gl_2k.jpg",
+        "md5": "d3f1289d154858c79915d58aad86366b"
+      },
+      "png": {
+        "size": 15836398,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_tea_table/chinese_tea_table_nor_gl_2k.png",
+        "md5": "1750c4a7059f6088a0663c6746c1f7c5"
+      },
+      "exr": {
+        "size": 5478586,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_nor_gl_2k.exr",
+        "md5": "49c76c0a799341752c24e02b2c860ca8"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 548449,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.jpg",
+        "md5": "f3398ab803461ee8247b05ad9b9992ba"
+      },
+      "png": {
+        "size": 4067945,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.png",
+        "md5": "54f562671d3ba658f7e80c95cea8a7f3"
+      },
+      "exr": {
+        "size": 1255745,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.exr",
+        "md5": "b861532e2cada63c08b960ce7fd02e44"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/chinese_tea_table_nor_gl_8k.exr": {
+            "size": 58007591,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_nor_gl_8k.exr",
+            "md5": "38beaf43e3c01a0217fccf8dadc3572b"
+          },
+          "textures/chinese_tea_table_rough_8k.exr": {
+            "size": 36014296,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_rough_8k.exr",
+            "md5": "74d5db6f4f45397b470637e8f12e26ab"
+          },
+          "textures/chinese_tea_table_diff_8k.jpg": {
+            "size": 29271189,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_diff_8k.jpg",
+            "md5": "6cdb64b3c712ea5cb1c5ad1129264063"
+          }
+        },
+        "size": 169479,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/chinese_tea_table/chinese_tea_table_8k.blend",
+        "md5": "418174b51236c3052c407ea15db17c09"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/chinese_tea_table_rough_4k.exr": {
+            "size": 8173719,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_rough_4k.exr",
+            "md5": "805c86df8358f01a5dd233f8b938470d"
+          },
+          "textures/chinese_tea_table_nor_gl_4k.exr": {
+            "size": 20415111,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_nor_gl_4k.exr",
+            "md5": "becee8cf5f7d3d9c4ba6d73665873ffe"
+          },
+          "textures/chinese_tea_table_diff_4k.jpg": {
+            "size": 6751904,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_diff_4k.jpg",
+            "md5": "e4285f01a6fc8d83787fe0b505d6077a"
+          }
+        },
+        "size": 169393,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/chinese_tea_table/chinese_tea_table_4k.blend",
+        "md5": "423ebe3ea22b0000d26a03a6df267379"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/chinese_tea_table_diff_2k.jpg": {
+            "size": 1696113,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_diff_2k.jpg",
+            "md5": "adb3c90c197dd4a44140b0ea89991d6a"
+          },
+          "textures/chinese_tea_table_rough_2k.exr": {
+            "size": 2007216,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_rough_2k.exr",
+            "md5": "1ea35cd5d386f7c1e497b6b587a2b41e"
+          },
+          "textures/chinese_tea_table_nor_gl_2k.exr": {
+            "size": 5478586,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_nor_gl_2k.exr",
+            "md5": "49c76c0a799341752c24e02b2c860ca8"
+          }
+        },
+        "size": 169620,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/chinese_tea_table/chinese_tea_table_2k.blend",
+        "md5": "31f9d88b0a04d134b6d54f6b5e24438f"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/chinese_tea_table_diff_1k.jpg": {
+            "size": 447131,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_diff_1k.jpg",
+            "md5": "eec9f6e3d2c3f7335abd4760e3a30ba2"
+          },
+          "textures/chinese_tea_table_rough_1k.exr": {
+            "size": 539360,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_rough_1k.exr",
+            "md5": "1f2a392f85d1c831830fd43083b3cf89"
+          },
+          "textures/chinese_tea_table_nor_gl_1k.exr": {
+            "size": 1255745,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.exr",
+            "md5": "b861532e2cada63c08b960ce7fd02e44"
+          }
+        },
+        "size": 169627,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/chinese_tea_table/chinese_tea_table_1k.blend",
+        "md5": "f142d210568c429b68081f03b692feb4"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "chinese_tea_table.bin": {
+            "size": 78792,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_tea_table/chinese_tea_table.bin",
+            "md5": "8dcb405bff1e509e3c846278ce2f3ad9"
+          },
+          "textures/chinese_tea_table_arm_8k.jpg": {
+            "size": 35552723,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_arm_8k.jpg",
+            "md5": "2692a7d5c35e91539e5184946a942169"
+          },
+          "textures/chinese_tea_table_diff_8k.jpg": {
+            "size": 29271189,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_diff_8k.jpg",
+            "md5": "6cdb64b3c712ea5cb1c5ad1129264063"
+          },
+          "textures/chinese_tea_table_nor_gl_8k.jpg": {
+            "size": 31807017,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_nor_gl_8k.jpg",
+            "md5": "be9f14aa0e77e459beaa85378fe27c71"
+          }
+        },
+        "size": 2793,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_tea_table/chinese_tea_table_8k.gltf",
+        "md5": "c9518bd591f25bb5bbc7568857d68bbf"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_tea_table_arm_4k.jpg": {
+            "size": 7926255,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_arm_4k.jpg",
+            "md5": "0ef9d785732df683a62e59998a877e35"
+          },
+          "chinese_tea_table.bin": {
+            "size": 78792,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_tea_table/chinese_tea_table.bin",
+            "md5": "8dcb405bff1e509e3c846278ce2f3ad9"
+          },
+          "textures/chinese_tea_table_diff_4k.jpg": {
+            "size": 6751904,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_diff_4k.jpg",
+            "md5": "e4285f01a6fc8d83787fe0b505d6077a"
+          },
+          "textures/chinese_tea_table_nor_gl_4k.jpg": {
+            "size": 9507397,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_nor_gl_4k.jpg",
+            "md5": "b0491e99aec65209b4c03cc20a5ef902"
+          }
+        },
+        "size": 2793,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/chinese_tea_table/chinese_tea_table_4k.gltf",
+        "md5": "9ba5b67dd7e5324d3e08371c38b6f627"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_tea_table_diff_2k.jpg": {
+            "size": 1696113,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_diff_2k.jpg",
+            "md5": "adb3c90c197dd4a44140b0ea89991d6a"
+          },
+          "chinese_tea_table.bin": {
+            "size": 78792,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_tea_table/chinese_tea_table.bin",
+            "md5": "8dcb405bff1e509e3c846278ce2f3ad9"
+          },
+          "textures/chinese_tea_table_nor_gl_2k.jpg": {
+            "size": 2329694,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_nor_gl_2k.jpg",
+            "md5": "d3f1289d154858c79915d58aad86366b"
+          },
+          "textures/chinese_tea_table_arm_2k.jpg": {
+            "size": 1922536,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_arm_2k.jpg",
+            "md5": "f005012cff95323a9e6b451a8b562826"
+          }
+        },
+        "size": 2793,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/chinese_tea_table/chinese_tea_table_2k.gltf",
+        "md5": "0776a66d0f8eb2340506de53ed4eafe8"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_tea_table_arm_1k.jpg": {
+            "size": 504125,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_arm_1k.jpg",
+            "md5": "c87805fa83058c7d08056446b0589f7e"
+          },
+          "chinese_tea_table.bin": {
+            "size": 78792,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_tea_table/chinese_tea_table.bin",
+            "md5": "8dcb405bff1e509e3c846278ce2f3ad9"
+          },
+          "textures/chinese_tea_table_nor_gl_1k.jpg": {
+            "size": 548449,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.jpg",
+            "md5": "f3398ab803461ee8247b05ad9b9992ba"
+          },
+          "textures/chinese_tea_table_diff_1k.jpg": {
+            "size": 447131,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_diff_1k.jpg",
+            "md5": "eec9f6e3d2c3f7335abd4760e3a30ba2"
+          }
+        },
+        "size": 2793,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_tea_table/chinese_tea_table_1k.gltf",
+        "md5": "742112f24cdcf8c357aacc8f255664e5"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/chinese_tea_table_nor_gl_8k.exr": {
+            "size": 58007591,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_nor_gl_8k.exr",
+            "md5": "38beaf43e3c01a0217fccf8dadc3572b"
+          },
+          "textures/chinese_tea_table_rough_8k.exr": {
+            "size": 36014296,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_rough_8k.exr",
+            "md5": "74d5db6f4f45397b470637e8f12e26ab"
+          },
+          "textures/chinese_tea_table_diff_8k.jpg": {
+            "size": 29271189,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_diff_8k.jpg",
+            "md5": "6cdb64b3c712ea5cb1c5ad1129264063"
+          }
+        },
+        "size": 134885,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/chinese_tea_table/chinese_tea_table_8k.usdc",
+        "md5": "529fa94cf3ab8b4f80dabe5a39735926"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/chinese_tea_table_rough_4k.exr": {
+            "size": 8173719,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_rough_4k.exr",
+            "md5": "805c86df8358f01a5dd233f8b938470d"
+          },
+          "textures/chinese_tea_table_nor_gl_4k.exr": {
+            "size": 20415111,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_nor_gl_4k.exr",
+            "md5": "becee8cf5f7d3d9c4ba6d73665873ffe"
+          },
+          "textures/chinese_tea_table_diff_4k.jpg": {
+            "size": 6751904,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_diff_4k.jpg",
+            "md5": "e4285f01a6fc8d83787fe0b505d6077a"
+          }
+        },
+        "size": 134885,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/chinese_tea_table/chinese_tea_table_4k.usdc",
+        "md5": "3dc07913ac85e4169f07e02b4ca16c29"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/chinese_tea_table_diff_2k.jpg": {
+            "size": 1696113,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_diff_2k.jpg",
+            "md5": "adb3c90c197dd4a44140b0ea89991d6a"
+          },
+          "textures/chinese_tea_table_rough_2k.exr": {
+            "size": 2007216,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_rough_2k.exr",
+            "md5": "1ea35cd5d386f7c1e497b6b587a2b41e"
+          },
+          "textures/chinese_tea_table_nor_gl_2k.exr": {
+            "size": 5478586,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_nor_gl_2k.exr",
+            "md5": "49c76c0a799341752c24e02b2c860ca8"
+          }
+        },
+        "size": 134907,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/chinese_tea_table/chinese_tea_table_2k.usdc",
+        "md5": "7138545b94ffb00d82135488e7fb0736"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/chinese_tea_table_diff_1k.jpg": {
+            "size": 447131,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_diff_1k.jpg",
+            "md5": "eec9f6e3d2c3f7335abd4760e3a30ba2"
+          },
+          "textures/chinese_tea_table_rough_1k.exr": {
+            "size": 539360,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_rough_1k.exr",
+            "md5": "1f2a392f85d1c831830fd43083b3cf89"
+          },
+          "textures/chinese_tea_table_nor_gl_1k.exr": {
+            "size": 1255745,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.exr",
+            "md5": "b861532e2cada63c08b960ce7fd02e44"
+          }
+        },
+        "size": 134907,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/chinese_tea_table/chinese_tea_table_1k.usdc",
+        "md5": "9206d318bf9ae78710adc0a20abc1c63"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 35552723,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_arm_8k.jpg",
+        "md5": "2692a7d5c35e91539e5184946a942169"
+      },
+      "png": {
+        "size": 50734122,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_tea_table/chinese_tea_table_arm_8k.png",
+        "md5": "c3bf618747b4a20413ba2d1963b7aeb3"
+      },
+      "exr": {
+        "size": 85758232,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_arm_8k.exr",
+        "md5": "c93b2a626ed6fe1683756d3774b0a0c5"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7926255,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_arm_4k.jpg",
+        "md5": "0ef9d785732df683a62e59998a877e35"
+      },
+      "png": {
+        "size": 24317391,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_tea_table/chinese_tea_table_arm_4k.png",
+        "md5": "76ac969fd0533a0092f5362a844d2f5f"
+      },
+      "exr": {
+        "size": 18632232,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_arm_4k.exr",
+        "md5": "989cff1be18cd0d79bb9827b1b5396fb"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1922536,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_arm_2k.jpg",
+        "md5": "f005012cff95323a9e6b451a8b562826"
+      },
+      "png": {
+        "size": 6778961,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_tea_table/chinese_tea_table_arm_2k.png",
+        "md5": "e61ffa5eac74b4c0832e82f52514d838"
+      },
+      "exr": {
+        "size": 4388843,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_arm_2k.exr",
+        "md5": "5e2474b5a6b5112bde1551d4cfa83a84"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 504125,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_arm_1k.jpg",
+        "md5": "c87805fa83058c7d08056446b0589f7e"
+      },
+      "png": {
+        "size": 1806282,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_tea_table/chinese_tea_table_arm_1k.png",
+        "md5": "f6318357f3737da68ff2113d67717396"
+      },
+      "exr": {
+        "size": 1146167,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_arm_1k.exr",
+        "md5": "a453159ed0ae9901377db3b029bdc132"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_tea_table_nor_gl_8k.exr": {
+            "size": 58007591,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_nor_gl_8k.exr",
+            "md5": "38beaf43e3c01a0217fccf8dadc3572b"
+          },
+          "textures/chinese_tea_table_rough_8k.exr": {
+            "size": 36014296,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_rough_8k.exr",
+            "md5": "74d5db6f4f45397b470637e8f12e26ab"
+          },
+          "textures/chinese_tea_table_diff_8k.jpg": {
+            "size": 29271189,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_diff_8k.jpg",
+            "md5": "6cdb64b3c712ea5cb1c5ad1129264063"
+          }
+        },
+        "size": 99228,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/chinese_tea_table/chinese_tea_table_8k.fbx",
+        "md5": "c572070bb25d3fcc8a03c277f3336b49"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_tea_table_rough_4k.exr": {
+            "size": 8173719,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_rough_4k.exr",
+            "md5": "805c86df8358f01a5dd233f8b938470d"
+          },
+          "textures/chinese_tea_table_nor_gl_4k.exr": {
+            "size": 20415111,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_nor_gl_4k.exr",
+            "md5": "becee8cf5f7d3d9c4ba6d73665873ffe"
+          },
+          "textures/chinese_tea_table_diff_4k.jpg": {
+            "size": 6751904,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_diff_4k.jpg",
+            "md5": "e4285f01a6fc8d83787fe0b505d6077a"
+          }
+        },
+        "size": 99228,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/chinese_tea_table/chinese_tea_table_4k.fbx",
+        "md5": "9e732865a764497ad3f9f7ff9580cf7d"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_tea_table_diff_2k.jpg": {
+            "size": 1696113,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_diff_2k.jpg",
+            "md5": "adb3c90c197dd4a44140b0ea89991d6a"
+          },
+          "textures/chinese_tea_table_rough_2k.exr": {
+            "size": 2007216,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_rough_2k.exr",
+            "md5": "1ea35cd5d386f7c1e497b6b587a2b41e"
+          },
+          "textures/chinese_tea_table_nor_gl_2k.exr": {
+            "size": 5478586,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_nor_gl_2k.exr",
+            "md5": "49c76c0a799341752c24e02b2c860ca8"
+          }
+        },
+        "size": 99228,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/chinese_tea_table/chinese_tea_table_2k.fbx",
+        "md5": "3cf6752ea7bde2ad06db0fa32d0d90d3"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_tea_table_diff_1k.jpg": {
+            "size": 447131,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_diff_1k.jpg",
+            "md5": "eec9f6e3d2c3f7335abd4760e3a30ba2"
+          },
+          "textures/chinese_tea_table_rough_1k.exr": {
+            "size": 539360,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_rough_1k.exr",
+            "md5": "1f2a392f85d1c831830fd43083b3cf89"
+          },
+          "textures/chinese_tea_table_nor_gl_1k.exr": {
+            "size": 1255745,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.exr",
+            "md5": "b861532e2cada63c08b960ce7fd02e44"
+          }
+        },
+        "size": 99228,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/chinese_tea_table/chinese_tea_table_1k.fbx",
+        "md5": "b78c33d7ac2acbc7354b940e80bb22f0"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 32521812,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_tea_table/chinese_tea_table_rough_8k.jpg",
+        "md5": "53d81faf6550626331d8e034e45c8acf"
+      },
+      "png": {
+        "size": 48993106,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_tea_table/chinese_tea_table_rough_8k.png",
+        "md5": "79dd116b98234597c78b4f490ad28e3f"
+      },
+      "exr": {
+        "size": 36014296,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_tea_table/chinese_tea_table_rough_8k.exr",
+        "md5": "74d5db6f4f45397b470637e8f12e26ab"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7232302,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_tea_table/chinese_tea_table_rough_4k.jpg",
+        "md5": "c3341942ae671006d731360a6d4d8554"
+      },
+      "png": {
+        "size": 18358811,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_tea_table/chinese_tea_table_rough_4k.png",
+        "md5": "2112312a2efdefb5aeaccb8c501e4770"
+      },
+      "exr": {
+        "size": 8173719,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_tea_table/chinese_tea_table_rough_4k.exr",
+        "md5": "805c86df8358f01a5dd233f8b938470d"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1736652,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_tea_table/chinese_tea_table_rough_2k.jpg",
+        "md5": "cee57f7234488d0b531ff824cd78cff5"
+      },
+      "png": {
+        "size": 5284218,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_tea_table/chinese_tea_table_rough_2k.png",
+        "md5": "6782ce6c52061318ce964682316fb733"
+      },
+      "exr": {
+        "size": 2007216,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_tea_table/chinese_tea_table_rough_2k.exr",
+        "md5": "1ea35cd5d386f7c1e497b6b587a2b41e"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 449158,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_rough_1k.jpg",
+        "md5": "37f15d7f54ae95fd97e8c290f43a9036"
+      },
+      "png": {
+        "size": 1414764,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_tea_table/chinese_tea_table_rough_1k.png",
+        "md5": "0d7aaa8f99fe6f8897bed48adce02589"
+      },
+      "exr": {
+        "size": 539360,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_tea_table/chinese_tea_table_rough_1k.exr",
+        "md5": "1f2a392f85d1c831830fd43083b3cf89"
+      }
+    }
+  }
+}

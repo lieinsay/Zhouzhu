@@ -10,6 +10,9 @@
 // tools/art-preview/render.py --rendered-directory登记真实Godot透明预览；/art.html可按版本旋转查看同源网格。
 // 作者模型与蒙皮：tools/art-models/README.md；prepare_actors.py在Blender中运行，externalize_textures.py仅机械拆出原贴图。
 // res://tests/actor_models_e2e.tscn检查真实蒙皮/动作/握点；res://tests/actor_world_e2e.tscn检查实际玩家与聚落模型。
+// 实体工坊 /art.html → 三维实体模型，独立应用到game/art/model-bindings.json；不应用内容草稿。
+// prepare_furniture.py / publish_furniture.py详见tools/art-models/README.md；furniture_models_e2e.tscn检查实际器物。
+// --model-bindings=res://art/model-bindings-review.json仅供显式试接入，默认仍读取正式绑定；不要覆盖历史版本。
 #include "dev_manual.h"
 
 #include "input_actions.h"

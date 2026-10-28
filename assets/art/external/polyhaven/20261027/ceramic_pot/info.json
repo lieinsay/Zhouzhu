@@ -1,0 +1,53 @@
+{
+  "type": 2,
+  "name": "Ceramic Pot",
+  "categories": [
+    "containers",
+    "props",
+    "decorative",
+    "dishes",
+    "collection: project_lighthouse"
+  ],
+  "category": "Food & Kitchen/Cookware/Pots & Pans",
+  "tags": [
+    "earthenware",
+    "glazed",
+    "aged",
+    "weathered",
+    "ceramic"
+  ],
+  "description": "Free 4K model of a lidded ceramic pot with twin side handles, aged beige glaze, chipped rim, and rich patina, showing stains, scratches, and hand-thrown form.",
+  "authors": {
+    "Aron \u0141yczek": "All"
+  },
+  "donated": true,
+  "category_id": "e6058a1a-0864-52d4-a70b-596d5f08ce64",
+  "max_resolution": [
+    4096,
+    4096
+  ],
+  "polycount": 3592,
+  "files_hash": "fa63130e7ddf8a865a1d4c3ec745382d0163ab31",
+  "texel_density": 3219.361079581328,
+  "dimensions": [
+    656.2502980232239,
+    501.7523765563965,
+    371.66545377112925
+  ],
+  "date_published": 1783036800,
+  "staging": null,
+  "collections": [
+    "project_lighthouse"
+  ],
+  "attributes": {
+    "material": [
+      "ceramic"
+    ],
+    "condition": [
+      "weathered"
+    ]
+  },
+  "img_version": "2b85aca4",
+  "download_count": 868,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/ceramic_pot.png?width=256&height=256&format=webp&v=2b85aca4"
+}

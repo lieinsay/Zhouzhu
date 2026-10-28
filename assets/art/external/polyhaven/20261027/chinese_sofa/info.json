@@ -1,0 +1,47 @@
+{
+  "name": "Chinese Sofa",
+  "categories": [
+    "furniture",
+    "seating"
+  ],
+  "type": 2,
+  "tags": [
+    "vintage",
+    "antique",
+    "wooden",
+    "ornate",
+    "traditional",
+    "fancy"
+  ],
+  "authors": {
+    "Kirill Sannikov": "All"
+  },
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 704,
+  "texel_density": 2196.2444577018523,
+  "dimensions": [
+    2285.4329347610474,
+    968.8513875007629,
+    860.0191126264232
+  ],
+  "staging": null,
+  "date_published": 1720396800,
+  "files_hash": "e526d4fda894dd044639fe0517c0074290b31f41",
+  "description": "Free 8K model of a vintage Chinese wooden sofa, antique and ornate traditional seating with elegant carved legs and a warm lacquered finish.",
+  "category_id": "a995f351-c031-54f6-b317-dc5928df17a3",
+  "category": "Furniture/Seating/Sofas & Couches",
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood"
+    ]
+  },
+  "img_version": "4ccb4df5",
+  "download_count": 3583,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/chinese_sofa.png?width=256&height=256&format=webp&v=4ccb4df5"
+}

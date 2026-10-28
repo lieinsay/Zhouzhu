@@ -1,0 +1,59 @@
+{
+  "kind": "bench",
+  "sourceAsset": "painted_wooden_bench",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {},
+    "uvMetresPerUnit": {
+      "painted_wooden_bench": 1.9130733732208105
+    },
+    "textureMeans": {
+      "painted_wooden_bench": [
+        0.10650117129853841,
+        0.04105420714811109,
+        0.02575115061126948
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.2,
+    0.35,
+    0.45
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.6000000238418579,
+      -0.17499999701976776,
+      0.0
+    ],
+    "max": [
+      0.6000000238418579,
+      0.17499999701976776,
+      0.44999998807907104
+    ]
+  },
+  "triangles": 630,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "a0f53740d77fc61aac01de0b7e1ae6109445d1756839f739ae31fdf10c9911f2"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "9bc533313091ee71eaca5fa6334b71d27935d9d75311f64df6a53c28a67c435c"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "878785565eeff706b8f1e4db7e3d794a544e9cf0e56cee424d9a271ab4ead47e"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Chinese Tea Table",
+  "categories": [
+    "table",
+    "furniture"
+  ],
+  "type": 2,
+  "tags": [
+    "vintage",
+    "antique",
+    "old",
+    "wooden",
+    "ornate",
+    "traditional"
+  ],
+  "authors": {
+    "Kirill Sannikov": "All"
+  },
+  "max_resolution": [
+    8192,
+    8192
+  ],
+  "polycount": 2508,
+  "texel_density": 4112.632700354318,
+  "dimensions": [
+    841.3148820400238,
+    835.6219828128815,
+    498.6410439014435
+  ],
+  "staging": null,
+  "date_published": 1719532800,
+  "files_hash": "232962e125d74cee5faec1913585cd78d5f5d616",
+  "description": "Free 8K 3D model of a vintage Chinese wooden tea table - antique, ornate, traditional with realistic wood grain.",
+  "category_id": "14a9e15a-6ae7-5665-8142-d5fbda6b6a75",
+  "category": "Furniture/Tables/Coffee Tables",
+  "attributes": {
+    "condition": [
+      "worn"
+    ],
+    "material": [
+      "wood"
+    ]
+  },
+  "img_version": "b95c9fc9",
+  "download_count": 15107,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/chinese_tea_table.png?width=256&height=256&format=webp&v=b95c9fc9"
+}

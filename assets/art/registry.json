@@ -3817,6 +3817,126 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.162Z",
+          "original": {
+            "path": "assets/art/previews/module/bridge/v3/render.png",
+            "sha256": "2c3c4addb95cb03203f17274d2237ff35f315c6ff2ebc38fabf9d520cea75f39",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/bridge/v3.png",
+            "sha256": "5e3e53eed17212a4ac3c9ad58c75ce77c60e4438c8012cd8efdd3bd15fdb7ae2",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  3.5,
+                  3.1399998664856,
+                  3.5
+                ],
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -3.5
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:bridge",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge"
+            ],
+            "name": "驾驶区",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "bridge"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-bridge.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "b8a3145acae782270c7bd41a130c943f09ad3d6039374d135d27ee08f37f13c2",
+            "vertices": 16608,
+            "triangles": 5536,
+            "path": "assets/art/previews/module/bridge/v3/model.json",
+            "sha256": "b8a3145acae782270c7bd41a130c943f09ad3d6039374d135d27ee08f37f13c2"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -4064,6 +4184,127 @@
             "reviewedAt": "2026-10-27T16:42:46.201Z",
             "reviewer": "Codex",
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
+            "userConfirmed": false
+          }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.211Z",
+          "original": {
+            "path": "assets/art/previews/module/storage/v3/render.png",
+            "sha256": "815a212f5edc468feebc086eeaa77c83adbe173d78d6ab7be764646993ddf32b",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/storage/v3.png",
+            "sha256": "876669d33f3aa6fb25a84b2b6774596ca4dfa6a9afd5e44d43c377d259077f3c",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  3.5,
+                  1.15000009536743,
+                  -3.5
+                ],
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:storage",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:storage"
+            ],
+            "name": "储存区",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "storage"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-storage.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "3f87083c34caddf3d276db828fbe8dec04298b4191c994fe91669a52a67aeec6",
+            "vertices": 2700,
+            "triangles": 900,
+            "path": "assets/art/previews/module/storage/v3/model.json",
+            "sha256": "3f87083c34caddf3d276db828fbe8dec04298b4191c994fe91669a52a67aeec6"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
             "userConfirmed": false
           }
         }
@@ -4315,6 +4556,127 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.265Z",
+          "original": {
+            "path": "assets/art/previews/module/sail/v3/render.png",
+            "sha256": "a0882b4c14c6aaa3b7ff2d4087c4331696c94e833857d17aa0e3259b7818ba4e",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/sail/v3.png",
+            "sha256": "6e5de865ded09920204a2edcc9fe54cafe080286a42853ce07fe96497a5c599e",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  3.5,
+                  7.19999980926514,
+                  -3.5
+                ],
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:sail",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:sail"
+            ],
+            "name": "帆",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "sail"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-sail.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "1a46d21eebf46de97f36d8c0002b66889dee8c6821ebec5c61e4cb580009cd4a",
+            "vertices": 7308,
+            "triangles": 2436,
+            "path": "assets/art/previews/module/sail/v3/model.json",
+            "sha256": "1a46d21eebf46de97f36d8c0002b66889dee8c6821ebec5c61e4cb580009cd4a"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -4562,6 +4924,127 @@
             "reviewedAt": "2026-10-27T16:42:46.555Z",
             "reviewer": "Codex",
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
+            "userConfirmed": false
+          }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.326Z",
+          "original": {
+            "path": "assets/art/previews/module/floatstone/v3/render.png",
+            "sha256": "ac9a6d33abf23f48852ae1590d9c98173892a0672fe081053566ff68f8ae7c44",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/floatstone/v3.png",
+            "sha256": "03d4b7e75bcc1f3e118684b9b07a0c69b7dfe8aeacf46a3d6e4f080b358cada7",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  3.5,
+                  1.15000009536743,
+                  -3.5
+                ],
+                "min": [
+                  -3.5,
+                  -4.97499990463257,
+                  -10.5
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:floatstone",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:floatstone"
+            ],
+            "name": "浮石舱",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "floatstone"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-floatstone.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "c44abd1ff9e37d4425dabbe66ef144214b9353b608757c14d4d9b816706445e1",
+            "vertices": 8100,
+            "triangles": 2700,
+            "path": "assets/art/previews/module/floatstone/v3/model.json",
+            "sha256": "c44abd1ff9e37d4425dabbe66ef144214b9353b608757c14d4d9b816706445e1"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
             "userConfirmed": false
           }
         }
@@ -4813,6 +5296,127 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.374Z",
+          "original": {
+            "path": "assets/art/previews/module/deck/v3/render.png",
+            "sha256": "be395486a28a30392a6df417c9cc07ff7fe0824f6e4e1d6c810ca379b3772cfc",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/deck/v3.png",
+            "sha256": "484d3bb960539070a8bdf9dff405080dd077b82bb47ccac2128ad77b3760272e",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  3.5,
+                  1.15000009536743,
+                  -3.5
+                ],
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:deck",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:deck"
+            ],
+            "name": "空节",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "deck"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-deck.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "38db88bc5bb3001fe6c66230a0bd2d6edcb27428dc1f413f62807849cefc9caa",
+            "vertices": 2700,
+            "triangles": 900,
+            "path": "assets/art/previews/module/deck/v3/model.json",
+            "sha256": "38db88bc5bb3001fe6c66230a0bd2d6edcb27428dc1f413f62807849cefc9caa"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -5060,6 +5664,127 @@
             "reviewedAt": "2026-10-27T16:42:47.364Z",
             "reviewer": "Codex",
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
+            "userConfirmed": false
+          }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.437Z",
+          "original": {
+            "path": "assets/art/previews/module/long_sail/v3/render.png",
+            "sha256": "4e42cb121f8ca7d0ffa82eb7ec0e95f999d5ff2b3d7e18479856de1f17037d52",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/long_sail/v3.png",
+            "sha256": "c63f70e751fab29b6a70d80f1ad1257a4c694bd1245147ed0c9d3b3914982939",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  3.5,
+                  8.39999961853027,
+                  -3.5
+                ],
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -17.5
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:long_sail",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-2:long_sail"
+            ],
+            "name": "双桅帆",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "long_sail"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-long_sail.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "130eb002d9958fc5f2dbc9506517b743e0b9b5366ea2316a4f8136ca77d95ddd",
+            "vertices": 12996,
+            "triangles": 4332,
+            "path": "assets/art/previews/module/long_sail/v3/model.json",
+            "sha256": "130eb002d9958fc5f2dbc9506517b743e0b9b5366ea2316a4f8136ca77d95ddd"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
             "userConfirmed": false
           }
         }
@@ -5311,6 +6036,127 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.515Z",
+          "original": {
+            "path": "assets/art/previews/module/tall_hold/v3/render.png",
+            "sha256": "7c4c2884715f104d5bdedf6771b20ce47955557c8fbba142a835c3ef8abc9c25",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/tall_hold/v3.png",
+            "sha256": "b6397520855e5d2cd3c6d82ef450d1e32d7e8bf57b1793df87727f38f3198845",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  3.57999968528748,
+                  4.94999980926514,
+                  -3.46000003814697
+                ],
+                "min": [
+                  -3.58000016212463,
+                  -3.5,
+                  -10.5799999237061
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:tall_hold",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "0,0,-1:tall_hold"
+            ],
+            "name": "双层货舱",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "tall_hold"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-tall_hold.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "879f146f7bc7351e6b480315d1a47dbcea87791062563d158d205b7a991ee6c4",
+            "vertices": 15984,
+            "triangles": 5328,
+            "path": "assets/art/previews/module/tall_hold/v3/model.json",
+            "sha256": "879f146f7bc7351e6b480315d1a47dbcea87791062563d158d205b7a991ee6c4"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -5560,6 +6406,128 @@
             "reviewedAt": "2026-10-27T16:42:47.733Z",
             "reviewer": "Codex",
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
+            "userConfirmed": false
+          }
+        },
+        {
+          "version": "v3",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.566Z",
+          "original": {
+            "path": "assets/art/previews/module/wide_deck/v3/render.png",
+            "sha256": "2dc05ff592191255c452bdd87c499c0ed7d041b3e657edba0d5a5c4f4f515c72",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/module/wide_deck/v3.png",
+            "sha256": "d61ef4448f6cfdfef7314e52cc764e7d5a3be9a6a32833fcd77d943746ad458a",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  10.5,
+                  1.15000009536743,
+                  -3.5
+                ],
+                "min": [
+                  -3.5,
+                  -3.5,
+                  -10.5
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "collection": "modules",
+            "format": "mesh-json",
+            "id": "module:wide_deck",
+            "itemIds": [],
+            "kind": "game",
+            "layout": [
+              "0,0,0:bridge",
+              "1,0,0:deck",
+              "0,0,-1:wide_deck"
+            ],
+            "name": "宽空节",
+            "notes": "从现有游戏 DLL 的真实模块节点导出，使用合法参考布局；不包含整船共用船首与连接梯子。",
+            "recordIds": [
+              "wide_deck"
+            ],
+            "source": {
+              "path": "game/bin/zhouzhu.windows.template_debug.x86_64.dll",
+              "sha256": "738d08a6f189d1ff4af8d85de7583b53a15303c441f2fd0ef6978ba0d34cbbc0"
+            },
+            "url": "/assets/models/module-wide_deck.json",
+            "usage": "ship-module",
+            "implementationSource": {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            },
+            "assetSha256": "73600e564db25ee6dbba4554b273455bc8631eede0bb363e2f1fcce36776da21",
+            "vertices": 4752,
+            "triangles": 1584,
+            "path": "assets/art/previews/module/wide_deck/v3/model.json",
+            "sha256": "73600e564db25ee6dbba4554b273455bc8631eede0bb363e2f1fcce36776da21"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
             "userConfirmed": false
           }
         }
@@ -5913,6 +6881,121 @@
             "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v4",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.917Z",
+          "original": {
+            "path": "assets/art/previews/building/house/v4/render.png",
+            "sha256": "f62ed74e2a0672ccbaa4e4f130e36bad326ab456df02adecea09102131cedcb3",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/house/v4.png",
+            "sha256": "127976dda4727c3e99def3ba4f1b8c911ce1d2a4e17035ad53fc4d1fa31618c0",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  6.59999990463257,
+                  6.07499980926514,
+                  4.71602487564087
+                ],
+                "min": [
+                  -6.59999990463257,
+                  -1.10000002384186,
+                  -4.15000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "id": "building:house",
+            "url": "/assets/models/building-house.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "house"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            "templateId": "house/sanjian",
+            "vertices": 24154,
+            "triangles": 11708,
+            "parts": 13,
+            "name": "民居",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/house/sanjian.txt，不是库存物品独立实体。",
+            "assetSha256": "4e8b25bfdedad8c898fd0a60589a35c0717b88cac9c233a14f8ad9f4ab4673ba",
+            "path": "assets/art/previews/building/house/v4/model.json",
+            "sha256": "4e8b25bfdedad8c898fd0a60589a35c0717b88cac9c233a14f8ad9f4ab4673ba"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -6262,6 +7345,121 @@
             "reviewedAt": "2026-10-27T17:01:33.908Z",
             "reviewer": "Codex",
             "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
+            "userConfirmed": false
+          }
+        },
+        {
+          "version": "v4",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:16.996Z",
+          "original": {
+            "path": "assets/art/previews/building/hall/v4/render.png",
+            "sha256": "1a9ed8e73b73f857548bef5560b589527720280bca215e797c234fb783c597d5",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/hall/v4.png",
+            "sha256": "ef7fa3a50a7793736c2fb97db7c8b8acbb9d1d38143f7219fa6663f7d142125f",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  9.60000038146973,
+                  8.57499980926514,
+                  7.08205080032349
+                ],
+                "min": [
+                  -9.60000038146973,
+                  -1.60000002384186,
+                  -5.65000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "id": "building:hall",
+            "url": "/assets/models/building-hall.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "hall"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            "templateId": "hall/citang",
+            "vertices": 31618,
+            "triangles": 15296,
+            "parts": 12,
+            "name": "堂屋",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/hall/citang.txt，不是库存物品独立实体。",
+            "assetSha256": "2b6e8389656d95de25703ef796b922146bf06581150794c813280ea7c3bdc843",
+            "path": "assets/art/previews/building/hall/v4/model.json",
+            "sha256": "2b6e8389656d95de25703ef796b922146bf06581150794c813280ea7c3bdc843"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
             "userConfirmed": false
           }
         }
@@ -6615,6 +7813,121 @@
             "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v4",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:17.059Z",
+          "original": {
+            "path": "assets/art/previews/building/granary/v4/render.png",
+            "sha256": "cfabf97c8b3f4112d64c1a027ccba98d5ac272759d4b4065c17e756f1eac6a82",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/granary/v4.png",
+            "sha256": "181b7806e98be621c9f65beb22a4f18410b5a5b11b383cdceef4f51ebc541137",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  4.09999990463257,
+                  6.17500066757202,
+                  6.71769189834595
+                ],
+                "min": [
+                  -4.09999990463257,
+                  -2.40000009536743,
+                  -3.90000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "id": "building:granary",
+            "url": "/assets/models/building-granary.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "granary"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            "templateId": "granary/cang",
+            "vertices": 21514,
+            "triangles": 10244,
+            "parts": 11,
+            "name": "仓",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/granary/cang.txt，不是库存物品独立实体。",
+            "assetSha256": "ca577a96780f165658a5c156509ab12c280ca4b98bd18355e06a35014a77ec71",
+            "path": "assets/art/previews/building/granary/v4/model.json",
+            "sha256": "ca577a96780f165658a5c156509ab12c280ca4b98bd18355e06a35014a77ec71"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -6966,6 +8279,121 @@
             "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v4",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:17.114Z",
+          "original": {
+            "path": "assets/art/previews/building/tower/v4/render.png",
+            "sha256": "f6d4f15852f54c66c84af1893bf0866eecaed356cbded62d9ff8d05967f65aef",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/tower/v4.png",
+            "sha256": "301e2e813c9a2a1b95b1b36e7d3d293c627536b0168e2099024ed70174502223",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  4.09999990463257,
+                  14.375,
+                  4.98564004898071
+                ],
+                "min": [
+                  -4.09999990463257,
+                  -1.39999997615814,
+                  -3.90000009536743
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "id": "building:tower",
+            "url": "/assets/models/building-tower.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "tower"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            "templateId": "tower/wanglou",
+            "vertices": 18290,
+            "triangles": 8888,
+            "parts": 22,
+            "name": "望楼",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。选用当前游戏模板 game/buildings/tower/wanglou.txt，不是库存物品独立实体。",
+            "assetSha256": "077e5f3f4b3010636513b022cf18ef77660bd7a941c934c5e2227ad8031712cd",
+            "path": "assets/art/previews/building/tower/v4/model.json",
+            "sha256": "077e5f3f4b3010636513b022cf18ef77660bd7a941c934c5e2227ad8031712cd"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -7314,6 +8742,120 @@
             "note": "GPU定向审图通过：夯土层水平、木构件纹理方向保持，原尺寸与网格指纹一致；旧v1/v2保留，非用户逐项确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v4",
+          "styleId": "painted-jrpg-3d-v1",
+          "origin": "model-render",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:17:17.139Z",
+          "original": {
+            "path": "assets/art/previews/building/berth/v4/render.png",
+            "sha256": "504d005a0b508763bbcc0f9d1b8b744c5c348ff4240030f6a928267a78762b60",
+            "width": 512,
+            "height": 512
+          },
+          "runtime": {
+            "path": "game/art/previews/building/berth/v4.png",
+            "sha256": "3202fcf983989f032eb74c00463ff6aaa13b23d81b6cdbd915cdc6725fe93f7e",
+            "width": 256,
+            "height": 256
+          },
+          "prompt": "真实模型统一正交相机与柔光渲染；不使用AI重绘。",
+          "references": [],
+          "derivation": {
+            "operation": "model-render-and-premultiplied-resize",
+            "parameters": {
+              "camera": [
+                1.1,
+                0.85,
+                1.35
+              ],
+              "projection": "orthographic",
+              "fit": 0.8,
+              "keyLight": {
+                "rotationDegrees": [
+                  -45,
+                  -30,
+                  0
+                ],
+                "energy": 1.1
+              },
+              "ambient": 0.7,
+              "background": "transparent",
+              "renderer": "Godot4.4.1 / real production shaders and bindings",
+              "sourceBounds": {
+                "max": [
+                  22.6000003814697,
+                  6.10998678207397,
+                  9.69999885559082
+                ],
+                "min": [
+                  -22.6000003814697,
+                  -0.899999976158142,
+                  -9.10000038146973
+                ]
+              },
+              "surfaceBindingsSha256": "3b6bf094c557bf56bf10f5f73374a696a1d682f8c1a60ad738b1cf6549eb35a0"
+            }
+          },
+          "model": {
+            "id": "building:berth",
+            "url": "/assets/models/building-berth.json",
+            "format": "mesh-json",
+            "usage": "building",
+            "collection": "buildings",
+            "recordIds": [
+              "berth"
+            ],
+            "itemIds": [],
+            "source": {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            "vertices": 384,
+            "triangles": 192,
+            "parts": 3,
+            "name": "船台",
+            "kind": "game",
+            "notes": "直接复用 build_building_mesh/building_parts；当前 BuildingDef 尺寸，在零高程平地按默认 SiteRules 勘察台基及坡道；包含所有真实材质和楼层。船台按当前 land_berth::add_parts 生成，无房屋模板。",
+            "assetSha256": "81154d4069e445c1483944bbf2a6ee916578f6bfeb3594195be4cc2bc89b37a0",
+            "path": "assets/art/previews/building/berth/v4/model.json",
+            "sha256": "81154d4069e445c1483944bbf2a6ee916578f6bfeb3594195be4cc2bc89b37a0"
+          },
+          "sourceSnapshotManifest": "assets/art/models/scene-20261027-authored-v4/manifest.json",
+          "sourceFingerprints": [
+            {
+              "path": "src/house_template.cpp",
+              "sha256": "07aefdfca3dda88f7f93d520460a439c2608876e732b940afdf3008e995418d7"
+            },
+            {
+              "path": "src/building_parts.cpp",
+              "sha256": "abcbfa3cf7a1d0fb2387cd769683bfa10a3db3cb4869fd6665e0ab5e4ec291f0"
+            },
+            {
+              "path": "src/building_mesh.cpp",
+              "sha256": "9f776be3e5091bd32135516be74af62b13951167b36cd8e9cd21c43b64a42751"
+            },
+            {
+              "path": "src/ship_layout.cpp",
+              "sha256": "87a7183c79ec7e040fc1bb0a82bb08c3e7b565cb5061f95b73cb2fff449aadb6"
+            },
+            {
+              "path": "src/ship.cpp",
+              "sha256": "fe7e1dbc1af44df5c0cf2c66c8d07ea527b7bd282c14f671c0a2a5a37979e7e1"
+            }
+          ],
+          "styleGap": "本作原生可编辑模块/建筑；本轮精修舭部折弧、门窗木销并同步预览。文化地域和动力路线保持未定，不引入外来完整建筑或新工业玩法。",
+          "userConfirmation": null,
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:17:17.383216+00:00",
+            "evidence": "output/model-upgrade-20261027/structures-contact.jpg",
+            "note": "真实网格GPU透明预览已审看；原生模块保留尺寸/连接与共享材质，未冒充外部作者完整船或建筑",
+            "userConfirmed": false
+          }
         }
       ]
     },
@@ -7521,6 +9063,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.281Z",
+          "original": {
+            "path": "assets/art/previews/furniture/bed/v3/render.png",
+            "sha256": "36f194cf5cec299581428e419f49e6eabc4d183f0d7da61aafec8c241681c226"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/bed/v3.png",
+            "sha256": "652b5c3d181cf228787e69aab7f78e50116f777a06fa819327d5bb3f27fd0aad"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.bed",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/bed/v1/model.glb",
+              "sha256": "01a9fe675573d6ee83c27c2c5b1e04469a3d8786fa88922543209190acadbb47"
+            },
+            "sourceBounds": {
+              "max": [
+                1.0,
+                0.600000023841858,
+                0.75
+              ],
+              "min": [
+                -1.0,
+                0.0,
+                -0.75
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.253Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -7728,6 +9330,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.737Z",
+          "original": {
+            "path": "assets/art/previews/furniture/stove/v3/render.png",
+            "sha256": "795e0a2a94fba82f91edf6adb164a0eeae866e5527e00a61c109d4991014c54d"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/stove/v3.png",
+            "sha256": "0846fdf3c798ddfa30518bf7eb7212f0a25efed0ac909c25183e511388926927"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.stove",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/stove/v1/model.glb",
+              "sha256": "c2d0c8a2e18a0a1acaedb7808f180f61fcf34173bb5066d83e904ed5170c181c"
+            },
+            "sourceBounds": {
+              "max": [
+                0.899999976158142,
+                2.75,
+                0.5
+              ],
+              "min": [
+                -0.899999976158142,
+                0.0,
+                -0.5
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.717Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -7935,6 +9597,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.783Z",
+          "original": {
+            "path": "assets/art/previews/furniture/table/v3/render.png",
+            "sha256": "95c4583bf3c3bc5b8f23891d92908abd494cc9b0196bb3602300eab77a3334e6"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/table/v3.png",
+            "sha256": "fd1becfdf3c9e0de368f8be6612cc42f52c0f148c254e52cd93379075d06ec93"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.table",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/table/v1/model.glb",
+              "sha256": "4eca58adc5c1f56197369293fcd9822a9bcdc81e1340bca12a0330a8186c72e9"
+            },
+            "sourceBounds": {
+              "max": [
+                0.699999988079071,
+                0.800000011920929,
+                0.450000017881393
+              ],
+              "min": [
+                -0.699999988079071,
+                0.0,
+                -0.450000017881393
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.760Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -8142,6 +9864,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.344Z",
+          "original": {
+            "path": "assets/art/previews/furniture/bench/v3/render.png",
+            "sha256": "2ddb5bbe0e657c3ae0cae1f6bb102721dfdd20e60c4d850be9c57a23137d5d8f"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/bench/v3.png",
+            "sha256": "3d323f0dbe870520900cb09f8705f1859a89736208bf3e4046879d893d315d33"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.bench",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/bench/v1/model.glb",
+              "sha256": "8626d70ea4b3c7762f39805d9ebed6bcfed6ace45d339503984dc795eb7f9390"
+            },
+            "sourceBounds": {
+              "max": [
+                0.600000023841858,
+                0.449999988079071,
+                0.174999997019768
+              ],
+              "min": [
+                -0.600000023841858,
+                0.0,
+                -0.174999997019768
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.317Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -8349,6 +10131,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.461Z",
+          "original": {
+            "path": "assets/art/previews/furniture/chest/v3/render.png",
+            "sha256": "989fbc60685d5cff526c561e87be8f9adae07f7499edcab3c7f9da8563093dde"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/chest/v3.png",
+            "sha256": "a1657a5e5ada2ad196d9c8ae950f3b3498c07e53d185700ab74ba485ef459960"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.chest",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/chest/v1/model.glb",
+              "sha256": "83834198198b7529351445503eadf62314e858a9e2e738eaed8f2a296c08f26c"
+            },
+            "sourceBounds": {
+              "max": [
+                0.600000023841858,
+                1.20000004768372,
+                0.299999982118607
+              ],
+              "min": [
+                -0.600000023841858,
+                0.0,
+                -0.299999982118607
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.435Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -8556,6 +10398,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.874Z",
+          "original": {
+            "path": "assets/art/previews/furniture/vat/v3/render.png",
+            "sha256": "cbbea666b58158313eed762880cee3390bdd55c9162435a0635d5eb911a5bd83"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/vat/v3.png",
+            "sha256": "19630be37b7825582263bc3458e65b819b3f1bb57e219ef228a8cdb066a95794"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.vat",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/vat/v1/model.glb",
+              "sha256": "caa89dc580c5dc95d90d11d0f4ca1d1e0cb6aa3b635d8522c961ac3e704b15b5"
+            },
+            "sourceBounds": {
+              "max": [
+                0.449999988079071,
+                0.800000011920929,
+                0.449999988079071
+              ],
+              "min": [
+                -0.449999988079071,
+                0.0,
+                -0.449999988079071
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.851Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -8763,6 +10665,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.406Z",
+          "original": {
+            "path": "assets/art/previews/furniture/bin/v3/render.png",
+            "sha256": "b1e5dcc1d80fedb75765720c8ad8dd39bf862b6774b946c44e687719fd480475"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/bin/v3.png",
+            "sha256": "1d7e948e716c765d01a5edeff54b77a6f3758f75eb2af2351313c74ffac888ba"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.bin",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/bin/v1/model.glb",
+              "sha256": "4008242136294a817ff7f60214dc97f75756ed6f4af6b2300710ce2263f6d2db"
+            },
+            "sourceBounds": {
+              "max": [
+                0.700000047683716,
+                1.60000002384186,
+                0.699999988079071
+              ],
+              "min": [
+                -0.700000047683716,
+                0.0,
+                -0.699999988079071
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.377Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -8970,6 +10932,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.229Z",
+          "original": {
+            "path": "assets/art/previews/furniture/altar/v3/render.png",
+            "sha256": "b3ee6b6757e96105d6ac116128b12046b6afacdb5092e918c500a08adfbcd873"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/altar/v3.png",
+            "sha256": "43037e10681b0673e613884016aadbec35fddfa457a4d67654ff68e5036c0a61"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.altar",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/altar/v1/model.glb",
+              "sha256": "d986f70b16a640f446865f9ce7a65447d8c1407dfd6c02a6d19664b2dcefec90"
+            },
+            "sourceBounds": {
+              "max": [
+                0.899999916553497,
+                1.46000003814697,
+                0.300000011920929
+              ],
+              "min": [
+                -0.899999916553497,
+                0.0,
+                -0.300000011920929
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.205Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -9177,6 +11199,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.546Z",
+          "original": {
+            "path": "assets/art/previews/furniture/loom/v3/render.png",
+            "sha256": "397c97794854c11534c7d04e55cbf8606f03d6c051a8c3dee1b34c08da7fdb7b"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/loom/v3.png",
+            "sha256": "5c765353ab1b2809d728d3ba0a42af726c4e07f6ec825c9b6a168216e6785c65"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.loom",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/loom/v1/model.glb",
+              "sha256": "c0fa0c8e16c8f750e01c58f17ec94c98e00d32271182e8d562ea548908ad337c"
+            },
+            "sourceBounds": {
+              "max": [
+                0.800000011920929,
+                1.5,
+                0.63999992609024
+              ],
+              "min": [
+                -0.800000011920929,
+                0.0,
+                -0.660000026226044
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.526Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -9384,6 +11466,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.691Z",
+          "original": {
+            "path": "assets/art/previews/furniture/shelf/v3/render.png",
+            "sha256": "438b69968a7e49a2d7a8110705cefe1a87d214369653511098ecd8b8e735f81a"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/shelf/v3.png",
+            "sha256": "b96b0dbad186bf7f7db10e7ec3790703c3b18678f90ac7b9a0d2b391a06914dd"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.shelf",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/shelf/v1/model.glb",
+              "sha256": "821d522117db17fa64373f391af139322e6d0786a56dbc00a8a9d018481859a9"
+            },
+            "sourceBounds": {
+              "max": [
+                0.800000071525574,
+                1.89999997615814,
+                0.249999970197678
+              ],
+              "min": [
+                -0.800000071525574,
+                0.0,
+                -0.250000029802322
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.669Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -9591,6 +11733,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.643Z",
+          "original": {
+            "path": "assets/art/previews/furniture/sacks/v3/render.png",
+            "sha256": "a20e2e4c98ed7f6da4c8864837224781f44f8564829e19fbddcb6b9608b8ca74"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/sacks/v3.png",
+            "sha256": "a3a88d6d427a9ac120827d2be767b1919cfd6e072a2152df44803738dff3f743"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.sacks",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/sacks/v1/model.glb",
+              "sha256": "4147b29964476ba9d38173695a04d30adf80e0184b2e8f27fa29a6cefddc0538"
+            },
+            "sourceBounds": {
+              "max": [
+                0.599999964237213,
+                0.699999988079071,
+                0.449999988079071
+              ],
+              "min": [
+                -0.599999964237213,
+                0.0,
+                -0.449999988079071
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.619Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -9798,6 +12000,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.502Z",
+          "original": {
+            "path": "assets/art/previews/furniture/drum/v3/render.png",
+            "sha256": "a3e252db5fa91fb73e2be52f0fd71a7d03143867e2d3b194590cd8abbc0e1fd7"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/drum/v3.png",
+            "sha256": "ea3a83983712e1c9a085b90fafb8003d0de0f0fe38d1f4d81ac65154a17a4b16"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.drum",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/drum/v1/model.glb",
+              "sha256": "cd705996c5908881565bc77c8e316c0d2770242699cadbb808fa86f697b66b16"
+            },
+            "sourceBounds": {
+              "max": [
+                0.400000005960464,
+                1.14999997615814,
+                0.25
+              ],
+              "min": [
+                -0.400000005960464,
+                0.0,
+                -0.25
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.483Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },
@@ -10005,6 +12267,66 @@
             "note": "同源真实模型指纹一致；512透明渲染与四张总览审图通过，构图、曲面和共享材质正确；原尺寸连接保持，程序造型的精修缺口仍登记，非用户确认",
             "userConfirmed": false
           }
+        },
+        {
+          "version": "v3",
+          "origin": "actual-authored-model-render",
+          "styleId": "painted-jrpg-3d-v1",
+          "productionStatus": "produced",
+          "generatedAt": "2026-10-28T06:08:18.594Z",
+          "original": {
+            "path": "assets/art/previews/furniture/mat/v3/render.png",
+            "sha256": "9967874d6c3899e3446f5df5d0dd921b8eb8809515de97085a9492b53ecb9703"
+          },
+          "runtime": {
+            "path": "game/art/previews/furniture/mat/v3.png",
+            "sha256": "6fce57885bf62113b5d9eeff7956b76424ce2e0cd783314f02fe351b0aac3fe8"
+          },
+          "derivation": {
+            "operation": "Godot production model/shader orthographic render, premultiplied-alpha resize",
+            "modelId": "furniture.mat",
+            "modelVersion": "v1",
+            "model": {
+              "path": "game/art/models/furniture/mat/v1/model.glb",
+              "sha256": "3034789c302bb59e3b5f3dd971fc9c6c5206c3426e822b3124906765bc2983ec"
+            },
+            "sourceBounds": {
+              "max": [
+                1.0,
+                0.0269999988377094,
+                0.699999988079071
+              ],
+              "min": [
+                -1.0,
+                0.0020000000949949,
+                -0.699999988079071
+              ]
+            },
+            "camera": [
+              1.1,
+              0.85,
+              1.35
+            ],
+            "projection": "orthographic",
+            "fit": 0.8,
+            "lightRotation": [
+              -45,
+              -30,
+              0
+            ],
+            "ambient": 0.65,
+            "tools": [
+              "game/tests/furniture_models_e2e.gd"
+            ]
+          },
+          "agentReview": {
+            "status": "accepted",
+            "reviewer": "Codex",
+            "reviewedAt": "2026-10-28T06:08:18.572Z",
+            "evidence": "output/model-upgrade-20261027/furniture-review-pixels",
+            "scope": "实际GLB生产着色器、占地、透明边缘、主体语义与接合像素；真实场景与碰撞另验"
+          },
+          "userConfirmation": null
         }
       ]
     },

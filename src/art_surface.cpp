@@ -8,12 +8,14 @@
 #include "curved_material.h"
 #include "shared_looks.h"
 #include "scatter_meshes.h"
+#include "model_art.h"
 using namespace godot;
 void ArtSurface::_bind_methods() {
     ClassDB::bind_static_method("ArtSurface", D_METHOD("create", "asset", "color", "roughness", "metallic"), &ArtSurface::create, DEFVAL(0.0));
     ClassDB::bind_static_method("ArtSurface", D_METHOD("configure", "material", "prefix", "asset"), &ArtSurface::configure);
     ClassDB::bind_static_method("ArtSurface",D_METHOD("part_material","index"),&ArtSurface::part_material);
     ClassDB::bind_static_method("ArtSurface",D_METHOD("scatter_mesh","look","lod"),&ArtSurface::scatter_mesh,DEFVAL(0));
+    ClassDB::bind_static_method("ArtSurface",D_METHOD("model_instance","id"),&ArtSurface::model_instance);
 }
 
 bool ArtSurface::configure(const Ref<ShaderMaterial> &p_material, const String &p_prefix, const String &p_asset) {
@@ -55,3 +57,4 @@ Ref<Material> ArtSurface::create(const String &p_asset, const Color &p_color, do
 }
 Ref<Material> ArtSurface::part_material(int p_index){if(p_index<0||p_index>=int(PartMaterial::COUNT))return {};SharedLooks looks;return looks.part_material(PartMaterial(p_index));}
 Ref<Mesh> ArtSurface::scatter_mesh(int p_look,int p_lod){if(p_look<0||p_look>int(ScatterLook::CRUST))return {};ScatterMeshes meshes;return p_lod==1?meshes.low_mesh(ScatterLook(p_look)):p_lod==2?meshes.felled_mesh(ScatterLook(p_look)):meshes.mesh(ScatterLook(p_look));}
+Node3D *ArtSurface::model_instance(const String &id){SharedLooks looks;return model_art::instantiate_styled(id,looks);}

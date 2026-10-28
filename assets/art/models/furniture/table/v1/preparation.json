@@ -1,0 +1,59 @@
+{
+  "kind": "table",
+  "sourceAsset": "chinese_tea_table",
+  "origin": "author-model-adaptation",
+  "appearance": {
+    "color": [
+      0.5,
+      0.36,
+      0.22
+    ],
+    "roughness": 0.88,
+    "normalStrength": 0.18,
+    "tileMetres": 0.5,
+    "projectMaterials": {},
+    "uvMetresPerUnit": {
+      "chinese_tea_table": 2.8020623099054762
+    },
+    "textureMeans": {
+      "chinese_tea_table": [
+        0.08302533096472152,
+        0.040311713031267356,
+        0.02259707827593566
+      ]
+    }
+  },
+  "sourceDefinition": "src/house_template.cpp",
+  "expectedWidthDepthHeight": [
+    1.4,
+    0.9,
+    0.8
+  ],
+  "actualBoundsZUp": {
+    "min": [
+      -0.699999988079071,
+      -0.45000001788139343,
+      0.0
+    ],
+    "max": [
+      0.699999988079071,
+      0.45000001788139343,
+      0.800000011920929
+    ]
+  },
+  "triangles": 2508,
+  "dependencies": [
+    {
+      "path": "textures/image-0.jpg",
+      "sha256": "4b6eea9bbf344912313a1046fd3e5183970a907b6dbd55d1ef465e27dd2d0859"
+    },
+    {
+      "path": "textures/image-1.jpg",
+      "sha256": "beaff8984d8fd498b7cfecc2e5decd4db3ba6c87583acc41d18767326cb3ae3c"
+    },
+    {
+      "path": "textures/image-2.jpg",
+      "sha256": "5d93474de9d0560d8a9a46a498fc6f64fb030f9cec6e6eb8f95c36dfc8e09e94"
+    }
+  ]
+}

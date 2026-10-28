@@ -1,0 +1,40 @@
+{
+  "author": {
+    "Kirill Sannikov": "All"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/chinese_tea_table",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "chinese_tea_table_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_tea_table/chinese_tea_table_1k.gltf",
+      "sha256": "4c1987aa1978c4fe1dfd0f5f10739df399346fc4c9373315d8d4b0cc798d8b01",
+      "md5": "742112f24cdcf8c357aacc8f255664e5"
+    },
+    {
+      "path": "textures/chinese_tea_table_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_arm_1k.jpg",
+      "sha256": "5d93474de9d0560d8a9a46a498fc6f64fb030f9cec6e6eb8f95c36dfc8e09e94",
+      "md5": "c87805fa83058c7d08056446b0589f7e"
+    },
+    {
+      "path": "chinese_tea_table.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_tea_table/chinese_tea_table.bin",
+      "sha256": "e584dbcf8d654c662ef849ef6111b11dc9f87e9a7ea8dc98c7d32dbfe10b7e52",
+      "md5": "8dcb405bff1e509e3c846278ce2f3ad9"
+    },
+    {
+      "path": "textures/chinese_tea_table_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_nor_gl_1k.jpg",
+      "sha256": "4b6eea9bbf344912313a1046fd3e5183970a907b6dbd55d1ef465e27dd2d0859",
+      "md5": "f3398ab803461ee8247b05ad9b9992ba"
+    },
+    {
+      "path": "textures/chinese_tea_table_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_tea_table/chinese_tea_table_diff_1k.jpg",
+      "sha256": "beaff8984d8fd498b7cfecc2e5decd4db3ba6c87583acc41d18767326cb3ae3c",
+      "md5": "eec9f6e3d2c3f7335abd4760e3a30ba2"
+    }
+  ]
+}

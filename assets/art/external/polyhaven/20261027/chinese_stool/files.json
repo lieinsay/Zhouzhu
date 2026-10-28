@@ -1,0 +1,834 @@
+{
+  "Diffuse": {
+    "8k": {
+      "jpg": {
+        "size": 36755808,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_diff_8k.jpg",
+        "md5": "74cf359b7e9b779563698b2ad65ad74a"
+      },
+      "png": {
+        "size": 208419832,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_stool/chinese_stool_diff_8k.png",
+        "md5": "91ad46548a244d2e051589ad4716c130"
+      },
+      "exr": {
+        "size": 102669235,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_diff_8k.exr",
+        "md5": "96376192e1ba05c4b6e74e398ae6484f"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8375881,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_diff_4k.jpg",
+        "md5": "eef7174f0cb6b1238c91aaf7f7a86c68"
+      },
+      "png": {
+        "size": 62526572,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_stool/chinese_stool_diff_4k.png",
+        "md5": "25c03ec0ac51adf6305eab946d68db2a"
+      },
+      "exr": {
+        "size": 22478500,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_diff_4k.exr",
+        "md5": "c3a10a37aa1c4ac33e3f6622af09d693"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2086650,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_diff_2k.jpg",
+        "md5": "265dfa0e9f9a2e14915dec566635824a"
+      },
+      "png": {
+        "size": 16860337,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_stool/chinese_stool_diff_2k.png",
+        "md5": "af81b8387bed357d1e60b155e5a7d7a3"
+      },
+      "exr": {
+        "size": 5286086,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_diff_2k.exr",
+        "md5": "49abe94a0eb9257508f791a00ea14098"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 542758,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_diff_1k.jpg",
+        "md5": "10519c09d42b36c461540f3e727df211"
+      },
+      "png": {
+        "size": 4458411,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_stool/chinese_stool_diff_1k.png",
+        "md5": "894bbd4da58dc2693534217b7a939e8e"
+      },
+      "exr": {
+        "size": 1375644,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_diff_1k.exr",
+        "md5": "718731ea3de7c9e9dbc38671f29fee30"
+      }
+    }
+  },
+  "nor_dx": {
+    "8k": {
+      "jpg": {
+        "size": 38064126,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_nor_dx_8k.jpg",
+        "md5": "979540f310b143b85fb034afbbebe429"
+      },
+      "png": {
+        "size": 200687000,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_stool/chinese_stool_nor_dx_8k.png",
+        "md5": "a075af989060931556fea633a8da0c10"
+      },
+      "exr": {
+        "size": 75468394,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_nor_dx_8k.exr",
+        "md5": "1bd9820e875d9be52acf2fb5db670df0"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 10355095,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_nor_dx_4k.jpg",
+        "md5": "43484d848d758987437ec57db40af763"
+      },
+      "png": {
+        "size": 63949930,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_stool/chinese_stool_nor_dx_4k.png",
+        "md5": "b6ddc6b6c16b3b0955bf5785faa8f1b6"
+      },
+      "exr": {
+        "size": 22275052,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_nor_dx_4k.exr",
+        "md5": "1dd5bb021b7a8220290e6d53b0df1f8e"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2560377,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_nor_dx_2k.jpg",
+        "md5": "0a314c008ec60fd59a0e5a6b9cd2dd96"
+      },
+      "png": {
+        "size": 17209202,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_stool/chinese_stool_nor_dx_2k.png",
+        "md5": "e2c2f56c46f81e7d3592f119f1092624"
+      },
+      "exr": {
+        "size": 5738036,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_nor_dx_2k.exr",
+        "md5": "7470f2f18146b5a6efa943ae193c7e3c"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 628697,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_nor_dx_1k.jpg",
+        "md5": "74c8def632a4e0c11fe1b5880c5863fe"
+      },
+      "png": {
+        "size": 4533039,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_stool/chinese_stool_nor_dx_1k.png",
+        "md5": "0af8e7a89750576a96fb9604085694af"
+      },
+      "exr": {
+        "size": 1443365,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_nor_dx_1k.exr",
+        "md5": "ba707a92d31b7c4702a68b309d29868f"
+      }
+    }
+  },
+  "nor_gl": {
+    "8k": {
+      "jpg": {
+        "size": 38104722,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_nor_gl_8k.jpg",
+        "md5": "71fa075212cf00a132950cc7ed99978c"
+      },
+      "png": {
+        "size": 200675181,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_stool/chinese_stool_nor_gl_8k.png",
+        "md5": "bfb479506875e5c686134296cbf1edfd"
+      },
+      "exr": {
+        "size": 75630595,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_nor_gl_8k.exr",
+        "md5": "61aaf57385bb676c51b516516ff88cc4"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 10374911,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_nor_gl_4k.jpg",
+        "md5": "c843abe2880d77a66a250a92a4a9ffa5"
+      },
+      "png": {
+        "size": 63944718,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_stool/chinese_stool_nor_gl_4k.png",
+        "md5": "b1c0ac7623c626fe7215c122c08ee0fd"
+      },
+      "exr": {
+        "size": 22310165,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_nor_gl_4k.exr",
+        "md5": "c2f4414fc539be697c60eb1056f61537"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2564187,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_nor_gl_2k.jpg",
+        "md5": "ce0e62d64d5f6c37dca454be797e5930"
+      },
+      "png": {
+        "size": 17209399,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_stool/chinese_stool_nor_gl_2k.png",
+        "md5": "f6843db7cedfe29de18cb9228f7f1df7"
+      },
+      "exr": {
+        "size": 5750391,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_nor_gl_2k.exr",
+        "md5": "1b708a467d087ee1c18a908fcbd8bb81"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 629035,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_nor_gl_1k.jpg",
+        "md5": "8b15a90085107867de316844cf03b3d7"
+      },
+      "png": {
+        "size": 4532826,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_stool/chinese_stool_nor_gl_1k.png",
+        "md5": "1756eafe65122e672f0e8c43027bd827"
+      },
+      "exr": {
+        "size": 1447547,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_nor_gl_1k.exr",
+        "md5": "51f091e3dad472817fc7479049185ff5"
+      }
+    }
+  },
+  "blend": {
+    "8k": {
+      "blend": {
+        "include": {
+          "textures/chinese_stool_rough_8k.exr": {
+            "size": 35869802,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_rough_8k.exr",
+            "md5": "f7e9ba3d24ed5260c35f99f854051d25"
+          },
+          "textures/chinese_stool_diff_8k.jpg": {
+            "size": 36755808,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_diff_8k.jpg",
+            "md5": "74cf359b7e9b779563698b2ad65ad74a"
+          },
+          "textures/chinese_stool_nor_gl_8k.exr": {
+            "size": 75630595,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_nor_gl_8k.exr",
+            "md5": "61aaf57385bb676c51b516516ff88cc4"
+          }
+        },
+        "size": 140904,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/8k/chinese_stool/chinese_stool_8k.blend",
+        "md5": "028a4a42a9390701e5aa514bdf2f834e"
+      }
+    },
+    "4k": {
+      "blend": {
+        "include": {
+          "textures/chinese_stool_diff_4k.jpg": {
+            "size": 8375881,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_diff_4k.jpg",
+            "md5": "eef7174f0cb6b1238c91aaf7f7a86c68"
+          },
+          "textures/chinese_stool_nor_gl_4k.exr": {
+            "size": 22310165,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_nor_gl_4k.exr",
+            "md5": "c2f4414fc539be697c60eb1056f61537"
+          },
+          "textures/chinese_stool_rough_4k.exr": {
+            "size": 8050441,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_rough_4k.exr",
+            "md5": "c658b00f387f78c3ee626628b32a3ae7"
+          }
+        },
+        "size": 140894,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/4k/chinese_stool/chinese_stool_4k.blend",
+        "md5": "2574f784d2fd8ad68f3d4f018b3dd01b"
+      }
+    },
+    "2k": {
+      "blend": {
+        "include": {
+          "textures/chinese_stool_diff_2k.jpg": {
+            "size": 2086650,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_diff_2k.jpg",
+            "md5": "265dfa0e9f9a2e14915dec566635824a"
+          },
+          "textures/chinese_stool_nor_gl_2k.exr": {
+            "size": 5750391,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_nor_gl_2k.exr",
+            "md5": "1b708a467d087ee1c18a908fcbd8bb81"
+          },
+          "textures/chinese_stool_rough_2k.exr": {
+            "size": 1967564,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_rough_2k.exr",
+            "md5": "e589ba3072c6e6a341f8f9a98ddcf13e"
+          }
+        },
+        "size": 141103,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/2k/chinese_stool/chinese_stool_2k.blend",
+        "md5": "a9dba0aee4d4566dddd44675cb17e596"
+      }
+    },
+    "1k": {
+      "blend": {
+        "include": {
+          "textures/chinese_stool_diff_1k.jpg": {
+            "size": 542758,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_diff_1k.jpg",
+            "md5": "10519c09d42b36c461540f3e727df211"
+          },
+          "textures/chinese_stool_nor_gl_1k.exr": {
+            "size": 1447547,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_nor_gl_1k.exr",
+            "md5": "51f091e3dad472817fc7479049185ff5"
+          },
+          "textures/chinese_stool_rough_1k.exr": {
+            "size": 530272,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_rough_1k.exr",
+            "md5": "12834bb1fa5603cddc8c38ed6ccaa440"
+          }
+        },
+        "size": 141096,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/chinese_stool/chinese_stool_1k.blend",
+        "md5": "178fec3418f427430bfd484a7faf5507"
+      }
+    }
+  },
+  "gltf": {
+    "8k": {
+      "gltf": {
+        "include": {
+          "chinese_stool.bin": {
+            "size": 40172,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_stool/chinese_stool.bin",
+            "md5": "a2951579ea0f4421b754331fb748d6f2"
+          },
+          "textures/chinese_stool_diff_8k.jpg": {
+            "size": 36755808,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_diff_8k.jpg",
+            "md5": "74cf359b7e9b779563698b2ad65ad74a"
+          },
+          "textures/chinese_stool_nor_gl_8k.jpg": {
+            "size": 38104722,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_nor_gl_8k.jpg",
+            "md5": "71fa075212cf00a132950cc7ed99978c"
+          },
+          "textures/chinese_stool_arm_8k.jpg": {
+            "size": 38523033,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_arm_8k.jpg",
+            "md5": "8f99e003c29b99356cac393aed1dab1f"
+          }
+        },
+        "size": 2883,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_stool/chinese_stool_8k.gltf",
+        "md5": "2395c620da156330dbc1433a9ee96f07"
+      }
+    },
+    "4k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_stool_diff_4k.jpg": {
+            "size": 8375881,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_diff_4k.jpg",
+            "md5": "eef7174f0cb6b1238c91aaf7f7a86c68"
+          },
+          "textures/chinese_stool_arm_4k.jpg": {
+            "size": 8730439,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_arm_4k.jpg",
+            "md5": "398a6af4a965f69e12f3829b34117298"
+          },
+          "chinese_stool.bin": {
+            "size": 40172,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_stool/chinese_stool.bin",
+            "md5": "a2951579ea0f4421b754331fb748d6f2"
+          },
+          "textures/chinese_stool_nor_gl_4k.jpg": {
+            "size": 10374911,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_nor_gl_4k.jpg",
+            "md5": "c843abe2880d77a66a250a92a4a9ffa5"
+          }
+        },
+        "size": 2883,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/chinese_stool/chinese_stool_4k.gltf",
+        "md5": "bc62081b89ef11b5ae3df48653d273c2"
+      }
+    },
+    "2k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_stool_arm_2k.jpg": {
+            "size": 2146772,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_arm_2k.jpg",
+            "md5": "63288d73a5f6bc69c08584feb4a47034"
+          },
+          "textures/chinese_stool_diff_2k.jpg": {
+            "size": 2086650,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_diff_2k.jpg",
+            "md5": "265dfa0e9f9a2e14915dec566635824a"
+          },
+          "chinese_stool.bin": {
+            "size": 40172,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_stool/chinese_stool.bin",
+            "md5": "a2951579ea0f4421b754331fb748d6f2"
+          },
+          "textures/chinese_stool_nor_gl_2k.jpg": {
+            "size": 2564187,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_nor_gl_2k.jpg",
+            "md5": "ce0e62d64d5f6c37dca454be797e5930"
+          }
+        },
+        "size": 2883,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/chinese_stool/chinese_stool_2k.gltf",
+        "md5": "bfd3734d7cec3453c469f757f85fd30e"
+      }
+    },
+    "1k": {
+      "gltf": {
+        "include": {
+          "textures/chinese_stool_diff_1k.jpg": {
+            "size": 542758,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_diff_1k.jpg",
+            "md5": "10519c09d42b36c461540f3e727df211"
+          },
+          "textures/chinese_stool_arm_1k.jpg": {
+            "size": 578268,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_arm_1k.jpg",
+            "md5": "d73e325e36b12467d98283648bf98c10"
+          },
+          "chinese_stool.bin": {
+            "size": 40172,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_stool/chinese_stool.bin",
+            "md5": "a2951579ea0f4421b754331fb748d6f2"
+          },
+          "textures/chinese_stool_nor_gl_1k.jpg": {
+            "size": 629035,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_nor_gl_1k.jpg",
+            "md5": "8b15a90085107867de316844cf03b3d7"
+          }
+        },
+        "size": 2883,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_stool/chinese_stool_1k.gltf",
+        "md5": "260547e2e492af393aedd6a6a460c3a1"
+      }
+    }
+  },
+  "usd": {
+    "8k": {
+      "usd": {
+        "include": {
+          "textures/chinese_stool_rough_8k.exr": {
+            "size": 35869802,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_rough_8k.exr",
+            "md5": "f7e9ba3d24ed5260c35f99f854051d25"
+          },
+          "textures/chinese_stool_diff_8k.jpg": {
+            "size": 36755808,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_diff_8k.jpg",
+            "md5": "74cf359b7e9b779563698b2ad65ad74a"
+          },
+          "textures/chinese_stool_nor_gl_8k.exr": {
+            "size": 75630595,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_nor_gl_8k.exr",
+            "md5": "61aaf57385bb676c51b516516ff88cc4"
+          }
+        },
+        "size": 63657,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/8k/chinese_stool/chinese_stool_8k.usdc",
+        "md5": "087e343e4389271ee63ca8eaffc1a1ae"
+      }
+    },
+    "4k": {
+      "usd": {
+        "include": {
+          "textures/chinese_stool_diff_4k.jpg": {
+            "size": 8375881,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_diff_4k.jpg",
+            "md5": "eef7174f0cb6b1238c91aaf7f7a86c68"
+          },
+          "textures/chinese_stool_nor_gl_4k.exr": {
+            "size": 22310165,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_nor_gl_4k.exr",
+            "md5": "c2f4414fc539be697c60eb1056f61537"
+          },
+          "textures/chinese_stool_rough_4k.exr": {
+            "size": 8050441,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_rough_4k.exr",
+            "md5": "c658b00f387f78c3ee626628b32a3ae7"
+          }
+        },
+        "size": 63657,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/4k/chinese_stool/chinese_stool_4k.usdc",
+        "md5": "48a14b55b19fde954a31f5a98d33ced7"
+      }
+    },
+    "2k": {
+      "usd": {
+        "include": {
+          "textures/chinese_stool_diff_2k.jpg": {
+            "size": 2086650,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_diff_2k.jpg",
+            "md5": "265dfa0e9f9a2e14915dec566635824a"
+          },
+          "textures/chinese_stool_nor_gl_2k.exr": {
+            "size": 5750391,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_nor_gl_2k.exr",
+            "md5": "1b708a467d087ee1c18a908fcbd8bb81"
+          },
+          "textures/chinese_stool_rough_2k.exr": {
+            "size": 1967564,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_rough_2k.exr",
+            "md5": "e589ba3072c6e6a341f8f9a98ddcf13e"
+          }
+        },
+        "size": 63658,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/2k/chinese_stool/chinese_stool_2k.usdc",
+        "md5": "c0d7edf4e642bb3a49a87e3819e297b5"
+      }
+    },
+    "1k": {
+      "usd": {
+        "include": {
+          "textures/chinese_stool_diff_1k.jpg": {
+            "size": 542758,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_diff_1k.jpg",
+            "md5": "10519c09d42b36c461540f3e727df211"
+          },
+          "textures/chinese_stool_nor_gl_1k.exr": {
+            "size": 1447547,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_nor_gl_1k.exr",
+            "md5": "51f091e3dad472817fc7479049185ff5"
+          },
+          "textures/chinese_stool_rough_1k.exr": {
+            "size": 530272,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_rough_1k.exr",
+            "md5": "12834bb1fa5603cddc8c38ed6ccaa440"
+          }
+        },
+        "size": 63657,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/usd/1k/chinese_stool/chinese_stool_1k.usdc",
+        "md5": "d00e218fc90add59c00717247ec2347a"
+      }
+    }
+  },
+  "arm": {
+    "8k": {
+      "jpg": {
+        "size": 38523033,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_arm_8k.jpg",
+        "md5": "8f99e003c29b99356cac393aed1dab1f"
+      },
+      "png": {
+        "size": 84455768,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_stool/chinese_stool_arm_8k.png",
+        "md5": "17ce87e4ebc7b584ea735cd8e27d78e7"
+      },
+      "exr": {
+        "size": 85882150,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_arm_8k.exr",
+        "md5": "29a0d13c9cca1fde60fab81bc9a7466a"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 8730439,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_arm_4k.jpg",
+        "md5": "398a6af4a965f69e12f3829b34117298"
+      },
+      "png": {
+        "size": 40331065,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_stool/chinese_stool_arm_4k.png",
+        "md5": "509542c5279b44e9ac20895ad0f199ba"
+      },
+      "exr": {
+        "size": 18996551,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_arm_4k.exr",
+        "md5": "595b9603c972db05e0580f5fb0eb17a0"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 2146772,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_arm_2k.jpg",
+        "md5": "63288d73a5f6bc69c08584feb4a47034"
+      },
+      "png": {
+        "size": 11737749,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_stool/chinese_stool_arm_2k.png",
+        "md5": "24c74111c7700b6070382b7e80596922"
+      },
+      "exr": {
+        "size": 4433710,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_arm_2k.exr",
+        "md5": "502a445cab96ae906488b510a8b3d3ec"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 578268,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_arm_1k.jpg",
+        "md5": "d73e325e36b12467d98283648bf98c10"
+      },
+      "png": {
+        "size": 3263468,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_stool/chinese_stool_arm_1k.png",
+        "md5": "31584587d2b334270a96d0b486e2f0bb"
+      },
+      "exr": {
+        "size": 1179715,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_arm_1k.exr",
+        "md5": "39ffaed11848d774615b16b093a5684b"
+      }
+    }
+  },
+  "fbx": {
+    "8k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_stool_rough_8k.exr": {
+            "size": 35869802,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_rough_8k.exr",
+            "md5": "f7e9ba3d24ed5260c35f99f854051d25"
+          },
+          "textures/chinese_stool_diff_8k.jpg": {
+            "size": 36755808,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_diff_8k.jpg",
+            "md5": "74cf359b7e9b779563698b2ad65ad74a"
+          },
+          "textures/chinese_stool_nor_gl_8k.exr": {
+            "size": 75630595,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_nor_gl_8k.exr",
+            "md5": "61aaf57385bb676c51b516516ff88cc4"
+          }
+        },
+        "size": 58636,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/8k/chinese_stool/chinese_stool_8k.fbx",
+        "md5": "ee32d1bd7b302fd5c58eef54fbfeddb8"
+      }
+    },
+    "4k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_stool_diff_4k.jpg": {
+            "size": 8375881,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_diff_4k.jpg",
+            "md5": "eef7174f0cb6b1238c91aaf7f7a86c68"
+          },
+          "textures/chinese_stool_nor_gl_4k.exr": {
+            "size": 22310165,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_nor_gl_4k.exr",
+            "md5": "c2f4414fc539be697c60eb1056f61537"
+          },
+          "textures/chinese_stool_rough_4k.exr": {
+            "size": 8050441,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_rough_4k.exr",
+            "md5": "c658b00f387f78c3ee626628b32a3ae7"
+          }
+        },
+        "size": 58636,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/4k/chinese_stool/chinese_stool_4k.fbx",
+        "md5": "dd1faf3408314f426ed2b731760b265b"
+      }
+    },
+    "2k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_stool_diff_2k.jpg": {
+            "size": 2086650,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_diff_2k.jpg",
+            "md5": "265dfa0e9f9a2e14915dec566635824a"
+          },
+          "textures/chinese_stool_nor_gl_2k.exr": {
+            "size": 5750391,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_nor_gl_2k.exr",
+            "md5": "1b708a467d087ee1c18a908fcbd8bb81"
+          },
+          "textures/chinese_stool_rough_2k.exr": {
+            "size": 1967564,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_rough_2k.exr",
+            "md5": "e589ba3072c6e6a341f8f9a98ddcf13e"
+          }
+        },
+        "size": 58636,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/2k/chinese_stool/chinese_stool_2k.fbx",
+        "md5": "9e38652e41af930181490648acae9125"
+      }
+    },
+    "1k": {
+      "fbx": {
+        "include": {
+          "textures/chinese_stool_diff_1k.jpg": {
+            "size": 542758,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_diff_1k.jpg",
+            "md5": "10519c09d42b36c461540f3e727df211"
+          },
+          "textures/chinese_stool_nor_gl_1k.exr": {
+            "size": 1447547,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_nor_gl_1k.exr",
+            "md5": "51f091e3dad472817fc7479049185ff5"
+          },
+          "textures/chinese_stool_rough_1k.exr": {
+            "size": 530272,
+            "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_rough_1k.exr",
+            "md5": "12834bb1fa5603cddc8c38ed6ccaa440"
+          }
+        },
+        "size": 58636,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/fbx/1k/chinese_stool/chinese_stool_1k.fbx",
+        "md5": "88e195f6a08cfcb46267eb3a3cb6d0d5"
+      }
+    }
+  },
+  "AO": {
+    "8k": {
+      "jpg": {
+        "size": 19706262,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_ao_8k.jpg",
+        "md5": "f5db106e2b8f8b264e0bf81f054705b2"
+      },
+      "png": {
+        "size": 23589831,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_stool/chinese_stool_ao_8k.png",
+        "md5": "dbd28c2df31fe660f3265e44ef08807c"
+      },
+      "exr": {
+        "size": 19047449,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_ao_8k.exr",
+        "md5": "5f2f76009bc8e9b26a6f371e517eed0a"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 5552935,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_ao_4k.jpg",
+        "md5": "82c5e3d593b763bafe9084fec53ad7cf"
+      },
+      "png": {
+        "size": 14009055,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_stool/chinese_stool_ao_4k.png",
+        "md5": "27d0c406b60679cde80f51186904dc94"
+      },
+      "exr": {
+        "size": 5674285,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_ao_4k.exr",
+        "md5": "8e2da9a2848b7647f8434cf28d99baf4"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1272033,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_ao_2k.jpg",
+        "md5": "4feb8f5a83ed5f15d1402103f68e48b8"
+      },
+      "png": {
+        "size": 4341562,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_stool/chinese_stool_ao_2k.png",
+        "md5": "25c6e5936fc9134e5f41626a4733a842"
+      },
+      "exr": {
+        "size": 1305131,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_ao_2k.exr",
+        "md5": "376d8d764441662d0134b8187cbb3090"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 321548,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_ao_1k.jpg",
+        "md5": "dba1ae5f95197575b9218fd121027407"
+      },
+      "png": {
+        "size": 1246827,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_stool/chinese_stool_ao_1k.png",
+        "md5": "fc9ecb5fe9173edc45133e23c93e75d2"
+      },
+      "exr": {
+        "size": 343957,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_ao_1k.exr",
+        "md5": "fe9ba7f26bda66f26a4c4834e441048b"
+      }
+    }
+  },
+  "Rough": {
+    "8k": {
+      "jpg": {
+        "size": 33919468,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/chinese_stool/chinese_stool_rough_8k.jpg",
+        "md5": "f891a202ea6985bd54c92fb68f5d5eca"
+      },
+      "png": {
+        "size": 51783148,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/chinese_stool/chinese_stool_rough_8k.png",
+        "md5": "172548885df9e42db7edc3f582baef1d"
+      },
+      "exr": {
+        "size": 35869802,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/chinese_stool/chinese_stool_rough_8k.exr",
+        "md5": "f7e9ba3d24ed5260c35f99f854051d25"
+      }
+    },
+    "4k": {
+      "jpg": {
+        "size": 7527177,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/chinese_stool/chinese_stool_rough_4k.jpg",
+        "md5": "ee4a73eee35abb153fe415567f2302fb"
+      },
+      "png": {
+        "size": 19390566,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/chinese_stool/chinese_stool_rough_4k.png",
+        "md5": "a6e2a95d9292a37fe08b0cebd5504b12"
+      },
+      "exr": {
+        "size": 8050441,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/chinese_stool/chinese_stool_rough_4k.exr",
+        "md5": "c658b00f387f78c3ee626628b32a3ae7"
+      }
+    },
+    "2k": {
+      "jpg": {
+        "size": 1820815,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/chinese_stool/chinese_stool_rough_2k.jpg",
+        "md5": "37662ecb50aaeb22999cbd9ada579521"
+      },
+      "png": {
+        "size": 5707083,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/chinese_stool/chinese_stool_rough_2k.png",
+        "md5": "00b1b04c82fb806d35e252e0f3fe0f35"
+      },
+      "exr": {
+        "size": 1967564,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/chinese_stool/chinese_stool_rough_2k.exr",
+        "md5": "e589ba3072c6e6a341f8f9a98ddcf13e"
+      }
+    },
+    "1k": {
+      "jpg": {
+        "size": 475286,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_stool/chinese_stool_rough_1k.jpg",
+        "md5": "472cbed4b7f4382eccb03de76062b528"
+      },
+      "png": {
+        "size": 1547838,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/chinese_stool/chinese_stool_rough_1k.png",
+        "md5": "6d33f20e1e5278e768dc862010962e15"
+      },
+      "exr": {
+        "size": 530272,
+        "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/chinese_stool/chinese_stool_rough_1k.exr",
+        "md5": "12834bb1fa5603cddc8c38ed6ccaa440"
+      }
+    }
+  }
+}

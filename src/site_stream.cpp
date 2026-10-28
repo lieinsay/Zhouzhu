@@ -225,7 +225,7 @@ JobPool::Work SiteStream::cell_job(WorldVillage *p_village, int p_cell) const {
                 continue;
             }
             const HouseTemplate tmpl = !def->house ? HouseTemplate() : (templates ? templates->resolve(item.building) : bare_template(*def));
-            out->buildings.push_back(to_building_arrays(build_building_mesh(ground, item.frame, item.building, tmpl, item.index)));
+            out->buildings.push_back(to_building_arrays(build_building_mesh(ground, item.frame, item.building, tmpl, item.index,true)));
         }
         return out;
     };

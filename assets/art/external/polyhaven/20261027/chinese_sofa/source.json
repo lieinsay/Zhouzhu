@@ -1,0 +1,40 @@
+{
+  "author": {
+    "Kirill Sannikov": "All"
+  },
+  "license": "CC0-1.0",
+  "url": "https://polyhaven.com/a/chinese_sofa",
+  "licenseUrl": "https://polyhaven.com/license",
+  "files": [
+    {
+      "path": "chinese_sofa_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/chinese_sofa/chinese_sofa_1k.gltf",
+      "sha256": "33f9f1bf014bea843f24944ed5ed2b0de0ba0ba1728ddac85fc79eb5aa2e6dce",
+      "md5": "6ccb6fbfbedbb2a5c3ded708448d0784"
+    },
+    {
+      "path": "textures/chinese_sofa_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_diff_1k.jpg",
+      "sha256": "fb512b25971ff1fa17d8049e9687fb232195b73fcf98ebf55e277df2d2d6bca3",
+      "md5": "6c7f09885790b40d7b21df59ec2e9952"
+    },
+    {
+      "path": "textures/chinese_sofa_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_arm_1k.jpg",
+      "sha256": "d0aabd7f28848c3f1189f768a50a29bc32ccdef2f557f91160080a47890be0f7",
+      "md5": "dcd64dc00367f4dbfabd0d94eb18b5b0"
+    },
+    {
+      "path": "chinese_sofa.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/chinese_sofa/chinese_sofa.bin",
+      "sha256": "5e91e3bc0d8bed2c7260501feca7d24eb355f2477a3ad2ca5e782351616cca4f",
+      "md5": "6d5166585d031df7e90cb264780ec5b8"
+    },
+    {
+      "path": "textures/chinese_sofa_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/chinese_sofa/chinese_sofa_nor_gl_1k.jpg",
+      "sha256": "6c7b73f4c1b38d8e26d35df1deb8f38af2f74fd08597a3a52645a41c6a417735",
+      "md5": "83753c91cce4ee813ef24a8863053d24"
+    }
+  ]
+}

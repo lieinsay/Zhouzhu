@@ -1,0 +1,851 @@
+{
+  "actors": [
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 3,
+      "left_grip_error": 0.0,
+      "model_id": "actor.young_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 0
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 0,
+      "left_grip_error": 0.0105320122092962,
+      "model_id": "actor.mature_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0329396650195122,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 1
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 158,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/female/v1/model.glb",
+      "head_height": 1.40795135498047,
+      "height_without_hat": 1.68,
+      "imported_model": true,
+      "job": 1,
+      "left_grip_error": 0.00861888099461794,
+      "model_id": "actor.young_female",
+      "model_path": "res://art/models/actors/female/v1/model.glb",
+      "right_grip_error": 0.00842983648180962,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 2
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 158,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/female/v1/model.glb",
+      "head_height": 1.40795135498047,
+      "height_without_hat": 1.68,
+      "imported_model": true,
+      "job": 0,
+      "left_grip_error": 0.00981074012815952,
+      "model_id": "actor.mature_female",
+      "model_path": "res://art/models/actors/female/v1/model.glb",
+      "right_grip_error": 0.028595419600606,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 3
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 1,
+      "left_grip_error": 0.0101641975343227,
+      "model_id": "actor.young_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0104252668097615,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 0
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 0,
+      "left_grip_error": 0.0105291837826371,
+      "model_id": "actor.mature_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0329301357269287,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 1
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 158,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/female/v1/model.glb",
+      "head_height": 1.40795135498047,
+      "height_without_hat": 1.68,
+      "imported_model": true,
+      "job": 1,
+      "left_grip_error": 0.00861861184239388,
+      "model_id": "actor.young_female",
+      "model_path": "res://art/models/actors/female/v1/model.glb",
+      "right_grip_error": 0.00843282323330641,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 2
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 158,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/female/v1/model.glb",
+      "head_height": 1.40795135498047,
+      "height_without_hat": 1.68,
+      "imported_model": true,
+      "job": 0,
+      "left_grip_error": 0.00981585308909416,
+      "model_id": "actor.mature_female",
+      "model_path": "res://art/models/actors/female/v1/model.glb",
+      "right_grip_error": 0.0286168064922094,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 3
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 1,
+      "left_grip_error": 0.010162909515202,
+      "model_id": "actor.young_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0104253860190511,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 0
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 0,
+      "left_grip_error": 0.0105343535542488,
+      "model_id": "actor.mature_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0329408459365368,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 1
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 158,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/female/v1/model.glb",
+      "head_height": 1.40795135498047,
+      "height_without_hat": 1.68,
+      "imported_model": true,
+      "job": 1,
+      "left_grip_error": 0.00861769076436758,
+      "model_id": "actor.young_female",
+      "model_path": "res://art/models/actors/female/v1/model.glb",
+      "right_grip_error": 0.00843481626361609,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 2
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 158,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/female/v1/model.glb",
+      "head_height": 1.40795135498047,
+      "height_without_hat": 1.68,
+      "imported_model": true,
+      "job": 0,
+      "left_grip_error": 0.00981600489467382,
+      "model_id": "actor.mature_female",
+      "model_path": "res://art/models/actors/female/v1/model.glb",
+      "right_grip_error": 0.0286151804029942,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 3
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 1,
+      "left_grip_error": 0.0101643465459347,
+      "model_id": "actor.young_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0104246949777007,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 0
+    },
+    {
+      "adult": true,
+      "animation": "idle",
+      "bones": 117,
+      "face_loaded": true,
+      "face_path": "res://art/models/actors/male/v1/model.glb",
+      "head_height": 1.50624084472656,
+      "height_without_hat": 1.78,
+      "imported_model": true,
+      "job": 4,
+      "left_grip_error": 0.0,
+      "model_id": "actor.young_male",
+      "model_path": "res://art/models/actors/male/v1/model.glb",
+      "right_grip_error": 0.0,
+      "skinned_clothing": 2,
+      "skinned_meshes": 5,
+      "textured_surfaces": 16,
+      "variant": 0
+    }
+  ],
+  "clockDay": 0,
+  "controlledTools": [
+    {
+      "job": 0,
+      "scope": "受控工具与蒙皮装配；不是自然NPC工作画面",
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.5018562078476,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0109855094924569,
+        "model_id": "actor.mature_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0258171893656254,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 1
+      },
+      "toolSource": "/root/ActorWorld/FlatMap/Map/Villagers/Villager1/Tool",
+      "variant": 1
+    },
+    {
+      "job": 1,
+      "scope": "受控工具与蒙皮装配；不是自然NPC工作画面",
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40422058105469,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.00859272107481956,
+        "model_id": "actor.young_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.00853851623833179,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 2
+      },
+      "toolSource": "/root/ActorWorld/FlatMap/Map/Villagers/Villager2/Tool",
+      "variant": 2
+    },
+    {
+      "job": 0,
+      "scope": "受控工具与蒙皮装配；不是自然NPC工作画面",
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 158,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/female/v1/model.glb",
+        "head_height": 1.40422058105469,
+        "height_without_hat": 1.68,
+        "imported_model": true,
+        "job": 0,
+        "left_grip_error": 0.0102152274921536,
+        "model_id": "actor.mature_female",
+        "model_path": "res://art/models/actors/female/v1/model.glb",
+        "right_grip_error": 0.0233908407390118,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 3
+      },
+      "toolSource": "/root/ActorWorld/FlatMap/Map/Villagers/Villager3/Tool",
+      "variant": 3
+    },
+    {
+      "job": 1,
+      "scope": "受控工具与蒙皮装配；不是自然NPC工作画面",
+      "state": {
+        "adult": true,
+        "animation": "idle",
+        "bones": 117,
+        "face_loaded": true,
+        "face_path": "res://art/models/actors/male/v1/model.glb",
+        "head_height": 1.5018562078476,
+        "height_without_hat": 1.78,
+        "imported_model": true,
+        "job": 1,
+        "left_grip_error": 0.0100975381210446,
+        "model_id": "actor.young_male",
+        "model_path": "res://art/models/actors/male/v1/model.glb",
+        "right_grip_error": 0.0105931721627712,
+        "skinned_clothing": 2,
+        "skinned_meshes": 5,
+        "textured_surfaces": 16,
+        "variant": 0
+      },
+      "toolSource": "/root/ActorWorld/FlatMap/Map/Villagers/Villager4/Tool",
+      "variant": 0
+    }
+  ],
+  "count": 14,
+  "furnitureInstances": [
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.table",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.table",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@99"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@100"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@101"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@102"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@103"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.vat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@104"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.vat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@105"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.stove",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@106"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@107"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@108"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.chest",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@109"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.sacks",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B0_hall/Level0/@Node3D@110"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bin",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B1_granary/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bin",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B1_granary/Level0/@Node3D@111"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.sacks",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B1_granary/Level0/@Node3D@112"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.sacks",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B1_granary/Level0/@Node3D@113"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.loom",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B2_house/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.loom",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B2_house/Level0/@Node3D@114"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B2_house/Level0/@Node3D@115"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.sacks",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B2_house/Level0/@Node3D@116"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B2_house/Level0/@Node3D@117"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bed",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B2_house/Level0/@Node3D@118"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.chest",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B2_house/Level0/@Node3D@119"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.altar",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.table",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@120"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@121"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bed",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@122"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.chest",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@123"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.mat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@124"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.stove",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@125"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.vat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@126"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B3_house/Level0/@Node3D@127"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.loom",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B4_house/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.loom",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B4_house/Level0/@Node3D@128"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B4_house/Level0/@Node3D@129"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.sacks",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B4_house/Level0/@Node3D@130"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B4_house/Level0/@Node3D@131"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bed",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B4_house/Level0/@Node3D@132"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.chest",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B4_house/Level0/@Node3D@133"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.loom",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B5_house/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.loom",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B5_house/Level0/@Node3D@134"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B5_house/Level0/@Node3D@135"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.sacks",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B5_house/Level0/@Node3D@136"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B5_house/Level0/@Node3D@137"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bed",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B5_house/Level0/@Node3D@138"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.chest",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B5_house/Level0/@Node3D@139"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.altar",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.table",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@140"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@141"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bed",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@142"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.chest",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@143"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.mat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@144"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.stove",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@145"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.vat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@146"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B6_house/Level0/@Node3D@147"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.altar",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/model"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.table",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@148"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bench",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@149"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.bed",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@150"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.chest",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@151"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.mat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@152"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.stove",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@153"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.vat",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@154"
+    },
+    {
+      "fallback": false,
+      "group": "Level0",
+      "id": "furniture.shelf",
+      "path": "/root/ActorWorld/FlatMap/Map/Settlement/B7_house/Level0/@Node3D@155"
+    }
+  ],
+  "naturalNpcActivities": [
+    {
+      "activity": "在屋里",
+      "job": "idler",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "farmer",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "carrier",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "farmer",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "carrier",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "farmer",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "carrier",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "farmer",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "carrier",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "farmer",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "carrier",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "farmer",
+      "phase": 0,
+      "visible": false
+    },
+    {
+      "activity": "在屋里",
+      "job": "carrier",
+      "phase": 0,
+      "visible": false
+    }
+  ],
+  "passed": true,
+  "renderer": "headless",
+  "scope": "真实开发地图同一World3D离屏镜头，聚落/玩家实际状态与自动时间推进；示例地图不冒充seed42暴雨开局；受控工具装配与自然NPC状态分别记录",
+  "shipCargoAuthored": true,
+  "visibleJobsCaptured": []
+}
