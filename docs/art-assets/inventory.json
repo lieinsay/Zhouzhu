@@ -1956,6 +1956,23 @@
       "material": 22,
       "character": 4
     },
-    "boundary": "覆盖当前已定义图片槽；需求快照、未来候选和程序数据仍不作为生图队列，模型精修单独登记"
+    "boundary": "覆盖当前已定义图片槽；需求快照、未来候选和程序数据仍不作为生图队列，模型精修单独登记",
+    "model_upgrade": {
+      "record": "docs/art-assets/MODEL-UPGRADE-20261027.md",
+      "acceptance": "assets/art/acceptance/model-upgrade-20261027.json",
+      "entity_registry": "assets/art/model-registry.json",
+      "entity_bindings": "game/art/model-bindings.json",
+      "logical_identities": 18,
+      "unique_glbs": 16,
+      "actor_identities": 4,
+      "furniture": 13,
+      "props": 1,
+      "preview_versions": {
+        "module": "v3",
+        "building": "v4",
+        "furniture": "v3"
+      },
+      "user_individual_confirmation": null
+    }
   }
 }
