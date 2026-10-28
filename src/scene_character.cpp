@@ -60,6 +60,7 @@ void SceneCharacter::_bind_methods(){
     ClassDB::bind_method(D_METHOD("configure","variant","job","hat"),&SceneCharacter::configure);
     ClassDB::bind_method(D_METHOD("animate","delta","speed","tool_angle","working"),&SceneCharacter::animate,DEFVAL(0.0),DEFVAL(false));
     ClassDB::bind_method(D_METHOD("get_visual_state"),&SceneCharacter::get_visual_state);
+    ClassDB::bind_method(D_METHOD("set_tool_frame","frame"),&SceneCharacter::set_tool_frame);
 }
 void SceneCharacter::configure(int p_variant,int p_job,bool p_hat){variant=((p_variant%4)+4)%4;job=std::clamp(p_job,0,4);hat=p_hat;if(is_inside_tree()&&looks)build();}
 void SceneCharacter::_ready(){if(!looks){own_looks=std::make_unique<SharedLooks>();looks=own_looks.get();}build();}
@@ -120,10 +121,10 @@ void SceneCharacter::animate(double delta,double speed,double tool_angle,bool wo
         animation->advance(std::max(.000001,delta));skeleton->force_update_all_bone_transforms();phase+=std::max(0.0,delta);
         right_grip_error=left_grip_error=0;
         const float height_shift=variant>=2?-.10f:0.0f;
-        if(job==0){const Basis rotation(Vector3(1,0,0),real_t(tool_angle));const Vector3 pivot(0,1.12f+height_shift,.05f);
-            arm_ik(false,pivot+rotation.xform(Vector3(0,-.04f,.20f)));arm_ik(true,pivot+rotation.xform(Vector3(0,.16f,.20f)));}
-        else if(job==1){arm_ik(false,Vector3(-.38f,1.32f+height_shift,0));arm_ik(true,Vector3(.38f,1.32f+height_shift,0));}
-        else if(job==2)arm_ik(false,Vector3(-.30f,1.12f+height_shift,.17f));
+        if(job==0){const Transform3D frame=has_tool_frame?tool_frame:Transform3D(Basis(Vector3(1,0,0),real_t(tool_angle)),Vector3(0,1.12f+height_shift,.05f));
+            arm_ik(false,frame.xform(Vector3(0,-.04f,.20f)));arm_ik(true,frame.xform(Vector3(0,.16f,.20f)));}
+        else if(job==1){const Transform3D frame=has_tool_frame?tool_frame:carrier_support_frame();arm_ik(false,frame.xform(Vector3(-.38f,0,0)));arm_ik(true,frame.xform(Vector3(.38f,0,0)));}
+        else if(job==2){const Transform3D frame=has_tool_frame?tool_frame:Transform3D(Basis(),Vector3(-.30f,1.2f,.05f));arm_ik(false,frame.xform(Vector3(0,-.08f,.12f)));}
         else if(carrying){arm_ik(false,Vector3(.40f,1.05f,-.40f));arm_ik(true,Vector3(-.40f,1.05f,-.40f));}
         if(job<3||carrying){const Array keys=grip_pose.keys();for(int i=0;i<keys.size();++i){const String name=keys[i];const int bone=skeleton->find_bone(name);const Array values=grip_pose[name];if(bone<0||values.size()!=4)continue;
             Quaternion q(values[0],values[1],values[2],values[3]);
@@ -154,12 +155,21 @@ bool SceneCharacter::build_imported(){
     prepare_imported(imported_model);
     if(!skeleton||!animation||skinned_meshes==0){remove_child(imported_model);imported_model->queue_free();imported_model=nullptr;return false;}
     animation->set_callback_mode_process(AnimationMixer::ANIMATION_CALLBACK_MODE_PROCESS_MANUAL);
-    const PackedStringArray clips=animation->get_animation_list();for(int i=0;i<clips.size();++i){const Ref<Animation> clip=animation->get_animation(clips[i]);if(clip.is_valid()&&(clips[i]==String("idle")||clips[i]==String("walk")||clips[i]==String("run")))clip->set_loop_mode(Animation::LOOP_LINEAR);}
+    const PackedStringArray clips=animation->get_animation_list();for(int i=0;i<clips.size();++i){const Ref<Animation> clip=animation->get_animation(clips[i]);if(clip.is_valid()&&(clips[i]==String("idle")||clips[i]==String("walk")||clips[i]==String("run")||clips[i]==String("work")||clips[i]==String("carry")))clip->set_loop_mode(Animation::LOOP_LINEAR);}
     face_loaded=true;face_path=model_path;animate(0,0);
     if(hat){const int head=skeleton->find_bone("J_Bip_C_Head");if(head>=0){auto *attachment=memnew(BoneAttachment3D);attachment->set_name("HeadAccessory");attachment->set_bone_idx(head);skeleton->add_child(attachment);
         const auto material=looks->surface_material(job==2?"material.hemp":"material.straw",job==2?Color(.55,.20,.17):Color(.78,.68,.42));auto *cap=mesh(attachment,"Hat",cylinder(*looks,job==2?.15:.025,job==2?.19:.34,job==2?.14:.16,material),Vector3());
         const Transform3D head_world=skeleton->get_global_transform()*skeleton->get_bone_global_pose(head);const Transform3D desired=get_global_transform()*Transform3D(Basis(),Vector3(0,variant>=2?1.66f:1.76f,0));cap->set_transform(head_world.affine_inverse()*desired);}}
     return true;
+}
+Transform3D SceneCharacter::carrier_support_frame() const{
+    if(!skeleton)return Transform3D(Basis(),Vector3(0,variant>=2?1.22f:1.32f,0));
+    const int l=skeleton->find_bone("J_Bip_L_UpperArm"),r=skeleton->find_bone("J_Bip_R_UpperArm");
+    if(l<0||r<0)return Transform3D(Basis(),Vector3(0,variant>=2?1.22f:1.32f,0));
+    const Vector3 a=to_local(skeleton->to_global(skeleton->get_bone_global_pose(l).origin)),b=to_local(skeleton->to_global(skeleton->get_bone_global_pose(r).origin));
+    const Vector3 x=(a-b).normalized(),z=x.cross(Vector3(0,1,0)).normalized(),y=z.cross(x).normalized();
+    // 骨关节在衣物内部：肩面承托留5.5cm，扁担后移到颈后，避免原1.32m横穿上胸。
+    return Transform3D(Basis(x,y,z),(a+b)*.5f+y*.055f-z*.06f);
 }
 void SceneCharacter::prepare_imported(Node *node){
     if(auto *rig=Object::cast_to<Skeleton3D>(node))skeleton=rig;

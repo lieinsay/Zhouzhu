@@ -13,6 +13,8 @@
 // 实体工坊 /art.html → 三维实体模型，独立应用到game/art/model-bindings.json；不应用内容草稿。
 // prepare_furniture.py / publish_furniture.py详见tools/art-models/README.md；furniture_models_e2e.tscn检查实际器物。
 // --model-bindings=res://art/model-bindings-review.json仅供显式试接入，默认仍读取正式绑定；不要覆盖历史版本。
+// NPC自然动作验收：python tools/observe-npc-visuals.py --help；npc_visual_observer.tscn只观察原任务、正常时钟与天气。
+// --visible沿用可见窗口授权；--scene seed42 --village 24仅移动观察者到源聚落，禁止拨钟或改NPC来补截图。
 #include "dev_manual.h"
 
 #include "input_actions.h"

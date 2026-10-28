@@ -21,7 +21,7 @@ func controlled_tools(actors:Array)->Array:
 		if original_tool==null:continue
 		seen[key]=true;var root:=Node3D.new();world.add_child(root)
 		var actor:=SceneCharacter.new();actor.configure(state.variant,state.job,true);root.add_child(actor)
-		root.add_child(original_tool.duplicate(0))
+		var copied_tool:Node3D=original_tool.duplicate(0);root.add_child(copied_tool);actor.set_tool_frame(copied_tool.transform)
 		for i in 24:actor.animate(1.0/60,0)
 		await frames(5)
 		check(actor.get_visual_state().right_grip_error<.055,"实际工具样件掌心误差")

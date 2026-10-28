@@ -1,5 +1,6 @@
 #include "villagers.h"
 #include "scene_character.h"
+#include "art_mesh.h"
 
 #include <algorithm>
 #include <cmath>
@@ -446,9 +447,10 @@ void Villagers::build_body(Body &r_body, const PersonState &p_person, int p_inde
             tool->set_position(Vector3(0,1.32f-(p_index%4>=2?.10f:0),0));
             add_mesh(tool, "Pole", box(l, Vector3(1.7f, 0.05f, 0.06f), mat_wood), Vector3());
             for (real_t side : { -0.8f, 0.8f }) {
-                add_mesh(tool, side < 0 ? "RopeL" : "RopeR", box(l, Vector3(0.02f, 0.55f, 0.02f), mat_wood), Vector3(side, -0.28f, 0));
-                add_mesh(tool, side < 0 ? "BucketL" : "BucketR", cylinder(l, 0.17f, 0.14f, 0.34f, mat_wood), Vector3(side, -0.7f, 0));
-                add_mesh(load, side < 0 ? "WaterL" : "WaterR", cylinder(l, 0.155f, 0.155f, 0.03f, mat_water), Vector3(side,1.32f-.54f-(p_index%4>=2?.10f:0),0));
+                add_mesh(tool, side < 0 ? "RopeL" : "RopeR", box(l, Vector3(0.02f, 0.55f, 0.02f), mat_sack), Vector3(side, -0.28f, 0));
+                BoxPart bucket;bucket.shape=VisualShape::BIN;bucket.sx=bucket.sy=bucket.sz=.34;
+                add_mesh(tool, side < 0 ? "BucketL" : "BucketR",l.mesh("villager_open_bucket",[&](){return Ref<Mesh>(art_mesh::shape(bucket,mat_wood));}),Vector3(side,-.7f,0));
+                add_mesh(load, side < 0 ? "WaterL" : "WaterR", cylinder(l, 0.139f, 0.139f, 0.02f, mat_water), Vector3(side,-.55f,0));
             }
             break;
         case Job::WATCHMAN:
@@ -496,6 +498,7 @@ void Villagers::place_body(Body &r_body, const PersonState &p_person, double p_d
     Vector3 tool_rot;
     if (p_person.phase == FolkPhase::WALKING) {
         bob = 0.04 * std::abs(std::sin(r_body.anim * 7.0));
+        if(m.who.job==Job::FARMER)tool_rot.x=-.30f; // 行走时略抬锄刃，避免短体型拖地；双手仍按实际工具求解。
     } else if (p_person.phase == FolkPhase::WORKING) {
         switch (p_person.task.kind) {
             case TaskKind::TILL:
@@ -519,16 +522,58 @@ void Villagers::place_body(Body &r_body, const PersonState &p_person, double p_d
         }
     }
     const double y = ground_y(m.x, m.z);
-    if(r_body.character&&r_body.character->uses_imported_model()){if(p_person.phase==FolkPhase::WALKING)bob=0;if(p_person.phase==FolkPhase::WORKING&&m.who.job==Job::FARMER)lean=0;}
+    if(r_body.character&&r_body.character->uses_imported_model()){if(p_person.phase==FolkPhase::WALKING)bob=0;if(p_person.phase==FolkPhase::WORKING&&(m.who.job==Job::FARMER||m.who.job==Job::CARRIER))lean=0;}
     r_body.root->set_position(Vector3(real_t(m.x), real_t(y + bob), real_t(m.z)));
     r_body.root->set_rotation(Vector3(real_t(lean), real_t(r_body.yaw + sway), 0));
     if (r_body.tool && m.who.job != Job::CARRIER) {
         r_body.tool->set_rotation(tool_rot);
     }
+    if(r_body.tool&&m.who.job==Job::FARMER){
+        double height=1.12-(m.index%4>=2?.10:0.0);
+        if(p_person.phase==FolkPhase::WORKING&&(p_person.task.kind==TaskKind::TILL||p_person.task.kind==TaskKind::TEND)){
+            // 同一把锄的刃底在支点下1.025米；按真实落点校准，不能随男女身高悬空。
+            // 只调工具视觉支点，地形、任务格、生产计时和人物根位置不变。
+            double contact_ground=-std::numeric_limits<double>::infinity();
+            for(double x:{-.11,.11})for(double z:{.23,.53}){
+                const Vector3 point=r_body.root->get_transform().xform(Vector3(real_t(x),0,real_t(z)));
+                contact_ground=std::max(contact_ground,ground_y(point.x,point.z));
+            }
+            height=1.01+std::clamp(contact_ground-y,-.25,.25); // 约1.5厘米浅入土，不以改地面达到接触。
+        }
+        Vector3 at=r_body.tool->get_position();at.y=real_t(Math::lerp(double(at.y),height,p_delta>0?1.0-std::exp(-24.0*p_delta):1.0));r_body.tool->set_position(at);
+    }
+    if(r_body.tool&&m.who.job==Job::CARRIER){
+        if(r_body.character&&r_body.character->uses_imported_model())r_body.tool->set_transform(r_body.character->carrier_support_frame());
+        if(r_body.load)r_body.load->set_transform(r_body.tool->get_transform());
+        r_body.tool->set_meta("water_contact_available",false);
+        for(real_t side:{-.8f,.8f}){
+            const bool right=side>0;auto *bucket=r_body.tool->get_node<Node3D>(right?"BucketR":"BucketL");
+            Vector3 at(side,-.7f,0);
+            if(right&&ground&&p_person.phase==FolkPhase::WORKING&&p_person.task.kind==TaskKind::FETCH_WATER){
+                double bottom=0;const double depth=ground->water_depth(p_person.task.face_x,p_person.task.face_z);
+                if(depth>0&&ground->walk_height(p_person.task.face_x,p_person.task.face_z,bottom)){
+                    const Vector3 surface=host_transform().xform(Vector3(real_t(p_person.task.face_x),real_t(bottom+depth),real_t(p_person.task.face_z)));
+                    const double progress=std::clamp(1.0-p_person.timer/std::max(.1,p_person.task.seconds),0.0,1.0);
+                    const double dip=std::pow(std::sin(Math_PI*progress),2);
+                    at=at.lerp(r_body.tool->to_local(surface+Vector3(0,.14f,0)),real_t(dip));
+                    r_body.tool->set_meta("water_contact_available",true);r_body.tool->set_meta("water_surface_target",surface);r_body.tool->set_meta("water_dip",dip);
+                }
+            }
+            bucket->set_position(at);Transform3D upright=bucket->get_transform();upright.basis=r_body.tool->get_global_transform().basis.inverse();bucket->set_transform(upright);
+            auto *rope=r_body.tool->get_node<Node3D>(right?"RopeR":"RopeL");const Vector3 a(side,-.025f,0),b=r_body.tool->to_local(bucket->get_global_position()+Vector3(0,.17f,0));const Vector3 axis=(b-a).normalized();
+            Vector3 x=Vector3(1,0,0)-axis*axis.x;if(x.length_squared()<.0001f)x=Vector3(0,0,1)-axis*axis.z;x.normalize();const Vector3 z=x.cross(axis).normalized();
+            rope->set_transform(Transform3D(Basis(x,axis*real_t(a.distance_to(b)/.55),z),(a+b)*.5f));
+            if(r_body.load){auto *water_mesh=r_body.load->get_node<Node3D>(right?"WaterR":"WaterL");water_mesh->set_global_transform(Transform3D(Basis(),bucket->get_global_position()+Vector3(0,.15f,0)));}
+        }
+    }
     if (r_body.load) {
         r_body.load->set_visible(!m.carrying.empty());
     }
-    if(r_body.character)r_body.character->animate(p_delta,p_person.phase==FolkPhase::WALKING?walk_speed:0,tool_rot.x,p_person.phase==FolkPhase::WORKING&&m.who.job==Job::FARMER);
+    if(r_body.character){
+        if(r_body.tool)r_body.character->set_tool_frame(r_body.character->get_transform().affine_inverse()*r_body.tool->get_transform());
+        const bool farming_work=p_person.phase==FolkPhase::WORKING&&m.who.job==Job::FARMER&&(p_person.task.kind==TaskKind::TILL||p_person.task.kind==TaskKind::TEND||p_person.task.kind==TaskKind::SOW||p_person.task.kind==TaskKind::HARVEST);
+        r_body.character->animate(p_delta,p_person.phase==FolkPhase::WALKING?p_person.speed:0,tool_rot.x,farming_work);
+    }
     refresh_label(r_body, p_person);
 }
 

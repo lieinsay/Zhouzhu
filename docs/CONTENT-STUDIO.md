@@ -175,3 +175,7 @@ VPN 入口扩展的 10 项定向检查通过，覆盖实际双地址同端口、
 模型API定向检查：`python -m unittest discover -s tools/content-studio/test_python -p test_model_art.py`。页面切换图片/实体时保留各自未暂存选择，应用只影响当前类。
 
 作者器物：`prepare_furniture.py`在Blender精修，`publish_furniture.py`按已审GPU SHA登记实体与同源图片。`furniture_models_e2e.tscn`验13家具/统一货箱；`scene_visuals_e2e.tscn -- --world-only --skip-interfaces`仅检查原始开局，不重新跑已通过的预览。完整流程与CLI见`tools/art-models/README.md`，本轮验收见`docs/art-assets/MODEL-UPGRADE-20261027.md`。
+
+### NPC自然动作观察
+
+`python tools/observe-npc-visuals.py --scene seed42 --village 24 --duration 180 --output output/npc-visual-20261028/run-name`运行`npc_visual_observer.tscn`，默认无头；获准后加`--visible`保存实际NPC连续像素。村坐标从当前源表读取，只移动观察者，原任务、时钟1倍、作息、天气、庄稼速度均不改。输出目录须全新且在output内，原聚落布局只读复制，存档隔离。`--scene main/flat`检查既有双岛/平板场景，须与带真实气候数据的seed42分别汇报；这些场景没有源天气数据，不能冒充剧情天气验收。每10秒保存进度、每个动作按真实相位捕获；落锄间隙由实际刃底到碰撞地面的射线测量，握持测实际骨骼掌心到工具轴线。遮挡镜头不能作为衣物/手部验收。观察器不使用fixed-fps或快进，正常场景卡顿时仍记录实际墙钟与游戏钟增量，结构成功不自动等于像素通过。

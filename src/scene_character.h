@@ -24,6 +24,8 @@ class SceneCharacter:public godot::Node3D {
     godot::String model_id,model_path,active_animation;
     int skinned_meshes=0,skinned_clothing=0,textured_surfaces=0;
     godot::Dictionary grip_pose;
+    godot::Transform3D tool_frame;
+    bool has_tool_frame=false;
     bool carrying=false;
     double right_grip_error=0,left_grip_error=0;
     void point_bone(int p_bone,const godot::Vector3 &p_target,int p_tip);
@@ -35,6 +37,8 @@ public:
     void configure(int p_variant,int p_job,bool p_hat);
     void animate(double p_delta,double p_speed,double p_tool_angle=0,bool p_working=false);
     void set_carrying(bool p_value){carrying=p_value;}
+    void set_tool_frame(const godot::Transform3D &p_frame){tool_frame=p_frame;has_tool_frame=true;}
+    godot::Transform3D carrier_support_frame() const;
     bool uses_imported_model()const{return imported_model!=nullptr;}
     godot::Dictionary get_visual_state() const;
     void _ready() override;

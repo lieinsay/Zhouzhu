@@ -58,6 +58,10 @@ func _ready()->void:
 		for i in 12:actor.animate(1.0/60,5.0)
 		check(actor.get_visual_state().animation=="run","快速移动动画状态")
 		await shot("actor_"+str(variant)+"_run")
+		# 组件回归，不修改任何真实NPC：劳作必须在作者Interact结束后继续，原来两秒就停。
+		for i in 300:actor.animate(1.0/60,0,0,true)
+		var players:=actor.find_children("*","AnimationPlayer",true,false)
+		check(players.size()==1 and players[0].is_playing() and actor.get_visual_state().animation=="work","连续五秒劳作仍播放真实骨骼动作")
 		camera.position=Vector3(.08,1.61,2.5);camera.look_at(Vector3(0,1.56,0));camera.size=.45;await shot("actor_"+str(variant)+"_face")
 		states[str(variant)]=actor.get_visual_state()
 		actor.queue_free();await frames(2)
