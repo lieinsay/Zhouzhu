@@ -127,6 +127,7 @@ private:
     double indoor = 0.0, indoor_timer = 0.0;
     bool indoor_hit = false;
     double gust_phase = 0.0;
+    double water_time = 0.0; // 水纹的钟（全局着色器参数 water_time）：按真实秒走，世界钟暂停时停
     uint64_t rng = 0x9E3779B97F4A7C15ull;
     double rain_ratio = 0.0, snow_ratio = 0.0;
 

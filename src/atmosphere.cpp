@@ -326,6 +326,11 @@ void Atmosphere::_process(double p_delta) {
     update_cloud_slots(day, p_delta);
     update_particles(eye, p_delta);
     gust_phase += p_delta * (0.6 + 2.0 * look.storm);
+    const WorldClock *clock = WorldClock::get_singleton();
+    if (!clock || !clock->is_paused()) {
+        water_time = std::fmod(water_time + p_delta, 86400.0); // 一真实日一轮回：传进着色器的 float 精度不随开局时长变差
+    }
+    RenderingServer::get_singleton()->global_shader_parameter_set("water_time", real_t(water_time));
     last_eye = eye;
 }
 

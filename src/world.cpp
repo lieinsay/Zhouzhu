@@ -617,6 +617,7 @@ JobPool::Work GroupWorld::river_job(const RiverChunkKey &p_key) const {
         for (int64_t k = 0; k < out->uvs.size(); k++) {
             uv[k] = Vector2(m.uvs[size_t(k) * 2], m.uvs[size_t(k) * 2 + 1]);
         }
+        out->tangents = float32s(m.tangents);
         out->custom0 = float32s(m.custom0);
         out->custom1 = float32s(m.custom1);
         out->custom2 = float32s(m.custom2);
@@ -646,6 +647,7 @@ void GroupWorld::adopt_river(std::unique_ptr<RiverArrays> p_river) {
     arrays.resize(Mesh::ARRAY_MAX);
     arrays[Mesh::ARRAY_VERTEX] = m.vertices;
     arrays[Mesh::ARRAY_NORMAL] = m.normals;
+    arrays[Mesh::ARRAY_TANGENT] = m.tangents;
     arrays[Mesh::ARRAY_TEX_UV] = m.uvs;
     arrays[Mesh::ARRAY_CUSTOM0] = m.custom0;
     arrays[Mesh::ARRAY_CUSTOM1] = m.custom1;
@@ -658,7 +660,7 @@ void GroupWorld::adopt_river(std::unique_ptr<RiverArrays> p_river) {
     mesh.instantiate();
     mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
     mesh->surface_set_material(0, river_material);
-    // 顶点的 y 是河床；着色器往上抬到水位（远处再抬一点），跌水帘往下垂：包围盒两头放宽
+    // 顶点的 y 是河床；着色器往上抬到水位，跌水帘往下垂：包围盒两头放宽
     const double chunk = river_mesh_rules.chunk_m;
     mesh->set_custom_aabb(AABB(Vector3(-40.0f, real_t(m.min_y - river_mesh_rules.fall_m - 5.0), -40.0f),
             Vector3(real_t(chunk + 80.0), real_t(m.max_y - m.min_y + river_mesh_rules.fall_m + 30.0), real_t(chunk + 80.0))));

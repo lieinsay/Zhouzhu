@@ -10,7 +10,7 @@
 // 每段一条横断面五列的带子：−core、−平岸半宽、中线、+平岸半宽、+core（core = 平岸半宽 + 河漫滩）。
 // 顶点的 y 是河床（只给包围盒用），真正的水位在着色器里按径流指数算（公式同 river_stage）：
 //   custom0 = (河床 y, 平岸深, 渗漏门槛, 平岸半宽)，custom1 = (河漫滩宽, 跌水, 流速系数, 0)，
-//   uv = (顺水弧长, 离中线的横距，左正右负)。着色器丢掉横距超出此刻水面半宽的片元——水面宽窄随水情变，且不会漫出河谷。
+//   tangent = 顺水方向（水纹按它顺流走），uv = (顺水弧长, 离中线的横距，左正右负)。着色器丢掉横距超出此刻水面半宽的片元——水面宽窄随水情变，且不会漫出河谷。
 // 近岸处带子收窄到离岸线的距离（河口一带岸线斜切过河，不收就伸到云海上空）。
 // 河口多一道跌水帘：顶边接水面、底边往下垂（custom1.y = 1 的顶点由着色器往下拉），水跌进云海。
 // 船坞坪上不画（坪凿平了，选坪时已避开河道与河漫滩）；停机坪照画——坪让给河，河从码头边流过去。
@@ -25,6 +25,7 @@ struct RiverMesh {
     double origin_x = 0.0, origin_z = 0.0; // 块的西北角：顶点相对它
     std::vector<float> positions; // xyz
     std::vector<float> normals; // xyz
+    std::vector<float> tangents; // xyzw：顺水方向
     std::vector<float> uvs; // uv
     std::vector<float> custom0; // rgba
     std::vector<float> custom1; // rgba

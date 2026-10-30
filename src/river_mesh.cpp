@@ -36,9 +36,10 @@ bool blocked(const WorldTerrain &p_terrain, double p_x, double p_z, double p_mar
 struct Emit {
     RiverMesh &mesh;
 
-    int vertex(double x, double y, double z, double u, double v, const RiverVertex &p_at, double p_fall, double p_speed) {
+    int vertex(double x, double y, double z, double u, double v, const RiverVertex &p_at, double p_fall, double p_speed, double p_tx, double p_tz) {
         mesh.positions.insert(mesh.positions.end(), { float(x - mesh.origin_x), float(y), float(z - mesh.origin_z) });
         mesh.normals.insert(mesh.normals.end(), { 0.0f, 1.0f, 0.0f });
+        mesh.tangents.insert(mesh.tangents.end(), { float(p_tx), 0.0f, float(p_tz), 1.0f });
         mesh.uvs.insert(mesh.uvs.end(), { float(u), float(v) });
         mesh.custom0.insert(mesh.custom0.end(), { float(p_at.bed()), float(p_at.depth), float(p_at.source?p_at.acc:p_at.dry), float(p_at.half()) });
         mesh.custom1.insert(mesh.custom1.end(), { float(p_at.floodplain), float(p_fall), float(p_speed), 0.0f });
@@ -117,7 +118,7 @@ RiverMesh build_river_mesh(const WorldTerrain &p_terrain, const RiverChunkKey &p
             const double right=v.source?std::min(half+v.right,std::max(half,room)):core;
             const double offs[5] = { -right, -half, 0.0, half, left };
             for (int k = 0; k < 5; k++) {
-                row[e][k] = emit.vertex(v.x + lx * offs[k], v.bed(), v.z + lz * offs[k], v.s, offs[k], v, 0.0, speed);
+                row[e][k] = emit.vertex(v.x + lx * offs[k], v.bed(), v.z + lz * offs[k], v.s, offs[k], v, 0.0, speed, -lz, lx);
             }
         }
         for (int k = 0; k < 4; k++) {
@@ -132,8 +133,8 @@ RiverMesh build_river_mesh(const WorldTerrain &p_terrain, const RiverChunkKey &p
             int top[3], low[3];
             for (int k = 0; k < 3; k++) {
                 const double px = b.x + lx * offs[k], pz = b.z + lz * offs[k];
-                top[k] = emit.vertex(px, b.bed(), pz, b.s, offs[k], b, 0.0, speed);
-                low[k] = emit.vertex(px + tx * p_rules.fall_throw_m, b.bed(), pz + tz * p_rules.fall_throw_m, b.s + p_rules.fall_m, offs[k], b, 1.0, speed);
+                top[k] = emit.vertex(px, b.bed(), pz, b.s, offs[k], b, 0.0, speed, tx, tz);
+                low[k] = emit.vertex(px + tx * p_rules.fall_throw_m, b.bed(), pz + tz * p_rules.fall_throw_m, b.s + p_rules.fall_m, offs[k], b, 1.0, speed, tx, tz);
             }
             for (int k = 0; k < 2; k++) {
                 emit.quad(top[k], top[k + 1], low[k], low[k + 1]);

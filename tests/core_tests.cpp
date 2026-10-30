@@ -2740,7 +2740,7 @@ void test_world_rivers() {
     const RiverMesh mesh = build_river_mesh(t, key);
     const size_t verts = mesh.positions.size() / 3;
     check(!mesh.empty() && mesh.indices.size() % 3 == 0, "干流所在的块有水面");
-    check(mesh.normals.size() == verts * 3 && mesh.uvs.size() == verts * 2 && mesh.custom0.size() == verts * 4 && mesh.custom1.size() == verts * 4, "顶点属性一一对上");
+    check(mesh.normals.size() == verts * 3 && mesh.tangents.size() == verts * 4 && mesh.uvs.size() == verts * 2 && mesh.custom0.size() == verts * 4 && mesh.custom1.size() == verts * 4, "顶点属性一一对上");
     int bad_index = 0;
     for (int32_t ix : mesh.indices) {
         bad_index += ix < 0 || size_t(ix) >= verts;
