@@ -1,9 +1,9 @@
 {
  "node": 6068,
- "created": "2026-10-11T03:19:13",
+ "created": "2026-10-30T08:12:34",
  "generator": {
   "root": "extern/skyisle-gen",
-  "commit": "6d4b081",
+  "commit": "8e3b824",
   "dirty": false,
   "backend": "游戏内"
  },
@@ -16,11 +16,11 @@
  "export": {
   "terrain_version": 8,
   "river_version": 1,
+  "lake_version": 1,
   "exporter": "src/gen_export.cpp"
  },
  "seconds": {
-  "generate": 50.76,
-  "write": 0.55,
-  "lod": 0.0
+  "generate": 46.52,
+  "write": 0.57
  }
 }
