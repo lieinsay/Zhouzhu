@@ -33,7 +33,7 @@ struct GroupMeta {
 
 // 岛群包的五份（export_skyisle.export）
 struct GroupFiles {
-    std::string terrain_bin, world_json, sites_tsv, resources_tsv, weather_tsv, rivers_tsv;
+    std::string terrain_bin, world_json, sites_tsv, resources_tsv, weather_tsv, rivers_tsv, lakes_tsv;
 };
 GroupFiles group_files(const skyisle::island::Group &p_group, const GroupMeta &p_meta);
 

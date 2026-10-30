@@ -376,7 +376,7 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         const double t1 = now_s();
         if (p_status) {
             p_status->progress("export", p_p0 + 0.6 * span,
-                    "岛群 #" + std::to_string(p_node) + "：导出游戏的包（terrain.bin、world.json、sites.tsv、weather.tsv、resources.tsv）");
+                    "岛群 #" + std::to_string(p_node) + "：导出游戏的包（terrain.bin、world.json、sites.tsv、weather.tsv、resources.tsv、rivers.tsv、lakes.tsv）");
         }
         const gen_export::GroupFiles files = gen_export::group_files(g, meta_of(p_planet, p_node));
         const fs::path out = upath(p_out_dir);
@@ -389,7 +389,8 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
             return false;
         }
         const std::pair<const char *, const std::string *> parts[] = { { "terrain.bin", &files.terrain_bin }, { "weather.tsv", &files.weather_tsv },
-            { "world.json", &files.world_json }, { "sites.tsv", &files.sites_tsv }, { "resources.tsv", &files.resources_tsv }, { "rivers.tsv", &files.rivers_tsv } };
+            { "world.json", &files.world_json }, { "sites.tsv", &files.sites_tsv }, { "resources.tsv", &files.resources_tsv }, { "rivers.tsv", &files.rivers_tsv },
+            { "lakes.tsv", &files.lakes_tsv } };
         for (const auto &p : parts) {
             std::ofstream f(tmp / p.first, std::ios::binary | std::ios::trunc);
             f.write(p.second->data(), std::streamsize(p.second->size()));
@@ -423,6 +424,7 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         Json exp = Json::obj();
         exp.set("terrain_version", 8);
         exp.set("river_version", 1);
+        exp.set("lake_version", 1);
         exp.set("exporter", "src/gen_export.cpp");
         stamp.set("export", exp);
         std::vector<std::pair<std::string, double>> secs = { { "generate", r_times.generate }, { "write", r_times.write } };

@@ -10,6 +10,7 @@
 #include <zlib.h>
 
 #include "skyisle/grid.hpp"
+#include "skyisle/island/lakes.hpp"
 #include "skyisle/island/resources.hpp"
 #include "skyisle/island/landforms.hpp"
 
@@ -770,6 +771,30 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
             }
         }
         F.rivers_tsv=s;
+    }
+
+    // ---- lakes.tsv（复核稿 W1a）：洼地湖塘的年均水位与年水账，生成器 core 的 lake_balance 算，这里只写。
+    // 坐标同 rivers.tsv 的点（格心，游戏的 x / z）；格高按 terrain.bin 的 float32；水账单位 m³/年。
+    {
+        const isl::LakeSet ls = isl::lake_balance(g);
+        auto num = [](double v) { return pyfmt::repr(v); };
+        static const char *STATUS[] = { "dry", "closed", "full" };
+        std::string s = "lakes 1\n";
+        s += "basis evaporation=thornthwaite_pet seepage=none season=annual_mean depth_limit=pit_keep\n";
+        s += "cycles_cut " + std::to_string(ls.cycles_cut) + "\n";
+        for (const isl::LakeRec &L : ls.lakes) {
+            s += "lake " + std::to_string(L.id) + " " + std::to_string(L.island) + " " + STATUS[L.status] + " " + std::to_string(L.down) + " " + std::to_string(L.channel_cells);
+            for (double v : { L.spill_z, L.bottom_z, L.level_z, L.area_full_m2, L.volume_full_m3, L.area_m2, L.volume_m3, L.catchment_km2,
+                         L.q_catch, L.q_up, L.q_shore, L.p_lake, L.e_lake, L.q_out })
+                s += " " + num(v);
+            s += "\ncells";
+            for (int32_t q : L.cells) {
+                const size_t c = size_t(q);
+                s += " " + num(R.ox_km * 1000 + (c % g.W + 0.5) * R.res) + " " + num(-R.oy_km * 1000 + (c / g.W + 0.5) * R.res) + " " + num(double(float(g.height.v[c])));
+            }
+            s += "\n";
+        }
+        F.lakes_tsv = s;
     }
 
     // ---- weather.tsv
