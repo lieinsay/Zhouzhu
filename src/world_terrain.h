@@ -71,6 +71,7 @@ class WorldTerrain {
     std::vector<IslandBody> bodies; // 同上
     uint64_t seed = 0;
     std::shared_ptr<const WorldRivers> rivers; // 建好就不再变，可以在拷贝之间共用
+    std::shared_ptr<const std::vector<uint8_t>> calm; // 按格：CALM_POND / CALM_RIM（要画的湖塘的范围格 / 外面一圈，set_calm_cells），0 = 照常
     CoverBlend cover_blend;
     std::vector<DockPlan> pads;
     std::unordered_map<int64_t, std::vector<int>> pad_buckets; // 桶 → 压着这个桶（含坪外 PAD_REACH_M）的坪
@@ -98,6 +99,12 @@ public:
     WorldTerrain(const WorldGrid &p_grid, const std::vector<WorldIsland> &p_islands, uint64_t p_seed, const RiverRules &p_river_rules = RiverRules());
 
     const WorldGrid &get_grid() const { return *grid; }
+    // 湖塘（lakes.tsv，W1a）：塘格（CALM_POND）与外面一圈塘岸格（CALM_RIM）的细节噪声幅度取 0；塘岸那一圈的格高插值不低于格间的线性内插。
+    // 细节是游戏自己加的米级起伏，比生成器 2 m 以内的塘还深；Catmull-Rom 在塘岸外陡降处会冲到水位以下，湿区漏出塘岸。
+    // 塘岸格都不低于溢口，两格之间按线性内插就挡得住水：塘的范围与水位照生成器的数据，塘里仍是光滑的曲面。都按格双线性过渡，再外一格回到原样。
+    // 要在建任何地面块之前设，之后不再变
+    static constexpr uint8_t CALM_POND = 1, CALM_RIM = 2;
+    void set_calm_cells(std::shared_ptr<const std::vector<uint8_t>> p_calm) { calm = std::move(p_calm); }
     bool valid() const { return grid && !grid->empty(); }
     const WorldIsland &island_info(int p_id) const;
     const IslandBody &island_body_of(int p_id) const;
@@ -111,6 +118,7 @@ public:
 
     double coast_noise(double p_x, double p_z) const; // 约 [-1, 1]
     double detail(double p_x, double p_z) const; // 米
+    double base_height(double p_x, double p_z) const; // 栅格高程的插值（Catmull-Rom；湖塘的塘岸那一圈不低于格间线性内插，见 set_calm_cells），不含细节
     TerrainSample sample(double p_x, double p_z) const;
     // 不算停机坪的原地形（码头选址就在它上面量）
     TerrainSample sample_raw(double p_x, double p_z) const;

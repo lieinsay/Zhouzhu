@@ -212,6 +212,8 @@ set(ZHOUZHU_CORE_SOURCES
     src/wild_landing.h
     src/world_grid.cpp
     src/world_grid.h
+    src/world_lakes.cpp
+    src/world_lakes.h
     src/world_ledger.cpp
     src/world_ledger.h
     src/world_river.cpp

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <set>
 
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
@@ -54,6 +55,7 @@ constexpr double RIVER_RETARGET_M = 64.0; // 焦点挪了这么远才重新挑�
 constexpr double RIVER_SYNC_M = 1000.0; // 瞬移时这么近的水面块当场建好，远的照常排队
 constexpr double PREPARE_RADIUS_M = 80.0; // 瞬移时落点这么近的叶块当场建好
 constexpr const char *RIVER_SHADER = "res://shaders/river.gdshader";
+constexpr const char *LAKE_SHADER = "res://shaders/lake.gdshader";
 constexpr const char *GROUND_SHADER = "res://shaders/ground.gdshader";
 constexpr double MARGIN_RETARGET_M = 500.0; // 相机挪了这么远才重算地面块的剔除余量
 constexpr double MARGIN_SLACK_M = 40.0;
@@ -148,6 +150,7 @@ void GroupWorld::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_weather_at", "x", "z", "y"), &GroupWorld::get_weather_at, DEFVAL(NAN));
     ClassDB::bind_method(D_METHOD("get_snow_line"), &GroupWorld::get_snow_line);
     ClassDB::bind_method(D_METHOD("find_river_near", "x", "z", "radius", "min_acc_km2"), &GroupWorld::find_river_near);
+    ClassDB::bind_method(D_METHOD("find_lake_near", "x", "z", "radius", "min_area_m2"), &GroupWorld::find_lake_near, DEFVAL(0.0));
     ClassDB::bind_method(D_METHOD("set_river_radius", "value"), &GroupWorld::set_river_radius);
     ClassDB::bind_method(D_METHOD("get_river_radius"), &GroupWorld::get_river_radius);
     ClassDB::bind_method(D_METHOD("set_runoff_override", "value"), &GroupWorld::set_runoff_override);
@@ -379,9 +382,19 @@ void GroupWorld::install() {
             ERR_PRINT(String("World: 读不了水面着色器 ") + RIVER_SHADER + String(U"，河只凿河道、不画水"));
         }
     }
+    if (!lakes.empty()) {
+        const Ref<Shader> shader = ResourceLoader::get_singleton()->load(LAKE_SHADER);
+        if (shader.is_valid()) {
+            lake_material.instantiate();
+            lake_material->set_shader(shader);
+        } else {
+            ERR_PRINT(String("World: 读不了湖面着色器 ") + LAKE_SHADER + String(U"，不画湖塘"));
+        }
+    }
     loaded = true;
     track_shading(ground_material);
     track_shading(river_material);
+    track_shading(lake_material);
     update_runoff();
     if (!player_works) {
         player_works = std::make_shared<GroundWorks>(); // 场景里单独摆的 World（没有 GroupStream 交账）：自己一份，只在这一局
@@ -482,6 +495,16 @@ bool GroupWorld::load_data(std::string &r_error) {
     } else if(int(Dictionary(info.get("hydro",Dictionary())).get("river_contract",0))>0) {
         r_error="缺少 rivers.tsv，拒绝从栅格补造河流"; return false;
     }
+    // 湖塘（W1a）：没有这份文件的旧包就是没有湖面；读坏了也只是不画，不补造
+    lakes = WorldLakes();
+    const String lakes_path = data_dir.path_join("lakes.tsv");
+    if (FileAccess::file_exists(lakes_path)) {
+        const CharString text = FileAccess::get_file_as_string(lakes_path).utf8();
+        std::string lake_error;
+        if (!parse_lakes(std::string(text.get_data(), size_t(text.length())), grid.res, lakes, lake_error)) {
+            ERR_PRINT(String("World: 读不了 ") + lakes_path + "：" + String::utf8(lake_error.c_str()) + String(U"，不画湖塘"));
+        }
+    }
     node_id = int(Dictionary(info.get("source", Dictionary())).get("node", -1));
     std::vector<WorldIsland> islands;
     const Array rows = info.get("islands", Array());
@@ -517,6 +540,26 @@ bool GroupWorld::load_data(std::string &r_error) {
         regime = RiverRegime::steady();
     }
     terrain = WorldTerrain(grid, islands, uint64_t(terrain_seed), river_rules);
+    if (!lakes.empty()) {
+        // 要画的湖塘的范围格与外面一圈塘岸（见 WorldTerrain::set_calm_cells）
+        auto calm = std::make_shared<std::vector<uint8_t>>(grid.height.size(), 0);
+        for (const WorldLake &L : lakes.lakes) {
+            if (!L.drawn()) {
+                continue;
+            }
+            for (size_t c = 0; c < L.cell_x.size(); c++) {
+                const size_t k = grid.nearest_cell(L.cell_x[c], L.cell_z[c]);
+                const int r = int(k / size_t(grid.cols)), col = int(k % size_t(grid.cols));
+                for (int rr = std::max(0, r - 1); rr <= std::min(grid.rows - 1, r + 1); rr++) {
+                    for (int cc = std::max(0, col - 1); cc <= std::min(grid.cols - 1, col + 1); cc++) {
+                        uint8_t &v = (*calm)[grid.index(rr, cc)];
+                        v = rr == r && cc == col ? WorldTerrain::CALM_POND : (v == WorldTerrain::CALM_POND ? v : WorldTerrain::CALM_RIM);
+                    }
+                }
+            }
+        }
+        terrain.set_calm_cells(calm);
+    }
     layout = TileLayout(grid);
     // 天气模型：慢变量（积雪、冰、物候）按海拔分箱，箱从岛群最低的地到最高的峰
     double low = 1e18, high = -1e18;
@@ -558,6 +601,17 @@ bool GroupWorld::load_data(std::string &r_error) {
     if (terrain.has_rivers()) {
         river_chunk_keys = river_chunks(terrain, river_mesh_rules);
     }
+    {
+        std::set<int64_t> have;
+        for (const RiverChunkKey &key : river_chunk_keys) {
+            have.insert(key.packed());
+        }
+        for (const RiverChunkKey &key : lake_chunks(lakes, river_mesh_rules.chunk_m)) {
+            if (have.insert(key.packed()).second) {
+                river_chunk_keys.push_back(key);
+            }
+        }
+    }
     return true;
 }
 
@@ -598,8 +652,10 @@ void GroupWorld::update_runoff() {
 
 JobPool::Work GroupWorld::river_job(const RiverChunkKey &p_key) const {
     const WorldTerrain *t = &terrain;
+    const WorldLakes *lk = &lakes;
     const RiverMeshRules rules = river_mesh_rules;
-    return [t, rules, p_key]() -> std::unique_ptr<JobResult> {
+    const LakeMeshRules lake_rules = lake_mesh_rules;
+    return [t, lk, rules, lake_rules, p_key]() -> std::unique_ptr<JobResult> {
         const RiverMesh m = build_river_mesh(*t, p_key, rules);
         std::unique_ptr<RiverArrays> out = std::make_unique<RiverArrays>();
         out->key = p_key;
@@ -607,6 +663,22 @@ JobPool::Work GroupWorld::river_job(const RiverChunkKey &p_key) const {
         out->origin_z = m.origin_z;
         out->min_y = m.min_y;
         out->max_y = m.max_y;
+        const LakeMesh lm = build_lake_mesh(*t, *lk, p_key, rules.chunk_m, lake_rules);
+        if (!lm.empty()) {
+            out->lake_vertices = vec3s(lm.positions);
+            out->lake_uvs.resize(int64_t(lm.uvs.size() / 2));
+            Vector2 *luv = out->lake_uvs.ptrw();
+            for (int64_t k = 0; k < out->lake_uvs.size(); k++) {
+                luv[k] = Vector2(lm.uvs[size_t(k) * 2], lm.uvs[size_t(k) * 2 + 1]);
+            }
+            out->lake_indices = int32s(lm.indices);
+            out->lake_min_x = lm.min_x;
+            out->lake_max_x = lm.max_x;
+            out->lake_min_y = lm.min_y;
+            out->lake_max_y = lm.max_y;
+            out->lake_min_z = lm.min_z;
+            out->lake_max_z = lm.max_z;
+        }
         if (m.empty()) {
             return out;
         }
@@ -639,31 +711,63 @@ void GroupWorld::adopt_river(std::unique_ptr<RiverArrays> p_river) {
     if (river_nodes.count(m.key.packed()) || river_distance(m.key) > river_radius * 1.25) {
         return; // 已经有了，或者焦点走远了
     }
-    if (m.empty() || river_material.is_null()) {
+    const bool draw_river = !m.indices.is_empty() && river_material.is_valid();
+    const bool draw_lake = !m.lake_indices.is_empty() && lake_material.is_valid();
+    if (!draw_river && !draw_lake) {
         river_nodes[m.key.packed()] = nullptr;
         return;
     }
-    Array arrays;
-    arrays.resize(Mesh::ARRAY_MAX);
-    arrays[Mesh::ARRAY_VERTEX] = m.vertices;
-    arrays[Mesh::ARRAY_NORMAL] = m.normals;
-    arrays[Mesh::ARRAY_TANGENT] = m.tangents;
-    arrays[Mesh::ARRAY_TEX_UV] = m.uvs;
-    arrays[Mesh::ARRAY_CUSTOM0] = m.custom0;
-    arrays[Mesh::ARRAY_CUSTOM1] = m.custom1;
-    arrays[Mesh::ARRAY_CUSTOM2] = m.custom2;
-    arrays[Mesh::ARRAY_INDEX] = m.indices;
-    const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) |
-            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT) |
-            (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM2_SHIFT);
     Ref<ArrayMesh> mesh;
     mesh.instantiate();
-    mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
-    mesh->surface_set_material(0, river_material);
-    // 顶点的 y 是河床；着色器往上抬到水位，跌水帘往下垂：包围盒两头放宽
+    AABB box;
     const double chunk = river_mesh_rules.chunk_m;
-    mesh->set_custom_aabb(AABB(Vector3(-40.0f, real_t(m.min_y - river_mesh_rules.fall_m - 5.0), -40.0f),
-            Vector3(real_t(chunk + 80.0), real_t(m.max_y - m.min_y + river_mesh_rules.fall_m + 30.0), real_t(chunk + 80.0))));
+    if (draw_river) {
+        Array arrays;
+        arrays.resize(Mesh::ARRAY_MAX);
+        arrays[Mesh::ARRAY_VERTEX] = m.vertices;
+        arrays[Mesh::ARRAY_NORMAL] = m.normals;
+        arrays[Mesh::ARRAY_TANGENT] = m.tangents;
+        arrays[Mesh::ARRAY_TEX_UV] = m.uvs;
+        arrays[Mesh::ARRAY_CUSTOM0] = m.custom0;
+        arrays[Mesh::ARRAY_CUSTOM1] = m.custom1;
+        arrays[Mesh::ARRAY_CUSTOM2] = m.custom2;
+        arrays[Mesh::ARRAY_INDEX] = m.indices;
+        const uint64_t format = (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT) |
+                (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM1_SHIFT) |
+                (uint64_t(Mesh::ARRAY_CUSTOM_RGBA_FLOAT) << Mesh::ARRAY_FORMAT_CUSTOM2_SHIFT);
+        mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays, Array(), Dictionary(), BitField<Mesh::ArrayFormat>(format));
+        mesh->surface_set_material(mesh->get_surface_count() - 1, river_material);
+        // 顶点的 y 是河床；着色器往上抬到水位，跌水帘往下垂：包围盒两头放宽
+        box = AABB(Vector3(-40.0f, real_t(m.min_y - river_mesh_rules.fall_m - 5.0), -40.0f),
+                Vector3(real_t(chunk + 80.0), real_t(m.max_y - m.min_y + river_mesh_rules.fall_m + 30.0), real_t(chunk + 80.0)));
+    }
+    if (draw_lake) {
+        Array arrays;
+        arrays.resize(Mesh::ARRAY_MAX);
+        PackedVector3Array normals;
+        normals.resize(m.lake_vertices.size());
+        normals.fill(Vector3(0, 1, 0));
+        PackedFloat32Array tangents;
+        tangents.resize(m.lake_vertices.size() * 4);
+        for (int64_t k = 0; k < m.lake_vertices.size(); k++) {
+            tangents.set(k * 4, 1.0f);
+            tangents.set(k * 4 + 1, 0.0f);
+            tangents.set(k * 4 + 2, 0.0f);
+            tangents.set(k * 4 + 3, 1.0f);
+        }
+        arrays[Mesh::ARRAY_VERTEX] = m.lake_vertices;
+        arrays[Mesh::ARRAY_NORMAL] = normals;
+        arrays[Mesh::ARRAY_TANGENT] = tangents;
+        arrays[Mesh::ARRAY_TEX_UV] = m.lake_uvs;
+        arrays[Mesh::ARRAY_INDEX] = m.lake_indices;
+        mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+        mesh->surface_set_material(mesh->get_surface_count() - 1, lake_material);
+        // 湖面平的，外框照实；行星弯曲让远处往下沉一点，下沿多放 30 m
+        const AABB lake_box(Vector3(real_t(m.lake_min_x - 5.0), real_t(m.lake_min_y - 30.0), real_t(m.lake_min_z - 5.0)),
+                Vector3(real_t(m.lake_max_x - m.lake_min_x + 10.0), real_t(m.lake_max_y - m.lake_min_y + 35.0), real_t(m.lake_max_z - m.lake_min_z + 10.0)));
+        box = draw_river ? box.merge(lake_box) : lake_box;
+    }
+    mesh->set_custom_aabb(box);
     MeshInstance3D *view = memnew(MeshInstance3D);
     view->set_name(vformat("River_%d_%d", m.key.ix, m.key.iz));
     view->set_mesh(mesh);
@@ -815,6 +919,34 @@ Dictionary GroupWorld::find_river_near(double p_x, double p_z, double p_radius, 
             out["mouth_dir_z"] = (last.z - before.z) / mouth_len;
         }
     });
+    return out;
+}
+
+Dictionary GroupWorld::find_lake_near(double p_x, double p_z, double p_radius, double p_min_area_m2) const {
+    Dictionary out;
+    if (!loaded) {
+        return out;
+    }
+    static const char *STATUS[] = { "dry", "closed", "full" };
+    double best = p_radius;
+    for (const WorldLake &L : lakes.lakes) {
+        const double d = std::hypot(L.center_x() - p_x, L.center_z() - p_z);
+        if (!L.drawn() || L.area_m2 < p_min_area_m2 || d >= best) {
+            continue;
+        }
+        best = d;
+        out["id"] = L.id;
+        out["x"] = L.center_x();
+        out["z"] = L.center_z();
+        out["level"] = L.level_z;
+        out["bottom"] = L.bottom_z;
+        out["spill"] = L.spill_z;
+        out["area_m2"] = L.area_m2;
+        out["volume_m3"] = L.volume_m3;
+        out["radius"] = 0.5 * std::hypot(L.max_x - L.min_x, L.max_z - L.min_z) + 0.5 * lakes.cell_m;
+        out["status"] = STATUS[L.status];
+        out["cells"] = int(L.cell_x.size());
+    }
     return out;
 }
 

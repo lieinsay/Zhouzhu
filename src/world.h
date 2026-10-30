@@ -26,6 +26,7 @@
 #include "map_host.h"
 #include "resource_scatter.h"
 #include "river_mesh.h"
+#include "world_lakes.h"
 #include "shared_looks.h"
 #include "stream_meter.h"
 #include "terrain_tile.h"
@@ -65,8 +66,13 @@ struct RiverArrays : JobResult {
     godot::PackedVector2Array uvs;
     godot::PackedFloat32Array tangents, custom0, custom1, custom2;
     godot::PackedInt32Array indices;
+    // 同一块里的湖面（lakes.tsv，W1a）：平的，y 就是水位
+    godot::PackedVector3Array lake_vertices;
+    godot::PackedVector2Array lake_uvs;
+    godot::PackedInt32Array lake_indices;
+    double lake_min_x = 0.0, lake_max_x = 0.0, lake_min_y = 0.0, lake_max_y = 0.0, lake_min_z = 0.0, lake_max_z = 0.0;
 
-    bool empty() const { return indices.is_empty(); }
+    bool empty() const { return indices.is_empty() && lake_indices.is_empty(); }
 };
 
 // 一个真实比例的岛群（skyisle-gen 第三层产物，经 tools/export_skyisle.py 转成 data_dir 下的 terrain.bin + world.json）。
@@ -180,9 +186,13 @@ class GroupWorld : public godot::Node3D, public GroundHost, public MapHost {
     RiverRegime regime;
     WeatherModel weather; // weather.tsv 的天气（没有这份文件就是没有数据的：常年晴）
     RiverMeshRules river_mesh_rules;
-    std::vector<RiverChunkKey> river_chunk_keys; // 有河的块
+    std::vector<RiverChunkKey> river_chunk_keys; // 有河或有要画的湖塘的块
     std::map<int64_t, godot::Node3D *> river_nodes; // 已挂上的水面块（空块为 nullptr）
     godot::Ref<godot::ShaderMaterial> river_material;
+    // 湖塘（lakes.tsv，复核稿 W1a）：年均水位与范围格来自生成器；湖面跟河面同块挂（同一个网格的第二面）
+    WorldLakes lakes;
+    LakeMeshRules lake_mesh_rules;
+    godot::Ref<godot::ShaderMaterial> lake_material;
     double runoff = 1.0; // 这一帧的径流指数
     godot::Vector3 river_focus;
     bool river_targeted = false;
@@ -270,6 +280,8 @@ public:
     // 该处附近（p_radius 以内）汇流至少 p_min_acc_km2 的河中线上最近一点：
     // { x, z, dir_x, dir_z（顺水）, width, floodplain, acc_km2, mouth（这条河出不出岸缘）, mouth_x, mouth_z, mouth_dir_x, mouth_dir_z（河口的流向）}；没有返回空字典
     godot::Dictionary find_river_near(double p_x, double p_z, double p_radius, double p_min_acc_km2) const;
+    // 该处 p_radius 以内、本版要画的、年均水面至少 p_min_area_m2 的湖塘里外框中心最近的一处：{ id, x, z（外框中心）, level, bottom, spill, area_m2, volume_m3, radius（外框半对角 + 半格）, status, cells }；没有返回空字典
+    godot::Dictionary find_lake_near(double p_x, double p_z, double p_radius, double p_min_area_m2 = 0.0) const;
     int get_pending_count() const;
 
     // 码头（下标与 sites.docks 一致）

@@ -82,6 +82,7 @@ extern "C" __declspec(dllimport) unsigned long __stdcall SetErrorMode(unsigned l
 #include "river_mesh.h"
 #include "world_grid.h"
 #include "world_ground.h"
+#include "world_lakes.h"
 #include "world_river.h"
 #include "world_sites.h"
 #include "world_ledger.h"
@@ -7610,6 +7611,7 @@ void test_dev_manual() {
 
 #include "nonriver_restore_checks.inc"
 #include "source_river_checks.inc"
+#include "world_lake_checks.inc"
 #include "terrain_normal_checks.inc"
 #include "terrain_color_checks.inc"
 #include "terrain_island_checks.inc"
@@ -7626,7 +7628,7 @@ int main(int argc, char **argv) {
     if (argc > 1) {
         const std::map<std::string, void (*)()> only = { { "inflate", test_inflate }, { "weather_pack", test_weather_pack }, { "planet_weather", test_planet_weather },
             { "weather_model", test_weather_model }, { "group_weather", test_group_weather }, { "sea_descent", test_sea_descent },
-            { "nonriver_restore", test_nonriver_restore }, {"source_rivers",test_source_rivers}, { "terrain_normals", test_terrain_normals },
+            { "nonriver_restore", test_nonriver_restore }, {"source_rivers",test_source_rivers}, { "world_lakes", test_world_lakes }, { "terrain_normals", test_terrain_normals },
             { "terrain_colors", test_terrain_colors },
             { "terrain_island_height", test_terrain_island_height },
             { "terrain_seams", test_terrain_seams },
@@ -7703,6 +7705,7 @@ int main(int argc, char **argv) {
     test_village_plan();
     test_world_sites();
     test_world_rivers();
+    test_world_lakes();
     test_map_grounds();
     test_layout_edits();
     test_house_templates();

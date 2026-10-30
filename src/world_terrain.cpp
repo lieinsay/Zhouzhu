@@ -143,6 +143,9 @@ double WorldTerrain::detail(double p_x, double p_z) const {
         rr = std::clamp(rr, 0, g.rows - 1);
         cc = std::clamp(cc, 0, g.cols - 1);
         const size_t k = g.index(rr, cc);
+        if (calm && (*calm)[k] != 0) {
+            return 0.0;
+        }
         const int cls = g.landcover[k];
         const double base = cls > 0 && cls < DETAIL_CLASSES ? DETAIL_AMP[cls] : 2.0; // 虚空格（岸线外推出来的地）按草坡算
         return base * ZONE_GAIN[zone_of(k)];
@@ -165,6 +168,31 @@ double WorldTerrain::detail(double p_x, double p_z) const {
     return g.source_landscape ? std::clamp(out, -3.0, 3.0) : out;
 }
 
+double WorldTerrain::base_height(double p_x, double p_z) const {
+    const WorldGrid &g = *grid;
+    const double h = g.height_at(p_x, p_z);
+    if (!calm) {
+        return h;
+    }
+    const double fc = g.col_of(p_x), fr = g.row_of(p_z);
+    const int c = int(std::floor(fc)), r = int(std::floor(fr));
+    const double tc = fc - c, tr = fr - r;
+    auto at = [&](int rr, int cc) { return g.index(std::clamp(rr, 0, g.rows - 1), std::clamp(cc, 0, g.cols - 1)); };
+    const size_t k00 = at(r, c), k01 = at(r, c + 1), k10 = at(r + 1, c), k11 = at(r + 1, c + 1);
+    const std::vector<uint8_t> &m = *calm;
+    auto lerp2 = [&](double a00, double a01, double a10, double a11) {
+        const double a = a00 + (a01 - a00) * tc, b = a10 + (a11 - a10) * tc;
+        return a + (b - a) * tr;
+    };
+    auto rim = [&](size_t k) { return m[k] == CALM_RIM ? 1.0 : 0.0; };
+    const double w = lerp2(rim(k00), rim(k01), rim(k10), rim(k11));
+    if (w <= 0.0) {
+        return h;
+    }
+    // 塘岸那一圈：不低于格高的线性内插（两个塘岸格之间的连线不会被曲线冲到水位以下），塘里照旧是光滑的曲面
+    return h + std::max(0.0, lerp2(g.height[k00], g.height[k01], g.height[k10], g.height[k11]) - h) * w;
+}
+
 TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     TerrainSample s;
     const WorldGrid &g = *grid;
@@ -177,7 +205,7 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
     if (!g.rockwall.empty()) s.rockwall = g.rockwall[cell];
     s.land = s.shore > 0.0;
     if (rivers && rivers->from_source()) {
-        const RiverGround ground = rivers->ground(p_x, p_z, g.height_at(p_x, p_z), detail(p_x, p_z));
+        const RiverGround ground = rivers->ground(p_x, p_z, base_height(p_x, p_z), detail(p_x, p_z));
         s.top = ground.top;
         s.bed = ground.bed;
         s.bank = ground.bank;
@@ -185,7 +213,7 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
         RiverHit hits[WorldRivers::MAX_HITS];
         const int n_hits = rivers ? rivers->near(p_x, p_z, hits, WorldRivers::MAX_HITS) : 0;
         if (n_hits == 0) {
-            s.top = g.height_at(p_x, p_z) + detail(p_x, p_z);
+            s.top = base_height(p_x, p_z) + detail(p_x, p_z);
         } else {
             // 旧包仍沿用原有横断面，不迁移历史河网。
             const RiverRules &rr = rivers->get_rules();
@@ -193,7 +221,7 @@ TerrainSample WorldTerrain::sample_raw(double p_x, double p_z) const {
             for (int k = 0; k < n_hits; k++) {
                 fade = std::min(fade, smooth01((hits[k].distance - hits[k].at.core(hits[k].side)) / rr.blend_m));
             }
-            const double natural = g.height_at(p_x, p_z) + fade * detail(p_x, p_z);
+            const double natural = base_height(p_x, p_z) + fade * detail(p_x, p_z);
             double top = 1e18;
             for (int k = 0; k < n_hits; k++) {
                 const RiverHit &h = hits[k];
