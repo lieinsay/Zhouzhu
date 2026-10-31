@@ -9,7 +9,7 @@
   "lon": 22.399523511374156
  },
  "hydro": {
-  "river_contract": 1,
+  "river_contract": 2,
   "capture_topographic_v1": true,
   "capture_topographic_passes": 3,
   "reach_geometry_v1": true,
