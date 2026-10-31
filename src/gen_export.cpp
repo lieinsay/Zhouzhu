@@ -12,6 +12,7 @@
 #include "skyisle/grid.hpp"
 #include "skyisle/island/lakes.hpp"
 #include "skyisle/island/resources.hpp"
+#include "skyisle/island/rivercurve.hpp"
 #include "skyisle/island/landforms.hpp"
 
 #include "py_format.h"
@@ -734,7 +735,7 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
     {
         const auto &net = g.rnet;
         auto num = [](double v) { return pyfmt::repr(v); };
-        std::string s = "rivers 1\nexponents " + num(m.station_width_exp) + " " + num(m.station_depth_exp) + "\n";
+        std::string s = "rivers 2\nexponents " + num(m.station_width_exp) + " " + num(m.station_depth_exp) + "\n";
         for (size_t i=0; i<net.basins.size(); ++i) {
             s += "basin " + std::to_string(i);
             for (double v : net.basins[i].index) s += " " + num(pyround(v, 3));
@@ -756,6 +757,12 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         s += "threshold";
         for(double v:threshold) s += " " + num(v);
         s += "\n";
+        // v2（复核稿 8.3）：中心线在格内的位置由 core 的 river_curves 给（D8 格心折线在半格与两侧谷底宽以内的平滑表示）。
+        // point 末尾两列 cx cz 是本点在中心线上的位置，left right 是按横移折算后的谷底宽（谷底边不动）；点后的 bend 行是到下一点
+        // （段末点则到汇入点）之间的中心线顶点。x z 仍是格心。
+        const isl::RiverCurves curve = isl::river_curves(g);
+        auto gx = [&](double col) { return R.ox_km*1000+col*R.res; };
+        auto gz = [&](double row) { return -R.oy_km*1000+row*R.res; };
         for(size_t i=0;i<net.segs.size();++i) {
             const auto &seg=net.segs[i];
             s += "stem " + std::to_string(i)+" "+std::to_string(seg.down)+" "+std::to_string(seg.join)+" "+std::to_string(seg.basin)+" "+std::to_string(seg.island)+" "+std::to_string(seg.exit)+"\n";
@@ -765,9 +772,12 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
                 const double values[]={ R.ox_km*1000+(cell%g.W+0.5)*R.res, -R.oy_km*1000+(cell/g.W+0.5)*R.res,
                     double(float(g.height.v[cell])),double(float(g.bed_m.v[cell])),double(float(g.width_m.v[cell])),double(float(g.depth_m.v[cell])),
                     double(net.w_mean[k]),double(net.d_mean[k]),double(net.acc[k]),double(net.q_mean[k]),
-                    pyround(net.fp_l[k],0),pyround(net.fp_r[k],0),double(net.level[k]) };
+                    pyround(curve.fp_l[k],0),pyround(curve.fp_r[k],0),double(net.level[k]),
+                    pyround(gx(curve.col[k]),2),pyround(gz(curve.row[k]),2) };
                 for(double v:values) s += " " + num(v);
                 s += "\n";
+                for(int32_t q=curve.bend_start[k]; q<curve.bend_start[k+1]; ++q)
+                    s += "bend " + num(pyround(gx(curve.bend_col[size_t(q)]),2)) + " " + num(pyround(gz(curve.bend_row[size_t(q)]),2)) + "\n";
             }
         }
         F.rivers_tsv=s;
@@ -829,7 +839,7 @@ GroupFiles group_files(const isl::Group &g, const GroupMeta &m) {
         src.set("lon", g.inp.lon);
         world.set("source", src);
         Json hydro=Json::obj();
-        hydro.set("river_contract",1);
+        hydro.set("river_contract",2);
         hydro.set("capture_topographic_v1",m.capture_topographic);
         hydro.set("capture_topographic_passes",m.capture_passes);
         hydro.set("reach_geometry_v1",m.reach_geometry);

@@ -423,7 +423,7 @@ bool make_group(const PlanetState &p_planet, int64_t p_node, const std::string &
         stamp.set("run", run);
         Json exp = Json::obj();
         exp.set("terrain_version", 8);
-        exp.set("river_version", 1);
+        exp.set("river_version", 2);
         exp.set("lake_version", 1);
         exp.set("exporter", "src/gen_export.cpp");
         stamp.set("export", exp);
