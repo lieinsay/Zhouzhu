@@ -19,6 +19,48 @@ void test_source_rivers() {
     check(net.stage(down,2).depth>down.depth && net.stage(down,2).half_width>down.half(),"涨水超过固定河槽");
     check(net.daily_index(tiny,1)==2 && !net.stage(tiny,2).wet,"rest 流域及溪涧断流");
     check(net.stage(down,4).depth==net.stage(down,1).depth,"日索引按源一年循环");
+    // v2（复核稿 8.3）：中心线位置 cx cz 与点间弯点；弯点各量按弧长内插，支流按源点下标接到干流的锚点而不是弯点
+    {
+        const std::string head="rivers 2\nexponents .26 .4\nbasin 0 1\nthreshold .3\n";
+        const std::string v2=head+
+            "stem 0 -1 -1 0 0 1\n"
+            "point 50 0 100 98 20 2 13 1 30 1 25 40 2.0 52 0\n"   // 级别照源写成 2.0
+            "bend 54 50\nbend 54 100\nbend 54 150\n"
+            "point 50 200 100 96 30 2 13 1 30 1 25 40 2.0 52 200\n"
+            "stem 1 0 1 -1 0 0\n"
+            "point 0 300 100 99 .02 .02 .01 .01 .3 .001 0 0 0 0 300\n"
+            "bend 30 250\n";
+        WorldGrid curved=g;
+        check(parse_source_rivers(v2,curved,error),"v2 中心线与弯点读取");
+        WorldTerrain bent(curved,{},42); const auto &cs=bent.get_rivers().get_stems();
+        const auto &main=cs[0].v;
+        check(main.size()==5 && main[0].x==52 && main[1].x==54 && main[1].z==50 && main[4].x==52 && main[4].z==200,"顶点 = 锚点中心线位置 + 弯点");
+        check(std::abs(main[2].width-25)<1e-9 && std::abs(main[2].surface-99)<1e-9 && main[2].s>main[1].s && main[4].s>main[3].s,
+            "弯点各量按弧长在两锚点间内插");
+        check(cs[1].v.size()==3 && cs[1].v.back().x==52 && cs[1].v.back().z==200,"支流接干流第 1 个源点（锚点），不是第 1 个顶点");
+        WorldGrid reject=g;
+        check(!parse_source_rivers("rivers 1\nexponents .26 .4\nbasin 0 1\nthreshold .3\nstem 0 -1 -1 0 0 1\n"
+            "point 50 0 100 98 20 2 13 1 30 1 25 40 2\nbend 54 50\npoint 50 200 100 96 30 2 13 1 30 1 25 40 2\n",reject,error),"v1 不认弯点");
+        check(!parse_source_rivers(head+"stem 0 -1 -1 0 0 1\npoint 50 0 100 98 20 2 13 1 30 1 25 40 2 52 0\n"
+            "point 50 200 100 96 30 2 13 1 30 1 25 40 2 52 200\nbend 60 260\n",reject,error),"没有汇入点的段末不许有弯点");
+        // 同一条直河：100 m 一段与插了弯点的 25 m 一段，横断面上的地面应当一样（合成不能随分段疏密变）
+        WorldGrid sparse=g, dense=g;
+        sparse.height.assign(9,110); dense.height.assign(9,110);
+        std::string thin=head+"stem 0 -1 -1 0 0 1\n", fine=head+"stem 0 -1 -1 0 0 1\n";
+        for(int k=-3;k<=3;++k) {
+            const double z=100.0*k, sf=(k+3)/6.0;
+            char line[160];
+            std::snprintf(line,sizeof line,"point 0 %g %g %g 16 1 10 .6 80 5 60 60 2.0 0 %g\n",z,108-2*sf,105-2*sf,z);
+            thin+=line; fine+=line;
+            if(k<3) for(int q=1;q<4;++q) { std::snprintf(line,sizeof line,"bend 0 %g\n",z+25.0*q); fine+=line; }
+        }
+        check(parse_source_rivers(thin,sparse,error) && parse_source_rivers(fine,dense,error),"直河疏密两版读取");
+        WorldTerrain ts(sparse,{},42), td(dense,{},42);
+        double worst=0;
+        for(double x=0;x<=90;x+=3) worst=std::max(worst,std::abs(ts.sample_raw(x,40).top-td.sample_raw(x,40).top));
+        std::printf("  straight river sparse vs dense: worst %.4f m\n",worst);
+        check(worst<.01,"同一条直河 100 m 与 25 m 分段的横断面一致");
+    }
     TileLayout layout(g); const auto tile=build_tile_mesh(terrain,layout,layout.leaf_at(25,0));
     bool center=false;
     for(size_t i=0;i<tile.positions.size();i+=3) {

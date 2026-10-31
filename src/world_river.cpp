@@ -220,24 +220,44 @@ std::shared_ptr<const WorldRivers> WorldRivers::build(const WorldGrid &g, const 
     if(g.source_rivers) {
         net->source=true; net->width_exp=g.station_width_exp; net->depth_exp=g.station_depth_exp;
         net->basin_daily=g.basin_daily; net->stream_daily=g.stream_min_daily;
+        std::vector<std::vector<size_t>> anchor; // 每段：源点下标 → 顶点下标（v2 的弯点插在源点之间）
         for(const auto &s:g.source_stems) {
             RiverStem stem; stem.parent=s.down; stem.mouth=s.exit==1; stem.island=s.island;
-            for(const auto &p:s.points) {
+            auto vertex=[&](const WorldGrid::SourcePoint &p) {
                 RiverVertex v; v.source=true; v.basin=s.basin<0?int(g.basin_daily.size())-1:s.basin; v.level=p.level;
                 v.profile_exp=g.station_depth_exp/g.station_width_exp;
-                v.x=p.x; v.z=p.z; v.surface=p.bed+p.depth; v.width=p.width; v.depth=p.depth;
+                v.x=p.cx; v.z=p.cz; v.surface=p.bed+p.depth; v.width=p.width; v.depth=p.depth;
                 v.mean_width=p.mean_width; v.mean_depth=p.mean_depth; v.q_mean=p.q_mean; v.acc=p.acc;
-                v.left=p.left; v.right=p.right; // 源 fp_left/right 是河岸外的谷底宽。
+                v.left=p.left; v.right=p.right; // 源 fp_left/right 是河岸外的谷底宽（v2 已按中心线横移折算）。
                 v.floodplain=std::max(v.left,v.right);
+                return v;
+            };
+            auto push=[&](RiverVertex v) {
                 if(!stem.v.empty()) v.s=stem.v.back().s+std::hypot(v.x-stem.v.back().x,v.z-stem.v.back().z);
                 stem.v.push_back(v);
-            }
+            };
             // 源 segments 的末点不含下游接点；join 明确指定那条 D8 连接边。
-            if(s.down>=0) {
-                RiverVertex join=net->stems[size_t(s.down)].v[size_t(s.join)];
-                join.s=stem.v.back().s+std::hypot(join.x-stem.v.back().x,join.z-stem.v.back().z);
-                stem.v.push_back(join);
+            auto join_vertex=[&]() { return net->stems[size_t(s.down)].v[anchor[size_t(s.down)][size_t(s.join)]]; };
+            std::vector<size_t> at;
+            for(size_t j=0;j<s.points.size();++j) {
+                const auto &p=s.points[j];
+                at.push_back(stem.v.size());
+                push(vertex(p));
+                if(p.bends.empty()) continue;
+                // 中心线的弯点：各量在本点与下一点（段末点则汇入点）之间按弧长内插，位置用源给的
+                const RiverVertex a=stem.v.back(), b=j+1<s.points.size()?vertex(s.points[j+1]):join_vertex();
+                std::vector<double> run{0.0};
+                double px=a.x, pz=a.z;
+                for(const auto &q:p.bends) { run.push_back(run.back()+std::hypot(q.first-px,q.second-pz)); px=q.first; pz=q.second; }
+                const double total=run.back()+std::hypot(b.x-px,b.z-pz);
+                for(size_t q=0;q<p.bends.size();++q) {
+                    RiverVertex v=lerp_vertex(a,b,total>0.0?run[q+1]/total:0.0);
+                    v.x=p.bends[q].first; v.z=p.bends[q].second;
+                    push(v);
+                }
             }
+            if(s.down>=0) push(join_vertex());
+            anchor.push_back(std::move(at));
             net->stems.push_back(std::move(stem));
         }
         net->index_segments();
@@ -618,12 +638,36 @@ RiverGround WorldRivers::ground(double p_x, double p_z, double p_natural, double
         }
         return 1.0 - smoothstep((hit.distance - core) / rules.blend_m);
     };
+    // 源河：同一条河只取「到这一点的距离沿河是局部最小」的那几处断面——垂足落在段内，或夹在端点而相邻那段的投影也越过这个端点
+    // （拐点外侧），或河的两端。投影夹在端点、相邻段的垂足却在段内的，是同一处断面的重复；算进去会让合成随分段疏密变
+    // （v2 的中心线约 1/4 格一个顶点，直河上就会把谷坡抬高十来厘米）。旧包的历史还原路径照旧。
+    auto local_min = [&](const RiverHit &hit) {
+        if (!hit.at.source || (hit.t > 0.0 && hit.t < 1.0)) return true;
+        const auto &v = stems[size_t(hit.stem)].v;
+        const size_t i = size_t(hit.segment);
+        const bool head = hit.t <= 0.0;
+        if (head ? i == 0 : i + 2 >= v.size()) return true;
+        const RiverVertex &a = head ? v[i - 1] : v[i + 1], &b = head ? v[i] : v[i + 2];
+        const double dx = b.x - a.x, dz = b.z - a.z, len2 = dx * dx + dz * dz;
+        const double u = len2 > 0.0 ? ((p_x - a.x) * dx + (p_z - a.z) * dz) / len2 : (head ? 1.0 : 0.0);
+        return head ? u >= 1.0 : u <= 0.0;
+    };
+    // 先按到线段的距离粗筛（影响范围不超过两端 core 的大者 + 渐回带），省掉远段的整套内插；不改结果
+    auto reaches = [&](uint32_t p_id) {
+        const auto &v = stems[seg_stem[p_id]].v;
+        const RiverVertex &a = v[seg_index[p_id]], &b = v[seg_index[p_id] + 1];
+        double t, d, side;
+        closest_on_segment(p_x, p_z, a.x, a.z, b.x, b.z, t, d, side);
+        return d < std::max(a.core(), b.core()) + rules.blend_m;
+    };
     double bank = 0.0;
     for (uint32_t id : found->second) {
+        if (!reaches(id)) continue;
         const RiverHit hit = measure(id, p_x, p_z);
         const double w = influence(hit);
+        if (w <= 0.0 || !local_min(hit)) continue;
         bank = std::max(bank, w);
-        if (w > 0.0) out.bed = std::max(out.bed, float(1.0 - smoothstep((hit.distance - hit.at.half()) / 1.5)));
+        out.bed = std::max(out.bed, float(1.0 - smoothstep((hit.distance - hit.at.half()) / 1.5)));
     }
     if (bank <= 0.0) return out;
     out.bank = float(bank);
@@ -637,13 +681,14 @@ RiverGround WorldRivers::ground(double p_x, double p_z, double p_natural, double
     };
     // index_segments 按 stem 顺序写每个桶；同河段在桶内连续，无需每次取样分配容器。
     for (uint32_t id : found->second) {
+        if (!reaches(id)) continue;
         const RiverHit hit = measure(id, p_x, p_z);
         if (hit.stem != stem) {
             finish();
             stem = hit.stem;
         }
         const double w = influence(hit);
-        if (w <= 0.0) continue;
+        if (w <= 0.0 || !local_min(hit)) continue;
         // 原有过渡权重 / 距离平方组成单位和插值：新候选在边界权重为零，
         // 河心取源断面原值。分母下限只防除零，不改变河宽、谷宽或水文。
         const double q = w / std::max(1e-24, hit.distance * hit.distance);

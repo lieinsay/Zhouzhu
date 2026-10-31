@@ -53,6 +53,8 @@ func shoot_set(world, camera: Camera3D, river: Dictionary, spawn: Vector3, momen
 	await shoot(camera, r + n * 3.0 + Vector3.UP * 14.0, r - n * 1.0 + d * 0.5, "river-top-" + moment)
 	await shoot(camera, above_ground(world, r + n * 60.0 - d * 40.0 + Vector3.UP * 35.0, 20.0), r + d * 20.0, "river-oblique-" + moment)
 	await shoot(camera, above_ground(world, r - d * 260.0 + n * 90.0 + Vector3.UP * 120.0, 60.0), r + d * 160.0, "river-far-" + moment)
+	# 平面形态：河上方约 500 m 往下看一公里上下的一段（看弯是不是折线）
+	await shoot(camera, r - d * 200.0 + Vector3.UP * 520.0, r + d * 120.0, "river-plan-" + moment)
 
 func hide_lake_surfaces(world) -> void:
 	var clear := StandardMaterial3D.new()

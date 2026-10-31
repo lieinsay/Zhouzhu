@@ -502,21 +502,35 @@ TileMesh build_tile_mesh(const WorldTerrain &p_terrain, const TileLayout &p_layo
     // 裙边垂多深：比相邻两级精度之差大就行
     const float skirt = float(2.0 + step);
     // 近处网格沿源河心与河岸切分；亚格细河无需放宽，也不会被一张跨河三角形盖住。
-    struct RiverCut { RiverVertex a,b; };
+    struct RiverCut { RiverVertex a,b; int stem; };
     std::vector<RiverCut> river_cuts;
     if(p_terrain.get_grid().source_rivers && p_terrain.has_rivers() && step<=32) {
         p_terrain.get_rivers().segments_in(mesh.origin_x,mesh.origin_z,mesh.origin_x+N*step,mesh.origin_z+N*step,
-            [&](int si,int vi) { const auto &v=p_terrain.get_rivers().get_stems()[size_t(si)].v; river_cuts.push_back({v[size_t(vi)],v[size_t(vi)+1]}); });
+            [&](int si,int vi) { const auto &v=p_terrain.get_rivers().get_stems()[size_t(si)].v; river_cuts.push_back({v[size_t(vi)],v[size_t(vi)+1],si}); });
     }
     auto river_quad=[&](int i,int j) {
         struct P { double x,z; };
         const double x=mesh.origin_x+j*step,z=mesh.origin_z+i*step;
         std::vector<std::vector<P>> polygons{{{x,z},{x+step,z},{x+step,z+step},{x,z+step}}};
         bool changed=false;
-        for(const auto &cut:river_cuts) {
-            const auto &a=cut.a,&c=cut.b;
+        // 同一条河只拿离格心最近的那段（及与它差不出一格的，即拐点两侧的两段）来切：
+        // v2 的中心线顶点约 1/4 格一个，弯里相邻几段方向只差几度，全拿来切会把一小格切成上百块。
+        struct Near { size_t cut; double d; };
+        std::vector<Near> near;
+        for(size_t q=0;q<river_cuts.size();++q) {
+            const auto &a=river_cuts[q].a,&c=river_cuts[q].b;
             const double margin=std::max(a.half(),c.half());
             if(std::max(a.x,c.x)+margin<x || std::min(a.x,c.x)-margin>x+step || std::max(a.z,c.z)+margin<z || std::min(a.z,c.z)-margin>z+step) continue;
+            const double dx=c.x-a.x,dz=c.z-a.z,len2=dx*dx+dz*dz,cx=x+.5*step,cz=z+.5*step;
+            const double t=len2>0?std::clamp(((cx-a.x)*dx+(cz-a.z)*dz)/len2,0.0,1.0):0.0;
+            near.push_back({q,std::hypot(cx-(a.x+t*dx),cz-(a.z+t*dz))});
+        }
+        for(const Near &n:near) {
+            double best=n.d;
+            for(const Near &m:near) if(river_cuts[m.cut].stem==river_cuts[n.cut].stem) best=std::min(best,m.d);
+            if(n.d>best+step) continue;
+            const auto &cut=river_cuts[n.cut];
+            const auto &a=cut.a,&c=cut.b;
             const double dx=c.x-a.x,dz=c.z-a.z,len=std::hypot(dx,dz);
             if(len<1e-6) continue;
             for(double offset:{-1.0,-0.5,0.0,0.5,1.0}) {

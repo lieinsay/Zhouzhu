@@ -16,6 +16,9 @@ struct WorldGrid {
         double x=0, z=0, surface=0, bed=0, width=0, depth=0;
         double mean_width=0, mean_depth=0, acc=0, q_mean=0, left=0, right=0;
         int level=0;
+        // rivers.tsv v2：本点在中心线上的位置（v1 就是格心 x z），与到下一点（段末点则到汇入点）之间的中心线顶点
+        double cx=0, cz=0;
+        std::vector<std::pair<double, double>> bends;
     };
     struct SourceStem {
         int down=-1, join=-1, basin=-1, island=0, exit=0;

@@ -26,8 +26,8 @@ void test_terrain_normals() {
         const double depth = std::min(2.0, width), half = width * 0.5;
         for (double z : { -200.0, 200.0 }) {
             WorldGrid::SourcePoint p;
-            p.x = center_x;
-            p.z = z;
+            p.x = p.cx = center_x; // 中心线位置同格心（v1 读进来就是这样）
+            p.z = p.cz = z;
             p.surface = 100.0 + longitudinal_slope * z;
             p.bed = p.surface - depth;
             p.width = p.mean_width = width;

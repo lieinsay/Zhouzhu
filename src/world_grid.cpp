@@ -260,11 +260,12 @@ bool parse_source_rivers(const std::string &text, WorldGrid &g, std::string &err
     std::istringstream input(text);
     std::string line,key;
     bool header=false;
+    int version=0;
     auto fail=[&]() { error="rivers.tsv 契约、索引或数值无效"; return false; };
     while(std::getline(input,line)) {
         std::istringstream row(line);
         if(!(row>>key) || key[0]=='#') continue;
-        if(key=="rivers") { int v=0; if(header || !(row>>v) || v!=1) return fail(); header=true; }
+        if(key=="rivers") { if(header || !(row>>version) || (version!=1 && version!=2)) return fail(); header=true; }
         else if(!header) return fail();
         else if(key=="exponents") { if(!(row>>we>>de) || !(we>0 && de>0 && we<1 && de<1)) return fail(); }
         else if(key=="basin" || key=="threshold") {
@@ -280,11 +281,23 @@ bool parse_source_rivers(const std::string &text, WorldGrid &g, std::string &err
         } else if(key=="point") {
             if(stems.empty()) return fail();
             WorldGrid::SourcePoint p;
-            if(!(row>>p.x>>p.z>>p.surface>>p.bed>>p.width>>p.depth>>p.mean_width>>p.mean_depth>>p.acc>>p.q_mean>>p.left>>p.right>>p.level)) return fail();
-            const double numbers[]={p.x,p.z,p.surface,p.bed,p.width,p.depth,p.mean_width,p.mean_depth,p.acc,p.q_mean,p.left,p.right};
+            double level=0; // 源写成 "2.0"：按整数读会把 ".0" 留给下一列
+            if(!(row>>p.x>>p.z>>p.surface>>p.bed>>p.width>>p.depth>>p.mean_width>>p.mean_depth>>p.acc>>p.q_mean>>p.left>>p.right>>level)) return fail();
+            if(level!=std::floor(level)) return fail();
+            p.level=int(level);
+            p.cx=p.x; p.cz=p.z;
+            if(version>=2 && !(row>>p.cx>>p.cz)) return fail();
+            const double numbers[]={p.x,p.z,p.surface,p.bed,p.width,p.depth,p.mean_width,p.mean_depth,p.acc,p.q_mean,p.left,p.right,p.cx,p.cz};
             for(double v:numbers) if(!std::isfinite(v)) return fail();
             if(p.width<=0 || p.depth<=0 || p.mean_width<0 || p.mean_depth<0 || p.acc<0 || p.q_mean<0 || p.left<0 || p.right<0 || p.level<0 || p.level>3) return fail();
+            if(std::hypot(p.cx-p.x,p.cz-p.z)>g.res) return fail(); // 中心线不出半格，出了一格就是契约坏了
             stems.back().points.push_back(p);
+        } else if(key=="bend" && version>=2) {
+            double x=0,z=0;
+            if(stems.empty() || stems.back().points.empty() || !(row>>x>>z) || !std::isfinite(x) || !std::isfinite(z)) return fail();
+            const auto &at=stems.back().points.back();
+            if(std::hypot(x-at.cx,z-at.cz)>2*g.res) return fail(); // 弯点在本点到下一点（一步至多斜一格）之间
+            stems.back().points.back().bends.emplace_back(x,z);
         } else return fail();
     }
     if(!header || basins.empty() || threshold.empty()) return fail();
@@ -293,6 +306,7 @@ bool parse_source_rivers(const std::string &text, WorldGrid &g, std::string &err
         const auto &s=stems[i];
         if(s.points.empty() || s.basin < -1 || s.basin>=int(basins.size()) || s.down < -1 || s.down>=int(i) ||
                 (s.down>=0 && (s.join<0 || s.join>=int(stems[size_t(s.down)].points.size())))) return fail();
+        if(s.down<0 && !s.points.back().bends.empty()) return fail(); // 没有汇入点，段末点之后不该有弯点
     }
     g.source_rivers=true; g.station_width_exp=we; g.station_depth_exp=de;
     g.source_stems=std::move(stems); g.basin_daily=std::move(basins); g.stream_min_daily=std::move(threshold);
