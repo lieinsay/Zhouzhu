@@ -104,3 +104,14 @@ reach 水沙方案仍未标定材料、来源率、输沙天数及成槽流量�
 | `lods.bin` | 177214468 | `a048dbdeede7257353d00ca31c4d7c91c419ff4f4b6bf2f8ae781903e318dd1e` |
 | `planet.bin` | 8336508 | `139dbb3382c5146304d9c318874a737cebdc219d62ea80fc85afef59f2d475ed` |
 | `weather.bin` | 9402026 | `538310ce2fae35d7d387d00b68c83ddf9989d87cf2e2f1169b14b61351841473` |
+
+## 2026-10-31：rivers.tsv v2（河道中心线去折线）
+
+用户看首版水域后指出河的转折仍是折线。源中心线是生成器 100 m 格的 D8 格心，v1 原样导出、游戏原样还原。生成器 `0206162` 的 core `river_curves` 在导出层给出亚格中心线：尺度一格的 Whittaker 平滑，横向只许在两侧谷底宽与半格以内挪动，源头、出口不动，支流接干流平滑后的点，弯点按 0.25 m 抽稀；不改地形、河网、宽深、流量与床高。
+
+- `rivers.tsv` 头改为 `rivers 2`：`point` 末尾加 `cx cz`（本格在中心线上的位置），`left right` 为按横移折算后的谷底宽（谷底边不动）；点后的 `bend x z` 行是到下一点（段末点则到汇入点）之间的中心线顶点；`x z` 仍是格心。`world.json` 的 `hydro.river_contract` 记 2，`stamp.json` 的 `river_version` 记 2。
+- 游戏两版都认：v1 的中心线就是格心。v2 的源河顶点 = 锚点中心线位置 + 弯点，各量按弧长在两锚点间内插，支流按源点下标接干流锚点；同一条河的谷地合成只取到该点距离沿河为局部最小的断面，近处切地面每条河只取最近的一两段（两项都让结果不随分段疏密变）。中心线位置离格心超过一格、弯点离上一点超过两格按契约损坏拒读。
+- 六个细版包重新生成：`terrain.bin`、`sites.tsv`、`resources.tsv`、`weather.tsv` 与此前逐位相同，`world.json` 只改契约号；6067、6070、6071、6327、6329 同时补上 `lakes.tsv`。粗版与行星包未动。
+- `tools/export_skyisle.py` 的 Python 导出路径仍写 v1，未跟进。
+
+做法、统计与停掉填洼的实验见 [复核稿](DISCUSS-RIVERS-WATER-REVIEW.md) 8.3 与生成器 DESIGN-NOTES 2026-10-31 条。
